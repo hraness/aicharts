@@ -14,7 +14,12 @@ import { contributionArtifact, contributionDeltaBundle, ensureContributionArtifa
 import { enrollmentStorageCall } from "./namespace-anchor";
 
 export const CONTRIBUTION_MIGRATION_MAX_HEADS = 8_192;
-export const CONTRIBUTION_MIGRATION_MAX_JOURNALS = 256;
+// A migration replays every retained v1 journal inside one transaction, so
+// the cap is the single-shot budget: it must cover an account with years of
+// daily v1 uploads yet stay inside the deferred-audit cost the runtime
+// already pays on a cold start. 4,096 matches the request-side
+// `expectedV1Revision` bound; beyond it, chunked migration is the follow-on.
+export const CONTRIBUTION_MIGRATION_MAX_JOURNALS = 4_096;
 export const CONTRIBUTION_MIGRATION_MAX_DAYS = 8_192;
 export const CONTRIBUTION_MIGRATION_MAX_SOURCE_BYTES = 67_108_864;
 type SourceObject = Readonly<{ bucket: "STAGING" | "CONTROL"; key: string; media: string; schema: string; bytes: Uint8Array<ArrayBuffer> }>;

@@ -347,13 +347,14 @@ fn run_op<B: Serialize + DeserializeOwned, T>(
         }
         None => {
             // A successful terminal is authoritative and reports without a new
-            // exchange; a refused intent was decided and retries fresh.
+            // exchange; a refused or abandoned intent was decided and retries
+            // fresh.
             if let Some(op) = settled(&journal.payload, record_key) {
                 let terminal = op.terminal.as_ref().ok_or(INVALID)?;
                 let result: serde_json::Value =
                     serde_json::from_slice(&STANDARD.decode(terminal).map_err(|_| INVALID)?)
                         .map_err(|_| INVALID)?;
-                if result.get("refused").is_none() {
+                if result.get("refused").is_none() && result.get("abandoned").is_none() {
                     return serde_json::to_string(
                         &serde_json::json!({ "schemaVersion": 3, "status": "settled",
                         "operationId": op.operation_id, "result": result }),
@@ -521,6 +522,39 @@ pub(super) fn grant(
                 "writerRevision": settled.writer_revision, "memberCount": settled.member_count })
         },
     )
+}
+
+/// Abandon a retained pending migration: replays its exact request bytes to
+/// the cancel route and, once the service records the abandoned terminal,
+/// marks the local intent decided so a later `--migrate` opens fresh.
+pub(super) fn cancel_migration(
+    dir: &Path,
+    key: &[u8; 32],
+    transport: &Transport,
+    deadline: &Deadline,
+) -> Result<String, &'static str> {
+    let mut journal = JournalFile::open(dir, key, transport.binding())?;
+    let index = journal
+        .payload
+        .ops
+        .iter()
+        .position(|op| op.key == "migrate" && op.terminal.is_none())
+        .ok_or("contribution_sync_not_pending")?;
+    let bytes = STANDARD
+        .decode(&journal.payload.ops[index].request)
+        .map_err(|_| INVALID)?;
+    let request: wire::MigrateRequest = serde_json::from_slice(&bytes).map_err(|_| INVALID)?;
+    let (body_hash, revision) = transport.cancel_migration(&request, deadline)?;
+    let evidence = serde_json::to_vec(&serde_json::json!({ "abandoned": true,
+        "operationId": request.operation_id, "bodyHash": body_hash, "revision": revision }))
+    .map_err(|_| INVALID)?;
+    journal.payload.ops[index].terminal = Some(STANDARD.encode(evidence));
+    journal.persist()?;
+    serde_json::to_string(
+        &serde_json::json!({ "schemaVersion": 3, "status": "abandoned",
+        "operationId": journal.payload.ops[index].operation_id, "revision": revision }),
+    )
+    .map_err(|_| super::INVALID)
 }
 
 /// Read-only view of the retained ops journal for --inspect: the local
