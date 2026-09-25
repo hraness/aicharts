@@ -140,6 +140,25 @@ pub struct NativeObservations {
     facts: Vec<NativeFact>,
     warnings: Vec<crate::Warning>,
     lines_read: u64,
+    quarantine: Quarantine,
+}
+
+/// Counts of source observations withheld under the exact-source rule: Codex
+/// timestamp/slot identities never justify reordered-history corrections, so
+/// ambiguous rewrites are quarantined instead of sent.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Quarantine {
+    /// Distinct deltas sharing one execution timestamp (slot ordinals).
+    pub same_instant_slots: usize,
+    /// Every observation of a source whose cumulative counters regressed or
+    /// that forked from another thread.
+    pub rewritten_history: usize,
+}
+impl Quarantine {
+    pub fn total(&self) -> usize {
+        self.same_instant_slots + self.rewritten_history
+    }
 }
 impl NativeObservations {
     /// Reads at most MAX_SOURCE_BYTES + 1 consumed bytes. The existing reader also
@@ -150,15 +169,48 @@ impl NativeObservations {
         account_id: &str,
         account_occurrence_key: &[u8; 32],
     ) -> Result<Self, Error> {
+        Self::read(
+            reader,
+            Provider::ClaudeCode,
+            account_id,
+            account_occurrence_key,
+        )
+    }
+
+    /// Codex rollouts carry cumulative `token_count` events whose native identity
+    /// is the execution plus the event timestamp. Distinct deltas stamped with one
+    /// timestamp receive slot ordinals in stream order, so their identity would
+    /// move under a reordered or compacted history. Such same-instant groups, and
+    /// every observation of a source whose cumulative counters regressed or that
+    /// forked from another thread, are quarantined: counted, never sent, never
+    /// corrected. Only stable single-timestamp observations become new facts.
+    pub fn read_codex<R: BufRead>(
+        reader: R,
+        account_id: &str,
+        account_occurrence_key: &[u8; 32],
+    ) -> Result<Self, Error> {
+        Self::read(reader, Provider::Codex, account_id, account_occurrence_key)
+    }
+
+    fn read<R: BufRead>(
+        reader: R,
+        provider: Provider,
+        account_id: &str,
+        account_occurrence_key: &[u8; 32],
+    ) -> Result<Self, Error> {
         if !account(account_id) {
             return Err(Error::InvalidScope);
         }
         if account_occurrence_key.iter().all(|byte| *byte == 0) {
             return Err(Error::InvalidKey);
         }
+        let client = match provider {
+            Provider::ClaudeCode => "claude",
+            Provider::Codex => "codex",
+            Provider::Devin => return Err(Error::InvalidScope),
+        };
         let mut bounded = reader.take(MAX_SOURCE_BYTES + 1);
-        let parsed =
-            crate::parse_reader(&mut bounded, Provider::ClaudeCode, account_occurrence_key);
+        let parsed = crate::parse_reader(&mut bounded, provider, account_occurrence_key);
         // Check even if the artificial EOF produced a syntax error. Never accept
         // a valid prefix of an oversized stream as if it were the whole input.
         if bounded.limit() == 0 {
@@ -173,10 +225,41 @@ impl NativeObservations {
         if count > MAX_OBSERVATIONS {
             return Err(Error::ObservationLimit);
         }
+        let rewritten = provider == Provider::Codex
+            && collection.warnings.iter().any(|warning| {
+                matches!(
+                    warning,
+                    crate::Warning::CodexCumulativeRegression
+                        | crate::Warning::CodexForkUnsupported
+                )
+            });
+        let mut instants: std::collections::HashMap<(u32, [u8; 16], u32), usize> =
+            std::collections::HashMap::new();
+        if provider == Provider::Codex {
+            for batch in &collection.batches {
+                for usage in &batch.usage {
+                    *instants
+                        .entry((batch.utc_day, usage.execution_id, usage.offset_ms))
+                        .or_insert(0) += 1;
+                }
+            }
+        }
+        let mut quarantine = Quarantine::default();
         let mut facts = Vec::with_capacity(count);
         for batch in collection.batches {
             for usage in batch.usage {
-                let row = NativeRow::from_claude(batch.utc_day, &usage.tokens)?;
+                if rewritten {
+                    quarantine.rewritten_history += 1;
+                    continue;
+                }
+                if instants
+                    .get(&(batch.utc_day, usage.execution_id, usage.offset_ms))
+                    .is_some_and(|members| *members > 1)
+                {
+                    quarantine.same_instant_slots += 1;
+                    continue;
+                }
+                let row = NativeRow::native(client, batch.utc_day, &usage.tokens)?;
                 let payload = encode(&row, MAX_BATCH_BYTES)?;
                 let payload_hash = hash_parts(&[b"aicharts:contribution-payload:v3\0", &payload]);
                 facts.push(NativeFact {
@@ -192,7 +275,14 @@ impl NativeObservations {
             facts,
             warnings: collection.warnings,
             lines_read: collection.lines_read,
+            quarantine,
         })
+    }
+
+    /// Observations withheld from every query and batch because their native
+    /// identity is not stable under a rewritten history.
+    pub fn quarantine(&self) -> &Quarantine {
+        &self.quarantine
     }
 
     pub fn len(&self) -> usize {

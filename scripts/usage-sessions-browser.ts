@@ -82,6 +82,32 @@ export async function verifyUsageSessions(browser: Browser, baseUrl: string): Pr
       await tokenSize("Median token size").getByText("Unavailable", { exact: true }).waitFor();
       await page.getByLabel("Token quantity", { exact: true }).selectOption("total");
       await page.getByLabel("Show", { exact: true }).selectOption("all");
+      // The selection's session facts feed the full rich explorer: exact grouped
+      // values, distribution refusals with reasons, and per-metric CSV export.
+      const richExplorer = page.getByRole("region", { name: "Session-fact metrics", exact: true });
+      await richExplorer.getByRole("combobox", { name: "Metric", exact: true }).selectOption("token-size-p95");
+      await richExplorer.locator(".usage-rich__groups tbody tr").first().waitFor();
+      invariant(await richExplorer.locator(".usage-rich__groups tbody tr").count() === 2, "The explorer must group adapted session facts per session by default.");
+      invariant((await richExplorer.locator(".usage-rich__groups").textContent())?.includes("26,900"), "Per-session P95 must equal the token-size card value.");
+      invariant((await richExplorer.textContent())?.includes("direct versus inclusive token scope"), "Pooling unknown-scope sessions must be refused with its reason.");
+      invariant(await richExplorer.locator('option[value="hour-of-day"][disabled]').count() === 2 && await richExplorer.locator('option[value="hour-of-day"]:not([disabled])').count() === 0,
+        "Hour-of-day grouping must be refused in both grouping controls without a declared time zone.");
+      await richExplorer.getByRole("combobox", { name: "Metric", exact: true }).selectOption("observed-turn-count");
+      // The refusal is stated once for the selection and again for every session group.
+      await richExplorer.locator(".usage-rich__reason").filter({ hasText: "do not provide this kind of observation" }).first().waitFor();
+      invariant(await richExplorer.locator(".usage-rich__groups tbody tr").count() === 2
+        && await richExplorer.locator(".usage-rich__groups tbody td:last-child").filter({ hasText: "do not provide this kind of observation" }).count() === 2,
+        "A metric the loaded facts cannot observe must be refused for every session group, not only in aggregate.");
+      await richExplorer.getByRole("combobox", { name: "Metric", exact: true }).selectOption("token-size-p95");
+      await richExplorer.getByRole("combobox", { name: "Session", exact: true }).selectOption({ index: 1 });
+      await richExplorer.locator(".usage-rich__percentiles").waitFor();
+      invariant(await richExplorer.locator(".usage-rich__histogram li").count() > 0, "A single session's token sizes must render an exact histogram.");
+      const richCsvEvent = page.waitForEvent("download");
+      await richExplorer.getByRole("button", { name: "Export CSV", exact: true }).click();
+      const richCsvFile = await (await richCsvEvent).path(); invariant(richCsvFile, "Rich metric CSV must download.");
+      const richCsv = await Bun.file(richCsvFile).text();
+      invariant(richCsv.startsWith("metric_id,metric_version,unit,") && richCsv.includes("\r\ntoken-size-p95,1,tokens,rich-facts-v1,") && richCsv.includes(",distribution,p95,"), "Rich CSV must carry identity, revision and exact percentile rows.");
+      await richExplorer.getByRole("combobox", { name: "Session", exact: true }).selectOption("*");
       await page.locator(".usage-sessions__select").first().click();
       await page.evaluate(async () => { await document.fonts.ready; });
       invariant(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), "Session page must fit the viewport.");

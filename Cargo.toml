@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/aicharts-protocol", "crates/aicharts-core", "crates/aicharts-ledger", "crates/aicharts-cli", "crates/aicharts-custody", "crates/aicharts-platform-acl", "crates/aicharts-platform-process", "crates/aicharts-import", "crates/aicharts-metrics"]
+members = ["crates/aicharts-protocol", "crates/aicharts-core", "crates/aicharts-ledger", "crates/aicharts-cli", "crates/aicharts-custody", "crates/aicharts-platform-acl", "crates/aicharts-platform-process", "crates/aicharts-import", "crates/aicharts-metrics", "crates/aicharts-fuzz"]
 exclude = ["vendor/tokscale-core"]
 resolver = "2"
 

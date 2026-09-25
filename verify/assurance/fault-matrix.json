@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "claim": "existing-injected-failure-inventory",
+  "scope": "Inventory of the injected-failure suites that already exist in the worker and Rust code. usage:fault-matrix runs every listed suite and fails when one is missing, renamed, skipped or not passing. It adds no fault tests of its own.",
+  "failureClasses": {
+    "crash-before-effect": "The process or request dies before its durable effect; recovery must show no partial write and an exact retry succeeds.",
+    "crash-after-effect": "The process dies after the effect but before acknowledgement; recovery must resume without a second charge or duplicate publication.",
+    "disk-full": "Local persistence refuses a write for lack of space and the ledger stays consistent.",
+    "capacity-exhaustion": "Durable Object or storage capacity refuses new work before any index write; the last published state is retained. The nearest existing analog to disk-full.",
+    "lost-reply": "A committed write, RPC or grant reply is lost; an exact retry reconciles without duplicating the effect.",
+    "restore-race": "A stale, reordered or late actor races a restore, reopen, fence or cancellation and must not mutate canonical state."
+  },
+  "gaps": [
+    { "failureClass": "disk-full", "reason": "No existing local-persistence test injects ENOSPC or SQLite full-disk errors. capacity-exhaustion suites are the nearest analog and are listed as such, not as disk-full evidence." }
+  ],
+  "limits": { "workerTimeoutMs": 300000, "cargoTimeoutMs": 2400000, "maxProcessOutputBytes": 8388608 },
+  "suites": [
+    {
+      "id": "worker-contribution-cancel", "kind": "worker", "source": "services/usage-worker/test/contribution-cancel.worker.ts", "expectedTests": 15,
+      "platforms": ["darwin", "linux"], "failureClasses": ["lost-reply", "crash-after-effect", "restore-race"],
+      "tests": [
+        "lost cancellation replies survive restart and exact retry ignores stale CAS without recharging",
+        "cancel after reservation wins over a late verified-body commit and keeps original charges",
+        "cancellation during held R2 I/O settles the late upload as abandoned without publishing heads",
+        "failed pre-arm and revoked authority after its await preserve unknown or pending bytes"
+      ]
+    },
+    {
+      "id": "worker-contribution-rebuild-integration", "kind": "worker", "source": "services/usage-worker/test/contribution-rebuild-integration.worker.ts", "expectedTests": 6,
+      "platforms": ["darwin", "linux"], "failureClasses": ["crash-after-effect", "lost-reply", "restore-race"],
+      "tests": [
+        "schema13 rebuild survives restart, retains exact step replies and never publishes its scratch root",
+        "a late fence acquisition settles its grant after the deadline without touching canonical storage"
+      ]
+    },
+    {
+      "id": "worker-contribution-projection", "kind": "worker", "source": "services/usage-worker/test/contribution-projection.worker.ts", "expectedTests": 15,
+      "platforms": ["darwin", "linux"], "failureClasses": ["lost-reply", "crash-after-effect", "capacity-exhaustion"],
+      "tests": [
+        "lost immutable write acknowledgement resumes the exact charged pending chunk after restart",
+        "capacity exhaustion refuses before index writes while retaining the last published revision",
+        "a failure after stage movement rolls back the pending intent and resumes without recharging",
+        "a crash after applying a revision resumes publication without replay or another charge"
+      ]
+    },
+    {
+      "id": "worker-restore-fence", "kind": "worker", "source": "services/usage-worker/test/restore-fence.worker.ts", "expectedTests": 13,
+      "platforms": ["darwin", "linux"], "failureClasses": ["lost-reply", "restore-race", "capacity-exhaustion"],
+      "tests": [
+        "refuses a stale epoch after publish",
+        "lost grant replies reconcile the exact attempt, including after close",
+        "terminal cancellation fences both reordered future grants and granted-but-lost replies",
+        "capacity refuses new attempts while existing unknown grants still reconcile and cancel"
+      ]
+    },
+    {
+      "id": "worker-admission-objects", "kind": "worker", "source": "services/usage-worker/test/admission-objects.worker.ts", "expectedTests": 11,
+      "platforms": ["darwin", "linux"], "failureClasses": ["lost-reply", "restore-race"],
+      "tests": [
+        "lost committed PUT reply preserves the object and reconciles on an exact later retry",
+        "a lost readback is not a successful persistence receipt",
+        "closed fences prevent object access or withhold success after an uncertain write"
+      ]
+    },
+    {
+      "id": "worker-admission-http", "kind": "worker", "source": "services/usage-worker/test/admission-http.worker.ts", "expectedTests": 25,
+      "platforms": ["darwin", "linux"], "failureClasses": ["lost-reply", "crash-after-effect"],
+      "tests": [
+        "real HTTP/RPC commit survives a lost RPC reply and restart without duplicate publication"
+      ]
+    },
+    {
+      "id": "ledger-process-death", "kind": "cargo", "package": "aicharts-ledger",
+      "sources": ["crates/aicharts-ledger/src/tests.rs", "crates/aicharts-ledger/src/sender_tests.rs", "crates/aicharts-ledger/src/prefix_tests.rs"],
+      "platforms": ["darwin", "linux"], "failureClasses": ["crash-before-effect", "crash-after-effect", "lost-reply", "restore-race"],
+      "tests": [
+        "tests::process_death_before_commit_recovers_without_partial_checkpoint_or_pending",
+        "tests::sender_tests::process_death_never_partially_migrates_allocates_or_acknowledges_a_batch",
+        "tests::sender_tests::prefix_tests::process_death_never_partially_migrates_or_admits_prefix_numeric_pair",
+        "tests::sender_tests::one_malformed_mismatched_or_staged_reply_never_partially_acknowledges",
+        "tests::readonly_connection_rejects_wal_raced_after_open_before_first_database_read",
+        "tests::readonly_handle_never_recovers_a_hot_journal_raced_after_open"
+      ]
+    },
+    {
+      "id": "cli-storage-and-transport-faults", "kind": "cargo", "package": "aicharts-cli",
+      "sources": ["crates/aicharts-cli/src/enrollment/attempt/storage_tests.rs", "crates/aicharts-cli/src/enrollment/attempt/drive_tests.rs", "crates/aicharts-cli/src/upload_tests.rs", "crates/aicharts-cli/src/stats_sync/https/tls_tests.rs"],
+      "platforms": ["darwin", "linux"], "failureClasses": ["crash-before-effect", "crash-after-effect", "lost-reply", "restore-race"],
+      "tests": [
+        "enrollment::attempt::storage_tests::every_prepublication_fault_preserves_committed_bytes_and_retains_any_created_stage",
+        "enrollment::attempt::storage_tests::durable_read_faults_and_changed_committed_tokens_never_return_durability_evidence",
+        "enrollment::attempt::storage_tests::absent_initialization_faults_and_intervening_creation_never_adopt_an_unrelated_record",
+        "enrollment::attempt::drive_tests::drive_reconciles_interrupted_pairing_custody",
+        "upload::tests::synthetic_commit_with_lost_reply_replays_exact_bytes_after_local_reopen",
+        "stats_sync::https::tls_tests::actual_tls_lost_reply_and_truncated_body_never_manufacture_receipt"
+      ]
+    },
+    {
+      "id": "custody-reference-faults", "kind": "cargo", "package": "aicharts-custody",
+      "sources": ["crates/aicharts-custody/src/references_tests.rs"],
+      "platforms": ["darwin", "linux"], "failureClasses": ["crash-before-effect", "crash-after-effect"],
+      "tests": ["references::tests::every_prepublication_fault_preserves_committed_state_and_original_candidate"]
+    },
+    {
+      "id": "custody-macos-interrupted-stages", "kind": "cargo", "package": "aicharts-custody",
+      "sources": ["crates/aicharts-custody/src/references/macos/tests.rs"],
+      "platforms": ["darwin"], "failureClasses": ["crash-after-effect", "restore-race"],
+      "tests": ["references::macos::tests::interrupted_stages_preserve_current_and_only_exact_retry_can_finish"]
+    },
+    {
+      "id": "platform-acl-macos-native-faults", "kind": "cargo", "package": "aicharts-platform-acl",
+      "sources": ["crates/aicharts-platform-acl/src/macos/tests.rs"],
+      "platforms": ["darwin"], "failureClasses": ["crash-before-effect", "crash-after-effect"],
+      "tests": ["macos::tests::native_faults_preserve_closed_status_and_exact_cleanup"]
+    }
+  ]
+}

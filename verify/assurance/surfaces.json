@@ -581,6 +581,16 @@
       "rebuildFrom": null,
       "lifecycleStatus": "qualification-required",
       "controlEvidence": true
+    },
+    {
+      "id": "worker:usage_reclamation_ledger",
+      "table": "usage_reclamation_ledger",
+      "owner": "services/usage-worker/src/reclamation-state.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
     }
   ]
 }

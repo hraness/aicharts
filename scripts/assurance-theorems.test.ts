@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { admitLean, admitLeanMutation, admitTranslation, rejectAdmissions } from "./assurance-theorems";
-import { applyExactMutation, type ProofProcess } from "./assurance-proof-common";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { admitLean, admitLeanMutation, admitTranslation, leanMutationsSchema, rejectAdmissions } from "./assurance-theorems";
+import { applyExactMutation, proofRoot, type ProofProcess } from "./assurance-proof-common";
 
 const result = (output: string, exitCode = 0): ProofProcess => ({ command: "lean", args: [], output,
   exitCode, signal: null, timedOut: false, outputExceeded: false, elapsedMs: 1 });
@@ -28,16 +30,22 @@ describe("production theorem evidence admission", () => {
     expect(() => applyExactMutation("fn changed_add() {}", mutation)).toThrow("mutation_source_drift");
     expect(() => applyExactMutation("checked_add checked_add", mutation)).toThrow("mutation_source_drift");
   });
-  test("negative controls require a semantic failure inside the named theorem", () => {
+  test("negative controls require a semantic failure inside the named theorem's proof and its recorded sorryAx", () => {
     const source = "import Std\nnamespace Example\ntheorem addition (x : Nat) : x = x + 1 := by\n  omega\n#print axioms addition\nend Example\n";
-    const output = "/tmp/ProductionProofs.lean:4:2: error: omega could not prove the goal\n";
-    const semantic = "/tmp/ProductionProofs.lean:4:2: error: unsolved goals\n";
+    const recorded = "'Example.addition' depends on axioms: [sorryAx]\n";
+    const output = "/tmp/ProductionProofs.lean:4:2: error: omega could not prove the goal\n" + recorded;
+    const semantic = "/tmp/ProductionProofs.lean:4:2: error: unsolved goals\n" + recorded;
     expect(admitLeanMutation(result(semantic, 1), source, "addition", "/tmp/ProductionProofs.lean")).toBe(true);
     const stepFailure = semantic.replace("unsolved goals", "Step failed: could not find a local assumption or a theorem to apply");
     expect(admitLeanMutation(result(stepFailure, 1), source, "addition", "/tmp/ProductionProofs.lean")).toBe(true);
+    expect(admitLeanMutation(result(output.replace("goal", "goal:"), 1), source, "addition", "/tmp/ProductionProofs.lean")).toBe(true);
     const multiline = "import Std\ntheorem pricing_terminal_body_exact\n    (x : Nat) : x = x + 1 := by\n  omega\n#print axioms pricing_terminal_body_exact\n";
-    expect(admitLeanMutation(result(semantic, 1), multiline, "pricing_terminal_body_exact", "/tmp/ProductionProofs.lean")).toBe(true);
-    expect(admitLeanMutation(result(semantic, 1), multiline, "pricing_terminal", "/tmp/ProductionProofs.lean")).toBe(false);
+    const multilineRecorded = semantic.replace("Example.addition", "pricing_terminal_body_exact");
+    expect(admitLeanMutation(result(multilineRecorded, 1), multiline, "pricing_terminal_body_exact", "/tmp/ProductionProofs.lean")).toBe(true);
+    expect(admitLeanMutation(result(multilineRecorded.replace(":4:2:", ":3:2:"), 1), multiline, "pricing_terminal_body_exact", "/tmp/ProductionProofs.lean")).toBe(true);
+    // A failure on the statement line, before the proof body begins, is not a proof failure of the named theorem.
+    expect(admitLeanMutation(result(multilineRecorded.replace(":4:2:", ":2:2:"), 1), multiline, "pricing_terminal_body_exact", "/tmp/ProductionProofs.lean")).toBe(false);
+    expect(admitLeanMutation(result(multilineRecorded, 1), multiline, "pricing_terminal", "/tmp/ProductionProofs.lean")).toBe(false);
     for (const invalid of [result(semantic), result(semantic.replace(":4:2:", ":1:2:"), 1),
       result(semantic.replace("unsolved goals", "Unknown constant `missing`"), 1),
       { ...result(semantic, 1), timedOut: true }, result(output, 0), result("compiler crashed", 1),
@@ -45,9 +53,36 @@ describe("production theorem evidence admission", () => {
       result(semantic + "/tmp/ProductionProofs.lean:99:1: error: unexpected token\n", 1),
       result(semantic + "/tmp/Other.lean:4:1: error: unsolved goals\n", 1),
       result(stepFailure.replace(":4:2:", ":1:2:"), 1),
-      result(semantic + "error: failed to load shared library\n", 1)]) {
+      result(semantic + "error: failed to load shared library\n", 1),
+      // The named theorem itself must be recorded as depending on sorryAx; a downstream or foreign report is not that.
+      result(semantic.replace(recorded, ""), 1),
+      result(semantic.replace("Example.addition", "Example.other"), 1),
+      result(semantic.replace("[sorryAx]", "[propext]"), 1),
+      result(recorded, 1)]) {
       expect(admitLeanMutation(invalid, source, "addition", "/tmp/ProductionProofs.lean")).toBe(false);
     }
+  });
+  test("the mutation manifest names existing theorems and unique single-match sources", () => {
+    const read = (path: string) => readFileSync(resolve(proofRoot, path), "utf8");
+    const manifest = leanMutationsSchema.parse(JSON.parse(read("verify/lean/mutations.json")));
+    const ids = [...manifest.production, ...manifest.mathematical].map(item => item.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    const proofs = read("verify/lean/ProductionKernels.proofs.lean") + read("verify/lean/Pricing.proofs.lean"), laws = read("verify/lean/UsageLaws.lean");
+    const pin = JSON.parse(read("verify/lean/toolchain.json")) as { productionTheorems: string[]; mathematicalTheorems: string[] };
+    for (const item of manifest.production) {
+      expect(proofs).toMatch(new RegExp(`^theorem ${item.expectedTheorem}(?:\\s|$)`, "mu"));
+      expect(pin.productionTheorems).toContain(`aicharts_metrics.${item.expectedTheorem}`);
+      expect(read(item.source).split(item.exactBefore).length).toBe(2);
+    }
+    for (const item of manifest.mathematical) {
+      expect(laws).toMatch(new RegExp(`^theorem ${item.expectedTheorem}(?:\\s|$)`, "mu"));
+      expect(pin.mathematicalTheorems).toContain(`UsageLaws.${item.expectedTheorem}`);
+      expect(read(item.source).split(item.exactBefore).length).toBe(2);
+    }
+    const kani = JSON.parse(read("verify/kani/harnesses.json")) as { theoremReplacements: { requiredMutation: string }[] };
+    for (const replacement of kani.theoremReplacements) expect(manifest.production.map(item => item.id)).toContain(replacement.requiredMutation);
+    expect(() => leanMutationsSchema.parse({ ...manifest, mathematical: [] })).toThrow();
+    expect(() => leanMutationsSchema.parse({ ...manifest, production: [{ ...manifest.production[0], source: "verify/lean/UsageLaws.lean" }] })).toThrow();
   });
   test("maintained proof inputs reject admissions and unreviewed escape mechanisms", () => {
     expect(() => rejectAdmissions("theorem identity (x : Nat) : x = x := by rfl")).not.toThrow();

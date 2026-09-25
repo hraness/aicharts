@@ -17,6 +17,60 @@ fn reference_add(left: u128, right: u128) -> Option<u128> {
     }
 }
 
+/// Every evidence basis, chosen by an unconstrained symbolic selector. Bases
+/// are enumerated here so the harness never edits or derives on kernel types.
+fn any_basis() -> Basis {
+    match kani::any::<u8>() % 3 {
+        0 => Basis::Reported,
+        1 => Basis::Derived,
+        _ => Basis::Estimated,
+    }
+}
+
+/// The two counters a known observation of `basis` advances.
+fn basis_components(totals: EvidenceTotals, basis: Basis) -> (u128, u128) {
+    match basis {
+        Basis::Reported => (totals.reported, totals.reported_records),
+        Basis::Derived => (totals.derived, totals.derived_records),
+        Basis::Estimated => (totals.estimated, totals.estimated_records),
+    }
+}
+
+/// Every counter a known observation of `basis` must leave untouched.
+fn other_components(totals: EvidenceTotals, basis: Basis) -> [u128; 6] {
+    let (reported, derived, estimated) = (
+        (totals.reported, totals.reported_records),
+        (totals.derived, totals.derived_records),
+        (totals.estimated, totals.estimated_records),
+    );
+    let (first, second) = match basis {
+        Basis::Reported => (derived, estimated),
+        Basis::Derived => (reported, estimated),
+        Basis::Estimated => (reported, derived),
+    };
+    [
+        first.0,
+        first.1,
+        second.0,
+        second.1,
+        totals.unknown_records,
+        totals.unsupported_records,
+    ]
+}
+
+fn any_totals() -> EvidenceTotals {
+    EvidenceTotals {
+        reported: kani::any(),
+        reported_records: kani::any(),
+        derived: kani::any(),
+        derived_records: kani::any(),
+        estimated: kani::any(),
+        estimated_records: kani::any(),
+        unknown_records: kani::any(),
+        unsupported_records: kani::any(),
+    }
+}
+
 #[kani::proof]
 fn checked_add_full_u128_matches_129_bit_math() {
     let left: u128 = kani::any();
@@ -260,38 +314,40 @@ fn price_zero_or_missing_rates_preserves_full_u128_token_domain() {
 #[kani::proof]
 fn evidence_add_full_u128_keeps_zero_distinct_from_missing() {
     let value: u128 = kani::any();
-    let initial: u128 = kani::any();
-    let count: u128 = kani::any();
-    let old = EvidenceTotals {
-        reported: initial,
-        reported_records: count,
-        ..EvidenceTotals::default()
-    };
-    let actual = old.observe(QuantityEvidence::Known {
-        value,
-        basis: Basis::Reported,
-    });
+    let basis = any_basis();
+    let old = any_totals();
+    let (initial, count) = basis_components(old, basis);
+    let actual = old.observe(QuantityEvidence::Known { value, basis });
     let expected_sum = reference_add(initial, value);
     let expected_count = reference_add(count, 1);
     assert_eq!(
-        actual.is_ok(),
-        expected_sum.is_some() && expected_count.is_some()
+        actual.map(|next| basis_components(next, basis)).ok(),
+        expected_sum.zip(expected_count)
     );
     if let Ok(next) = actual {
-        assert_eq!(Some(next.reported), expected_sum);
-        assert_eq!(Some(next.reported_records), expected_count);
-        assert_eq!(next.unknown_records, 0);
-        assert_eq!(next.estimated_records, 0);
+        assert_eq!(other_components(next, basis), other_components(old, basis));
     }
-    if let Ok(unknown) = old.observe(QuantityEvidence::Unknown) {
-        assert_eq!(unknown.reported, initial);
-        assert_eq!(unknown.reported_records, count);
-        assert_eq!(unknown.unknown_records, 1);
-    } else {
-        assert!(false, "the unknown count starts at zero");
+    let unknown = old.observe(QuantityEvidence::Unknown);
+    assert_eq!(
+        unknown.map(|next| next.unknown_records).ok(),
+        reference_add(old.unknown_records, 1)
+    );
+    if let Ok(next) = unknown {
+        assert_eq!(basis_components(next, basis), (initial, count));
+        assert_eq!(next.unsupported_records, old.unsupported_records);
     }
-    kani::cover!(value == 0 && actual.is_ok());
-    kani::cover!(actual == Err(Error::Overflow));
+    let unsupported = old.observe(QuantityEvidence::Unsupported);
+    assert_eq!(
+        unsupported.map(|next| next.unsupported_records).ok(),
+        reference_add(old.unsupported_records, 1)
+    );
+    if let Ok(next) = unsupported {
+        assert_eq!(basis_components(next, basis), (initial, count));
+        assert_eq!(next.unknown_records, old.unknown_records);
+    }
+    kani::cover!(value == 0 && actual.is_ok() && basis == Basis::Derived);
+    kani::cover!(actual == Err(Error::Overflow) && basis == Basis::Estimated);
+    kani::cover!(unknown == Err(Error::Overflow) && actual.is_ok());
 }
 
 #[kani::proof]
@@ -323,12 +379,14 @@ fn matching_full_population_identity_never_confuses_missing_with_zero() {
     let right_value: u128 = kani::any();
     let left_known: bool = kani::any();
     let right_known: bool = kani::any();
+    let left_basis = any_basis();
+    let right_basis = any_basis();
     let left = ScopedQuantity {
         population: left_population,
         evidence: if left_known {
             QuantityEvidence::Known {
                 value: left_value,
-                basis: Basis::Reported,
+                basis: left_basis,
             }
         } else {
             QuantityEvidence::Unknown
@@ -339,7 +397,7 @@ fn matching_full_population_identity_never_confuses_missing_with_zero() {
         evidence: if right_known {
             QuantityEvidence::Known {
                 value: right_value,
-                basis: Basis::Estimated,
+                basis: right_basis,
             }
         } else {
             QuantityEvidence::Unsupported
@@ -353,11 +411,116 @@ fn matching_full_population_identity_never_confuses_missing_with_zero() {
     if let Ok(pair) = actual {
         assert_eq!(pair.left, left_value);
         assert_eq!(pair.right, right_value);
-        assert_eq!(pair.left_basis, Basis::Reported);
-        assert_eq!(pair.right_basis, Basis::Estimated);
+        assert_eq!(pair.left_basis, left_basis);
+        assert_eq!(pair.right_basis, right_basis);
         assert_eq!(pair.ratio().is_ok(), right_value != 0);
     }
-    kani::cover!(actual.is_ok() && left_value == 0);
+    kani::cover!(actual.is_ok() && left_value == 0 && left_basis != right_basis);
     kani::cover!(matches!(actual, Err(Error::MissingEvidence)) && left_value == 0);
     kani::cover!(matches!(actual, Err(Error::PopulationMismatch)));
+}
+
+#[kani::proof]
+fn rounded_production_width_ratio_follows_floor_ceiling_and_half_up_laws() {
+    // The domain is built from an exact quotient, nonzero denominator and
+    // remainder below it so the reference needs no division: the only division
+    // circuits are the production u128 ones under test. Division solving cost
+    // is dominated by denominator width: a u8 denominator needed ~276 seconds
+    // against the pinned 300-second harness budget, u7 ~118 seconds, and wider
+    // operand pairs exceeded a 900-second CaDiCaL budget without a
+    // counterexample, so this bounded domain (u8 quotient, u6 denominator) is
+    // the admitted Kani evidence; it exercises every rule and the exact
+    // half-up law for odd and even denominators but does not qualify
+    // production-width operands. The gate refuses solver assumptions, so the
+    // domain is reached by total maps instead: the raw byte maps onto every
+    // denominator in one through sixty-four and an out-of-range remainder maps
+    // to zero, which still reaches every remainder below it.
+    let quotient: u8 = kani::any();
+    let raw_denominator: u8 = kani::any();
+    let denominator = raw_denominator % 64 + 1;
+    let raw_remainder: u8 = kani::any();
+    let remainder = if raw_remainder < denominator {
+        raw_remainder
+    } else {
+        0
+    };
+    let numerator = u128::from(u64::from(quotient) * u64::from(denominator) + u64::from(remainder));
+    assert_eq!(ExactRatio::new(numerator, 0), Err(Error::ZeroDenominator));
+    let selector: u8 = kani::any();
+    let rule = match selector {
+        0 => Rounding::Floor,
+        1 => Rounding::Ceiling,
+        _ => Rounding::HalfUp,
+    };
+    let increment = match rule {
+        Rounding::Floor => 0,
+        Rounding::Ceiling => u128::from(remainder != 0),
+        // 2r >= d is the exact half-up law for every d, including odd d.
+        Rounding::HalfUp => u128::from(u32::from(remainder) * 2 >= u32::from(denominator)),
+    };
+    let actual =
+        ExactRatio::new(numerator, u128::from(denominator)).map(|ratio| ratio.rounded(rule));
+    assert_eq!(actual, Ok(Ok(u128::from(quotient) + increment)));
+    kani::cover!(rule == Rounding::Floor && remainder != 0);
+    kani::cover!(rule == Rounding::Ceiling && increment == 1);
+    kani::cover!(rule == Rounding::HalfUp && remainder != 0 && increment == 1);
+    kani::cover!(rule == Rounding::HalfUp && remainder != 0 && increment == 0);
+}
+
+#[kani::proof]
+fn evidence_merge_full_u128_adds_every_component_or_refuses() {
+    let left = any_totals();
+    let right = any_totals();
+    let actual = left.merge(right);
+    let expected = [
+        reference_add(left.reported, right.reported),
+        reference_add(left.reported_records, right.reported_records),
+        reference_add(left.derived, right.derived),
+        reference_add(left.derived_records, right.derived_records),
+        reference_add(left.estimated, right.estimated),
+        reference_add(left.estimated_records, right.estimated_records),
+        reference_add(left.unknown_records, right.unknown_records),
+        reference_add(left.unsupported_records, right.unsupported_records),
+    ];
+    let all_fit = expected[0].is_some()
+        && expected[1].is_some()
+        && expected[2].is_some()
+        && expected[3].is_some()
+        && expected[4].is_some()
+        && expected[5].is_some()
+        && expected[6].is_some()
+        && expected[7].is_some();
+    assert_eq!(actual.is_ok(), all_fit);
+    if let Ok(merged) = actual {
+        assert_eq!(Some(merged.reported), expected[0]);
+        assert_eq!(Some(merged.reported_records), expected[1]);
+        assert_eq!(Some(merged.derived), expected[2]);
+        assert_eq!(Some(merged.derived_records), expected[3]);
+        assert_eq!(Some(merged.estimated), expected[4]);
+        assert_eq!(Some(merged.estimated_records), expected[5]);
+        assert_eq!(Some(merged.unknown_records), expected[6]);
+        assert_eq!(Some(merged.unsupported_records), expected[7]);
+        assert_eq!(Ok(merged), right.merge(left));
+    }
+    kani::cover!(actual.is_ok() && left != EvidenceTotals::default());
+    kani::cover!(actual == Err(Error::Overflow) && right.reported == 0);
+}
+
+#[kani::proof]
+fn disjoint_output_full_u128_sums_visible_and_reasoning_once() {
+    let visible: u128 = kani::any();
+    let reasoning: u128 = kani::any();
+    let actual = InclusiveOutput::from_disjoint(visible, reasoning);
+    let expected = reference_add(visible, reasoning);
+    assert_eq!(actual.map(InclusiveOutput::total).ok(), expected);
+    if let Ok(output) = actual {
+        assert_eq!(output.reasoning(), Some(reasoning));
+        assert_eq!(output.disjoint(), Ok([visible, reasoning]));
+        assert_eq!(
+            Ok(output),
+            InclusiveOutput::new(output.total(), Some(reasoning))
+        );
+    }
+    kani::cover!(actual.is_ok() && visible == 0 && reasoning != 0);
+    kani::cover!(actual == Err(Error::Overflow));
 }

@@ -1,10 +1,14 @@
 //! Bounded local projections. No source identity or free text crosses this boundary.
 use aicharts_import::{CostSource, LocalImport};
+use aicharts_metrics::{
+    Basis, MatchedPair, Population, QuantityEvidence, Rounding, ScopedQuantity,
+};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
 use std::sync::OnceLock;
-mod health;
+pub(crate) mod health;
 mod pricing;
 pub(super) use health::run_retained_health;
 use health::CollectedStats;
@@ -207,16 +211,7 @@ pub(super) fn validate_report(report: &Report) -> Result<(), &'static str> {
                 return Err(invalid);
             }
         }
-        let mut total = 0u128;
-        for value in [
-            &row.tokens.input,
-            &row.tokens.cache_read,
-            &row.tokens.cache_write,
-            &row.tokens.output,
-            &row.tokens.reasoning,
-        ] {
-            total += decimal(value).ok_or(invalid)?;
-        }
+        let total = row_token_total(&row.tokens).ok_or(invalid)?;
         let timed = decimal(&row.timed_tokens).ok_or(invalid)?;
         if timed > total
             || (row.timed_records == 0 && timed != 0)
@@ -225,6 +220,7 @@ pub(super) fn validate_report(report: &Report) -> Result<(), &'static str> {
         {
             return Err(invalid);
         }
+        row_cohorts(row, total)?;
         let count = totals.entry(&row.client).or_default();
         *count = count
             .checked_add(row.records)
@@ -398,7 +394,171 @@ fn cost_microusd(value: f64) -> Result<u128, &'static str> {
     if !value.is_finite() || !(0.0..=9_007_199_254.0).contains(&value) {
         return Err("stats_cost_invalid");
     }
-    Ok((value * 1_000_000.0).round() as u128)
+    if value == 0.0 {
+        return Ok(0);
+    }
+    // The shortest round-trip decimal identifies the parsed value exactly. It
+    // is scaled and rounded half-up in integer arithmetic: a binary product
+    // loses the half at 2^53 and misrounds literals such as 0.0001245.
+    aicharts_metrics::scaled_decimal(&value.to_string(), 6, Rounding::HalfUp)
+        .map_err(|_| "stats_cost_invalid")
+}
+/// The five disjoint v2 buckets of one row, added in full width. Each bucket is
+/// bounded by the 24-digit profile, so a refusal here is a corrupted report.
+fn row_token_total(tokens: &Tokens) -> Option<u128> {
+    let mut values = [0u128; 5];
+    for (target, value) in values.iter_mut().zip([
+        &tokens.input,
+        &tokens.cache_read,
+        &tokens.cache_write,
+        &tokens.output,
+        &tokens.reasoning,
+    ]) {
+        *target = decimal(value)?;
+    }
+    aicharts_metrics::checked_sum(values).ok()
+}
+/// A cost cohort with no records has an unknown amount, never a zero.
+fn cost_evidence(microusd: u128, records: u64, basis: Basis) -> QuantityEvidence {
+    if records == 0 {
+        QuantityEvidence::Unknown
+    } else {
+        QuantityEvidence::Known {
+            value: microusd,
+            basis,
+        }
+    }
+}
+fn evidence_text(evidence: QuantityEvidence) -> Option<String> {
+    match evidence {
+        QuantityEvidence::Known { value, .. } => Some(value.to_string()),
+        QuantityEvidence::Unknown | QuantityEvidence::Unsupported => None,
+    }
+}
+const UNIT_RECORDS: u16 = 1;
+const GRAIN_REPORTED_COST: u16 = 1;
+const GRAIN_ESTIMATED_COST: u16 = 2;
+const GRAIN_TIMED: u16 = 3;
+/// The record population of one aggregate row. Quantities pair only over the
+/// same rows and the same cohort grain. The identity is local and never exported.
+fn row_population(row: &Row, grain: u16) -> Population {
+    let mut hash = Sha256::new();
+    hash.update(b"aicharts:stats-row-population-v1\0");
+    hash.update(row.utc_day.to_le_bytes());
+    for field in [
+        Some(row.client.as_str()),
+        row.provider.as_deref(),
+        row.model.as_deref(),
+        Some(row.token_basis.as_str()),
+    ] {
+        match field {
+            Some(text) => {
+                hash.update([1u8]);
+                hash.update((text.len() as u64).to_le_bytes());
+                hash.update(text.as_bytes());
+            }
+            None => hash.update([0u8]),
+        }
+    }
+    let digest = hash.finalize();
+    let mut identity = [0u8; 16];
+    identity.copy_from_slice(&digest[..16]);
+    Population {
+        identity,
+        unit: UNIT_RECORDS,
+        grain,
+    }
+}
+/// The cohort pairs the shared explorer derives from one row: cost over the
+/// row's tokens for a cost kind that covers every record of a row with known
+/// tokens and complete breakdown coverage, because partial price coverage has
+/// no attributable token subtotal in v2, and timed tokens over source duration
+/// for the timed records. An absent cohort is unknown, never a zero ratio.
+#[derive(Debug, PartialEq)]
+struct RowCohorts {
+    reported: Option<MatchedPair>,
+    estimated: Option<MatchedPair>,
+    timed: Option<MatchedPair>,
+}
+fn cohort(
+    population: Population,
+    left: QuantityEvidence,
+    right: QuantityEvidence,
+) -> Result<Option<MatchedPair>, &'static str> {
+    let scoped = |evidence| ScopedQuantity {
+        population,
+        evidence,
+    };
+    match aicharts_metrics::match_quantities(scoped(left), scoped(right)) {
+        Ok(pair) => Ok(Some(pair)),
+        Err(aicharts_metrics::Error::MissingEvidence) => Ok(None),
+        Err(_) => Err("stats_report_invalid"),
+    }
+}
+fn row_cohorts(row: &Row, total: u128) -> Result<RowCohorts, &'static str> {
+    let invalid = "stats_report_invalid";
+    let token_basis = match row.token_basis.as_str() {
+        "reported" => Some(Basis::Reported),
+        "estimated" => Some(Basis::Estimated),
+        _ => None,
+    };
+    let amount = |text: &Option<String>| -> Result<Option<u128>, &'static str> {
+        text.as_deref()
+            .map(|text| decimal(text).ok_or(invalid))
+            .transpose()
+    };
+    let cost = |text: &Option<String>, records: u64, basis: Basis, grain: u16| {
+        let denominator = match token_basis {
+            Some(token_basis) if records == row.records && row.breakdown_coverage == "complete" => {
+                QuantityEvidence::Known {
+                    value: total,
+                    basis: token_basis,
+                }
+            }
+            _ => QuantityEvidence::Unsupported,
+        };
+        let evidence = match amount(text)? {
+            Some(value) if records > 0 => QuantityEvidence::Known { value, basis },
+            Some(_) => return Err(invalid),
+            None if records == 0 => QuantityEvidence::Unknown,
+            None => return Err(invalid),
+        };
+        cohort(row_population(row, grain), evidence, denominator)
+    };
+    let reported = cost(
+        &row.reported_cost_microusd,
+        row.reported_cost_records,
+        Basis::Reported,
+        GRAIN_REPORTED_COST,
+    )?;
+    let estimated = cost(
+        &row.estimated_cost_microusd,
+        row.estimated_cost_records,
+        Basis::Estimated,
+        GRAIN_ESTIMATED_COST,
+    )?;
+    let timed_tokens = decimal(&row.timed_tokens).ok_or(invalid)?;
+    let timed = match (token_basis, amount(&row.duration_ms)?) {
+        (Some(basis), Some(duration)) if row.timed_records > 0 => cohort(
+            row_population(row, GRAIN_TIMED),
+            QuantityEvidence::Known {
+                value: timed_tokens,
+                basis,
+            },
+            QuantityEvidence::Known {
+                value: duration,
+                basis,
+            },
+        )?,
+        (_, Some(_)) if row.timed_records == 0 => return Err(invalid),
+        (_, None) if row.timed_records > 0 => return Err(invalid),
+        _ => None,
+    };
+    Ok(RowCohorts {
+        reported,
+        estimated,
+        timed,
+    })
 }
 type RowKey = (u64, String, Option<String>, Option<String>, String);
 fn project(
@@ -444,7 +604,7 @@ fn project(
             }
             *target = value as u128;
         }
-        let total = tokens.iter().sum::<u128>();
+        let total = aicharts_metrics::checked_sum(tokens).map_err(|_| "stats_token_invalid")?;
         if basis == "unavailable" && total != 0 {
             return Err("stats_token_basis_invalid");
         }
@@ -457,7 +617,7 @@ fn project(
             && !message.model_attribution_conflicted
             && basis != "unavailable"
         {
-            pricing::estimate(provider.as_deref(), model.as_deref(), tokens)
+            pricing::estimate(provider.as_deref(), model.as_deref(), tokens)?
         } else {
             None
         };
@@ -532,11 +692,17 @@ fn project(
                 reasoning: row.tokens[4].to_string(),
             },
             records: row.records,
-            reported_cost_microusd: (row.reported_records > 0)
-                .then(|| row.reported_cost.to_string()),
+            reported_cost_microusd: evidence_text(cost_evidence(
+                row.reported_cost,
+                row.reported_records,
+                Basis::Reported,
+            )),
             reported_cost_records: row.reported_records,
-            estimated_cost_microusd: (row.estimated_records > 0)
-                .then(|| row.estimated_cost.to_string()),
+            estimated_cost_microusd: evidence_text(cost_evidence(
+                row.estimated_cost,
+                row.estimated_records,
+                Basis::Estimated,
+            )),
             estimated_cost_records: row.estimated_records,
             duration_ms: (row.timed_records > 0).then(|| row.duration.to_string()),
             timed_records: row.timed_records,
@@ -721,23 +887,12 @@ pub(super) fn run(args: &[String]) -> Result<String, &'static str> {
     }
     let mut output = "AI Charts detailed stats: local only; nothing uploaded\nUTC period; token buckets are disjoint. Costs may be unmeasured.\n".to_owned();
     for source in &report.sources {
-        let total: u128 = report
-            .rows
-            .iter()
-            .filter(|r| r.client == source.client)
-            .map(|row| {
-                [
-                    &row.tokens.input,
-                    &row.tokens.cache_read,
-                    &row.tokens.cache_write,
-                    &row.tokens.output,
-                    &row.tokens.reasoning,
-                ]
-                .iter()
-                .map(|n| n.parse::<u128>().unwrap_or(0))
-                .sum::<u128>()
-            })
-            .sum();
+        let mut total = 0u128;
+        for row in report.rows.iter().filter(|r| r.client == source.client) {
+            let row_total = row_token_total(&row.tokens).ok_or("stats_report_invalid")?;
+            total =
+                aicharts_metrics::checked_add(total, row_total).map_err(|_| "stats_value_limit")?;
+        }
         use std::fmt::Write;
         let _ = writeln!(
             output,
@@ -755,5 +910,7 @@ pub(super) fn run(args: &[String]) -> Result<String, &'static str> {
     Ok(output)
 }
 
+#[cfg(test)]
+mod kernel_tests;
 #[cfg(test)]
 mod tests;

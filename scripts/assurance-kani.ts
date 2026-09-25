@@ -1,4 +1,4 @@
-import { writeFile } from "node:fs/promises";
+import { readdir, stat, writeFile } from "node:fs/promises";
 import { dirname, relative, resolve } from "node:path";
 import { z } from "zod";
 import { completed, gitIdentity, mutationsSchema, proofRoot, proofRunDirectory, readProofFile, runProofProcess,
@@ -19,15 +19,22 @@ export const unreachableAssertionSchema = z.object({ harness: text, function: te
 type UnreachableAssertion = z.infer<typeof unreachableAssertionSchema>;
 export const unreachableBindingKey = (entry: UnreachableAssertion) => entry.binding.kind === "workspace"
   ? `workspace:${entry.binding.path}` : `installed:${entry.binding.path}`;
-export const kaniHarnessSchema = z.object({ name: text, scalarDomain: text, containerDomain: text,
+export const kernelFunction = z.string().regex(/^(?:arithmetic|evidence|revision|tokens)::(?:[A-Z][A-Za-z]*::)?[a-z_]+$/u);
+const kaniHarnessSchema = z.object({ name: text, functions: z.array(kernelFunction).min(1), scalarDomain: text, containerDomain: text,
   requiredCoverCount: count.positive(), requiredCoverDescriptions: z.array(text).min(1) }).strict();
 export const kaniHarnessesSchema = z.object({ schemaVersion: z.literal(1), source: z.literal("crates/aicharts-metrics/src/proofs.rs"),
-  expectedHarnessCount: z.literal(17), scope: text, harnesses: z.array(kaniHarnessSchema).length(17),
-  theoremReplacements: z.array(z.object({ retiredHarness: text, reason: text, scalarDomain: text, productionFunction: text,
+  expectedHarnessCount: z.literal(20), scope: text, functionCoverage: text, harnesses: z.array(kaniHarnessSchema).length(20),
+  theoremReplacements: z.array(z.object({ retiredHarness: text, reason: text, scalarDomain: text,
+    productionFunction: z.string().regex(/^aicharts_metrics::(?:arithmetic|evidence|revision|tokens)::[a-z_]+$/u),
     theoremFile: z.literal("verify/lean/Pricing.proofs.lean"), theorem: z.literal("aicharts_metrics.pricing_unit_rate_exact"),
-    witnesses: z.array(text).length(3), requiredMutation: z.literal("wrong-half-up-offset") }).strict()).length(1) }).strict();
+    witnesses: z.array(text).length(3), requiredMutation: z.literal("wrong-half-up-offset"),
+    requiredMutationManifest: z.literal("verify/lean/mutations.json") }).strict()).length(1) }).strict();
+export type TheoremReplacement = z.infer<typeof kaniHarnessesSchema>["theoremReplacements"][number];
 const pinSchema = z.object({ schemaVersion: z.literal(1), kani: z.literal("0.68.0"), cbmc: z.literal("6.11.0"),
-  rustc: text, toolchain: text, harnessTimeoutSeconds: z.literal(90), qualification: text,
+  rustc: text, toolchain: text,
+  // The production stage carries the bounded rounded-ratio harness (about 100 CPU seconds on the pinned macOS
+  // toolchain); every mutant must still be killed inside the 90-second harness budget and its 180-second process cap.
+  harnessTimeoutSeconds: z.object({ production: z.literal(300), mutation: z.literal(90) }).strict(), qualification: text,
   rustupHome: z.literal("target/assurance-tools/rustup"),
   artifacts: z.object({ "darwin-arm64": z.object({ url: z.string().url(), sha256: digest }).strict(),
     "linux-x64": z.object({ url: z.string().url(), sha256: digest }).strict() }).strict(),
@@ -129,15 +136,77 @@ export function admitKani(raw: unknown, process: ProofProcess, harnesses: z.infe
   return { ok: errors.length === 0, errors, harnesses: evidence };
 }
 
+/** A theorem receipt shape sufficient to bind a retired harness to its replacement proof. */
+const theoremReceiptSchema = z.object({ schemaVersion: z.literal(1), ok: z.boolean(), sourceSha256: z.record(z.string(), z.string()),
+  pin: z.object({ productionTheorems: z.array(text) }).passthrough(),
+  results: z.array(z.object({ mutation: z.string().nullable(),
+    evaluation: z.object({ ok: z.boolean(), expectedFailedTheorem: text.optional(),
+      axioms: z.array(z.object({ theorem: text }).passthrough()).optional() }).passthrough() }).passthrough()).min(1) }).passthrough();
+
+export function replacementKernelFile(replacement: Pick<TheoremReplacement, "productionFunction">) {
+  return `crates/aicharts-metrics/src/${replacement.productionFunction.split("::")[1]}.rs`;
+}
+
+/** The Kani gate refuses a theorem replacement unless a theorems receipt proves the named theorem
+ * and witnesses for the exact bytes of the replaced kernel file and theorem file now under test,
+ * and its required negative control was killed in that same run. A missing, stale, failed or
+ * differently named receipt is not evidence. */
+export function admitTheoremReplacement(raw: unknown, snapshotHashes: Record<string, string>, replacement: TheoremReplacement) {
+  const errors: string[] = [];
+  const parsed = theoremReceiptSchema.safeParse(raw);
+  if (!parsed.success) return { ok: false, errors: ["missing_or_malformed_theorem_receipt"] };
+  const receipt = parsed.data, kernel = replacementKernelFile(replacement);
+  if (!receipt.ok) errors.push("theorem_receipt_not_ok");
+  for (const path of [kernel, replacement.theoremFile]) {
+    if (!snapshotHashes[path] || receipt.sourceSha256[path] !== snapshotHashes[path]) errors.push(`theorem_receipt_source_drift:${path}`);
+  }
+  const required = [replacement.theorem, ...replacement.witnesses];
+  if (required.some(name => !receipt.pin.productionTheorems.includes(name))) errors.push("theorem_receipt_missing_theorem_pin");
+  const production = receipt.results.find(result => result.mutation === null);
+  const proved = production?.evaluation.axioms?.map(item => item.theorem) ?? [];
+  if (!production?.evaluation.ok || required.some(name => !proved.includes(name))) errors.push("theorem_receipt_missing_proof");
+  const control = receipt.results.find(result => result.mutation === replacement.requiredMutation);
+  if (!control?.evaluation.ok || !control.evaluation.expectedFailedTheorem) errors.push("theorem_receipt_missing_required_mutation");
+  return { ok: errors.length === 0, errors };
+}
+
 export function rejectKaniAssumptions(source: string) {
   if (/\bkani\s*::\s*assume\b/u.test(source)
     || [...source.matchAll(/#\[\s*kani\s*::\s*([a-z_]+)/gu)].some(match => !["proof", "unwind"].includes(match[1]))) throw new Error("unreviewed_kani_assumption_or_stub");
 }
 
+/** Every theorems receipt under `target/assurance/theorems`, newest first by modification time.
+ * A run directory without a receipt is not evidence; an absent directory yields no candidates. */
+export async function theoremReceiptCandidates(parent = resolve(proofRoot, "target/assurance/theorems")) {
+  let runs: string[] = [];
+  try { runs = (await readdir(parent)).filter(name => name.startsWith("run-")); } catch { return []; }
+  const candidates: { path: string; modifiedMs: number }[] = [];
+  for (const name of runs) {
+    const path = resolve(parent, name, "receipt.json");
+    try { candidates.push({ path, modifiedMs: (await stat(path)).mtimeMs }); } catch { /* no receipt was written for this run */ }
+  }
+  return candidates.sort((left, right) => right.modifiedMs - left.modifiedMs).map(item => item.path);
+}
+
+/** Binds one theorem replacement to the newest receipt that proves it for the exact kernel and
+ * theorem bytes now under test. Receipts for other bytes, failed runs and malformed files are
+ * skipped with their reasons recorded; when none binds, the gate refuses. Absence is never a pass. */
+export async function bindTheoremReplacement(replacement: TheoremReplacement, snapshotHashes: Record<string, string>, parent?: string) {
+  const refusals: string[] = [];
+  for (const path of await theoremReceiptCandidates(parent)) {
+    let receipt: unknown = null;
+    try { receipt = JSON.parse((await readProofFile(path, 67_108_864)).toString("utf8")); } catch { /* admitted below as malformed */ }
+    const evaluation = admitTheoremReplacement(receipt, snapshotHashes, replacement);
+    if (evaluation.ok) return { receipt: relative(proofRoot, path), ...evaluation };
+    refusals.push(`${relative(proofRoot, path)}:${evaluation.errors.join(",")}`);
+  }
+  throw new Error(`unbound_theorem_replacement:${replacement.retiredHarness}:${refusals.length ? refusals.join(";") : "missing_theorem_receipt"}`);
+}
+
 export async function runKani() {
   const snapshot = await sourceSnapshot(["scripts/assurance-kani.ts", "scripts/assurance-kani.test.ts", "scripts/assurance-proof-common.ts", "scripts/assurance-proof-common.test.ts",
     "verify/kani/harnesses.json", "verify/kani/mutations.json", "verify/kani/toolchain.json",
-    "verify/lean/Pricing.proofs.lean", "verify/lean/toolchain.json", "verify/lean/pricing-mutations.json"]);
+    "verify/lean/Pricing.proofs.lean", "verify/lean/toolchain.json", "verify/lean/mutations.json"]);
   const pin = pinSchema.parse(JSON.parse(snapshot.bytes.get("verify/kani/toolchain.json")!.toString("utf8")));
   const inventory = kaniHarnessesSchema.parse(JSON.parse(snapshot.bytes.get("verify/kani/harnesses.json")!.toString("utf8")));
   const mutations = mutationsSchema.parse(JSON.parse(snapshot.bytes.get("verify/kani/mutations.json")!.toString("utf8"))).mutations;
@@ -147,10 +216,15 @@ export async function runKani() {
   if (!sameInventory(declared, inventory.harnesses.map(item => item.name))) throw new Error("production_harness_inventory_drift");
   const theoremNames = z.object({ productionTheorems: z.array(text) }).passthrough().parse(JSON.parse(
     snapshot.bytes.get("verify/lean/toolchain.json")!.toString("utf8")) as unknown).productionTheorems;
+  const leanMutationIds = z.object({ production: z.array(z.object({ id: text }).passthrough()) }).passthrough()
+    .parse(JSON.parse(snapshot.bytes.get("verify/lean/mutations.json")!.toString("utf8")) as unknown).production.map(item => item.id);
+  const replacementEvidence: Record<string, { receipt: string; ok: boolean; errors: string[] }> = {};
   for (const replacement of inventory.theoremReplacements) {
-    if (declared.includes(replacement.retiredHarness) || [replacement.theorem, ...replacement.witnesses].some(name => !theoremNames.includes(name))) {
+    if (declared.includes(replacement.retiredHarness) || [replacement.theorem, ...replacement.witnesses].some(name => !theoremNames.includes(name))
+      || !leanMutationIds.includes(replacement.requiredMutation)) {
       throw new Error("kani_theorem_replacement_inventory_drift");
     }
+    replacementEvidence[replacement.retiredHarness] = await bindTheoremReplacement(replacement, snapshot.hashes);
   }
   const platform = `${process.platform}-${process.arch}`, selected = pin.platforms[platform];
   if (!selected) throw new Error(`unqualified_kani_platform:${platform}`);
@@ -184,7 +258,7 @@ export async function runKani() {
     const harnesses = item.mutation ? inventory.harnesses.filter(harness => harness.name === item.mutation!.harness) : inventory.harnesses;
     if (item.mutation && harnesses.length !== 1) throw new Error("unknown_mutation_harness");
     const args = ["kani", "-p", "aicharts-metrics", "--target-dir", resolve(stage.path, "target"), "-Z", "unstable-options",
-      "--harness-timeout", `${pin.harnessTimeoutSeconds}s`, "--export-json", reportPath, "--output-format", "terse", "--run-sanity-checks",
+      "--harness-timeout", `${item.mutation ? pin.harnessTimeoutSeconds.mutation : pin.harnessTimeoutSeconds.production}s`, "--export-json", reportPath, "--output-format", "terse", "--run-sanity-checks",
       ...(item.mutation ? ["--exact", "--harness", item.mutation.harness] : [])];
     const process = await runProofProcess(binaries.driver, args, stage.path, env, item.mutation ? 180_000 : 1_800_000);
     await writeFile(resolve(stage.path, "kani.log"), process.output);
@@ -208,7 +282,8 @@ export async function runKani() {
   const receipt = { schemaVersion: 1, ...await gitIdentity(), createdAt: new Date().toISOString(), platform,
     claim: "production Rust kernels in the exact declared finite scalar/container domains; no provider/storage or arbitrary-history proof",
     trustedBoundary: "Rust/Kani/CBMC compilation, scalar operator semantics, solver and installed runtime libraries; binaries measured, not a complete installed-image attestation",
-    replacementEvidence: "The mapped pricing theorem is not executed by this Kani command; usage:formal:theorems is a separate mandatory gate.",
+    replacementEvidence: "The mapped pricing theorem is not executed by this Kani command; usage:formal:theorems is a separate mandatory gate whose receipt for the exact replaced kernel bytes was required above.",
+    theoremReplacements: replacementEvidence,
     sourceSha256: snapshot.hashes, toolHashes, verifiedBindings, environment: env, pin, inventory, results, inputsUnchanged, toolsUnchanged, stagesUnchanged, reportsUnchanged,
     ok: inputsUnchanged && toolsUnchanged && stagesUnchanged && reportsUnchanged && results.length === cases.length && results.every(result => result.evaluation.ok) };
   const path = resolve(run, "receipt.json");

@@ -24,19 +24,25 @@ Run `bun scripts/assurance-metric-baseline.ts` for the admitted high-cardinality
 
 `bun run usage:formal:tla` checks the fifteen historical baseline expectations
 and the repaired-model configurations with pinned TLC and Java. The repaired
-manifest now contains seventy-one cases: sixteen complete finite safety
+manifest now contains seventy-six cases: sixteen complete finite safety
 explorations, forty-two explicit success, refusal and recovery witnesses, and
-thirteen guard-removal counterexamples. The eight M11 contribution-rebuild cases
-have individual receipts, including complete single-job and sequential-job
-graphs of 258,698 and 221,596 distinct states. Both aggregate model suites pass
-with the current model and runner inputs. The baseline receipt is
-`target/assurance/tla/run-baseline-final-escalated/run-lz8Ip3/receipt.json` and
-the repaired receipt is
-`target/assurance/tla/run-m11-official-final-escalated/run-XWgJ9I/receipt.json`;
-together they qualify all 86 cases. The runner admits only the expected
-invariants, state counts and complete structured output. A witness is reachability
-evidence; no temporal liveness theorem follows from it. Conditional progress and
-trusted abstractions are recorded in the [action map](../verify/tla/repaired-action-map.md).
+eighteen guard-removal counterexamples, so every repaired model M1–M11 has at
+least one deliberately broken guard that must violate its safety invariant. The
+eight M11 contribution-rebuild cases have individual receipts, including complete
+single-job and sequential-job graphs of 258,698 and 221,596 distinct states.
+Every case runs under the required `development` bounds profile (one worker,
+256 MiB heap, 60-second deadline, 300,000 distinct states); the optional
+`nightly` profile (`bun scripts/assurance-tla.ts --profile nightly --suite nightly`)
+widens the M1 and M11 domains through numeric `CONSTANT` parameters under four
+workers, a 2 GiB heap, a 600-second deadline and 3,000,000 distinct states, and
+never substitutes for the development suites. Each run writes its own receipt
+under `target/assurance/tla/`, recording the profile, the captured model and
+configuration bytes and the complete state counts; the required Formal
+verification job is the standing execution evidence. The runner admits only the
+expected invariants, state counts and complete structured output. A witness is
+reachability evidence; no temporal liveness theorem follows from it. Conditional
+progress and trusted abstractions are recorded in the
+[action map](../verify/tla/repaired-action-map.md).
 The [account-work model](../verify/tla/account-work-action-map.md) separately covers
 independent consent/projection progress, held calls, watchdogs, late settlement,
 restart and explicit resume. Its bounded safety and reachability results do not
@@ -45,16 +51,24 @@ The [native-flight model](../verify/tla/native-flight-action-map.md) checks reta
 uploads, durable cancellation, lost replies, restart and stale-reply isolation.
 Its two-device finite models abstract bytes and durable publication; syscall,
 cryptographic and transport behavior require their own implementation evidence.
+The [contribution-rebuild model](../verify/tla/contribution-rebuild-action-map.md)
+maps the M11 diagnostic rebuild job to the controller's reservation, provider,
+commit, comparison, abort and replay boundaries.
 
 `bun run usage:conformance:check` executes generated commands against actual
-Worker, SQLite ledger and browser-authority code. It retains thirty-nine traces
+Worker, SQLite ledger and browser-authority code. It retains forty-two traces
 across three fixed seeds per group, compares each observed transition, and
-requires the declared action/outcome coverage. Both the positive control and a
-production-only restore-guard mutant run isolated source snapshots. The unchanged
-adapter must catch the mutant in all three schedules. Compiler/runtime failures,
-missing tests, timeouts and truncated output do not count as counterexamples.
-These bounded schedules connect selected model abstractions to implementation;
-they are not an exhaustive refinement proof.
+requires the declared action/outcome coverage. The Worker suite now includes an
+M11 schedule that drives a real diagnostic rebuild: repeated begin, head and
+comparison steps must return byte-identical receipts with no second charge and
+no new object, an eviction between retries must resume the retained receipt, and
+older, future and differently anchored requests must conflict. Both the positive
+control and a production-only restore-guard mutant run isolated source snapshots.
+The unchanged adapter must catch the mutant in all three schedules. The runner
+admits repaired model names M1–M11 only. Compiler/runtime failures, missing
+tests, timeouts and truncated output do not count as counterexamples. These
+bounded schedules connect selected model abstractions to implementation; they
+are not an exhaustive refinement proof.
 
 ## Production arithmetic proofs
 
@@ -66,11 +80,14 @@ with default safety and unwinding checks, positive covers and production mutants
 Structured results must contain every required assertion and cover. An exit code
 or timed-out solver summary alone cannot establish success.
 
-The current Kani inventory has seventeen production harnesses and forty-four
-reachable covers, with two production mutations. On each supported platform,
-nineteen unreachable checks have individually reviewed source or
-installed-library hash bindings: six bound to the workspace source and thirteen
-bound to that platform's own bundled standard-library and `kani_core` rlibs.
+The current Kani inventory has twenty production harnesses and fifty-three
+reachable covers, with thirteen production mutations that each must fail their
+named unchanged assertion. The manifest names the production functions behind
+every harness, and a test requires each kernel `pub fn` to be covered by a
+harness or a theorem replacement. On each supported platform, eighteen
+unreachable checks have individually reviewed source or installed-library hash
+bindings: five bound to the workspace source and thirteen bound to that
+platform's own bundled standard-library and `kani_core` rlibs.
 A new unreachable assertion refuses admission, and neither platform inherits
 the other's exceptions. Those exceptions cannot replace a reachable assertion
 in the actual harness. The Linux list was reviewed from the first ubuntu-24.04
@@ -86,7 +103,13 @@ nine separate mathematical laws. Pricing covers five full-u128 token buckets and
 five optional full-u128 rates: exact multiplication, ordered missing-rate/overflow
 refusal, per-observation half-up rounding and the 24-digit profile limit. A
 five-bucket non-unit example and success/refusal witnesses accompany the general
-theorem. All four production mutants must fail their named unchanged theorem.
+theorem. All four production mutants and the separate bounded-fold law control
+listed in `verify/lean/mutations.json` must fail their named unchanged theorem.
+The Kani gate binds its pricing theorem replacement to a theorem receipt for the
+same kernel bytes and refuses without one. The Lean route has executed on
+ubuntu-24.04 in the required Formal verification job (PR #422, run
+36055796464) as well as on the macOS pilot host; each receipt records its own
+platform.
 These results do not validate tariff provenance or provider-reported quantities.
 The proof toolchain, compiler, standard-library models and their installed runtime
 remain trusted boundaries. See the [theorem route](../verify/lean/README.md) and
@@ -94,12 +117,46 @@ remain trusted boundaries. See the [theorem route](../verify/lean/README.md) and
 These commands require their pinned local tools; installing tools is a separate
 step from executing or accepting a proof.
 
+The production callers route their kernel arithmetic through the same
+functions the proofs cover. The detailed CLI report converts a source's
+floating-point cost through `scaled_decimal`, which scales the shortest
+round-trip decimal literal and rounds half-up in integer arithmetic; the
+retired `f64` product kept 124 micro-USD for the literal `0.0001245` and
+fabricated a micro-USD near 2^53. Row totals, per-source summaries, the Claude
+cache TTL partition, Devin transcript totals, the ledger status counters and the
+CLI collection counters use `checked_sum`, `checked_add_bounded` and
+`CacheWrites::with_ttl`; every u64 or 24-digit overflow is a refusal, never a
+wrapped or silently absent number. A malformed checked-in tariff rate refuses
+that client's projection, so the source reports `incomplete` with a warning and
+its measured health records the refusal; the retired parser read such a rate
+as an absent tariff and left the estimate silently unknown. Each report row's
+reported-cost, estimated-cost and timed cohorts are paired through
+`match_quantities` with the selection the shared explorer applies (a known
+token basis, complete breakdown coverage and wholly covered records), and the
+TypeScript explorer applies the same pairing before any ratio. These routings
+are exercised by unit tests and by the differential vectors below; they are
+not separately live-qualified against real client stores.
+
+`bun run kernel-vectors:check` regenerates five seeded vector files under
+`fixtures/usage/assurance/kernel-vectors/` (wire token totals, bounded checked
+addition, cache TTL splits, exact-ratio rounding and micro-USD pricing, at least
+2,000 cases each including the 10^12 wire limit, the 24-digit profile limit and
+u64/u128 edges) from plain BigInt references and refuses any drift. The Rust
+kernel evaluates every vector in `crates/aicharts-metrics/src/vectors_tests.rs`
+and the shared TypeScript evaluates the same files in
+`lib/usage/kernel-vectors.test.ts`; each law must witness every declared
+outcome. The vectors are synthetic and check agreement of three
+implementations, not tariff provenance or provider quantities.
+
 Provision the pinned tools with `bun scripts/assurance-tools.ts`; use
 `--verify --offline` to inspect an existing installation. The
 [installation contract](../verify/tools/README.md) records platform, archive,
-Rust component and Lean dependency admission. CI requires the model, Kani and
-Lean jobs alongside the existing application and companion checks. A successful
-installation receipt is not a successful proof receipt.
+Rust component and Lean dependency admission. The required Formal verification
+job runs the adapter and conformance gates, then the model suites, the fresh
+Lean proofs and the Kani gate, alongside the existing application and companion
+checks; theorem receipts precede Kani because every theorem replacement must
+bind to a receipt for the same source bytes. A successful installation receipt
+is not a successful proof receipt.
 
 ## Canonical account transition
 
@@ -115,7 +172,11 @@ its owning transaction. Exact retained terminal receipts remain reconcilable;
 delayed writes cannot resume through an old profile. Device credentials do not
 authorize account-wide tombstones. The nine `/v3/contributions` endpoints require
 the separate `AICHARTS_USAGE_CONTRIBUTIONS_ENABLED` flag in addition to the existing
-master, stats and admission flags. No deployment configuration enables it yet.
+master, stats and admission flags. No deployment configuration enables it: on
+2026-09-24 the Worker that would serve these endpoints had not been redeployed
+for the merged source, and the activation runbook records the recovery-artifact
+requirement that precedes that deployment; reverify flag names on both services
+before any activation. A names-only read of the Vercel production environment on 2026-09-24 listed `AICHARTS_USAGE_AUTH_ENABLED`, `AICHARTS_USAGE_PAIRING_ENABLED`, `AICHARTS_USAGE_PRIVATE_READ_ENABLED`, `AICHARTS_USAGE_STATS_ENABLED` and `NEXT_PUBLIC_SITE_URL`; no `AICHARTS_USAGE_CONTRIBUTIONS_ENABLED` or `AICHARTS_USAGE_PUBLIC_READ_ENABLED` name existed, and no value was read.
 Retained-data migration seals a bounded, independently replayed legacy inventory.
 Original objects remain intact; unresolved aggregate populations remain explicit
 and are not added to overlapping canonical observations. Migration cancellation
@@ -326,3 +387,28 @@ footprint reached 1,079.7 MB while holding two full reports in the diagnostic
 episode, so physical memory budgeting and maximum-report optimization remain
 open. These measurements are bounded synthetic workload evidence, not a hosted
 SLO or modest-hardware p95 claim.
+
+## Verification matrix
+
+Each evidence class has one command, one receipt location and one stated
+limit. Everything below is implemented and passes locally on the recorded tree;
+none of it is live-qualified, and no receipt from one class substitutes for
+another.
+
+| Command | Evidence | Receipt | What a pass means |
+| --- | --- | --- | --- |
+| `bun run test:property` | fast-check laws in `lib/*.property.test.ts` and `lib/*/*.property.test.ts` (108 tests, 16 files) | test output only | Sampled laws hold for the generated inputs. Bun does not expand globs, so the script lists both depths; `scripts/assurance-fuzz.test.ts` fails when a property file sits outside them. |
+| `bun run usage:fuzz` | seeded stateful runs in `crates/aicharts-fuzz`: ledger command sequences against real SQLite, usage and admission wire round trips with byte corruption and single-violation injection, metrics arithmetic, token-partition and dominance laws | `target/assurance/fuzz/run-*/receipt.json` | Four named seeds (`baseline`, `rewrite-heavy`, `conflict-heavy`, `settlement-race`) ran the configured iterations (default 1,000; ledger commands capped at 5,000) with one receipt line per suite and seed and no counterexample. `--iterations`, `--seed <name\|decimal>`, `--ledger-commands` and `--timeout-minutes` replay a failure exactly. Sampled evidence, not a proof. |
+| `bun run usage:fault-matrix` | eleven existing injected-failure suites listed in `verify/assurance/fault-matrix.json` | `target/assurance/fault-matrix/run-*/receipt.json` | Every listed test still exists under its exact name, every suite ran through the worker tool command or exact cargo filters, and every summary is complete and passing. Failure classes covered by passing suites: crash before effect, crash after effect, lost reply, restore race and capacity exhaustion. `disk-full` is a declared gap: no existing test injects a full disk, and capacity exhaustion is recorded as the nearest analog, not as disk-full evidence. macOS-only suites are `skipped-platform` elsewhere, never passed. |
+| `bun run security:check` | `cargo audit` on both Cargo locks, `bun audit`, dependency pins (release tags or full commits for `github:` packages, exact hashed lockfile entries, checksummed registry crates, pinned git crates, full-commit action pins, pinned `bunx` targets), a shape-based secret scan, and a privacy canary over the PostHog import boundary and the analytics and discovery surfaces | `target/assurance/security/run-*/receipt.json` | No published advisory, no unpinned dependency, no credential-shaped literal outside a value that names itself synthetic or a fixture directory whose README documents synthetic data, and no raw location, referrer, storage or private identifier on the canary surfaces. Findings carry a path and rule, never the matched bytes. A missing tool fails the run unless `--allow-missing-tools` is stated; the workflows never state it. |
+| `bun run usage:formal:tla`, `usage:formal:kani`, `usage:formal:theorems`, `usage:conformance:check` | see the sections above | `target/assurance/{tla,kani,theorems,conformance}/` | Unchanged; the nightly workflow runs the TLA suite with `--profile nightly`. |
+
+`.github/workflows/nightly-assurance.yml` runs daily at 09:00 UTC and on
+dispatch with a three-hour budget: it provisions the formal tools and
+`cargo-audit` 0.22.2, then runs the nightly TLA profile, `usage:fuzz` at 200,000
+iterations, `usage:fault-matrix`, `security:check` and, when
+`scripts/usage-perf.ts` exists, `usage:perf`, and retains every receipt for
+thirty days. `.github/workflows/security.yml` runs only `security:check` on pull
+requests and pushes to `main`; it is informational and not a required check.
+A green nightly run is evidence for that day's tree and advisory database; it
+does not qualify a deployment.

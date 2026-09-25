@@ -112,6 +112,8 @@ jobs:
         run: bun run release:linux:notices:check
       - name: Check Linux qualification runner
         run: bun run release:linux:runner:check
+      - name: Check release publication path
+        run: bun run release:publish:check
       - name: Typecheck
         run: bun run typecheck
       - name: Lint
@@ -148,7 +150,7 @@ jobs:
   worker:
     name: Worker
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -166,8 +168,70 @@ jobs:
           restore-keys: bun-${{ runner.os }}-
       - name: Install frozen dependencies
         run: bun install --frozen-lockfile
+      # The adapter and conformance gates build Rust under checked bounds (the
+      # 180 s build bound in vendor/tokscale-core/QUALIFICATION.json and the
+      # 180 s process limit of the conformance manifest) that assume warm
+      # dependency artifacts, as a developer machine has. The pinned toolchain,
+      # a cache of the two gate build directories and an unbounded dependency
+      # build ahead of the gates provide that; the gates themselves stay
+      # bounded. The conformance gate builds with the workflow's
+      # CARGO_INCREMENTAL stripped from its environment, so its pre-build runs
+      # the same way to share fingerprints. The gates live in this unfiltered
+      # job because they guard the Worker implementation, which the formal
+      # job's path filter does not watch.
+      - name: Install pinned Rust toolchain
+        run: rustup show active-toolchain
+      - name: Restore gate build directories
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            target/adapter-qualification
+            target/assurance/conformance-build
+          key: worker-gates-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml', 'Cargo.lock', 'vendor/tokscale-core/Cargo.lock') }}
+          restore-keys: worker-gates-${{ runner.os }}-
+      - name: Build gate dependencies
+        run: |
+          RUSTC="$(rustup which --toolchain 1.97.1 rustc)"
+          export RUSTC
+          cargo test --locked --manifest-path vendor/tokscale-core/Cargo.toml --lib --no-run --target-dir target/adapter-qualification --jobs 2
+          env -u CARGO_INCREMENTAL CARGO_TARGET_DIR=target/assurance/conformance-build cargo test --locked -p aicharts-ledger --test assurance_conformance --no-run
+      - name: Generate Worker binding types
+        run: bun scripts/usage-worker-tools.ts types
+      - name: Check protocol adapters
+        run: bun run usage:adapters:check
+      - name: Check implementation conformance schedules and mutant
+        if: ${{ !cancelled() }}
+        run: bun run usage:conformance:check
       - name: Check usage worker in local workerd
+        if: ${{ !cancelled() }}
         run: bun run usage:worker:check
+      - name: Save gate build directories
+        if: always()
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            target/adapter-qualification
+            target/assurance/conformance-build
+          key: worker-gates-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml', 'Cargo.lock', 'vendor/tokscale-core/Cargo.lock') }}
+      - name: Retain adapter and conformance receipts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: conformance-${{ github.sha }}
+          # The conformance stages symlink the repository's node_modules and the
+          # resolved tool binaries; the retained evidence is the receipts, logs,
+          # traces and staged sources, not a copy of either.
+          path: |
+            target/assurance/adapters/
+            target/assurance/conformance/
+            !target/assurance/conformance/**/node_modules/**
+            !target/assurance/conformance/*/tools/**
+          if-no-files-found: error
+          retention-days: 14
 
   rust:
     name: Rust
@@ -231,7 +295,7 @@ jobs:
       - name: Install frozen dependencies
         run: bun install --frozen-lockfile
       - name: Check bootstrap prerequisites
-        run: python3 --version && zstd --version && rustup --version
+        run: python3 --version && zstd --version && rustup --version && rustup show active-toolchain
       - name: Record Linux disk headroom before provisioning
         run: df -h .
       - name: Check bootstrap admission regressions
@@ -242,12 +306,14 @@ jobs:
       - name: Check model suites
         if: ${{ !cancelled() && steps.tools.outcome == 'success' }}
         run: bun run usage:formal:tla
-      - name: Check production Kani obligations and mutations
-        if: ${{ !cancelled() && steps.tools.outcome == 'success' }}
-        run: bun run usage:formal:kani
+      # Theorem receipts precede the Kani gate: every theorem replacement in
+      # verify/kani/harnesses.json must bind to a receipt for the same bytes.
       - name: Check fresh production Lean proofs and mutations
         if: ${{ !cancelled() && steps.tools.outcome == 'success' }}
         run: bun run usage:formal:theorems
+      - name: Check production Kani obligations and mutations
+        if: ${{ !cancelled() && steps.tools.outcome == 'success' }}
+        run: bun run usage:formal:kani
       - name: Record Linux tool footprint and remaining capacity
         if: always()
         run: |

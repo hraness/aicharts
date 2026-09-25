@@ -2,10 +2,12 @@ import { describe, expect, test } from "bun:test";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { evaluateTlc, validateTlcConfig, type ModelCase, type ProcessResult, type TraceState } from "./assurance-tla";
+import { evaluateTlc, manifestSchema, runTla, tlaProfiles, validateTlcConfig, type ModelCase, type ProcessResult, type TraceState } from "./assurance-tla";
 
 const models = resolve(import.meta.dir, "../verify/tla");
 const manifest = JSON.parse(readFileSync(resolve(models, "cases.json"), "utf8")) as { cases: ModelCase[] };
+const repaired = JSON.parse(readFileSync(resolve(models, "repaired-cases.json"), "utf8")) as { cases: ModelCase[] };
+const nightly = JSON.parse(readFileSync(resolve(models, "nightly-cases.json"), "utf8")) as { cases: ModelCase[] };
 const getCase = (id: string) => {
   const value = manifest.cases.find(item => item.id === id);
   if (!value) throw new Error(`missing_fixture_case:${id}`);
@@ -88,5 +90,67 @@ describe("pinned TLC evidence admission", () => {
       traces++;
     }
     expect(traces).toBe(11);
+  });
+  test("the repaired suite retains every guard-removal counterexample with its exact expected trace", () => {
+    expect(repaired.cases).toHaveLength(87);
+    expect(Object.fromEntries(["counterexample", "sanity", "witness"].map(kind =>
+      [kind, repaired.cases.filter(item => item.kind === kind).length]))).toEqual({ counterexample: 22, sanity: 19, witness: 46 });
+    const guard = (id: string, constant: string) => {
+      const value = repaired.cases.find(item => item.id === id);
+      if (!value) throw new Error(`missing_guard_case:${id}`);
+      expect(value.kind).toBe("counterexample"); expect(value.invariant).toBe("Safety");
+      expect(value.requiredActions.length).toBeGreaterThanOrEqual(2);
+      const config = readFileSync(resolve(models, value.config), "utf8");
+      expect(config).toContain(`CONSTANT ${constant} = TRUE`); expect(validateTlcConfig(config, value)).toEqual([]);
+      const source = readFileSync(resolve(models, `${value.module}.tla`), "utf8");
+      expect(source).toContain(constant);
+    };
+    guard("m2-negative-freeze", "UnsafeFreeze"); guard("m3-negative-revocation", "UnsafeRevocation");
+    guard("m5-negative-generation", "UnsafeGeneration"); guard("m6-negative-stale-delivery", "UnsafeStaleDelivery");
+    guard("m7-negative-scrub", "UnsafeScrub");
+  });
+});
+
+describe("nightly bounds profile", () => {
+  const nightlyText = readFileSync(resolve(models, "nightly-cases.json"), "utf8");
+  const repairedText = readFileSync(resolve(models, "repaired-cases.json"), "utf8");
+  test("profiles state exact reviewed bounds and the nightly manifest binds to the nightly profile only", () => {
+    expect(tlaProfiles.development).toEqual({ workers: 1, heapMiB: 256, timeoutMs: 60_000, maxOutputBytes: 1_048_576, maxDistinctStates: 300_000 });
+    expect(tlaProfiles.nightly).toEqual({ workers: 4, heapMiB: 2048, timeoutMs: 600_000, maxOutputBytes: 8_388_608, maxDistinctStates: 3_000_000 });
+    expect(manifestSchema("nightly").safeParse(JSON.parse(nightlyText)).success).toBe(true);
+    expect(manifestSchema("development").safeParse(JSON.parse(nightlyText)).success).toBe(false);
+    expect(manifestSchema("development").safeParse(JSON.parse(repairedText)).success).toBe(true);
+    expect(manifestSchema("nightly").safeParse(JSON.parse(repairedText)).success).toBe(false);
+    expect(nightly.cases.map(item => item.id)).toEqual(["m1-nightly-safety", "m1-nightly-orphan", "m11-nightly-sequential-safety", "m11-nightly-negative-quota", "m12-nightly-reclamation-wide-safety"]);
+    // The nightly M1/M11 sanity floors exceed their development counterparts, so the nightly configs explore a wider domain.
+    expect(nightly.cases.find(item => item.id === "m1-nightly-safety")?.minDistinctStates).toBeGreaterThan(2554);
+    expect(nightly.cases.find(item => item.id === "m11-nightly-sequential-safety")?.minDistinctStates).toBeGreaterThan(221596);
+  });
+  test("numeric CONSTANT parameters are admitted only in the reviewed positive range", () => {
+    const value = nightly.cases[0];
+    const config = readFileSync(resolve(models, value.config), "utf8");
+    expect(config).toContain("CONSTANT OpCount = 3");
+    expect(validateTlcConfig(config, value)).toEqual([]);
+    for (const constant of ["CONSTANT OpCount = 0", "CONSTANT OpCount = -1", "CONSTANT OpCount = 1000", "CONSTANT OpCount = 03", "CONSTANT OpCount = 3 + 1"]) {
+      expect(validateTlcConfig(config.replace("CONSTANT OpCount = 3", constant), value)).toContain("unreviewed configuration directive");
+    }
+    for (const [id, quota] of [["m11-nightly-sequential-safety", 3], ["m11-nightly-negative-quota", 6]] as const) {
+      const m11 = readFileSync(resolve(models, `configs/${id}.cfg`), "utf8");
+      expect(m11).toContain("CONSTANT JobCount = 3"); expect(m11).toContain(`CONSTANT Quota = ${quota}`);
+    }
+    expect(readFileSync(resolve(models, "configs/m11-sequential-safety.cfg"), "utf8")).toContain("CONSTANT JobCount = 2");
+  });
+  test("a development-sized ceiling refuses counts that the nightly ceiling admits", () => {
+    const wide = { ...sanity, expectedDistinctStates: 400_000, minDistinctStates: 2 };
+    const output = log(sanity.id).replace(/\d[\d,]* states generated, \d[\d,]* distinct states found/u, "900,000 states generated, 400,000 distinct states found");
+    expect(evaluateTlc(wide, result(output, 0)).errors).toContain("missing, vacuous or excessive exploration counts");
+    expect(evaluateTlc(wide, result(output, 0), tlaProfiles.nightly.maxDistinctStates).errors).toEqual([]);
+    expect(evaluateTlc(wide, result(output, 0), tlaProfiles.development.maxDistinctStates).ok).toBe(false);
+  });
+  test("the nightly profile and the nightly suite are inseparable", async () => {
+    await expect(runTla({ profile: "nightly", suite: "repaired" })).rejects.toThrow("nightly_profile_and_suite_must_match");
+    await expect(runTla({ profile: "nightly", suite: "all" })).rejects.toThrow("nightly_profile_and_suite_must_match");
+    await expect(runTla({ suite: "nightly" })).rejects.toThrow("nightly_profile_and_suite_must_match");
+    await expect(runTla({ profile: "development", suite: "nightly" })).rejects.toThrow("nightly_profile_and_suite_must_match");
   });
 });

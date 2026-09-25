@@ -1,4 +1,4 @@
-import { err, type Result } from "../result";
+import { err, ok, type Result } from "../result";
 import { parseSessionReport } from "./sessions";
 import { parseTerminalTurn } from "./turns";
 import { parseCompactionEvent } from "./compaction";
@@ -157,3 +157,219 @@ export async function richFactsFromCompactions(input: unknown, options: RichAdap
     return a.finish();
   } catch (cause) { return failure(cause); }
 }
+
+// ---- Native transcripts (mirror of crates/aicharts-core/src/rich_facts/transcript.rs) ----
+// Only bounded identifiers, timestamps, counters and enumerated stop/error flags are
+// read; prompts, tool arguments, results and paths never leave the parsed line.
+// Streaming timings, dispatch clocks and retry links are absent from these
+// transcripts and are exported as explicit nulls, never fabricated.
+
+export const RICH_TRANSCRIPT_PROFILE = "numeric-producer-v1";
+export const RICH_TRANSCRIPT_MAX_LINES = 100_000;
+const TRANSCRIPT_MAX_EXECUTIONS = 2_000, TRANSCRIPT_MAX_LINE_BYTES = 1_048_576, TRANSCRIPT_MAX_TOKENS = 1_000_000_000_000;
+const TRANSCRIPT_MAX_TIME_MS = 8_640_000_000_000_000, TRANSCRIPT_MAX_WINDOW_MS = 31 * 86_400_000, TRANSCRIPT_MAX_BLOCKS = 4_096;
+/** Mirror of the Rust CLAUDE_MODELS allowlist. */
+const TRANSCRIPT_CLAUDE_MODELS = ["claude-opus-4-1-20250805", "claude-opus-4-5-20251101", "claude-opus-4-6", "claude-opus-4-7",
+  "claude-sonnet-4-20250514", "claude-sonnet-4-5-20250929", "claude-sonnet-4-6", "claude-haiku-4-5-20251001"] as const;
+type ClaudeModel = typeof TRANSCRIPT_CLAUDE_MODELS[number];
+export type TranscriptProvider = "claude_code" | "codex";
+export type TranscriptSource = Readonly<{ provider: TranscriptProvider; text: string }>;
+/** Per-kind evidence beside the report: how many candidate records were skipped and how many lines were read. */
+export type TranscriptMeasured = Readonly<{ skippedRecords: number; linesRead: number }>;
+
+const RFC3339 = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2})$/u;
+const field = (value: unknown, name: string): unknown => value !== null && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>)[name] : undefined;
+const nativeId = (value: unknown): string | null => typeof value === "string" && /^[A-Za-z0-9_-]{1,256}$/u.test(value) ? value : null;
+const text = (value: unknown, max: number): string | null => typeof value === "string" && value.length > 0 && new TextEncoder().encode(value).length <= max ? value : null;
+const count = (value: unknown): number | null => typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= TRANSCRIPT_MAX_TOKENS ? value : null;
+const flag = (value: unknown): boolean | null => typeof value === "boolean" ? value : null;
+const millis = (value: unknown): number | null => {
+  if (typeof value !== "string" || value.length > 64 || !RFC3339.test(value)) return null;
+  const parsed = Date.parse(value);
+  return Number.isSafeInteger(parsed) && parsed >= 0 && parsed <= TRANSCRIPT_MAX_TIME_MS ? parsed : null;
+};
+/** `undefined`/`null` → missing; plain object → value; anything else → invalid. */
+const object = (value: unknown): { state: "missing" } | { state: "invalid" } | { state: "value"; value: Record<string, unknown> } =>
+  value === undefined || value === null ? { state: "missing" } : typeof value === "object" && !Array.isArray(value) ? { state: "value", value: value as Record<string, unknown> } : { state: "invalid" };
+const blocks = (value: unknown): readonly unknown[] | null => Array.isArray(value) && value.length <= TRANSCRIPT_MAX_BLOCKS ? value : null;
+const stop = (value: unknown): "success" | "refusal" | null =>
+  value === "end_turn" || value === "tool_use" || value === "max_tokens" || value === "stop_sequence" || value === "pause_turn" ? "success" : value === "refusal" ? "refusal" : null;
+const text32 = (value: unknown) => text(value, 32);
+const claudeModel = (value: unknown): ClaudeModel | null => TRANSCRIPT_CLAUDE_MODELS.find(model => model === value) ?? null;
+
+type ClaudeTokens = Readonly<{ input: number; cacheRead: number; cacheWrite: number; write5m: number | null; write1h: number | null; output: number }>;
+type RequestState = { owner: RichOwner; session: string; firstParent: string | null; firstAt: number; lastAt: number; messageId: string | null;
+  tokens: ClaudeTokens | null; model: ClaudeModel | null; stop: "success" | "refusal" | null; error: boolean };
+type Producer = Adapter & { owners: Map<string, RichOwner>; measured: { skippedRecords: number; linesRead: number }; supported: Set<RichFact["kind"]> };
+
+function* transcriptLines(jsonl: string, measured: { skippedRecords: number; linesRead: number }): Generator<Record<string, unknown>> {
+  let lines = 0;
+  for (const raw of jsonl.split("\n")) {
+    if (raw.trim().length === 0) continue;
+    if (new TextEncoder().encode(raw).length > TRANSCRIPT_MAX_LINE_BYTES) { measured.skippedRecords += 1; continue; }
+    if (++lines > RICH_TRANSCRIPT_MAX_LINES) throw new Error("record_limit");
+    let parsed: unknown;
+    try { parsed = JSON.parse(raw); } catch { throw new Error("invalid_rich_facts"); }
+    if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("invalid_rich_facts");
+    yield parsed as Record<string, unknown>;
+  }
+  measured.linesRead += lines;
+}
+async function transcriptOwner(p: Producer, provider: TranscriptProvider, session: string, child: string | null, parent: string | null, rootCapable: boolean): Promise<RichOwner> {
+  const root = await p.keyed("execution", [provider, session]);
+  const owned: RichOwner = child !== null
+    ? { provider, accountId: null, executionId: await p.keyed("execution", [provider, session, child]), conversationId: await p.keyed("conversation", [provider, session]), lineage: "child", parentExecutionId: root }
+    : parent !== null
+      ? { provider, accountId: null, executionId: root, conversationId: await p.keyed("conversation", [provider, parent]), lineage: "child", parentExecutionId: await p.keyed("execution", [provider, parent]) }
+      : { provider, accountId: null, executionId: root, conversationId: await p.keyed("conversation", [provider, session]), lineage: rootCapable ? "root" : "unknown", parentExecutionId: null };
+  const existing = p.owners.get(owned.executionId);
+  if (existing) { if (JSON.stringify(existing) !== JSON.stringify(owned)) throw new Error("conflicting_owner"); }
+  else { if (p.owners.size >= TRANSCRIPT_MAX_EXECUTIONS) throw new Error("record_limit"); p.owners.set(owned.executionId, owned); }
+  return owned;
+}
+async function transcriptTool(p: Producer, owned: RichOwner, session: string, native: string, stage: "requested" | "terminal", outcome: "unknown" | "success" | "error", atMs: number) {
+  await p.put(owned, `${native}:${stage}`, atMs, { kind: "tool", observationId: await p.keyed("observation", [owned.provider, session, "tool", native, stage]), stage, outcome });
+}
+async function scanClaude(p: Producer, jsonl: string) {
+  for (const kind of ["usage", "request", "tool", "context"] as const) p.supported.add(kind);
+  const users = new Map<string, number>(), requests = new Map<string, RequestState>();
+  for (const line of transcriptLines(jsonl, p.measured)) {
+    const kind = text32(line.type);
+    if (kind !== "user" && kind !== "assistant") continue;
+    const at = millis(line.timestamp), session = nativeId(line.sessionId);
+    if (at === null || session === null) { p.measured.skippedRecords += 1; continue; }
+    const agent = nativeId(line.agentId), child = agent ?? (flag(line.isSidechain) === true ? "sidechain" : null);
+    const owned = await transcriptOwner(p, "claude_code", session, child, null, true);
+    const message = object(line.message);
+    if (message.state === "invalid") { p.measured.skippedRecords += 1; continue; }
+    const body = message.state === "value" ? message.value : null;
+    if (kind === "user") {
+      const uuid = nativeId(line.uuid);
+      if (uuid !== null && users.size < RICH_FACT_MAX_RECORDS && !users.has(uuid)) users.set(uuid, at);
+      for (const block of (body ? blocks(body.content) : null) ?? []) {
+        if (text32(field(block, "type")) !== "tool_result") continue;
+        const id = nativeId(field(block, "tool_use_id"));
+        if (id === null) { p.measured.skippedRecords += 1; continue; }
+        await transcriptTool(p, owned, session, id, "terminal", flag(field(block, "is_error")) === true ? "error" : "success", at);
+      }
+      continue;
+    }
+    if (!body) { p.measured.skippedRecords += 1; continue; }
+    for (const block of blocks(body.content) ?? []) {
+      if (text32(field(block, "type")) !== "tool_use") continue;
+      const id = nativeId(field(block, "id"));
+      if (id === null) { p.measured.skippedRecords += 1; continue; }
+      await transcriptTool(p, owned, session, id, "requested", "unknown", at);
+    }
+    const request = nativeId(line.requestId);
+    if (request === null) { p.measured.skippedRecords += 1; continue; }
+    const usage = object(body.usage), input = usage.state === "value" ? count(usage.value.input_tokens) : null, output = usage.state === "value" ? count(usage.value.output_tokens) : null;
+    let tokens: ClaudeTokens | null = null;
+    if (usage.state === "value" && input !== null && output !== null) {
+      const creation = object(usage.value.cache_creation);
+      tokens = { input, output, cacheRead: count(usage.value.cache_read_input_tokens) ?? 0, cacheWrite: count(usage.value.cache_creation_input_tokens) ?? 0,
+        write5m: creation.state === "value" ? count(creation.value.ephemeral_5m_input_tokens) : null, write1h: creation.state === "value" ? count(creation.value.ephemeral_1h_input_tokens) : null };
+    }
+    let state = requests.get(request);
+    if (!state) {
+      if (requests.size >= RICH_FACT_MAX_RECORDS) throw new Error("record_limit");
+      state = { owner: owned, session, firstParent: nativeId(line.parentUuid), firstAt: at, lastAt: at, messageId: null, tokens: null, model: null, stop: null, error: false };
+      requests.set(request, state);
+    }
+    if (JSON.stringify(state.owner) !== JSON.stringify(owned)) throw new Error("conflicting_owner");
+    state.firstAt = Math.min(state.firstAt, at);
+    if (at >= state.lastAt) { state.lastAt = at; if (tokens !== null) state.tokens = tokens; }
+    state.messageId ??= nativeId(body.id);
+    state.model ??= claudeModel(body.model);
+    state.stop = stop(body.stop_reason) ?? state.stop;
+    state.error ||= flag(line.isApiErrorMessage) === true;
+  }
+  const responses = new Set<string>();
+  for (const [request, state] of requests) {
+    const owned = state.owner, prompt = state.firstParent === null ? undefined : users.get(state.firstParent);
+    const requestedAtMs = prompt !== undefined && prompt <= state.lastAt && state.lastAt - prompt <= TRANSCRIPT_MAX_WINDOW_MS ? prompt : null;
+    const outcome = state.error ? "error" : state.stop ?? "unknown";
+    const observationId = await p.keyed("observation", [owned.provider, state.session, "request", request]);
+    await p.put(owned, request, state.lastAt, { kind: "request", observationId, stage: "terminal", outcome, requestedAtMs, dispatchedAtMs: null, terminalAtMs: state.lastAt,
+      firstTokenAtMs: null, lastTokenAtMs: null, clockUncertaintyMs: null, retryOf: null });
+    const tokens = state.tokens;
+    if (tokens === null) { p.measured.skippedRecords += 1; continue; }
+    const split = tokens.write5m !== null && tokens.write1h !== null && tokens.write5m + tokens.write1h === tokens.cacheWrite;
+    const usage = (grain: "request" | "response", id: string): RichPayload => ({ kind: "usage", grain, tokenScope: "direct", observationId: id, model: state.model, modelBasis: state.model === null ? "unknown" : "response",
+      tokens: { inputUncached: String(tokens.input), cacheRead: String(tokens.cacheRead), cacheWrite5m: String(split ? tokens.write5m : 0), cacheWrite1h: String(split ? tokens.write1h : 0),
+        cacheWriteUnknown: String(split ? 0 : tokens.cacheWrite), output: String(tokens.output), reasoning: null } });
+    await p.put(owned, `${request}:request`, state.lastAt, usage("request", observationId));
+    if (state.messageId !== null && !responses.has(state.messageId)) {
+      responses.add(state.messageId);
+      await p.put(owned, `${state.messageId}:response`, state.lastAt, usage("response", await p.keyed("observation", [owned.provider, state.session, "response", state.messageId])));
+    }
+    await p.put(owned, `${request}:context`, state.lastAt, { kind: "context", observationId: await p.keyed("observation", [owned.provider, state.session, "context", request]),
+      tokens: String(tokens.input + tokens.cacheRead + tokens.cacheWrite), limitTokens: null });
+  }
+}
+async function scanCodex(p: Producer, jsonl: string) {
+  for (const kind of ["request", "tool", "context"] as const) p.supported.add(kind);
+  let session: { id: string; parent: string | null; rootCapable: boolean } | null = null;
+  const sameInstant = new Map<number, number>();
+  for (const line of transcriptLines(jsonl, p.measured)) {
+    const kind = text32(line.type), payload = object(line.payload);
+    if (payload.state !== "value") continue;
+    const payloadKind = text32(payload.value.type);
+    if (kind === "session_meta") {
+      const id = nativeId(payload.value.id);
+      if (id === null) { p.measured.skippedRecords += 1; continue; }
+      if (session !== null && session.id !== id) throw new Error("session_identity_changed");
+      const source = text(payload.value.source, 16);
+      session = { id, parent: nativeId(payload.value.parent_thread_id), rootCapable: source === "cli" || source === "vscode" || source === "exec" || source === "mcp" };
+      continue;
+    }
+    if (session === null) { p.measured.skippedRecords += 1; continue; }
+    const at = millis(line.timestamp);
+    if (at === null) { if (kind === "event_msg" || kind === "response_item") p.measured.skippedRecords += 1; continue; }
+    const owned = await transcriptOwner(p, "codex", session.id, null, session.parent, session.rootCapable);
+    if (kind === "event_msg" && payloadKind === "token_count") {
+      const info = object(payload.value.info), last = info.state === "value" ? object(info.value.last_token_usage) : null, input = last?.state === "value" ? count(last.value.input_tokens) : null;
+      if (info.state !== "value" || last?.state !== "value" || input === null) { p.measured.skippedRecords += 1; continue; }
+      const slot = sameInstant.get(at) ?? 0, native = `${at}:${slot}`;
+      sameInstant.set(at, slot + 1);
+      await p.put(owned, native, at, { kind: "request", observationId: await p.keyed("observation", [owned.provider, session.id, "request", native]), stage: "terminal", outcome: "unknown",
+        requestedAtMs: null, dispatchedAtMs: null, terminalAtMs: at, firstTokenAtMs: null, lastTokenAtMs: null, clockUncertaintyMs: null, retryOf: null });
+      const limit = count(info.value.model_context_window);
+      await p.put(owned, `${native}:context`, at, { kind: "context", observationId: await p.keyed("observation", [owned.provider, session.id, "context", native]), tokens: String(input), limitTokens: limit === null ? null : String(limit) });
+    } else if (kind === "response_item" && (payloadKind === "function_call" || payloadKind === "custom_tool_call" || payloadKind === "local_shell_call")) {
+      const call = nativeId(payload.value.call_id);
+      if (call === null) { p.measured.skippedRecords += 1; continue; }
+      await transcriptTool(p, owned, session.id, call, "requested", "unknown", at);
+    } else if (kind === "response_item" && (payloadKind === "function_call_output" || payloadKind === "custom_tool_call_output")) {
+      const call = nativeId(payload.value.call_id);
+      if (call === null) { p.measured.skippedRecords += 1; continue; }
+      // Codex outputs carry no status field; success is not inferred.
+      await transcriptTool(p, owned, session.id, call, "terminal", "unknown", at);
+    }
+  }
+}
+
+/** Facts from explicit Claude Code and Codex JSONL transcripts; every fact is revision zero. */
+export async function richFactsFromTranscripts(sources: readonly TranscriptSource[], options: RichAdapterOptions): Promise<Result<{ report: RichFactReport; measured: TranscriptMeasured }, RichFactError>> {
+  try {
+    if (!Array.isArray(sources) || sources.length > TRANSCRIPT_MAX_EXECUTIONS) throw new Error("record_limit");
+    const owned = sources.map(source => {
+      const provider: unknown = field(source, "provider"), text: unknown = field(source, "text");
+      if ((provider !== "claude_code" && provider !== "codex") || typeof text !== "string") throw new Error("invalid_rich_facts");
+      return { provider, text };
+    });
+    const a = await adapter(RICH_TRANSCRIPT_PROFILE, options);
+    const p: Producer = { ...a, owners: new Map(), measured: { skippedRecords: 0, linesRead: 0 }, supported: new Set() };
+    for (const source of owned) await (source.provider === "claude_code" ? scanClaude(p, source.text) : scanCodex(p, source.text));
+    if (new Set(p.facts.map(fact => fact.id)).size !== p.facts.length) throw new Error("conflicting_fact");
+    for (const kind of p.supported) p.coverage[kind] = "partial";
+    const report = a.finish();
+    return report.ok ? ok({ report: report.value, measured: { ...p.measured } }) : report;
+  } catch (cause) { return transcriptFailure(cause); }
+}
+const transcriptFailure = (cause: unknown): Result<never, RichFactError> => {
+  const message = cause instanceof Error ? cause.message : "";
+  return err(message === "record_limit" || message === "conflicting_fact" || message === "conflicting_owner" ? message : "invalid_rich_facts");
+};
+export const richFactsFromClaudeTranscript = (text: string, options: RichAdapterOptions) => richFactsFromTranscripts([{ provider: "claude_code", text }], options);
+export const richFactsFromCodexTranscript = (text: string, options: RichAdapterOptions) => richFactsFromTranscripts([{ provider: "codex", text }], options);

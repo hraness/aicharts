@@ -58,6 +58,12 @@ test("a session admits local Blob bytes, exports its own exact current selection
   const view = await session.query(query), json = JSON.parse(await (await session.export(view, "json")).text());
   expect(json.measures[0].value.amount).toBe(view.measures[0].value?.kind === "integer" ? view.measures[0].value.amount.toString() : null);
   expect(json.snapshot.sha256).toMatch(/^[a-f0-9]{64}$/u);
+  const csv = await (await session.export(view, { metricCsv: view.measures[0].id })).text();
+  expect(csv.startsWith("metric_id,metric_version,unit,source_profile,snapshot_sha256,")).toBe(true);
+  expect(csv).toContain(`\r\n${view.measures[0].id},1,`);
+  expect(csv).toContain(`,${json.snapshot.sha256},`);
+  await expect(session.export(view, { metricCsv: "not-a-metric" })).rejects.toThrow();
+  await expect(session.export(view, "rows" as never)).rejects.toThrow();
   await expect(session.export({ ...view }, "json")).rejects.toThrow("cancelled");
   const detail = await session.query({ ...query, dayCount: 1 }, { slot: "detail", parent: view });
   expect(detail.query.dayCount).toBe(1);

@@ -152,6 +152,10 @@
 .usage-stats__coverage p { color: var(--muted); font-size: .8rem; max-inline-size: 75ch; }
 .usage-stats__coverage p:last-child { margin-block-start: 1rem; }
 .usage-stats__coverage th[scope="row"] { white-space: nowrap; }
+.usage-stats__freshness { display: grid; gap: .6rem 1.5rem; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); margin-block: 1rem 1.25rem; }
+.usage-stats__freshness div { display: grid; gap: .2rem; }
+.usage-stats__freshness dt { color: var(--muted); font-size: .72rem; letter-spacing: .04em; text-transform: uppercase; }
+.usage-stats__freshness dd { font-size: .85rem; line-height: 1.45; margin: 0; max-inline-size: 48ch; }
 .usage-stats__client-coverage { margin-block: 1.25rem; }
 .usage-stats__client-coverage > p:last-child { padding-block-end: 1.1rem; }
 .usage-stats__client-coverage table { min-inline-size: 24rem; }

@@ -13,7 +13,7 @@
     {
       "id": "codex",
       "prefix": "sessions::codex::tests::",
-      "expectedTests": 74
+      "expectedTests": 77
     },
     {
       "id": "claude",
@@ -33,7 +33,7 @@
     {
       "id": "offline",
       "prefix": "offline::tests::",
-      "expectedTests": 4
+      "expectedTests": 6
     }
   ],
   "adapters": [

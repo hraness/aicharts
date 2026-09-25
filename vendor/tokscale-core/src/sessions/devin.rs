@@ -98,6 +98,38 @@ impl DevinDesktopSessionLookup {
     fn resolve(&self, title: &str) -> Option<&DevinDesktopSession> {
         self.by_title.get(title)?.as_ref()
     }
+
+    /// Order-independent digest of every resolution this lookup can make.
+    /// Desktop rows depend on it, so retained rows are bound to it.
+    pub(crate) fn digest(&self) -> [u8; 32] {
+        use sha2::Digest as _;
+        let mut titles: Vec<&String> = self.by_title.keys().collect();
+        titles.sort_unstable();
+        let mut hash = sha2::Sha256::new();
+        hash.update((titles.len() as u64).to_le_bytes());
+        let mut field = |value: Option<&str>| {
+            match value {
+                Some(value) => {
+                    hash.update([1u8]);
+                    hash.update((value.len() as u64).to_le_bytes());
+                    hash.update(value.as_bytes());
+                }
+                None => hash.update([0u8]),
+            };
+        };
+        for title in titles {
+            field(Some(title));
+            match &self.by_title[title] {
+                Some(session) => {
+                    field(Some(&session.session_id));
+                    field(session.model_id.as_deref());
+                    field(session.workspace.as_deref());
+                }
+                None => field(None),
+            }
+        }
+        hash.finalize().into()
+    }
 }
 
 /// Load the CLI-session metadata needed to resolve Desktop ACP file titles.
@@ -257,7 +289,10 @@ pub fn parse_devin_cli_sqlite(db_path: &Path) -> Vec<UnifiedMessage> {
         // but parsing lets us skip corrupt rows cleanly).
         let chat_msg: DevinChatMessage = match crate::offline_io::json_str(&chat_json) {
             Ok(m) => m,
-            Err(_) => return Ok(()),
+            Err(_) => {
+                crate::offline_io::record_schema_mismatch();
+                return Ok(());
+            }
         };
         if chat_msg.role != "assistant" {
             return Ok(());
@@ -284,6 +319,16 @@ pub fn parse_devin_cli_sqlite(db_path: &Path) -> Vec<UnifiedMessage> {
             .map(str::to_string)
             .unwrap_or_else(|| "devin".to_string());
 
+        let clamped = metrics.is_some_and(|m| {
+            [
+                m.input_tokens,
+                m.output_tokens,
+                m.cache_read_tokens,
+                m.cache_creation_tokens,
+            ]
+            .iter()
+            .any(|value| value.is_some_and(|value| value < 0))
+        });
         let tokens = match metrics {
             Some(m) => TokenBreakdown {
                 input: m.input_tokens.unwrap_or(0).max(0),
@@ -314,6 +359,12 @@ pub fn parse_devin_cli_sqlite(db_path: &Path) -> Vec<UnifiedMessage> {
         // zero-metric CLI row could suppress the only real usage record.
         if tokens.total() == 0 {
             return Ok(());
+        }
+        if clamped {
+            crate::offline_io::record_clamped();
+        }
+        if created_at_ms.is_none() {
+            crate::offline_io::record_fallback();
         }
 
         let recorded_timestamp = created_at_ms.unwrap_or(fallback_timestamp);
@@ -482,6 +533,7 @@ pub fn parse_devin_desktop_ndjson_with_lookup(
 
     for_each_json_line(path, &mut |line_index, line| {
         let Ok(event) = crate::offline_io::json_str::<DevinDesktopEvent>(line) else {
+            crate::offline_io::record_schema_mismatch();
             return;
         };
 
@@ -517,6 +569,20 @@ pub fn parse_devin_desktop_ndjson_with_lookup(
             == Some("usage_update")
         {
             let meta = notification.get("_meta");
+            if [
+                "cognition.ai/inputTokens",
+                "cognition.ai/cachedReadTokens",
+                "cognition.ai/cachedWriteTokens",
+                "cognition.ai/outputTokens",
+            ]
+            .iter()
+            .any(|field| {
+                meta.and_then(|meta| meta.get(*field))
+                    .and_then(|value| value.as_i64())
+                    .is_some_and(|value| value < 0)
+            }) {
+                crate::offline_io::record_clamped();
+            }
             let input =
                 nonnegative_number(meta.and_then(|meta| meta.get("cognition.ai/inputTokens")));
             let cache_read =
@@ -594,6 +660,21 @@ pub fn parse_devin_desktop_ndjson_with_lookup(
         if input == 0 && output == 0 && cache_read == 0 && cache_write == 0 {
             return;
         }
+        if [
+            "input_tokens",
+            "output_tokens",
+            "cache_read_tokens",
+            "cache_creation_tokens",
+        ]
+        .iter()
+        .any(|field| {
+            usage
+                .get(*field)
+                .and_then(|v| v.as_i64())
+                .is_some_and(|value| value < 0)
+        }) {
+            crate::offline_io::record_clamped();
+        }
 
         let model_hint = notification_model(&notification);
         legacy_messages.push(desktop_message(
@@ -603,7 +684,10 @@ pub fn parse_devin_desktop_ndjson_with_lookup(
                 file_session_id: &file_session_id,
                 title: title.as_deref(),
                 model_hint: model_hint.as_deref(),
-                timestamp: notification_timestamp(&notification).unwrap_or(fallback_timestamp),
+                timestamp: notification_timestamp(&notification).unwrap_or_else(|| {
+                    crate::offline_io::record_fallback();
+                    fallback_timestamp
+                }),
                 tokens: TokenBreakdown {
                     input,
                     output,
@@ -638,7 +722,10 @@ pub fn parse_devin_desktop_ndjson_with_lookup(
                 file_session_id: &file_session_id,
                 title: title.as_deref(),
                 model_hint: usage.model_id.as_deref(),
-                timestamp: usage.timestamp.unwrap_or(fallback_timestamp),
+                timestamp: usage.timestamp.unwrap_or_else(|| {
+                    crate::offline_io::record_fallback();
+                    fallback_timestamp
+                }),
                 tokens,
             },
             "usage",

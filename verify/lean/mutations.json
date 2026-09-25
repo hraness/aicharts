@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "scope": "Isolated negative controls for the theorem gate. Production mutants change one production Rust body in a staged copy and must fail exactly their named unchanged theorem after fresh extraction. Mathematical mutants change one definition in a staged copy of UsageLaws.lean and must fail exactly their named unchanged law. None is a production mode.",
+  "production": [
+    {
+      "id": "wrapping-addition",
+      "source": "crates/aicharts-metrics/src/arithmetic.rs",
+      "exactBefore": "match left.checked_add(right) {\n        Some(value) => Ok(value),\n        None => Err(Error::Overflow),\n    }",
+      "exactAfter": "Ok(left.wrapping_add(right))",
+      "expectedTheorem": "checked_add_exact",
+      "requireSingleSourceMatch": true
+    },
+    {
+      "id": "last-known-owner-wins",
+      "source": "crates/aicharts-metrics/src/revision.rs",
+      "exactBefore": "Err(Error::OwnerConflict)",
+      "exactAfter": "Ok(right)",
+      "expectedTheorem": "merge_owner_exact",
+      "requireSingleSourceMatch": true
+    },
+    {
+      "id": "wrong-half-up-offset",
+      "source": "crates/aicharts-metrics/src/arithmetic.rs",
+      "exactBefore": "checked_add(pico, 500_000)? / 1_000_000",
+      "exactAfter": "checked_add(pico, 499_999)? / 1_000_000",
+      "expectedTheorem": "pricing_terminal_body_exact",
+      "requireSingleSourceMatch": true
+    },
+    {
+      "id": "non-unit-rate-erased",
+      "source": "crates/aicharts-metrics/src/arithmetic.rs",
+      "exactBefore": "token_count.checked_mul(rate)",
+      "exactAfter": "token_count.checked_mul(if rate == 1 { 1 } else { 0 })",
+      "expectedTheorem": "pricing_body_exact",
+      "requireSingleSourceMatch": true
+    }
+  ],
+  "mathematical": [
+    {
+      "id": "bounded-fold-strict-limit",
+      "source": "verify/lean/UsageLaws.lean",
+      "exactBefore": "if accumulator + value ≤ limit then boundedFold limit (accumulator + value) rest",
+      "exactAfter": "if accumulator + value < limit then boundedFold limit (accumulator + value) rest",
+      "expectedTheorem": "bounded_fold_exact",
+      "requireSingleSourceMatch": true
+    }
+  ]
+}

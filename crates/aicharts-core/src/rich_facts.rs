@@ -1,5 +1,11 @@
 //! Opt-in local projection of owned session observations. No files, state or network.
-//! This producer has no lineage, request lifecycle, exact timing or complete coverage.
+//! The session producer has no lineage, request lifecycle, exact timing or
+//! complete coverage. The transcript producer (`transcript`) adds request, tool,
+//! context and lineage-bearing usage facts from native JSONL; `revision` assigns
+//! durable revisions from a caller-persisted ledger.
+
+pub mod revision;
+pub mod transcript;
 
 use crate::sessions::SessionReport;
 use hmac::{Hmac, Mac};
@@ -8,6 +14,8 @@ use sha2::Sha256;
 use std::io::{self, Write};
 
 pub const PROFILE: &str = "rich-facts-v1";
+/// Provenance profile of transcript-derived facts; identities are namespaced by it.
+pub const TRANSCRIPT_PROFILE: &str = "numeric-producer-v1";
 pub const MAX_REPORT_BYTES: usize = 8 * 1024 * 1024;
 pub const MAX_FACTS: usize = 50_000;
 pub const MAX_EXECUTIONS: usize = 2_000;
@@ -20,6 +28,15 @@ pub struct ExportOptions {
     window: Window,
 }
 impl ExportOptions {
+    pub fn source_epoch(&self) -> &str {
+        &self.source_epoch
+    }
+    pub fn start_ms(&self) -> u64 {
+        self.window.start_ms
+    }
+    pub fn end_ms(&self) -> u64 {
+        self.window.end_ms
+    }
     pub fn new(source_epoch: &str, start_ms: u64, end_ms: u64) -> Result<Self, &'static str> {
         if source_epoch.is_empty()
             || source_epoch.len() > 128
@@ -41,79 +58,253 @@ impl ExportOptions {
 
 #[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
-struct Window {
-    start_ms: u64,
-    end_ms: u64,
+pub struct Window {
+    pub(crate) start_ms: u64,
+    pub(crate) end_ms: u64,
+}
+#[derive(Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Provenance {
+    pub(crate) profile: &'static str,
+    pub(crate) version: u8,
+    pub(crate) source_id: String,
 }
 #[derive(Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
-struct Provenance {
-    profile: &'static str,
-    version: u8,
-    source_id: String,
+pub struct Coverage {
+    pub(crate) usage: &'static str,
+    pub(crate) span: &'static str,
+    pub(crate) request: &'static str,
+    pub(crate) turn: &'static str,
+    pub(crate) tool: &'static str,
+    pub(crate) context: &'static str,
+    pub(crate) compaction: &'static str,
 }
-#[derive(Serialize)]
-struct Coverage {
-    usage: &'static str,
-    span: &'static str,
-    request: &'static str,
-    turn: &'static str,
-    tool: &'static str,
-    context: &'static str,
-    compaction: &'static str,
+impl Coverage {
+    pub fn usage(&self) -> &'static str {
+        self.usage
+    }
+    pub fn request(&self) -> &'static str {
+        self.request
+    }
+    pub fn tool(&self) -> &'static str {
+        self.tool
+    }
+    pub fn context(&self) -> &'static str {
+        self.context
+    }
+}
+#[derive(Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Owner {
+    pub(crate) provider: &'static str,
+    pub(crate) account_id: Option<String>,
+    pub(crate) execution_id: String,
+    pub(crate) conversation_id: Option<String>,
+    pub(crate) lineage: &'static str,
+    pub(crate) parent_execution_id: Option<String>,
+}
+impl Owner {
+    pub fn execution_id(&self) -> &str {
+        &self.execution_id
+    }
+    pub fn lineage(&self) -> &'static str {
+        self.lineage
+    }
+    pub fn parent_execution_id(&self) -> Option<&str> {
+        self.parent_execution_id.as_deref()
+    }
+}
+#[derive(Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Tokens {
+    pub(crate) input_uncached: String,
+    pub(crate) cache_read: String,
+    pub(crate) cache_write5m: String,
+    pub(crate) cache_write1h: String,
+    pub(crate) cache_write_unknown: String,
+    pub(crate) output: String,
+    pub(crate) reasoning: Option<String>,
+}
+#[derive(Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Usage {
+    pub(crate) kind: &'static str,
+    pub(crate) grain: &'static str,
+    pub(crate) token_scope: &'static str,
+    pub(crate) observation_id: String,
+    pub(crate) model: Option<&'static str>,
+    pub(crate) model_basis: &'static str,
+    pub(crate) tokens: Tokens,
+}
+#[derive(Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Request {
+    pub(crate) kind: &'static str,
+    pub(crate) observation_id: String,
+    pub(crate) stage: &'static str,
+    pub(crate) outcome: &'static str,
+    pub(crate) requested_at_ms: Option<u64>,
+    pub(crate) dispatched_at_ms: Option<u64>,
+    pub(crate) terminal_at_ms: Option<u64>,
+    pub(crate) first_token_at_ms: Option<u64>,
+    pub(crate) last_token_at_ms: Option<u64>,
+    pub(crate) clock_uncertainty_ms: Option<u64>,
+    pub(crate) retry_of: Option<String>,
+}
+#[derive(Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Tool {
+    pub(crate) kind: &'static str,
+    pub(crate) observation_id: String,
+    pub(crate) stage: &'static str,
+    pub(crate) outcome: &'static str,
+}
+#[derive(Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Context {
+    pub(crate) kind: &'static str,
+    pub(crate) observation_id: String,
+    pub(crate) tokens: String,
+    pub(crate) limit_tokens: Option<String>,
+}
+/// Exactly one rich-facts-v1 payload kind; retractions carry no payload.
+#[derive(Clone, PartialEq, Eq, Serialize)]
+#[serde(untagged)]
+pub enum Payload {
+    Usage(Usage),
+    Request(Request),
+    Tool(Tool),
+    Context(Context),
+}
+impl Payload {
+    pub fn usage(&self) -> Option<&Usage> {
+        match self {
+            Self::Usage(value) => Some(value),
+            _ => None,
+        }
+    }
+    pub fn request(&self) -> Option<&Request> {
+        match self {
+            Self::Request(value) => Some(value),
+            _ => None,
+        }
+    }
+    pub fn tool(&self) -> Option<&Tool> {
+        match self {
+            Self::Tool(value) => Some(value),
+            _ => None,
+        }
+    }
+    pub fn context(&self) -> Option<&Context> {
+        match self {
+            Self::Context(value) => Some(value),
+            _ => None,
+        }
+    }
+}
+impl Usage {
+    pub fn grain(&self) -> &'static str {
+        self.grain
+    }
+    pub fn token_scope(&self) -> &'static str {
+        self.token_scope
+    }
+    /// Exact input + cache read + cache write + output as a u128; never saturates.
+    pub fn total(&self) -> u128 {
+        [
+            &self.tokens.input_uncached,
+            &self.tokens.cache_read,
+            &self.tokens.cache_write5m,
+            &self.tokens.cache_write1h,
+            &self.tokens.cache_write_unknown,
+            &self.tokens.output,
+        ]
+        .iter()
+        .map(|value| value.parse::<u128>().unwrap_or(0))
+        .sum()
+    }
+}
+impl Request {
+    pub fn stage(&self) -> &'static str {
+        self.stage
+    }
+    pub fn outcome(&self) -> &'static str {
+        self.outcome
+    }
+    pub fn requested_at_ms(&self) -> Option<u64> {
+        self.requested_at_ms
+    }
+    pub fn first_token_at_ms(&self) -> Option<u64> {
+        self.first_token_at_ms
+    }
+}
+impl Tool {
+    pub fn stage(&self) -> &'static str {
+        self.stage
+    }
+    pub fn outcome(&self) -> &'static str {
+        self.outcome
+    }
+}
+impl Context {
+    pub fn tokens(&self) -> &str {
+        &self.tokens
+    }
+    pub fn limit_tokens(&self) -> Option<&str> {
+        self.limit_tokens.as_deref()
+    }
+}
+#[derive(Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Fact {
+    pub(crate) id: String,
+    pub(crate) revision: u32,
+    pub(crate) provenance: Provenance,
+    pub(crate) owner: Owner,
+    pub(crate) kind: &'static str,
+    pub(crate) at_ms: u64,
+    pub(crate) value: Option<Payload>,
+}
+impl Fact {
+    pub fn id(&self) -> &str {
+        &self.id
+    }
+    pub fn revision(&self) -> u32 {
+        self.revision
+    }
+    pub fn owner(&self) -> &Owner {
+        &self.owner
+    }
+    pub fn kind(&self) -> &'static str {
+        self.kind
+    }
+    pub fn at_ms(&self) -> u64 {
+        self.at_ms
+    }
+    pub fn value(&self) -> Option<&Payload> {
+        self.value.as_ref()
+    }
 }
 #[derive(Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
-struct Owner {
-    provider: &'static str,
-    account_id: Option<String>,
-    execution_id: String,
-    conversation_id: Option<String>,
-    lineage: &'static str,
-    parent_execution_id: Option<String>,
-}
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-struct Tokens {
-    input_uncached: String,
-    cache_read: String,
-    cache_write5m: String,
-    cache_write1h: String,
-    cache_write_unknown: String,
-    output: String,
-    reasoning: Option<String>,
-}
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-struct Usage {
-    kind: &'static str,
-    grain: &'static str,
-    token_scope: &'static str,
-    observation_id: String,
-    model: Option<&'static str>,
-    model_basis: &'static str,
-    tokens: Tokens,
-}
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-struct Fact {
-    id: String,
-    revision: u32,
-    provenance: Provenance,
-    owner: Owner,
-    kind: &'static str,
-    at_ms: u64,
-    value: Usage,
-}
-#[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Report {
-    schema_version: u8,
-    profile: &'static str,
-    provenance: Provenance,
-    window: Window,
-    coverage: Coverage,
-    facts: Vec<Fact>,
+    pub(crate) schema_version: u8,
+    pub(crate) profile: &'static str,
+    pub(crate) provenance: Provenance,
+    pub(crate) window: Window,
+    pub(crate) coverage: Coverage,
+    pub(crate) facts: Vec<Fact>,
+}
+impl Report {
+    pub fn facts(&self) -> &[Fact] {
+        &self.facts
+    }
+    pub fn coverage(&self) -> &Coverage {
+        &self.coverage
+    }
+    pub fn source_id(&self) -> &str {
+        &self.provenance.source_id
+    }
 }
 
 struct BoundedOutput {
@@ -140,19 +331,15 @@ impl Report {
     }
 }
 
-fn keyed(
+pub(crate) fn keyed(
     key: &[u8; 32],
+    profile: &'static str,
     epoch: &str,
     domain: &str,
     values: &[&str],
 ) -> Result<String, &'static str> {
     // Exact JSON-array bytes match rich-fact-adapters.ts; all inputs are bounded ASCII.
-    let mut parts = vec![
-        "aicharts-rich-facts-v1",
-        crate::sessions::PROFILE,
-        epoch,
-        domain,
-    ];
+    let mut parts = vec!["aicharts-rich-facts-v1", profile, epoch, domain];
     parts.extend_from_slice(values);
     let encoded = serde_json::to_vec(&parts).map_err(|_| "summary_encode_failed")?;
     let mut mac = Hmac::<Sha256>::new_from_slice(key).map_err(|_| "invalid_key")?;
@@ -180,7 +367,15 @@ pub fn project_sessions(
     if report.sessions.len() > MAX_EXECUTIONS {
         return Err("record_limit");
     }
-    let hash = |domain, values: &[&str]| keyed(key, &options.source_epoch, domain, values);
+    let hash = |domain, values: &[&str]| {
+        keyed(
+            key,
+            crate::sessions::PROFILE,
+            &options.source_epoch,
+            domain,
+            values,
+        )
+    };
     let provenance = Provenance {
         profile: crate::sessions::PROFILE,
         version: 1,
@@ -237,7 +432,7 @@ pub fn project_sessions(
                 owner: owner.clone(),
                 kind: "usage",
                 at_ms: usage.at_ms,
-                value,
+                value: Some(Payload::Usage(value)),
             });
         }
     }
