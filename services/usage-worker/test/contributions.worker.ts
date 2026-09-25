@@ -15,7 +15,7 @@ import { enrollmentAccountName, type EnrollmentProof } from "../src/enrollment-c
 import { PAIRING_TTL_MS, uploadSecretCommitment } from "../src/pairing";
 import { admissionHex, decodeAdmissionBatch, encodeAdmissionBatch, encodeAdmissionOperation } from "../../../lib/usage/admission";
 import { AdmissionState, admissionIdBytes, type AdmissionAuthority } from "../src/admission-state";
-import { captureContributionMigration, CONTRIBUTION_MIGRATION_MAX_JOURNALS } from "../src/contributions-migration";
+import { captureContributionMigration, CONTRIBUTION_MIGRATION_MAX_HEADS } from "../src/contributions-migration";
 import { ADMISSION_POLICY_V1 } from "../src/admission-policy";
 import { DAY_MS, encodeUsageBatch } from "../../../lib/usage/wire";
 import { StatsState } from "../src/stats-state";
@@ -331,8 +331,13 @@ describe("sealed retained-history migration", () => {
     await expectsFault(capture, "storage_invalid"); expect(replay).not.toHaveBeenCalled();
     await onState((state, storage) => storage.transactionSync(() => {
       state.sql.exec("UPDATE usage_admission_control SET head_count=1,live_count=1 WHERE id=1");
-      for (let revision = 2; revision <= CONTRIBUTION_MIGRATION_MAX_JOURNALS + 1; revision++)
-        state.sql.exec("INSERT INTO usage_admission_journal SELECT ?,batch,journal,committed_at_ms FROM usage_admission_journal WHERE revision=1", revision);
+      // The retained journal table itself cannot exceed 4,096 revisions, so
+      // the reachable overflow is the head count: push retained heads past
+      // the migration bound with synthetic rows (checked before any parse).
+      for (let index = 2; index <= CONTRIBUTION_MIGRATION_MAX_HEADS + 1; index++) {
+        const id = new Uint8Array(16); new DataView(id.buffer).setUint32(12, index);
+        state.sql.exec("INSERT INTO usage_admission_heads VALUES (?,zeroblob(184),1,NULL)", id);
+      }
     }));
     await expectsFault(capture, "limit"); expect(replay).not.toHaveBeenCalled();
   });
