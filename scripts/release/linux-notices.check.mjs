@@ -606,6 +606,18 @@ test("hashed linker output must be byte-identical to the exposed executable", as
   });
 });
 
+test("every mapped registry crate is the exact locked version and archive checksum", async () => {
+  const policy = JSON.parse(await readFile(new URL("../../distribution/cli/linux-notices.json", import.meta.url), "utf8"));
+  const lock = await readFile(new URL("../../Cargo.lock", import.meta.url), "utf8");
+  const locked = new Map();
+  for (const block of lock.split(/\n\[\[package\]\]\n/u).slice(1)) {
+    const field = name => block.match(new RegExp(`^${name} = "([^"]+)"$`, "mu"))?.[1];
+    if (field("source") === registry) locked.set(`${field("name")}@${field("version")}`, field("checksum"));
+  }
+  assert.ok(locked.size > 100);
+  for (const pkg of policy.packages) assert.equal(locked.get(`${pkg.name}@${pkg.version}`), pkg.checksum, `${pkg.name}@${pkg.version}`);
+});
+
 test("source mapping is unique, pinned and covers SQLite and Unicode notices", async () => {
   const policy = JSON.parse(await readFile(new URL("../../distribution/cli/linux-notices.json", import.meta.url), "utf8"));
   assert.equal(policy.schemaVersion, 1);
