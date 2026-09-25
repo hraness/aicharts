@@ -1667,3 +1667,64 @@ misses are timeouts in tests byte-identical to main, which main's CI run
 not widened); the pull request's `Required` check on GitHub runners is the
 binding aggregate for those. Not activated: the contributions flag stays off
 in every deployment, the Worker is not redeployed, and no live drill ran.
+
+Main moved again before the pull request had a check. GitHub creates no
+`pull_request` run while it cannot build the merge ref, and the branch
+conflicted with the canonical product messaging (#438), the enrolled-device
+totals read (#439) and its plan record (#440); the workflow file itself was
+sound. The second absorption (`f796696`) resolved four CLI help strings,
+keeping the branch's extended text under main's colon heads, and the plan
+log kept both entries; the branch adds no em-dash copy of its own. An
+independent read-only review of the four joins and the browser repairs
+confirmed each of them (no transfer symbol left anywhere, every
+`CREATE TABLE` name in an export section or a stated exclusion, autosubmit
+continuing past a failed publication while withholding every contribution
+send, each browser assertion at least as strong as before) and found one
+test-only weakening: the three sign-out checks in the stats contract had
+started comparing the URL without its query string, which would have
+accepted a sign-out that rewrote the saved view. They now capture the URL
+before the click and require it unchanged and still on `/usage/details`.
+The review's missing case is added: a store rewritten into the retired
+(client, day) ownership shape erases down to the admission tables. Two
+review notes are recorded, not acted on, because no build of this branch's
+Worker has run anywhere: the persisted lifecycle object is exact-keyed to
+`{ erasure }`, and the export cursor is positional over the section list;
+both would need a tolerance only for state that does not exist.
+
+The first CI run for the pull request (36099527593) passed every job except
+Worker: the protocol adapter and conformance gates, moved into that
+unfiltered job by the first integration, need the pinned Rust toolchain
+(`rustup which --toolchain 1.97.1`) and warm dependency artifacts under
+their checked 180 s bounds, which the lane branches' formal job had
+provided implicitly and a bare Bun job does not. The adapter gate takes
+3 s on a warm build directory and fails its bound cold, so the job now
+installs the toolchain, restores a cache of the two gate build directories
+and the crate registry, builds the gate dependencies without a bound
+(the conformance pre-build with `CARGO_INCREMENTAL` unset, as the gate
+strips it), then runs the bounded gates and saves the cache even on
+failure; the bounds themselves are unchanged. Focused evidence on the
+re-merged tree at host load 47–50: typecheck, lint, Rust fmt, clippy and
+123 focused CLI tests, 114 focused Bun tests, worker tsc with 105 focused
+worker tests and the 5 erase tests, generated data, the assurance
+registry, the pin audit, build and browser run 12 (pairing, stats desktop
+and mobile, dashboard, atlas) with the restored sign-out checks.
+
+The second run (36101030837) carried that wiring. With a cold cache the
+unbounded pre-build took 78 s for the adapter dependencies and crate and
+14 s for the conformance test binary, and the bounded gates then ran on
+Linux for the first time in this repository's CI: the adapter gate reached
+discovery 34 s after starting against its 180 s build bound, and the
+conformance gate passed in 28 s. Discovery failed on
+`adapter_test_count_drift:codex`. Main's PR #434 added three Codex parser
+tests (a null-`info` token count as a rate-limit heartbeat, a missing
+`info` key as a schema mismatch, an unresolvable model refusing the
+measurement fallback) without qualifying them in
+`vendor/tokscale-core/QUALIFICATION.json`; main's CI does not run the
+adapter gate, so the manifest still expected 74 Codex tests where the
+compiled crate lists 77. The manifest now expects 77. Discovery of the
+test executable built from the merged vendor tree lists 2287 tests: 77
+Codex, 77 Claude Code, 24 Cursor, 14 Devin and 6 offline, a qualified
+selection of 198. The same run's receipt retention followed the
+conformance stages' `node_modules` symlink and their tool symlinks into a
+1.01 GB artifact of 213,348 files; the upload now excludes both and keeps
+the receipts, logs, traces and staged sources.

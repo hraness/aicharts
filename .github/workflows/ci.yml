@@ -222,9 +222,14 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: conformance-${{ github.sha }}
+          # The conformance stages symlink the repository's node_modules and the
+          # resolved tool binaries; the retained evidence is the receipts, logs,
+          # traces and staged sources, not a copy of either.
           path: |
             target/assurance/adapters/
             target/assurance/conformance/
+            !target/assurance/conformance/**/node_modules/**
+            !target/assurance/conformance/*/tools/**
           if-no-files-found: error
           retention-days: 14
 

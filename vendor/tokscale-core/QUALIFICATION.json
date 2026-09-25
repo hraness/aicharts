@@ -13,7 +13,7 @@
     {
       "id": "codex",
       "prefix": "sessions::codex::tests::",
-      "expectedTests": 74
+      "expectedTests": 77
     },
     {
       "id": "claude",
