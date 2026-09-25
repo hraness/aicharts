@@ -731,13 +731,13 @@ fn parse_codex_reader<R: BufRead>(
 
                 // Process token_count events
                 if is_token_count {
-                    let info = match payload.info {
-                        Some(i) => i,
-                        None => {
-                            state.audit_schema_mismatch_records += 1;
-                            crate::offline_io::fault("import_schema_mismatch");
-                            continue;
-                        }
+                    // Newer Codex also emits rate-limit-only `token_count`
+                    // events whose `info` is null (only `rate_limits` is
+                    // populated). That variant carries no usage fields at
+                    // all, so skipping it cannot drop tokens; it is a
+                    // recognized shape, not a malformed record.
+                    let Some(info) = payload.info else {
+                        continue;
                     };
 
                     let raw_clamped = info
@@ -751,12 +751,15 @@ fn parse_codex_reader<R: BufRead>(
                     if raw_clamped {
                         state.audit_clamped_records += 1;
                     }
+                    // Fallback evidence covers only degradation of the token
+                    // measurement itself: missing usage fields or an
+                    // unparseable timestamp. An unresolvable model is not a
+                    // measurement fallback — the exact tokens still aggregate
+                    // under a null model identity, so it must not refuse an
+                    // otherwise clean source's publication.
                     if info.total_token_usage.is_none()
                         || info.last_token_usage.is_none()
                         || parse_codex_entry_timestamp(entry.timestamp.as_deref()).is_none()
-                        || (payload_model.is_none()
-                            && info_model.is_none()
-                            && state.current_model.is_none())
                     {
                         state.audit_fallback_records += 1;
                     }
@@ -2014,6 +2017,51 @@ mod tests {
 
         assert!(!parsed.parse_succeeded);
         assert!(parsed.messages.is_empty());
+    }
+
+    #[test]
+    fn test_token_count_with_null_info_is_a_recognized_rate_limit_heartbeat() {
+        // Newer Codex emits `token_count` events that carry only rate-limit
+        // telemetry (`"info":null`, `rate_limits` populated). They hold no
+        // usage fields, so the import skips them without faulting and still
+        // reads the real token_count that follows.
+        let content = concat!(
+            r#"{"timestamp":"2026-09-24T15:25:44.761Z","type":"event_msg","payload":{"type":"token_count","info":null,"rate_limits":{"limit_id":"premium","limit_name":null,"primary":null,"secondary":null,"credits":{"has_credits":false,"unlimited":false,"balance":"0"},"individual_limit":null,"spend_control_reached":null,"plan_type":null,"rate_limit_reached_type":null}}}"#,
+            "\n",
+            r#"{"timestamp":"2026-09-24T15:26:00.000Z","type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":10,"cached_input_tokens":2,"output_tokens":3},"last_token_usage":{"input_tokens":10,"cached_input_tokens":2,"output_tokens":3}}}}"#,
+            "\n"
+        );
+        let file = create_test_file(content);
+
+        let parsed = parse_codex_file_incremental(file.path(), 0, CodexParseState::default());
+        assert!(parsed.parse_succeeded);
+        assert_eq!(parsed.state.audit_schema_mismatch_records, 0);
+        assert_eq!(parsed.messages.len(), 1);
+        assert_eq!(parsed.messages[0].tokens.input, 8);
+        assert_eq!(parsed.messages[0].tokens.output, 3);
+        assert_eq!(parsed.messages[0].tokens.cache_read, 2);
+    }
+
+    #[test]
+    fn test_token_count_without_resolvable_model_is_not_a_measurement_fallback() {
+        // A token_count with complete usage but no resolvable model keeps its
+        // exact tokens under an unknown model identity. Withholding the model
+        // label is not a measurement fallback and must not fault publication.
+        let content = concat!(
+            r#"{"timestamp":"2026-09-24T15:25:44.761Z","type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":10,"cached_input_tokens":2,"cache_write_input_tokens":0,"output_tokens":3,"reasoning_output_tokens":1,"total_tokens":12},"last_token_usage":{"input_tokens":10,"cached_input_tokens":2,"cache_write_input_tokens":0,"output_tokens":3,"reasoning_output_tokens":1,"total_tokens":12},"model_context_window":258400}}}"#,
+            "\n"
+        );
+        let file = create_test_file(content);
+
+        let parsed = parse_codex_file_incremental(file.path(), 0, CodexParseState::default());
+        assert!(parsed.parse_succeeded);
+        assert_eq!(parsed.state.audit_fallback_records, 0);
+        assert_eq!(parsed.state.audit_schema_mismatch_records, 0);
+        assert_eq!(parsed.messages.len(), 1);
+        assert_eq!(parsed.messages[0].model_id, "unknown");
+        assert_eq!(parsed.messages[0].tokens.input, 8);
+        assert_eq!(parsed.messages[0].tokens.output, 2);
+        assert_eq!(parsed.messages[0].tokens.reasoning, 1);
     }
 
     #[test]
