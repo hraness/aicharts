@@ -62,7 +62,13 @@ pub struct CodexPayload {
     pub model: Option<String>,
     pub model_name: Option<String>,
     pub model_info: Option<CodexModelInfo>,
-    pub info: Option<CodexInfo>,
+    /// `token_count` usage carrier. Three-way on purpose: absent entirely is
+    /// an unrecognized shape that could carry usage under a field this schema
+    /// does not model, so it still refuses; explicit `null` is the newer
+    /// rate-limit-only heartbeat, which cannot hold tokens and is skipped;
+    /// an object is the usage-bearing variant.
+    #[serde(default, deserialize_with = "deserialize_info_presence")]
+    pub info: Option<Option<CodexInfo>>,
     pub turn_id: Option<String>,
     /// Unix timestamp (seconds) from `task_started` events. Legacy Codex turns
     /// may use UUID v4 ids, so this is their only causal ordering signal.
@@ -104,6 +110,16 @@ where
             .or_else(|| v.as_u64().map(|u| u as i64))
             .or_else(|| v.as_f64().map(|f| f as i64))
     }))
+}
+
+/// Records whether the `info` key was written at all: absent gives `None` via
+/// `#[serde(default)]` (this function never runs), explicit `null` gives
+/// `Some(None)`, and a usage object gives `Some(Some(info))`.
+fn deserialize_info_presence<'de, D>(deserializer: D) -> Result<Option<Option<CodexInfo>>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    Ok(Some(Option::<CodexInfo>::deserialize(deserializer)?))
 }
 
 #[derive(Debug, Deserialize)]
@@ -511,7 +527,7 @@ fn parse_codex_reader<R: BufRead>(
                 let is_token_count = entry.entry_type == "event_msg"
                     && payload.payload_type.as_deref() == Some("token_count");
                 let info_model = if is_token_count {
-                    payload.info.as_ref().and_then(extract_model_from_info)
+                    payload_info(&payload).and_then(extract_model_from_info)
                 } else {
                     None
                 };
@@ -592,7 +608,7 @@ fn parse_codex_reader<R: BufRead>(
                             }
                         }
                         if is_token_count {
-                            if let Some(info) = payload.info.as_ref() {
+                            if let Some(info) = payload_info(&payload) {
                                 remember_forked_child_inherited_baseline(&mut state, info);
                             }
                         }
@@ -731,13 +747,21 @@ fn parse_codex_reader<R: BufRead>(
 
                 // Process token_count events
                 if is_token_count {
-                    // Newer Codex also emits rate-limit-only `token_count`
-                    // events whose `info` is null (only `rate_limits` is
-                    // populated). That variant carries no usage fields at
-                    // all, so skipping it cannot drop tokens; it is a
-                    // recognized shape, not a malformed record.
-                    let Some(info) = payload.info else {
-                        continue;
+                    let info = match payload.info {
+                        Some(Some(info)) => info,
+                        // Newer Codex emits rate-limit-only `token_count`
+                        // events whose `info` is null (only `rate_limits` is
+                        // populated). That recognized variant carries no usage
+                        // fields at all, so skipping it cannot drop tokens.
+                        Some(None) => continue,
+                        // `info` absent entirely is not the heartbeat shape;
+                        // it could carry usage under a field this schema does
+                        // not model, so it stays a hard schema mismatch.
+                        None => {
+                            state.audit_schema_mismatch_records += 1;
+                            crate::offline_io::fault("import_schema_mismatch");
+                            continue;
+                        }
                     };
 
                     let raw_clamped = info
@@ -1401,7 +1425,13 @@ fn extract_model(payload: &CodexPayload) -> Option<String> {
         .filter(|s| !s.is_empty())
         .or(payload.model.clone().filter(|s| !s.is_empty()))
         .or(payload.model_name.clone().filter(|s| !s.is_empty()))
-        .or(payload.info.as_ref().and_then(extract_model_from_info))
+        .or(payload_info(payload).and_then(extract_model_from_info))
+}
+
+/// The `token_count` usage carrier when present as an object; `None` for both
+/// an absent `info` key and an explicit `"info":null` heartbeat.
+fn payload_info(payload: &CodexPayload) -> Option<&CodexInfo> {
+    payload.info.as_ref().and_then(Option::as_ref)
 }
 
 fn extract_model_from_info(info: &CodexInfo) -> Option<String> {
@@ -2040,6 +2070,27 @@ mod tests {
         assert_eq!(parsed.messages[0].tokens.input, 8);
         assert_eq!(parsed.messages[0].tokens.output, 3);
         assert_eq!(parsed.messages[0].tokens.cache_read, 2);
+    }
+
+    #[test]
+    fn test_token_count_without_info_key_is_a_schema_mismatch() {
+        // A `token_count` with no `info` key at all is not the observed
+        // rate-limit heartbeat shape — it could carry usage under a field this
+        // schema does not model, so it must keep faulting closed. Only the
+        // explicit `"info":null` heartbeat may be skipped.
+        let content = concat!(
+            r#"{"timestamp":"2026-09-24T15:25:44.761Z","type":"event_msg","payload":{"type":"token_count","rate_limits":{"limit_id":"premium"}}}"#,
+            "\n",
+            r#"{"timestamp":"2026-09-24T15:26:00.000Z","type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":10,"cached_input_tokens":2,"output_tokens":3},"last_token_usage":{"input_tokens":10,"cached_input_tokens":2,"output_tokens":3}}}}"#,
+            "\n"
+        );
+        let file = create_test_file(content);
+
+        let parsed = parse_codex_file_incremental(file.path(), 0, CodexParseState::default());
+        assert_eq!(parsed.state.audit_schema_mismatch_records, 1);
+        assert_eq!(parsed.messages.len(), 1);
+        assert_eq!(parsed.messages[0].tokens.input, 8);
+        assert_eq!(parsed.messages[0].tokens.output, 3);
     }
 
     #[test]
