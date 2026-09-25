@@ -74,6 +74,11 @@ export type EnrollmentError = "invalid_input" | "unavailable" | "unauthorized" |
   | StatsError | ContributionError | ContributionQueryError | ContributionRebuildError | "expired" | "conflict" | "recovery_required" | "revoked" | "storage_invalid" | "storage_unavailable" | "clock_regressed" | "limit" | "handle_unavailable" | "publishing_full"
   | "account_erased" | "device_revoked";
 export type EnrollmentResult<T> = { ok: true; value: T } | { ok: false; error: EnrollmentError };
+/** Carries a fence-preflight refusal out of the fenced transaction; unlike the
+ * storage-invariant faults its code is the refused operation's own reply. */
+class FenceRefusal extends Error {
+  constructor(readonly code: EnrollmentError) { super(code); }
+}
 export type EnrollmentReceipt = Readonly<{
   schemaVersion: 1; accountId: string; intentId: string; reservationId: string;
   deviceId: string; enrolledAtMs: number; namespaceVersion: 1;
@@ -351,7 +356,7 @@ export class AccountEnrollment extends DurableObject<Env> {
     try {
       this.ctx.storage.transactionSync(() => {
         const before = this.#fencePreflight(accountId, generation, allowErased);
-        if (!before.ok) throw new AdmissionFault(before.error === "unauthorized" ? "unauthorized" : before.error === "account_erased" ? "account_erased" : "recovery_required");
+        if (!before.ok) throw new FenceRefusal(before.error === "unauthorized" ? "unauthorized" : before.error === "account_erased" ? "account_erased" : "recovery_required");
         if (before.value.epoch !== fence.epoch || (!before.value.established && fence.established)) throw new AdmissionFault("recovery_required");
         if (this.#objects().length === 0) {
           this.ctx.storage.sql.exec(SCHEMA_SQL);
@@ -400,7 +405,7 @@ export class AccountEnrollment extends DurableObject<Env> {
         if (audited !== null) throw new AdmissionFault(audited === "storage_invalid" ? "storage_invalid" : "recovery_required");
       });
       return null;
-    } catch (error) { return error instanceof AdmissionFault || error instanceof ContributionFault || error instanceof ContributionRebuildFault ? error.code : "storage_invalid"; }
+    } catch (error) { return error instanceof FenceRefusal || error instanceof AdmissionFault || error instanceof ContributionFault || error instanceof ContributionRebuildFault ? error.code : "storage_invalid"; }
   }
   /** True once the stored payload carries a confirmed erasure. Reads the
    * current schema-5+ row only; legacy rows cannot carry a lifecycle record. */
@@ -2509,7 +2514,7 @@ export class AccountEnrollment extends DurableObject<Env> {
             });
             break;
           case 1: {
-            const withdrawal: LeaderboardConsentViewV1 = Object.freeze({ consent: false, consentedAtMs: null, publicHandle: null });
+            const withdrawal: LeaderboardConsentViewV1 = Object.freeze({ schemaVersion: 1, consent: false, consentedAtMs: null, publicHandle: null });
             const published = await this.#publishLeaderboardConsent(scope.accountId, withdrawal, current.value.eventAtMs);
             if (published !== "published") return err("storage_unavailable");
             this.#acknowledgeConsent(observation, withdrawal, current.value.eventAtMs);

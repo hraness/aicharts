@@ -1,6 +1,6 @@
 import { runInDurableObject } from "cloudflare:test";
 import { afterEach, beforeEach, expect, test } from "vitest";
-import { activateStats, afterEachLifecycle, beforeEachLifecycle, enroll, fixture, hex, lifecycle, lifecycleValue, session, statsRequest, statsUpload, stub } from "./lifecycle-fixture";
+import { activateStats, afterEachLifecycle, beforeEachLifecycle, enroll, fixture, hex, lifecycle, lifecycleStub, lifecycleValue, session, statsRequest, statsUpload, stub } from "./lifecycle-fixture";
 
 beforeEach(beforeEachLifecycle);
 afterEach(afterEachLifecycle);
@@ -35,9 +35,9 @@ test("device operations refuse foreign accounts, unknown devices, expired sessio
   expect(await lifecycle({ operation: "revoke_device", deviceId: device.deviceId }, session(fixture.account, Date.now()))).toEqual({ ok: false, error: "expired" });
   expect(await lifecycle({ operation: "devices" }, session(fixture.account, Date.now() - 1))).toEqual({ ok: false, error: "expired" });
   const foreign = `acct_${hex(9_000_000 + fixture.serial, 16)}`;
-  expect(await stub().lifecycle({ ...session(foreign), operation: "devices" })).toEqual({ ok: false, error: "unauthorized" });
-  expect(await stub(foreign).lifecycle({ ...session(foreign), operation: "devices" })).toEqual({ ok: false, error: "not_enrolled" });
-  expect(await stub().lifecycle({ ...session(), operation: "nope" })).toEqual({ ok: false, error: "invalid_input" });
+  expect(await lifecycleStub().lifecycle({ ...session(foreign), operation: "devices" })).toEqual({ ok: false, error: "unauthorized" });
+  expect(await lifecycleStub(foreign).lifecycle({ ...session(foreign), operation: "devices" })).toEqual({ ok: false, error: "not_enrolled" });
+  expect(await lifecycleStub().lifecycle({ ...session(), operation: "nope" })).toEqual({ ok: false, error: "invalid_input" });
   expect(await lifecycle({ operation: "devices" })).toMatchObject({ ok: true });
   expect(await revision()).toBe(before);
 });

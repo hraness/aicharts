@@ -598,7 +598,7 @@ test.each(CONFORMANCE_SEEDS)("M11 generated rebuild step retries replay exact re
   for (const command of scheduleShuffle(seed, ["comparison-retry", "old-version", "future-version", "begin-replay", "status"])) {
     if (command === "status") {
       const status = await stub.readContributionRebuild(read);
-      if (status.ok) expect(status.value).toEqual({ receipt: matched, pending: false, chargedBytes: first.chargedBytes });
+      if (status.ok) expect(status.value).toEqual({ receipt: matched, pending: false, chargedBytes: first.chargedBytes, readiness: "unobserved" });
       trace.compare(command, {}, outcome(status), "ok", await image(), model);
     } else if (command === "comparison-retry") await compare(command, {}, await stub.executeContributionRebuild(advance(2)), "ok", matched);
     else if (command === "old-version") await compare(command, {}, await stub.executeContributionRebuild(advance(1)), "conflict");

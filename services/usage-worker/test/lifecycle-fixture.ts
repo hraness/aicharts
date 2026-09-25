@@ -14,7 +14,7 @@ import { parseUsageStatsReport } from "../../../lib/usage/stats-contract";
 import { DAY_MS, encodeUsageBatch } from "../../../lib/usage/wire";
 import { decodeAdmissionBatch, encodeAdmissionBatch, encodeAdmissionOperation } from "../../../lib/usage/admission";
 import { ADMISSION_POLICY_V1 } from "../src/admission-policy";
-import { parseUsageLifecycleValue, type UsageLifecycleOperationInput, type UsageLifecycleValue } from "../../../lib/usage/lifecycle-contract";
+import { parseUsageLifecycleValue, type UsageLifecycleOperationInput, type UsageLifecycleResult, type UsageLifecycleValue } from "../../../lib/usage/lifecycle-contract";
 
 export const NOW = Math.ceil(Date.now() / DAY_MS) * DAY_MS + DAY_MS / 2, DAY = Math.floor(NOW / DAY_MS);
 export const hex = (value: number, width = 32) => value.toString(16).padStart(width * 2, "0");
@@ -91,9 +91,13 @@ export const initializeIndex = (id = fixture.account) => index().applyConsent({ 
   publicHandle: null, consentedAtMs: null, eventAtMs: 0 });
 export const indexState = () => runInDurableObject(index(), (_instance, state) =>
   state.storage.sql.exec("SELECT revision, payload FROM leaderboard_index").toArray().map(row => ({ revision: row.revision, payload: JSON.parse(String(row.payload)) as { members: { accountId: string }[]; tombstones: { accountId: string; eventAtMs: number }[] } })));
+/** The lifecycle RPC surface only: the whole enrollment stub's mapped RPC type
+ * now exceeds the compiler's instantiation budget when the union is named. */
+export const lifecycleStub = (id = fixture.account) =>
+  stub(id) as unknown as { lifecycle(input: unknown): Promise<UsageLifecycleResult> };
 /** Drive one lifecycle operation and check the reply against the frozen contract. */
 export async function lifecycle(operation: UsageLifecycleOperationInput, scope = session()) {
-  const result = await stub(scope.accountId).lifecycle({ ...scope, ...operation });
+  const result = await lifecycleStub(scope.accountId).lifecycle({ ...scope, ...operation });
   if (result.ok) expect(parseUsageLifecycleValue(result.value)).toEqual(result.value);
   return result;
 }
