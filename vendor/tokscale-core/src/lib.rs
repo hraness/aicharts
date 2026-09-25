@@ -2166,7 +2166,7 @@ fn parse_all_messages_streaming<S: MessageSink>(
                         Some(&claude_home),
                     )
                 },
-                |path| sessions::claudecode::parse_claude_file_with_home(path, Some(&claude_home)),
+                |path| crate::offline_checkpoint::parse_claude(path, &claude_home),
             )
         })
         .collect();
@@ -2386,7 +2386,7 @@ fn parse_all_messages_streaming<S: MessageSink>(
         pricing,
         &mut all_messages,
         ClientId::Cursor,
-        sessions::cursor::parse_cursor_file,
+        crate::offline_checkpoint::parse_cursor,
     );
 
     parse_cached_lane(
@@ -3279,7 +3279,7 @@ fn parse_all_messages_streaming<S: MessageSink>(
                     db_path,
                     &source_cache,
                     pricing,
-                    sessions::devin::parse_devin_cli_sqlite,
+                    crate::offline_checkpoint::parse_devin_cli,
                 )
             })
             .collect();
@@ -3474,7 +3474,7 @@ fn parse_all_messages_streaming<S: MessageSink>(
                                     &scan_result.devin_dbs,
                                 )
                             });
-                            sessions::devin::parse_devin_desktop_ndjson_with_lookup(path, lookup)
+                            crate::offline_checkpoint::parse_devin_desktop(path, lookup)
                         } else if let Some(fingerprint) = fingerprint {
                             let lookup_cell = devin_desktop_lookup_cell_for_snapshot(
                                 &devin_desktop_lookups,

@@ -33,7 +33,7 @@
     {
       "id": "offline",
       "prefix": "offline::tests::",
-      "expectedTests": 4
+      "expectedTests": 6
     }
   ],
   "adapters": [

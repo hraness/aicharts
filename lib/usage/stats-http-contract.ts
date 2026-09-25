@@ -2,6 +2,7 @@ import { parseUsageStatsReport, STATS_MAX_DAY, STATS_MAX_DAYS, type UsageStatsRe
 import { isStatsClient } from "./stats-registry";
 import { privateDaysSnapshot as snapshot } from "./private-days-http-contract";
 import { PRIVATE_DAYS_MAX_HEADS } from "./private-days-contract";
+import { parseSourceHealthSummary, type SourceHealthSummary } from "./source-health-contract";
 
 export const STATS_HTTP_URL = "https://usage.aicharts.io/internal/usage/stats";
 export const STATS_UPLOAD_URL = "https://usage.aicharts.io/v2/snapshots";
@@ -26,6 +27,8 @@ export type StatsUpload = Readonly<{
   sequence: number; expectedRevision: number; mode: "replace-window" | "preserve-history" | "replace-snapshot";
   takeover: Readonly<{ expectedV1Revision: number; headDigest: string }> | null;
   report: UsageStatsReport;
+  /** `source-health-v1` summary of the publishing collection; absent for flights frozen before it existed. */
+  health?: SourceHealthSummary;
 }>;
 export type StatsReceipt = Readonly<{
   schemaVersion: 2; operationId: string; bodyHash: string; sequence: number; revision: number;
@@ -91,7 +94,8 @@ export function parseStatsAbandonment(value: unknown): StatsAbandonment | null {
 }
 export function parseStatsUpload(value: unknown): StatsUpload | null {
   try {
-    const dto = snapshot(value, ["schemaVersion", "operationId", "accountId", "deviceId", "generation", "sequence", "expectedRevision", "mode", "takeover", "report"]);
+    const keys = ["schemaVersion", "operationId", "accountId", "deviceId", "generation", "sequence", "expectedRevision", "mode", "takeover", "report"];
+    const dto = snapshot(value, keys) ?? snapshot(value, [...keys, "health"]);
     if (!dto || dto.schemaVersion !== 2 || !identity(dto.operationId) || !account(dto.accountId) || !identity(dto.deviceId)
       || !identity(dto.generation) || !statsInteger(dto.sequence, 1) || !statsInteger(dto.expectedRevision, 0, Number.MAX_SAFE_INTEGER - 1)
       || (dto.mode !== "replace-window" && dto.mode !== "preserve-history" && dto.mode !== "replace-snapshot")) return null;
@@ -111,8 +115,13 @@ export function parseStatsUpload(value: unknown): StatsUpload | null {
     if (source.client === "9router" || (source.status !== "observed" && source.status !== "empty") || source.warnings !== 0
       || report.rows.some(row => row.client !== source.client)
       || (source.status === "empty" && (report.rows.length !== 0 || source.records !== 0))) return null;
+    // The key stays absent, never null, so canonical bytes and body hashes of
+    // health-free flights are unchanged.
+    const health = "health" in dto ? parseSourceHealthSummary(dto.health, source.client) : undefined;
+    if (health === null) return null;
     const result: StatsUpload = Object.freeze({ schemaVersion: 2, operationId: dto.operationId, accountId: dto.accountId,
-      deviceId: dto.deviceId, generation: dto.generation, sequence: dto.sequence, expectedRevision: dto.expectedRevision, mode: dto.mode, takeover, report });
+      deviceId: dto.deviceId, generation: dto.generation, sequence: dto.sequence, expectedRevision: dto.expectedRevision, mode: dto.mode, takeover, report,
+      ...(health === undefined ? {} : { health }) });
     return new TextEncoder().encode(JSON.stringify(result)).byteLength <= STATS_UPLOAD_BYTES ? result : null;
   } catch { return null; }
 }

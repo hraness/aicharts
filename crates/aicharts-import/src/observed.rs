@@ -96,6 +96,7 @@ impl ImportHealth {
             && (has(HealthCode::Clamped) == self.clamped_records.is_some_and(|n| n > 0))
             && (has(HealthCode::Fallback) == self.fallback_records.is_some_and(|n| n > 0))
             && (has(HealthCode::Estimated) == self.estimated_records.is_some_and(|n| n > 0))
+            && (has(HealthCode::SchemaCoverageLimited) == self.schema_mismatch_records.is_none())
             && ((has(HealthCode::SourceFailed) || has(HealthCode::ProjectionRefused)) == (self.outcome == ImportOutcome::Failed))
             && match (self.event_min_ms, self.event_max_ms) {
                 (None, None) => self.outcome == ImportOutcome::Failed || self.records.is_none_or(|n| n == 0),
@@ -113,7 +114,9 @@ pub fn collect_observed(
     checkpoint: Option<&mut ImportCheckpoint>,
 ) -> ObservedImport {
     let binding = checkpoint::scope(home, client, approved_roots, source_roots, first_ms);
-    let supported = client == "codex";
+    // Fixture-supported parsers measure their own schema mismatches, clamps
+    // and fallbacks; every other selector's coverage stays unmeasured.
+    let supported = tokscale_core::offline::CHECKPOINT_CLIENTS.contains(&client);
     let old = checkpoint.as_ref().and_then(|c| c.state.as_ref());
     let reuse = old.filter(|state| Some(state.scope) == binding.as_ref().ok().copied());
     let enabled = checkpoint.is_some() && supported && binding.is_ok();
@@ -138,22 +141,27 @@ pub fn collect_observed(
         qualification_id: QUALIFICATION_ID.to_owned(),
         files: None,
         logical_bytes: None,
-        // The byte reader sees text parsing, not SQLite pager reads. Do not
-        // present an incomplete I/O counter as a universal parser metric.
-        parsed_bytes: matches!(client, "codex" | "claude" | "cursor").then_some(work.parsed_bytes),
+        // The byte reader sees text parsing, not SQLite pager reads (devin-cli).
+        // Do not present an incomplete I/O counter as a universal parser metric.
+        parsed_bytes: matches!(client, "codex" | "claude" | "cursor" | "devin-desktop")
+            .then_some(work.parsed_bytes),
         verified_bytes: work.verified_bytes,
         reused_files: work.reused_files,
         records: None,
         deferred_tail_files: None,
-        // Only recognized malformed Codex token-count records are measured;
-        // unknown future source variants remain SchemaCoverageLimited.
+        // Only recognized malformed records of fixture-supported parsers are
+        // measured; every other selector remains SchemaCoverageLimited.
         schema_mismatch_records: supported.then_some(work.schema_mismatch_records),
         clamped_records: supported.then_some(work.clamped_records),
         fallback_records: supported.then_some(work.fallback_records),
         estimated_records: None,
         event_min_ms: None,
         event_max_ms: None,
-        codes: vec![HealthCode::SchemaCoverageLimited],
+        codes: if supported {
+            Vec::new()
+        } else {
+            vec![HealthCode::SchemaCoverageLimited]
+        },
     };
     if replay {
         health.codes.push(HealthCode::CheckpointReplay);
