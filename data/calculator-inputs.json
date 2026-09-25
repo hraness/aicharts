@@ -16,12 +16,12 @@
     "peakHoursUtc": "Monday through Friday, 01:00-04:00 and 06:00-10:00 UTC",
     "source": {
       "name": "DeepSeek API pricing",
-      "retrievedAt": "2026-09-23T04:55:37.585Z",
+      "retrievedAt": "2026-09-25T15:35:05.895Z",
       "url": "https://api-docs.deepseek.com/quick_start/pricing"
     }
   },
   "electricity": {
-    "period": "2026-06",
+    "period": "2026-07",
     "residentialPresets": [
       {
         "asOf": "2026-09-10",
@@ -50,10 +50,10 @@
     ],
     "source": {
       "name": "EIA Electric Power Monthly, Table 5.6.A",
-      "retrievedAt": "2026-09-23T04:55:37.585Z",
+      "retrievedAt": "2026-09-25T15:35:05.895Z",
       "url": "https://www.eia.gov/electricity/monthly/epm_table_grapher.php?t=epmt_5_6_a"
     },
-    "usResidentialCentsPerKwh": 18.34
+    "usResidentialCentsPerKwh": 18.31
   },
   "gpuRental": {
     "methodology": "Median hourly ask of the cheapest verified single-GPU on-demand offers (up to 20 per SKU) on the Vast.ai marketplace at retrieval time.",
@@ -61,22 +61,22 @@
       {
         "gpuId": "rtx-5090",
         "offerCount": 20,
-        "usdPerHour": 0.61
+        "usdPerHour": 0.56
       },
       {
         "gpuId": "rtx-4090",
         "offerCount": 20,
-        "usdPerHour": 0.47
+        "usdPerHour": 0.51
       },
       {
         "gpuId": "h100-sxm",
         "offerCount": 5,
-        "usdPerHour": 3.21
+        "usdPerHour": 3.7
       }
     ],
     "source": {
       "name": "Vast.ai marketplace",
-      "retrievedAt": "2026-09-23T04:55:37.585Z",
+      "retrievedAt": "2026-09-25T15:35:05.895Z",
       "url": "https://console.vast.ai/api/v0/bundles/"
     }
   },
@@ -284,7 +284,7 @@
     "promoGuaranteedThrough": "2026-11-21",
     "source": {
       "name": "OpenAI API pricing",
-      "retrievedAt": "2026-09-23T04:55:37.585Z",
+      "retrievedAt": "2026-09-25T15:35:05.895Z",
       "url": "https://developers.openai.com/api/docs/pricing"
     }
   },
