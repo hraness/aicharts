@@ -1757,3 +1757,20 @@ to the list and a regression that each of the seven workspace crates in the
 CLI graph passes attribution; that regression fails with exactly the CI
 error when the list omits the crate. The tree stays Linux-unqualified until
 a dispatch on the merged fix passes.
+
+The fix merged as `f495d9f` ([PR 444](https://github.com/hraness/aicharts/pull/444)),
+which also qualified the Devin row-bound test that #442 added without a
+manifest update (the adapter manifest now expects 15 Devin tests, matching
+discovery); its first Build attempt hit the homepage browser flake that main
+also shows (a transient duplicate `#model-updates` or `#chart` section during
+a bookmark redirect), and the rerun passed. The site was production-verified
+again at `f495d9f` (`dpl_2wBgHwhjCaiPZiLqJZrjoJrpuFG4`, three pages, recomputed
+token). Qualification run 36108512661 on `f495d9f` again stopped at `notices`
+with `notices_unmapped_crate`, now for a registry crate: the delivery-gates
+integrator raised `rustls` to 0.23.45 for RUSTSEC-2026-0285 without moving its
+notice-policy entry off 0.23.44. The 0.23.45 archive digest equals the
+`Cargo.lock` checksum and its three license texts are byte-identical to
+0.23.44's, so only the version and checksum change. A diff of the CLI's Linux
+dependency graph against the policy found no other unmapped crate. A new
+regression requires every policy entry to be a locked registry package with
+the same archive checksum; it fails naming `rustls@0.23.44` without the fix.
