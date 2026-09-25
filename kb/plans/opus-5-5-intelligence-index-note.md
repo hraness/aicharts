@@ -3,7 +3,7 @@ title: Publish the Claude Opus 5.5 Intelligence Index note
 description: Ship /blog/opus-5-5-intelligence-index, a note that places Claude Opus 5.5 (max) as the leading configuration on the Intelligence Index from the checked snapshot, tabulates its effort ladder and cost components, and separates it from the Claude Code · Opus 5 coding-agent row, and complete its Slopcamera figure through the documented generation path.
 type: plan
 area: blog
-status: in-progress
+status: blocked
 repository_scopes:
   - app/blog
   - lib/snapshot-placement.ts
@@ -61,16 +61,16 @@ Provenance: drafted by a Cursor cloud agent (Claude) on 2026-09-25 from the chec
 
 1. Verify the snapshot rows, fetch Artificial Analysis’s model page and Anthropic’s announcement, and record the quoted claims. Done 2026-09-25.
 2. Write the shared placement helpers, the Opus bindings, the article factory, registration, admission, and tests. Done 2026-09-25.
-3. Generate, review, and register the Slopcamera figure. See the figure handoff below for state.
+3. Generate, review, and register the Slopcamera figure. Blocked 2026-09-25: the agent VM has no Vercel CLI login, no `VERCEL_TOKEN`, and no `AI_GATEWAY_API_KEY`, and the authenticated Vercel MCP connection is refused the project OIDC token (`403 forbidden`, resource `projectOIDCToken`). Prompt, provider options, and the source build are prepared; only the credentialed call is outstanding.
 4. Let CI pass, enable auto-merge on the task-owned pull request, and verify the live URL, figure, and Open Graph image.
 
 ## Figure handoff
 
-Until the figure lands, `bun run typecheck` fails on `app/blog/editorial-images.ts` and `app/blog/blog.test.tsx` fails its image gate; both are the intended fail-closed behavior, and the pull request stays a draft.
+The Slopcamera source build at the reviewed commit was cloned and built on the agent VM on 2026-09-25 (`bun install --frozen-lockfile --ignore-scripts`, `bun run build:sdk`, `bun run build:desktop:cli`; `slopcamera doctor --json` reports version 3.2.5 and `gatewayCredential.configured: false`). The prompt below and the reviewed provider options were written to ignored `artifacts/slopcamera/`. The project’s Vercel environment holds no `AI_GATEWAY_API_KEY`, so the documented `vercel env run` path authenticates the child with the project OIDC token the CLI mints; the Vercel MCP connection on the VM can read the project but is refused `projectOIDCToken` creation, and `vercel login` needs an interactive device code. Until the figure lands, `bun run typecheck` fails on `app/blog/editorial-images.ts` and `app/blog/blog.test.tsx` fails its image gate; both are the intended fail-closed behavior, and the pull request stays a draft.
 
 ### Prompt
 
-Write this text, with one trailing newline, to `artifacts/slopcamera/prompts/opus-5-5-intelligence-index.txt` and record its SHA-256 as `promptSha256`.
+Write this text, with one trailing newline, to `artifacts/slopcamera/prompts/opus-5-5-intelligence-index.txt`. Its SHA-256 is `bb9fbb63630ff778f6f59570636710d3cc7eb3b215058d323d808a12affc140a`; record that value as `promptSha256`.
 
 ```text
 Editorial illustration in a wide 16:9 frame on a near-charcoal ground (#12100f). Monochrome with one accent: matte warm-ivory (#f5f2ed) forms, raised charcoal (#1d1a18) surfaces, and a single warm brass (#d0a77c) line as the only accent. A staircase of five low charcoal steps rises from the lower left toward the upper right across the center of the frame, each step a little taller and a little deeper than the one below it. One large, smooth, matte ivory sphere rests on the topmost step; four progressively smaller matte ivory spheres rest one per lower step, so the spheres shrink as the steps descend. One thin brass line runs along the front lip of the topmost step only and stops before the frame edges. Soft key light from the upper left, matte materials, quiet studio shadows, shallow depth, generous negative space. No text, no numbers, no axes, no charts, no logos, no screens, no people, no robots, no brains, no brand marks. Keep the staircase and all five spheres centered so the subject stays legible when the image is cropped to the middle 60 percent of its width.
