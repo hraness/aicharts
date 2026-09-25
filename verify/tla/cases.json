@@ -240,6 +240,36 @@
       "config": "configs/m4-capacity-refusal-witness.cfg",
       "minDistinctStates": 3,
       "expectedDistinctStates": null
+    },
+    {
+      "id": "m12-unguarded-overcount-commits",
+      "module": "M12MonotonicMerge",
+      "kind": "counterexample",
+      "invariant": "NoOvercount",
+      "requiredActions": [
+        "Submit",
+        "Merge"
+      ],
+      "minTraceStates": 3,
+      "config": "configs/m12-unguarded-overcount.cfg",
+      "minDistinctStates": 4,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m12-committed-overcount-persists",
+      "module": "M12MonotonicMerge",
+      "kind": "witness",
+      "invariant": "ResubmitHonestCorrects",
+      "requiredActions": [
+        "Submit",
+        "Submit",
+        "Merge",
+        "Merge"
+      ],
+      "minTraceStates": 5,
+      "config": "configs/m12-overcount-persists.cfg",
+      "minDistinctStates": 4,
+      "expectedDistinctStates": null
     }
   ]
 }

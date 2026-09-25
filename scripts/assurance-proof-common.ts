@@ -91,7 +91,7 @@ export const mutationSchema = z.object({ id: z.string().regex(/^[a-z-]+$/u),
   exactBefore: z.string().min(1), exactAfter: z.string().min(1), harness: z.string().min(1),
   expectedFailedAssertion: z.string().min(1), requireSingleSourceMatch: z.literal(true) }).strict();
 export const mutationsSchema = z.object({ schemaVersion: z.literal(1), scope: z.string(),
-  mutations: z.array(mutationSchema).length(13) }).strict();
+  mutations: z.array(mutationSchema).length(14) }).strict();
 export type KernelMutation = z.infer<typeof mutationSchema>;
 export type SourceMutation = Pick<KernelMutation, "id" | "source" | "exactBefore" | "exactAfter">;
 

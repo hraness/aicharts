@@ -19,7 +19,7 @@ export const tlaProfiles = {
 export type TlaProfile = keyof typeof tlaProfiles;
 const modelCaseSchema = (maxDistinctStates: number) => z.object({
   id: identifier, module: z.enum(["M1Restore", "M4Contributions", "M4Supersession", "M1RestoreRepaired", "M2Ledger",
-    "M3Admission", "M4ContributionsRepaired", "M5Authority", "M6Consent", "M7Projection", "M8StagedProjection", "M9AccountWork", "M10ContributionFlight", "M11ContributionRebuild", "M12Reclamation"]),
+    "M3Admission", "M4ContributionsRepaired", "M5Authority", "M6Consent", "M7Projection", "M8StagedProjection", "M9AccountWork", "M10ContributionFlight", "M11ContributionRebuild", "M12MonotonicMerge", "M12Reclamation"]),
   kind: z.enum(["counterexample", "sanity", "witness"]), invariant: operator.nullable(),
   config: z.string().regex(/^configs\/[a-z0-9-]+\.cfg$/u),
   requiredActions: z.array(operator), minTraceStates: z.number().int().min(0).max(100),

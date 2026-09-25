@@ -168,14 +168,14 @@ describe("production function coverage manifest", () => {
         expect(body).toContain(name.split("::").at(-1)!);
       }
     }
-    expect(inventory.harnesses.reduce((sum, item) => sum + item.requiredCoverCount, 0)).toBe(53);
+    expect(inventory.harnesses.reduce((sum, item) => sum + item.requiredCoverCount, 0)).toBe(56);
   });
   test("the schema refuses a harness without named functions or an unknown module path", () => {
     expect(() => kaniHarnessesSchema.parse({ ...inventory, harnesses: inventory.harnesses.map((item, index) => index ? item : { ...item, functions: [] }) })).toThrow();
     expect(() => kaniHarnessesSchema.parse({ ...inventory, harnesses: inventory.harnesses.map((item, index) => index ? item : { ...item, functions: ["proofs::any_basis"] }) })).toThrow();
   });
   test("every mutation targets one exact production match and a declared harness", () => {
-    expect(mutations.length).toBe(13);
+    expect(mutations.length).toBe(14);
     expect(new Set(mutations.map(item => item.id)).size).toBe(mutations.length);
     for (const item of mutations) {
       expect(text(item.source).split(item.exactBefore).length).toBe(2);

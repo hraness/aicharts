@@ -5,7 +5,7 @@ functions. They do not replace arithmetic or ownership with verification stubs.
 Kani checks the stated finite scalar and container domains; the theorem lane
 owns the separate unbounded finite-history argument.
 
-The required Kani inventory contains twenty harnesses and fifty-three covers.
+The required Kani inventory contains twenty-one harnesses and fifty-six covers.
 `harnesses.json` names the production functions each harness exercises, and
 `scripts/assurance-kani.test.ts` requires every `pub fn` in the crate (outside
 `proofs.rs` and `tests.rs`) to be named by a harness or by a theorem

@@ -43,8 +43,8 @@ test("exact token roles, cache denominators and reasoning subsets retain integer
     { kind: "ratio", numerator: 5n, denominator: 25n }, { kind: "ratio", numerator: 8n, denominator: 25n },
     { kind: "ratio", numerator: 25n, denominator: 25n },
   ]);
-  const huge = "999999999999999999999999";
-  const large = run(report([row({ tokens: { input: huge, cacheRead: huge, cacheWrite: huge, output: huge, reasoning: huge } })]));
+  const huge = "16777216000000";
+  const large = run(report([row({ records: 10_000_000, tokens: { input: huge, cacheRead: huge, cacheWrite: huge, output: huge, reasoning: huge } })]));
   expect(large.fold.total).toBe(BigInt(huge) * 5n);
 });
 
@@ -91,7 +91,7 @@ test("global topK plus Other conserves the independent selected fold for seeded 
   const rows: UsageStatsRow[] = [];
   for (let day = 20_690; day < 20_710; day++) for (const client of ["codex", "claude", "cursor"] as const) {
     seed ^= seed << 13; seed ^= seed >>> 17; seed ^= seed << 5;
-    rows.push(row({ utcDay: day, client, provider: client === "claude" ? "anthropic" : "openai", tokens: { input: String(seed >>> 0), cacheRead: "2", cacheWrite: "3", output: "5", reasoning: "7" } }));
+    rows.push(row({ utcDay: day, client, provider: client === "claude" ? "anthropic" : "openai", tokens: { input: String((seed >>> 0) % 8_000_000), cacheRead: "2", cacheWrite: "3", output: "5", reasoning: "7" } }));
   }
   const input = report(rows), snapshot = createMetricSnapshot(input)!;
   for (const first of [20_690, 20_695, 20_700]) for (const client of ["*", "codex", "claude"]) {

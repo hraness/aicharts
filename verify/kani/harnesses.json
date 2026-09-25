@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "source": "crates/aicharts-metrics/src/proofs.rs",
-  "expectedHarnessCount": 20,
+  "expectedHarnessCount": 21,
   "scope": "Every harness must execute with all default safety, overflow, unwinding, undefined-function, and assertion reachability checks. Pricing rate and container partitions are explicit. A timeout or missing/unsatisfied cover is a failure.",
   "functionCoverage": "Every pub fn in crates/aicharts-metrics (excluding proofs.rs and tests.rs) must be named by at least one harness's functions list or by a theorem replacement's productionFunction; scripts/assurance-kani.test.ts enforces this from the crate source.",
   "harnesses": [
@@ -58,6 +58,20 @@
         "cover condition: actual.is_ok()",
         "cover condition: actual == Err(Error::Underflow)",
         "cover condition: actual == Err(Error::Overflow)"
+      ]
+    },
+    {
+      "name": "proofs::cumulative_baseline_delta_conserves_the_counter",
+      "functions": [
+        "arithmetic::checked_replace"
+      ],
+      "scalarDomain": "Two arbitrary u128 values: cumulative snapshot and inherited baseline.",
+      "containerDomain": "None",
+      "requiredCoverCount": 3,
+      "requiredCoverDescriptions": [
+        "cover condition: snapshot == baseline && delta == Ok(0)",
+        "cover condition: snapshot > baseline && delta.is_ok()",
+        "cover condition: snapshot < baseline && delta == Err(Error::Underflow)"
       ]
     },
     {

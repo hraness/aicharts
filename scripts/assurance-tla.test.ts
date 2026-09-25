@@ -25,9 +25,10 @@ describe("pinned TLC evidence admission", () => {
       "m4-foreign-population-loss", "m4-contributions-structural-sanity", "m4-proven-overlap-sanity",
       "m4-read-retry-witness", "m4-aba-resurrection", "m4-aba-double-charge",
       "m4-supersession-structural-sanity", "m4-successful-retry-witness", "m4-capacity-refusal-witness",
+      "m12-unguarded-overcount-commits", "m12-committed-overcount-persists",
     ].sort());
     expect(Object.fromEntries(["counterexample", "sanity", "witness"].map(kind =>
-      [kind, manifest.cases.filter(item => item.kind === kind).length]))).toEqual({ counterexample: 6, sanity: 4, witness: 5 });
+      [kind, manifest.cases.filter(item => item.kind === kind).length]))).toEqual({ counterexample: 7, sanity: 4, witness: 6 });
   });
   test("admits the recorded expected violation and completed sanity output separately", () => {
     const counterexample = evaluateTlc(failure, result(log(failure.id), 12));
@@ -89,12 +90,12 @@ describe("pinned TLC evidence admission", () => {
       expect(trace.configSha256).toBe(hash(modelCase.config));
       traces++;
     }
-    expect(traces).toBe(11);
+    expect(traces).toBe(13);
   });
   test("the repaired suite retains every guard-removal counterexample with its exact expected trace", () => {
-    expect(repaired.cases).toHaveLength(87);
+    expect(repaired.cases).toHaveLength(88);
     expect(Object.fromEntries(["counterexample", "sanity", "witness"].map(kind =>
-      [kind, repaired.cases.filter(item => item.kind === kind).length]))).toEqual({ counterexample: 22, sanity: 19, witness: 46 });
+      [kind, repaired.cases.filter(item => item.kind === kind).length]))).toEqual({ counterexample: 22, sanity: 20, witness: 46 });
     const guard = (id: string, constant: string) => {
       const value = repaired.cases.find(item => item.id === id);
       if (!value) throw new Error(`missing_guard_case:${id}`);

@@ -23,7 +23,7 @@ export const kernelFunction = z.string().regex(/^(?:arithmetic|evidence|revision
 const kaniHarnessSchema = z.object({ name: text, functions: z.array(kernelFunction).min(1), scalarDomain: text, containerDomain: text,
   requiredCoverCount: count.positive(), requiredCoverDescriptions: z.array(text).min(1) }).strict();
 export const kaniHarnessesSchema = z.object({ schemaVersion: z.literal(1), source: z.literal("crates/aicharts-metrics/src/proofs.rs"),
-  expectedHarnessCount: z.literal(20), scope: text, functionCoverage: text, harnesses: z.array(kaniHarnessSchema).length(20),
+  expectedHarnessCount: z.literal(21), scope: text, functionCoverage: text, harnesses: z.array(kaniHarnessSchema).length(21),
   theoremReplacements: z.array(z.object({ retiredHarness: text, reason: text, scalarDomain: text,
     productionFunction: z.string().regex(/^aicharts_metrics::(?:arithmetic|evidence|revision|tokens)::[a-z_]+$/u),
     theoremFile: z.literal("verify/lean/Pricing.proofs.lean"), theorem: z.literal("aicharts_metrics.pricing_unit_rate_exact"),

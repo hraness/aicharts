@@ -8,6 +8,13 @@ export const STATS_MAX_BYTES = 32 * 1024 * 1024;
 export const STATS_MAX_SOURCES = 64;
 export const STATS_MAX_RECORDS = 10_000_000;
 export const STATS_MAX_DAY = 99_999_999;
+/** Largest plausible token count a single usage record can honestly report.
+ * Model context windows are near 1M; 2^23 leaves wide headroom while still
+ * refusing cumulative-counter leaks (forked Codex rollouts report a shared
+ * ~12B baseline, which lands at tens of millions per record). Committed cells
+ * only ever grow, so admission is the only place an impossible value can be
+ * stopped. */
+export const STATS_MAX_TOKENS_PER_RECORD = 8_388_608n;
 export const STATS_DAY_MS = 86_400_000;
 export const STATS_TOKEN_KEYS = ["input", "cacheRead", "cacheWrite", "output", "reasoning"] as const;
 export type StatsTokenKey = typeof STATS_TOKEN_KEYS[number];
@@ -142,6 +149,7 @@ export function parseUsageStatsRow(value: unknown): UsageStatsRow | null {
     const tokenFields = statsOwnRecord(raw.tokens, STATS_TOKEN_KEYS);
     if (tokenFields === null || STATS_TOKEN_KEYS.some(key => !statsDecimal(tokenFields[key]))) return null;
     const tokens = Object.freeze({ ...tokenFields }) as StatsTokens;
+    if (statsTokenTotal(tokens) > BigInt(raw.records) * STATS_MAX_TOKENS_PER_RECORD) return null;
     if (raw.tokenBasis === "unavailable" && (statsTokenTotal(tokens) !== 0n || raw.timedTokens !== "0" || raw.breakdownCoverage !== "partial")) return null;
     if (BigInt(raw.timedTokens) > statsTokenTotal(tokens) || (raw.timedRecords === 0 && raw.timedTokens !== "0")) return null;
     return Object.freeze({ ...raw, tokens }) as UsageStatsRow;

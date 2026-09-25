@@ -11,7 +11,7 @@ import { parseLeaderboardSnapshot } from "../lib/usage/leaderboard-contract";
 import { createUsageStatsExample } from "../lib/usage/stats-example";
 import { SESSION_EXAMPLE } from "../lib/usage/session-example";
 import { METRIC_CSV_COLUMNS, parseCsv } from "../lib/usage/metric-export";
-import { parseUsageStatsReport, type UsageStatsReport } from "../lib/usage/stats-contract";
+import { parseUsageStatsReport, STATS_MAX_TOKENS_PER_RECORD, type UsageStatsReport } from "../lib/usage/stats-contract";
 import { parseStatsPublicSearch, statsPublicStatus, STATS_PUBLIC_MEDIA, type StatsPublicReply } from "../lib/usage/stats-public";
 import { encodePrivateDaysPublicResponse, parsePrivateDaysPublicSearch, PRIVATE_DAYS_PUBLIC_MEDIA } from "../lib/usage/private-days-public";
 import { USAGE_ACCOUNT_HEADER } from "../lib/usage/account-public";
@@ -530,7 +530,16 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
       }
       await capture("stats-year-range");
       const today = Math.floor(Date.now() / 86_400_000), original = createUsageStatsExample(today);
-      const large = { ...original, rows: original.rows.map((row, index) => index === original.rows.length - 3 ? { ...row, tokens: { ...row.tokens, input: "9007199254740993" } } : row) };
+      const target = original.rows.length - 3, widened = original.rows[target];
+      // The contract caps one row at records x 8,388,608 tokens, so a
+      // physically plausible wide fixture needs the matching record count.
+      const records = 9_000_000;
+      const wide = String(STATS_MAX_TOKENS_PER_RECORD * BigInt(records) / 5n);
+      const large = { ...original,
+        rows: original.rows.map((row, index) => index === target ? { ...row, records,
+          tokens: { input: wide, cacheRead: wide, cacheWrite: wide, output: wide, reasoning: wide } } : row),
+        sources: original.sources.map(source => source.client === widened.client
+          ? { ...source, records: source.records - widened.records + records } : source) };
       invariant(parseUsageStatsReport(large), "Large local numeric fixture must validate.");
       const upload = page.getByLabel("Open numeric usage report", { exact: true });
       await upload.setInputFiles({ name: "numeric-report.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(large)) });

@@ -19,6 +19,12 @@ pub(super) const DAY_MS: u64 = 86_400_000;
 pub(super) const MAX_ROWS: usize = 65_536;
 pub(super) const MAX_BYTES: usize = 32 * 1024 * 1024;
 const MAX_RECORDS: u64 = 10_000_000;
+/// Largest plausible token count a single usage record can honestly report.
+/// Mirrors STATS_MAX_TOKENS_PER_RECORD in the wire contract: model context
+/// windows are near 1M, so 2^23 refuses cumulative-counter leaks (a forked
+/// Codex rollout replaying a shared ~12B baseline lands at tens of millions
+/// per record) without ever touching real usage.
+const MAX_TOKENS_PER_RECORD: u128 = 8_388_608;
 const MAX_DECIMAL: u128 = aicharts_metrics::MAX_DECIMAL;
 const HELP: &str = "AI Charts detailed stats: local, read-only\n\n  aicharts stats --home DIR (--all | --client ID ...) [--source-root DIR ...] [--since YYYY-MM-DD --until YYYY-MM-DD] [--json | --health-json]\n  aicharts stats --list-clients\n\nThe default period is the last 30 UTC days, including today. Select up to 366\ndays. --home is an explicit absolute directory. To read one configured profile,\nselect one client and supply its exclusive absolute --source-root directories.\nWithout those roots, discovery uses the selected home and stays within it.\nLocal parser support includes every client in the pinned Tokscale registry.\nSome clients require an existing local export or API cache. This command does\nnot refresh credentials or contact providers. It never uploads anything.\n\nJSON contains day/client/model aggregates, disjoint token buckets, known costs\nand coverage. Unknown identities are withheld. Unknown costs stay unknown;\nreported charges and estimates are separate. Failed scans are incomplete, never\na successful empty replacement. --health-json emits separate measured source\nhealth, including parsing work, partial tails and fixed warning codes. It keeps\nunknown counters null and does not create persistent state.\nRedirect --json output to import at /usage/details.\n";
 
@@ -213,7 +219,8 @@ pub(super) fn validate_report(report: &Report) -> Result<(), &'static str> {
         }
         let total = row_token_total(&row.tokens).ok_or(invalid)?;
         let timed = decimal(&row.timed_tokens).ok_or(invalid)?;
-        if timed > total
+        if total > u128::from(row.records) * MAX_TOKENS_PER_RECORD
+            || timed > total
             || (row.timed_records == 0 && timed != 0)
             || (row.token_basis == "unavailable"
                 && (total != 0 || timed != 0 || row.breakdown_coverage != "partial"))

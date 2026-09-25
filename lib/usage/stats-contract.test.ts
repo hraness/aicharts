@@ -24,7 +24,9 @@ test("canonical integer strings retain more than double precision", () => {
   fc.assert(fc.property(fc.bigInt({ min: 0n, max: 999_999_999_999_999_999_999_999n }), count => {
     const raw = statsFixture(), row = raw.rows[0];
     const parsed = parseUsageStatsReport({ ...raw, rows: [{ ...row, tokens: { ...row.tokens, input: String(count) } }] });
-    expect(parsed?.rows[0].tokens.input).toBe(String(count));
+    if (count <= 8_388_608n - statsTokenTotal({ ...row.tokens, input: "0" })) {
+      expect(parsed?.rows[0].tokens.input).toBe(String(count));
+    } else expect(parsed).toBeNull();
   }), { numRuns: 150 });
   for (const input of ["-1", "01", "1.0", "1e3", " 0", "1".repeat(25), 10, null]) {
     const raw = statsFixture(); expect(parseUsageStatsReport({ ...raw, rows: [{ ...raw.rows[0], tokens: { ...raw.rows[0].tokens, input } }] })).toBeNull();
@@ -46,6 +48,24 @@ test("duplicate rows, coverage mismatches and out-of-range data are rejected", (
     { ...raw, rows: [{ ...raw.rows[0], utcDay: raw.firstUtcDay + 1 }] },
     { ...raw, sources: [{ ...raw.sources[0], status: "not_found" }] }, { ...raw, revision: 1 },
     { ...raw, sources: [{ ...raw.sources[0], latestAtMs: raw.generatedAtMs + 1 }] }]) expect(parseUsageStatsReport(value)).toBeNull();
+});
+test("implausible per-record token totals are refused before they can commit", () => {
+  const raw = statsFixture(), row = raw.rows[0];
+  // The row's other buckets carry 65 tokens; 1 record admits 8_388_608 total.
+  const admitted = { ...row, tokens: { ...row.tokens, input: String(8_388_608n - 65n) } };
+  expect(statsTokenTotal(admitted.tokens)).toBe(8_388_608n);
+  expect(parseUsageStatsReport({ ...raw, rows: [admitted] })).not.toBeNull();
+  const refused = { ...row, tokens: { ...row.tokens, input: String(8_388_608n - 65n + 1n) } };
+  expect(parseUsageStatsReport({ ...raw, rows: [refused] })).toBeNull();
+  // The failure mode this prevents: a forked rollout's inherited cumulative
+  // counter admitted as usage — 12B over a few hundred records.
+  const leaked = { ...row, records: 300, tokens: { ...row.tokens, input: "12000000000" } };
+  expect(parseUsageStatsReport({ ...raw,
+    sources: [{ ...raw.sources[0], records: 300 }], rows: [leaked] })).toBeNull();
+  // Averages stay legal: many records may carry a large total.
+  const honest = { ...row, records: 300, tokens: { ...row.tokens, input: String(300n * 8_388_608n - 65n) } };
+  expect(parseUsageStatsReport({ ...raw,
+    sources: [{ ...raw.sources[0], records: 300 }], rows: [honest] })).not.toBeNull();
 });
 test("known zero costs differ from unknown and cost populations cannot overlap", () => {
   const raw = statsFixture(), row = raw.rows[0];
