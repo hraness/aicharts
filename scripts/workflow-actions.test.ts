@@ -180,6 +180,8 @@ describe("workflow action supply chain", () => {
       "Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6",
       "Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6",
       "actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8",
+      "actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830",
+      "actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830",
       "actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830",
       "actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830",
       "actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830",
