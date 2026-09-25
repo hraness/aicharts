@@ -18,7 +18,11 @@ use ureq::{
 const STATUS: &str = "https://usage.aicharts.io/v2/snapshots/status";
 const UPLOAD: &str = "https://usage.aicharts.io/v2/snapshots";
 const ABANDON: &str = "https://usage.aicharts.io/v2/snapshots/abandon";
+const TOTALS: &str = "https://usage.aicharts.io/v2/snapshots/totals";
 const CAP: usize = 2048;
+/// The totals reply enumerates every device and client on the account, so it
+/// carries the contract's 256 KiB bound instead of the fixed 2 KiB receipts.
+const TOTALS_CAP: usize = 256 * 1024;
 const UNAVAILABLE: &str = "stats_sync_exchange_uncertain";
 const INVALID: &str = "stats_sync_invalid_response";
 const TOTAL: Duration = Duration::from_secs(45);
@@ -112,7 +116,7 @@ fn single<'a>(headers: &'a HeaderMap, name: &str) -> Result<Option<&'a [u8]>, &'
     }
     Ok(first)
 }
-fn framing(headers: &HeaderMap) -> Result<usize, &'static str> {
+fn framing(headers: &HeaderMap, digits: usize, cap: usize) -> Result<usize, &'static str> {
     if headers.iter().count() > 64
         || single(headers, "content-type")? != Some(b"application/json; charset=utf-8")
         || [
@@ -130,7 +134,7 @@ fn framing(headers: &HeaderMap) -> Result<usize, &'static str> {
     }
     let bytes = single(headers, "content-length")?.ok_or(INVALID)?;
     if bytes.is_empty()
-        || bytes.len() > 4
+        || bytes.len() > digits
         || bytes[0] == b'0'
         || !bytes.iter().all(u8::is_ascii_digit)
     {
@@ -139,7 +143,7 @@ fn framing(headers: &HeaderMap) -> Result<usize, &'static str> {
     let length = bytes
         .iter()
         .fold(0usize, |v, b| v * 10 + (b - b'0') as usize);
-    if length > CAP {
+    if length > cap {
         return Err(INVALID);
     }
     Ok(length)
@@ -162,18 +166,29 @@ impl Transport {
         url: &'static str,
         bytes: &[u8],
     ) -> Result<T, &'static str> {
+        self.exchange_bounded(url, bytes, 4, CAP)
+    }
+    fn exchange_bounded<T: DeserializeOwned>(
+        &mut self,
+        url: &'static str,
+        bytes: &[u8],
+        digits: usize,
+        cap: usize,
+    ) -> Result<T, &'static str> {
         let agent = Agent::with_parts(
             config(RootCerts::WebPki),
             DefaultConnector::default(),
             UsageResolver,
         );
-        self.exchange_with_agent(agent, url, bytes)
+        self.exchange_with_agent(agent, url, bytes, digits, cap)
     }
     fn exchange_with_agent<T: DeserializeOwned>(
         &mut self,
         agent: Agent,
         url: &str,
         bytes: &[u8],
+        digits: usize,
+        cap: usize,
     ) -> Result<T, &'static str> {
         let started = Instant::now();
         let mut response = agent
@@ -191,12 +206,12 @@ impl Transport {
         if ![200, 400, 401, 409, 503].contains(&status) {
             return Err(INVALID);
         }
-        let expected = framing(response.headers())?;
+        let expected = framing(response.headers(), digits, cap)?;
         let mut body = Vec::with_capacity(expected);
         response
             .body_mut()
             .with_config()
-            .limit((CAP + 1) as u64)
+            .limit((cap + 1) as u64)
             .reader()
             .read_to_end(&mut body)
             .map_err(|_| INVALID)?;
@@ -210,6 +225,12 @@ impl Transport {
     }
     pub(super) fn status(&mut self, request: &StatusRequest<'_>) -> Result<Status, &'static str> {
         self.exchange(STATUS, &super::encoded(request)?)
+    }
+    pub(super) fn totals(
+        &mut self,
+        request: &super::totals::TotalsRequest<'_>,
+    ) -> Result<super::totals::Totals, &'static str> {
+        self.exchange_bounded(TOTALS, &super::encoded(request)?, 6, TOTALS_CAP)
     }
     pub(super) fn upload(&mut self, request: &Upload) -> Result<Receipt, &'static str> {
         request.validate()?;
@@ -241,7 +262,7 @@ mod tests {
             HeaderValue::from_static("application/json; charset=utf-8"),
         );
         headers.insert("content-length", HeaderValue::from_static("128"));
-        assert_eq!(framing(&headers), Ok(128));
+        assert_eq!(framing(&headers, 4, CAP), Ok(128));
         for name in [
             "transfer-encoding",
             "content-encoding",
@@ -252,10 +273,10 @@ mod tests {
         ] {
             let mut changed = headers.clone();
             changed.insert(name, HeaderValue::from_static("x"));
-            assert!(framing(&changed).is_err());
+            assert!(framing(&changed, 4, CAP).is_err());
         }
         headers.append("content-length", HeaderValue::from_static("128"));
-        assert!(framing(&headers).is_err());
+        assert!(framing(&headers, 4, CAP).is_err());
     }
     #[test]
     fn failure_dto_is_exact_and_never_exposes_server_strings() {

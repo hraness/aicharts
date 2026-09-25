@@ -79,6 +79,7 @@ const HELP: &str = "AI Charts: local reports and enrolled publication
   aicharts stats --home DIR (--all | --client ID ...) [--since YYYY-MM-DD --until YYYY-MM-DD] [--json]
   aicharts stats-health --state-dir DIR --home DIR --client ID [--since YYYY-MM-DD --until YYYY-MM-DD]
   aicharts stats-sync --state-dir DIR --key-file PATH --home DIR --client ID [--since YYYY-MM-DD --until YYYY-MM-DD]
+  aicharts stats-totals --state-dir DIR [--json]
   aicharts contribution-sync --help
   aicharts refresh --help
   aicharts autosubmit --config-file PATH [--check | --dry-run]
@@ -555,6 +556,9 @@ fn run(args: &[String]) -> Result<String, &'static str> {
     }
     if args.first().map(String::as_str) == Some("stats-sync") {
         return stats_sync::run(args);
+    }
+    if args.first().map(String::as_str) == Some("stats-totals") {
+        return stats_sync::totals::run(args);
     }
     if args.first().map(String::as_str) == Some("contribution-sync") {
         return contribution_sync::run(args);

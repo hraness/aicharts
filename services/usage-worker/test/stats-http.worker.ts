@@ -3,7 +3,7 @@ import { createExecutionContext, waitOnExecutionContext, reset, runInDurableObje
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { STATS_HTTP_URL, STATS_UPLOAD_URL, STATS_STATUS_URL, decodeStatsHttpResponse, encodeStatsHttpRequest, parseStatsUpload, type StatsUpload } from "../../../lib/usage/stats-http-contract";
 import { STATS_ABANDON_URL, parseStatsAbandonment } from "../../../lib/usage/stats-http-contract";
-import { STATS_TOTALS_URL, decodeStatsTotalsResponse, encodeStatsTotalsRequest } from "../../../lib/usage/stats-totals-contract";
+import { STATS_TOTALS_DEVICE_URL, STATS_TOTALS_URL, decodeStatsTotalsResponse, encodeStatsTotalsDeviceRequest, encodeStatsTotalsRequest } from "../../../lib/usage/stats-totals-contract";
 import { createStatsTotalsHttpHandler } from "../src/stats-http";
 import { statsHash, statsUploadText } from "../src/stats-state";
 import { parseUsageStatsReport } from "../../../lib/usage/stats-contract";
@@ -147,6 +147,7 @@ test("shaped foreign v2 upload and abandonment receipts refuse without leaking a
     const selected: StatsUploadHttpEnvironment = { ACCOUNT_ENROLLMENTS: { getByName() { return {
       admitStatsSnapshot: async () => reply({ ...receipt, ...change }),
       readStatsStatus: async () => { throw new Error("unexpected status"); },
+      readStatsTotals: async () => { throw new Error("unexpected totals"); },
       abandonStatsSnapshot: async () => reply({ schemaVersion: 2, outcome: "committed", receipt: { ...receipt, ...change } }),
     }; } } };
     const ctx = createExecutionContext();
@@ -185,4 +186,35 @@ test("lifetime totals travel through the verified workload boundary with bounded
   const routed = await worker.fetch(new Request(STATS_TOTALS_URL, { method: "POST", body: encodeStatsTotalsRequest(query),
     headers: { "content-type": "application/json", accept: "application/json", authorization: "Bearer a.b.c" } }), env, createExecutionContext());
   expect(routed.status).toBe(503); // The production router keeps the route closed until its flags are set.
+});
+test("enrolled device reads its own account totals with the upload secret, never a session", async () => {
+  const device = await activated();
+  expect((await uploadCall(device.input, device.proof.uploadSecret)).status).toBe(200);
+  const body = { schemaVersion: 2, accountId: account, deviceId: device.input.deviceId, generation: env.USAGE_ENROLLMENT_GENERATION };
+  const wire = encodeStatsTotalsDeviceRequest(body); expect(wire).not.toBeNull();
+  const call = async (payload: BodyInit | null, token: string, extra: Record<string, string> = {}) => {
+    const ctx = createExecutionContext();
+    try {
+      return await createStatsUploadHttpHandler(effects)(new Request(STATS_TOTALS_DEVICE_URL, { method: "POST", body: payload,
+        headers: { "content-type": "application/json", accept: "application/json", authorization: `Bearer ${token}`, ...extra } }), env, ctx);
+    } finally { await waitOnExecutionContext(ctx); }
+  };
+  const reply = await call(wire, device.proof.uploadSecret);
+  expect(reply.status).toBe(200); expect(reply.headers.get("cache-control")).toBe("private, no-store");
+  expect(Number(reply.headers.get("content-length"))).toBeGreaterThan(0);
+  const parsed = decodeStatsTotalsResponse(new Uint8Array(await reply.arrayBuffer()));
+  expect(parsed).toMatchObject({ ok: true, value: { revision: 1, legacyComplete: true, total: { records: 1, days: 1, tokens: { input: "7", cacheWrite: "5" } },
+    clients: [{ client: "cursor", basis: "snapshots", records: 1 }], devices: [{ deviceId: device.input.deviceId, records: 1 }] } });
+  // The browser session credential family is meaningless here: wrong secret, polling secret, stale generation all refuse.
+  expect((await call(wire, device.proof.pollSecret)).status).toBe(401);
+  expect((await call(wire, "0".repeat(63) + "1")).status).toBe(401);
+  expect((await call(JSON.stringify({ ...body, generation: hex(999999) }), device.proof.uploadSecret)).status).toBe(503);
+  expect((await call(JSON.stringify({ ...body, extra: "PRIVATE_CANARY" }), device.proof.uploadSecret)).status).toBe(400);
+  expect((await call(wire, device.proof.uploadSecret, { cookie: "session=PRIVATE_CANARY" })).status).toBe(400);
+  const routed = await worker.fetch(request(STATS_TOTALS_DEVICE_URL, body, device.proof.uploadSecret), { ...env,
+    AICHARTS_USAGE_WORKER_ENABLED: "1", AICHARTS_USAGE_STATS_ENABLED: "1", AICHARTS_USAGE_ADMISSION_ENABLED: "1",
+  } as Env, createExecutionContext());
+  expect(routed.status).toBe(200); // Device reads open with the same flags as uploads; no browser flags required.
+  const gated = await worker.fetch(request(STATS_TOTALS_DEVICE_URL, body, device.proof.uploadSecret), env, createExecutionContext());
+  expect(gated.status).toBe(503); // Without the admission flag the router keeps the route closed.
 });

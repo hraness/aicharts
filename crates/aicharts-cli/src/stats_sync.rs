@@ -11,6 +11,7 @@ use std::path::PathBuf;
 mod disk;
 #[cfg(target_os = "macos")]
 mod https;
+pub(super) mod totals;
 const MAX_BYTES: usize = 4 * 1024 * 1024;
 /// Shared admitted legacy population, not a response-body allocation bound.
 pub(crate) const MAX_LEGACY_RECORDS: u64 = 1_000_000;
