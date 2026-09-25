@@ -559,7 +559,7 @@ function codingContrastBlocks(
   }
   blocks.push(paragraph(
     opus5IndexRows.length === 0
-      ? `The Intelligence Index snapshot retrieved ${intelligenceRetrievedAt} stores no Claude Opus 5 row, so the step from Opus 5 to Opus 5.5 that Anthropic describes cannot be measured on the Index from this snapshot, and the coding-agent chart stores no Opus 5.5 row to measure it there.`
+      ? `The Intelligence Index snapshot retrieved ${intelligenceRetrievedAt} stores no Claude Opus 5 row, so the step from Opus 5 to Opus 5.5 that Anthropic describes cannot be measured on the Index from this snapshot${opus55Rows.length === 0 ? ", and the coding-agent chart stores no Opus 5.5 row to measure it there" : ""}.`
       : `The Intelligence Index snapshot retrieved ${intelligenceRetrievedAt} also stores ${pluralConfigurations(opus5IndexRows.length)} of Claude Opus 5: ${joinNames(opus5IndexRows.map(row => `${row.name} at ${scoreAndCost(row)}`))}.`,
   ));
   return blocks;

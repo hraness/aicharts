@@ -1064,7 +1064,9 @@ describe("AI Charts benchmark notes", () => {
     expect(markup).toContain(formatSnapshotScore(opus5.record.benchmarks.aaIndex));
     expect(markup).toContain(formatSnapshotCostUsd(opus5.record.economics.costUsd));
     expect(markdown).toContain(`${spellOrdinal(opus5.rank)} of ${opus5.indexedCount} configurations`);
-    expect(markdown).toContain("That row is Opus 5, the previous Opus generation");
+    expect(markdown).toContain("stores one configuration that runs Claude Opus 5.5: Claude Code · Opus 5.5 (max)");
+    expect(markdown).toContain("It also stores the previous generation, Claude Code · Opus 5 (max)");
+    expect(markdown).not.toContain("no row runs Claude Opus 5.5 in any harness");
     for (const dominator of opus5.dominators) {
       expect(markup).toContain(dominator.seriesLabel);
     }
@@ -1138,20 +1140,18 @@ describe("AI Charts benchmark notes", () => {
     expect(dominatedMarkdown).toContain("The highest-scoring point on the cost frontier belongs to another model, Twin (max)");
     expect(dominated.dek).not.toContain("cost frontier");
 
-    // An Opus 5.5 coding-agent row, once one exists, is listed instead of denied.
-    const opus5Row = codingSnapshot.records.find(record => record.agent === "Claude Code" && record.model === "Opus 5");
-    if (opus5Row === undefined) throw new Error("Checked snapshot must store the Claude Code · Opus 5 row.");
-    const opus55Row = { ...opus5Row, id: "opus-5-5-cc", model: "Opus 5.5", modelLabel: "Opus 5.5 (max)", seriesId: "Claude Code:opus-5-5", seriesLabel: "Claude Code · Opus 5.5" };
-    const withCodingRow = articleToMarkdown(createOpus55Article(intelligenceSnapshot, {
-      ...codingSnapshot,
-      records: [...codingSnapshot.records, opus55Row],
-    }));
+    // The checked snapshot now stores Claude Code · Opus 5.5; a second harness still lists both.
+    const liveOpus55 = codingSnapshot.records.find(record => (
+      record.providerId === "anthropic" && record.model === "Opus 5.5"
+    ));
+    if (liveOpus55 === undefined) throw new Error("Checked snapshot must store the Claude Code · Opus 5.5 row.");
+    const withCodingRow = articleToMarkdown(createOpus55Article(intelligenceSnapshot, codingSnapshot));
     expect(withCodingRow).toContain("stores one configuration that runs Claude Opus 5.5: Claude Code · Opus 5.5 (max)");
     expect(withCodingRow).toContain("It also stores the previous generation, Claude Code · Opus 5 (max)");
     expect(withCodingRow).not.toContain("no row runs Claude Opus 5.5 in any harness");
     const withTwoCodingRows = articleToMarkdown(createOpus55Article(intelligenceSnapshot, {
       ...codingSnapshot,
-      records: [...codingSnapshot.records, opus55Row, { ...opus55Row, agent: "Cursor", id: "opus-5-5-cursor", seriesId: "Cursor:opus-5-5", seriesLabel: "Cursor · Opus 5.5" }],
+      records: [...codingSnapshot.records, { ...liveOpus55, agent: "Cursor", id: "opus-5-5-cursor", seriesId: "Cursor:opus-5-5", seriesLabel: "Cursor · Opus 5.5" }],
     }));
     expect(withTwoCodingRows).toContain("stores two configurations that run Claude Opus 5.5");
     expect(withTwoCodingRows).toContain("| Claude Code · Opus 5.5 (max) |");

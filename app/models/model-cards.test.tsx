@@ -410,6 +410,32 @@ describe("public model cards", () => {
     expect(markdownForPath("/models/anthropic/claude-opus-5-5").found).toBe(false);
   });
 
+  test("publishes Claude Code · Opus 5.5 on its unlisted coding-agent route", async () => {
+    const opus55 = MODEL_CARD_PRESENTATIONS.find(card => (
+      card.path === "/models/unlisted/opus-5-5.b958c16d6e9d4ca8979907a4/max"
+    ));
+    if (opus55 === undefined) throw new Error("Expected the Claude Code · Opus 5.5 coding-agent card.");
+    expect(opus55).toMatchObject({
+      canonicalModelId: "unlisted/opus-5-5.b958c16d6e9d4ca8979907a4",
+      model: "Opus 5.5",
+      profileSlug: "max",
+      providerId: "anthropic",
+    });
+    const detailPage = await ModelCardPage({
+      params: Promise.resolve({
+        creatorSlug: opus55.creatorSlug,
+        modelSlug: opus55.modelSlug,
+        profileSlug: opus55.profileSlug,
+      }),
+    });
+    const detailMarkup = renderToStaticMarkup(detailPage);
+    expect(detailMarkup).toContain("<h1>Opus 5.5 Max</h1>");
+    expect(detailMarkup).toContain("Claude Code");
+    expect(detailMarkup).toContain("Anthropic");
+    expect(markdownForPath(opus55.path).found).toBe(true);
+    expect(INDEX_MODEL_PAGES.some(page => page.path === "/models/anthropic/claude-opus-5-5/index")).toBeTrue();
+  });
+
   test("seeds Deedy commentary under the MiMo Index page", async () => {
     const mimo = INDEX_MODEL_PAGES.find(page => page.canonicalModelId === "xiaomi/mimo-v2-6-pro");
     if (mimo === undefined) throw new Error("Expected the MiMo Index page.");
