@@ -64,6 +64,7 @@ enum Endpoint {
     Cancel,
     Activate,
     Migrate,
+    MigrateCancel,
     Grant,
 }
 impl Endpoint {
@@ -75,6 +76,7 @@ impl Endpoint {
             Self::Cancel => "https://usage.aicharts.io/v3/contributions/cancel",
             Self::Activate => "https://usage.aicharts.io/v3/contributions/activate",
             Self::Migrate => "https://usage.aicharts.io/v3/contributions/migrate",
+            Self::MigrateCancel => "https://usage.aicharts.io/v3/contributions/migrate/cancel",
             Self::Grant => "https://usage.aicharts.io/v3/contributions/populations",
         }
     }
@@ -84,13 +86,17 @@ impl Endpoint {
             Self::Heads => MAX_QUERY_BYTES,
             Self::Upload => MAX_BATCH_BYTES,
             Self::Cancel => CANCEL_BYTES,
-            Self::Activate | Self::Migrate | Self::Grant => wire::CONTROL_REQUEST_BYTES,
+            Self::Activate | Self::Migrate | Self::MigrateCancel | Self::Grant => {
+                wire::CONTROL_REQUEST_BYTES
+            }
         }
     }
     fn response_cap(self) -> usize {
         match self {
             Self::Heads => MAX_REPLY_BYTES,
-            Self::Activate | Self::Migrate | Self::Grant => wire::CONTROL_REPLY_BYTES,
+            Self::Activate | Self::Migrate | Self::MigrateCancel | Self::Grant => {
+                wire::CONTROL_REPLY_BYTES
+            }
             _ => MAX_TERMINAL_BYTES,
         }
     }
@@ -487,6 +493,18 @@ impl Transport {
         let body = wire::control_body(request)?;
         self.control_op(Endpoint::Migrate, deadline, &body, |code, bytes| {
             wire::migration_receipt(code, bytes, request)
+        })
+    }
+    /// Explicit cancellation of a pending migration, replaying the retained
+    /// request to the cancel route; the reply is the abandoned terminal.
+    pub(super) fn cancel_migration(
+        &self,
+        request: &wire::MigrateRequest,
+        deadline: &Deadline,
+    ) -> Result<(String, u64), &'static str> {
+        let body = wire::control_body(request)?;
+        self.control_op(Endpoint::MigrateCancel, deadline, &body, |code, bytes| {
+            wire::migration_terminal(code, bytes, request)
         })
     }
     pub(super) fn grant(
