@@ -1511,3 +1511,59 @@ fn pending_migration_abandons_through_exact_replay_and_retries_fresh() {
     );
     drop(dir);
 }
+
+#[test]
+fn refused_migration_still_pending_server_side_cancels_through_retained_replay() {
+    let dir = scratch();
+    let bodies = Arc::new(Mutex::new(Vec::<Vec<u8>>::new()));
+    let captured = bodies.clone();
+    // A refused intent never proves the server settled: the operation may
+    // still hold pendingOperation and refuse every later reservation. Cancel
+    // must reconcile it by replaying the retained request anyway.
+    // Steps: status (not_started), migrate (refused conflict — settles
+    // locally), cancel-migration (abandoned terminal).
+    let _server = Server::steps(3, move |index, stream| {
+        let (_h, body) = request(stream);
+        captured.lock().unwrap().push(body.clone());
+        match index {
+            0 => respond_status(
+                stream,
+                409,
+                &serde_json::to_vec(&serde_json::json!({
+                "schemaVersion": 3, "result": { "ok": false, "error": "not_started" } }))
+                .unwrap(),
+            ),
+            1 => respond_status(
+                stream,
+                409,
+                &serde_json::to_vec(&serde_json::json!({
+                "schemaVersion": 3, "result": { "ok": false, "error": "conflict" } }))
+                .unwrap(),
+            ),
+            _ => {
+                let request: serde_json::Value = serde_json::from_slice(&body).unwrap();
+                respond(
+                    stream,
+                    &serde_json::to_vec(&serde_json::json!({
+                    "schemaVersion": 3, "result": { "ok": true, "value": {
+                        "outcome": "abandoned", "operationId": request["operationId"],
+                        "bodyHash": "9".repeat(64), "revision": 1 } } }))
+                    .unwrap(),
+                );
+            }
+        }
+    });
+    let transport = ops_transport(_server.addr);
+    let deadline = Deadline::command().unwrap();
+    let revisions = |_: &std::path::Path| -> Result<(u64, u64), &'static str> { Ok((0, 0)) };
+    assert_eq!(
+        super::super::ops::migrate(&dir.0, &KEY, &transport, &deadline, revisions).unwrap_err(),
+        "contribution_sync_conflict"
+    );
+    let out = super::super::ops::cancel_migration(&dir.0, &KEY, &transport, &deadline).unwrap();
+    assert!(out.contains("\"abandoned\""), "{out}");
+    let sent = bodies.lock().unwrap();
+    assert_eq!(sent.len(), 3);
+    assert_eq!(sent[1], sent[2], "cancel must replay the identical retained request");
+    drop(dir);
+}
