@@ -1260,7 +1260,7 @@
         "capacityRefs": {
           "contribution-migration-max-journals": 4096,
           "contribution-migration-max-days": 8192,
-          "contribution-migration-max-source-bytes": 67108864
+          "contribution-migration-max-source-bytes": 268435456
         }
       },
       "kind": "derived",

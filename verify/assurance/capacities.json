@@ -895,7 +895,7 @@
       "id": "contribution-migration-max-source-bytes",
       "scope": "account-canonical-migration",
       "unit": "bytes",
-      "value": 67108864,
+      "value": 268435456,
       "source": {
         "path": "services/usage-worker/src/contributions-migration.ts",
         "symbol": "CONTRIBUTION_MIGRATION_MAX_SOURCE_BYTES"
