@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "registryRevision": 1,
+  "registryRevision": 3,
   "clients": [
     {
       "id": "9router",
@@ -34,6 +34,16 @@
     },
     {
       "id": "antigravity-cli",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "antigravity-extension",
       "qualification": "unreviewed",
       "phase": "4",
       "evidence": [
@@ -364,6 +374,26 @@
     },
     {
       "id": "micode",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "micode-desktop",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "muse",
       "qualification": "unreviewed",
       "phase": "4",
       "evidence": [

@@ -40,6 +40,7 @@ pub mod kiro;
 pub mod lmstudio;
 pub mod mcode;
 pub mod micode;
+pub mod muse;
 pub mod mux;
 pub mod omp;
 pub mod openclaw;
@@ -90,6 +91,10 @@ pub struct UnifiedMessage {
     pub cost: f64,
     #[serde(default)]
     pub cost_source: CostSource,
+    /// OpenAI processing tier actually used for this request, when the source
+    /// records it. Fast/priority requests have a different per-token tariff.
+    #[serde(default)]
+    pub service_tier: Option<String>,
     #[serde(default)]
     pub duration_ms: Option<i64>,
     #[serde(default = "default_message_count")]
@@ -389,6 +394,7 @@ impl UnifiedMessage {
             tokens,
             cost,
             cost_source: CostSource::Unknown,
+            service_tier: None,
             duration_ms: None,
             message_count: default_message_count(),
             agent,
