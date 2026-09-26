@@ -5,7 +5,7 @@ import { ensureContributionJournal, readContributionJournalRoot, readContributio
   type VerifiedContributionJournal } from "../src/contributions-journal";
 import { ContributionState, CONTRIBUTION_MAX_METADATA_BYTES } from "../src/contributions-state";
 import { ensureContributionBody, readContributionBody, resolveContributionReference, type VerifiedContributionBody } from "../src/contributions-objects";
-import { CONTRIBUTION_IDENTITY, CONTRIBUTION_MAX_IMMUTABLE_BYTES, CONTRIBUTION_MAX_MEMBERS, CONTRIBUTION_MAX_MUTATIONS,
+import { CONTRIBUTION_IDENTITY, CONTRIBUTION_MAX_HEADS, CONTRIBUTION_MAX_IMMUTABLE_BYTES,
   CONTRIBUTION_PROFILE, ContributionFault, contributionBodyHash, contributionHash, contributionPayloadHash,
   parseContributionBatch, type ContributionAuthority, type ContributionBatch, type ContributionMutation, type ContributionResult,
   type ContributionMigrationRequest, type ContributionMigrationReceipt, type ContributionTerminal } from "../../../lib/usage/contributions";
@@ -15,7 +15,8 @@ import { enrollmentAccountName, type EnrollmentProof } from "../src/enrollment-c
 import { PAIRING_TTL_MS, uploadSecretCommitment } from "../src/pairing";
 import { admissionHex, decodeAdmissionBatch, encodeAdmissionBatch, encodeAdmissionOperation } from "../../../lib/usage/admission";
 import { AdmissionState, admissionIdBytes, type AdmissionAuthority } from "../src/admission-state";
-import { captureContributionMigration, CONTRIBUTION_MIGRATION_MAX_HEADS } from "../src/contributions-migration";
+import { advanceContributionMigration, captureContributionMigration, clearMigrationScratch, contributionMigrationBundle,
+  CONTRIBUTION_MIGRATION_MAX_HEADS, CONTRIBUTION_MIGRATION_STAGE_ROUNDS } from "../src/contributions-migration";
 import { ADMISSION_POLICY_V1 } from "../src/admission-policy";
 import { DAY_MS, encodeUsageBatch } from "../../../lib/usage/wire";
 import { StatsState } from "../src/stats-state";
@@ -234,7 +235,10 @@ describe("V3 additive SQL and immutable numeric bodies", () => {
     expect(deltas).toMatchObject([{ id: hex(1, 32), before: { bodyHash: contributionBodyHash(first), index: 0 }, after: { bodyHash: contributionBodyHash(moved), index: 0 } }]);
   });
   test("multi-page replacement journals retain every removed reference and reserve every emitted byte", async () => {
-    expect(CONTRIBUTION_JOURNAL_MAX_ENTRIES).toBe(CONTRIBUTION_MAX_MEMBERS + CONTRIBUTION_MAX_MUTATIONS);
+    // Migration delta journals carry one entry per retained legacy head, so
+    // the shared journal bound is the protocol head ceiling, not the smaller
+    // batch-only member+mutation envelope.
+    expect(CONTRIBUTION_JOURNAL_MAX_ENTRIES).toBe(CONTRIBUTION_MAX_HEADS);
     await fresh();
     await publish(await request(Array.from({ length: 256 }, (_, index) => ({ id: index + 1, input: index + 1 }))));
     await publish(await request([{ id: 257, input: 257 }]));
@@ -655,5 +659,68 @@ describe("actual AccountEnrollment V3 joins", () => {
     const reserved = (await snapshot()).control.immutableBytes;
     success(await stub().admitContributions({ uploadSecret: device.proof.uploadSecret, request: batch }));
     expect((await snapshot()).control.immutableBytes).toBe(reserved);
+  });
+
+  test("staged migration carries accounts beyond the original one-shot journal cap", async () => {
+    const device = await enrolled();
+    const HEADS = 9_000;
+    for (let batch = 0; batch < Math.ceil(HEADS / 256); batch++) {
+      const count = Math.min(256, HEADS - batch * 256);
+      const operations = Array.from({ length: count }, (_, index) => {
+        const sequence = batch * 256 + index + 1;
+        const id = admissionIdBytes(hex(sequence, 32));
+        const frame = success(encodeUsageBatch({ utcDay: DAY, registryRevision: 1, usage: [{ id, executionId: new Uint8Array(16),
+          accountId: new Uint8Array(16), offsetMs: 1, provider: 1 as const, authMode: 0 as const, evidence: 1 as const, modelId: 0,
+          contextTier: 0 as const, tokens: { inputUncached: BigInt(sequence), cacheRead: 0n, cacheWrite5m: 0n, cacheWrite1h: 0n,
+            output: 0n, reasoningOutput: 0n } }], prompts: [], intervals: [] }, ADMISSION_POLICY_V1));
+        return success(encodeAdmissionOperation({ accountId: admissionIdBytes(account.slice(5)), deviceId: admissionIdBytes(device.deviceId),
+          generation: admissionIdBytes(env.USAGE_ENROLLMENT_GENERATION), action: 1 as const, sequence, occurrenceId: id,
+          expectedHeadHash: new Uint8Array(32), frame }, ADMISSION_POLICY_V1));
+      });
+      const encoded = success(encodeAdmissionBatch(operations, ADMISSION_POLICY_V1));
+      success(await stub().admitBatch({ uploadSecret: device.proof.uploadSecret,
+        batch: success(decodeAdmissionBatch(encoded, ADMISSION_POLICY_V1)).bytes }));
+    }
+    await preparedPopulation(device);
+    const migration = success(await migrationRpc().migrateContributions({ uploadSecret: device.proof.uploadSecret,
+      request: await migrationRequest(device.deviceId) }));
+    expect(migration.headCount).toBe(HEADS);
+    expect(migration.deltaCount).toBe(HEADS);
+    const root = await readContributionJournalRoot(env.STAGING, account, migration.deltaManifestHash);
+    expect(root.count).toBe(HEADS);
+    expect(root.pages.length).toBe(Math.ceil(HEADS / 256));
+    expect(root.pages.length).toBeGreaterThan(33);
+    const snapshot = await onState(state => state.control());
+    expect(snapshot.phase).toBe("active"); expect(snapshot.headCount).toBe(HEADS);
+    expect(await onState(state => state.sql.exec("SELECT name FROM sqlite_schema WHERE name GLOB 'migration_*'").toArray())).toEqual([]);
+  }, 120_000);
+
+  test("staged capture resumes through a durable cursor and reproduces the same seal", async () => {
+    const device = await enrolled();
+    for (let batch = 0; batch < 4; batch++) success(await stub().admitBatch({ uploadSecret: device.proof.uploadSecret,
+      batch: legacyBatch(device.deviceId, 10 + batch, batch + 1, batch + 1).bytes }));
+    success(await stub().admitStatsSnapshot({ uploadSecret: device.proof.uploadSecret, request: legacyStats(device.deviceId) }));
+    await preparedPopulation(device);
+    const authority = await onState(state => JSON.parse(state.sql.exec("SELECT payload FROM account_enrollment WHERE id=1").one().payload as string) as AdmissionAuthority);
+    const request = await migrationRequest(device.deviceId);
+    const advance = () => onState((state, storage) => storage.transactionSync(() =>
+      advanceContributionMigration(state.sql, authority, request)));
+    let steps = 0, snapshot = await advance();
+    for (let rounds = 0; snapshot === null && rounds < CONTRIBUTION_MIGRATION_STAGE_ROUNDS; rounds++) {
+      steps += 1;
+      if (steps === 3) { await abortAllDurableObjects(); await enable(); }
+      snapshot = await advance();
+    }
+    if (!snapshot) throw new Error("staged capture did not reach ready");
+    expect(steps).toBeGreaterThan(1);
+    const rerun = await onState(state => captureContributionMigration(state.sql, authority));
+    expect(JSON.stringify(rerun.seal)).toBe(JSON.stringify(snapshot.seal));
+    expect(rerun.manifest.hash).toBe(snapshot.manifest.hash);
+    expect(snapshot.seal.v1HeadCount).toBe(4);
+    // The snapshot's lazy iterables bind the producing object's storage; the
+    // bundle assembly therefore runs inside the object context.
+    const journalCount = await onState(() => contributionMigrationBundle(request, snapshot).journal.root.count);
+    expect(journalCount).toBe(4);
+    await onState(state => clearMigrationScratch(state.sql));
   });
 });

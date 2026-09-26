@@ -1949,3 +1949,55 @@ qualified), then `--grant`, then the owner consent+handle step.
 Current live state: worker `449df2b9` (= `5be3f87`, widened bounds) serves
 100%; account contributions control sits at `prepared`/`not_started`
 control — revision 0, nothing committed; `--status` is green.
+
+### 2026-09-26 — Chunked migration implemented: durable scratch, staged capture, streamed assembly
+
+C1–C5 landed on `chunked-migration`, with one design deviation driven by a
+runtime fact: workerd's storage authorizer refuses `CREATE TEMP TABLE`
+(`SQLITE_AUTH`), so scratch lives in durable `migration_*` tables
+(`migration_meta/heads/frag/delta/page/dpage`). That is strictly better for
+resumability — a mid-flight capture survives object eviction and resumes at
+the committed cursor — and the frozen schema manifest stays exact because
+`enrollment.ts`'s `#objects()` scan now excludes the `migration_*` namespace
+(all scratch contents are re-parsed and re-verified, never trusted).
+
+Key shape:
+
+- `advanceContributionMigration` drives one bounded stage per
+  `transactionSync`: capture (64 journals), rest descriptors, head replay
+  (8,192 rows), seal (16 fragments), deltas (8,192), entries (8,192),
+  manifest pages (64), delta pages (64). Every stage re-asserts the pinned
+  admission/stats revisions (`conflict` on drift); `metaStore` persists the
+  cursor inside the same transaction, so a rolled-back stage replays
+  idempotently.
+- `MigrationStage` list: `capture → rest → heads → seal → deltas → entries
+  → pages → dpages → ready`; the `migrate` handler loops up to
+  `CONTRIBUTION_MIGRATION_STAGE_ROUNDS` (4,096) inside one RPC.
+- Journal bounds widened for the full-head envelope: `MAX_ENTRIES` 8,448 →
+  262,144 (= `CONTRIBUTION_MAX_HEADS`), root artifact 16,384 → 131,072
+  bytes; page geometry unchanged (256 entries / 262,144 bytes).
+  `CONTRIBUTION_MIGRATION_MAX_HEADS` 65,536 → 262,144 and a new
+  `CONTRIBUTION_MIGRATION_MAX_BUNDLE_BYTES` (256 MiB) bounds total charged
+  bytes now that manifest/journal bytes live in R2 rather than one row.
+- `ensureContributionJournal` verifies streaming: page descriptors, sizes,
+  sorted unique ids and the entries hash are recomputed iteratively before
+  any R2 write; `bundle.pages` is a lazy `Iterable` bound to the scratch
+  table, never a second materialized delta list.
+- Commit-time recapture (`stagedMigrationSnapshot`) re-asserts the pin and
+  reloads the seal/digests from scratch — same tamper guarantee, no second
+  full replay; `clearMigrationScratch` runs inside the commit transaction
+  and on `abandon`.
+- Partial-init recovery: scratch tables present without a `meta` row mean an
+  interrupted begin → the next `advance` resets and restarts cleanly.
+
+Tests: the contributions suite is now 32 cases, all green, including a
+9,000-head staged migration through the real RPC (journal root of 36 page
+descriptors, >8,448-entry delta journal, active commit, scratch wiped) and a
+cursor-resume test that survives `abortAllDurableObjects` mid-capture and
+reproduces an identical seal/manifest. Full worker suite: 725 tests across
+43 files green; worker `tsc --noEmit` clean; `usage:assurance:check` clean
+with the six scratch surfaces registered and the three capacity constants
+re-pinned.
+
+Remaining: independent review, PR through protected workflow, Worker
+redeploy, then live `--migrate` → `--grant` → owner consent/handle.
