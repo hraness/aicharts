@@ -3,14 +3,16 @@
 import { getDesignPaletteTheme } from "@hraness/design-kit";
 import {
   DesignPaletteProvider,
+  RouteErrorPage,
   ThemeColorSync,
+  type RouteErrorPageProps,
 } from "@hraness/design-kit/react";
-import { RouteErrorState, type RouteErrorProps } from "@/components/route-state";
+import { site } from "./site";
 import "./globals.css";
 
 const initialPalette = getDesignPaletteTheme("paper", "light");
 
-export default function GlobalError(props: RouteErrorProps) {
+export default function GlobalError(props: RouteErrorPageProps) {
   return (
     <html
       className={initialPalette.className}
@@ -39,7 +41,7 @@ export default function GlobalError(props: RouteErrorProps) {
           legacyStorageKey="aicharts-theme"
         >
           <ThemeColorSync darkColor="#12100f" lightColor="#f8f7f4" />
-          <RouteErrorState {...props} />
+          <RouteErrorPage {...props} siteName={site.name} />
         </DesignPaletteProvider>
       </body>
     </html>
