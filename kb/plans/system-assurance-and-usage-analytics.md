@@ -1905,3 +1905,47 @@ the retained pending request to `/v3/contributions/migrate/cancel`, records
 the abandoned terminal on the migrate record, and lets `--migrate` retry
 fresh — the escape for a wedged `pendingOperation`. The focused suite is now
 60 tests.
+
+#### Chunked migration implementation phases
+
+- **C1 — scratch-backed capture** (`services/usage-worker/src/
+  contributions-migration.ts`): introduce a durable scratch table
+  `usage_migration_scratch` (real table; the schema checks are whitelists so
+  no family bump is needed — verified: `SCHEMA_FAMILIES` and the
+  `ADMISSION_SCHEMA`/`STATS_SCHEMA` exact-DDL checks iterate expected names
+  only). Kind-discriminated rows: `meta` (JSON cursor: operationId,
+  pinned v1/v2 revisions, throughRevision, per-device sequence,
+  sourceBytes, previousTime), `head` rows (occurrence_id, operation blob,
+  journal_revision, utc_day), `page` rows (ordinal, artifact text).
+  `decideAdmission` inputs come from per-batch scratch SELECTs — the same
+  ~256-row lookup `admission.heads(batch)` already performs.
+- **C2 — segmented replay**: `service.migrate` splits into bounded
+  `transactionSync` stages of ~64 journals each, resumable via the meta
+  cursor; each stage re-asserts `admission.control().revision` equals the
+  reserve-time pin (drift -> `conflict`, client replays identical request
+  and the stage picks up at the cursor). All stages run inside the existing
+  `migrate` RPC loop driven by the CLI's durable-op replay.
+- **C3 — streamed assembly**: the manifest/page/entries JSON is produced by
+  incremental `"["+parts.join(",")+"]"` string assembly (byte-identical to
+  `JSON.stringify(entries)`); page artifacts land in scratch rows, read back
+  lazily by `ensureContributionMigration` for R2 writes. `deltaBytes` bound
+  in the operation-metadata parser lifts past 16 MiB (the delta journal is
+  an R2 artifact, not row data).
+- **C4 — stored-vs-charged bytes**: `body_bytes` stores manifest+journal
+  bytes only (<<16 MiB); capacity charging keeps counting the full bundle
+  (`seal.immutableBytes` unchanged). `commitMigration`'s recapture becomes a
+  paged rescan of scratch recomputing the manifest hash — same tamper
+  guarantee without a second full capture.
+- **C5 — cancel + tests**: `--cancel-migration` wipes the pending op and
+  scratch atomically; new tests assert byte-identical manifests between
+  one-shot (small accounts) and chunked (the same fixture replayed at >1
+  segment), wedge/resume per stage, and the over-cap behavior.
+
+Gate per phase: `bun run scripts/usage-worker-tools.ts test` +
+`usage:assurance:check`; ship through a PR; redeploy Worker; then run
+`contribution-sync --migrate` on the live account (custody consent already
+qualified), then `--grant`, then the owner consent+handle step.
+
+Current live state: worker `449df2b9` (= `5be3f87`, widened bounds) serves
+100%; account contributions control sits at `prepared`/`not_started`
+control — revision 0, nothing committed; `--status` is green.
