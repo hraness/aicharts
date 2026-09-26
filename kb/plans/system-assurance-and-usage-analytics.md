@@ -1905,3 +1905,107 @@ the retained pending request to `/v3/contributions/migrate/cancel`, records
 the abandoned terminal on the migrate record, and lets `--migrate` retry
 fresh — the escape for a wedged `pendingOperation`. The focused suite is now
 60 tests.
+
+### Migration scale finding (2026-09-25, live owner account)
+
+The owner account measures **239,101 retained v1 heads** across **952
+journals** (probe `migration-probe` logged on the deployed worker). The
+one-shot migration path (`captureContributionMigration` → `reserveMigration`
+→ `ensureContributionMigration` → `commitMigration`) cannot carry it:
+
+1. `CONTRIBUTION_MIGRATION_MAX_HEADS` was 8,192; the journal table itself
+   CHECKs `revision <= 4,096`, so the journal bound now sits at the table
+   maximum and the head bound at 65,536 — both still below this account.
+2. Raising the head bound alone is insufficient: the capture materializes the
+   full decoded head set in a JS `Map` (~300+ MB at 239k) inside one
+   `transactionSync`, over the durable-object heap.
+3. `usage_contribution_operations.body_bytes` CHECKs `<= 16,777,216` for
+   `kind='migration'`; the sealed page set for 239k head entries is ~38 MB of
+   JSON — over the cap even if memory held.
+4. `commitMigration` re-runs the entire capture (`recapture()`) to prove the
+   reserved snapshot was not tampered — doubling the transient cost.
+
+`activateFresh` also deliberately refuses populated accounts
+(`legacyIsEmpty() !== true → recovery_required`), so fresh activation cannot
+bypass history — migration is the only V3 entry for retained accounts.
+
+#### Chunked migration design (in progress)
+
+Same wire contract — `POST /v3/contributions/migrate` with the identical
+request bytes; the durable ops journal's exact-replay semantics already give
+the client a resumable loop. The change is internal staging:
+
+- **Scratch, not heap**: the journal replay writes heads into a bounded
+  durable scratch table (`occurrence_id, operation, journal_revision,
+  utc_day`) rather than a `Map`; `decideAdmission` reads per-batch heads from
+  SQL (the same lookup `admission.heads(batch)` already uses).
+- **Bounded transactions**: replay proceeds in fixed-size journal segments
+  (e.g. 64/segment), each its own `transactionSync` advancing a durable
+  cursor in the pending op's metadata — a hibernate or RPC timeout rolls
+  back at most one segment, and the next call resumes.
+- **Assembly**: after the last segment, a paged ordered scan of scratch
+  produces headEntries/conservation/deltas; seal + manifest + pages are
+  emitted the same way, but pages and the >16 MiB body budget move to R2
+  objects addressed by hash — the op row stores manifest + descriptors
+  (hash/bytes) only.
+- **Drift safety**: each segment re-checks `admission.control().revision`
+  equals the reserve-time pin; source drift between segments is `conflict`
+  → fresh request on retry, same as today.
+- **Cancel**: `--cancel-migration` clears the pending op AND the scratch
+  rows in the same transaction.
+
+The seal/manifest content is byte-identical to the one-shot output for the
+same account — chunking changes storage/transient cost, not the proof.
+
+
+### Migration scale finding (2026-09-25, live owner account)
+
+The owner account measures **239,101 retained v1 heads** across **952
+journals** (a `migration-probe` log line on the deployed worker). The
+one-shot migration path (`captureContributionMigration` -> `reserveMigration`
+-> `ensureContributionMigration` -> `commitMigration`) cannot carry it:
+
+1. `CONTRIBUTION_MIGRATION_MAX_HEADS` was 8,192; the journal table itself
+   CHECKs `revision <= 4,096`, so the journal bound now sits at the table
+   maximum and the head bound at 65,536 -- both still below this account.
+2. Raising the head bound alone is insufficient: the capture materializes
+   the full decoded head set in a JS `Map` (~300+ MB at 239k) inside one
+   `transactionSync`, over the durable-object heap.
+3. `usage_contribution_operations.body_bytes` CHECKs `<= 16,777,216` for
+   `kind='migration'`; the sealed page set for 239k head entries is ~38 MB
+   of JSON -- over the cap even if memory held.
+4. `commitMigration` re-runs the entire capture (`recapture()`) to prove the
+   reserved snapshot was not tampered -- doubling the transient cost.
+
+`activateFresh` also deliberately refuses populated accounts
+(`legacyIsEmpty() !== true -> recovery_required`), so fresh activation
+cannot bypass history -- migration is the only V3 entry for retained
+accounts.
+
+#### Chunked migration design (in progress)
+
+Same wire contract -- `POST /v3/contributions/migrate` with identical
+request bytes; the durable ops journal's exact-replay semantics already
+give the client a resumable loop. The change is internal staging:
+
+- **Scratch, not heap**: the journal replay writes heads into a durable
+  scratch table (`occurrence_id, operation, journal_revision, utc_day`)
+  rather than a `Map`; `decideAdmission` reads per-batch heads from SQL
+  (the same lookup `admission.heads(batch)` already uses).
+- **Bounded transactions**: replay proceeds in fixed-size journal segments,
+  each its own `transactionSync` advancing a durable cursor in the pending
+  op's metadata -- a hibernate or RPC timeout rolls back at most one
+  segment, and the next call resumes.
+- **Assembly**: after the last segment, a paged ordered scan of scratch
+  produces headEntries/conservation/deltas; seal + manifest + pages are
+  emitted the same way, but pages move to R2 objects addressed by hash --
+  the op row stores manifest + descriptors (hash/bytes) only, so the
+  16 MiB `body_bytes` bound keeps covering the row.
+- **Drift safety**: each segment re-checks `admission.control().revision`
+  equals the reserve-time pin; source drift between segments is `conflict`
+  -> fresh request on retry, same as today.
+- **Cancel**: `--cancel-migration` clears the pending op AND the scratch
+  rows in the same transaction.
+
+The seal/manifest content is byte-identical to the one-shot output for the
+same account -- chunking changes storage and transient cost, not the proof.
