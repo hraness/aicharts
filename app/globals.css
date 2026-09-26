@@ -2017,6 +2017,12 @@ body {
   --hraness-marketing-measure: var(--aicharts-measure);
   --hraness-marketing-gutter: var(--aicharts-gutter);
 }
+/* The grammar paints a forced-colors border on all four sides, which would
+ * grow the sticky header by 1px and shift the page. Reserve the top border
+ * as transparent so the media repaint keeps geometry identical. */
+.hraness-marketing-header.hraness-marketing-header {
+  border-block-start: 1px solid transparent;
+}
 .aicharts-home {
   padding-block-end: 0;
 }
