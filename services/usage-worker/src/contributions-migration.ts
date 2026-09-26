@@ -9,7 +9,7 @@ import { auditReceiptHead, batchAccount, decideAdmission, freezeAdmission, lastS
   ownedAdmissionJournal, ownedAdmissionOperation, timestampsAtMost, type AdmissionHead } from "./admission-policy";
 import { StatsState, STATS_SCHEMA, statsUploadText } from "./stats-state";
 import { legacyContributionRow } from "./contributions-legacy";
-import { contributionArtifact, ensureContributionArtifact, ensureContributionJournal, CONTRIBUTION_JOURNAL_PAGE_ENTRIES,
+import { contributionArtifact, ensureContributionArtifact, sealVerifiedContributionJournal, CONTRIBUTION_JOURNAL_PAGE_ENTRIES,
   CONTRIBUTION_JOURNAL_ROOT_BYTES, parseContributionJournalRoot,
   type ContributionArtifact, type ContributionJournalBundle, type VerifiedContributionJournal } from "./contributions-journal";
 import { enrollmentStorageCall } from "./namespace-anchor";
@@ -97,6 +97,11 @@ interface MigrationMeta {
   sealJson?: string; deltaRevCursor?: number; deltaIdCursor?: string | null; deltaCount?: number;
   entrySource?: number; entryCursor?: number; entrySeq?: number; pageCursor?: number; deltaCursor?: string | null;
   deltaOrdinal?: number; manifestJson?: string; deltaEntriesHash?: string;
+  // Ordered proof-of-storage progress: [0,sources) then bodies, manifest
+  // pages, the manifest, delta pages and the journal root — every item
+  // completes its R2 write/verify before the cursor advances. The byte
+  // counter persists beside the index so the source bound stays honest.
+  ensureIndex?: number; ensureInspected?: number;
 }
 
 export function clearMigrationScratch(sql: SqlStorage): void {
@@ -580,44 +585,117 @@ async function sourceBytes(bucket: R2Bucket, key: string, media: string, schema:
 const verified = new WeakSet<object>();
 export type VerifiedContributionMigration = Readonly<{ bodyHash: string; manifestHash: string; byteLength: number; journal: VerifiedContributionJournal }>;
 export const isVerifiedContributionMigration = (value: VerifiedContributionMigration): boolean => verified.has(value);
+
+/** The proof-of-storage loop walks thousands of artifacts — far beyond one
+ * exchange's wall clock — so progress is checkpointed into scratch: a flat
+ * ordered item index (sources, bodies, manifest pages, manifest, delta pages,
+ * journal root) that a timed-out call resumes from. Every item is verified
+ * before the cursor advances; a crash between item and checkpoint simply
+ * re-verifies that item on resume. `budgetMs` leaves margin inside the
+ * caller's exchange deadline so the checkpoint lands before a disconnect. */
 export async function ensureContributionMigration(env: Pick<Env, "STAGING" | "CONTROL">, bundle: ContributionMigrationBundle,
-  admitted: () => boolean): Promise<VerifiedContributionMigration> {
-  const check = () => { if (!admitted()) throw new ContributionFault("recovery_required"); }; let inspected = 0;
+  admitted: () => boolean, sql: SqlStorage, budgetMs: number): Promise<VerifiedContributionMigration> {
+  const accountId = bundle.request.accountId;
+  const check = () => { if (!admitted()) throw new ContributionFault("recovery_required"); };
+  check();
+  checked(migrationScratchPresent(sql));
+  const meta = metaLoad(sql);
+  checked(meta.stage === "ready");
+  const startedAt = Date.now();
+  const persist = () => { meta.ensureIndex = index; meta.ensureInspected = inspected; metaStore(sql, meta); };
+  const expire = () => { if (Date.now() - startedAt > budgetMs) { persist(); throw new ContributionFault("storage_unavailable"); } };
+
+  const sourceDescriptors = JSON.parse(meta.sourceDescriptorsJson!) as SourceDescriptor[];
+  const bodies = JSON.parse(meta.bodiesJson!) as LegacyBody[];
+  const manifestOrdinals = sql.exec("SELECT ordinal FROM migration_page ORDER BY ordinal").toArray().map(row => row.ordinal as number);
+  const deltaOrdinals = sql.exec("SELECT ordinal FROM migration_dpage ORDER BY ordinal").toArray().map(row => row.ordinal as number);
+  const total = sourceDescriptors.length + bodies.length + manifestOrdinals.length + 1 + deltaOrdinals.length + 1;
+
+  // Flat item sequence: [0,S) source verifies, [S,S+B) body verifies,
+  // manifest pages, manifest, delta pages, journal root.
+  let index = meta.ensureIndex ?? 0, inspected = meta.ensureInspected ?? 0;
+  const manifestArtifact = () => parseArtifactRow(meta.manifestJson!);
+  const scratchArtifact = (table: string, ordinal: number) => {
+    const row = sql.exec(`SELECT text, hash, bytes FROM ${table} WHERE ordinal=? LIMIT 1`, ordinal).toArray()[0];
+    checked(row); return parseArtifactRow(row.text as string, row.hash as string, row.bytes as number);
+  };
   const available = (maximum: number) => {
     const remaining = CONTRIBUTION_MIGRATION_MAX_SOURCE_BYTES - inspected;
     if (remaining < 1) throw new ContributionFault("limit"); return Math.min(maximum, remaining);
   };
-  for (const source of bundle.snapshot.sourceObjects) {
-    check(); const bytes = await sourceBytes(env[source.bucket], source.key, source.media, source.schema, available(source.bytes.length)); check();
-    checked(equalAdmissionBytes(bytes, source.bytes)); inspected += bytes.length;
-  }
-  for (const body of bundle.snapshot.bodies) {
-    check(); const prefix = `usage-stats/v2/${bundle.request.accountId}/${bundle.request.generation}`;
-    const bytes = await sourceBytes(env.STAGING, `${prefix}/snapshots/${body.bodyHash}.json`, "application/vnd.aicharts.stats-v2+json", "2", available(4_194_304)); check();
-    inspected += bytes.length;
-    checked(contributionHash(bytes) === body.bodyHash);
-    const text = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(bytes), request = parseStatsUpload(JSON.parse(text) as unknown);
-    checked(request && statsUploadText(request) === text && request.accountId === bundle.request.accountId && request.generation === bundle.request.generation
-      && request.deviceId === body.deviceId && request.expectedRevision + 1 === body.revision);
-    const receiptBytes = await sourceBytes(env.CONTROL, `${prefix}/receipts/${String(body.revision).padStart(16, "0")}-${body.bodyHash}.json`, "application/vnd.aicharts.stats-v2+json", "2", available(1_024)); check();
-    inspected += receiptBytes.length;
-    const receipt = parseStatsReceipt(JSON.parse(new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(receiptBytes)) as unknown);
-    checked(receipt && receipt.bodyHash === body.bodyHash && receipt.operationId === request.operationId && receipt.sequence === request.sequence
-      && receipt.revision === body.revision && receipt.committedAtMs === body.committedAtMs && receipt.client === request.report.sources[0].client
-      && receipt.firstUtcDay === request.report.firstUtcDay && receipt.dayCount === request.report.dayCount);
-    for (const day of body.days) {
-      const rows = request.report.rows.filter(row => row.utcDay === day.day), source = request.report.sources[0], bases = new Set(rows.map(row => row.tokenBasis));
-      const projected = parseUsageStatsReport({ ...request.report, firstUtcDay: day.day, dayCount: 1, revision: receipt.revision, updatedAtMs: receipt.committedAtMs,
-        sources: [{ ...source, status: rows.length ? "observed" : "empty", records: rows.reduce((sum, row) => sum + row.records, 0),
-          tokenBasis: bases.size > 1 ? "mixed" : [...bases][0] ?? source.tokenBasis, latestAtMs: rows.length ? source.latestAtMs : null }], rows });
-      checked(projected && contributionHash(JSON.stringify(projected)) === day.projectionHash && JSON.stringify(projected) === JSON.stringify(day.report));
+  const done = () => index >= total;
+
+  while (!done()) {
+    expire(); if (index % 16 === 0) { check(); persist(); }
+    let position = 0;
+    if (index < sourceDescriptors.length) {
+      const descriptor = sourceDescriptors[index], maximum = available(descriptor.size);
+      const object = await enrollmentStorageCall(env[descriptor.bucket].get(descriptor.key), value => { if (value) void value.body.cancel().catch(() => undefined); });
+      if (!object) throw new ContributionFault("storage_invalid");
+      checked(statsInteger(object.size, 1, maximum)
+        && object.httpMetadata?.contentType === descriptor.media && object.httpMetadata.contentEncoding === undefined
+        && object.customMetadata?.schemaVersion === descriptor.schema && Object.keys(object.customMetadata).length === 1
+        && object.checksums.sha256 !== undefined);
+      const bytes = await enrollmentStorageCall(object.arrayBuffer() as Promise<ArrayBuffer>);
+      checked(contributionHash(new Uint8Array(bytes)) === descriptor.hash);
+      inspected += descriptor.size; index += 1; continue;
     }
+    position += sourceDescriptors.length;
+    if (index < position + bodies.length) {
+      const body = bodies[index - position], prefix = `usage-stats/v2/${accountId}/${bundle.request.generation}`;
+      const bytes = await sourceBytes(env.STAGING, `${prefix}/snapshots/${body.bodyHash}.json`, "application/vnd.aicharts.stats-v2+json", "2", available(4_194_304));
+      inspected += bytes.length;
+      checked(contributionHash(bytes) === body.bodyHash);
+      const text = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(bytes), request = parseStatsUpload(JSON.parse(text) as unknown);
+      checked(request && statsUploadText(request) === text && request.accountId === accountId && request.generation === bundle.request.generation
+        && request.deviceId === body.deviceId && request.expectedRevision + 1 === body.revision);
+      const receiptBytes = await sourceBytes(env.CONTROL, `${prefix}/receipts/${String(body.revision).padStart(16, "0")}-${body.bodyHash}.json`,
+        "application/vnd.aicharts.stats-v2+json", "2", available(1_024));
+      inspected += receiptBytes.length;
+      const receipt = parseStatsReceipt(JSON.parse(new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(receiptBytes)) as unknown);
+      checked(receipt && receipt.bodyHash === body.bodyHash && receipt.operationId === request.operationId && receipt.sequence === request.sequence
+        && receipt.revision === body.revision && receipt.committedAtMs === body.committedAtMs && receipt.client === request.report.sources[0].client
+        && receipt.firstUtcDay === request.report.firstUtcDay && receipt.dayCount === request.report.dayCount);
+      for (const day of body.days) {
+        const rows = request.report.rows.filter(row => row.utcDay === day.day), source = request.report.sources[0], bases = new Set(rows.map(row => row.tokenBasis));
+        const projected = parseUsageStatsReport({ ...request.report, firstUtcDay: day.day, dayCount: 1, revision: receipt.revision, updatedAtMs: receipt.committedAtMs,
+          sources: [{ ...source, status: rows.length ? "observed" : "empty", records: rows.reduce((sum, row) => sum + row.records, 0),
+            tokenBasis: bases.size > 1 ? "mixed" : [...bases][0] ?? source.tokenBasis, latestAtMs: rows.length ? source.latestAtMs : null }], rows });
+        checked(projected && contributionHash(JSON.stringify(projected)) === day.projectionHash && JSON.stringify(projected) === JSON.stringify(day.report));
+      }
+      index += 1; continue;
+    }
+    position += bodies.length;
+    if (index < position + manifestOrdinals.length) {
+      await ensureContributionArtifact(env.STAGING, accountId, scratchArtifact("migration_page", manifestOrdinals[index - position]), admitted);
+      index += 1; continue;
+    }
+    position += manifestOrdinals.length;
+    if (index === position) {
+      await ensureContributionArtifact(env.STAGING, accountId, manifestArtifact(), admitted);
+      index += 1; continue;
+    }
+    position += 1;
+    if (index < position + deltaOrdinals.length) {
+      await ensureContributionArtifact(env.STAGING, accountId, scratchArtifact("migration_dpage", deltaOrdinals[index - position]), admitted);
+      index += 1; continue;
+    }
+    position += deltaOrdinals.length;
+    if (index === position) {
+      await ensureContributionArtifact(env.STAGING, accountId, bundle.journal.artifact, admitted);
+      index += 1; continue;
+    }
+    checked(false);
   }
   check();
-  for (const page of bundle.snapshot.pages) await ensureContributionArtifact(env.STAGING, bundle.request.accountId, page, admitted);
-  await ensureContributionArtifact(env.STAGING, bundle.request.accountId, bundle.snapshot.manifest, admitted);
-  const journal = await ensureContributionJournal(env.STAGING, bundle.journal, admitted); check();
+  const journal = sealVerifiedContributionJournal(bundle.journal);
   const result = Object.freeze({ bodyHash: bundle.bodyHash, manifestHash: bundle.snapshot.manifest.hash,
     byteLength: bundle.byteLength, journal });
   verified.add(result); return result;
+}
+function parseArtifactRow(text: string, hash?: string, bytes?: number): ContributionArtifact {
+  const artifact: ContributionArtifact = Object.freeze({ text,
+    hash: hash ?? contributionHash(text), bytes: bytes ?? new TextEncoder().encode(text).length });
+  checked(artifact.bytes === new TextEncoder().encode(artifact.text).length && contributionHash(artifact.text) === artifact.hash);
+  return artifact;
 }
