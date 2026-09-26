@@ -757,4 +757,25 @@ describe("actual AccountEnrollment V3 joins", () => {
     expect(receipt.headCount).toBe(2);
     expect((await snapshot()).control.phase).toBe("active");
   });
+
+  test("a fresh migration request resets orphaned staged scratch after source drift", async () => {
+    const device = await enrolled();
+    success(await stub().admitBatch({ uploadSecret: device.proof.uploadSecret, batch: legacyBatch(device.deviceId).bytes }));
+    success(await stub().admitStatsSnapshot({ uploadSecret: device.proof.uploadSecret, request: legacyStats(device.deviceId) }));
+    await preparedPopulation(device);
+    const admission = await onState(state => JSON.parse(state.sql.exec("SELECT payload FROM account_enrollment WHERE id=1").one().payload as string) as AdmissionAuthority);
+    const stale = await migrationRequest(device.deviceId);
+    await onState((state, storage) => storage.transactionSync(() => advanceContributionMigration(state.sql, admission, stale)));
+    // The account's V2 revision moves under the staged capture; the pinned
+    // request can never complete but its scratch would otherwise wedge.
+    const drifted = legacyStats(device.deviceId, "codex");
+    success(await stub().admitStatsSnapshot({ uploadSecret: device.proof.uploadSecret, request: { ...drifted, operationId: hex(++operation),
+      sequence: 2, expectedRevision: 1 } }));
+    await expectsFault(() => onState((state, storage) => storage.transactionSync(() => advanceContributionMigration(state.sql, admission, stale))), "conflict");
+    const fresh = await migrationRequest(device.deviceId);
+    const receipt = success(await migrationRpc().migrateContributions({ uploadSecret: device.proof.uploadSecret, request: fresh }));
+    expect(receipt.headCount).toBe(1);
+    expect((await snapshot()).control.phase).toBe("active");
+    expect(await onState(state => state.sql.exec("SELECT name FROM sqlite_schema WHERE name GLOB 'migration_*'").toArray())).toEqual([]);
+  });
 });

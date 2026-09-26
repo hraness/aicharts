@@ -102,6 +102,9 @@ interface MigrationMeta {
   // completes its R2 write/verify before the cursor advances. The byte
   // counter persists beside the index so the source bound stays honest.
   ensureIndex?: number; ensureInspected?: number;
+  // Scratch belongs to exactly one migration request; a refused or drifted
+  // attempt leaves orphaned workspace a fresh request must reset, not trip on.
+  requestId?: string;
 }
 
 export function clearMigrationScratch(sql: SqlStorage): void {
@@ -188,6 +191,7 @@ function captureBegin(sql: SqlStorage, authority: AdmissionAuthority, meta: Migr
   if (request && (request.expectedV1Revision !== first.revision || request.expectedV2Revision !== second.revision))
     throw new ContributionFault("conflict");
   admission.verifyHistory(authority, true); stats.auditHistory(authority);
+  meta.requestId = request?.operationId;
   meta.pinV1 = first.revision; meta.pinV2 = second.revision; meta.pinHeads = first.heads; meta.pinLive = first.live;
   meta.v1DeviceCount = Number(v1Devices.count); meta.v1DeviceBytes = Number(v1Devices.bytes);
   meta.dayCount = Number(totals.count); meta.dayBytes = Number(totals.bytes);
@@ -506,8 +510,15 @@ export function stagedMigrationSnapshot(sql: SqlStorage): ContributionMigrationS
  * snapshot once every stage has run; null while work remains. */
 export function advanceContributionMigration(sql: SqlStorage, authority: AdmissionAuthority,
   request: ContributionMigrationRequest | null): ContributionMigrationSnapshot | null {
-  // Tables without a meta row are a partial begin — reset and start over.
+  // Tables without a meta row are a partial begin — reset and start over. A
+  // meta row bound to a different request is orphaned workspace left by a
+  // refused or drifted attempt; the fresh request resets it — a still-pending
+  // operation with a different body hash never reaches this point because the
+  // caller's operation check refuses first.
   let meta = migrationScratchPresent(sql) ? metaRead(sql) : null;
+  if (meta !== null && request !== null && meta.requestId !== request.operationId) {
+    clearMigrationScratch(sql); meta = null;
+  }
   if (meta === null) {
     meta = scratchReset(sql);
     captureBegin(sql, authority, meta, request);
