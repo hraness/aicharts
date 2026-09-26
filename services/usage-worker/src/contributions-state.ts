@@ -214,7 +214,7 @@ export class ContributionState {
       invariant(request && seal && contributionIdentity(migrationMetadata?.manifestHash) && request.operationId === operationId
         && request.accountId === control.accountId && request.generation === row.generation && request.deviceId === row.device_id
         && request.expectedRevision === row.expected_revision && seal.accountId === request.accountId && seal.generation === request.generation
-        && request.expectedV1Revision === seal.v1Revision && request.expectedV2Revision === seal.v2Revision
+        && request.expectedV1Revision === seal.v1Revision && request.expectedV2Revision <= seal.v2Revision
         && contributionHash(`aicharts:contribution-migration:v3\0${JSON.stringify(request)}\0${migrationMetadata.manifestHash}`) === row.body_hash);
       if (row.outcome === "pending") invariant(row.terminal === null && row.published_revision === null && control.pendingOperation === operationId);
       else if (row.outcome === "abandoned") {

@@ -93,7 +93,7 @@ const SCRATCH_OBJECTS = ["migration_meta", "migration_heads", "migration_frag", 
 
 interface MigrationMeta {
   stage: "capture" | "rest" | "heads" | "seal" | "deltas" | "entries" | "pages" | "dpages" | "ready";
-  pinV1: number; pinV2: number; pinHeads: number; pinLive: number; throughRevision: number;
+  pinV1: number; pinV2: number; pinV2Bytes?: number; pinHeads: number; pinLive: number; throughRevision: number;
   v1DeviceCount: number; v1DeviceBytes: number; sequence: Record<string, number>; previousTime: number; sourceBytes: number;
   headCursor: string | null; headsSeen: number; liveSeen: number; headSeq: number;
   numeric: Record<string, string[]>; suppressed: number;
@@ -166,11 +166,12 @@ function* fragScan(sql: SqlStorage, kind: string): Generator<string> {
     if (page.length < 1024) return;
   }
 }
-/** Assert the pinned source revisions still hold; drift between stages is a
- * conflict, resolved when the client replays a fresh request. */
+/** The v1 lineage is frozen once any snapshot is committed, so its pin must
+ * hold end to end; a drift here is corruption, never feed noise. The v2 stats
+ * stream stays writable while a migration is staged — its pin is taken inside
+ * restSegment's own transaction, so later drift cannot conflict the call. */
 function migrationPin(sql: SqlStorage, meta: MigrationMeta): void {
-  const first = new AdmissionState(sql).control(), second = new StatsState(sql).control();
-  if (first.revision !== meta.pinV1 || second.revision !== meta.pinV2) throw new ContributionFault("conflict");
+  if (new AdmissionState(sql).control().revision !== meta.pinV1) throw new ContributionFault("conflict");
 }
 
 /** Deferred audits and bound checks run once, when scratch is first laid. */
@@ -183,7 +184,7 @@ function captureBegin(sql: SqlStorage, authority: AdmissionAuthority, meta: Migr
   const admission = new AdmissionState(sql), stats = new StatsState(sql), first = admission.control(), second = stats.control();
   if (first.quarantined || second.quarantined) throw new ContributionFault("recovery_required");
   if (first.heads > CONTRIBUTION_MIGRATION_MAX_HEADS || first.revision > CONTRIBUTION_MIGRATION_MAX_JOURNALS) throw new ContributionFault("limit");
-  if (admission.pending(authority) !== null || stats.pendings().length !== 0) throw new ContributionFault("conflict");
+  if (admission.pending(authority) !== null) throw new ContributionFault("conflict");
   // Do not let an understated/corrupt control row admit a larger legacy scan.
   const actualHeads = sql.exec("SELECT COUNT(*) AS count FROM (SELECT occurrence_id FROM usage_admission_heads LIMIT ?)", CONTRIBUTION_MIGRATION_MAX_HEADS + 1).one().count;
   const actualJournals = sql.exec("SELECT COUNT(*) AS count FROM (SELECT revision FROM usage_admission_journal LIMIT ?)", CONTRIBUTION_MIGRATION_MAX_JOURNALS + 1).one().count;
@@ -194,7 +195,7 @@ function captureBegin(sql: SqlStorage, authority: AdmissionAuthority, meta: Migr
   if (!statsInteger(totals.count, 0, CONTRIBUTION_MIGRATION_MAX_DAYS) || !statsInteger(totals.bytes, 0, CONTRIBUTION_MIGRATION_MAX_SOURCE_BYTES)) throw new ContributionFault("limit");
   const v1Devices = sql.exec("SELECT COUNT(*) AS count, COALESCE(SUM(COALESCE(length(last_batch),0)+COALESCE(length(last_journal),0)),0) AS bytes FROM (SELECT last_batch,last_journal FROM usage_admission_devices LIMIT 129)").one();
   checked(statsInteger(v1Devices.count, 0, 128) && statsInteger(v1Devices.bytes, 0, CONTRIBUTION_MIGRATION_MAX_SOURCE_BYTES));
-  if (request && (request.expectedV1Revision !== first.revision || request.expectedV2Revision !== second.revision))
+  if (request && request.expectedV1Revision !== first.revision)
     throw new ContributionFault("conflict");
   // The deferred audits run from their durable checkpoint, not from zero:
   // a from-scratch replay exceeds one request's CPU budget at owner scale and
@@ -204,9 +205,8 @@ function captureBegin(sql: SqlStorage, authority: AdmissionAuthority, meta: Migr
   // the staged capture itself re-verifies every journal and head below.
   admission.verifyHistory(authority); stats.auditHistory(authority);
   meta.requestId = request?.operationId;
-  meta.pinV1 = first.revision; meta.pinV2 = second.revision; meta.pinHeads = first.heads; meta.pinLive = first.live;
+  meta.pinV1 = first.revision; meta.pinHeads = first.heads; meta.pinLive = first.live;
   meta.v1DeviceCount = Number(v1Devices.count); meta.v1DeviceBytes = Number(v1Devices.bytes);
-  meta.dayCount = Number(totals.count); meta.dayBytes = Number(totals.bytes);
 }
 
 /** Replay the next ≤SEGMENT_JOURNALS retained journals into scratch heads;
@@ -260,6 +260,10 @@ function captureSegment(sql: SqlStorage, authority: AdmissionAuthority, meta: Mi
  * owned-day suppression set) materialize once into the meta record. */
 function restSegment(sql: SqlStorage, meta: MigrationMeta): void {
   const stats = new StatsState(sql), second = stats.control();
+  // The v2 pin is taken here, inside the same transaction as the snapshot
+  // reads below — a live stats feed keeps advancing while a migration is
+  // staged, so the seal binds the v2 state this transaction actually saw.
+  meta.pinV2 = second.revision; meta.pinV2Bytes = second.immutableBytes;
   const rawDays = paged(sql, "SELECT d.*, d.revision AS ownership_revision FROM usage_stats_days d ORDER BY d.client,d.utc_day,d.device_id", CONTRIBUTION_MIGRATION_MAX_DAYS);
   const bodies = new Map<string, { bodyHash: string; deviceId: string; revision: number; committedAtMs: number; days: LegacyDay[] }>();
   const days: LegacyDay[] = rawDays.map(raw => {
@@ -275,7 +279,8 @@ function restSegment(sql: SqlStorage, meta: MigrationMeta): void {
       revision: day.revision, committedAtMs: report.updatedAtMs, days: [day] });
     return day;
   });
-  checked(days.length === meta.dayCount);
+  meta.dayCount = days.length;
+  meta.dayBytes = days.reduce((sum, day) => sum + day.bytes, 0);
   const devices = paged(sql, "SELECT * FROM usage_stats_devices ORDER BY device_id", 128);
   for (const raw of devices) {
     checked(typeof raw.device_id === "string"); const receipt = stats.progress(raw.device_id).receipt; checked(receipt);
@@ -342,7 +347,6 @@ function headsSegment(sql: SqlStorage, authority: AdmissionAuthority, meta: Migr
 /** Seal the retained state: the streamed digests, conservation, and the
  * bounded seal descriptor. */
 function sealSegment(sql: SqlStorage, authority: AdmissionAuthority, meta: MigrationMeta): void {
-  const second = new StatsState(sql).control();
   const conservation = Object.entries(meta.numeric).sort(([a], [b]) => a < b ? -1 : 1).map(([key, values]) => [key, values]);
   const v1Sources = (JSON.parse(meta.sourceDescriptorsJson!) as SourceDescriptor[])
     .map(({ bucket, key, media, schema, hash, size }) => ({ bucket, key, media, schema, hash, size }));
@@ -352,7 +356,7 @@ function sealSegment(sql: SqlStorage, authority: AdmissionAuthority, meta: Migra
     v1SourceDigest: digest({ objects: v1Sources, devices: authority.devices.map(device => [device.deviceId, device.enrolledAtMs, device.revokedAtMs]) }),
     v2Revision: meta.pinV2, v2DayCount: meta.dayCount, v2BodyCount: (JSON.parse(meta.bodiesJson!) as unknown[]).length,
     v2SourceDigest: meta.v2SourceDigest, conservationDigest: digest(conservation),
-    immutableBytes: meta.sourceBytes + second.immutableBytes, metadataBytes: meta.metadataBytes });
+    immutableBytes: meta.sourceBytes + meta.pinV2Bytes!, metadataBytes: meta.metadataBytes });
   if (!seal) throw new ContributionFault("limit");
   meta.sealJson = JSON.stringify(seal); meta.conservationJson = JSON.stringify(conservation);
   meta.deltaRevCursor = 0; meta.deltaIdCursor = null; meta.deltaCount = 0;
@@ -578,7 +582,7 @@ export function captureContributionMigration(sql: SqlStorage, authority: Admissi
  * holding the delta list in memory. */
 export function contributionMigrationBundle(request: ContributionMigrationRequest, snapshot: ContributionMigrationSnapshot): ContributionMigrationBundle {
   if (request.accountId !== snapshot.seal.accountId || request.generation !== snapshot.seal.generation
-    || request.expectedV1Revision !== snapshot.seal.v1Revision || request.expectedV2Revision !== snapshot.seal.v2Revision) throw new ContributionFault("conflict");
+    || request.expectedV1Revision !== snapshot.seal.v1Revision || request.expectedV2Revision > snapshot.seal.v2Revision) throw new ContributionFault("conflict");
   const bodyHash = contributionHash(`aicharts:contribution-migration:v3\0${JSON.stringify(request)}\0${snapshot.manifest.hash}`);
   const root = parseContributionJournalRoot({ schemaVersion: 3, kind: "contribution-deltas", accountId: request.accountId,
     generation: request.generation, operationId: request.operationId, bodyHash,
