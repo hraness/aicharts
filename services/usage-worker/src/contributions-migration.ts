@@ -190,7 +190,13 @@ function captureBegin(sql: SqlStorage, authority: AdmissionAuthority, meta: Migr
   checked(statsInteger(v1Devices.count, 0, 128) && statsInteger(v1Devices.bytes, 0, CONTRIBUTION_MIGRATION_MAX_SOURCE_BYTES));
   if (request && (request.expectedV1Revision !== first.revision || request.expectedV2Revision !== second.revision))
     throw new ContributionFault("conflict");
-  admission.verifyHistory(authority, true); stats.auditHistory(authority);
+  // The deferred audits run from their durable checkpoint, not from zero:
+  // a from-scratch replay exceeds one request's CPU budget at owner scale and
+  // captureBegin can never commit, restarting every call forever. The
+  // checkpoint is the designed optimization — every mutation carries a newer
+  // journal_revision so delta coverage still reaches each later write, and
+  // the staged capture itself re-verifies every journal and head below.
+  admission.verifyHistory(authority); stats.auditHistory(authority);
   meta.requestId = request?.operationId;
   meta.pinV1 = first.revision; meta.pinV2 = second.revision; meta.pinHeads = first.heads; meta.pinLive = first.live;
   meta.v1DeviceCount = Number(v1Devices.count); meta.v1DeviceBytes = Number(v1Devices.bytes);
