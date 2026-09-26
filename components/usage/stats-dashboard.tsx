@@ -48,8 +48,13 @@ function StatsSkeleton() {
 
 const subscribeNever = () => () => undefined;
 
-export function StatsDashboard({ todayUtcDay, remoteEnabled = false, startWithAccount = false, fallback, returnTo = "/dashboard" }: Readonly<{
+/** `overview` keeps the account view to the figures most readers want and
+ * links to the detailed report for the rest; `full` renders every section. */
+export function StatsDashboard({ todayUtcDay, remoteEnabled = false, startWithAccount = false, fallback, returnTo = "/dashboard", account, lead, variant = "full" }: Readonly<{
   todayUtcDay: number; remoteEnabled?: boolean; startWithAccount?: boolean; fallback?: ReactNode; returnTo?: string;
+  /** Rendered beside the page title. */ account?: ReactNode;
+  /** Rendered between the page title and the period report. */ lead?: ReactNode;
+  variant?: "overview" | "full";
 }>) {
   const [stored, setLoaded] = useState<Loaded | null>(null);
   const [facts, setFacts] = useState<Readonly<{ document: RichFactsDocument | null; absence: RichExplorerAbsence | null; name: string | null }>>({ document: null, absence: null, name: null });
@@ -198,6 +203,7 @@ export function StatsDashboard({ todayUtcDay, remoteEnabled = false, startWithAc
     setLoaded(null); setStatus("idle");
   };
   const showFallback = status === "stats_not_started" && loaded === null && fallback !== undefined;
+  const overview = variant === "overview";
   const sourceControls = <>
     <button className="usage-button usage-button--quiet" type="button" onClick={() => picker.current?.click()}>{loaded?.scope === "local" ? "Replace local report" : "Open local report"}</button>
     <button className="usage-stats__text-button" type="button" onClick={example}>Explore example</button>
@@ -208,10 +214,13 @@ export function StatsDashboard({ todayUtcDay, remoteEnabled = false, startWithAc
     <Link href="/usage/sessions">Session timing</Link>
   </>;
   return <>
-    {!showFallback && <header className="usage-stats-heading"><div><h1>Your usage</h1>{!loaded && <p>Tokens, models, and the sources behind them.</p>}</div>
-      <span>{loaded?.scope === "account" ? "Private to your account" : loaded?.scope === "example" ? "Example data · synthetic" : "Local reports stay in this browser"}</span>
-    </header>}
-    <div className="usage-stats-source" aria-label="Choose usage data">
+    {showFallback ? account !== undefined && <div className="usage-stats-heading usage-stats-heading--bare">{account}</div>
+      : <header className="usage-stats-heading"><div><h1>Your usage</h1>{!loaded && account === undefined && <p>Tokens, models, and the sources behind them.</p>}</div>
+        {(account === undefined || loaded) && <span>{loaded?.scope === "account" ? "Private to your account" : loaded?.scope === "example" ? "Example data · synthetic" : "Local reports stay in this browser"}</span>}
+        {account}
+      </header>}
+    {lead}
+    <div className="usage-stats-source" aria-label="Choose usage data" hidden={overview && loaded?.scope === "account"}>
       <input ref={picker} type="file" accept=".json,application/json" hidden aria-label="Open numeric usage report" onChange={event => {
         const file = event.target.files?.[0]; event.target.value = ""; if (file) void importFile(file);
       }} />
@@ -234,7 +243,7 @@ export function StatsDashboard({ todayUtcDay, remoteEnabled = false, startWithAc
       <form action="/api/suite-auth/start" method="get"><input type="hidden" name="return_to" value={returnTo} /><button className="usage-button usage-button--primary" type="submit">Sign in with Hraness</button></form></div>}
     {status === "not_enrolled" && <div className="usage-stats__notice"><h2>No collector connected</h2><p>Enroll a device to sync accepted measurements to your account. You can inspect a local numeric report now.</p><Link className="usage-inline-link" href="https://github.com/hraness/aicharts/blob/main/docs/usage-local.md">Local collector guide</Link></div>}
     {showFallback ? fallback : status === "stats_not_started" ? <div className="usage-stats__notice"><h2>No detailed snapshot yet</h2><p>Your existing daily measurements remain available. Any report below is the last one loaded. Open a detailed local report to inspect model and token breakdowns.</p><Link className="usage-inline-link" href="/dashboard">View account overview</Link></div> : null}
-    {loaded && <StatsReportView key={loaded.version} report={loaded.report} session={loaded.session} scope={loaded.scope} todayUtcDay={todayUtcDay}
+    {loaded && <StatsReportView key={loaded.version} variant={variant} report={loaded.report} session={loaded.session} scope={loaded.scope} todayUtcDay={todayUtcDay}
       captureExport={() => {
         const id = pending.current.id;
         return () => pending.current.id === id && (loaded.scope !== "account" || currentUsageAccountScope(loaded.authority));

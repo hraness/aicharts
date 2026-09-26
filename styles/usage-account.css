@@ -16,3 +16,19 @@
 .usage-account__action:disabled { color: var(--muted); cursor: not-allowed; text-decoration: none; }
 .usage-account__actions { border-block-start: 1px solid var(--grid); margin-block-start: .75rem; padding-block-start: .35rem; }
 @media (max-width: 440px) { .usage-account summary { column-gap: .55rem; } .usage-account__status { flex-basis: calc(100% - 2rem); } .usage-account summary::after { margin-inline-start: auto; } }
+.usage-stats-heading .usage-account { border: 0; margin: 0 0 0 auto; padding: 0; position: relative; }
+.usage-stats-heading .usage-account summary { border: 1px solid var(--grid); border-radius: 999px; gap: .5rem; min-block-size: 2.5rem; padding-inline: .9rem .6rem; }
+.usage-stats-heading .usage-account summary:hover { border-color: var(--muted); }
+.usage-stats-heading .usage-account summary > span:first-child { block-size: 1px; clip-path: inset(50%); inline-size: 1px; overflow: hidden; position: absolute; white-space: nowrap; }
+.usage-stats-heading .usage-account__status { order: -1; }
+.usage-stats-heading .usage-account code { color: var(--muted); font-size: .75rem; }
+.usage-stats-heading .usage-account__body { background: var(--popover, var(--background)); border: 1px solid var(--grid); border-radius: .6rem; box-shadow: var(--elevation-overlay); inline-size: min(26rem, calc(100vw - 2rem)); inset-block-start: calc(100% + .4rem); inset-inline-end: 0; padding: .9rem 1rem .5rem; position: absolute; z-index: 20; }
+.usage-stats-heading .usage-account__body > p:first-child { margin-block-start: 0; }
+.usage-stats-heading--bare { justify-content: flex-end; }
+@media (max-width: 600px) {
+  .usage-stats-heading .usage-account { flex-basis: 100%; margin-inline-start: 0; }
+  .usage-stats-heading .usage-account code { display: none; }
+  .usage-stats-heading .usage-account__status { flex-basis: auto; }
+  .usage-stats-heading .usage-account summary { inline-size: 100%; }
+  .usage-stats-heading .usage-account__body { inline-size: 100%; inset-inline-start: 0; }
+}

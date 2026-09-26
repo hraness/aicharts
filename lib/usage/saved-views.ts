@@ -115,6 +115,11 @@ export function savedViewRangeText(range: SavedViewRange): string {
 }
 /** Serializes only the fields that differ from the default view, in a fixed
  * order, after every foreign parameter of `base`. Legacy keys are dropped. */
+/** Foreign `source` value on a detailed-report link that opens the report on
+ * the signed-in account instead of the local-report prompt. It carries no
+ * identifier and is not part of the saved view. */
+export const DETAILS_ACCOUNT_SOURCE = "account";
+
 export function savedViewSearch(view: SavedView, base: string | URLSearchParams = ""): string {
   const query = new URLSearchParams(params(base) ?? undefined);
   for (const key of [...SAVED_VIEW_KEYS, ...LEGACY_V1_KEYS, ...PRIVATE_VIEW_KEYS]) query.delete(key);
