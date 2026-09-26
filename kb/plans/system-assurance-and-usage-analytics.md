@@ -2022,3 +2022,24 @@ replaced `449df2b9` at 100% traffic on 2026-09-26 ~05:50 UTC via
 `wrangler versions upload`/`deploy`, preserving the pinned enrollment
 generation, worker version, four Durable Object bindings, two R2 buckets and
 all nine enabled flags.
+
+
+### 2026-09-26 — Proof-of-storage cursor shipped and deployed
+
+`#468` (`1a5a971`) added the durable ensure cursor the owner-sized account
+requires: `ensureContributionMigration` walks a flat ordered item index —
+sources, bodies, manifest pages, manifest, delta pages, journal root —
+persisted into `migration_meta` (`ensureIndex`, `ensureInspected`) every 16
+items and on budget expiry. A spent 25-second in-call budget throws
+`storage_unavailable` after the checkpoint; the client's identical replay
+resumes at the cursor. The journal seal uses
+`sealVerifiedContributionJournal` — every page is individually ensured under
+the cursor, so the tail call verifies bundle consistency rather than
+re-reading every artifact.
+
+A self-review caught a double-counted `inspected` prefix on resume (the
+bound would falsely fire at scale); the byte counter now persists beside
+the index so accounting resumes exactly at the checkpoint.
+
+Production Worker `76bbc3c4-ab90-4af6-8bb8-4b1c5a607269` (source `1a5a971`)
+replaced `dfcbfb8e` at 100% on 2026-09-26 ~06:50 UTC.
