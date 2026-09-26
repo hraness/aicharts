@@ -33,7 +33,8 @@ export function SiteHeader({
   skipTarget = "#main-content",
 }: Readonly<{
   className?: string;
-  current: SiteHeaderPath;
+  /** Omitted on pages outside the site navigation, such as the 404 page. */
+  current?: SiteHeaderPath;
   skipLabel?: string;
   skipTarget?: string;
 }>) {

@@ -43,7 +43,9 @@ test("fallback documents remain control-free", () => {
   );
   const notFound = renderToStaticMarkup(<NotFound />);
 
-  expect(`${globalError}${notFound}`).not.toContain("hraness-design-theme-toggle");
+  expect(globalError).not.toContain("hraness-design-theme-toggle");
+  // The 404 page keeps the site header, so it carries exactly one appearance menu.
+  expect(notFound.match(/class="hraness-design-theme-toggle(?: |")/gu)).toHaveLength(1);
   expect(globalError).toContain('<meta content="light dark" name="color-scheme"/>');
   expect(globalError).toContain(
     '<meta content="#f8f7f4" media="(prefers-color-scheme: light)" name="theme-color"/>',
@@ -51,10 +53,12 @@ test("fallback documents remain control-free", () => {
   expect(globalError).toContain(
     '<meta content="#12100f" media="(prefers-color-scheme: dark)" name="theme-color"/>',
   );
-  expect(notFound).toContain("<h1>Page not found</h1>");
-  expect(notFound).toContain('href="/"');
-  expect(notFound).toContain('href="/data"');
-  expect(notFound).toContain('href="/blog"');
+  expect(notFound).toContain('class="hraness-status-page"');
+  expect(notFound).toContain('href="/#intelligence-index"');
+  expect(notFound).toContain("Browse the charts");
+  expect(notFound).toContain('href="/models"');
+  expect(notFound).toContain('href="/usage"');
   expect(notFound).toContain('href="/llms.txt"');
-  expect(notFound).toContain('href="/sitemap.xml"');
+  expect(notFound).toContain("data-hraness-status-routes");
+  expect(notFound).not.toContain('href="/sitemap.xml"');
 });

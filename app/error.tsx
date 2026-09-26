@@ -1,7 +1,15 @@
 "use client";
 
-import { RouteErrorState, type RouteErrorProps } from "@/components/route-state";
+import { RouteErrorPage, type RouteErrorPageProps } from "@hraness/design-kit/react";
+import { useEffect } from "react";
 
-export default function RouteError(props: RouteErrorProps) {
-  return <RouteErrorState {...props} />;
+import { site } from "./site";
+
+export default function RouteError(props: RouteErrorPageProps) {
+  useEffect(() => { console.error(props.error); }, [props.error]);
+  return (
+    <div data-analytics-surface="error_recovery">
+      <RouteErrorPage {...props} siteName={site.name} />
+    </div>
+  );
 }
