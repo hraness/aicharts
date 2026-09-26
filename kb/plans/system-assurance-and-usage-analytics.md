@@ -2001,3 +2001,24 @@ re-pinned.
 
 Remaining: independent review, PR through protected workflow, Worker
 redeploy, then live `--migrate` → `--grant` → owner consent/handle.
+
+
+### 2026-09-26 — Chunked migration shipped and deployed
+
+`#467` merged the staged migration implementation (`b43bfb9`): durable
+`migration_*` scratch tables, one bounded segment per `transactionSync`,
+durable-cursor resume across object eviction, streamed journal assembly with
+widened bounds (262,144 entries, 131,072-byte root), and the commit-time
+snapshot re-pin. Registry, cost-surface, and lifecycle-export registrations
+accompany the new tables.
+
+Post-merge self-review found and fixed four defects before merge: the
+delta-page cursor captured once per stage (duplicated page window), a
+missing null-day skip in delta emission, a missing scratch-vs-stored day
+comparison, and a v1Sources field-order parity drift in the seal digest.
+
+Production Worker `dfcbfb8e-7897-4918-ae2b-7e074c0115e3` (source `b43bfb9`)
+replaced `449df2b9` at 100% traffic on 2026-09-26 ~05:50 UTC via
+`wrangler versions upload`/`deploy`, preserving the pinned enrollment
+generation, worker version, four Durable Object bindings, two R2 buckets and
+all nine enabled flags.

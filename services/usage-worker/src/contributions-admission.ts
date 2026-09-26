@@ -36,6 +36,9 @@ function failure(error: unknown): ContributionResult<never> {
  * fence checks around this helper. Every continuation re-enters the same owner
  * transaction; no authentication, revocation, namespace or writer decision is
  * inferred from an earlier successful await. Numeric content stays in R2. */
+// The client's exchange deadline is 45s; the proof-of-storage loop keeps 25s
+// per call so its durable cursor persists before a disconnect.
+const ENSURE_BUDGET_MS = 25_000;
 export class AccountContributions {
   constructor(readonly env: Env, readonly state: ContributionState, readonly transaction: AdmissionTransaction,
     readonly beforeCommit?: () => Promise<void>) {}
@@ -161,7 +164,10 @@ export class AccountContributions {
         });
       } catch { return false; } };
       let proof;
-      try { proof = await ensureContributionMigration(this.env, migration, admitted); }
+      // ENSURE_BUDGET_MS bounds one exchange's R2 proof work; a spent budget
+      // throws storage_unavailable after the durable cursor lands, and the
+      // client's identical replay resumes the item sequence.
+      try { proof = await ensureContributionMigration(this.env, migration, admitted, this.state.sql, ENSURE_BUDGET_MS); }
       catch (error) { const result = locate(); if (result) return { ok: true, value: result }; throw error; }
       const after = locate(); if (after) return { ok: true, value: after };
       await this.#before(observation, request);

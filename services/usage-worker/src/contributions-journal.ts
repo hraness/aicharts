@@ -167,7 +167,19 @@ export async function ensureContributionJournal(bucket: R2Bucket, bundle: Contri
     throw new ContributionFault("invalid_input");
   for (const page of bundle.pages) await ensureContributionArtifact(bucket, bundle.root.accountId, page, admitted);
   await ensureContributionArtifact(bucket, bundle.root.accountId, bundle.artifact, admitted);
-  const result = Object.freeze({ accountId: bundle.root.accountId, hash: bundle.artifact.hash, count: bundle.root.count, byteLength: bundle.byteLength });
+  return sealVerifiedContributionJournal(bundle);
+}
+/** Seal a journal whose every artifact was already stored exactly — the
+ * staged migration uploads each page under its own durable ensure cursor, so
+ * the final seal only re-verifies the bundle's internal consistency. */
+export function sealVerifiedContributionJournal(bundle: ContributionJournalBundle): VerifiedContributionJournal {
+  const root = parseContributionJournalRoot(bundle.root);
+  if (!root) throw new ContributionFault("invalid_input");
+  const artifact = contributionArtifact(root, CONTRIBUTION_JOURNAL_ROOT_BYTES);
+  if (artifact.text !== bundle.artifact.text || artifact.hash !== bundle.artifact.hash || artifact.bytes !== bundle.artifact.bytes
+    || artifact.bytes + root.pages.reduce((sum, page) => sum + page.bytes, 0) !== bundle.byteLength)
+    throw new ContributionFault("invalid_input");
+  const result = Object.freeze({ accountId: root.accountId, hash: bundle.artifact.hash, count: root.count, byteLength: bundle.byteLength });
   verified.add(result); return result;
 }
 export async function readContributionJournalRoot(bucket: R2Bucket, accountId: string, hash: string): Promise<ContributionJournalRoot> {

@@ -16,6 +16,7 @@ import { PAIRING_TTL_MS, uploadSecretCommitment } from "../src/pairing";
 import { admissionHex, decodeAdmissionBatch, encodeAdmissionBatch, encodeAdmissionOperation } from "../../../lib/usage/admission";
 import { AdmissionState, admissionIdBytes, type AdmissionAuthority } from "../src/admission-state";
 import { advanceContributionMigration, captureContributionMigration, clearMigrationScratch, contributionMigrationBundle,
+  ensureContributionMigration, stagedMigrationSnapshot,
   CONTRIBUTION_MIGRATION_MAX_HEADS, CONTRIBUTION_MIGRATION_STAGE_ROUNDS } from "../src/contributions-migration";
 import { ADMISSION_POLICY_V1 } from "../src/admission-policy";
 import { DAY_MS, encodeUsageBatch } from "../../../lib/usage/wire";
@@ -722,5 +723,31 @@ describe("actual AccountEnrollment V3 joins", () => {
     const journalCount = await onState(() => contributionMigrationBundle(request, snapshot).journal.root.count);
     expect(journalCount).toBe(4);
     await onState(state => clearMigrationScratch(state.sql));
+  });
+
+  test("proof-of-storage resumes at the durable ensure cursor after a spent exchange budget", async () => {
+    const device = await enrolled();
+    success(await stub().admitBatch({ uploadSecret: device.proof.uploadSecret, batch: legacyBatch(device.deviceId).bytes }));
+    success(await stub().admitBatch({ uploadSecret: device.proof.uploadSecret, batch: legacyBatch(device.deviceId, 15, 2, 2).bytes }));
+    await preparedPopulation(device);
+    const admission = await onState(state => JSON.parse(state.sql.exec("SELECT payload FROM account_enrollment WHERE id=1").one().payload as string) as AdmissionAuthority);
+    const request = await migrationRequest(device.deviceId), granted = authority({ deviceId: device.deviceId });
+    const { cursor, receipt } = await runInDurableObject(stub(), async (_instance, context) => {
+      const state = new ContributionState(context.storage), sql = state.sql;
+      const bundle = context.storage.transactionSync(() =>
+        state.reserveMigration(request, captureContributionMigration(sql, admission, request), granted));
+      let tick = NOW;
+      const spent = vi.spyOn(Date, "now").mockImplementation(() => { tick += 9_000; return tick; });
+      try {
+        await expect(ensureContributionMigration(env, bundle, () => true, sql, 25_000)).rejects.toMatchObject({ code: "storage_unavailable" });
+      } finally { spent.mockRestore(); }
+      const cursor = (JSON.parse(sql.exec("SELECT v FROM migration_meta WHERE k='meta'").one().v as string) as { ensureIndex?: number }).ensureIndex;
+      const proof = await ensureContributionMigration(env, bundle, () => true, sql, 60_000);
+      const out = context.storage.transactionSync(() => state.commitMigration(bundle, proof, granted, () => stagedMigrationSnapshot(sql)));
+      return { cursor, receipt: out };
+    });
+    expect(cursor).toBeGreaterThan(0);
+    expect(receipt.headCount).toBe(2);
+    expect((await snapshot()).control.phase).toBe("active");
   });
 });
