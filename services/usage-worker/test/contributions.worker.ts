@@ -758,6 +758,35 @@ describe("actual AccountEnrollment V3 joins", () => {
     expect((await snapshot()).control.phase).toBe("active");
   });
 
+  test("a spent stage budget still commits the partial segment cursor", async () => {
+    const device = await enrolled();
+    for (let batch = 0; batch < 8; batch++) success(await stub().admitBatch({ uploadSecret: device.proof.uploadSecret,
+      batch: legacyBatch(device.deviceId, 10 + batch, batch + 1, batch + 1).bytes }));
+    success(await stub().admitStatsSnapshot({ uploadSecret: device.proof.uploadSecret, request: legacyStats(device.deviceId) }));
+    await preparedPopulation(device);
+    const authority = await onState(state => JSON.parse(state.sql.exec("SELECT payload FROM account_enrollment WHERE id=1").one().payload as string) as AdmissionAuthority);
+    const request = await migrationRequest(device.deviceId);
+    // The request bound commits before any budget decision — a spent budget
+    // may only stop new work, never discard the request binding.
+    await onState((state, storage) => storage.transactionSync(() => advanceContributionMigration(state.sql, authority, request)));
+    // An expiry that trips after each journal replays the kill boundary a
+    // CPU-aborted request hits: the partial segment must still commit.
+    const advance = (perItemBudget: number) => onState((state, storage) => storage.transactionSync(() => {
+      let ticks = 0;
+      return advanceContributionMigration(state.sql, authority, request, () => ++ticks > perItemBudget);
+    }));
+    const through = () => onState(state =>
+      (JSON.parse(state.sql.exec("SELECT v FROM migration_meta WHERE k='meta'").one().v as string) as { throughRevision: number }).throughRevision);
+    expect(await advance(1)).toBeNull();
+    expect(await through()).toBe(1);
+    expect(await advance(3)).toBeNull();
+    expect(await through()).toBe(4);
+    let snapshot: Awaited<ReturnType<typeof advance>>;
+    for (let rounds = 0; rounds < CONTRIBUTION_MIGRATION_STAGE_ROUNDS && !(snapshot = await advance(64)); rounds++) void rounds;
+    expect(snapshot!.seal.v1HeadCount).toBe(8);
+    await onState(state => clearMigrationScratch(state.sql));
+  });
+
   test("a fresh migration request resets orphaned staged scratch after source drift", async () => {
     const device = await enrolled();
     success(await stub().admitBatch({ uploadSecret: device.proof.uploadSecret, batch: legacyBatch(device.deviceId).bytes }));

@@ -211,12 +211,13 @@ function captureBegin(sql: SqlStorage, authority: AdmissionAuthority, meta: Migr
 
 /** Replay the next ≤SEGMENT_JOURNALS retained journals into scratch heads;
  * prior-head lookups resolve through the scratch table, not a resident map. */
-function captureSegment(sql: SqlStorage, authority: AdmissionAuthority, meta: MigrationMeta): void {
+function captureSegment(sql: SqlStorage, authority: AdmissionAuthority, meta: MigrationMeta, expired: () => boolean): void {
   const rows = sql.exec("SELECT * FROM usage_admission_journal WHERE revision > ? ORDER BY revision LIMIT ?",
     meta.throughRevision, SEGMENT_JOURNALS).toArray();
   const prefix = `usage-admission/v1/${authority.accountId.slice(5)}/${authority.generation}`;
   const descriptors: SourceDescriptor[] = meta.sourceDescriptorsJson ? JSON.parse(meta.sourceDescriptorsJson) as SourceDescriptor[] : [];
   for (const raw of rows) {
+    if (expired()) break;
     const batch = ownedAdmissionBatch(blob(raw.batch)), journal = ownedAdmissionJournal(blob(raw.journal), batch);
     const device = authority.devices.find(device => device.deviceId === admissionHex(batch.deviceId));
     checked(typeof raw.revision === "number" && raw.revision === meta.throughRevision + 1 && journal.accountJournalRevision === raw.revision
@@ -302,13 +303,14 @@ function restSegment(sql: SqlStorage, meta: MigrationMeta): void {
 
 /** Verify retained heads against the replayed scratch set and emit the
  * head-entry fragments (v1HeadDigest input) plus conservation accumulators. */
-function headsSegment(sql: SqlStorage, authority: AdmissionAuthority, meta: MigrationMeta): void {
+function headsSegment(sql: SqlStorage, authority: AdmissionAuthority, meta: MigrationMeta, expired: () => boolean): void {
   const admission = new AdmissionState(sql), first = admission.control();
   const owned = new Set(JSON.parse(meta.ownedJson!) as string[]);
   const cursor = meta.headCursor === null ? new Uint8Array(0) : hexBytes(meta.headCursor);
   const rows = sql.exec("SELECT occurrence_id FROM usage_admission_heads WHERE occurrence_id > ? ORDER BY occurrence_id LIMIT ?",
     cursor, SEGMENT_HEADS).toArray();
   for (const raw of rows) {
+    if (expired()) break;
     const idBuf = blob(raw.occurrence_id), id = admissionHex(idBuf);
     const replay = sql.exec("SELECT operation, journal_revision, utc_day FROM migration_heads WHERE occurrence_id=? LIMIT 2", idBuf).toArray()[0];
     const current = admission.head(idBuf, authority, first);
@@ -357,7 +359,7 @@ function sealSegment(sql: SqlStorage, authority: AdmissionAuthority, meta: Migra
 
 /** Emit the retained delta entries, iterating heads by journal revision so
  * each batch decodes once; the scratch key (id) keeps the emitted order. */
-function deltasSegment(sql: SqlStorage, meta: MigrationMeta): void {
+function deltasSegment(sql: SqlStorage, meta: MigrationMeta, expired: () => boolean): void {
   const seal = parseContributionLegacySeal(JSON.parse(meta.sealJson!) as unknown); checked(seal);
   const owned = new Set(JSON.parse(meta.ownedJson!) as string[]);
   const cursorId = meta.deltaIdCursor === null || meta.deltaIdCursor === undefined ? new Uint8Array(0) : hexBytes(meta.deltaIdCursor);
@@ -366,6 +368,7 @@ function deltasSegment(sql: SqlStorage, meta: MigrationMeta): void {
   let batch: ReturnType<typeof ownedAdmissionBatch> | null = null, journal: ReturnType<typeof ownedAdmissionJournal> | null = null;
   let indexOf = new Map<string, number>(), revision = 0;
   for (const row of rows) {
+    if (expired()) break;
     const head = scratchHead(row), id = admissionHex(blob(row.occurrence_id));
     if (head.revision !== revision) {
       const kept = sql.exec("SELECT batch, journal FROM usage_admission_journal WHERE revision=? LIMIT 2", head.revision).toArray();
@@ -392,7 +395,7 @@ function deltasSegment(sql: SqlStorage, meta: MigrationMeta): void {
 
 /** Emit manifest entry fragments in section order: v1 heads (the stored tuple
  * text wrapped), journals, days, devices, writers, conservation. */
-function entriesSegment(sql: SqlStorage, meta: MigrationMeta): void {
+function entriesSegment(sql: SqlStorage, meta: MigrationMeta, expired: () => boolean): void {
   const kinds = { head: "v1-head", journal: "v1-journal", day: "v2-day-unresolved", device: "v2-device",
     writer: "v2-writer", conservation: "conservation" } as const;
   const order = Object.keys(kinds) as (keyof typeof kinds)[];
@@ -403,7 +406,7 @@ function entriesSegment(sql: SqlStorage, meta: MigrationMeta): void {
       conservation: meta.conservationJson }[kind];
     return inline[kind] = (json ? JSON.parse(json) : []) as unknown[];
   };
-  for (let emitted = 0; emitted < SEGMENT_DELTAS; ) {
+  for (let emitted = 0; emitted < SEGMENT_DELTAS && !expired(); ) {
     if (meta.entrySource! >= order.length) { meta.pageCursor = 0; meta.stage = "pages"; return; }
     const source = order[meta.entrySource!];
     let text: string | null = null;
@@ -429,8 +432,8 @@ function entriesSegment(sql: SqlStorage, meta: MigrationMeta): void {
 
 /** Emit ≤SEGMENT_PAGES manifest page artifacts per call; each page serializes
  * through the same `contributionArtifact` codec as the one-shot path. */
-function pagesSegment(sql: SqlStorage, authority: AdmissionAuthority, meta: MigrationMeta): void {
-  for (let pages = 0; pages < SEGMENT_PAGES; pages++) {
+function pagesSegment(sql: SqlStorage, authority: AdmissionAuthority, meta: MigrationMeta, expired: () => boolean): void {
+  for (let pages = 0; pages < SEGMENT_PAGES && !expired(); pages++) {
     const rows = sql.exec("SELECT seq, text FROM migration_frag WHERE kind='entry' AND seq>=? ORDER BY seq LIMIT ?",
       meta.pageCursor!, MIGRATION_PAGE_ENTRIES).toArray();
     if (!rows.length) break;
@@ -457,8 +460,8 @@ function pagesSegment(sql: SqlStorage, authority: AdmissionAuthority, meta: Migr
 
 /** Emit ≤SEGMENT_PAGES delta-journal page artifacts per call, iterating the
  * scratch deltas in their keyed (id) order. */
-function dpagesSegment(sql: SqlStorage, authority: AdmissionAuthority, meta: MigrationMeta): void {
-  for (let pages = 0; pages < SEGMENT_PAGES; pages++) {
+function dpagesSegment(sql: SqlStorage, authority: AdmissionAuthority, meta: MigrationMeta, expired: () => boolean): void {
+  for (let pages = 0; pages < SEGMENT_PAGES && !expired(); pages++) {
     const cursor = meta.deltaCursor === null || meta.deltaCursor === undefined ? "" : meta.deltaCursor;
     const rows = sql.exec("SELECT id, text FROM migration_delta WHERE id > ? ORDER BY id LIMIT ?",
       cursor, CONTRIBUTION_JOURNAL_PAGE_ENTRIES).toArray();
@@ -523,7 +526,7 @@ export function stagedMigrationSnapshot(sql: SqlStorage): ContributionMigrationS
 /** Advance the staged capture one bounded step. Returns the assembled
  * snapshot once every stage has run; null while work remains. */
 export function advanceContributionMigration(sql: SqlStorage, authority: AdmissionAuthority,
-  request: ContributionMigrationRequest | null): ContributionMigrationSnapshot | null {
+  request: ContributionMigrationRequest | null, expired: () => boolean = () => false): ContributionMigrationSnapshot | null {
   // Tables without a meta row are a partial begin — reset and start over. A
   // meta row bound to a different request is orphaned workspace left by a
   // refused or drifted attempt; the fresh request resets it — a still-pending
@@ -542,14 +545,14 @@ export function advanceContributionMigration(sql: SqlStorage, authority: Admissi
   if (meta.stage === "ready") return stagedMigrationSnapshot(sql);
   migrationPin(sql, meta);
   switch (meta.stage) {
-    case "capture": captureSegment(sql, authority, meta); break;
+    case "capture": captureSegment(sql, authority, meta, expired); break;
     case "rest": restSegment(sql, meta); break;
-    case "heads": headsSegment(sql, authority, meta); break;
+    case "heads": headsSegment(sql, authority, meta, expired); break;
     case "seal": sealSegment(sql, authority, meta); break;
-    case "deltas": deltasSegment(sql, meta); break;
-    case "entries": entriesSegment(sql, meta); break;
-    case "pages": pagesSegment(sql, authority, meta); break;
-    case "dpages": dpagesSegment(sql, authority, meta); break;
+    case "deltas": deltasSegment(sql, meta, expired); break;
+    case "entries": entriesSegment(sql, meta, expired); break;
+    case "pages": pagesSegment(sql, authority, meta, expired); break;
+    case "dpages": dpagesSegment(sql, authority, meta, expired); break;
   }
   metaStore(sql, meta);
   const stage: string = meta.stage;
