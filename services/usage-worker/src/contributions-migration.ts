@@ -49,7 +49,10 @@ type DeltaJournalParts = Readonly<{ count: number; entriesHash: string;
   descriptors: readonly Readonly<{ hash: string; bytes: number; count: number }>[]; pages: Iterable<ContributionArtifact> }>;
 export type ContributionMigrationSnapshot = Readonly<{
   seal: ContributionLegacySeal; manifest: ContributionArtifact; pages: Iterable<ContributionArtifact>;
+  // manifestPageBytes is the scratch SUM(bytes) over the paged manifest —
+  // reading it must not materialize ~250MB of page JSON per call.
   sourceObjects: Iterable<SourceObject>; bodies: readonly LegacyBody[]; journal: DeltaJournalParts; sourceBytes: number;
+  manifestPageBytes: number;
 }>;
 export type ContributionMigrationBundle = Readonly<{ snapshot: ContributionMigrationSnapshot; journal: ContributionJournalBundle;
   bodyHash: string; byteLength: number; request: ContributionMigrationRequest }>;
@@ -496,6 +499,7 @@ export function stagedMigrationSnapshot(sql: SqlStorage): ContributionMigrationS
   const bodies = JSON.parse(meta.bodiesJson!) as LegacyBody[];
   const deltaDescriptors = sql.exec("SELECT hash, bytes, count FROM migration_dpage ORDER BY ordinal").toArray()
     .map(row => ({ hash: row.hash as string, bytes: row.bytes as number, count: row.count as number }));
+  const manifestPageBytes = Number(sql.exec("SELECT COALESCE(SUM(bytes),0) AS sum FROM migration_page").one().sum);
   return { seal, manifest,
     pages: artifactRows("migration_page"),
     sourceObjects: { [Symbol.iterator]: function* () {
@@ -509,7 +513,8 @@ export function stagedMigrationSnapshot(sql: SqlStorage): ContributionMigrationS
     } },
     bodies, sourceBytes: meta.sourceBytes,
     journal: Object.freeze({ count: meta.deltaCount!, entriesHash: meta.deltaEntriesHash!,
-      descriptors: Object.freeze(deltaDescriptors.map(row => Object.freeze(row))), pages: artifactRows("migration_dpage") }) };
+      descriptors: Object.freeze(deltaDescriptors.map(row => Object.freeze(row))), pages: artifactRows("migration_dpage") }),
+    manifestPageBytes };
 }
 
 /** Advance the staged capture one bounded step. Returns the assembled
@@ -574,10 +579,8 @@ export function contributionMigrationBundle(request: ContributionMigrationReques
   const artifact = contributionArtifact(root, CONTRIBUTION_JOURNAL_ROOT_BYTES);
   const journal: ContributionJournalBundle = Object.freeze({ root, artifact, pages: snapshot.journal.pages,
     byteLength: artifact.bytes + snapshot.journal.descriptors.reduce((sum, page) => sum + page.bytes, 0) });
-  let manifestPageBytes = 0;
-  for (const page of snapshot.pages) manifestPageBytes += page.bytes;
   return { snapshot, journal, bodyHash, request,
-    byteLength: snapshot.manifest.bytes + manifestPageBytes + journal.byteLength };
+    byteLength: snapshot.manifest.bytes + snapshot.manifestPageBytes + journal.byteLength };
 }
 async function sourceBytes(bucket: R2Bucket, key: string, media: string, schema: string, maximum: number): Promise<Uint8Array<ArrayBuffer>> {
   const object = await enrollmentStorageCall(bucket.get(key), value => { if (value) void value.body.cancel().catch(() => undefined); });
