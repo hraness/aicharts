@@ -54,7 +54,7 @@ import {
   ensureNamespaceAnchor, enrollmentStorageCall, namespaceAnchorKey, readNamespaceAnchor, sameNamespaceAnchor, type NamespaceAnchor,
 } from "./namespace-anchor";
 import {
-  RESTORE_FENCE_GENESIS_EPOCH, RESTORE_FENCE_LEASE_TTL_MS, restoreFenceName,
+  RESTORE_FENCE_GENESIS_EPOCH, RESTORE_FENCE_LEASE_TTL_MS, RESTORE_FENCE_MAX_ATTEMPTS, restoreFenceName,
   type FenceObservation,
 } from "./restore-fence";
 import {
@@ -1437,7 +1437,10 @@ export class AccountEnrollment extends DurableObject<Env> {
       const failed = rpcSnapshot(raw, ["ok", "error"]);
       if (failed?.ok === false && (failed.error === "clock_regressed" || failed.error === "storage_invalid" || failed.error === "storage_unavailable")) return failed.error;
       const view = reply?.ok === true ? enrollmentSnapshot(reply.value, ["record", "inFlight", "observedAtMs"]) : null;
-      if (view === null || !statsInteger(view.inFlight, 0, 64) || !enrollmentTime(view.observedAtMs)) return "recovery_required";
+      // inFlight reports every outstanding lease, including expired ones a
+      // dead caller can never settle — a leaked backlog is valid state, so the
+      // sanity bound is the attempt lifetime the fence itself enforces.
+      if (view === null || !statsInteger(view.inFlight, 0, RESTORE_FENCE_MAX_ATTEMPTS) || !enrollmentTime(view.observedAtMs)) return "recovery_required";
       if (view.record === null) return local.value.established ? "recovery_required" : null;
       const record = enrollmentSnapshot(view.record, ["schemaVersion", "accountId", "generation", "epoch", "workerVersion", "phase", "established", "updatedAtMs"]);
       // A sealed external tombstone refuses every ordinary read even when the
