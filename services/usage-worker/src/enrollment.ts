@@ -398,7 +398,10 @@ export class AccountEnrollment extends DurableObject<Env> {
   }
 
   #objects(): Record<string, SqlStorageValue>[] {
-    return this.ctx.storage.sql.exec("SELECT type, name, sql FROM sqlite_schema WHERE name NOT GLOB '_cf_*' AND name NOT GLOB 'sqlite_*' AND name != '__cf_kv' LIMIT 30").toArray();
+    // `migration_*` is the contribution-migration scratch namespace: durable
+    // so staged progress survives object eviction, deliberately outside the
+    // frozen schema manifest, and wiped on commit or abandon.
+    return this.ctx.storage.sql.exec("SELECT type, name, sql FROM sqlite_schema WHERE name NOT GLOB '_cf_*' AND name NOT GLOB 'sqlite_*' AND name != '__cf_kv' AND name NOT GLOB 'migration_*' LIMIT 30").toArray();
   }
   #schema(legacy = false): void {
     const objects = this.#objects();

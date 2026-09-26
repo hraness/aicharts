@@ -5,8 +5,11 @@ import { enrollmentStorageCall } from "./namespace-anchor";
 
 export const CONTRIBUTION_JOURNAL_PAGE_ENTRIES = 256;
 export const CONTRIBUTION_JOURNAL_PAGE_BYTES = 262_144;
-export const CONTRIBUTION_JOURNAL_ROOT_BYTES = 16_384;
-export const CONTRIBUTION_JOURNAL_MAX_ENTRIES = 8_448;
+// A sealed legacy account may carry up to CONTRIBUTION_MAX_HEADS retained
+// heads, so a migration journal can span ~1,024 pages; the root bound covers
+// that descriptor list (~75KB worst case) rather than the old 33-page cap.
+export const CONTRIBUTION_JOURNAL_ROOT_BYTES = 131_072;
+export const CONTRIBUTION_JOURNAL_MAX_ENTRIES = 262_144;
 export type ContributionJournalBinding = Readonly<{
   accountId: string; generation: string; operationId: string; bodyHash: string; previousRevision: number; revision: number;
 }>;
@@ -18,7 +21,7 @@ export type ContributionJournalPage = Readonly<{ schemaVersion: 3; kind: "contri
   accountId: string; generation: string; entries: readonly ContributionDelta[] }>;
 export type ContributionArtifact = Readonly<{ hash: string; text: string; bytes: number }>;
 export type ContributionJournalBundle = Readonly<{ root: ContributionJournalRoot; artifact: ContributionArtifact;
-  pages: readonly ContributionArtifact[]; byteLength: number }>;
+  pages: Iterable<ContributionArtifact>; byteLength: number }>;
 function array(value: unknown, max: number): readonly unknown[] | null {
   if (!Array.isArray(value) || Object.getPrototypeOf(value) !== Array.prototype || value.length > max) return null;
   const descriptors = Object.getOwnPropertyDescriptors(value);
@@ -138,21 +141,29 @@ export async function ensureContributionArtifact(bucket: R2Bucket, accountId: st
 }
 export async function ensureContributionJournal(bucket: R2Bucket, bundle: ContributionJournalBundle, admitted: () => boolean): Promise<VerifiedContributionJournal> {
   // A capability means every exact referenced page exists, not merely that a
-  // caller supplied a root hash. Rebuild the envelope before any provider I/O.
-  const root = parseContributionJournalRoot(bundle.root), entries: ContributionDelta[] = [];
-  if (!root || bundle.pages.length !== root.pages.length) throw new ContributionFault("invalid_input");
-  for (let index = 0; index < bundle.pages.length; index++) {
-    const artifact = bundle.pages[index], descriptor = root.pages[index]; let page: ContributionJournalPage | null;
+  // caller supplied a root hash. Verify the envelope before any provider I/O;
+  // entries stream through their parsed form so large journals stay bounded.
+  const root = parseContributionJournalRoot(bundle.root);
+  if (!root) throw new ContributionFault("invalid_input");
+  const entryParts: string[] = []; let index = 0, previous = "";
+  for (const artifact of bundle.pages) {
+    const descriptor = root.pages[index]; let page: ContributionJournalPage | null;
     try { page = parseContributionJournalPage(JSON.parse(artifact.text) as unknown); } catch { page = null; }
     if (!page || page.accountId !== root.accountId || page.generation !== root.generation || JSON.stringify(page) !== artifact.text
-      || descriptor.hash !== artifact.hash || descriptor.bytes !== artifact.bytes || descriptor.count !== page.entries.length)
+      || !descriptor || descriptor.hash !== artifact.hash || descriptor.bytes !== artifact.bytes || descriptor.count !== page.entries.length)
       throw new ContributionFault("invalid_input");
-    entries.push(...page.entries);
+    for (const entry of page.entries) {
+      const parsed = parseContributionDelta(entry);
+      if (!parsed || (entryParts.length !== 0 && parsed.id <= previous)) throw new ContributionFault("invalid_input");
+      previous = parsed.id; entryParts.push(JSON.stringify(parsed));
+    }
+    index += 1;
   }
-  const expected = contributionDeltaBundle(root, entries);
-  if (JSON.stringify(expected.root) !== JSON.stringify(root) || expected.artifact.text !== bundle.artifact.text
-    || expected.artifact.hash !== bundle.artifact.hash || expected.artifact.bytes !== bundle.artifact.bytes
-    || expected.byteLength !== bundle.byteLength || expected.pages.some((page, index) => page.text !== bundle.pages[index].text))
+  if (index !== root.pages.length || entryParts.length !== root.count
+    || contributionHash(`[${entryParts.join(",")}]`) !== root.entriesHash) throw new ContributionFault("invalid_input");
+  const artifact = contributionArtifact(root, CONTRIBUTION_JOURNAL_ROOT_BYTES);
+  if (artifact.text !== bundle.artifact.text || artifact.hash !== bundle.artifact.hash || artifact.bytes !== bundle.artifact.bytes
+    || artifact.bytes + root.pages.reduce((sum, page) => sum + page.bytes, 0) !== bundle.byteLength)
     throw new ContributionFault("invalid_input");
   for (const page of bundle.pages) await ensureContributionArtifact(bucket, bundle.root.accountId, page, admitted);
   await ensureContributionArtifact(bucket, bundle.root.accountId, bundle.artifact, admitted);

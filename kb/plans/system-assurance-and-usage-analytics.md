@@ -1905,3 +1905,99 @@ the retained pending request to `/v3/contributions/migrate/cancel`, records
 the abandoned terminal on the migrate record, and lets `--migrate` retry
 fresh — the escape for a wedged `pendingOperation`. The focused suite is now
 60 tests.
+
+#### Chunked migration implementation phases
+
+- **C1 — scratch-backed capture** (`services/usage-worker/src/
+  contributions-migration.ts`): introduce a durable scratch table
+  `usage_migration_scratch` (real table; the schema checks are whitelists so
+  no family bump is needed — verified: `SCHEMA_FAMILIES` and the
+  `ADMISSION_SCHEMA`/`STATS_SCHEMA` exact-DDL checks iterate expected names
+  only). Kind-discriminated rows: `meta` (JSON cursor: operationId,
+  pinned v1/v2 revisions, throughRevision, per-device sequence,
+  sourceBytes, previousTime), `head` rows (occurrence_id, operation blob,
+  journal_revision, utc_day), `page` rows (ordinal, artifact text).
+  `decideAdmission` inputs come from per-batch scratch SELECTs — the same
+  ~256-row lookup `admission.heads(batch)` already performs.
+- **C2 — segmented replay**: `service.migrate` splits into bounded
+  `transactionSync` stages of ~64 journals each, resumable via the meta
+  cursor; each stage re-asserts `admission.control().revision` equals the
+  reserve-time pin (drift -> `conflict`, client replays identical request
+  and the stage picks up at the cursor). All stages run inside the existing
+  `migrate` RPC loop driven by the CLI's durable-op replay.
+- **C3 — streamed assembly**: the manifest/page/entries JSON is produced by
+  incremental `"["+parts.join(",")+"]"` string assembly (byte-identical to
+  `JSON.stringify(entries)`); page artifacts land in scratch rows, read back
+  lazily by `ensureContributionMigration` for R2 writes. `deltaBytes` bound
+  in the operation-metadata parser lifts past 16 MiB (the delta journal is
+  an R2 artifact, not row data).
+- **C4 — stored-vs-charged bytes**: `body_bytes` stores manifest+journal
+  bytes only (<<16 MiB); capacity charging keeps counting the full bundle
+  (`seal.immutableBytes` unchanged). `commitMigration`'s recapture becomes a
+  paged rescan of scratch recomputing the manifest hash — same tamper
+  guarantee without a second full capture.
+- **C5 — cancel + tests**: `--cancel-migration` wipes the pending op and
+  scratch atomically; new tests assert byte-identical manifests between
+  one-shot (small accounts) and chunked (the same fixture replayed at >1
+  segment), wedge/resume per stage, and the over-cap behavior.
+
+Gate per phase: `bun run scripts/usage-worker-tools.ts test` +
+`usage:assurance:check`; ship through a PR; redeploy Worker; then run
+`contribution-sync --migrate` on the live account (custody consent already
+qualified), then `--grant`, then the owner consent+handle step.
+
+Current live state: worker `449df2b9` (= `5be3f87`, widened bounds) serves
+100%; account contributions control sits at `prepared`/`not_started`
+control — revision 0, nothing committed; `--status` is green.
+
+### 2026-09-26 — Chunked migration implemented: durable scratch, staged capture, streamed assembly
+
+C1–C5 landed on `chunked-migration`, with one design deviation driven by a
+runtime fact: workerd's storage authorizer refuses `CREATE TEMP TABLE`
+(`SQLITE_AUTH`), so scratch lives in durable `migration_*` tables
+(`migration_meta/heads/frag/delta/page/dpage`). That is strictly better for
+resumability — a mid-flight capture survives object eviction and resumes at
+the committed cursor — and the frozen schema manifest stays exact because
+`enrollment.ts`'s `#objects()` scan now excludes the `migration_*` namespace
+(all scratch contents are re-parsed and re-verified, never trusted).
+
+Key shape:
+
+- `advanceContributionMigration` drives one bounded stage per
+  `transactionSync`: capture (64 journals), rest descriptors, head replay
+  (8,192 rows), seal (16 fragments), deltas (8,192), entries (8,192),
+  manifest pages (64), delta pages (64). Every stage re-asserts the pinned
+  admission/stats revisions (`conflict` on drift); `metaStore` persists the
+  cursor inside the same transaction, so a rolled-back stage replays
+  idempotently.
+- `MigrationStage` list: `capture → rest → heads → seal → deltas → entries
+  → pages → dpages → ready`; the `migrate` handler loops up to
+  `CONTRIBUTION_MIGRATION_STAGE_ROUNDS` (4,096) inside one RPC.
+- Journal bounds widened for the full-head envelope: `MAX_ENTRIES` 8,448 →
+  262,144 (= `CONTRIBUTION_MAX_HEADS`), root artifact 16,384 → 131,072
+  bytes; page geometry unchanged (256 entries / 262,144 bytes).
+  `CONTRIBUTION_MIGRATION_MAX_HEADS` 65,536 → 262,144 and a new
+  `CONTRIBUTION_MIGRATION_MAX_BUNDLE_BYTES` (256 MiB) bounds total charged
+  bytes now that manifest/journal bytes live in R2 rather than one row.
+- `ensureContributionJournal` verifies streaming: page descriptors, sizes,
+  sorted unique ids and the entries hash are recomputed iteratively before
+  any R2 write; `bundle.pages` is a lazy `Iterable` bound to the scratch
+  table, never a second materialized delta list.
+- Commit-time recapture (`stagedMigrationSnapshot`) re-asserts the pin and
+  reloads the seal/digests from scratch — same tamper guarantee, no second
+  full replay; `clearMigrationScratch` runs inside the commit transaction
+  and on `abandon`.
+- Partial-init recovery: scratch tables present without a `meta` row mean an
+  interrupted begin → the next `advance` resets and restarts cleanly.
+
+Tests: the contributions suite is now 32 cases, all green, including a
+9,000-head staged migration through the real RPC (journal root of 36 page
+descriptors, >8,448-entry delta journal, active commit, scratch wiped) and a
+cursor-resume test that survives `abortAllDurableObjects` mid-capture and
+reproduces an identical seal/manifest. Full worker suite: 725 tests across
+43 files green; worker `tsc --noEmit` clean; `usage:assurance:check` clean
+with the six scratch surfaces registered and the three capacity constants
+re-pinned.
+
+Remaining: independent review, PR through protected workflow, Worker
+redeploy, then live `--migrate` → `--grant` → owner consent/handle.

@@ -855,7 +855,7 @@
       "id": "contribution-journal-root-bytes",
       "scope": "account-canonical-journal",
       "unit": "bytes",
-      "value": 16384,
+      "value": 131072,
       "source": {
         "path": "services/usage-worker/src/contributions-journal.ts",
         "symbol": "CONTRIBUTION_JOURNAL_ROOT_BYTES"
@@ -865,7 +865,7 @@
       "id": "contribution-migration-max-heads",
       "scope": "account-canonical-migration",
       "unit": "count",
-      "value": 65536,
+      "value": 262144,
       "source": {
         "path": "services/usage-worker/src/contributions-migration.ts",
         "symbol": "CONTRIBUTION_MIGRATION_MAX_HEADS"
@@ -905,7 +905,7 @@
       "id": "contribution-journal-max-entries",
       "scope": "canonical-contribution-replay",
       "unit": "count",
-      "value": 8448,
+      "value": 262144,
       "source": {
         "path": "services/usage-worker/src/contributions-journal.ts",
         "symbol": "CONTRIBUTION_JOURNAL_MAX_ENTRIES"

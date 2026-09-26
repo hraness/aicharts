@@ -7,7 +7,8 @@ import type { AdmissionObservation, AdmissionOwner, AdmissionTransaction } from 
 import { AdmissionFault } from "./admission-policy";
 import { ensureContributionBody } from "./contributions-objects";
 import { ensureContributionJournal } from "./contributions-journal";
-import { captureContributionMigration, ensureContributionMigration } from "./contributions-migration";
+import { advanceContributionMigration, CONTRIBUTION_MIGRATION_STAGE_ROUNDS, ensureContributionMigration,
+  stagedMigrationSnapshot, type ContributionMigrationBundle } from "./contributions-migration";
 import { ContributionState, type ContributionGrantReceipt } from "./contributions-state";
 import { readNamespaceAnchor, sameNamespaceAnchor } from "./namespace-anchor";
 import { uploadSecretCommitment } from "./pairing";
@@ -141,23 +142,32 @@ export class AccountContributions {
         return receipt;
       });
       const terminal = locate(); if (terminal) return { ok: true, value: terminal };
-      const bundle = this.#run(observation, request, (owner, now) => this.state.reserveMigration(request,
-        captureContributionMigration(this.state.sql, owner), authority(owner, request.deviceId, now)));
+      // The staged capture commits bounded progress per transactionSync; an
+      // RPC timeout between rounds simply rolls back the last segment and the
+      // client's identical replay resumes at the durable cursor.
+      let bundle: ContributionMigrationBundle | null = null;
+      for (let rounds = 0; rounds < CONTRIBUTION_MIGRATION_STAGE_ROUNDS && bundle === null; rounds++)
+        bundle = this.#run(observation, request, (owner, now) => {
+          const snapshot = advanceContributionMigration(this.state.sql, owner, request);
+          return snapshot === null ? null : this.state.reserveMigration(request, snapshot, authority(owner, request.deviceId, now));
+        });
+      if (bundle === null) throw new ContributionFault("storage_unavailable");
+      const migration = bundle;
       const admitted = () => { try {
         return this.#run(observation, request, () => {
           const control = this.state.control(), operation = this.state.operation(request.operationId);
           return control.phase === "prepared" && control.revision === request.expectedRevision && control.pendingOperation === request.operationId
-            && operation?.outcome === "pending" && operation.intent.bodyHash === bundle.bodyHash;
+            && operation?.outcome === "pending" && operation.intent.bodyHash === migration.bodyHash;
         });
       } catch { return false; } };
       let proof;
-      try { proof = await ensureContributionMigration(this.env, bundle, admitted); }
+      try { proof = await ensureContributionMigration(this.env, migration, admitted); }
       catch (error) { const result = locate(); if (result) return { ok: true, value: result }; throw error; }
       const after = locate(); if (after) return { ok: true, value: after };
       await this.#before(observation, request);
       const final = locate(); if (final) return { ok: true, value: final };
-      return { ok: true, value: this.#run(observation, request, (owner, now) => this.state.commitMigration(bundle, proof,
-        authority(owner, request.deviceId, now), () => captureContributionMigration(this.state.sql, owner))) };
+      return { ok: true, value: this.#run(observation, request, (owner, now) => this.state.commitMigration(migration, proof,
+        authority(owner, request.deviceId, now), () => stagedMigrationSnapshot(this.state.sql))) };
     } catch (error) { return failure(error); }
   }
   /** Explicit cancellation of the same migration request is available even

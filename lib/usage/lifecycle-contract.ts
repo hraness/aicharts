@@ -414,5 +414,11 @@ export const LIFECYCLE_EXPORT_EXCLUDED: readonly LifecycleExportExclusionV1[] = 
   owner("r2:stats-snapshots-and-receipts", "content-addressed by the exported usage_stats_days rows, or usage_stats_day_sources rows in a store not yet partitioned by device"),
   owner("r2:enrollment-namespace-anchors", "mirror of the exported enrollment anchor metadata without the namespace key"),
   owner("r2:staged-measurements", "transient pre-admission staging with no account-owned durable content"),
+  owner("worker:migration_meta", "in-flight staged-migration workspace; derived, not durable account content"),
+  owner("worker:migration_heads", "in-flight staged-migration workspace; derived, not durable account content"),
+  owner("worker:migration_frag", "in-flight staged-migration workspace; derived, not durable account content"),
+  owner("worker:migration_delta", "in-flight staged-migration workspace; derived, not durable account content"),
+  owner("worker:migration_page", "in-flight staged-migration workspace; derived, not durable account content"),
+  owner("worker:migration_dpage", "in-flight staged-migration workspace; derived, not durable account content"),
 ]);
 function owner(surface: string, reason: string): LifecycleExportExclusionV1 { return owned({ surface, reason }); }

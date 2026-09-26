@@ -916,7 +916,7 @@
         "capacityRefs": {
           "contribution-journal-page-entries": 256,
           "contribution-journal-page-bytes": 262144,
-          "contribution-journal-root-bytes": 16384,
+          "contribution-journal-root-bytes": 131072,
           "contribution-max-immutable-bytes": 8589934592,
           "contribution-max-operations": 1000000
         }
@@ -959,7 +959,7 @@
       "assurancePolicy": "authority-and-deletion-controls",
       "budget": {
         "capacityRefs": {
-          "contribution-journal-max-entries": 8448,
+          "contribution-journal-max-entries": 262144,
           "contribution-replay-chunk-entries": 32,
           "contribution-replay-max-source-bytes": 33554432,
           "contribution-projection-max-immutable-bytes": 4294967296,
@@ -978,7 +978,7 @@
       "assurancePolicy": "authority-and-deletion-controls",
       "budget": {
         "capacityRefs": {
-          "contribution-journal-max-entries": 8448,
+          "contribution-journal-max-entries": 262144,
           "contribution-replay-chunk-entries": 32,
           "contribution-replay-max-source-bytes": 33554432,
           "contribution-projection-max-immutable-bytes": 4294967296,
@@ -997,7 +997,7 @@
       "assurancePolicy": "authority-and-deletion-controls",
       "budget": {
         "capacityRefs": {
-          "contribution-journal-max-entries": 8448,
+          "contribution-journal-max-entries": 262144,
           "contribution-replay-chunk-entries": 32,
           "contribution-replay-max-source-bytes": 33554432,
           "contribution-projection-max-immutable-bytes": 4294967296,
@@ -1253,6 +1253,90 @@
       "retention": "ephemeral",
       "owner": "app/api/usage/totals/route.ts",
       "note": "Lifetime account totals: one bounded worker read per request (256 KiB reply cap), private, no-store, no persistence."
+    },
+    "worker:migration_meta": {
+      "assurancePolicy": "derived-projections",
+      "budget": {
+        "capacityRefs": {
+          "contribution-migration-max-journals": 4096,
+          "contribution-migration-max-days": 8192,
+          "contribution-migration-max-source-bytes": 67108864
+        }
+      },
+      "kind": "derived",
+      "note": "Transient staged-migration workspace, never user data: rows carry replayed heads, digest fragments and assembled artifacts derived byte-exactly from the retained admission journal and stats state. Scratch is created only inside a migration attempt, dropped by commitMigration and abandon, and excluded from the frozen schema manifest by the migration_ namespace.",
+      "owner": "services/usage-worker/src/contributions-migration.ts",
+      "source": "retained legacy admission journal and stats state; wiped on migration commit or abandon",
+      "retention": "ephemeral"
+    },
+    "worker:migration_heads": {
+      "assurancePolicy": "derived-projections",
+      "budget": {
+        "capacityRefs": {
+          "contribution-migration-max-heads": 262144
+        }
+      },
+      "kind": "derived",
+      "note": "Transient staged-migration workspace, never user data: rows carry replayed heads, digest fragments and assembled artifacts derived byte-exactly from the retained admission journal and stats state. Scratch is created only inside a migration attempt, dropped by commitMigration and abandon, and excluded from the frozen schema manifest by the migration_ namespace.",
+      "owner": "services/usage-worker/src/contributions-migration.ts",
+      "source": "retained legacy admission journal and stats state; wiped on migration commit or abandon",
+      "retention": "ephemeral"
+    },
+    "worker:migration_frag": {
+      "assurancePolicy": "derived-projections",
+      "budget": {
+        "capacityRefs": {
+          "contribution-migration-max-heads": 262144,
+          "contribution-migration-max-journals": 4096,
+          "contribution-migration-max-days": 8192
+        }
+      },
+      "kind": "derived",
+      "note": "Transient staged-migration workspace, never user data: rows carry replayed heads, digest fragments and assembled artifacts derived byte-exactly from the retained admission journal and stats state. Scratch is created only inside a migration attempt, dropped by commitMigration and abandon, and excluded from the frozen schema manifest by the migration_ namespace.",
+      "owner": "services/usage-worker/src/contributions-migration.ts",
+      "source": "retained legacy admission journal and stats state; wiped on migration commit or abandon",
+      "retention": "ephemeral"
+    },
+    "worker:migration_delta": {
+      "assurancePolicy": "derived-projections",
+      "budget": {
+        "capacityRefs": {
+          "contribution-journal-max-entries": 262144
+        }
+      },
+      "kind": "derived",
+      "note": "Transient staged-migration workspace, never user data: rows carry replayed heads, digest fragments and assembled artifacts derived byte-exactly from the retained admission journal and stats state. Scratch is created only inside a migration attempt, dropped by commitMigration and abandon, and excluded from the frozen schema manifest by the migration_ namespace.",
+      "owner": "services/usage-worker/src/contributions-migration.ts",
+      "source": "retained legacy admission journal and stats state; wiped on migration commit or abandon",
+      "retention": "ephemeral"
+    },
+    "worker:migration_page": {
+      "assurancePolicy": "derived-projections",
+      "budget": {
+        "capacityRefs": {
+          "contribution-migration-max-heads": 262144,
+          "contribution-journal-page-entries": 256
+        }
+      },
+      "kind": "derived",
+      "note": "Transient staged-migration workspace, never user data: rows carry replayed heads, digest fragments and assembled artifacts derived byte-exactly from the retained admission journal and stats state. Scratch is created only inside a migration attempt, dropped by commitMigration and abandon, and excluded from the frozen schema manifest by the migration_ namespace.",
+      "owner": "services/usage-worker/src/contributions-migration.ts",
+      "source": "retained legacy admission journal and stats state; wiped on migration commit or abandon",
+      "retention": "ephemeral"
+    },
+    "worker:migration_dpage": {
+      "assurancePolicy": "derived-projections",
+      "budget": {
+        "capacityRefs": {
+          "contribution-journal-max-entries": 262144,
+          "contribution-journal-page-entries": 256
+        }
+      },
+      "kind": "derived",
+      "note": "Transient staged-migration workspace, never user data: rows carry replayed heads, digest fragments and assembled artifacts derived byte-exactly from the retained admission journal and stats state. Scratch is created only inside a migration attempt, dropped by commitMigration and abandon, and excluded from the frozen schema manifest by the migration_ namespace.",
+      "owner": "services/usage-worker/src/contributions-migration.ts",
+      "source": "retained legacy admission journal and stats state; wiped on migration commit or abandon",
+      "retention": "ephemeral"
     }
   },
   "exempt": []
