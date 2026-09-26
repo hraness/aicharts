@@ -79,15 +79,16 @@ Publishing needs macOS and an AI Charts account. Nothing is sent until you run
 sync or upload, and only token counts leave this Mac, never prompts or code.
 
 Steps, in order (use the same private folder and key every time):
-  1. aicharts keygen --output ~/.aicharts/key
-  2. aicharts enroll --state-dir ~/.aicharts/state
-  3. aicharts init --state-dir ~/.aicharts/state --key-file ~/.aicharts/key
-  4. aicharts prefix-enable --state-dir ~/.aicharts/state
+  1. mkdir -m 700 ~/.aicharts
+  2. aicharts keygen --output ~/.aicharts/key
+  3. aicharts enroll --state-dir ~/.aicharts/state
+  4. aicharts init --state-dir ~/.aicharts/state --key-file ~/.aicharts/key
+  5. aicharts prefix-enable --state-dir ~/.aicharts/state
        --key-file ~/.aicharts/key --revision N   (N from aicharts status)
-  5. aicharts collect-prefix --state-dir ~/.aicharts/state
+  6. aicharts collect-prefix --state-dir ~/.aicharts/state
        --key-file ~/.aicharts/key --claude ~/.claude/projects
-  6. aicharts upload --state-dir ~/.aicharts/state --key-file ~/.aicharts/key
-  7. aicharts sync --complete-prefix --state-dir ~/.aicharts/state
+  7. aicharts upload --state-dir ~/.aicharts/state --key-file ~/.aicharts/key
+  8. aicharts sync --complete-prefix --state-dir ~/.aicharts/state
        --key-file ~/.aicharts/key --claude ~/.claude/projects
 
 Keep the key file. Changing it changes how your sessions are counted.
@@ -360,7 +361,11 @@ pub(crate) fn resolve(args: &[String]) -> Option<Help> {
     }
     let (path, _) = if args[0] == "help" {
         (&args[1..], true)
-    } else if args.len() >= 2 && is_help_flag(&args[args.len() - 1]) {
+    } else if args.len() >= 2
+        && is_help_flag(&args[args.len() - 1])
+        // After `--` the arguments belong to another program (capture mcode).
+        && !args[..args.len() - 1].iter().any(|arg| arg == "--")
+    {
         (&args[..args.len() - 1], false)
     } else {
         return None;
@@ -497,6 +502,19 @@ mod tests {
         assert_eq!(
             resolve(&args(&["sync", "-h"])),
             Some(Help::Delegate(args(&["sync", "--help"])))
+        );
+        // Arguments after `--` belong to the wrapped program.
+        assert_eq!(
+            resolve(&args(&[
+                "capture",
+                "mcode",
+                "--cache-dir",
+                "/c",
+                "--",
+                "exec",
+                "-h"
+            ])),
+            None
         );
     }
 

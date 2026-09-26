@@ -238,8 +238,8 @@ pub(crate) fn explain(code: &str, args: &[String]) -> Explained {
         ),
         "key_read_failed" => explained("Couldn't read the key file.", format!("ls -l {key}")),
         "key_create_failed" => explained(
-            "Couldn't create the key file. keygen never overwrites an existing file.",
-            "aicharts keygen --output NEW_PATH".to_owned(),
+            "Couldn't create the key file. Its folder must already exist, and keygen never overwrites a file.",
+            "aicharts help keygen".to_owned(),
         ),
         "no_source_files" => explained(
             "No session files were found where you pointed.",
@@ -330,10 +330,17 @@ pub(crate) fn explain(code: &str, args: &[String]) -> Explained {
             "AI Charts didn't accept this Mac's saved sign-in.",
             format!("aicharts account --state-dir {dir} --diagnose"),
         ),
-        "upload_transport_uncertain" | "stats_sync_exchange_uncertain"
-        | "contribution_sync_exchange_uncertain" => explained(
+        "upload_transport_uncertain" => explained(
+            "The connection dropped before AI Charts replied. The same batch is kept to resend.",
+            format!("aicharts upload --state-dir {dir} --key-file {key} --resume"),
+        ),
+        "stats_sync_exchange_uncertain" | "contribution_sync_exchange_uncertain" => explained(
             "The connection dropped before AI Charts replied. The same batch is kept to resend.",
             again,
+        ),
+        "upload_transport_blocked" => explained(
+            "AI Charts isn't accepting uploads from this Mac right now. Nothing was sent.",
+            format!("aicharts account --state-dir {dir} --diagnose"),
         ),
         _ if code.contains("transport") || code.ends_with("_timeout") => explained(
             "Couldn't reach the service. Check your internet connection and try again.",
@@ -459,6 +466,18 @@ mod tests {
             human("source_changed_during_scan", &["collect", "--state-dir", "/s"]),
             "✗ A file changed while AI Charts was reading it. Nothing was saved from this pass.\n→ aicharts collect --state-dir /s\n"
         );
+    }
+
+    #[test]
+    fn upload_failures_point_at_the_right_recovery() {
+        let upload = ["upload", "--state-dir", "/s", "--key-file", "/k"];
+        assert_eq!(
+            explain("upload_transport_uncertain", &args(&upload)).next,
+            "aicharts upload --state-dir /s --key-file /k --resume"
+        );
+        let blocked = explain("upload_transport_blocked", &args(&upload));
+        assert!(!blocked.message.contains("internet"), "{blocked:?}");
+        assert_eq!(blocked.next, "aicharts account --state-dir /s --diagnose");
     }
 
     #[test]
