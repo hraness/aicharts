@@ -23,7 +23,10 @@ use std::{
 const FILE: &str = "contribution-ops-v3";
 const PENDING: &str = "contribution-ops-v3.pending";
 const LOCK: &str = "contribution-ops-v3.lock";
-const MAX_OPS: usize = 32;
+// Settled records are retained as evidence; a restartable operation retries
+// under new intents after each decided refusal, so the bound must cover the
+// churn of a long unblocked operation, not just a handful of attempts.
+const MAX_OPS: usize = 256;
 const MAX_JOURNAL_BYTES: usize = 262_144;
 const MAX_REQUEST_BYTES: usize = wire::CONTROL_REQUEST_BYTES;
 const MAX_TERMINAL_BYTES: usize = wire::CONTROL_REPLY_BYTES;
@@ -459,18 +462,21 @@ pub(super) fn migrate(
         "migrate",
         |_, transport, deadline| {
             let population = primary_population(key, transport.binding());
-            match transport.control(&population, deadline) {
+            let expected = match transport.control(&population, deadline) {
                 Ok(view) if view.migrated => return Err("contribution_sync_already_migrated"),
                 Ok(view) if !view.prepared && view.activated => {
                     return Err("contribution_sync_already_active")
                 }
-                Ok(view) if !view.prepared || view.revision != 0 => return Err(super::CONFLICT),
-                Ok(_) => {}
-                Err("contribution_sync_not_started") => {}
+                // A settled-but-unpublished intent (an abandoned migration)
+                // already consumed a control revision; the pin must observe
+                // the current one, not insist the account is untouched.
+                Ok(view) if !view.prepared => return Err(super::CONFLICT),
+                Ok(view) => view.revision,
+                Err("contribution_sync_not_started") => 0,
                 Err(code) => return Err(code),
-            }
+            };
             let (v1, v2) = revisions(dir)?;
-            wire::migrate_request(transport.binding(), &operation_id()?, 0, v1, v2)
+            wire::migrate_request(transport.binding(), &operation_id()?, expected, v1, v2)
         },
         |transport, deadline, request| transport.migrate(request, deadline),
         |settled| {
@@ -527,6 +533,13 @@ pub(super) fn grant(
 /// Abandon a retained pending migration: replays its exact request bytes to
 /// the cancel route and, once the service records the abandoned terminal,
 /// marks the local intent decided so a later `--migrate` opens fresh.
+///
+/// A locally refused verdict never proves the server settled the operation —
+/// a refusal mid-flight can leave the intent pending and holding
+/// `pendingOperation`, which refuses every later migration until it is
+/// explicitly abandoned. When no intent is unsettled, the latest settled one
+/// is replayed so the cancel route reconciles that server-side residue; a
+/// server outcome of `migrated` still refuses to abandon.
 pub(super) fn cancel_migration(
     dir: &Path,
     key: &[u8; 32],
@@ -534,27 +547,51 @@ pub(super) fn cancel_migration(
     deadline: &Deadline,
 ) -> Result<String, &'static str> {
     let mut journal = JournalFile::open(dir, key, transport.binding())?;
-    let index = journal
+    let indices: Vec<usize> = journal
         .payload
         .ops
         .iter()
-        .position(|op| op.key == "migrate" && op.terminal.is_none())
-        .ok_or("contribution_sync_not_pending")?;
-    let bytes = STANDARD
-        .decode(&journal.payload.ops[index].request)
-        .map_err(|_| INVALID)?;
-    let request: wire::MigrateRequest = serde_json::from_slice(&bytes).map_err(|_| INVALID)?;
-    let (body_hash, revision) = transport.cancel_migration(&request, deadline)?;
-    let evidence = serde_json::to_vec(&serde_json::json!({ "abandoned": true,
-        "operationId": request.operation_id, "bodyHash": body_hash, "revision": revision }))
-    .map_err(|_| INVALID)?;
-    journal.payload.ops[index].terminal = Some(STANDARD.encode(evidence));
-    journal.persist()?;
-    serde_json::to_string(
-        &serde_json::json!({ "schemaVersion": 3, "status": "abandoned",
-        "operationId": journal.payload.ops[index].operation_id, "revision": revision }),
-    )
-    .map_err(|_| super::INVALID)
+        .enumerate()
+        .filter(|(_, op)| op.key == "migrate")
+        .map(|(index, _)| index)
+        .collect();
+    if indices.is_empty() {
+        return Err("contribution_sync_not_pending");
+    }
+    let mut last: Option<(String, u64)> = None;
+    let mut settled = 0usize;
+    for index in indices.iter().rev().copied() {
+        let bytes = STANDARD
+            .decode(&journal.payload.ops[index].request)
+            .map_err(|_| INVALID)?;
+        let request: wire::MigrateRequest = serde_json::from_slice(&bytes).map_err(|_| INVALID)?;
+        match transport.cancel_migration(&request, deadline) {
+            // Idempotent on an already-abandoned row — the reply cannot prove
+            // this call abandoned it, so every retained intent must be replayed;
+            // only that guarantees no pending row keeps holding the slot.
+            Ok((body_hash, revision)) => {
+                let evidence = serde_json::to_vec(&serde_json::json!({ "abandoned": true,
+                    "operationId": request.operation_id, "bodyHash": body_hash, "revision": revision }))
+                .map_err(|_| INVALID)?;
+                journal.payload.ops[index].terminal = Some(STANDARD.encode(evidence));
+                journal.persist()?;
+                settled += 1;
+                last = Some((request.operation_id.clone(), revision));
+            }
+            // A server-settled or unknown intent does not hold the pending
+            // slot; keep replaying retained intents until the live one does.
+            Err("contribution_sync_not_started" | "contribution_sync_conflict") => continue,
+            Err(code) => return Err(code),
+        }
+    }
+    match last {
+        Some((operation_id, revision)) => serde_json::to_string(
+            &serde_json::json!({ "schemaVersion": 3, "status": "abandoned",
+            "operationId": operation_id, "revision": revision, "abandonedCount": settled }),
+        )
+        .map_err(|_| super::INVALID),
+        None => Err("contribution_sync_not_pending"),
+    }
 }
 
 /// Read-only view of the retained ops journal for --inspect: the local
