@@ -65,9 +65,9 @@ export function UsageTotalsPanel({ returnTo }: Readonly<{ returnTo: string }>) {
   return <UsageTotalsView state={state} totals={visible} returnTo={returnTo} retry={() => { setState("loading"); void read(); }} />;
 }
 
-function Share({ label, detail, tokens, total, badge }: Readonly<{ label: ReactNode; detail: string; tokens: bigint; total: bigint; badge?: string }>) {
+function Share({ label, detail, tokens, total, badge, series }: Readonly<{ label: ReactNode; detail: string; tokens: bigint; total: bigint; badge?: string; series?: number }>) {
   const share = statsRatio(tokens, total);
-  return <li className="usage-totals__row">
+  return <li className="usage-totals__row" data-series={series}>
     <span className="usage-totals__name">{label}{badge !== undefined && <span className="usage-totals__badge">{badge}</span>}</span>
     <span className="usage-totals__value">{formatStatsCompact(tokens)}<span className="usage-totals__share"> · {share < 1 && tokens > 0n ? "<1" : Math.round(share)}%</span></span>
     <span className="usage-totals__bar" aria-hidden="true"><i style={{ inlineSize: `${Math.max(share, tokens > 0n ? .75 : 0)}%` }} /></span>
@@ -106,7 +106,7 @@ export function UsageTotalsView({ state, totals, returnTo, retry }: Readonly<{ s
       {!totals.legacyComplete && <p className="usage-totals__notice">Earlier uploads are still being indexed ({formatStatsInteger(totals.legacyVerifiedRevision)} of {formatStatsInteger(totals.legacyRevision)} batches). Totals grow as indexing finishes.</p>}
     </div>
     <div className="usage-totals__lists">
-      <div><h3>By client</h3><ol>{clients.map(client => <Share key={client.client} label={statsLabel(client.client, "client")} tokens={tokensOf(client)} total={total}
+      <div><h3>By client</h3><ol>{clients.map((client, index) => <Share key={client.client} series={Math.min(index, 5)} label={statsLabel(client.client, "client")} tokens={tokensOf(client)} total={total}
         detail={`${formatStatsInteger(client.days)} days · ${basisText[client.basis]}`} />)}</ol></div>
       <div><h3>By device</h3><ol>{devices.map(device => <Share key={device.deviceId} label={<code title={device.deviceId}>{shortDevice(device.deviceId)}</code>} tokens={tokensOf(device)} total={total}
         badge={device.revokedAtMs !== null ? "Revoked" : undefined}
