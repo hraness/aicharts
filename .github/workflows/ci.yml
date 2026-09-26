@@ -219,7 +219,7 @@ jobs:
           key: worker-gates-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml', 'Cargo.lock', 'vendor/tokscale-core/Cargo.lock') }}
       - name: Retain adapter and conformance receipts
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: conformance-${{ github.sha }}
           # The conformance stages symlink the repository's node_modules and the
@@ -321,7 +321,7 @@ jobs:
           if test -d target/assurance-tools; then du -sh target/assurance-tools; fi
       - name: Retain formal receipts and diagnostics
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: formal-verification-${{ github.sha }}
           path: |
