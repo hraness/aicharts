@@ -57,7 +57,7 @@
 .usage-rich__histogram { display: grid; gap: .3rem; list-style: none; margin: 1rem 0 0; padding: 0; }
 .usage-rich__histogram li { align-items: center; display: grid; font-size: .72rem; font-variant-numeric: tabular-nums; gap: .5rem; grid-template-columns: minmax(8rem, 12rem) minmax(0, 1fr) 3.5rem; min-block-size: 1.25rem; }
 .usage-rich__bin { color: var(--muted); overflow-wrap: anywhere; }
-.usage-rich__bar { background: var(--foreground); block-size: .75rem; display: block; inline-size: var(--share, 0%); min-inline-size: 1px; }
+.usage-rich__bar { background: linear-gradient(to right, var(--usage-bar-base), var(--usage-bar-top)); block-size: .75rem; border-radius: 0 4px 4px 0; display: block; inline-size: var(--share, 0%); min-inline-size: 1px; }
 .usage-rich__count { text-align: end; }
 .usage-rich__drilldown summary span { color: var(--muted); font-size: .75rem; margin-inline-start: .5rem; }
 .usage-rich__drilldown .usage-stats__text-button { min-block-size: 2.75rem; }
