@@ -179,7 +179,7 @@ export class ContributionState {
     if (!row) return null;
     const control = this.control();
     invariant(row.id === operationId && (row.kind === "batch" || row.kind === "grant" || row.kind === "activation" || row.kind === "migration") && contributionIdentity(row.body_hash)
-      && statsInteger(row.body_bytes, row.kind === "batch" || row.kind === "migration" ? 1 : 0, row.kind === "batch" ? CONTRIBUTION_MAX_BYTES : row.kind === "migration" ? 16_777_216 : 0)
+      && statsInteger(row.body_bytes, row.kind === "batch" || row.kind === "migration" ? 1 : 0, row.kind === "batch" ? CONTRIBUTION_MAX_BYTES : row.kind === "migration" ? CONTRIBUTION_MIGRATION_MAX_BUNDLE_BYTES : 0)
       && statsInteger(row.metadata_bytes, METADATA_BASE, CONTRIBUTION_MAX_METADATA_BYTES) && contributionIdentity(row.device_id)
       && contributionIdentity(row.generation) && (row.kind === "activation" || row.kind === "migration" ? row.population_id === null : contributionIdentity(row.population_id))
       && statsInteger(row.sequence, row.kind === "batch" ? 1 : 0, row.kind === "batch" ? Number.MAX_SAFE_INTEGER : 0)

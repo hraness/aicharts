@@ -683,8 +683,15 @@ describe("actual AccountEnrollment V3 joins", () => {
         batch: success(decodeAdmissionBatch(encoded, ADMISSION_POLICY_V1)).bytes }));
     }
     await preparedPopulation(device);
-    const migration = success(await migrationRpc().migrateContributions({ uploadSecret: device.proof.uploadSecret,
-      request: await migrationRequest(device.deviceId) }));
+    const request = await migrationRequest(device.deviceId);
+    // The proof-of-storage budget splits this scale across several exchanges;
+    // the identical request replays until the terminal receipt.
+    let migration: ContributionMigrationReceipt | undefined;
+    for (let attempts = 0; attempts < 40 && !migration; attempts++) {
+      const reply = await migrationRpc().migrateContributions({ uploadSecret: device.proof.uploadSecret, request });
+      if (!reply.ok) expect(reply.error).toBe("storage_unavailable"); else migration = reply.value;
+    }
+    if (!migration) throw new Error("staged migration did not complete in 40 exchanges");
     expect(migration.headCount).toBe(HEADS);
     expect(migration.deltaCount).toBe(HEADS);
     const root = await readContributionJournalRoot(env.STAGING, account, migration.deltaManifestHash);
@@ -736,8 +743,8 @@ describe("actual AccountEnrollment V3 joins", () => {
       const state = new ContributionState(context.storage), sql = state.sql;
       const bundle = context.storage.transactionSync(() =>
         state.reserveMigration(request, captureContributionMigration(sql, admission, request), granted));
-      let tick = NOW;
-      const spent = vi.spyOn(Date, "now").mockImplementation(() => { tick += 9_000; return tick; });
+      let tick = 0;
+      const spent = vi.spyOn(performance, "now").mockImplementation(() => { tick += 9_000; return tick; });
       try {
         await expect(ensureContributionMigration(env, bundle, () => true, sql, 25_000)).rejects.toMatchObject({ code: "storage_unavailable" });
       } finally { spent.mockRestore(); }
@@ -749,5 +756,26 @@ describe("actual AccountEnrollment V3 joins", () => {
     expect(cursor).toBeGreaterThan(0);
     expect(receipt.headCount).toBe(2);
     expect((await snapshot()).control.phase).toBe("active");
+  });
+
+  test("a fresh migration request resets orphaned staged scratch after source drift", async () => {
+    const device = await enrolled();
+    success(await stub().admitBatch({ uploadSecret: device.proof.uploadSecret, batch: legacyBatch(device.deviceId).bytes }));
+    success(await stub().admitStatsSnapshot({ uploadSecret: device.proof.uploadSecret, request: legacyStats(device.deviceId) }));
+    await preparedPopulation(device);
+    const admission = await onState(state => JSON.parse(state.sql.exec("SELECT payload FROM account_enrollment WHERE id=1").one().payload as string) as AdmissionAuthority);
+    const stale = await migrationRequest(device.deviceId);
+    await onState((state, storage) => storage.transactionSync(() => advanceContributionMigration(state.sql, admission, stale)));
+    // The account's V2 revision moves under the staged capture; the pinned
+    // request can never complete but its scratch would otherwise wedge.
+    const drifted = legacyStats(device.deviceId, "codex");
+    success(await stub().admitStatsSnapshot({ uploadSecret: device.proof.uploadSecret, request: { ...drifted, operationId: hex(++operation),
+      sequence: 2, expectedRevision: 1 } }));
+    await expectsFault(() => onState((state, storage) => storage.transactionSync(() => advanceContributionMigration(state.sql, admission, stale))), "conflict");
+    const fresh = await migrationRequest(device.deviceId);
+    const receipt = success(await migrationRpc().migrateContributions({ uploadSecret: device.proof.uploadSecret, request: fresh }));
+    expect(receipt.headCount).toBe(1);
+    expect((await snapshot()).control.phase).toBe("active");
+    expect(await onState(state => state.sql.exec("SELECT name FROM sqlite_schema WHERE name GLOB 'migration_*'").toArray())).toEqual([]);
   });
 });
