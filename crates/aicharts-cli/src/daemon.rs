@@ -250,8 +250,8 @@ fn publish_args(options: &Options) -> Option<Vec<String>> {
 }
 
 pub(super) fn run(args: &[String]) -> Result<String, &'static str> {
-    if args == ["daemon", "--help"] || args == ["daemon", "-h"] {
-        return Ok(super::HELP.to_owned());
+    if let Some(crate::help::Help::Page(page)) = crate::help::resolve(args) {
+        return Ok(page);
     }
     let options = parse_options(args)?;
     #[cfg(not(unix))]

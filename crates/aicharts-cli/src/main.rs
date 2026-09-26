@@ -3,12 +3,15 @@
 mod account;
 mod autosubmit;
 mod capture;
+mod cli_style;
 mod contribution_sync;
 mod daemon;
 mod enroll;
 #[cfg(unix)]
 mod enrolled_ledger;
 mod enrollment;
+mod errors;
+mod help;
 mod inspect;
 mod intro;
 #[cfg(unix)]
@@ -56,128 +59,6 @@ const MAX_SOURCE_BYTES: u64 = 256 * 1_024 * 1_024;
 /// another fixture's descriptor-pinned path readbacks.
 #[cfg(test)]
 pub(crate) static TEST_FIXTURE_PARENT: std::sync::Mutex<()> = std::sync::Mutex::new(());
-/// Argument-shape errors point an interactive caller at the command contract;
-/// state and data errors keep their single line so the cause stays unambiguous.
-const USAGE_HINT_CODES: &[&str] = &[
-    "invalid_command",
-    "invalid_option",
-    "missing_option_value",
-    "explicit_key_and_source_required",
-    "explicit_source_required",
-    "state_directory_required",
-    "key_required",
-    "output_required",
-    "occurrence_key_required",
-    "invalid_interval",
-    "invalid_retry_attempts",
-    "upload_not_enabled_use_dry_run",
-    "too_many_sources",
-];
-const HELP: &str = "AI Charts: local reports and enrolled publication
-
-  aicharts --version [--json]
-  aicharts stats --home DIR (--all | --client ID ...) [--since YYYY-MM-DD --until YYYY-MM-DD] [--json]
-  aicharts stats-health --state-dir DIR --home DIR --client ID [--since YYYY-MM-DD --until YYYY-MM-DD]
-  aicharts stats-sync --state-dir DIR --key-file PATH --home DIR --client ID [--since YYYY-MM-DD --until YYYY-MM-DD]
-  aicharts stats-totals --state-dir DIR [--json]
-  aicharts contribution-sync --help
-  aicharts refresh --help
-  aicharts autosubmit --config-file PATH [--check | --dry-run]
-  aicharts capture mcode --cache-dir DIR --executable PATH -- exec ...
-  aicharts support protocol --json
-  aicharts support --help
-  aicharts turns --codex FILE [--codex FILE ...] --occurrence-key-file KEY [--json]
-  aicharts sessions --occurrence-key-file KEY [--codex FILE ...] [--claude FILE ...] [--devin FILE ...] [--json]
-  aicharts sessions --profile rich-facts-v1 --source-epoch EPOCH --window-start-ms N --window-end-ms N --occurrence-key-file KEY --codex FILE --json
-  aicharts usage --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--devin FILE_OR_DIR] [--json]
-  aicharts upload --state-dir DIR --key-file PATH [--resume]
-  aicharts sync --complete-prefix --state-dir DIR --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--devin FILE_OR_DIR] [--max-batches N] [--reconcile-retained] [--json]
-  aicharts upload --dry-run --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--devin FILE_OR_DIR]
-  aicharts keygen --output PATH
-  aicharts init --state-dir DIR --key-file PATH
-  aicharts collect --state-dir DIR --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--devin FILE_OR_DIR] [--rescan] [--json]
-  aicharts prefix-enable --state-dir DIR --key-file PATH --revision N
-  aicharts upgrade --state-dir DIR --key-file PATH --revision N --backup-dir NEW_DIR [--occurrence-key-file PATH]
-  aicharts collect-prefix --state-dir DIR --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--devin FILE_OR_DIR] [--rescan] [--json]
-  aicharts status --state-dir DIR --key-file PATH [--json]
-  aicharts inspect --state-dir DIR --key-file PATH [--occurrence-key-file PATH] [--json] [--export-dir NEW_DIR]
-  aicharts account --state-dir ABSOLUTE_DIR [--json]
-  aicharts account --state-dir ABSOLUTE_DIR --diagnose [--json]
-  aicharts daemon [--once] [--complete-prefix] --state-dir DIR --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--devin FILE_OR_DIR] [--interval-seconds N] [--retry-attempts N] [--publish-config PATH] [--publish-interval-seconds N] [--json]
-  aicharts enroll --state-dir DIR
-  aicharts outbox --dry-run --state-dir DIR --key-file PATH [--limit 1..256] [--after ID --revision N]
-  aicharts reindex-plan --dry-run --state-dir OLD --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--devin FILE_OR_DIR] [--json]
-  aicharts reindex-prepare --state-dir OLD --key-file PATH --shadow-dir NEW --occurrence-key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--devin FILE_OR_DIR] [--json]
-
-Every command also answers `aicharts COMMAND --help` with its contract.
-Sources may be repeated. Directories scan .jsonl files (.json ATIF transcripts
-for --devin) and skip symlink entries.
-turns requires explicit regular files instead; it never scans directories. It
-reports runtime and partial response-token/requested-call subtotals.
-Complete token totals and dispatched tool calls remain unknown. Nothing is uploaded.
-Version reports compiler metadata only, with no verified release provenance.
-Final source files must be regular files; this is not an OS source sandbox.
-usage prints numeric summaries. upload --dry-run prints canonical frames as hex JSON;
-it does not contact any service. On an enrolled macOS installation, upload
---state-dir sends at most one bounded pending batch to the fixed usage service
-and settles the local ledger only on a validated terminal journal; an uncertain
-reply retains the frozen flight for explicit recovery, never a speculative
-replay. upload --resume re-exchanges that exact retained batch and settles only
-on its validated journal; it refuses when no flight is retained. Key files
-contain exactly 32 private random bytes.
-keygen creates a new mode-0600 file on Unix and never overwrites an existing file.
-Persistent commands are Unix-only and require explicit initialization. collect
-rescans changed sources from the beginning; unchanged metadata skips parsing.
-Unstable or unfinished sources are deferred whole until a later pass; stable
-siblings can commit. sourcesDeferred counts these without advancing their state.
-inspect diagnoses legacy attribution conflicts without changing the ledger.
-inspect --export-dir creates an exact private numeric recovery copy, preserving
-source, outbox and sender facts; retain original keys and enrollment anchors.
-upgrade requires the inspected revision and a new backup directory. Only
-unambiguous legacy histories upgrade; conflicting known owners remain quarantined
-and cannot collect, reindex or upload. Never reset a quarantined ledger.
-
-prefix-enable explicitly adds local completed-prefix integrity metadata. Then use
-collect-prefix: it fully replays completed lines and defers an unfinished tail.
-A --devin source is one whole ATIF document, so its completed prefix is the
-entire file; a changed transcript is a new source, never an append.
-Metadata skipping is a reliability optimization, not tamper attestation; --rescan
-rehashes every retained prefix. Neither command uploads content or enables sending.
-outbox never acknowledges or sends; ordinary state opening can recover SQLite.
-inspect reads only an existing ledger without source scanning, recovery or writes.
-account verifies both retained credentials and prints the enrolled account and
-device IDs without advancing enrollment, opening the ledger or contacting a server.
-account --diagnose performs the same one-time read-only enrolled join but emits
-only a fixed stage and reason, without IDs or native messages. A refusal exits 2;
-it never repairs, reenrolls, contacts a server or opens the ledger.
-An explicit occurrence key selects the existing split-key namespace version 1;
-omitting it selects legacy identity. Neither option migrates or rekeys state.
-reindex-plan inspects existing state without recovery or writes and rereads explicit
-sources. reindex-prepare creates a new account-key-bound shadow only when every old
-measurement is exactly covered. Neither command changes or promotes the old state.
-daemon runs the existing local collector in the foreground; --once performs one
-pass for smoke/tests. --json requires a preceding --once. The default waits 15
-minutes after each pass. --complete-prefix selects collect-prefix for an already
-prefix-enabled ledger; it defers stable unfinished tails and never migrates state.
-Omitting it retains collect. A ledger mode mismatch fails before reading sources.
-It retries only transient ledger busy/change results immediately (three retries by
-default; --retry-attempts accepts 0..8). Every other pass result, including a
-fixed error, is reported and the daemon waits the normal interval; only --once
-returns the error. --publish-config runs one autosubmit cycle from that
-configuration on its own schedule (--publish-interval-seconds, default 3600,
-at least 300), so one long-lived process both collects and publishes; a failed
-cycle is reported and retried at the next due pass. It never installs an OS
-service.
-sync performs one supervised collection and bounded upload pass on an already
-enrolled macOS installation. It requires an existing prefix-enabled sender ledger;
-it never initializes, migrates, enrolls or installs a service. See sync --help.
-enroll pairs this installation with an AI Charts account through local macOS
-credential custody and one explicit browser approval; it never uploads and only
-prepares the option to upload later. Enrollment does not install a scheduled
-publisher or recover an unavailable key. See autosubmit --help for scheduling.
-Keep your key private and retain it: changing it changes occurrence identities.
-";
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Mode {
     Usage,
@@ -522,33 +403,8 @@ fn run(args: &[String]) -> Result<String, &'static str> {
     if args.iter().any(|arg| arg == "--version") {
         return version::run(args);
     }
-    if args.is_empty() || args == ["--help"] || args == ["-h"] {
-        return Ok(HELP.to_owned());
-    }
-    // turns, sessions, daemon and support answer their own help inside their
-    // runners; every other known command gets the top-level contract.
-    if args.len() == 2
-        && matches!(args[1].as_str(), "--help" | "-h")
-        && matches!(
-            args[0].as_str(),
-            "usage"
-                | "keygen"
-                | "init"
-                | "collect"
-                | "prefix-enable"
-                | "upgrade"
-                | "collect-prefix"
-                | "status"
-                | "outbox"
-                | "inspect"
-                | "account"
-                | "enroll"
-                | "reindex-plan"
-                | "reindex-prepare"
-                | "upload"
-        )
-    {
-        return Ok(HELP.to_owned());
+    if let Some(help::Help::Page(page)) = help::resolve(args) {
+        return Ok(page);
     }
     if args.first().map(String::as_str) == Some("turns") {
         return turns::run(args);
@@ -593,7 +449,7 @@ fn run(args: &[String]) -> Result<String, &'static str> {
                     std::process::exit(exit_code);
                 }
                 Err(code) => {
-                    eprintln!("aicharts: {code}");
+                    errors::report(code, args);
                     std::process::exit(2);
                 }
             }
@@ -649,10 +505,24 @@ fn main() {
         .skip(1)
         .map(|arg| arg.into_string())
         .collect();
-    let Ok(args) = args else {
-        eprintln!("aicharts: invalid_argument_encoding");
+    let Ok(mut args) = args else {
+        errors::report("invalid_argument_encoding", &[]);
         std::process::exit(2);
     };
+    if args.first().map(String::as_str) == Some("-V") && args.len() <= 2 {
+        args[0] = "--version".to_owned();
+    }
+    if !args.iter().any(|arg| arg == "--version") {
+        match help::resolve(&args) {
+            Some(help::Help::Page(page)) => write_help(&args, &page),
+            Some(help::Help::Delegate(delegated)) => args = delegated,
+            Some(help::Help::UnknownTopic(_)) => {
+                errors::report("unknown_help_topic", &args);
+                std::process::exit(2);
+            }
+            None => {}
+        }
+    }
     let support_options = support::options();
     if matches!(
         args.first().map(String::as_str),
@@ -678,7 +548,7 @@ fn main() {
                 std::process::exit(exit_code);
             }
             Err(code) => {
-                eprintln!("aicharts: {code}");
+                errors::report(code, &args);
                 std::process::exit(2);
             }
         }
@@ -694,19 +564,9 @@ fn main() {
     match run(&args) {
         Ok(output) => {
             let stdout = io::stdout();
-            let intro = if args.is_empty() || args == ["--help"] || args == ["-h"] {
-                let term = std::env::var("TERM").ok();
-                let columns = std::env::var("COLUMNS")
-                    .ok()
-                    .and_then(|value| value.parse().ok());
-                intro::terminal_intro(stdout.is_terminal(), term.as_deref(), columns)
-            } else {
-                ""
-            };
             let mut writer = stdout.lock();
             if writer
-                .write_all(intro.as_bytes())
-                .and_then(|()| writer.write_all(output.as_bytes()))
+                .write_all(output.as_bytes())
                 .and_then(|()| writer.flush())
                 .is_err()
             {
@@ -718,15 +578,36 @@ fn main() {
             }
         }
         Err(code) => {
-            eprintln!("aicharts: {code}");
-            // Piped output keeps the exact one-line contract; an interactive
-            // caller gets a pointer to the command contract for usage errors.
-            if io::stderr().is_terminal() && USAGE_HINT_CODES.contains(&code) {
-                eprintln!("aicharts: run 'aicharts --help' for the command contract");
-            }
+            errors::report(code, &args);
             std::process::exit(2);
         }
     }
+}
+
+/// Print a help page on stdout (with the ASCII intro on an interactive
+/// terminal for the overview and root help) and exit 0.
+fn write_help(args: &[String], page: &str) -> ! {
+    let stdout = io::stdout();
+    let intro = if args.is_empty() || args == ["--help"] || args == ["-h"] || args == ["help"] {
+        let term = std::env::var("TERM").ok();
+        let columns = std::env::var("COLUMNS")
+            .ok()
+            .and_then(|value| value.parse().ok());
+        intro::terminal_intro(stdout.is_terminal(), term.as_deref(), columns)
+    } else {
+        ""
+    };
+    let mut writer = stdout.lock();
+    let written = writer
+        .write_all(intro.as_bytes())
+        .and_then(|()| writer.write_all(page.as_bytes()))
+        .and_then(|()| writer.flush());
+    // A closed pipe (`aicharts --help | head -1`) is not a failure of help.
+    std::process::exit(match written {
+        Ok(()) => 0,
+        Err(error) if error.kind() == io::ErrorKind::BrokenPipe => 0,
+        Err(_) => 1,
+    });
 }
 
 #[cfg(test)]
@@ -824,9 +705,10 @@ mod tests {
     #[test]
     fn help_does_not_read_source_data() {
         let help = run(&args(&["--help"])).unwrap();
-        assert!(help.contains("local reports and enrolled publication"));
-        assert!(help.contains("partial response-token/requested-call subtotals"));
-        assert!(help.contains("Complete token totals and dispatched tool calls remain unknown"));
-        assert!(!help.contains("partial observed runtime with unknown tokens/tools"));
+        assert_eq!(help, help::root());
+        assert_eq!(run(&args(&[])).unwrap(), help::overview());
+        assert!(run(&args(&["status", "--help"]))
+            .unwrap()
+            .starts_with("Usage: aicharts status"));
     }
 }

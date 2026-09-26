@@ -241,7 +241,11 @@ pub(super) fn execute(args: &[String]) -> i32 {
         return 1;
     }
     if let Some(error) = error {
-        eprintln!("aicharts: {error}");
+        if crate::errors::wants_json(args) {
+            eprintln!("aicharts: {error}");
+        } else {
+            crate::errors::report_stderr(error, args);
+        }
     }
     code
 }

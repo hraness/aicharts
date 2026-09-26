@@ -1564,6 +1564,9 @@ fn refused_migration_still_pending_server_side_cancels_through_retained_replay()
     assert!(out.contains("\"abandoned\""), "{out}");
     let sent = bodies.lock().unwrap();
     assert_eq!(sent.len(), 3);
-    assert_eq!(sent[1], sent[2], "cancel must replay the identical retained request");
+    assert_eq!(
+        sent[1], sent[2],
+        "cancel must replay the identical retained request"
+    );
     drop(dir);
 }
