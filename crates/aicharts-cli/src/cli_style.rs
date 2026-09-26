@@ -58,10 +58,8 @@ pub(crate) struct Style {
     pub(crate) ascii: bool,
 }
 
-// `ok`, `warn`, `progress` and `notice` serve enroll progress and keychain
-// notices, which land in a follow-up change.
-#[allow(dead_code)]
 impl Style {
+    #[cfg(test)]
     pub(crate) fn plain() -> Self {
         Style {
             color: false,
@@ -107,6 +105,7 @@ impl Style {
     pub(crate) fn fail(self) -> String {
         self.paint("✗", "FAIL", "31")
     }
+    #[cfg(test)]
     pub(crate) fn warn(self) -> String {
         self.paint("⚠", "WARN", "33")
     }

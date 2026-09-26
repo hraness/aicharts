@@ -57,7 +57,7 @@ fn option_value<'a>(args: &'a [String], flag: &str) -> Option<&'a str> {
         .filter(|value| !value.is_empty() && !value.starts_with("--"))
 }
 
-fn quote(value: &str) -> String {
+pub(crate) fn quote(value: &str) -> String {
     if !value.is_empty()
         && value
             .chars()
