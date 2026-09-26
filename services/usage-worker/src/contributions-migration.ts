@@ -33,10 +33,13 @@ export const CONTRIBUTION_MIGRATION_MAX_BUNDLE_BYTES = 268_435_456;
 // identical replayed request resumes at the cursor. The round cap bounds work
 // inside a single call; hitting it surfaces an uncertain outcome and the
 // client retries with the same request bytes.
-const SEGMENT_JOURNALS = 64;
-const SEGMENT_HEADS = 8_192;
-const SEGMENT_DELTAS = 8_192;
-const SEGMENT_PAGES = 64;
+// Each advance() runs exactly one segment inside its own transactionSync —
+// a segment that exceeds the request CPU cap rolls back and the stage never
+// commits, so every bound is sized for a large head-journal on the real cap.
+const SEGMENT_JOURNALS = 24;
+const SEGMENT_HEADS = 2_048;
+const SEGMENT_DELTAS = 2_048;
+const SEGMENT_PAGES = 32;
 export const CONTRIBUTION_MIGRATION_STAGE_ROUNDS = 4_096;
 const MIGRATION_PAGE_ENTRIES = 128;
 type SourceObject = Readonly<{ bucket: "STAGING" | "CONTROL"; key: string; media: string; schema: string; bytes: Uint8Array<ArrayBuffer> }>;
