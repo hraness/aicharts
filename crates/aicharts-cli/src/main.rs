@@ -14,6 +14,7 @@ mod errors;
 mod help;
 mod inspect;
 mod intro;
+mod keychain_notice;
 #[cfg(unix)]
 mod owned_process;
 #[cfg(unix)]
@@ -522,6 +523,10 @@ fn main() {
             }
             None => {}
         }
+    }
+    if keychain_notice::before_keychain(&args) == keychain_notice::Outcome::Skip {
+        eprintln!("Skipped. Nothing was read from your keychain.");
+        std::process::exit(1);
     }
     let support_options = support::options();
     if matches!(

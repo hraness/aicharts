@@ -213,7 +213,9 @@ impl RawStore for MacStore {
         options
             .set_location(Location::FileKeychain(self.keychain.clone()))
             .set_service(reference.service())
-            .set_account_name(reference.account());
+            .set_account_name(reference.account())
+            .set_label(reference.label())
+            .set_description("AI Charts usage key");
         // add() maps only to SecItemAdd. No set/update/delete fallback exists.
         options.add().map_err(|error| add_error(error.code()))
     }
