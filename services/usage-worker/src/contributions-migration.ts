@@ -591,8 +591,10 @@ export const isVerifiedContributionMigration = (value: VerifiedContributionMigra
  * ordered item index (sources, bodies, manifest pages, manifest, delta pages,
  * journal root) that a timed-out call resumes from. Every item is verified
  * before the cursor advances; a crash between item and checkpoint simply
- * re-verifies that item on resume. `budgetMs` leaves margin inside the
- * caller's exchange deadline so the checkpoint lands before a disconnect. */
+ * re-verifies that item on resume. The call ends on an item budget — the
+ * request clock cannot be trusted to advance — with `budgetMs` on the
+ * monotonic clock as a secondary bound, both inside the caller's exchange
+ * deadline so the checkpoint lands before a disconnect. */
 export async function ensureContributionMigration(env: Pick<Env, "STAGING" | "CONTROL">, bundle: ContributionMigrationBundle,
   admitted: () => boolean, sql: SqlStorage, budgetMs: number): Promise<VerifiedContributionMigration> {
   const accountId = bundle.request.accountId;
@@ -601,9 +603,17 @@ export async function ensureContributionMigration(env: Pick<Env, "STAGING" | "CO
   checked(migrationScratchPresent(sql));
   const meta = metaLoad(sql);
   checked(meta.stage === "ready");
-  const startedAt = Date.now();
+  // Date.now() is frozen at request start in the worker runtime; the
+  // monotonic clock still advances across awaited I/O, and the per-call item
+  // budget is the deterministic bound a frozen clock cannot hide.
+  const startedAt = performance.now(), budgetItems = 160;
+  let doneThisCall = 0;
   const persist = () => { meta.ensureIndex = index; meta.ensureInspected = inspected; metaStore(sql, meta); };
-  const expire = () => { if (Date.now() - startedAt > budgetMs) { persist(); throw new ContributionFault("storage_unavailable"); } };
+  const expire = () => {
+    if (doneThisCall >= budgetItems || performance.now() - startedAt > budgetMs) {
+      persist(); throw new ContributionFault("storage_unavailable");
+    }
+  };
 
   const sourceDescriptors = JSON.parse(meta.sourceDescriptorsJson!) as SourceDescriptor[];
   const bodies = JSON.parse(meta.bodiesJson!) as LegacyBody[];
@@ -638,7 +648,7 @@ export async function ensureContributionMigration(env: Pick<Env, "STAGING" | "CO
         && object.checksums.sha256 !== undefined);
       const bytes = await enrollmentStorageCall(object.arrayBuffer() as Promise<ArrayBuffer>);
       checked(contributionHash(new Uint8Array(bytes)) === descriptor.hash);
-      inspected += descriptor.size; index += 1; continue;
+      inspected += descriptor.size; index += 1; doneThisCall += 1; continue;
     }
     position += sourceDescriptors.length;
     if (index < position + bodies.length) {
@@ -663,27 +673,27 @@ export async function ensureContributionMigration(env: Pick<Env, "STAGING" | "CO
             tokenBasis: bases.size > 1 ? "mixed" : [...bases][0] ?? source.tokenBasis, latestAtMs: rows.length ? source.latestAtMs : null }], rows });
         checked(projected && contributionHash(JSON.stringify(projected)) === day.projectionHash && JSON.stringify(projected) === JSON.stringify(day.report));
       }
-      index += 1; continue;
+      index += 1; doneThisCall += 1; continue;
     }
     position += bodies.length;
     if (index < position + manifestOrdinals.length) {
       await ensureContributionArtifact(env.STAGING, accountId, scratchArtifact("migration_page", manifestOrdinals[index - position]), admitted);
-      index += 1; continue;
+      index += 1; doneThisCall += 1; continue;
     }
     position += manifestOrdinals.length;
     if (index === position) {
       await ensureContributionArtifact(env.STAGING, accountId, manifestArtifact(), admitted);
-      index += 1; continue;
+      index += 1; doneThisCall += 1; continue;
     }
     position += 1;
     if (index < position + deltaOrdinals.length) {
       await ensureContributionArtifact(env.STAGING, accountId, scratchArtifact("migration_dpage", deltaOrdinals[index - position]), admitted);
-      index += 1; continue;
+      index += 1; doneThisCall += 1; continue;
     }
     position += deltaOrdinals.length;
     if (index === position) {
       await ensureContributionArtifact(env.STAGING, accountId, bundle.journal.artifact, admitted);
-      index += 1; continue;
+      index += 1; doneThisCall += 1; continue;
     }
     checked(false);
   }
