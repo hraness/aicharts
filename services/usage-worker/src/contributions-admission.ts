@@ -39,6 +39,12 @@ function failure(error: unknown): ContributionResult<never> {
 // The client's exchange deadline is 45s; the proof-of-storage loop keeps 25s
 // per call so its durable cursor persists before a disconnect.
 const ENSURE_BUDGET_MS = 25_000;
+// A request killed by the runtime CPU cap discards that request's buffered
+// writes — including committed transactionSync output — so the stage loop
+// must stop starting new segments while one worst-case segment still fits
+// under the cap. The caller's exchange sees a clean storage_unavailable and
+// replays; the committed segments below the cap are the durable progress.
+const STAGE_BUDGET_MS = 18_000;
 export class AccountContributions {
   constructor(readonly env: Env, readonly state: ContributionState, readonly transaction: AdmissionTransaction,
     readonly beforeCommit?: () => Promise<void>) {}
@@ -149,9 +155,15 @@ export class AccountContributions {
       // RPC timeout between rounds simply rolls back the last segment and the
       // client's identical replay resumes at the durable cursor.
       let bundle: ContributionMigrationBundle | null = null;
-      for (let rounds = 0; rounds < CONTRIBUTION_MIGRATION_STAGE_ROUNDS && bundle === null; rounds++)
+      // performance.now() advances across awaited I/O and sync CPU where
+      // Date.now() is frozen; expired stops new work inside segments too, so
+      // a request killed by the runtime CPU cap never discards the call's
+      // committed rounds — the exchange exits cleanly at the budget.
+      const stageStarted = performance.now();
+      const expired = () => performance.now() - stageStarted >= STAGE_BUDGET_MS;
+      for (let rounds = 0; rounds < CONTRIBUTION_MIGRATION_STAGE_ROUNDS && bundle === null && !expired(); rounds++)
         bundle = this.#run(observation, request, (owner, now) => {
-          const snapshot = advanceContributionMigration(this.state.sql, owner, request);
+          const snapshot = advanceContributionMigration(this.state.sql, owner, request, expired);
           return snapshot === null ? null : this.state.reserveMigration(request, snapshot, authority(owner, request.deviceId, now));
         });
       if (bundle === null) throw new ContributionFault("storage_unavailable");
