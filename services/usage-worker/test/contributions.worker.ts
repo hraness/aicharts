@@ -683,8 +683,15 @@ describe("actual AccountEnrollment V3 joins", () => {
         batch: success(decodeAdmissionBatch(encoded, ADMISSION_POLICY_V1)).bytes }));
     }
     await preparedPopulation(device);
-    const migration = success(await migrationRpc().migrateContributions({ uploadSecret: device.proof.uploadSecret,
-      request: await migrationRequest(device.deviceId) }));
+    const request = await migrationRequest(device.deviceId);
+    // The proof-of-storage budget splits this scale across several exchanges;
+    // the identical request replays until the terminal receipt.
+    let migration: ContributionMigrationReceipt | undefined;
+    for (let attempts = 0; attempts < 40 && !migration; attempts++) {
+      const reply = await migrationRpc().migrateContributions({ uploadSecret: device.proof.uploadSecret, request });
+      if (!reply.ok) expect(reply.error).toBe("storage_unavailable"); else migration = reply.value;
+    }
+    if (!migration) throw new Error("staged migration did not complete in 40 exchanges");
     expect(migration.headCount).toBe(HEADS);
     expect(migration.deltaCount).toBe(HEADS);
     const root = await readContributionJournalRoot(env.STAGING, account, migration.deltaManifestHash);
@@ -736,8 +743,8 @@ describe("actual AccountEnrollment V3 joins", () => {
       const state = new ContributionState(context.storage), sql = state.sql;
       const bundle = context.storage.transactionSync(() =>
         state.reserveMigration(request, captureContributionMigration(sql, admission, request), granted));
-      let tick = NOW;
-      const spent = vi.spyOn(Date, "now").mockImplementation(() => { tick += 9_000; return tick; });
+      let tick = 0;
+      const spent = vi.spyOn(performance, "now").mockImplementation(() => { tick += 9_000; return tick; });
       try {
         await expect(ensureContributionMigration(env, bundle, () => true, sql, 25_000)).rejects.toMatchObject({ code: "storage_unavailable" });
       } finally { spent.mockRestore(); }
