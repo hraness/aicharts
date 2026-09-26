@@ -3,8 +3,8 @@ import Link from "next/link";
 
 import { ChartPageFooter } from "@/components/chart-navigation";
 import { SiteHeader } from "@/components/site-header";
+import { CopyCommand } from "@/components/usage/copy-command";
 import { searchSite } from "@/app/site";
-import { usagePageConfiguration } from "@/lib/usage/private-days-page";
 
 import "@/styles/usage.css";
 
@@ -29,64 +29,87 @@ const metrics = [
   ["Clients", "55 sources", "Codex, Claude Code, Cursor, Devin, OpenCode, Warp, and the other supported sources, reported together. Run aicharts stats --list-clients for the full list."],
 ] as const;
 
-export default async function UsagePage() {
-  const configuration = await usagePageConfiguration();
+/* A fixed illustration of the dashboard, marked as an example and hidden from
+ * assistive technology; it never shows real account data. */
+const previewDays = [38, 44, 31, 52, 47, 61, 29, 35, 58, 66, 49, 72, 55, 41, 63, 78, 57, 69, 84, 74] as const;
+const previewClients = [["Claude Code", "58%", 58], ["Codex", "31%", 31], ["Cursor", "8%", 8], ["Other clients", "3%", 3]] as const;
+
+function DashboardPreview() {
+  return <div className="usage-card usage-preview" aria-hidden="true">
+    <div className="usage-preview__top"><span className="usage-preview__label">Observed tokens · 20 days</span><span className="usage-preview__tag">Example</span></div>
+    <p className="usage-preview__figure">4.82B<small>tokens</small></p>
+    <p className="usage-preview__sub">4 clients · 2 Macs · source coverage complete</p>
+    <div className="usage-preview__plot">
+      {previewDays.map((height, index) => <span key={index} style={{ blockSize: `${height}%` }}>
+        <i data-series="0" style={{ flexGrow: 58 }} /><i data-series="1" style={{ flexGrow: 30 + (index % 4) * 3 }} /><i data-series="2" style={{ flexGrow: 8 + (index % 3) * 2 }} />
+      </span>)}
+    </div>
+    <ul className="usage-preview__rows">
+      {previewClients.map(([name, share, width], index) => <li key={name}>
+        <i data-series={index === 3 ? 5 : index} /><span>{name}</span><strong>{share}</strong><b><i data-series={index === 3 ? 5 : index} style={{ inlineSize: `${width}%` }} /></b>
+      </li>)}
+    </ul>
+  </div>;
+}
+
+export default function UsagePage() {
   return <>
     <SiteHeader current="/usage" />
     <main className="usage-home" id="main-content">
-      <section className="usage-hero" aria-labelledby="usage-title">
+      <section className="usage-hero usage-hero--preview" aria-labelledby="usage-title">
         <div className="usage-hero__copy">
+          <p className="usage-pill"><i aria-hidden="true" />In development <span>· build from source</span></p>
           <h1 id="usage-title">See how many tokens your AI agents use</h1>
           <p className="usage-hero__lede">The AI Charts collector counts tokens, cost, and speed for each model across the coding agents on your machine. Prompts, transcripts, file paths, and provider credentials stay on your machine, and each total lists the sources it covers.</p>
           <div className="usage-hero__actions">
-            {configuration.available
-              ? <Link className="usage-button usage-button--primary" href="/dashboard">Open your dashboard</Link>
-              : <Link className="usage-button usage-button--primary" href="/usage/details">Open a local report</Link>}
+            <Link className="usage-button usage-button--primary" href="/dashboard">Open your dashboard <span className="usage-button__arrow" aria-hidden="true">→</span></Link>
             <Link className="usage-button usage-button--quiet" href="#usage-setup">Set up tracking</Link>
           </div>
+          <p className="usage-hero__note">The collector has no packaged release yet. Account sync runs on macOS only.</p>
         </div>
-        <aside className="usage-status" aria-label="Status">
-          <span className="usage-status__dot" aria-hidden="true" />
-          <div>
-            <strong>In development</strong>
-            <span>The collector has no packaged release yet. Build it from source. Account sync runs on macOS only.</span>
-            {configuration.available ? null : <span>Your online dashboard is paused. Local reports still work.</span>}
-          </div>
-        </aside>
+        <DashboardPreview />
       </section>
 
-      <section className="usage-empty" id="usage-setup" aria-labelledby="usage-setup-title">
-        <div>
-          <h2 id="usage-setup-title">Set up tracking in three steps</h2>
+      <section className="usage-section" id="usage-setup" aria-labelledby="usage-setup-title">
+        <div className="usage-section__intro">
+          <div><span className="usage-eyebrow">Setup</span><h2 id="usage-setup-title">Set up tracking in three steps</h2></div>
           <p>The collector runs on your machine. When it publishes, it uploads daily totals of tokens, cost, and time for each client and model, with each client&rsquo;s source coverage.</p>
-          <div className="usage-metric-list" role="list">
-            {steps.map(([step, title, description]) => <article className="usage-metric-row" key={step} role="listitem">
-              <span className="usage-metric-row__window">{step}</span><h3>{title}</h3><p>{description}</p>
-            </article>)}
-          </div>
-          <div className="usage-terminal" aria-label="Collector setup commands"><code>aicharts enroll --state-dir &quot;$HOME/.aicharts/state&quot;</code><span>then approve in browser</span></div>
-          <div className="usage-inline-links">
-            <Link className="usage-inline-link" href="https://github.com/hraness/aicharts/blob/main/docs/usage-local.md#build-and-run">Build instructions</Link>
-            <Link className="usage-inline-link" href="https://github.com/hraness/aicharts/blob/main/docs/usage-autosubmit.md">Scheduled publication guide</Link>
-          </div>
+        </div>
+        <ol className="usage-steps">
+          {steps.map(([step, title, description]) => <li className="usage-card usage-step" key={step}>
+            <span className="usage-step__number" aria-hidden="true">{Number(step)}</span><h3>{title}</h3><p>{description}</p>
+          </li>)}
+        </ol>
+        <CopyCommand command={'aicharts enroll --state-dir "$HOME/.aicharts/state"'} label="Collector setup command" note="then approve in browser" />
+        <div className="usage-setup__foot">
+          <Link className="usage-button usage-button--quiet usage-button--small" href="https://github.com/hraness/aicharts/blob/main/docs/usage-local.md#build-and-run">Build instructions <span className="usage-button__arrow" aria-hidden="true">↗</span></Link>
+          <Link className="usage-button usage-button--quiet usage-button--small" href="https://github.com/hraness/aicharts/blob/main/docs/usage-autosubmit.md">Scheduled publication guide <span className="usage-button__arrow" aria-hidden="true">↗</span></Link>
         </div>
       </section>
 
-      <section className="usage-metric-band" aria-labelledby="usage-metrics-title">
-        <div className="usage-section-heading"><h2 id="usage-metrics-title">What the dashboard shows</h2></div>
-        <div className="usage-metric-list">
-          {metrics.map(([window, title, description]) => <article className="usage-metric-row" key={title}>
-            <span className="usage-metric-row__window">{window}</span><h3>{title}</h3><p>{description}</p>
-          </article>)}
+      <section className="usage-section" aria-labelledby="usage-metrics-title">
+        <div className="usage-section__intro">
+          <div><span className="usage-eyebrow">Dashboard</span><h2 id="usage-metrics-title">What the dashboard shows</h2></div>
+          <p>Every figure comes from the records your clients keep locally, reported per client, model, and UTC day.</p>
         </div>
+        <ul className="usage-metric-grid">
+          {metrics.map(([window, title, description], index) => <li className="usage-card usage-metric-card" key={title} data-series={index % 5}>
+            <span className="usage-metric-card__label"><i aria-hidden="true" />{window}</span><h3>{title}</h3><p>{description}</p>
+          </li>)}
+        </ul>
       </section>
 
-      <section className="usage-empty" aria-labelledby="usage-local-title">
-        <div>
-          <h2 id="usage-local-title">Start with a local report</h2>
-          <p>No account needed. The collector writes a report file with token counts, known costs, and source coverage. The detailed reports page reads that file in your browser tab and does not upload it.</p>
-          <div className="usage-terminal" aria-label="Local-only report example"><code>aicharts stats --home &quot;$HOME&quot; --all --json &gt; usage-report.json</code><span>local only</span></div>
-          <Link className="usage-inline-link" href="/usage/details">Open a report</Link>
+      <section className="usage-section" aria-labelledby="usage-local-title">
+        <div className="usage-card usage-local">
+          <div>
+            <span className="usage-eyebrow">No account needed</span>
+            <h2 id="usage-local-title">Start with a local report</h2>
+            <p>The collector writes a report file with token counts, known costs, and source coverage. The detailed reports page reads that file in your browser tab and does not upload it.</p>
+          </div>
+          <div>
+            <CopyCommand command={'aicharts stats --home "$HOME" --all --json > usage-report.json'} label="Local-only report command" note="local only" />
+            <Link className="usage-button usage-button--primary" href="/usage/details">Open a report <span className="usage-button__arrow" aria-hidden="true">→</span></Link>
+          </div>
         </div>
       </section>
 
