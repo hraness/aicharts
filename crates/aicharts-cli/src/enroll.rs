@@ -3,6 +3,7 @@
 //! the account. Nothing is uploaded and no transcript, source or secret leaves
 //! the device; enrollment only prepares the option to upload later.
 
+use std::io::IsTerminal;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
@@ -96,7 +97,7 @@ fn summary(account: &[u8], device: &[u8], directory: &Path, audience: Audience) 
     match audience {
         Audience::Human => format!(
             "Connected this Mac to your AI Charts account. Nothing was uploaded; your usage stays here until you publish.\nTo see the account: aicharts account --state-dir {}\n",
-            directory.display()
+            crate::errors::quote(&directory.to_string_lossy())
         ),
         Audience::Agent | Audience::Quiet => format!(
             "Enrolled this installation for AI Charts.\nAccount: {}\nDevice: {}\nNothing was uploaded; telemetry stays local until you enable upload.\n",
@@ -117,11 +118,18 @@ pub(super) fn run(args: &[String]) -> Result<String, &'static str> {
     if audience == Audience::Human {
         eprintln!("Next: aicharts help publish");
     }
+    // Captured stdout (`$(aicharts enroll …)`, `> file`) keeps the fixed
+    // lines with both identifiers even when a person started the command.
+    let result = if std::io::stdout().is_terminal() {
+        audience
+    } else {
+        Audience::Quiet
+    };
     Ok(summary(
         &outcome.account_id,
         &outcome.device_id,
         &directory,
-        audience,
+        result,
     ))
 }
 
@@ -181,7 +189,14 @@ mod copy_tests {
             !human.contains("abab") && !human.contains("cdcd"),
             "{human}"
         );
-        assert!(human.contains("aicharts account --state-dir /s"));
+        assert!(human.contains("aicharts account --state-dir /s\n"));
+        let spaced = summary(
+            &[0xab; 16],
+            &[0xcd; 32],
+            Path::new("/Users/me/Library/Application Support/AI Charts"),
+            Audience::Human,
+        );
+        assert!(spaced.contains("--state-dir '/Users/me/Library/Application Support/AI Charts'"));
         let quiet = summary(&[0xab; 16], &[0xcd; 32], Path::new("/s"), Audience::Quiet);
         assert!(quiet.contains(&format!("Account: {}", "ab".repeat(16))));
     }
