@@ -246,6 +246,13 @@ export class AdmissionState {
       && (operation.action !== 2 || !isZeroHash(operation.expectedHeadHash)));
     return { operation, revision: row.journal_revision, day: day?.day ?? null };
   }
+  /** Retained heads dated within [firstUtcDay, firstUtcDay + dayCount) in
+   * occurrence order, each audited exactly as `head` audits one, from a single
+   * scan. Yields at most `limit + 1` rows so the caller can refuse overflow. */
+  *headsOnDays(firstUtcDay: number, dayCount: number, limit: number, authority: AdmissionAuthority, control = this.control()): Generator<AdmissionHead> {
+    for (const row of this.sql.exec(`SELECT occurrence_id, operation, journal_revision, utc_day FROM usage_admission_heads WHERE utc_day >= ? AND utc_day < ? ORDER BY occurrence_id LIMIT ${limit + 1}`,
+      firstUtcDay, firstUtcDay + dayCount)) yield this.#head(row, authority, control);
+  }
   head(id: Uint8Array, authority: AdmissionAuthority, control = this.control()): AdmissionHead | null {
     const rows = this.sql.exec("SELECT * FROM usage_admission_heads WHERE occurrence_id = ? LIMIT 2", id).toArray();
     requireAdmission(rows.length <= 1);
