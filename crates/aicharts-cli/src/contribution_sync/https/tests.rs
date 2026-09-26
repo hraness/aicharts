@@ -1570,3 +1570,41 @@ fn refused_migration_still_pending_server_side_cancels_through_retained_replay()
     );
     drop(dir);
 }
+
+#[test]
+fn local_failures_never_settle_an_intent() {
+    // Codes that never reached a service verdict must leave the retained
+    // intent pending; only wire-decided refusals settle it.
+    for code in [
+        "attempt_custody",
+        "attempt_busy",
+        "attempt_recovery_required",
+        "attempt_missing",
+        "attempt_conflict",
+        "attempt_limit",
+        "attempt_storage_unavailable",
+        "attempt_invalid_record",
+        "attempt_invalid_successor",
+        "attempt_clock_regressed",
+        "attempt_outcome_unknown",
+        "attempt_stale_snapshot",
+        "contribution_ops_unavailable",
+        "contribution_ops_recovery_required",
+        "contribution_sync_random_unavailable",
+        "contribution_sync_identity_changed",
+        "contribution_sync_unsupported_provider",
+        "contribution_sync_exchange_limit",
+    ] {
+        assert!(!super::super::ops::settled_error(code), "{code}");
+    }
+    for code in [
+        "contribution_sync_conflict",
+        "contribution_sync_invalid_response",
+        "contribution_sync_storage_invalid",
+        "contribution_sync_recovery_required",
+        "contribution_sync_limit",
+        "contribution_sync_not_started",
+    ] {
+        assert!(super::super::ops::settled_error(code), "{code}");
+    }
+}
