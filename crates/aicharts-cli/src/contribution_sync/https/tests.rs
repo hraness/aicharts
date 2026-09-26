@@ -1521,8 +1521,8 @@ fn refused_migration_still_pending_server_side_cancels_through_retained_replay()
     // still hold pendingOperation and refuse every later reservation. Cancel
     // must reconcile it by replaying the retained request anyway.
     // Steps: status (not_started), migrate (refused conflict — settles
-    // locally), cancel-migration (abandoned terminal).
-    let _server = Server::steps(3, move |index, stream| {
+    // locally, then sweeps one auto-abandon), cancel-migration (abandoned).
+    let _server = Server::steps(4, move |index, stream| {
         let (_h, body) = request(stream);
         captured.lock().unwrap().push(body.clone());
         match index {
@@ -1560,14 +1560,18 @@ fn refused_migration_still_pending_server_side_cancels_through_retained_replay()
         super::super::ops::migrate(&dir.0, &KEY, &transport, &deadline, revisions).unwrap_err(),
         "contribution_sync_conflict"
     );
+    // A decided settle fires one best-effort abandon for just that intent —
+    // the refusal may still hold the server's pending slot.
     let out = super::super::ops::cancel_migration(&dir.0, &KEY, &transport, &deadline).unwrap();
     assert!(out.contains("\"abandoned\""), "{out}");
     let sent = bodies.lock().unwrap();
-    assert_eq!(sent.len(), 3);
-    assert_eq!(
-        sent[1], sent[2],
-        "cancel must replay the identical retained request"
-    );
+    assert_eq!(sent.len(), 4);
+    for replay in &sent[1..] {
+        assert_eq!(
+            sent[1], *replay,
+            "every cancel must replay the identical retained request"
+        );
+    }
     drop(dir);
 }
 

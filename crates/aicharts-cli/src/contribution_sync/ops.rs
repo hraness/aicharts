@@ -485,7 +485,7 @@ pub(super) fn migrate(
     revisions: impl FnOnce(&Path) -> Result<(u64, u64), &'static str>,
 ) -> Result<String, &'static str> {
     let mut journal = JournalFile::open(dir, key, transport.binding())?;
-    run_op(
+    let out = run_op(
         &mut journal,
         transport,
         deadline,
@@ -515,7 +515,33 @@ pub(super) fn migrate(
                 "suppressedV1Heads": settled.suppressed_v1_heads,
                 "unresolvedV2Bodies": settled.unresolved_v2_bodies })
         },
-    )
+    );
+    // A decided refusal may still hold the server's pending slot — the
+    // reserve commits before the wire verdict lands, so a refused migrate
+    // can leave `pendingOperation` pointing at this op and wedge every later
+    // reserve. Replay this one intent's abandon to release it; the exchange
+    // is idempotent and best-effort — its failure leaves the explicit
+    // `--cancel-migration` path untouched.
+    if let Err(code) = &out {
+        if *code != wire::UNCERTAIN && settled_error(code) {
+            if let Some(op) = journal
+                .payload
+                .ops
+                .iter()
+                .rev()
+                .find(|op| op.key == "migrate" && op.terminal.is_some())
+            {
+                if let Ok(bytes) = STANDARD.decode(&op.request) {
+                    if let Ok(request) = serde_json::from_slice::<wire::MigrateRequest>(&bytes) {
+                        if let Ok(each) = Deadline::command() {
+                            let _ = transport.cancel_migration(&request, &each);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    out
 }
 
 pub(super) fn grant(
