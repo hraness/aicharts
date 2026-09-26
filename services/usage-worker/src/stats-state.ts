@@ -367,13 +367,11 @@ export class StatsState {
     }
   }
   #legacy(authority: AdmissionAuthority, range: StatsRange) {
-    const admission = new AdmissionState(this.sql), control = admission.control(), sql = this.sql;
+    const admission = new AdmissionState(this.sql), control = admission.control();
     function* heads() {
       let count = 0;
-      for (const row of sql.exec(`SELECT occurrence_id, utc_day FROM usage_admission_heads WHERE utc_day >= ? AND utc_day < ? ORDER BY occurrence_id LIMIT ${MAX_ADMISSION_HEADS + 1}`, range.firstUtcDay, range.firstUtcDay + range.dayCount)) {
-        requireStats(row.occurrence_id instanceof ArrayBuffer && ++count <= MAX_ADMISSION_HEADS);
-        const head = admission.head(new Uint8Array(row.occurrence_id), authority, control);
-        requireStats(head && head.day !== null);
+      for (const head of admission.headsOnDays(range.firstUtcDay, range.dayCount, MAX_ADMISSION_HEADS, authority, control)) {
+        requireStats(++count <= MAX_ADMISSION_HEADS && head.day !== null);
         const batch = decodeUsageBatch(head.operation.frame, ADMISSION_POLICY_V1);
         requireStats(batch.ok);
         yield { head, usage: batch.value.usage[0], client: legacyClient(batch.value.usage[0].provider), deviceId: admissionHex(head.operation.deviceId) };
