@@ -24,7 +24,7 @@ export const CONTRIBUTION_MIGRATION_MAX_HEADS = 262_144;
 // at the table maximum covers every reachable account.
 export const CONTRIBUTION_MIGRATION_MAX_JOURNALS = 4_096;
 export const CONTRIBUTION_MIGRATION_MAX_DAYS = 8_192;
-export const CONTRIBUTION_MIGRATION_MAX_SOURCE_BYTES = 67_108_864;
+export const CONTRIBUTION_MIGRATION_MAX_SOURCE_BYTES = 268_435_456;
 // Total charged bytes for one migration (manifest + manifest pages + delta
 // journal): entries up to heads+journals+days+devices, so ~110MB worst case.
 export const CONTRIBUTION_MIGRATION_MAX_BUNDLE_BYTES = 268_435_456;
