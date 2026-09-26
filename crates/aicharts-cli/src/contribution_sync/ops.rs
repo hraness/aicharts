@@ -208,6 +208,32 @@ impl JournalFile {
             .map_err(|_| IO)
     }
 }
+/// Only a decided service verdict may settle a retained intent. Local
+/// custody, lease, ledger, entropy, provider-capability and deadline failures
+/// never reached the wire — the intent stays pending and replays.
+pub(super) fn settled_error(code: &str) -> bool {
+    !matches!(
+        code,
+        "attempt_custody"
+            | "attempt_busy"
+            | "attempt_recovery_required"
+            | "attempt_missing"
+            | "attempt_conflict"
+            | "attempt_limit"
+            | "attempt_storage_unavailable"
+            | "attempt_invalid_record"
+            | "attempt_invalid_successor"
+            | "attempt_clock_regressed"
+            | "attempt_outcome_unknown"
+            | "attempt_stale_snapshot"
+            | "contribution_ops_unavailable"
+            | "contribution_ops_recovery_required"
+            | "contribution_sync_random_unavailable"
+            | "contribution_sync_identity_changed"
+            | "contribution_sync_unsupported_provider"
+            | "contribution_sync_exchange_limit"
+    )
+}
 /// The replayable intent: an op that persisted but has no terminal yet.
 fn unsettled<'a>(payload: &'a Payload, key: &str) -> Option<&'a OpRecord> {
     payload
@@ -388,6 +414,10 @@ fn run_op<B: Serialize + DeserializeOwned, T>(
         // An uncertain exchange reached no service decision: the pending
         // record persists so the identical request replays on the next call.
         Err(code) if code == wire::UNCERTAIN => return Err(code),
+        // Local custody, lease, ledger and entropy failures never reached a
+        // service verdict — the intent stays pending and replays rather than
+        // settling as a refusal the service never issued.
+        Err(code) if !settled_error(code) => return Err(code),
         // A decided refusal also settles the intent durably; a later retry
         // reads fresh state and opens a new operation rather than replaying
         // bytes the service already refused.
@@ -544,7 +574,7 @@ pub(super) fn cancel_migration(
     dir: &Path,
     key: &[u8; 32],
     transport: &Transport,
-    deadline: &Deadline,
+    _deadline: &Deadline,
 ) -> Result<String, &'static str> {
     let mut journal = JournalFile::open(dir, key, transport.binding())?;
     let indices: Vec<usize> = journal
@@ -565,7 +595,10 @@ pub(super) fn cancel_migration(
             .decode(&journal.payload.ops[index].request)
             .map_err(|_| INVALID)?;
         let request: wire::MigrateRequest = serde_json::from_slice(&bytes).map_err(|_| INVALID)?;
-        match transport.cancel_migration(&request, deadline) {
+        // Each retained intent gets its own exchange budget — one shared
+        // deadline would starve every replay after the first few.
+        let each = Deadline::command()?;
+        match transport.cancel_migration(&request, &each) {
             // Idempotent on an already-abandoned row — the reply cannot prove
             // this call abandoned it, so every retained intent must be replayed;
             // only that guarantees no pending row keeps holding the slot.
@@ -581,6 +614,9 @@ pub(super) fn cancel_migration(
             // A server-settled or unknown intent does not hold the pending
             // slot; keep replaying retained intents until the live one does.
             Err("contribution_sync_not_started" | "contribution_sync_conflict") => continue,
+            // An uncertain or expired exchange leaves that intent unresolved —
+            // try the remaining ones; the caller may rerun to finish the sweep.
+            Err(wire::UNCERTAIN) | Err("contribution_sync_exchange_limit") => continue,
             Err(code) => return Err(code),
         }
     }
