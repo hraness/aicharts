@@ -147,6 +147,20 @@ export class RestoreFence extends DurableObject<Env> {
     if (this.#objects().length === 0) return 0;
     const rows = this.ctx.storage.sql.exec("SELECT COUNT(*) AS count FROM fence_lease").toArray();
     const count = rows[0]?.count;
+    // Expired but unsettled leases are durable evidence for late release and
+    // readback; they can accumulate past the live-holder cap, so the stored
+    // count's corruption bound is the attempt lifetime, not the lease cap.
+    if (typeof count !== "number" || !Number.isSafeInteger(count) || count < 0 || count > RESTORE_FENCE_MAX_ATTEMPTS) throw new Error("storage_invalid");
+    return count;
+  }
+  /** Live holders only: an execution killed mid-flight (for example on the
+   * request CPU cap) can never settle its lease, so counting expired leases
+   * against the grant cap would wedge the account permanently once leaked
+   * rows reach RESTORE_FENCE_MAX_LEASES. Drain gates keep the conservative
+   * raw count — an expired lease may still represent a running operation. */
+  #liveHolders(now: number): number {
+    const rows = this.ctx.storage.sql.exec("SELECT COUNT(*) AS count FROM fence_lease WHERE deadline_ms > ?", now).toArray();
+    const count = rows[0]?.count;
     if (typeof count !== "number" || !Number.isSafeInteger(count) || count < 0 || count > RESTORE_FENCE_MAX_LEASES) throw new Error("storage_invalid");
     return count;
   }
@@ -240,7 +254,7 @@ export class RestoreFence extends DurableObject<Env> {
     });
   }
   #grant(record: RestoreFenceRecord, revision: number, now: number, leaseMs: number, attemptId: string): RestoreFenceResult<RestoreFenceLease> {
-    if (this.#inFlight() >= RESTORE_FENCE_MAX_LEASES || revision >= RESTORE_FENCE_MAX_ATTEMPTS) return err("limit");
+    if (this.#liveHolders(now) >= RESTORE_FENCE_MAX_LEASES || revision >= RESTORE_FENCE_MAX_ATTEMPTS) return err("limit");
     const deadlineMs = now + leaseMs;
     if (!enrollmentTime(deadlineMs)) return err("clock_regressed");
     this.ctx.storage.sql.exec("INSERT INTO fence_attempt (attempt_id, epoch, worker_version, deadline_ms, established, terminal, committed) VALUES (?, ?, ?, ?, ?, 0, 0)",
