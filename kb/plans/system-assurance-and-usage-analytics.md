@@ -2043,3 +2043,19 @@ the index so accounting resumes exactly at the checkpoint.
 
 Production Worker `76bbc3c4-ab90-4af6-8bb8-4b1c5a607269` (source `1a5a971`)
 replaced `dfcbfb8e` at 100% on 2026-09-26 ~06:50 UTC.
+
+### 2026-09-26 — Deterministic work budgets, lease-lifetime bounds and the pending-operation wedge
+
+Four production observations closed the remaining live-qualification blockers for the owner-scale migration.
+
+`#478` (`a6f9b51`) ended the rounds loop before the request CPU cap with a clean `storage_unavailable`; `exceededCpu` discards the call's entire buffered write set, so a call that dies at the cap makes zero durable progress regardless of committed-looking cursors mid-call.
+
+`#479` (`f06308b`) replaced the elapsed-time budget after a live clock probe proved both `Date.now()` and `performance.now()` freeze for a synchronous Durable Object request's whole duration. `STAGE_WORK_BUDGET = 2,048` weighted work units now bounds stage rounds deterministically, and a regression test pins the partial-cursor commit on a mid-segment expiry.
+
+`#475`/`#480` repaired two restore-fence bounds the migration traffic exposed: the grant cap now counts only unexpired leases (a killed request's lease cannot outlive it), and the fence-read sanity bound tracks `RESTORE_FENCE_MAX_ATTEMPTS` rather than the live-holder bound — accumulated expired leases are valid state, not corruption.
+
+The live loop then surfaced a real reconciliation gap: an op refused locally (`storage_invalid`) had reserved `pendingOperation` server-side and never settled — every later reservation conflicted at ready, ~400 bounded calls in. `--cancel-migration` only replayed unsettled intents, so the wedge was unreachable. `#484` replays every retained migrate intent through the idempotent cancel route until the live one abandons, pins `expectedRevision` to the live control revision (an abandon consumes one), and raises the ops-journal bound to 256 records since a restartable operation mints a fresh intent per decided refusal. The live wedge cleared with `abandoned` at revision 1; migration replay resumed under the work budget.
+
+Operational note: the `/tmp` deploy-config dir is not durable — its loss produced a recovered config missing `AICHARTS_USAGE_CONTRIBUTIONS_ENABLED` and with public read off, and two probe uploads carried it before the regression was caught by the structured `--status` refusal. Production deploys must re-derive vars from `docs/usage-activation.md` rather than a scratch directory.
+
+`sa/migration-v2-pin-at-rest` relaxes the migration pin to its actual requirement. `migrationPin` originally re-checked both source revisions on every call, so any committed stats snapshot during staging burned the in-flight request — under a live multi-device feed the migration could never finish. The V1 lineage is already frozen once any snapshot is committed (fresh admissions refuse after `hasCommittedSnapshot`), so only its pin is kept as a corruption guard. The V2 pin moves into `restSegment`'s own transaction — the one place days, device receipts and the control row must be observed consistently — and the seal then binds exactly that observed revision; the request's `expectedV2Revision` becomes a floor (`<=`) instead of an equality, so a corpus captured later than the client minted remains admissible. Drift before or after the pin is therefore ordinary progress, not a wedge.

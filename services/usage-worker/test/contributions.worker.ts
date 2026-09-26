@@ -795,16 +795,60 @@ describe("actual AccountEnrollment V3 joins", () => {
     const admission = await onState(state => JSON.parse(state.sql.exec("SELECT payload FROM account_enrollment WHERE id=1").one().payload as string) as AdmissionAuthority);
     const stale = await migrationRequest(device.deviceId);
     await onState((state, storage) => storage.transactionSync(() => advanceContributionMigration(state.sql, admission, stale)));
-    // The account's V2 revision moves under the staged capture; the pinned
-    // request can never complete but its scratch would otherwise wedge.
+    // The account's V2 revision moves under the staged capture — a live stats
+    // feed keeps streaming while a migration is in flight. The pinned request
+    // still completes: the seal binds the V2 state restSegment observed.
     const drifted = legacyStats(device.deviceId, "codex");
     success(await stub().admitStatsSnapshot({ uploadSecret: device.proof.uploadSecret, request: { ...drifted, operationId: hex(++operation),
       sequence: 2, expectedRevision: 1 } }));
-    await expectsFault(() => onState((state, storage) => storage.transactionSync(() => advanceContributionMigration(state.sql, admission, stale))), "conflict");
-    const fresh = await migrationRequest(device.deviceId);
-    const receipt = success(await migrationRpc().migrateContributions({ uploadSecret: device.proof.uploadSecret, request: fresh }));
+    const assembled = await onState((state, storage) => storage.transactionSync(() => {
+      for (let rounds = 0; rounds < CONTRIBUTION_MIGRATION_STAGE_ROUNDS; rounds++) {
+        const result = advanceContributionMigration(state.sql, admission, stale);
+        if (result) return result;
+      }
+      return null;
+    }));
+    expect(assembled).not.toBeNull();
+    expect(assembled!.seal.v2Revision).toBe(2);
+    const receipt = success(await migrationRpc().migrateContributions({ uploadSecret: device.proof.uploadSecret, request: stale }));
     expect(receipt.headCount).toBe(1);
+    expect(receipt.expectedV2Revision).toBe(1);
     expect((await snapshot()).control.phase).toBe("active");
     expect(await onState(state => state.sql.exec("SELECT name FROM sqlite_schema WHERE name GLOB 'migration_*'").toArray())).toEqual([]);
+  });
+
+  test("a live stats writer cannot wedge the staged migration", async () => {
+    const device = await enrolled();
+    for (let batch = 0; batch < 3; batch++) success(await stub().admitBatch({ uploadSecret: device.proof.uploadSecret,
+      batch: legacyBatch(device.deviceId, 10 + batch, batch + 1, batch + 1).bytes }));
+    success(await stub().admitStatsSnapshot({ uploadSecret: device.proof.uploadSecret, request: legacyStats(device.deviceId) }));
+    await preparedPopulation(device);
+    const admission = await onState(state => JSON.parse(state.sql.exec("SELECT payload FROM account_enrollment WHERE id=1").one().payload as string) as AdmissionAuthority);
+    const request = await migrationRequest(device.deviceId);
+    const advance = () => onState((state, storage) => storage.transactionSync(() =>
+      advanceContributionMigration(state.sql, admission, request)));
+    await advance(); // captureBegin: pins the immutable V1 lineage only.
+    // A second device publishes mid-staging — V2 drifts while V1 stays frozen.
+    const drifted = legacyStats(device.deviceId, "codex");
+    for (let seq = 2; seq <= 4; seq++) {
+      const expectedRevision = await onState(state => new StatsState(state.sql).control().revision);
+      success(await stub().admitStatsSnapshot({ uploadSecret: device.proof.uploadSecret,
+        request: { ...drifted, operationId: hex(++operation), sequence: seq, expectedRevision } }));
+    }
+    let assembled: Awaited<ReturnType<typeof advance>> = null;
+    for (let rounds = 0; rounds < CONTRIBUTION_MIGRATION_STAGE_ROUNDS && !(assembled = await advance()); rounds++) void rounds;
+    if (!assembled) throw new Error("staged capture did not reach ready");
+    expect(assembled.seal.v2Revision).toBe(4);
+    expect(assembled.seal.v1Revision).toBe(3);
+    const receipt = success(await migrationRpc().migrateContributions({ uploadSecret: device.proof.uploadSecret, request }));
+    expect(receipt.headCount).toBe(3);
+    expect(receipt.expectedV2Revision).toBe(1);
+    expect((await snapshot()).control.phase).toBe("active");
+    // The V2 write surface is superseded post-migration — later attempts
+    // refuse rather than reopening the feed the bundle already sealed.
+    const expectedRevision = await onState(state => new StatsState(state.sql).control().revision);
+    const late = legacyStats(device.deviceId, "codex");
+    expect(await stub().admitStatsSnapshot({ uploadSecret: device.proof.uploadSecret,
+      request: { ...late, operationId: hex(++operation), sequence: 5, expectedRevision } })).toEqual({ ok: false, error: "profile_superseded" });
   });
 });
