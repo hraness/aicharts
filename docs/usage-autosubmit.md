@@ -246,6 +246,16 @@ checked. An interval is a scheduling request, not guaranteed daily delivery:
 firings while the Mac sleeps or the job is already running are missed. Verify
 the actual completion timestamp and result in `last-cycle.json`.
 
+Once an account's contribution profile is active (after `contribution-sync
+--migrate` or `--activate`), the service refuses this aggregate path for every
+client with `stats_sync_profile_superseded`, and a retained aggregate flight
+can no longer settle. Scheduled publication then has to send each native
+transcript through `contribution-sync --send`, which currently accepts Claude
+Code and Codex files up to 64 MiB. Clients without a contribution sender, such
+as Devin CLI and Cursor, and larger transcripts have no publication path on an
+activated account. Activate an account only when every client you rely on has
+one, and keep the previous publisher's job until the account shows its data.
+
 Every device publishes its own snapshots; the account sums devices per client
 and day, so a second Mac needs no ownership transfer and its cycles never
 conflict with the first. Each publication first resends a retained uncertain

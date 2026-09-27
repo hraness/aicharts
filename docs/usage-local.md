@@ -247,7 +247,9 @@ Items created before the first stable-signed build still refuse the new signatur
 AICHARTS_CUSTODY_INTERACTION=allow ./target/debug/aicharts status --state-dir /absolute/private/directory/aicharts-state --key-file /absolute/private/directory/aicharts.key
 ```
 
-Choose "Always Allow" in the dialog. The exact value `allow` is required; any other value keeps prompts suppressed, and the grant persists under the stable designated requirement so later rebuilds need no consent.
+Choose "Always Allow" in the dialog. The exact value `allow` is required; any other value keeps prompts suppressed. In practice macOS still asks again for each rebuilt binary, once per saved key (two dialogs: pairing and namespace), even with the same signing identity. For a scheduled collector, copy one signed build to a stable path, grant that copy once in an attended command, verify it with the override unset, and leave that file unchanged until the next deliberate upgrade.
+
+Never set the override in a loop, a schedule or any unattended script, and never inspect the login keychain with `security dump-keychain -d`: each attempt can open another dialog on the owner's screen. An unattended job without a grant fails with `custody_access_denied`, which is the intended signal to grant it once by hand.
 
 ## Inspect retained totals without writes
 
