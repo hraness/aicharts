@@ -402,7 +402,8 @@ formats and dated retail estimates. The current source implements explicit
 Cursor, Trae, Warp, Hindsight, and Antigravity refreshes, MiniMax Code capture,
 and one configured `autosubmit` publication cycle. The
 [scheduled publisher guide](usage-autosubmit.md) describes configuration and
-manual launchd setup; the CLI does not install or switch a LaunchAgent.
+the `aicharts service` LaunchAgent install; the CLI does not start or stop
+the job, which takes effect at the next login.
 These implementations still require relevant live provider, custody, account
 readback, and scheduled-cycle qualification before cutover. Public profile
 pages and embeddable statistics are not implemented.
