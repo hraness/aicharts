@@ -517,6 +517,7 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
       await sorted.getByRole("button").focus(); await page.keyboard.press("Enter"); invariant(await sorted.getAttribute("aria-sort") === "ascending", "Sort must update accessible direction.");
       await page.getByRole("button", { name: "gpt-5", exact: true }).click();
       invariant(await page.getByLabel("Model", { exact: true }).inputValue() === "gpt-5", "Model drilldown must filter the common scope.");
+      await page.locator(".usage-stats[aria-busy='false']").waitFor();
       const downloadEvent = page.waitForEvent("download"); await page.getByRole("button", { name: "Download numeric CSV" }).focus(); await page.keyboard.press("Enter");
       const download = await downloadEvent, file = await download.path(); invariant(file, "CSV must download.");
       const csv = await Bun.file(file).text(); invariant(csv.includes("output_excluding_reasoning") && csv.includes('"gpt-5"') && !csv.includes('"warp"'), "CSV must match the selected numeric scope.");
