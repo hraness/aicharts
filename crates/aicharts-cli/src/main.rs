@@ -21,7 +21,9 @@ mod owned_process;
 #[cfg(unix)]
 mod prefix;
 mod reindex;
+mod service;
 mod sessions;
+mod setup;
 #[cfg(unix)]
 mod source_checkpoint;
 mod source_health;
@@ -463,6 +465,12 @@ fn run(args: &[String]) -> Result<String, &'static str> {
     }
     if args.first().map(String::as_str) == Some("menubar") {
         return menubar::run(args);
+    }
+    if args.first().map(String::as_str) == Some("service") {
+        return service::run(args);
+    }
+    if args.first().map(String::as_str) == Some("setup") {
+        return setup::run(args);
     }
     if args.first().map(String::as_str) == Some("enroll") {
         return enroll::run(args);
