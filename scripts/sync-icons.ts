@@ -36,7 +36,11 @@ for (const mark of spec.marks ?? []) {
   }
 }
 for (const reference of spec.references ?? []) {
-  files.set(`${ICONS_OUT}/${reference.slug}.svg`, reference.svg.replace(/^\.\.\//u, ""));
+  // References are generation-time family anchors; sync only the ones the
+  // product actually serves today.
+  if (existsSync(`${ICONS_OUT}/${reference.slug}.svg`)) {
+    files.set(`${ICONS_OUT}/${reference.slug}.svg`, reference.svg.replace(/^\.\.\//u, ""));
+  }
 }
 
 const written: string[] = [];
