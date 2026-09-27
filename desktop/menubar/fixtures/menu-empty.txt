@@ -1,0 +1,14 @@
+[mark.chart Ac] AI Charts · Collecting
+AI Charts
+● Collecting · Last pass 1 min ago
+─────────
+↗ Open usage dashboard ↗ (primary)  ⌘O
+─────────
+No outputs yet · Agents save finished files here (label)
+Open outputs folder
+─────────
+✓ Open at login
+─────────
+♡ Updates & support ↗
+  ⌥ Copy diagnostics
+Quit AI Charts

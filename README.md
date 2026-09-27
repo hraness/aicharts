@@ -81,10 +81,12 @@ and what still needs testing against real providers. The
 [claim inventory](docs/usage-claims.md) lists every support, platform and
 live-status statement in this README and the usage guides with its evidence.
 
-## Menu-bar companion
+## Menu bar
 
-AI Charts includes an unbundled macOS menu-bar companion for the repository's
-`outputs/` directory. Build it explicitly, then run the foreground singleton:
+The AI Charts menu bar shows whether usage collection is working: when the
+last pass ran, when your usage last synced, and any failures in plain words,
+with the collector's error log one click away. It also opens the usage
+dashboard and lists your two newest outputs. Build it explicitly, then run it:
 
 ```sh
 bun run menubar:build
@@ -92,19 +94,30 @@ bun run menubar:install
 bun run menubar
 ```
 
-`menubar:install` copies the release-built companion to
+`menubar:install` copies the release-built binary to
 `~/Library/Application Support/AI Charts/bin/aicharts-menubar` atomically. The
 launcher never compiles on startup: it uses that installed copy when present,
-or a prebuilt checkout binary otherwise. A second invocation exits through the
-binary's per-output-directory lock. Use `bun run menubar:uninstall` to remove
-the installed copy. No app bundle, signing, or notarization is part of this
-companion.
+or a prebuilt checkout binary otherwise. A second copy exits with status 3 and
+says AI Charts is already in your menu bar. Use `bun run menubar:uninstall` to
+remove the installed copy.
+
+To open it at login, run `aicharts-menubar install` (or turn on "Open at
+login" in its menu). macOS then shows a notice that `aicharts-menubar` can open
+at login. `aicharts-menubar status` says whether it is running and opens at
+login, `aicharts-menubar start` opens it now, and `aicharts-menubar uninstall`
+removes the login item. Nothing here runs `launchctl`; the login item takes
+effect at your next login.
+
+The menu reads two files from `~/.aicharts` (or `AICHARTS_HOME`):
+`collector-status.json`, which `aicharts daemon --status-file` writes after
+each pass, and `autosubmit-runtime/last-cycle.json`, which each publishing
+cycle writes. Both hold times, results and fixed error codes, never account
+IDs, paths or session content.
 
 The build uses the committed Cargo lockfile. Installation stages the replacement
 in a private temporary directory and refuses symlinked or externally writable
 managed directories. Launch also refuses symlinked or externally writable
-executables. These checks preserve the explicit per-user installation boundary;
-the companion is not an updater or a privileged service.
+executables. The menu bar is not an updater or a privileged service.
 
 ## AI Charts agent skill
 

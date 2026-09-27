@@ -317,6 +317,8 @@ Options
   --retry-attempts 0..8          Retries when the ledger is busy (default 3)
   --publish-config PATH          Also run autosubmit from this configuration
   --publish-interval-seconds N   How often to publish (default 3600, min 300)
+  --status-file PATH             Write each pass's result here for the menu bar
+                                 (use ~/.aicharts/collector-status.json)
   --json                         Machine-readable result (needs --once)
 
 Example

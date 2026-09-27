@@ -1,0 +1,79 @@
+{
+  "appId": "aicharts",
+  "items": [
+    {
+      "kind": "header",
+      "label": "AI Charts"
+    },
+    {
+      "detail": "Set up publishing to see your usage here",
+      "kind": "status",
+      "label": "Not set up on this Mac",
+      "symbol": "status.idle"
+    },
+    {
+      "kind": "separator"
+    },
+    {
+      "id": "setup.guide",
+      "kind": "action",
+      "label": "Set up publishing",
+      "opens": "browser",
+      "role": "primary",
+      "symbol": "action.help"
+    },
+    {
+      "kind": "separator"
+    },
+    {
+      "kind": "label",
+      "label": "No outputs yet",
+      "subtitle": "Agents save finished files here"
+    },
+    {
+      "id": "outputs.folder",
+      "kind": "action",
+      "label": "Open outputs folder",
+      "opens": "finder",
+      "symbol": "action.folder"
+    },
+    {
+      "kind": "separator"
+    },
+    {
+      "id": "login",
+      "kind": "action",
+      "label": "Open at login",
+      "state": "off",
+      "subtitle": "macOS shows a notice when you turn this on"
+    },
+    {
+      "kind": "separator"
+    },
+    {
+      "alternate": {
+        "id": "support.diagnostics",
+        "label": "Copy diagnostics",
+        "symbol": "action.copy"
+      },
+      "id": "support",
+      "kind": "action",
+      "label": "Updates & support",
+      "opens": "browser",
+      "symbol": "action.support"
+    },
+    {
+      "kind": "quit",
+      "label": "Quit AI Charts"
+    }
+  ],
+  "mark": {
+    "letters": "Ac",
+    "symbol": "mark.chart"
+  },
+  "name": "AI Charts",
+  "revision": 1,
+  "tooltip": "AI Charts · Not set up on this Mac",
+  "type": "snapshot",
+  "version": 2
+}

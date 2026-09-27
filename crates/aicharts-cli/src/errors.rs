@@ -173,6 +173,10 @@ pub(crate) fn explain(code: &str, args: &[String]) -> Explained {
             help,
         ),
         "missing_option_value" => explained("An option is missing its value.", help),
+        "invalid_status_file" => explained(
+            "--status-file needs a full path to a file, such as ~/.aicharts/collector-status.json.",
+            help,
+        ),
         "invalid_argument_encoding" => {
             explained("An argument isn't valid UTF-8 text.", help)
         }
