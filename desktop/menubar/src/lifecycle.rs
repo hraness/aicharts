@@ -16,6 +16,7 @@ use desktop_foundation::identity::{self, AppSpec, Environment, IdentityState, Si
 use desktop_foundation::service::{
     self, Change, Glyphs, LaunchAgentPlan, LoginItem, LoginState, ServiceError, ServiceStatus,
 };
+pub use hraness_cli_kit::audience::{self, Audience};
 use sha2::{Digest, Sha256};
 
 /// One product's names.
@@ -35,56 +36,10 @@ pub struct Product {
 /// The environment switch for the local `.app` identity. Off by default.
 pub const LOCAL_APP_ENV: &str = "HRANESS_LOCAL_APP";
 
-/// Who reads the output. TODO(df-0.8.1): use `hraness_cli_kit::audience`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Audience {
-    Human,
-    Agent,
-    Quiet,
-}
-
-const AGENT_MARKERS: &[&str] = &[
-    "AI_AGENT",
-    "CLAUDECODE",
-    "CODEX_SANDBOX",
-    "CODEX_SANDBOX_NETWORK_DISABLED",
-    "CURSOR_AGENT",
-    "GEMINI_CLI",
-];
-
-/// The shared `detectAudience` rule (SPEC § C).
-pub fn audience(env: &dyn Fn(&str) -> Option<String>, stderr_is_tty: bool) -> Audience {
-    match env("HRANESS_AUDIENCE").as_deref() {
-        Some("human") => return Audience::Human,
-        Some("agent") => return Audience::Agent,
-        Some("quiet") | Some("off") => return Audience::Quiet,
-        _ => {}
-    }
-    if AGENT_MARKERS
-        .iter()
-        .any(|name| env(name).is_some_and(|value| !value.is_empty()))
-    {
-        return Audience::Agent;
-    }
-    if stderr_is_tty {
-        Audience::Human
-    } else {
-        Audience::Quiet
-    }
-}
-
-/// ASCII fallbacks for `TERM=dumb`, non-UTF-8 locales and `HRANESS_ASCII=1`.
+/// ASCII fallbacks for `TERM=dumb`, non-UTF-8 locales and `HRANESS_ASCII=1`,
+/// by the kit's shared style rule.
 pub fn glyphs(env: &dyn Fn(&str) -> Option<String>) -> Glyphs {
-    let utf8 = ["LC_ALL", "LC_CTYPE", "LANG"].iter().any(|name| {
-        env(name).is_some_and(|value| {
-            let value = value.to_ascii_lowercase();
-            value.contains("utf-8") || value.contains("utf8")
-        })
-    });
-    if env("TERM").as_deref() == Some("dumb")
-        || env("HRANESS_ASCII").as_deref() == Some("1")
-        || !utf8
-    {
+    if hraness_cli_kit::Style::detect(env, false).ascii {
         Glyphs::Ascii
     } else {
         Glyphs::Unicode
@@ -183,7 +138,7 @@ impl Context<'_> {
     }
 
     fn audience(&self) -> Audience {
-        audience(self.env, self.stderr_is_tty)
+        audience::detect(self.env, self.stderr_is_tty)
     }
 
     fn local_app(&self) -> bool {
@@ -673,13 +628,13 @@ mod tests {
     #[test]
     fn audience_follows_the_shared_rule() {
         let none = |_: &str| None;
-        assert_eq!(audience(&none, true), Audience::Human);
-        assert_eq!(audience(&none, false), Audience::Quiet);
+        assert_eq!(audience::detect(&none, true), Audience::Human);
+        assert_eq!(audience::detect(&none, false), Audience::Quiet);
         let prefix = |name: &str| (name == "CODEX_HOME").then(|| "x".to_owned());
-        assert_eq!(audience(&prefix, true), Audience::Human);
-        assert_eq!(audience(&agent_env, true), Audience::Agent);
+        assert_eq!(audience::detect(&prefix, true), Audience::Human);
+        assert_eq!(audience::detect(&agent_env, true), Audience::Agent);
         let forced = |name: &str| (name == "HRANESS_AUDIENCE").then(|| "off".to_owned());
-        assert_eq!(audience(&forced, true), Audience::Quiet);
+        assert_eq!(audience::detect(&forced, true), Audience::Quiet);
     }
 
     #[test]

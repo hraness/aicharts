@@ -8,7 +8,7 @@
 
 use std::io::Write;
 
-use crate::cli_style::{self, Audience, Style};
+use hraness_cli_kit::{audience, Audience, Style, Symbol};
 
 /// Commands that `invalid_command` can suggest.
 const COMMANDS: &[&str] = &[
@@ -413,9 +413,9 @@ pub(crate) fn render(
             let explained = explain(code, args);
             let mut text = format!(
                 "{} {}\n{} {}\n",
-                style.fail(),
+                style.symbol(Symbol::Fail),
                 explained.message,
-                style.next(),
+                style.symbol(Symbol::Next),
                 explained.next
             );
             if debug {
@@ -438,7 +438,7 @@ pub(crate) fn report_stderr(code: &str, args: &[String]) {
     let text = render(
         code,
         args,
-        cli_style::detect_current(),
+        audience::detect_current(),
         Style::stderr(),
         debug_enabled(args),
     );
@@ -465,7 +465,7 @@ mod tests {
     }
 
     fn human(code: &str, values: &[&str]) -> String {
-        render(code, &args(values), Audience::Human, Style::plain(), false)
+        render(code, &args(values), Audience::Human, Style::PLAIN, false)
     }
 
     #[test]
@@ -571,7 +571,7 @@ mod tests {
                     "invalid_option",
                     &args(&["status"]),
                     audience,
-                    Style::plain(),
+                    Style::PLAIN,
                     false
                 ),
                 "aicharts: invalid_option\n"
@@ -581,7 +581,7 @@ mod tests {
             "invalid_option",
             &args(&["status"]),
             Audience::Human,
-            Style::plain(),
+            Style::PLAIN,
             true,
         );
         assert!(debug.ends_with("  code: invalid_option\n"));

@@ -3,7 +3,6 @@
 mod account;
 mod autosubmit;
 mod capture;
-mod cli_style;
 mod contribution_sync;
 mod daemon;
 mod enroll;

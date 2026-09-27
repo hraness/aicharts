@@ -2,13 +2,15 @@
 //!
 //! Normal commands read the keychain with prompts suppressed. Only an explicit
 //! `AICHARTS_CUSTODY_INTERACTION=allow` lets macOS show its dialog, so that is
-//! the one place a person needs to hear what is coming. The copy follows the
-//! shared `keychain` template (Hraness permissions kit, Appendix B).
-//! TODO(df-0.8): render through `hraness-cli-kit` permissions once 0.8.0 ships.
+//! the one place a person needs to hear what is coming. The copy is the shared
+//! `keychain` pre-prompt template rendered by `hraness-cli-kit`
+//! (hraness/desktop-foundation 0.8.1; permissions kit, Appendix B).
 
 use std::io::{BufRead, IsTerminal, Write};
 
-use crate::cli_style::{self, Audience, Style};
+use hraness_cli_kit::audience::{self, Audience};
+use hraness_cli_kit::permissions::{self, PermissionKind, PermissionNeed, ProductRef, Surface};
+use hraness_cli_kit::{Style, Symbol};
 
 const CONSENT_VARIABLE: &str = "AICHARTS_CUSTODY_INTERACTION";
 
@@ -26,13 +28,32 @@ const KEYCHAIN_COMMANDS: &[&str] = &[
     "upload",
 ];
 
+/// The shared keychain pre-prompt for AI Charts: `aicharts` asks to use the
+/// keys it saved, for AI Charts.
+fn keychain_need() -> PermissionNeed {
+    PermissionNeed::new(
+        ProductRef::new("AI Charts", "aicharts").with_requester("aicharts"),
+        PermissionKind::Keychain,
+        "use its saved keys from your keychain",
+        "AI Charts reads the keys it saved when this Mac was connected.",
+    )
+}
+
 pub(crate) fn render(style: Style, confirm: bool) -> String {
-    let mut text = format!(
-        "{} macOS will ask to let aicharts use its saved keys from your keychain for AI Charts.\n   AI Charts reads the keys it saved when this Mac was connected. Enter your Mac password if asked, then choose Always Allow so macOS doesn't ask again.\n",
-        style.notice()
-    );
+    // The requester is explicit, so the environment lookup is never used.
+    let notice = permissions::render_pre_prompt(&keychain_need(), Surface::Cli, &|_| None);
+    let mut text = format!("{} {}\n", style.symbol(Symbol::Notice), notice.title);
+    for line in &notice.lines {
+        text.push_str("   ");
+        text.push_str(line);
+        text.push('\n');
+    }
     if confirm {
-        text.push_str("   Press Enter to continue · s to skip\n");
+        if let Some(confirm_line) = &notice.confirm {
+            text.push_str("   ");
+            text.push_str(confirm_line);
+            text.push('\n');
+        }
     }
     text
 }
@@ -58,7 +79,7 @@ pub(crate) fn applies(args: &[String], consent: Option<&str>) -> bool {
 /// when stdin is a terminal too. Scripts and agents see nothing.
 pub(crate) fn before_keychain(args: &[String]) -> Outcome {
     let consent = std::env::var(CONSENT_VARIABLE).ok();
-    if !applies(args, consent.as_deref()) || cli_style::detect_current() != Audience::Human {
+    if !applies(args, consent.as_deref()) || audience::detect_current() != Audience::Human {
         return Outcome::Continue;
     }
     let confirm = std::io::stdin().is_terminal() && std::io::stderr().is_terminal();
@@ -84,15 +105,11 @@ mod tests {
     #[test]
     fn the_notice_follows_the_keychain_template() {
         assert_eq!(
-            render(Style::plain(), true),
+            render(Style::PLAIN, true),
             "🔐 macOS will ask to let aicharts use its saved keys from your keychain for AI Charts.\n   AI Charts reads the keys it saved when this Mac was connected. Enter your Mac password if asked, then choose Always Allow so macOS doesn't ask again.\n   Press Enter to continue · s to skip\n"
         );
-        let ascii = Style {
-            color: false,
-            ascii: true,
-        };
-        assert!(render(ascii, false).starts_with("NOTE macOS will ask"));
-        assert!(!render(ascii, false).contains("Press Enter"));
+        assert!(render(Style::ASCII, false).starts_with("NOTE macOS will ask"));
+        assert!(!render(Style::ASCII, false).contains("Press Enter"));
     }
 
     #[test]
