@@ -1,5 +1,6 @@
-import { contributionAccount, contributionIdentity, CONTRIBUTION_MAX_HEADS, CONTRIBUTION_MAX_OPERATIONS, isContributionError,
+import { contributionAccount, contributionIdentity, CONTRIBUTION_MAX_OPERATIONS, isContributionError,
   type ContributionError } from "./contribution-contract";
+import { CONTRIBUTION_MAX_HEADS } from "./contributions";
 import { parseContributionIndexReference, type ContributionIndexReference } from "./contribution-index";
 import { contributionIndexKey, CONTRIBUTION_INDEX_MAX_KEY_BYTES } from "./contribution-index-contract";
 import { parseContributionCell, type ContributionCell } from "./contribution-rollups";

@@ -770,7 +770,7 @@
       "assurancePolicy": "authority-and-deletion-controls",
       "budget": {
         "capacityRefs": {
-          "contribution-max-heads": 262144,
+          "contribution-max-heads": 1048576,
           "contribution-max-associations": 1048576,
           "contribution-max-populations": 1024,
           "contribution-max-operations": 1000000,
@@ -788,7 +788,7 @@
       "assurancePolicy": "authority-and-deletion-controls",
       "budget": {
         "capacityRefs": {
-          "contribution-max-heads": 262144,
+          "contribution-max-heads": 1048576,
           "contribution-max-associations": 1048576,
           "contribution-max-populations": 1024,
           "contribution-max-operations": 1000000,
@@ -806,7 +806,7 @@
       "assurancePolicy": "canonical-account-history",
       "budget": {
         "capacityRefs": {
-          "contribution-max-heads": 262144,
+          "contribution-max-heads": 1048576,
           "contribution-max-associations": 1048576,
           "contribution-max-populations": 1024,
           "contribution-max-operations": 1000000,
@@ -824,7 +824,7 @@
       "assurancePolicy": "authority-and-deletion-controls",
       "budget": {
         "capacityRefs": {
-          "contribution-max-heads": 262144,
+          "contribution-max-heads": 1048576,
           "contribution-max-associations": 1048576,
           "contribution-max-populations": 1024,
           "contribution-max-operations": 1000000,
@@ -842,7 +842,7 @@
       "assurancePolicy": "authority-and-deletion-controls",
       "budget": {
         "capacityRefs": {
-          "contribution-max-heads": 262144,
+          "contribution-max-heads": 1048576,
           "contribution-max-associations": 1048576,
           "contribution-max-populations": 1024,
           "contribution-max-operations": 1000000,
@@ -860,7 +860,7 @@
       "assurancePolicy": "authority-and-deletion-controls",
       "budget": {
         "capacityRefs": {
-          "contribution-max-heads": 262144,
+          "contribution-max-heads": 1048576,
           "contribution-max-associations": 1048576,
           "contribution-max-populations": 1024,
           "contribution-max-operations": 1000000,
@@ -916,7 +916,7 @@
         "capacityRefs": {
           "contribution-journal-page-entries": 256,
           "contribution-journal-page-bytes": 262144,
-          "contribution-journal-root-bytes": 131072,
+          "contribution-journal-root-bytes": 524288,
           "contribution-max-immutable-bytes": 8589934592,
           "contribution-max-operations": 1000000
         }
@@ -959,7 +959,7 @@
       "assurancePolicy": "authority-and-deletion-controls",
       "budget": {
         "capacityRefs": {
-          "contribution-journal-max-entries": 262144,
+          "contribution-journal-max-entries": 1048576,
           "contribution-replay-chunk-entries": 32,
           "contribution-replay-max-source-bytes": 33554432,
           "contribution-projection-max-immutable-bytes": 4294967296,
@@ -978,7 +978,7 @@
       "assurancePolicy": "authority-and-deletion-controls",
       "budget": {
         "capacityRefs": {
-          "contribution-journal-max-entries": 262144,
+          "contribution-journal-max-entries": 1048576,
           "contribution-replay-chunk-entries": 32,
           "contribution-replay-max-source-bytes": 33554432,
           "contribution-projection-max-immutable-bytes": 4294967296,
@@ -997,7 +997,7 @@
       "assurancePolicy": "authority-and-deletion-controls",
       "budget": {
         "capacityRefs": {
-          "contribution-journal-max-entries": 262144,
+          "contribution-journal-max-entries": 1048576,
           "contribution-replay-chunk-entries": 32,
           "contribution-replay-max-source-bytes": 33554432,
           "contribution-projection-max-immutable-bytes": 4294967296,
@@ -1273,7 +1273,7 @@
       "assurancePolicy": "derived-projections",
       "budget": {
         "capacityRefs": {
-          "contribution-migration-max-heads": 262144
+          "contribution-migration-max-heads": 1048576
         }
       },
       "kind": "derived",
@@ -1286,7 +1286,7 @@
       "assurancePolicy": "derived-projections",
       "budget": {
         "capacityRefs": {
-          "contribution-migration-max-heads": 262144,
+          "contribution-migration-max-heads": 1048576,
           "contribution-migration-max-journals": 4096,
           "contribution-migration-max-days": 8192
         }
@@ -1301,7 +1301,7 @@
       "assurancePolicy": "derived-projections",
       "budget": {
         "capacityRefs": {
-          "contribution-journal-max-entries": 262144
+          "contribution-journal-max-entries": 1048576
         }
       },
       "kind": "derived",
@@ -1314,7 +1314,7 @@
       "assurancePolicy": "derived-projections",
       "budget": {
         "capacityRefs": {
-          "contribution-migration-max-heads": 262144,
+          "contribution-migration-max-heads": 1048576,
           "contribution-journal-page-entries": 256
         }
       },
@@ -1328,7 +1328,7 @@
       "assurancePolicy": "derived-projections",
       "budget": {
         "capacityRefs": {
-          "contribution-journal-max-entries": 262144,
+          "contribution-journal-max-entries": 1048576,
           "contribution-journal-page-entries": 256
         }
       },
