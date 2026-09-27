@@ -5,8 +5,8 @@ import {
   USAGE_CONSENT_HTTP_URL, type UsageConsentQueryResult,
 } from "./consent-http-contract";
 import {
-  PAIRING_HTTP_CAPACITY, PAIRING_HTTP_CLIENT_MS, PAIRING_HTTP_MEDIA, PAIRING_HTTP_STAGE_MS,
-  pairingHttpBody, pairingHttpDiscard, pairingHttpToken,
+  PAIRING_HTTP_CAPACITY, PAIRING_HTTP_CLIENT_MS, PAIRING_HTTP_COLD_READ_RETRY_MS, PAIRING_HTTP_MEDIA,
+  PAIRING_HTTP_STAGE_MS, pairingHttpBody, pairingHttpDiscard, pairingHttpToken,
 } from "./pairing-http-contract";
 import { privateDaysHttpLength, privateDaysSnapshot } from "./private-days-http-contract";
 import { pairingHttpWork, type PairingHttpEffects } from "./pairing-http-work";
@@ -93,25 +93,38 @@ export function createUsageConsentTransport(dependencies: UsageConsentTransportD
         const captured = query, encoded = encodeUsageConsentHttpRequest(captured);
         if (encoded === null) throw unavailable();
         const controller = new AbortController(); work.onStop(() => { controller.abort(); });
-        guard();
-        const response = await fetcher(USAGE_CONSENT_HTTP_URL, { method: "POST",
+        const open = () => fetcher(USAGE_CONSENT_HTTP_URL, { method: "POST",
           headers: { "content-type": "application/json", accept: "application/json", "accept-encoding": "identity", authorization: `Bearer ${token}` },
           body: encoded, redirect: "manual", credentials: "omit", cache: "no-store", signal: controller.signal,
         });
-        let reading = false;
-        try {
-          guard();
-          if (response.status !== 200 || response.url !== USAGE_CONSENT_HTTP_URL || response.redirected
-            || response.headers.get("content-type") !== PAIRING_HTTP_MEDIA || response.headers.has("content-encoding")
-            || response.headers.has("location") || response.headers.has("set-cookie")) throw unavailable();
-          const length = privateDaysHttpLength(response.headers, 1_024);
-          reading = true;
-          const bytes = await pairingHttpBody(response.body, 1_024, length, work);
-          guard();
-          const domain = decodeUsageConsentHttpResponse(bytes);
-          if (domain === null) throw unavailable();
-          guard(); return Object.freeze({ kind: "query", accountId: captured.accountId, result: domain });
-        } finally { if (!reading) await pairingHttpDiscard(response); }
+        const read = async (): Promise<UsageConsentTransportOutcome | null> => {
+          const response = await open();
+          let reading = false;
+          try {
+            guard();
+            // A worker 503 usually means the account object is still booting;
+            // the response is drained and the same read is retried once below.
+            if (response.status === 503) return null;
+            if (response.status !== 200 || response.url !== USAGE_CONSENT_HTTP_URL || response.redirected
+              || response.headers.get("content-type") !== PAIRING_HTTP_MEDIA || response.headers.has("content-encoding")
+              || response.headers.has("location") || response.headers.has("set-cookie")) throw unavailable();
+            const length = privateDaysHttpLength(response.headers, 1_024);
+            reading = true;
+            const bytes = await pairingHttpBody(response.body, 1_024, length, work);
+            guard();
+            const domain = decodeUsageConsentHttpResponse(bytes);
+            if (domain === null) throw unavailable();
+            guard(); return Object.freeze({ kind: "query", accountId: captured.accountId, result: domain });
+          } finally { if (!reading) await pairingHttpDiscard(response); }
+        };
+        guard();
+        const first = await read();
+        if (first !== null) return first;
+        await new Promise<void>(resolve => { setTimeout(resolve, PAIRING_HTTP_COLD_READ_RETRY_MS); });
+        guard();
+        const second = await read();
+        if (second === null) throw unavailable();
+        return second;
       }, startedAt);
       return result;
     } catch { return failed(); }

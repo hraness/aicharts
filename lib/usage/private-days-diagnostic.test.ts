@@ -102,7 +102,7 @@ test("missing diagnostic accessor is unknown and an anonymous session remains401
 
 test("Worker refusal and framing reasons contain no response header values", async () => {
   const cases: [NonNullable<Parameters<typeof worker>[0]>, string][] = [
-    [{ status: 401 }, "status"], [{ status: 503 }, "status"], [{ url: "https://private.example/" + CANARY }, "url"],
+    [{ status: 401 }, "status"], [{ url: "https://private.example/" + CANARY }, "url"],
     [{ headers: { "content-type": CANARY } }, "media"], [{ headers: { "content-encoding": CANARY } }, "encoding"],
     [{ headers: { location: CANARY } }, "location"], [{ headers: { "set-cookie": CANARY } }, "cookie"],
     [{ headers: { "content-length": CANARY } }, "length"], [{ headers: { "content-length": "1" } }, "body"],
@@ -113,6 +113,24 @@ test("Worker refusal and framing reasons contain no response header values", asy
     const row = event(f.lines); expect(row.workerDispatched).toBe(true); expect(row.workerStatus).toBe(options.status ?? 200);
     expect(row.transportFailure).toBe(reason); expect(row.publicOutcome).toBe("unavailable");
   }
+});
+
+test("a Worker 503 settles once and retries the same read against the warmed object", async () => {
+  // The account object's cold boot outlives the first stage; the retry is the
+  // single bounded second dispatch that rides out that residency cost.
+  const f = fixture({ fetch: async () => worker({ status: 503 }) });
+  const pending = f.handle(request()); await turns(); f.fire(1_500);
+  expect((await pending).status).toBe(503); await f.drain();
+  const row = event(f.lines); expect(row.workerDispatched).toBe(true); expect(row.workerStatus).toBe(503);
+  expect(row.transportFailure).toBe("status"); expect(row.publicOutcome).toBe("unavailable"); expect(f.fetches()).toBe(2);
+});
+
+test("a cold Worker 503 followed by a healthy reply serves the read without surfacing the stall", async () => {
+  let calls = 0;
+  const f = fixture({ fetch: async () => { calls++; return worker(calls === 1 ? { status: 503 } : {}); } });
+  const pending = f.handle(request()); await turns(); f.fire(1_500);
+  const response = await pending; expect(response.status).toBe(200); await f.drain();
+  const row = event(f.lines); expect(row.workerStatus).toBe(200); expect(row.publicOutcome).toBe("not_enrolled"); expect(f.fetches()).toBe(2);
 });
 
 test("HTTP200 domain failures and not-enrolled final projection stay distinct", async () => {
