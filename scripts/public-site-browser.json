@@ -1,0 +1,19 @@
+{
+  "origin": "https://aicharts.io",
+  "routes": [
+    "/",
+    "/calculator",
+    "/usage",
+    "/leaderboard",
+    "/models",
+    "/blog",
+    "/dashboard",
+    "/benchmarks",
+    "/coding",
+    "/data"
+  ],
+  "prefixes": [
+    "*"
+  ],
+  "minimalRoutes": []
+}
