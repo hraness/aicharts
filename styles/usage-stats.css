@@ -39,7 +39,7 @@
 .usage-stats :is(input, select) { background-color: var(--background); border: 1px solid var(--grid); border-radius: var(--usage-radius-sm); caret-color: var(--foreground); color: var(--foreground); font-size: .8rem; min-block-size: 2.5rem; min-inline-size: 0; padding: .45rem .7rem; transition: border-color 140ms ease, box-shadow 140ms ease; }
 .usage-stats select { appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 1rem) 52%, calc(100% - .7rem) 52%; background-repeat: no-repeat; background-size: .3rem .3rem; cursor: pointer; padding-inline-end: 2rem; }
 .usage-stats :is(input, select):focus-visible { border-color: var(--hraness-site-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--hraness-site-accent) 22%, transparent); outline: none; }
-.usage-stats select { max-inline-size: 15rem; min-inline-size: 8.5rem; }
+.usage-stats select { max-inline-size: 15rem; min-inline-size: min(8.5rem, 100%); }
 .usage-stats :is(input, select):hover { border-color: var(--muted); }
 .usage-stats__text-button, .usage-stats__range button { align-items: center; background: transparent; border: 1px solid var(--line); border-radius: 999px; color: var(--foreground); cursor: pointer; display: inline-flex; font-family: inherit; font-size: .78rem; font-weight: 500; gap: .35rem; min-block-size: 2.25rem; padding: .3rem .85rem; transition: background 140ms ease, border-color 140ms ease; white-space: nowrap; }
 .usage-stats__text-button:hover:not(:disabled), .usage-stats__range button:hover { background: var(--usage-tint); border-color: color-mix(in srgb, var(--hraness-site-accent) 45%, var(--grid)); }
@@ -123,7 +123,7 @@
 .usage-stats__hint { color: var(--muted); font-size: .75rem; margin-block-start: .75rem; max-inline-size: 85ch; }
 .usage-stats__day-detail { align-items: start; background: var(--usage-tint); border: 1px solid color-mix(in srgb, var(--hraness-site-accent) 25%, var(--grid)); border-radius: var(--usage-radius-sm); display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; justify-content: space-between; margin-block-start: 1rem; padding: 1rem 1.25rem; }
 .usage-stats__day-detail h3 { font-size: .95rem; }
-.usage-stats__day-detail p { color: var(--muted); font-size: .8rem; margin-block-start: .25rem; }
+.usage-stats__day-detail p { color: var(--muted); font-size: var(--text-caption); line-height: 1.5; margin-block-start: .25rem; }
 .usage-stats__day-detail ul { flex-basis: 100%; list-style: none; }
 .usage-stats__day-detail li { border-block-start: 1px solid color-mix(in srgb, var(--grid) 70%, transparent); display: flex; font-size: .8rem; gap: 1rem; justify-content: space-between; padding-block: .4rem; }
 .usage-stats__day-detail li > span { overflow-wrap: anywhere; }
@@ -169,10 +169,10 @@
 .usage-stats__timing dl { display: grid; font-size: .8rem; gap: .6rem; max-inline-size: 38rem; }
 .usage-stats__timing dl > div { display: flex; gap: 1rem; justify-content: space-between; }
 .usage-stats__timing dd { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; text-align: end; }
-.usage-stats__timing p { color: var(--muted); font-size: .8rem; margin-block-start: .85rem; max-inline-size: 75ch; }
+.usage-stats__timing p { color: var(--muted); font-size: var(--text-caption); line-height: 1.5; margin-block-start: .85rem; max-inline-size: 75ch; }
 .usage-stats__coverage p + p { margin-block-start: .75rem; }
 .usage-stats__coverage { padding-block: 2rem; scroll-margin-block-start: 2rem; }
-.usage-stats__coverage p { color: var(--muted); font-size: .8rem; max-inline-size: 75ch; }
+.usage-stats__coverage p { color: var(--muted); font-size: var(--text-caption); line-height: 1.5; max-inline-size: 75ch; }
 .usage-stats__coverage p:last-child { margin-block-start: 1rem; }
 .usage-stats__coverage th[scope="row"] { white-space: nowrap; }
 .usage-stats__freshness { display: grid; gap: .6rem 1.5rem; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); margin-block: 1rem 1.25rem; }
@@ -248,14 +248,14 @@
   .usage-stats-source { gap: .35rem 1rem; }
   .usage-stats-source a { margin-inline-start: 0; }
   .usage-stats__toolbar { gap: .6rem; }
-  .usage-stats__mobile-controls { align-items: end; display: flex; gap: .75rem; inline-size: 100%; }
-  .usage-stats__mobile-controls label { flex: 1; }
+  .usage-stats__mobile-controls { align-items: end; display: flex; flex-wrap: wrap; gap: .75rem; inline-size: 100%; }
+  .usage-stats__mobile-controls label { flex: 1 1 9rem; min-inline-size: 0; }
   .usage-stats__desktop-periods, .usage-stats__filters[data-expanded="false"] { display: none; }
   .usage-stats__filters { inline-size: 100%; }
   .usage-stats__filters label { flex: 1 1 35%; min-inline-size: 0; }
   .usage-stats select { inline-size: 100%; max-inline-size: none; }
   .usage-stats__presets button { padding-inline: .6rem; }
-  .usage-stats__custom label { flex: 1 1 40%; min-inline-size: 0; }
+  .usage-stats__custom label { flex: 1 1 10rem; min-inline-size: 0; }
   .usage-stats__custom input { inline-size: 100%; }
   .usage-stats__overview { display: grid; }
   .usage-stats__range { order: 0; }

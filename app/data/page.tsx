@@ -137,7 +137,7 @@ export default function CodingAgentDatasetPage() {
   const leaders = currentCodingAgentBenchmarkLeaders(snapshot);
 
   return (
-    <main
+    <main tabIndex={-1}
       className="plain-publication__article"
       data-analytics-surface="data_document"
       id="data-content"

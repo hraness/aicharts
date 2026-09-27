@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "Connect your collector | AI Charts",
 export default async function PairingPage() {
   await connection();
   const available = usagePairingAvailable();
-  return <><SiteHeader current="/usage" /><main className="usage-home" id="main-content">
+  return <><SiteHeader current="/usage" /><main tabIndex={-1} className="usage-home" id="main-content">
     <PairingApproval key={available ? "available" : "closed"} available={available} /><ChartPageFooter />
   </main></>;
 }

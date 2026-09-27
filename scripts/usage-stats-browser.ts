@@ -517,6 +517,7 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
       await sorted.getByRole("button").focus(); await page.keyboard.press("Enter"); invariant(await sorted.getAttribute("aria-sort") === "ascending", "Sort must update accessible direction.");
       await page.getByRole("button", { name: "gpt-5", exact: true }).click();
       invariant(await page.getByLabel("Model", { exact: true }).inputValue() === "gpt-5", "Model drilldown must filter the common scope.");
+      await page.locator(".usage-stats[aria-busy='false']").waitFor();
       const downloadEvent = page.waitForEvent("download"); await page.getByRole("button", { name: "Download numeric CSV" }).focus(); await page.keyboard.press("Enter");
       const download = await downloadEvent, file = await download.path(); invariant(file, "CSV must download.");
       const csv = await Bun.file(file).text(); invariant(csv.includes("output_excluding_reasoning") && csv.includes('"gpt-5"') && !csv.includes('"warp"'), "CSV must match the selected numeric scope.");
@@ -589,6 +590,7 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
         await expandFilters();
         await page.getByLabel("Client", { exact: true }).selectOption("codex");
         await choosePeriod(90); await page.getByRole("heading", { name: "Weekly usage" }).waitFor();
+        await page.locator(".usage-stats[aria-busy='false']").waitFor();
         invariant(await page.getByLabel("Client", { exact: true }).inputValue() === "codex", "Account range refresh must preserve client selection.");
         await expandFilters();
         statsMode = "range_too_large"; await page.getByRole("button", { name: "Refresh", exact: true }).click();

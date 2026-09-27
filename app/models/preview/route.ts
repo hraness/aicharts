@@ -1,3 +1,5 @@
+import { paletteColors } from "@hraness/design-kit";
+
 import { site } from "@/app/site";
 import { MODEL_CARD_COLLECTION_SOCIAL_IMAGE_URL } from "@/lib/model-card-collection";
 
@@ -16,6 +18,8 @@ const contentSecurityPolicy = [
 
 const canonicalUrl = new URL("/models", site.origin).toString();
 
+const palette = paletteColors["tokyo-night"];
+
 const document = `<!doctype html>
 <html lang="en">
 <head>
@@ -26,11 +30,16 @@ const document = `<!doctype html>
   <title>AI model pages | AI Charts</title>
   <style>
     * { box-sizing: border-box; }
-    html { color-scheme: dark; }
+    html {
+      color-scheme: light dark;
+      --background: light-dark(${palette.light.background}, ${palette.dark.background});
+      --foreground: light-dark(${palette.light.foreground}, ${palette.dark.foreground});
+      --muted: light-dark(${palette.light.muted}, ${palette.dark.muted});
+    }
     body {
       align-items: center;
-      background: #08090c;
-      color: #f7f6f2;
+      background: var(--background);
+      color: var(--foreground);
       display: flex;
       font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       justify-content: center;
@@ -45,9 +54,9 @@ const document = `<!doctype html>
     }
     img {
       aspect-ratio: 1200 / 630;
-      border: 1px solid rgb(255 255 255 / 16%);
+      border: 1px solid transparent;
       border-radius: clamp(.85rem, 2vw, 1.5rem);
-      box-shadow: 0 1.5rem 4rem rgb(0 0 0 / 45%);
+      box-shadow: 0 1rem 3rem -1rem light-dark(rgb(24 32 62 / 25%), rgb(0 0 0 / 45%));
       display: block;
       inline-size: 100%;
       object-fit: cover;
@@ -61,19 +70,20 @@ const document = `<!doctype html>
     }
     h1 {
       font-size: clamp(1.25rem, 4vw, 2.4rem);
-      letter-spacing: -.045em;
-      line-height: 1;
+      letter-spacing: -.025em;
+      line-height: 1.15;
       margin: 0;
       text-wrap: balance;
     }
     p {
-      color: rgb(247 246 242 / 62%);
+      color: var(--muted);
       font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
-      font-size: clamp(.7rem, 1.5vw, .9rem);
+      font-size: clamp(.8125rem, 1.5vw, .9rem);
       letter-spacing: .06em;
       margin: 0;
       text-transform: uppercase;
     }
+    @media (forced-colors: active) { img { border-color: CanvasText; box-shadow: none; } }
   </style>
 </head>
 <body>

@@ -32,7 +32,7 @@
 .usage-sessions__detail { background: var(--usage-card); border: 1px solid var(--usage-card-border); border-radius: var(--usage-radius); box-shadow: var(--usage-card-shadow); margin-block-start: 2rem; padding: clamp(1.25rem, 3vw, 1.75rem); }
 .usage-sessions__detail header { align-items: baseline; display: flex; flex-wrap: wrap; gap: 1rem 2rem; justify-content: space-between; }
 .usage-sessions__detail h2 { font-size: 1.4rem; letter-spacing: -.025em; }
-.usage-sessions__detail header p, .usage-sessions__detail header > span { color: var(--muted); font-size: .8rem; margin-block-start: .5rem; }
+.usage-sessions__detail header p, .usage-sessions__detail header > span { color: var(--muted); font-size: .875rem; margin-block-start: .5rem; }
 .usage-sessions__detail h3 { font-size: 1rem; margin-block: 2rem 1rem; }
 .usage-sessions__rich { background: var(--usage-card); border: 1px solid var(--usage-card-border); border-radius: var(--usage-radius); box-shadow: var(--usage-card-shadow); margin-block: 2rem; padding: clamp(1.25rem, 3vw, 1.75rem); }
 .usage-sessions__rich header { align-items: baseline; display: flex; flex-wrap: wrap; gap: .75rem 2rem; justify-content: space-between; }
@@ -60,9 +60,9 @@
 .usage-sessions__phases dt { align-items: center; display: flex; gap: .4rem; }
 .usage-sessions__key { block-size: .6rem; border-radius: 50%; display: inline-block; flex-shrink: 0; inline-size: .6rem; }
 .usage-sessions__phases dd { font-size: .95rem; font-variant-numeric: tabular-nums; margin-block-start: .5rem; }
-.usage-sessions__phases dd span { color: var(--muted); display: block; font-size: .75rem; margin-block-start: .25rem; }
+.usage-sessions__phases dd span { color: var(--muted); display: block; font-size: .8125rem; margin-block-start: .25rem; }
 .usage-sessions__timeline { display: grid; gap: .6rem; grid-template-columns: 1fr 1fr; margin-block: 1.75rem 1rem; }
-.usage-sessions__timeline > span { color: var(--muted); font-size: .7rem; grid-row: 2; }
+.usage-sessions__timeline > span { color: var(--muted); font-size: .8125rem; grid-row: 2; }
 .usage-sessions__timeline > span:last-child { text-align: end; }
 .usage-sessions__track { background: var(--usage-control); block-size: 2.25rem; border-radius: var(--usage-radius-sm); overflow: hidden; display: flex; gap: 1px; grid-column: 1 / -1; grid-row: 1; }
 .usage-sessions [role="region"][tabindex="0"]:focus { outline: 2px solid var(--hraness-site-accent); outline-offset: 3px; }

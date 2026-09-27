@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 };
 
 export default function SessionUsagePage() {
-  return <><SiteHeader current="/usage" /><main className="usage-home usage-home--stats" id="main-content">
+  return <><SiteHeader current="/usage" /><main tabIndex={-1} className="usage-home usage-home--stats" id="main-content">
     <nav className="usage-stats-nav" aria-label="Usage views"><Link href="/dashboard">Account overview</Link><Link href="/usage/details">Detailed reports</Link><Link href="/usage/sessions" aria-current="page">Sessions</Link><Link href="/leaderboard">Leaderboard</Link></nav>
     <SessionDashboard /><ChartPageFooter />
   </main></>;

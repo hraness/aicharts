@@ -55,7 +55,7 @@ function DashboardPreview() {
 export default function UsagePage() {
   return <>
     <SiteHeader current="/usage" />
-    <main className="usage-home" id="main-content">
+    <main tabIndex={-1} className="usage-home" id="main-content">
       <section className="usage-hero usage-hero--preview" aria-labelledby="usage-title">
         <div className="usage-hero__copy">
           <p className="usage-pill"><i aria-hidden="true" />In development <span>· build from source</span></p>

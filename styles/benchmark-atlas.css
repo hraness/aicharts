@@ -12,18 +12,14 @@
 .benchmark-library-heading h2 { font-size: clamp(24px, 3vw, 32px); font-weight: 550; letter-spacing: -.03em; }
 .benchmark-library-heading p { color: var(--muted); font-size: 13px; line-height: 1.5; margin-top: 8px; }
 .benchmark-library-heading strong { color: var(--foreground); font-weight: 550; }
-.benchmark-atlas { --atlas-accent: #246457; --atlas-tint: #e2eee7; --atlas-bar: #70a08d; --option-picker-accent: var(--atlas-accent); scroll-margin-top: 72px; border-bottom: 1px solid var(--grid); }
-[data-theme="dark"] .benchmark-atlas { --atlas-accent: #9dc9b5; --atlas-tint: #24342e; --atlas-bar: #658a77; }
-/* Each task family carries a quiet accent so a reader can tell at a glance that they
+.benchmark-atlas { --atlas-accent: light-dark(#246457, #9dc9b5); --atlas-tint: light-dark(#e2eee7, #24342e); --atlas-bar: light-dark(#70a08d, #658a77); --option-picker-accent: var(--atlas-accent); scroll-margin-top: 72px; border-bottom: 1px solid var(--grid); }
+/* Paired chart accents follow the active color scheme, including the no-JS system default.
+   Each task family carries a quiet accent so a reader can tell at a glance that they
    changed subject. Every value clears AA against both page backgrounds. */
-.benchmark-atlas[data-atlas-category="coding"], .benchmark-atlas[data-atlas-category="computer-use"] { --atlas-accent: #1f5480; --atlas-tint: #e0e9f2; --atlas-bar: #6693b8; }
-[data-theme="dark"] .benchmark-atlas[data-atlas-category="coding"], [data-theme="dark"] .benchmark-atlas[data-atlas-category="computer-use"] { --atlas-accent: #9dc0e0; --atlas-tint: #1f2c38; --atlas-bar: #5f7f9c; }
-.benchmark-atlas[data-atlas-category="reasoning"], .benchmark-atlas[data-atlas-category="science"] { --atlas-accent: #66305e; --atlas-tint: #f0e4ee; --atlas-bar: #a3739c; }
-[data-theme="dark"] .benchmark-atlas[data-atlas-category="reasoning"], [data-theme="dark"] .benchmark-atlas[data-atlas-category="science"] { --atlas-accent: #d3a8cc; --atlas-tint: #33222f; --atlas-bar: #8a6584; }
-.benchmark-atlas[data-atlas-category="research"], .benchmark-atlas[data-atlas-category="memory"] { --atlas-accent: #6b5312; --atlas-tint: #f2ebd9; --atlas-bar: #a89158; }
-[data-theme="dark"] .benchmark-atlas[data-atlas-category="research"], [data-theme="dark"] .benchmark-atlas[data-atlas-category="memory"] { --atlas-accent: #d8c078; --atlas-tint: #332c1a; --atlas-bar: #8d7b4b; }
-.benchmark-atlas[data-atlas-category="image"], .benchmark-atlas[data-atlas-category="video"], .benchmark-atlas[data-atlas-category="audio"], .benchmark-atlas[data-atlas-category="world"] { --atlas-accent: #7a3038; --atlas-tint: #f5e3e4; --atlas-bar: #b3767c; }
-[data-theme="dark"] .benchmark-atlas[data-atlas-category="image"], [data-theme="dark"] .benchmark-atlas[data-atlas-category="video"], [data-theme="dark"] .benchmark-atlas[data-atlas-category="audio"], [data-theme="dark"] .benchmark-atlas[data-atlas-category="world"] { --atlas-accent: #dfa3aa; --atlas-tint: #382426; --atlas-bar: #96666b; }
+.benchmark-atlas[data-atlas-category="coding"], .benchmark-atlas[data-atlas-category="computer-use"] { --atlas-accent: light-dark(#1f5480, #9dc0e0); --atlas-tint: light-dark(#e0e9f2, #1f2c38); --atlas-bar: light-dark(#6693b8, #5f7f9c); }
+.benchmark-atlas[data-atlas-category="reasoning"], .benchmark-atlas[data-atlas-category="science"] { --atlas-accent: light-dark(#66305e, #d3a8cc); --atlas-tint: light-dark(#f0e4ee, #33222f); --atlas-bar: light-dark(#a3739c, #8a6584); }
+.benchmark-atlas[data-atlas-category="research"], .benchmark-atlas[data-atlas-category="memory"] { --atlas-accent: light-dark(#6b5312, #d8c078); --atlas-tint: light-dark(#f2ebd9, #332c1a); --atlas-bar: light-dark(#a89158, #8d7b4b); }
+.benchmark-atlas[data-atlas-category="image"], .benchmark-atlas[data-atlas-category="video"], .benchmark-atlas[data-atlas-category="audio"], .benchmark-atlas[data-atlas-category="world"] { --atlas-accent: light-dark(#7a3038, #dfa3aa); --atlas-tint: light-dark(#f5e3e4, #382426); --atlas-bar: light-dark(#b3767c, #96666b); }
 
 .benchmark-atlas button, .benchmark-atlas input, .benchmark-atlas select { font: inherit; }
 .benchmark-atlas button { color: inherit; }
@@ -37,7 +33,7 @@
 .atlas-library > summary:hover { background: var(--secondary); }
 .atlas-library__active { color: var(--atlas-accent); margin-left: 10px; }
 .atlas-library[open] { grid-column: 1 / -1; }
-.atlas-library__content { margin-top: 18px; padding: 20px; border: 1px solid var(--grid); border-radius: 5px; }
+.atlas-library__content { margin-top: 18px; padding: 20px; border: 1px solid transparent; border-radius: .875rem; background: var(--hraness-material-plane); box-shadow: var(--hraness-material-lift); }
 .atlas-library__tools { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
 .atlas-search { display: grid; flex: 1; gap: 8px; max-width: 380px; min-width: 0; font-size: 12px; font-weight: 550; }
 .atlas-search input { min-width: 0; width: 100%; min-height: 44px; font-size: 14px; background: transparent; border: 1px solid var(--line); border-radius: 5px; padding: 10px 12px; }
@@ -55,7 +51,7 @@
 .atlas-coverage { color: var(--muted); font-size: 11px; white-space: nowrap; }
 .atlas-coverage--charted { color: var(--atlas-accent); }
 .atlas-coverage--charted::before { content: ""; display: inline-block; width: 4px; height: 4px; background: currentColor; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
-.atlas-library__note { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--grid); color: var(--muted); font-size: 12px; line-height: 1.6; max-width: 920px; }
+.atlas-library__note { margin-top: 18px; padding-top: 14px; color: var(--muted); font-size: .875rem; line-height: 1.65; max-width: 72ch; }
 .atlas-content { min-width: 0; padding-block: 28px 24px; }
 .atlas-heading { display: flex; align-items: start; justify-content: space-between; gap: 20px; }
 .atlas-eyebrow { font-size: 11px; letter-spacing: .055em; text-transform: uppercase; font-weight: 550; color: var(--muted); }
@@ -242,4 +238,8 @@
   .atlas-row__heading { gap: 10px; }
   .atlas-row__heading data { font-size: 13px; }
   .atlas-comparison__heading { align-items: start; flex-direction: column; gap: 6px; }
+}
+
+@media (forced-colors: active) {
+  .atlas-library__content { border-color: CanvasText; box-shadow: none; }
 }

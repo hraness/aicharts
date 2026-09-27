@@ -61,8 +61,9 @@ test("native select menus inherit the application theme", () => {
   const baseEnd = stylesheet.indexOf("\n}\n\n:root", baseStart);
   const baseLayer = stylesheet.slice(baseStart, baseEnd + 2);
 
-  expect(firstRule(":root")).toContain("color-scheme: light");
-  expect(firstRule(':root[data-theme="dark"]')).toContain("color-scheme: dark");
+  // The shared palette owns the resolved scheme, including system without JS.
+  expect(firstRule(":root")).not.toContain("color-scheme:");
+  expect(firstRule(":root")).not.toContain("--background:");
   expect(baseLayer).toContain(":where(select) { color-scheme: inherit; }");
   expect(baseLayer).toMatch(/:where\(select > option, select > optgroup, select > optgroup > option\)\s*\{[^}]*background-color:\s*var\(--popover\);[^}]*color:\s*var\(--foreground\);/su);
   expect(baseLayer).toContain(":where(select option:disabled) { color: var(--muted); }");
@@ -301,7 +302,7 @@ test("chart canvas is full bleed while its header and resource nav own safe gutt
 
 test("share export floats over the chart with a quiet bounded surface", () => {
   expect(stylesheet).not.toContain(".share-label");
-  expect(firstRule(".share-trigger.ui-surface")).toContain("background: color-mix(in oklch, var(--surface-raised) 92%, transparent)");
+  expect(firstRule(".share-trigger.ui-surface")).toContain("background: color-mix(in srgb, var(--surface-raised) 92%, transparent)");
   expect(firstRule(".share-trigger.ui-surface")).toContain("color: var(--foreground)");
   expect(firstRule(".share-trigger.ui-surface:hover,\n.ui-menu-trigger:has(> .share-menu-popover) > .share-trigger.ui-surface")).toContain("background: var(--surface-active)");
   expect(stylesheet).not.toContain("--jelly-");

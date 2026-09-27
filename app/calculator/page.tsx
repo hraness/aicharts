@@ -48,7 +48,7 @@ export default function CalculatorPage() {
 
   return <>
     <SiteHeader current="/calculator" />
-    <main className="chart-home calculator-home" id="main-content">
+    <main tabIndex={-1} className="chart-home calculator-home" id="main-content">
       <header className="chart-page-intro">
         <h1>Subscription vs API vs GPUs</h1>
         <p>One fully used ChatGPT Pro 20x seat implies a monthly token volume. This calculator prices that same volume five ways: the subscription sticker, the {inputs.openAiApiPricing.modelName} API, the {inputs.deepSeekApiPricing.modelVersion} API, GPUs you buy, and GPUs you rent.</p>

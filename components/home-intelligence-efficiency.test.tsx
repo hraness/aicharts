@@ -289,7 +289,7 @@ describe("homepage Intelligence efficiency view", () => {
     expect(css).toContain(".intelligence-efficiency__point-control:focus-visible");
     expect(css).toMatch(/\.intelligence-efficiency__metric-control button\s*\{[^}]*font:\s*550 14px[^}]*min-height:\s*44px;/su);
     expect(css).toContain(".intelligence-efficiency__notes summary:focus-visible");
-    expect(css).toContain('[data-theme="dark"] .intelligence-efficiency');
+    expect(css).toMatch(/\.intelligence-efficiency\s*\{[^}]*--brand-key:\s*light-dark\(#805424, #d0a77c\);/su);
     expect(css).toMatch(/\.intelligence-efficiency__labels line\s*\{[^}]*stroke:\s*var\(--muted\);[^}]*stroke-width:\s*1;/su);
   });
 
