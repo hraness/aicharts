@@ -103,7 +103,7 @@
 - Content bytes live in the content store; the control plane keeps references and metadata only.
 - Run `bun run check:cost-surfaces` before handoff whenever a data surface changes.
 - Every keychain dialog lands on the owner's screen. Never set `AICHARTS_CUSTODY_INTERACTION=allow` in a loop, schedule, or background script, and never inspect the login keychain with `security dump-keychain -d`. Grant a newly built binary once in one attended command, then verify it with the override unset (see `docs/usage-local.md`).
-- Do not activate or migrate an account's contribution profile while any client it publishes lacks a contribution sender; activation refuses the aggregate path for every client (`docs/usage-autosubmit.md`).
+- Keep aggregate snapshot and V1 publishing open for every client and collector version whatever the contribution profile's phase: the private reads, lifetime totals and leaderboard read those stores (`docs/usage-autosubmit.md`).
 
 <!-- algal-skills:start -->
 - Prefer the globally installed `algal-*` skills for bounded git state, diffs, repository survey/search, test and release gates, CI polling, and web fetches instead of repeated raw tool output.
