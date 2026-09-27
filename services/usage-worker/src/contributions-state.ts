@@ -56,7 +56,7 @@ function populationValue(value: unknown): ContributionPopulation | null {
     const raw = statsOwnRecord(value, ["id", "generation", "deviceId", "writerRevision", "revision", "headHash", "memberCount"]);
     return raw && contributionIdentity(raw.id) && contributionIdentity(raw.generation) && contributionIdentity(raw.deviceId)
       && statsInteger(raw.writerRevision, 1, CONTRIBUTION_MAX_OPERATIONS) && statsInteger(raw.revision, 0, CONTRIBUTION_MAX_OPERATIONS)
-      && contributionHex(raw.headHash) && statsInteger(raw.memberCount, 0, CONTRIBUTION_MAX_MEMBERS)
+      && contributionHex(raw.headHash) && statsInteger(raw.memberCount, 0, CONTRIBUTION_MAX_ASSOCIATIONS)
       && ((raw.revision === 0) === (raw.headHash === CONTRIBUTION_ZERO_HASH))
       ? { id: raw.id, generation: raw.generation, deviceId: raw.deviceId, writerRevision: raw.writerRevision,
         revision: raw.revision, headHash: raw.headHash, memberCount: raw.memberCount } : null;

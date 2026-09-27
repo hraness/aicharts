@@ -32,6 +32,7 @@ pub const MAX_BATCH_BYTES: usize = 1_048_576;
 const MAX_REVISION: u64 = 1_000_000;
 const MAX_SEQUENCE: u64 = 9_007_199_254_740_991;
 const MAX_TIME: u64 = 8_640_000_000_000_000;
+const MAX_MEMBERS: u64 = 1_048_576;
 const ZERO_HASH: &str = "0000000000000000000000000000000000000000000000000000000000000000";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -427,7 +428,7 @@ impl CorrelatedHeads {
         }
         if self.page.revision >= MAX_REVISION
             || self.page.population.revision >= MAX_REVISION
-            || self.page.population.member_count + new_members > MAX_OBSERVATIONS as u64
+            || self.page.population.member_count + new_members > MAX_MEMBERS
         {
             return Err(Error::Limit);
         }

@@ -1,6 +1,6 @@
 //! Exact JSON field order is part of the cross-language immutable-body contract.
 use super::{
-    hex, identity, Error, Scope, MAX_MUTATIONS, MAX_OBSERVATIONS, MAX_REPLY_BYTES, MAX_REVISION,
+    hex, identity, Error, Scope, MAX_MEMBERS, MAX_MUTATIONS, MAX_REPLY_BYTES, MAX_REVISION,
     MAX_SEQUENCE, MAX_TIME, ZERO_HASH,
 };
 use serde::{de::DeserializeOwned, Deserialize, Deserializer, Serialize};
@@ -408,7 +408,7 @@ impl HeadPage {
             || pop.revision > self.revision
             || !hex(&pop.head_hash, 64)
             || (pop.revision == 0) != (pop.head_hash == ZERO_HASH)
-            || pop.member_count > MAX_OBSERVATIONS as u64
+            || pop.member_count > MAX_MEMBERS
             || self.entries.len() != query.ids.len()
         {
             return Err(Error::InvalidReply);

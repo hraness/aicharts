@@ -154,7 +154,7 @@ impl Population {
             || self.revision > revision
             || !hexadecimal(&self.head_hash, 64)
             || (self.revision == 0) != self.head_hash.bytes().all(|b| b == b'0')
-            || self.member_count > 8_192
+            || self.member_count > MAX_MEMBERS
         {
             return Err(INVALID);
         }
@@ -343,6 +343,7 @@ pub(super) fn status_terminal(
 pub(super) const CONTROL_REQUEST_BYTES: usize = 2_048;
 pub(super) const CONTROL_REPLY_BYTES: usize = 4_096;
 const MAX_HEADS: u64 = 1_048_576;
+const MAX_MEMBERS: u64 = 1_048_576;
 const MAX_UNRESOLVED_BODIES: u64 = 65_536;
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -620,7 +621,7 @@ pub(super) fn grant_receipt(
         || value.population.revision > value.revision
         || !hexadecimal(&value.population.head_hash, 64)
         || (value.population.revision == 0) != value.population.head_hash.bytes().all(|b| b == b'0')
-        || value.population.member_count > 8_192
+        || value.population.member_count > MAX_MEMBERS
     {
         return Err(INVALID);
     }

@@ -1312,6 +1312,16 @@
       }
     },
     {
+      "id": "native-contribution-members",
+      "scope": "native-contribution-producer",
+      "unit": "count",
+      "value": 1048576,
+      "source": {
+        "path": "crates/aicharts-core/src/contribution_producer.rs",
+        "symbol": "MAX_MEMBERS"
+      }
+    },
+    {
       "id": "native-contribution-mutations",
       "scope": "native-contribution-producer",
       "unit": "count",
@@ -1744,8 +1754,8 @@
       "finding": null
     },
     {
-      "left": "native-contribution-observations",
-      "right": "contribution-max-members",
+      "left": "native-contribution-members",
+      "right": "contribution-max-associations",
       "relation": "equal",
       "status": "enforced",
       "finding": null

@@ -487,7 +487,7 @@ fn reply_scope_population_and_exact_entry_set_are_correlated() {
         ("writerRevision", json!(2)),
         ("revision", json!(13)),
         ("headHash", json!(h(1))),
-        ("memberCount", json!(8_193)),
+        ("memberCount", json!(MAX_MEMBERS + 1)),
     ] {
         let mut value = reply();
         value["result"]["value"]["population"][field] = replacement;
@@ -722,7 +722,7 @@ fn source_bytes_and_retained_observation_count_are_bounded() {
 fn capacity_and_sequence_exhaustion_refuse_without_emitting_a_prefix() {
     let request = query();
     let mut value = reply();
-    value["result"]["value"]["population"]["memberCount"] = json!(MAX_OBSERVATIONS);
+    value["result"]["value"]["population"]["memberCount"] = json!(MAX_MEMBERS);
     refuses(
         request
             .correlate(&bytes(&value))
