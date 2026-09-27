@@ -60,17 +60,21 @@ export function parseUsageDashboardQuery(value: unknown): UsageDashboardQuery | 
   } catch { return null; }
 }
 
+/** Parts are joined by ".", an unreserved character: platforms re-serialize
+ * query strings like URLSearchParams, which percent-encodes "," but never "." */
+const PART_SEPARATOR = ".";
+
 export function usageDashboardPath(value: unknown): string | null {
   const query = parseUsageDashboardQuery(value);
   if (query === null) return null;
   const range = query.range === null ? "" : `&firstUtcDay=${query.range.firstUtcDay}&dayCount=${query.range.dayCount}`;
-  return `${USAGE_DASHBOARD_PATH}?parts=${query.parts.join(",")}${range}`;
+  return `${USAGE_DASHBOARD_PATH}?parts=${query.parts.join(PART_SEPARATOR)}${range}`;
 }
 
 export function parseUsageDashboardSearch(search: string): UsageDashboardQuery | null {
-  const match = /^\?parts=([a-z]{1,8}(?:,[a-z]{1,8}){0,3})(?:&firstUtcDay=(0|[1-9][0-9]{0,7})&dayCount=([1-9][0-9]{0,2}))?$/u.exec(search);
+  const match = /^\?parts=([a-z]{1,8}(?:\.[a-z]{1,8}){0,3})(?:&firstUtcDay=(0|[1-9][0-9]{0,7})&dayCount=([1-9][0-9]{0,2}))?$/u.exec(search);
   if (match === null || match[0] !== search) return null;
-  const query = parseUsageDashboardQuery({ parts: match[1]!.split(","),
+  const query = parseUsageDashboardQuery({ parts: match[1]!.split(PART_SEPARATOR),
     range: match[2] === undefined ? null : { firstUtcDay: Number(match[2]), dayCount: Number(match[3]) } });
   return query !== null && usageDashboardPath(query) === `${USAGE_DASHBOARD_PATH}${search}` ? query : null;
 }

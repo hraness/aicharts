@@ -19,7 +19,7 @@ const totals: StatsTotals = { schemaVersion: 2, generatedAtMs: 1_000, revision: 
 const example = createUsageStatsExample(20_789);
 const report = parseUsageStatsReport({ ...example, revision: 1, updatedAtMs: example.generatedAtMs })!;
 const range = { firstUtcDay: report.firstUtcDay, dayCount: report.dayCount };
-const search = `?parts=account,totals,consent,stats&firstUtcDay=${range.firstUtcDay}&dayCount=${range.dayCount}`;
+const search = `?parts=account.totals.consent.stats&firstUtcDay=${range.firstUtcDay}&dayCount=${range.dayCount}`;
 const consentView = { schemaVersion: 1, consent: false, consentedAtMs: null, publicHandle: null } as const;
 const incoming = (options: RequestInit = {}, url = `${USAGE_DASHBOARD_URL}${search}`) => new Request(url, {
   ...options, headers: { accept: USAGE_DASHBOARD_MEDIA, "sec-fetch-site": "same-origin", ...options.headers },
@@ -99,7 +99,7 @@ test("method, origin, framing and canonical search reject before any live read",
     [incoming({ method: "POST" }), 405], [incoming({ headers: { "sec-fetch-site": "cross-site" } }), 403],
     [incoming({ headers: { origin: "https://foreign.example" } }), 403], [incoming({ headers: { accept: "application/json" } }), 400],
     [incoming({ headers: { authorization: "Bearer a.b.c" } }), 400], [incoming({}, `${USAGE_DASHBOARD_URL}?parts=stats`), 400],
-    [incoming({}, `${USAGE_DASHBOARD_URL}?parts=totals,account`), 400], [incoming({}, `https://aicharts.io/api/usage/dashboard/${search}`), 400],
+    [incoming({}, `${USAGE_DASHBOARD_URL}?parts=totals.account`), 400], [incoming({}, `https://aicharts.io/api/usage/dashboard/${search}`), 400],
     [incoming({}, `https://foreign.example/api/usage/dashboard${search}`), 403], [incoming({}, `${USAGE_DASHBOARD_URL}${search}&x=${"1".repeat(200)}`), 400],
   ];
   for (const [request, status] of cases) {

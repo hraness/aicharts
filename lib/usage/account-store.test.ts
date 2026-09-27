@@ -67,7 +67,7 @@ test("reads issued together become one request and are accepted in the identity 
   try {
     const [account, total, consent, stats] = await Promise.all([readUsageAccountPart("account", h.live), readUsageAccountPart("totals", h.live),
       readUsageAccountPart("consent", h.live), h.stats()]);
-    expect(h.dashboards()).toEqual([`/api/usage/dashboard?parts=account,totals,consent,stats&firstUtcDay=${range.firstUtcDay}&dayCount=${range.dayCount}`]);
+    expect(h.dashboards()).toEqual([`/api/usage/dashboard?parts=account.totals.consent.stats&firstUtcDay=${range.firstUtcDay}&dayCount=${range.dayCount}`]);
     expect(reasons).toEqual(["identity-changed"]);
     for (const bound of [account, total, consent, stats]) { expect(bound?.scope?.accountId).toBe(A); expect(currentUsageAccountScope(bound!.scope!)).toBe(true); }
     expect(account?.reply).toEqual({ schemaVersion: 1, state: "ready", account: { accountId: A } });
@@ -89,7 +89,7 @@ test("stored replies answer revisits instantly; a stale one renders at once whil
     const stale = await readUsageAccountPart("totals", h.live);
     expect(stale?.scope?.accountId).toBe(A);
     await settle();
-    expect(h.dashboards()).toEqual([expect.any(String), "/api/usage/dashboard?parts=account,totals"]);
+    expect(h.dashboards()).toEqual([expect.any(String), "/api/usage/dashboard?parts=account.totals"]);
     expect(refreshed).toBe(1);
     h.advance(USAGE_ACCOUNT_STALE_MS + 1);
     await readUsageAccountPart("account", h.live);
@@ -125,7 +125,7 @@ test("one part that fails stays unavailable on its own and is never stored", asy
   expect(stats).toEqual({ reply: { schemaVersion: 2, ok: false, error: "unavailable" }, scope: null });
   h.server.down = new Set();
   expect((await readUsageAccountPart("totals", h.live))?.scope?.accountId).toBe(A);
-  expect(h.dashboards()).toEqual([expect.stringContaining("parts=account,totals,stats"), "/api/usage/dashboard?parts=totals"]);
+  expect(h.dashboards()).toEqual([expect.stringContaining("parts=account.totals.stats"), "/api/usage/dashboard?parts=totals"]);
 });
 
 test("a settled refusal renews once, then clears every view and stored reply", async () => {
