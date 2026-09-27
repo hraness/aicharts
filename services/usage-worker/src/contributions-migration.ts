@@ -1,13 +1,13 @@
 import { admissionHex, equalAdmissionBytes } from "../../../lib/usage/admission";
 import { contributionHash, contributionPayloadHash, ContributionFault, parseContributionLegacySeal,
   type ContributionDelta, type ContributionLegacySeal, type ContributionMigrationRequest } from "../../../lib/usage/contributions";
-import { parseUsageStatsReport, statsInteger, STATS_TOKEN_KEYS, type UsageStatsReport } from "../../../lib/usage/stats-contract";
-import { parseStatsReceipt, parseStatsUpload } from "../../../lib/usage/stats-http-contract";
+import { parseUsageStatsReport, STATS_TOKEN_KEYS, type UsageStatsReport } from "../../../lib/usage/stats-contract";
+import { parseStatsReceipt, statsInteger } from "../../../lib/usage/stats-http-contract";
 import { AdmissionState, type AdmissionAuthority } from "./admission-state";
 import { ADMISSION_SCHEMA } from "./admission-schema";
 import { auditReceiptHead, batchAccount, decideAdmission, freezeAdmission, lastSequence, operationDay, ownedAdmissionBatch,
   ownedAdmissionJournal, ownedAdmissionOperation, timestampsAtMost, type AdmissionHead } from "./admission-policy";
-import { StatsState, STATS_SCHEMA, statsUploadText } from "./stats-state";
+import { StatsState, STATS_SCHEMA } from "./stats-state";
 import { legacyContributionRow } from "./contributions-legacy";
 import { contributionArtifact, ensureContributionArtifact, sealVerifiedContributionJournal, CONTRIBUTION_JOURNAL_PAGE_ENTRIES,
   CONTRIBUTION_JOURNAL_ROOT_BYTES, parseContributionJournalRoot,
@@ -694,16 +694,29 @@ export async function ensureContributionMigration(env: Pick<Env, "STAGING" | "CO
       const bytes = await sourceBytes(env.STAGING, `${prefix}/snapshots/${body.bodyHash}.json`, "application/vnd.aicharts.stats-v2+json", "2", available(4_194_304));
       inspected += bytes.length;
       checked(contributionHash(bytes) === body.bodyHash);
-      const text = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(bytes), request = parseStatsUpload(JSON.parse(text) as unknown);
-      checked(request && statsUploadText(request) === text && request.accountId === accountId && request.generation === bundle.request.generation
-        && request.deviceId === body.deviceId && request.expectedRevision + 1 === body.revision);
+      const text = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(bytes);
+      // Retained upload bytes are the evidence — they hash to body.bodyHash and
+      // correlate to the server-issued receipt. Re-validating the payload under
+      // the current schema would reject earlier accepted writes (bounds tighten
+      // over time — e.g. per-row token ceilings), so only the correlation
+      // fields the seal binds are re-read, loosely typed.
+      let parsedJson: unknown = null;
+      try { parsedJson = JSON.parse(text); } catch { /* checked below */ }
+      type RetainedUpload = { schemaVersion?: unknown; operationId?: unknown; sequence?: unknown; expectedRevision?: unknown; accountId?: unknown;
+        deviceId?: unknown; generation?: unknown; report?: { firstUtcDay?: unknown; dayCount?: unknown; sources?: unknown } };
+      const request: RetainedUpload | null = typeof parsedJson === "object" && parsedJson !== null ? parsedJson as RetainedUpload : null;
+      const report = request?.report && typeof request.report === "object" ? request.report : null;
+      const sources = report && Array.isArray(report.sources) ? report.sources as { client?: unknown }[] : null;
+      checked(request !== null && request.schemaVersion === 2 && request.accountId === accountId && request.generation === bundle.request.generation
+        && request.deviceId === body.deviceId && typeof request.expectedRevision === "number" && request.expectedRevision + 1 === body.revision
+        && report !== null && statsInteger(report.firstUtcDay) && statsInteger(report.dayCount, 1) && sources !== null && sources.length === 1);
       const receiptBytes = await sourceBytes(env.CONTROL, `${prefix}/receipts/${String(body.revision).padStart(16, "0")}-${body.bodyHash}.json`,
         "application/vnd.aicharts.stats-v2+json", "2", available(1_024));
       inspected += receiptBytes.length;
       const receipt = parseStatsReceipt(JSON.parse(new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(receiptBytes)) as unknown);
       checked(receipt && receipt.bodyHash === body.bodyHash && receipt.operationId === request.operationId && receipt.sequence === request.sequence
-        && receipt.revision === body.revision && receipt.committedAtMs === body.committedAtMs && receipt.client === request.report.sources[0].client
-        && receipt.firstUtcDay === request.report.firstUtcDay && receipt.dayCount === request.report.dayCount);
+        && receipt.revision === body.revision && receipt.committedAtMs === body.committedAtMs && receipt.client === sources[0]!.client
+        && receipt.firstUtcDay === report.firstUtcDay && receipt.dayCount === report.dayCount);
       // Retained day content is proven by its own stored hash chain — the
       // projection text hashed into usage_stats_days at commit — and cannot be
       // re-derived from the body's upload bytes: preserve-history writes store
@@ -711,7 +724,7 @@ export async function ensureContributionMigration(env: Pick<Env, "STAGING" | "CO
       // absent from the last upload. The day<->body provenance the seal binds
       // is the write path's own bodyHash/receipt correlation, re-checked here.
       for (const day of body.days) {
-        checked(day.day >= request.report.firstUtcDay && day.day < request.report.firstUtcDay + request.report.dayCount);
+        checked(day.day >= (report.firstUtcDay as number) && day.day < (report.firstUtcDay as number) + (report.dayCount as number));
       }
       index += 1; doneThisCall += 1; continue;
     }

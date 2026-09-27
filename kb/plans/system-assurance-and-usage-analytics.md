@@ -2063,3 +2063,20 @@ Operational note: the `/tmp` deploy-config dir is not durable — its loss produ
 `#498` closes the reserve-side wedge the pin fix exposed next: an op that reaches `ready` commits `pendingOperation` inside the reserve transaction before the wire verdict lands, so a decided refusal can leave the slot held — and every later migration then conflicts at reserve after a full ~400-call restage. The observed burn order was pin-drift kills (fixed by `#496`), then orphaned-pending kills — each invisible without the deployed `innerfault` channel because `failure()` maps the inner code. `--migrate` now replays the just-settled intent's exact bytes to the cancel route once on any decided settle — idempotent, best-effort — so the slot releases in-band. Abandons consume a control revision (`expectedRevision+1` fencing), so a cancel landing while an op is in flight still stales that op's minted pin — sweep order matters: cancel first, mint after.
 
 Two custody facts this session made load-bearing: adhoc-signed rebuilds change the binary's cdhash, so a keychain item ACL'd to prior builds re-prompts on every build (observed as indefinite `SecItemCopyMatching` hangs in non-interactive callers, not errors — `SecurityAgent` waits for a click). The durable fix is the documented `custody:signing` identity (`AI Charts Custody (Local)`, designated requirement `io.aicharts.cli`): one "Always Allow" grant binds the item to the identity, and every later rebuild under it is silent. Worker observability must also be enabled in the deploy config (`observability.enabled`) for `console.log` diagnostics to reach `wrangler tail` — tail otherwise shows envelope events only.
+
+**2026-09-27 (continued):** The first live multi-device account reached ensure and
+failed three times on retained-content invariants the ensure stage invented
+rather than on storage. (1) `preserve-history` stored projections are merged
+envelopes; re-deriving them from the last upload's bytes is impossible — now
+verified by their own hash chain at `rest` capture (b05c94a). (2) Retained
+upload bodies that predate tightened write-path bounds (per-row token
+ceiling) fail today's `parseStatsUpload` — the seal now binds hash-verified
+bytes + the server-issued receipt instead of re-validating the payload under
+the current schema. A synthetic injection test covers a body the hardened
+parser refuses. Live result: migration `bd7a2044` committed 239,101 heads
+(219,902 suppressed, 25 opaque V2 bodies) at revision 12; grant followed at
+revision 13. `--send` publication is gated by `source_warnings` — real
+transcripts always carry coverage warnings (unknown_models, unmeasured_*),
+and generation-5 Claude slugs are absent from the model map — so the
+publication path cannot currently accept any real file. Leaderboard consent
+remains a browser-session decision by design.
