@@ -176,6 +176,7 @@ async function fixture(options: { pairing?: boolean } = {}) {
   let clockMs = nowMs;
   let environment = ready;
   let failAt: string | null = null;
+  let userInfoStatus = 200;
   let userInfoOverrides: Record<string, unknown> = {};
   let idTokenOverrides: Record<string, unknown> = {};
   let accessTokenOverrides: Record<string, unknown> = {};
@@ -278,11 +279,11 @@ async function fixture(options: { pairing?: boolean } = {}) {
       }
       if (url === endpoints.userInfo) {
         expect(new Headers(init?.headers).get("authorization")).toBe(`Bearer ${accessToken}`);
-        const response = Response.json({
+        const response = Response.json(userInfoStatus === 200 ? {
           email: "synthetic-reader@example.com", email_verified: true,
           sub: providerSubject, suite_account_id: accountId, suite_client_id: clientId,
           ...profile, ...userInfoOverrides,
-        });
+        } : { error: "invalid_token", error_description: "The authentication session is no longer active." }, { status: userInfoStatus });
         userInfoResponses.push(response);
         return response;
       }
@@ -359,6 +360,7 @@ async function fixture(options: { pairing?: boolean } = {}) {
     environment: (value: UsageAuthEnvironment) => { environment = value; },
     time: (value: number) => { clockMs = value; },
     fail: (url: string | null) => { failAt = url; },
+    userInfoStatus: (status: number) => { userInfoStatus = status; },
     userInfo: (value: Record<string, unknown>) => { userInfoOverrides = value; },
     idToken: (value: Record<string, unknown>) => { idTokenOverrides = value; },
     accessToken: (value: Record<string, unknown>) => { accessTokenOverrides = value; },
@@ -2425,10 +2427,21 @@ describe("finite private-read Accounts outcomes", () => {
     expect(f.calls).toEqual([endpoints.userInfo, endpoints.userInfo]);
   });
 
+  test("a definite provider refusal of the session is an expired sign-in, not an outage", async () => {
+    const f = await fixture(), { cookie } = await f.login(); f.environment(privateReady); f.calls.length = 0;
+    f.userInfoStatus(401);
+    const scope = f.server.beginPrivateReadSession(request("/private", { headers: { cookie } }))!;
+    expect(await scope.readOutcome()).toEqual({ kind: "authentication_required" });
+    expect(scope.current()).toBe(false);
+    expect(f.calls).toEqual([endpoints.userInfo]);
+  });
+
   test("provider failures and live identity rejection are unavailable, never declared signed out", async () => {
-    for (const mode of ["failure", "mismatch"] as const) {
+    for (const mode of ["failure", "mismatch", "interrupted"] as const) {
       const f = await fixture(), { cookie } = await f.login(); f.environment(privateReady); f.calls.length = 0;
-      if (mode === "failure") f.fail(endpoints.userInfo); else f.userInfo({ suite_account_id: `acct_${"a".repeat(32)}` });
+      if (mode === "failure") f.fail(endpoints.userInfo);
+      else if (mode === "interrupted") f.userInfoStatus(500);
+      else f.userInfo({ suite_account_id: `acct_${"a".repeat(32)}` });
       const scope = f.server.beginPrivateReadSession(request("/private", { headers: { cookie } }))!;
       expect(await scope.readOutcome()).toEqual({ kind: "unavailable" }); expect(scope.current()).toBe(false);
       expect(f.calls).toEqual([endpoints.userInfo]);
