@@ -25,6 +25,10 @@ const SQLITE_SCAN_MAX_SECS: u64 = 600;
 // admitted size; 32 MiB/s is a conservative sequential-read floor so ordinary
 // disk contention still fits inside the bounded deadline.
 const SQLITE_SCAN_BYTES_PER_SEC: u64 = 32 * 1024 * 1024;
+// Text sources are read and JSON-parsed in full, on machines that are often
+// busy with the very agents being measured; 16 MiB/s keeps a contended pass
+// inside its deadline instead of refusing and retrying the whole corpus.
+const TEXT_SCAN_BYTES_PER_SEC: u64 = 16 * 1024 * 1024;
 static SERIAL: Mutex<()> = Mutex::new(());
 static ACTIVE: Mutex<Option<Audit>> = Mutex::new(None);
 static CAPTURE: Mutex<()> = Mutex::new(());
@@ -213,11 +217,11 @@ fn sqlite_scan_budget(bytes: u64) -> Duration {
     )
 }
 /// Every admitted byte of a text source is still read and parsed, so the
-/// deadline also scales with corpus size at the same conservative sequential
-/// floor as SQLite. A small corpus stays dominated by the fixed base; a large
-/// one cannot strand its own scan inside it.
+/// deadline also scales with corpus size at a conservative read-and-parse
+/// floor. A small corpus stays dominated by the fixed base; a large one
+/// cannot strand its own scan inside it.
 fn text_scan_budget(bytes: u64) -> Duration {
-    Duration::from_secs((bytes / SQLITE_SCAN_BYTES_PER_SEC).min(AUDIT_MAX_SECS.saturating_sub(60)))
+    Duration::from_secs((bytes / TEXT_SCAN_BYTES_PER_SEC).min(AUDIT_MAX_SECS.saturating_sub(60)))
 }
 /// The overall deadline is the fixed base plus headroom for every admitted
 /// SQLite source's scaled scan budget and the admitted text corpus, never
@@ -1657,11 +1661,15 @@ mod tests {
         assert_eq!(text_scan_budget(1024), Duration::from_secs(0));
         assert_eq!(
             text_scan_budget(3 * 1024 * 1024 * 1024),
-            Duration::from_secs(96)
+            Duration::from_secs(192)
+        );
+        assert_eq!(
+            text_scan_budget(16 * 1024 * 1024 * 1024),
+            Duration::from_secs(1024)
         );
         assert_eq!(
             text_scan_budget(32 * 1024 * 1024 * 1024),
-            Duration::from_secs(1024)
+            Duration::from_secs(AUDIT_MAX_SECS - 60)
         );
         assert_eq!(
             text_scan_budget(u64::MAX),

@@ -246,15 +246,14 @@ checked. An interval is a scheduling request, not guaranteed daily delivery:
 firings while the Mac sleeps or the job is already running are missed. Verify
 the actual completion timestamp and result in `last-cycle.json`.
 
-Once an account's contribution profile is active (after `contribution-sync
---migrate` or `--activate`), the service refuses this aggregate path for every
-client with `stats_sync_profile_superseded`, and a retained aggregate flight
-can no longer settle. Scheduled publication then has to send each native
-transcript through `contribution-sync --send`, which currently accepts Claude
-Code and Codex files up to 64 MiB. Clients without a contribution sender, such
-as Devin CLI and Cursor, and larger transcripts have no publication path on an
-activated account. Activate an account only when every client you rely on has
-one, and keep the previous publisher's job until the account shows its data.
+This aggregate path is the one the dashboard, lifetime totals and leaderboard
+read, and it stays open for every client and every collector version, including
+after an account's contribution profile is activated (`contribution-sync
+--migrate` or `--activate`). Contribution sending (`contribution-sync --send`,
+Claude Code and Codex files up to 64 MiB) is optional and never replaces it.
+Services from before this change refused the aggregate path on activated
+accounts with `stats_sync_profile_superseded`; a flight parked by that refusal
+settles on the next cycle against a current service.
 
 Every device publishes its own snapshots; the account sums devices per client
 and day, so a second Mac needs no ownership transfer and its cycles never
