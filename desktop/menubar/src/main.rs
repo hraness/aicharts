@@ -88,13 +88,13 @@ impl AiChartsHost {
         service::plan(&item, self.home.as_deref()?).ok()
     }
 
-    fn login_on(&self) -> bool {
-        self.login_plan().is_some_and(|plan| {
-            matches!(
-                service::login_state(&plan),
-                LoginState::On | LoginState::Outdated | LoginState::NotOurs
-            )
-        })
+    fn login(&self) -> menu::Login {
+        match self.login_plan().map(|plan| service::login_state(&plan)) {
+            Some(LoginState::On) => menu::Login::On,
+            Some(LoginState::Outdated) => menu::Login::Outdated,
+            Some(LoginState::NotOurs) => menu::Login::NotOurs,
+            _ => menu::Login::Off,
+        }
     }
 
     fn fail(&self, message: &str) -> DispatchOutcome {
@@ -188,10 +188,12 @@ impl AiChartsHost {
         let Some(plan) = self.login_plan() else {
             return self.fail("Couldn't change Open at login");
         };
-        let result = if self.login_on() {
-            service::uninstall(&plan)
-        } else {
-            service::install(&plan)
+        let result = match self.login() {
+            menu::Login::On => service::uninstall(&plan),
+            // Install repoints an outdated item; a changed one is refused.
+            menu::Login::Off | menu::Login::Outdated | menu::Login::NotOurs => {
+                service::install(&plan)
+            }
         };
         match result {
             Ok(_) => DispatchOutcome::Accepted,
@@ -207,7 +209,7 @@ impl Host for AiChartsHost {
         menu::build(menu::View {
             health: &health,
             outputs: self.outputs.nodes(),
-            login_on: self.login_on(),
+            login: self.login(),
             action_error: action_error.as_deref(),
             now: SystemTime::now(),
         })
@@ -330,7 +332,7 @@ mod tests {
             error: Some((*error).into()),
         }));
         let status = if failed.is_empty() {
-            "published"
+            "complete"
         } else {
             "partial_failure"
         };
@@ -367,14 +369,14 @@ mod tests {
         state: &str,
         health: Health,
         outputs_count: usize,
-        login_on: bool,
+        login: menu::Login,
         action_error: Option<&str>,
     ) {
         let (outputs, dir) = outputs(outputs_count);
         let model = menu::build(menu::View {
             health: &health,
             outputs,
-            login_on,
+            login,
             action_error,
             now: now(),
         });
@@ -384,7 +386,7 @@ mod tests {
 
     #[test]
     fn menu_first_run() {
-        fixture("first-run", Health::default(), 0, false, None);
+        fixture("first-run", Health::default(), 0, menu::Login::Off, None);
     }
 
     #[test]
@@ -394,7 +396,7 @@ mod tests {
             cycle: Some(cycle(3_000, &[])),
             error_log: true,
         };
-        fixture("running", health, 3, true, None);
+        fixture("running", health, 3, menu::Login::On, None);
     }
 
     #[test]
@@ -409,7 +411,7 @@ mod tests {
             cycle: Some(cycle(3_000, &[("cursor", "stats_sync_request_refused")])),
             error_log: true,
         };
-        fixture("error", health, 3, true, None);
+        fixture("error", health, 3, menu::Login::On, None);
     }
 
     #[test]
@@ -424,7 +426,7 @@ mod tests {
             cycle: Some(cycle(3_000, &[])),
             error_log: true,
         };
-        fixture("partial", health, 1, true, None);
+        fixture("partial", health, 1, menu::Login::On, None);
     }
 
     #[test]
@@ -434,7 +436,7 @@ mod tests {
             cycle: None,
             error_log: false,
         };
-        fixture("stopped", health, 0, false, None);
+        fixture("stopped", health, 0, menu::Login::Off, None);
     }
 
     #[test]
@@ -444,7 +446,7 @@ mod tests {
             cycle: None,
             error_log: false,
         };
-        fixture("empty", health, 0, true, None);
+        fixture("empty", health, 0, menu::Login::On, None);
     }
 
     #[test]
@@ -458,7 +460,7 @@ mod tests {
             "action-error",
             health,
             3,
-            true,
+            menu::Login::On,
             Some("Couldn't open your browser"),
         );
     }
@@ -477,7 +479,27 @@ mod tests {
             )),
             error_log: true,
         };
-        fixture("publish-only", health, 0, false, None);
+        fixture("publish-only", health, 0, menu::Login::Off, None);
+    }
+
+    #[test]
+    fn menu_login_outdated() {
+        let health = Health {
+            collector: Some(collector(240, true, None, &[])),
+            cycle: Some(cycle(3_000, &[])),
+            error_log: false,
+        };
+        fixture("login-outdated", health, 0, menu::Login::Outdated, None);
+    }
+
+    #[test]
+    fn menu_login_changed_elsewhere() {
+        let health = Health {
+            collector: Some(collector(240, true, None, &[])),
+            cycle: Some(cycle(3_000, &[])),
+            error_log: false,
+        };
+        fixture("login-not-ours", health, 0, menu::Login::NotOurs, None);
     }
 
     #[test]
@@ -491,7 +513,7 @@ mod tests {
         let model = menu::build(menu::View {
             health: &health,
             outputs,
-            login_on: true,
+            login: menu::Login::On,
             action_error: Some("Couldn't open your browser"),
             now: now(),
         });

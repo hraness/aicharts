@@ -23,6 +23,17 @@ pub const DIAGNOSTICS: &str = "support.diagnostics";
 
 /// Recent outputs shown in the menu. Two keeps the worst case (two status
 /// rows and the error log row) within ten top-level rows.
+/// The login item as the menu shows it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Login {
+    Off,
+    On,
+    /// Written by AI Charts for another copy of the binary; clicking repoints it.
+    Outdated,
+    /// Written or edited by something else; left alone.
+    NotOurs,
+}
+
 pub const OUTPUTS_LIMIT: usize = 2;
 const MAX_DETAIL: usize = 80;
 
@@ -30,7 +41,7 @@ const MAX_DETAIL: usize = 80;
 pub struct View<'a> {
     pub health: &'a Health,
     pub outputs: Vec<MenuNode>,
-    pub login_on: bool,
+    pub login: Login,
     /// A failed menu action, shown as a ⚠︎ row until it expires.
     pub action_error: Option<&'a str>,
     pub now: SystemTime,
@@ -164,20 +175,17 @@ pub fn build(view: View) -> MenuModel {
                 ),
         ));
     }
-    let login = MenuItem::state(
-        LOGIN,
-        "Open at login",
-        if view.login_on {
-            ItemState::On
-        } else {
-            ItemState::Off
-        },
-    );
-    nodes.push(MenuNode::interactive(if view.login_on {
-        login
-    } else {
-        login.with_subtitle("macOS shows a notice when you turn this on")
-    }));
+    let login = match view.login {
+        Login::On => MenuItem::state(LOGIN, "Open at login", ItemState::On),
+        Login::Off => MenuItem::state(LOGIN, "Open at login", ItemState::Off)
+            .with_subtitle("macOS shows a notice when you turn this on"),
+        Login::Outdated => MenuItem::state(LOGIN, "Open at login", ItemState::Mixed)
+            .with_subtitle("Points to an older copy. Click to update it"),
+        Login::NotOurs => MenuItem::state(LOGIN, "Open at login", ItemState::Mixed)
+            .with_subtitle("Changed outside AI Charts, so it's left alone")
+            .disabled(),
+    };
+    nodes.push(MenuNode::interactive(login));
     nodes.push(MenuNode::Separator);
     nodes.push(MenuNode::interactive(
         MenuItem::action(SUPPORT, "Updates & support")

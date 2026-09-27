@@ -61,6 +61,7 @@ Automatic publishing
   daemon                   Keep collecting every 15 minutes
   autosubmit               Run one scheduled publishing cycle
   refresh                  Save usage from a provider account (Cursor, Warp)
+  menubar                  Show collection status in the menu bar (macOS)
 
 Options
   -h, --help               Show help (also: aicharts help <command>)
@@ -323,6 +324,23 @@ Options
 
 Example
   aicharts daemon --once --state-dir ~/.aicharts/state --key-file ~/.aicharts/key --claude ~/.claude/projects
+"
+        }
+        "menubar" => {
+            "Usage: aicharts menubar install | uninstall | status | start [--json]
+
+Show whether collection is working in the macOS menu bar: the last pass,
+the last sync and any failures, with the error log one click away.
+
+Commands
+  install      Open the menu bar at login (macOS shows a notice)
+  uninstall    Stop opening it at login
+  status       Check whether it runs and opens at login
+  start        Open it in the menu bar now
+
+Install the menu bar first from a checkout: bun run menubar:install
+For collection status, run the daemon with
+--status-file ~/.aicharts/collector-status.json.
 "
         }
         "stats-health" => {

@@ -271,7 +271,7 @@ impl Health {
     /// The publishing problem, if the last cycle did not publish everything.
     pub fn sync_problem(&self, now: SystemTime) -> Option<Problem> {
         let (cycle, when) = self.cycle.as_ref()?;
-        if cycle.status == "published" || cycle.status == "ok" {
+        if cycle.status == "complete" {
             return None;
         }
         let failed: Vec<&Step> = cycle
@@ -384,6 +384,32 @@ mod tests {
         std::fs::write(dir.join(COLLECTOR_STATUS), r#"{"schemaVersion":2}"#).unwrap();
         assert_eq!(Health::read(&dir).collector, None);
         std::fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn a_complete_cycle_is_not_a_problem() {
+        let cycle = LastCycle {
+            schema_version: 1,
+            status: "complete".into(),
+            dry_run: false,
+            steps: vec![Step {
+                action: "publish".into(),
+                client: Some("codex".into()),
+                status: "published".into(),
+                error: None,
+            }],
+        };
+        let health = Health {
+            cycle: Some((cycle, at(100))),
+            ..Health::default()
+        };
+        assert_eq!(health.sync_problem(at(200)), None);
+        let mut resume = health.clone();
+        resume.cycle.as_mut().unwrap().0.status = "resume_required".into();
+        assert_eq!(
+            resume.sync_problem(at(200)).map(|problem| problem.label),
+            Some("Last publish didn't finish".to_owned())
+        );
     }
 
     #[test]

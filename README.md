@@ -101,16 +101,16 @@ or a prebuilt checkout binary otherwise. A second copy exits with status 3 and
 says AI Charts is already in your menu bar. Use `bun run menubar:uninstall` to
 remove the installed copy.
 
-To open it at login, run `aicharts-menubar install` (or turn on "Open at
+To open it at login, run `aicharts menubar install` (or turn on "Open at
 login" in its menu). macOS then shows a notice that `aicharts-menubar` can open
-at login. `aicharts-menubar status` says whether it is running and opens at
-login, `aicharts-menubar start` opens it now, and `aicharts-menubar uninstall`
+at login. `aicharts menubar status` says whether it is running and opens at
+login, `aicharts menubar start` opens it now, and `aicharts menubar uninstall`
 removes the login item. Nothing here runs `launchctl`; the login item takes
 effect at your next login.
 
 The menu reads two files from `~/.aicharts` (or `AICHARTS_HOME`):
-`collector-status.json`, which `aicharts daemon --status-file` writes after
-each pass, and `autosubmit-runtime/last-cycle.json`, which each publishing
+`collector-status.json`, which `aicharts daemon --status-file
+~/.aicharts/collector-status.json` writes after each pass, and `autosubmit-runtime/last-cycle.json`, which each publishing
 cycle writes. Both hold times, results and fixed error codes, never account
 IDs, paths or session content.
 
