@@ -6,10 +6,12 @@ import { enrollmentStorageCall } from "./namespace-anchor";
 export const CONTRIBUTION_JOURNAL_PAGE_ENTRIES = 256;
 export const CONTRIBUTION_JOURNAL_PAGE_BYTES = 262_144;
 // A sealed legacy account may carry up to CONTRIBUTION_MAX_HEADS retained
-// heads, so a migration journal can span ~1,024 pages; the root bound covers
-// that descriptor list (~75KB worst case) rather than the old 33-page cap.
-export const CONTRIBUTION_JOURNAL_ROOT_BYTES = 131_072;
-export const CONTRIBUTION_JOURNAL_MAX_ENTRIES = 262_144;
+// heads, so a journal can span ~4,096 pages; the root bound covers that
+// descriptor list (~450KB worst case) rather than a lower page cap.
+export const CONTRIBUTION_JOURNAL_ROOT_BYTES = 524_288;
+// Deliberately equals CONTRIBUTION_MAX_HEADS: a delta journal can carry one
+// entry per retained head. Kept a literal for the assurance registry.
+export const CONTRIBUTION_JOURNAL_MAX_ENTRIES = 1_048_576;
 export type ContributionJournalBinding = Readonly<{
   accountId: string; generation: string; operationId: string; bodyHash: string; previousRevision: number; revision: number;
 }>;
