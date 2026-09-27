@@ -179,7 +179,9 @@ test("cohort resolution honours revisions, retractions, windows and refuses inva
 
 test("property: union length never exceeds the sum of lengths, agent time never drops below active wall time and shares sum to one", () => {
   const owners = [richOwner, child, grandchild];
-  assertProperty(fc.property(fc.array(fc.record({ owner: fc.integer({ min: 0, max: 2 }), start: fc.integer({ min: 0, max: 9_000 }), length: fc.integer({ min: 1, max: 1_000 }), output: fc.bigInt({ min: 0n, max: 1_000_000n }) }), { maxLength: 40 }), rows => {
+  // Report windows are half-open [0, 10_000): a span stamped at its end must
+  // finish before 10_000 or the fixture report itself is (correctly) refused.
+  assertProperty(fc.property(fc.array(fc.record({ owner: fc.integer({ min: 0, max: 2 }), start: fc.integer({ min: 0, max: 9_000 }), length: fc.integer({ min: 1, max: 999 }), output: fc.bigInt({ min: 0n, max: 1_000_000n }) }), { maxLength: 40 }), rows => {
     // Every lineage owner is retained so the root's descendant tree is complete.
     const facts = [...owners.map((owner, index) => at(900 + index, richUsage(900 + index, "0"), owner)), ...rows.flatMap((row, index) => [
       at(index * 2 + 1, span(index * 2 + 1, "inference", row.start, row.start + row.length), owners[row.owner]!),
