@@ -14,7 +14,7 @@ test("uses the released Nebula Sans contract across web, exports, and social ima
   expect(packageJson.dependencies).toMatchObject({
     "@hraness/design-kit": "github:hraness/design-kit#v0.21.0",
     "@hraness/ui": "github:hraness/ui#v0.5.16",
-    "@hraness/web-discovery": "github:hraness/web-discovery#v0.8.0",
+    "@hraness/web-discovery": "github:hraness/web-discovery#v0.9.0",
   });
   expect(globals).toContain("--font-sans: var(--font-text)");
   expect(globals).not.toContain("--font-sans: Inter");
