@@ -1,0 +1,18 @@
+[mark.chart Ac, attention] AI Charts · Collecting
+AI Charts
+● Collecting · Last pass 4 min ago · last sync 50 min ago
+⚠︎ 4 recent passes didn't finish · A session file is too large to read
+─────────
+↗ Open usage dashboard ↗ (primary)  ⌘O
+─────────
+chart 0 · 2 KB · today  CSV
+  ⌥ Show in Finder
+Open outputs folder
+─────────
+Show error log
+  ⌥ Show error log in Finder
+✓ Open at login
+─────────
+♡ Updates & support ↗
+  ⌥ Copy diagnostics
+Quit AI Charts

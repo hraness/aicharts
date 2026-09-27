@@ -118,6 +118,7 @@ fn every_command_answers_its_own_help_with_exit_zero() {
         "capture",
         "contribution-sync",
         "refresh",
+        "menubar",
     ] {
         let long = run(&[command, "--help"], &[]);
         assert_eq!(long.status.code(), Some(0), "{command}: {long:?}");

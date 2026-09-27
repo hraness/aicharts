@@ -1,0 +1,80 @@
+{
+  "appId": "aicharts",
+  "items": [
+    {
+      "kind": "header",
+      "label": "AI Charts"
+    },
+    {
+      "detail": "Last pass 4 min ago · last sync 50 min ago",
+      "kind": "status",
+      "label": "Collecting",
+      "symbol": "status.running"
+    },
+    {
+      "kind": "separator"
+    },
+    {
+      "id": "dashboard",
+      "kind": "action",
+      "label": "Open usage dashboard",
+      "opens": "browser",
+      "role": "primary",
+      "shortcut": "CmdOrCtrl+O",
+      "symbol": "action.open"
+    },
+    {
+      "kind": "separator"
+    },
+    {
+      "kind": "label",
+      "label": "No outputs yet",
+      "subtitle": "Agents save finished files here"
+    },
+    {
+      "id": "outputs.folder",
+      "kind": "action",
+      "label": "Open outputs folder",
+      "opens": "finder",
+      "symbol": "action.folder"
+    },
+    {
+      "kind": "separator"
+    },
+    {
+      "id": "login",
+      "kind": "action",
+      "label": "Open at login",
+      "state": "mixed",
+      "subtitle": "Points to an older copy. Click to update it"
+    },
+    {
+      "kind": "separator"
+    },
+    {
+      "alternate": {
+        "id": "support.diagnostics",
+        "label": "Copy diagnostics",
+        "symbol": "action.copy"
+      },
+      "id": "support",
+      "kind": "action",
+      "label": "Updates & support",
+      "opens": "browser",
+      "symbol": "action.support"
+    },
+    {
+      "kind": "quit",
+      "label": "Quit AI Charts"
+    }
+  ],
+  "mark": {
+    "letters": "Ac",
+    "symbol": "mark.chart"
+  },
+  "name": "AI Charts",
+  "revision": 1,
+  "tooltip": "AI Charts · Collecting",
+  "type": "snapshot",
+  "version": 2
+}

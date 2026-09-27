@@ -24,6 +24,7 @@ const COMMANDS: &[&str] = &[
     "init",
     "inspect",
     "keygen",
+    "menubar",
     "outbox",
     "prefix-enable",
     "refresh",
@@ -173,6 +174,26 @@ pub(crate) fn explain(code: &str, args: &[String]) -> Explained {
             help,
         ),
         "missing_option_value" => explained("An option is missing its value.", help),
+        "menubar_command_required" => explained(
+            "Name a menu bar command: install, uninstall, status or start.",
+            "aicharts menubar --help".to_owned(),
+        ),
+        "menubar_not_installed" => explained(
+            "The AI Charts menu bar isn't installed on this Mac.",
+            "bun run menubar:install".to_owned(),
+        ),
+        "menubar_start_failed" => explained(
+            "Couldn't run the AI Charts menu bar.",
+            "aicharts menubar --help".to_owned(),
+        ),
+        "home_required" => explained(
+            "Couldn't find your home folder. Set HOME and try again.",
+            help,
+        ),
+        "invalid_status_file" => explained(
+            "--status-file needs a full path to a file, such as ~/.aicharts/collector-status.json.",
+            help,
+        ),
         "invalid_argument_encoding" => {
             explained("An argument isn't valid UTF-8 text.", help)
         }
