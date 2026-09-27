@@ -2092,3 +2092,16 @@ healthy and empty pending the browser-session consent decision for handle
 transcripts cannot publish (unknown_models on generation-5 Claude slugs plus
 unmeasured_* coverage); needs a warnings-classification or acknowledge
 decision. Leaderboard consent is web-only by design.
+
+**2026-09-27 (send gate):** `--send` previously refused every real
+transcript — `read_source` required `warnings().is_empty()` but the
+producer always marks unmeasured coverage and unknown-model slugs, so no
+measured observation could publish. Warnings are coverage annotations;
+the produced facts are already measured and the quarantine withholds
+unstable rows. The gate is removed and every send/drain result now
+reports `source.warnings`, `source.linesRead` and `source.quarantined`.
+Model map gained `claude-opus-5`, `claude-opus-5-5`, `claude-sonnet-5`,
+`claude-fable-5-1` plus `[ctx]` qualifier matching for session
+attribution. Live evidence: first real Claude transcript drained 912
+observations across sequences 1-4; a sweep is publishing the remaining
+local transcripts (#514 merged).
