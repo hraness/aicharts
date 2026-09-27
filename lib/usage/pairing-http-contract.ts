@@ -7,6 +7,10 @@ export const PAIRING_HTTP_CLIENT_MS = 35_000;
 export const PAIRING_HTTP_WORKER_MS = 30_000;
 export const PAIRING_HTTP_STAGE_MS = 5_000;
 export const PAIRING_HTTP_STAGE_MUTATION_MS = 15_000;
+// An evicted account object pays seconds of boot before its first read. The
+// abandoned call leaves it resident, so one bounded retry rides out the cold
+// start instead of surfacing a transient outage to the reader.
+export const PAIRING_HTTP_COLD_READ_RETRY_MS = 1_500;
 export type PairingHttpFailure = 400 | 401 | 503;
 
 const codes = Object.freeze({ 400: "invalid_request", 401: "unauthorized_service", 503: "coordinator_unavailable" });

@@ -5,8 +5,8 @@ import {
   PRIVATE_DAYS_HTTP_RESPONSE_BYTES, PRIVATE_DAYS_HTTP_URL, type PrivateDaysQueryResult,
 } from "./private-days-http-contract";
 import {
-  PAIRING_HTTP_CAPACITY, PAIRING_HTTP_CLIENT_MS, PAIRING_HTTP_MEDIA, PAIRING_HTTP_STAGE_MS,
-  pairingHttpBody, pairingHttpDiscard, pairingHttpToken,
+  PAIRING_HTTP_CAPACITY, PAIRING_HTTP_CLIENT_MS, PAIRING_HTTP_COLD_READ_RETRY_MS, PAIRING_HTTP_MEDIA,
+  PAIRING_HTTP_STAGE_MS, pairingHttpBody, pairingHttpDiscard, pairingHttpToken,
 } from "./pairing-http-contract";
 import { pairingHttpWork, type PairingHttpEffects } from "./pairing-http-work";
 import type { PrivateDaysDiagnostic } from "./private-days-diagnostic";
@@ -116,39 +116,53 @@ export function createPrivateDaysTransport(dependencies: PrivateDaysTransportDep
         const controller = new AbortController(); work.onStop(() => { controller.abort(); });
         guard();
         diagnostic?.step("worker_dispatch"); diagnostic?.dispatched();
-        let response: Response;
-        try { response = await fetcher(PRIVATE_DAYS_HTTP_URL, { method: "POST",
+        const open = () => fetcher(PRIVATE_DAYS_HTTP_URL, { method: "POST",
           headers: { "content-type": "application/json", accept: "application/json", "accept-encoding": "identity", authorization: `Bearer ${token}` },
           body: encoded, redirect: "manual", credentials: "omit", cache: "no-store", signal: controller.signal,
-        }); } catch { return reject("worker_fetch"); }
-        diagnostic?.status(response.status);
-        const failureHeader = response.headers.get(USAGE_FAILURE_HEADER);
-        diagnostic?.workerFailure(failureHeader !== null && USAGE_FAILURE_STAGES.includes(failureHeader as UsageFailureStage) ? failureHeader : null);
-        let reading = false;
-        try {
-          guard();
-          diagnostic?.step("worker_framing");
-          if (response.status !== 200) reject("status");
-          if (response.url !== PRIVATE_DAYS_HTTP_URL) reject("url");
-          if (response.redirected) reject("redirect");
-          if (response.headers.get("content-type") !== PAIRING_HTTP_MEDIA) reject("media");
-          if (response.headers.has("content-encoding")) reject("encoding");
-          if (response.headers.has("location")) reject("location");
-          if (response.headers.has("set-cookie")) reject("cookie");
-          diagnostic?.step("worker_length");
-          let length: number | null;
-          try { length = privateDaysHttpLength(response.headers, PRIVATE_DAYS_HTTP_RESPONSE_BYTES); } catch { return reject("length"); }
-          reading = true;
-          diagnostic?.step("worker_body");
-          let bytes: Uint8Array;
-          try { bytes = await pairingHttpBody(response.body, PRIVATE_DAYS_HTTP_RESPONSE_BYTES, length, work); } catch { return reject("body"); }
-          guard();
-          diagnostic?.step("worker_decode");
-          const domain = decodePrivateDaysHttpResponse(bytes, captured);
-          if (domain === null) reject("decode");
-          diagnostic?.domain(domain.ok ? "success" : domain.error);
-          guard(); diagnostic?.step("complete"); return Object.freeze({ kind: "query", accountId: captured.accountId, result: domain });
-        } finally { if (!reading) await pairingHttpDiscard(response); }
+        });
+        const read = async (): Promise<PrivateDaysTransportOutcome | null> => {
+          let response: Response;
+          try { response = await open(); } catch { return reject("worker_fetch"); }
+          diagnostic?.status(response.status);
+          const failureHeader = response.headers.get(USAGE_FAILURE_HEADER);
+          diagnostic?.workerFailure(failureHeader !== null && USAGE_FAILURE_STAGES.includes(failureHeader as UsageFailureStage) ? failureHeader : null);
+          let reading = false;
+          try {
+            guard();
+            diagnostic?.step("worker_framing");
+            // A worker 503 usually means the account object is still booting;
+            // the response is drained and the same read is retried once below.
+            if (response.status === 503) return null;
+            if (response.status !== 200) reject("status");
+            if (response.url !== PRIVATE_DAYS_HTTP_URL) reject("url");
+            if (response.redirected) reject("redirect");
+            if (response.headers.get("content-type") !== PAIRING_HTTP_MEDIA) reject("media");
+            if (response.headers.has("content-encoding")) reject("encoding");
+            if (response.headers.has("location")) reject("location");
+            if (response.headers.has("set-cookie")) reject("cookie");
+            diagnostic?.step("worker_length");
+            let length: number | null;
+            try { length = privateDaysHttpLength(response.headers, PRIVATE_DAYS_HTTP_RESPONSE_BYTES); } catch { return reject("length"); }
+            reading = true;
+            diagnostic?.step("worker_body");
+            let bytes: Uint8Array;
+            try { bytes = await pairingHttpBody(response.body, PRIVATE_DAYS_HTTP_RESPONSE_BYTES, length, work); } catch { return reject("body"); }
+            guard();
+            diagnostic?.step("worker_decode");
+            const domain = decodePrivateDaysHttpResponse(bytes, captured);
+            if (domain === null) reject("decode");
+            diagnostic?.domain(domain.ok ? "success" : domain.error);
+            guard(); diagnostic?.step("complete"); return Object.freeze({ kind: "query", accountId: captured.accountId, result: domain });
+          } finally { if (!reading) await pairingHttpDiscard(response); }
+        };
+        guard();
+        const first = await read();
+        if (first !== null) return first;
+        await new Promise<void>(resolve => { setTimeout(resolve, PAIRING_HTTP_COLD_READ_RETRY_MS); });
+        guard();
+        const second = await read();
+        if (second === null) reject("status");
+        return second;
       }, startedAt);
       diagnostic?.closeTransport(); return result;
     } catch { return failed(); }
