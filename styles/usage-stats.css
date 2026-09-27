@@ -39,7 +39,7 @@
 .usage-stats :is(input, select) { background-color: var(--background); border: 1px solid var(--grid); border-radius: var(--usage-radius-sm); caret-color: var(--foreground); color: var(--foreground); font-size: .8rem; min-block-size: 2.5rem; min-inline-size: 0; padding: .45rem .7rem; transition: border-color 140ms ease, box-shadow 140ms ease; }
 .usage-stats select { appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 1rem) 52%, calc(100% - .7rem) 52%; background-repeat: no-repeat; background-size: .3rem .3rem; cursor: pointer; padding-inline-end: 2rem; }
 .usage-stats :is(input, select):focus-visible { border-color: var(--hraness-site-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--hraness-site-accent) 22%, transparent); outline: none; }
-.usage-stats select { max-inline-size: 15rem; min-inline-size: 8.5rem; }
+.usage-stats select { max-inline-size: 15rem; min-inline-size: min(8.5rem, 100%); }
 .usage-stats :is(input, select):hover { border-color: var(--muted); }
 .usage-stats__text-button, .usage-stats__range button { align-items: center; background: transparent; border: 1px solid var(--line); border-radius: 999px; color: var(--foreground); cursor: pointer; display: inline-flex; font-family: inherit; font-size: .78rem; font-weight: 500; gap: .35rem; min-block-size: 2.25rem; padding: .3rem .85rem; transition: background 140ms ease, border-color 140ms ease; white-space: nowrap; }
 .usage-stats__text-button:hover:not(:disabled), .usage-stats__range button:hover { background: var(--usage-tint); border-color: color-mix(in srgb, var(--hraness-site-accent) 45%, var(--grid)); }
