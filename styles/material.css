@@ -36,11 +36,15 @@
   overflow: clip;
   position: relative;
   border-radius: var(--radius-lg);
-  margin-block: 1.5rem;
-  padding: clamp(1.5rem, 4vw, 3rem);
+  margin-block: .75rem;
+  padding: clamp(1.25rem, 2.5vw, 1.75rem);
+}
+@media (min-width: 720px) {
+  .chart-home-hero { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; column-gap: clamp(1rem, 3vw, 2.5rem); }
+  .chart-home-hero > .chart-page-intro__actions { grid-column: 2; grid-row: 1 / -1; margin-top: 0; }
 }
 .chart-home-hero > :not([data-hraness-hero-backdrop]) { position: relative; z-index: 1; }
-.chart-home-hero h1 { max-inline-size: 24ch; text-wrap: balance; }
+.chart-home-hero h1 { text-wrap: balance; }
 .chart-home-hero > p { text-wrap: pretty; }
 
 [data-hraness-material="lantern"] :is(.home-calculator, .home-activity__list a, .home-index-strip__row .model-logo-card) {
