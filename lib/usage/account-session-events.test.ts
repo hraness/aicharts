@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { clearUsageAccountViews, retainUsageAccountLifecycle, subscribeUsageAccountSignOut } from "./account-session-events";
+import { clearUsageAccountViews, retainUsageAccountLifecycle, subscribeUsageAccountLifecycle, subscribeUsageAccountSignOut } from "./account-session-events";
 import { captureUsageAccountRead, currentUsageAccountRead } from "./account-generation";
 
 test("one SDK channel validates exact cross-tab sign-out, fans out cleanup and releases on last subscriber", () => {
@@ -33,27 +33,35 @@ test("one SDK channel validates exact cross-tab sign-out, fans out cleanup and r
   }
 });
 
-test("one retained lifecycle owner invalidates hidden, restored and refocused documents and releases every listener", () => {
+test("suspension invalidates and a restore asks for a fresh read; hiding, showing and refocusing only revalidate", () => {
   const originals = ["window", "document", "BroadcastChannel"].map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)] as const);
-  const target = new EventTarget(), page = new EventTarget();
+  const target = new EventTarget(), page = Object.assign(new EventTarget(), { visibilityState: "visible" as DocumentVisibilityState });
   Object.defineProperty(globalThis, "window", { configurable: true, value: target });
   Object.defineProperty(globalThis, "document", { configurable: true, value: page });
   Object.defineProperty(globalThis, "BroadcastChannel", { configurable: true, value: undefined });
+  const events: string[] = [];
+  const stopEvents = subscribeUsageAccountLifecycle(event => { events.push(event); });
   const one = retainUsageAccountLifecycle(), two = retainUsageAccountLifecycle();
   try {
     const initial = captureUsageAccountRead();
     target.dispatchEvent(new Event("pageshow")); expect(currentUsageAccountRead(initial)).toBe(true);
-    for (const [surface, name] of [[page, "visibilitychange"], [target, "pagehide"], [target, "focus"], [target, "pageshow"]] as const) {
+    // A live document keeps its authority: these never invalidate a read.
+    page.dispatchEvent(new Event("visibilitychange")); target.dispatchEvent(new Event("focus"));
+    page.visibilityState = "hidden"; page.dispatchEvent(new Event("visibilitychange")); page.visibilityState = "visible";
+    expect(currentUsageAccountRead(initial)).toBe(true); expect(events).toEqual(["visible", "visible"]);
+    for (const name of ["pagehide", "pageshow"] as const) {
       const ticket = captureUsageAccountRead(), event = new Event(name);
       if (name === "pageshow") Object.defineProperty(event, "persisted", { value: true });
-      surface.dispatchEvent(event); expect(currentUsageAccountRead(ticket)).toBe(false);
+      target.dispatchEvent(event); expect(currentUsageAccountRead(ticket)).toBe(false);
     }
-    one(); one(); const remaining = captureUsageAccountRead(); target.dispatchEvent(new Event("focus"));
+    expect(events).toEqual(["visible", "visible", "restored"]);
+    one(); one(); const remaining = captureUsageAccountRead(); target.dispatchEvent(new Event("pagehide"));
     expect(currentUsageAccountRead(remaining)).toBe(false);
-    two(); const released = captureUsageAccountRead();
-    target.dispatchEvent(new Event("focus")); page.dispatchEvent(new Event("visibilitychange"));
-    expect(currentUsageAccountRead(released)).toBe(true);
+    two(); const released = captureUsageAccountRead(); events.length = 0;
+    target.dispatchEvent(new Event("pagehide")); target.dispatchEvent(new Event("focus")); page.dispatchEvent(new Event("visibilitychange"));
+    expect(currentUsageAccountRead(released)).toBe(true); expect(events).toEqual([]);
   } finally {
+    stopEvents();
     one(); two();
     for (const [key, descriptor] of originals) {
       if (descriptor) Object.defineProperty(globalThis, key, descriptor); else Reflect.deleteProperty(globalThis, key);

@@ -16,6 +16,8 @@ import { parseStatsPublicSearch, statsPublicStatus, STATS_PUBLIC_MEDIA, type Sta
 import { encodePrivateDaysPublicResponse, parsePrivateDaysPublicSearch, PRIVATE_DAYS_PUBLIC_MEDIA } from "../lib/usage/private-days-public";
 import { USAGE_ACCOUNT_HEADER } from "../lib/usage/account-public";
 import { encodeUsageConsentPublicReply, USAGE_CONSENT_PUBLIC_MEDIA } from "../lib/usage/consent-public";
+import type { UsageDashboardQuery } from "../lib/usage/dashboard-public";
+import { accountReady, fulfillUsageDashboard, totalsUnavailable, usageDashboardFixtureQuery, type UsageDashboardFixtureReply } from "./usage-dashboard-fixture";
 import { verifyUsageStatsMaximum, type UsageStatsBrowserRuntime } from "./usage-stats-performance";
 import { admitWorkerDiagnosticBuildReuse, parseWorkerProfileEpisodes, verifyUsageStatsWorkerProfile } from "./usage-stats-worker-profile";
 
@@ -115,7 +117,22 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
     let localInteraction = false, statsMode: "ready" | "not_started" | "range_too_large" | "authentication_required" = "ready";
     let accountId = `acct_${"a".repeat(32)}`;
     let signOutCalls = 0, signOutFails = true, accountSignedOut = false, holdStats = false, downloads = 0;
-    const heldStats: { route: Route; accountId: string }[] = []; let statsArrived: (() => void) | undefined;
+    const heldStats: { route: Route; accountId: string; query: UsageDashboardQuery }[] = []; let statsArrived: (() => void) | undefined;
+    let dashboardReads = 0;
+    // The page read answers each part as its standalone endpoint would; a stats
+    // refusal is a refusal of the whole verified read.
+    const dashboardReply = (query: UsageDashboardQuery, owner: string, mode: typeof statsMode, signedOut: boolean): UsageDashboardFixtureReply => {
+      if (signedOut || (mode === "authentication_required" && query.parts.includes("stats"))) return "authentication_required";
+      return { accountId: owner, part: part => {
+        if (part === "account") return accountReady(owner);
+        if (part === "totals") return totalsUnavailable;
+        if (part === "consent") return { status: 200, body: '{"schemaVersion":1,"state":"not_enrolled"}' };
+        invariant(query.range !== null && mode !== "authentication_required", "A stats part carries its exact window.");
+        const reply: StatsPublicReply = mode === "ready" ? { schemaVersion: 2, ok: true, value: hostedReport(query.range.firstUtcDay, query.range.dayCount, owner) }
+          : { schemaVersion: 2, ok: false, error: mode };
+        return { status: statsPublicStatus(reply), body: JSON.stringify(reply) };
+      } };
+    };
     await context.addInitScript(() => {
       Object.defineProperty(navigator, "clipboard", { value: { writeText: async (text: string) => { document.documentElement.dataset.copiedAccount = text; } } });
       const state = window as Window & { holdUsageExport?: boolean; releaseUsageDigest?: () => Promise<void>;
@@ -174,10 +191,14 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
         signOutCalls++; if (!signOutFails) accountSignedOut = true;
         await route.fulfill({ status: signOutFails ? 503 : 200, contentType: "application/json", body: signOutFails ? '{"error":"unavailable"}' : '{"kind":"signed_out"}' }); return;
       }
+      if (url.pathname === "/api/usage/dashboard") {
+        const query = usageDashboardFixtureQuery(route); dashboardReads++;
+        if (holdStats && query.parts.includes("stats")) { heldStats.push({ route, accountId, query }); statsArrived?.(); return; }
+        await fulfillUsageDashboard(route, query, dashboardReply(query, accountId, statsMode, accountSignedOut)); return;
+      }
       if (url.pathname === "/api/usage/stats") {
         const range = parseStatsPublicSearch(url.search); invariant(range, "Stats request must use the exact numeric GET contract.");
         invariant(request.method() === "GET" && request.postData() === null, "Stats reads must have no mutation body.");
-        if (holdStats) { heldStats.push({ route, accountId }); statsArrived?.(); return; }
         const reply: StatsPublicReply = statsMode === "ready" ? { schemaVersion: 2, ok: true, value: hostedReport(range.firstUtcDay, range.dayCount, accountId) }
           : { schemaVersion: 2, ok: false, error: statsMode };
         await route.fulfill({ status: statsPublicStatus(reply), headers: { "content-type": STATS_PUBLIC_MEDIA, "cache-control": "private, no-store", [USAGE_ACCOUNT_HEADER]: accountId }, body: JSON.stringify(reply) }); return;
@@ -274,24 +295,31 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
         await account.locator("summary").click();
         const bTotal = await page.locator(".usage-stats__exact").textContent();
         invariant(aTotal !== bTotal, "A and B fixtures must carry observably different measurements.");
-        for (const { route, accountId: staleAccount } of heldStats.splice(0)) {
-          const range = parseStatsPublicSearch(new URL(route.request().url()).search); invariant(range, "Held A range remains exact.");
-          await route.fulfill({ status: 200, headers: { "content-type": STATS_PUBLIC_MEDIA, [USAGE_ACCOUNT_HEADER]: staleAccount },
-            body: JSON.stringify({ schemaVersion: 2, ok: true, value: hostedReport(range.firstUtcDay, range.dayCount, staleAccount) }) }).catch(() => undefined);
+        for (const { route, accountId: staleAccount, query } of heldStats.splice(0)) {
+          await fulfillUsageDashboard(route, query, dashboardReply(query, staleAccount, "ready", false)).catch(() => undefined);
         }
         await settle(page);
         invariant(await page.getByText("Private to your account", { exact: true }).count() === 1, "Late A cannot displace current B.");
         invariant(await page.locator(".usage-stats__exact").textContent() === bTotal, "Late A data must not overwrite the distinct B measurement.");
-        for (const boundary of ["bfcache", "visibility", "focus"] as const) {
+        // Switching tabs or windows keeps the verified report on screen; it is
+        // revalidated in the background instead of being cleared into an error.
+        for (const boundary of ["visibility", "focus"] as const) {
           await page.evaluate(kind => {
-            if (kind === "bfcache") window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: true }));
-            else if (kind === "visibility") document.dispatchEvent(new Event("visibilitychange"));
+            if (kind === "visibility") document.dispatchEvent(new Event("visibilitychange"));
             else window.dispatchEvent(new Event("focus"));
           }, boundary);
-          invariant(await page.locator(".usage-stats").count() === 0, `${boundary} must require a fresh private read.`);
-          await page.getByRole("button", { name: "Load account", exact: true }).click();
-          await page.getByText("Private to your account", { exact: true }).waitFor();
+          await settle(page);
+          invariant(await page.getByText("Private to your account", { exact: true }).count() === 1
+            && await page.locator(".usage-stats__exact").textContent() === bTotal, `${boundary} must keep the verified report on screen.`);
         }
+        // A restore from the back-forward cache clears private views, then reads them again by itself.
+        const beforeRestore = dashboardReads;
+        await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: true })));
+        for (let attempt = 0; attempt < 200 && dashboardReads === beforeRestore; attempt++) await Bun.sleep(25);
+        invariant(dashboardReads > beforeRestore, "A restored page must read its private report again without a click.");
+        await page.getByText("Private to your account", { exact: true }).waitFor(); await settle(page);
+        invariant(await page.locator(".usage-stats__exact").textContent() === bTotal, "The restored report must be the current account's.");
+        await account.getByText("Verified with Hraness", { exact: true }).waitFor();
         await capture("stats-account-b-revalidated");
         const beforeCloseDownloads = downloads, releaseClosedImage = await holdNextImage(page);
         await page.getByRole("button", { name: "Download image", exact: true }).click();
@@ -591,6 +619,9 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
         await page.getByLabel("Client", { exact: true }).selectOption("codex");
         await choosePeriod(90); await page.getByRole("heading", { name: "Weekly usage" }).waitFor();
         await page.locator(".usage-stats[aria-busy='false']").waitFor();
+        // Client options come from the report worker's facets, which can land
+        // after the refreshed report mounts; a lost selection still times out.
+        await page.waitForFunction(() => document.querySelector<HTMLSelectElement>("select[aria-label='Client']")?.value === "codex", undefined, { timeout: 10_000 }).catch(() => undefined);
         invariant(await page.getByLabel("Client", { exact: true }).inputValue() === "codex", "Account range refresh must preserve client selection.");
         await expandFilters();
         statsMode = "range_too_large"; await page.getByRole("button", { name: "Refresh", exact: true }).click();
@@ -643,9 +674,8 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
           await siblingSignOut();
           await page.getByRole("heading", { name: "Sign in to view your usage", exact: true }).waitFor();
           holdStats = false;
-          for (const { route, accountId } of heldStats.splice(0)) {
-            const range = parseStatsPublicSearch(new URL(route.request().url()).search); invariant(range, "Held read keeps its original range.");
-            await route.fulfill({ status: 200, headers: { "content-type": STATS_PUBLIC_MEDIA, [USAGE_ACCOUNT_HEADER]: accountId }, body: JSON.stringify({ schemaVersion: 2, ok: true, value: hostedReport(range.firstUtcDay, range.dayCount, accountId) }) }).catch(() => undefined);
+          for (const { route, accountId, query } of heldStats.splice(0)) {
+            await fulfillUsageDashboard(route, query, dashboardReply(query, accountId, "ready", false)).catch(() => undefined);
           }
           await settle(page);
           invariant(await page.locator(".usage-stats").count() === 0, "A late successful account response must not restore private data after cross-tab sign-out.");

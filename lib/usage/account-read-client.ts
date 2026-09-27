@@ -7,6 +7,8 @@ import type { MetricWorkerFactory } from "./metric-explorer-session";
 import { readUsageConsent } from "./consent-client";
 import { readPrivateTotals } from "./stats-totals-client";
 import type { PrivateDaysRange } from "./private-days-public";
+import { readUsageDashboard } from "./dashboard-client";
+import type { UsageDashboardQuery } from "./dashboard-public";
 
 type Options = Readonly<{
   fetch?: typeof fetch;
@@ -233,6 +235,22 @@ export function readAccountSummary(signal: AbortSignal, options: Options = {}) {
   return recoverRead(() => readUsageAccount(signal, options.fetch),
     reply => "error" in reply && reply.error.code === "authentication_required",
     reply => "error" in reply && reply.error.code === "unavailable", signal, options);
+}
+/** Several private parts in one read, with the same single renewal and bounded
+ * transient retries as every standalone read. */
+export function readAccountDashboard(query: UsageDashboardQuery, signal: AbortSignal, options: Options = {}) {
+  return recoverRead(() => readUsageDashboard(query, signal, options.fetch),
+    reply => reply.kind === "error" && reply.error === "authentication_required",
+    reply => reply.kind === "error" && reply.error === "unavailable", signal, options);
+}
+
+/** Join or begin the shared SDK session protocol and wait for it to settle.
+ * True only for a definite signed-in answer; never throws. */
+export async function settleUsageAccountSession(signal: AbortSignal, options: Options = {}): Promise<boolean> {
+  try {
+    const joined = beginSessionFlight(signal, options);
+    return signedIn(await untilAbort(joined.flight, signal));
+  } catch { return false; }
 }
 
 /** Explicit user mutation, never replayed. SDK owns cookie custody and the same

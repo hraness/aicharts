@@ -8,6 +8,7 @@ import {
 } from "@hraness/suite-accounts/oidc-rp";
 import { createPairingAuthentication, type UsagePairingIntent } from "./pairing-auth";
 import { pairingCookieName, pairingSetCookie } from "./pairing-custody";
+import { createUsageUserInfoCache, type UsageUserInfoCache } from "./userinfo-cache";
 
 const binding = Object.freeze({
   authMode: "oidc-rp",
@@ -57,6 +58,9 @@ type UsageAuthOptions = Readonly<{
   randomBytes?: SuiteOidcRelyingPartyOptions["randomBytes"];
   /** Trusted server transport. The current fence must survive lazy binding. */
   pairingIntent?: (intentId: string, current: () => boolean) => UsagePairingIntent;
+  /** Private reads only: replay a live userinfo verdict for the same bearer
+   * within its bounded window. Pairing and sign-in always ask Accounts. */
+  userInfoCache?: UsageUserInfoCache;
 }>;
 
 function processEnvironment(): UsageAuthEnvironment {
@@ -213,7 +217,8 @@ function beginAccountSession(request: Request, options: UsageAuthOptions, privat
         // Do not reject a response after dispatch: let the SDK consume its body
         // and clean up. The read below fences the eventual session projection.
         providerAttempted = true;
-        const response = await fetcher(input, init);
+        const response = privateRead && options.userInfoCache !== undefined
+          ? await options.userInfoCache.fetch(fetcher, input, init, now) : await fetcher(input, init);
         // A 401 is the provider's definite refusal of this session — unlike a
         // network or server failure it settles as reauthentication, not an
         // ambiguous outage.
@@ -445,7 +450,7 @@ function productionPairingIntent(intentId: string, current: () => boolean): Usag
     decideBrowser: (input: unknown) => invoke("decideBrowser", input),
   });
 }
-const server = createUsageAuthServer({ pairingIntent: productionPairingIntent });
+const server = createUsageAuthServer({ pairingIntent: productionPairingIntent, userInfoCache: createUsageUserInfoCache() });
 export const handleUsageAuth = server.handle;
 export const usagePairingAvailable = server.pairingAvailable;
 export const beginUsagePairingRequest = server.beginPairingRequest;

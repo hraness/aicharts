@@ -12,6 +12,7 @@ import { parseLeaderboardSnapshot, type LeaderboardConsentViewV1 } from "../lib/
 import { verifyUsagePairing } from "./usage-pairing-browser";
 import { verifyUsageStats } from "./usage-stats-browser";
 import { parseStatsPublicSearch, STATS_PUBLIC_MEDIA } from "../lib/usage/stats-public";
+import { accountReady, fulfillUsageDashboard, totalsUnavailable, usageDashboardFixtureQuery } from "./usage-dashboard-fixture";
 
 function invariant(value: unknown, message: string): asserts value {
   if (!value) throw new Error(message);
@@ -186,6 +187,8 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
       page.on("pageerror", () => failures.push("browser runtime error"));
       const accountId = `acct_${"a".repeat(32)}`;
       let mode: Mode = "ready", hold = false, requests = 0;
+      // The page's status reads and the consent route's decisions share one server state.
+      let consent: LeaderboardConsentViewV1 = { schemaVersion: 1, consent: false, consentedAtMs: null, publicHandle: null };
       const held: Route[] = [];
       let heldArrived: (() => void) | undefined;
       await context.route("**/*", async route => {
@@ -214,6 +217,15 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
         if (url.pathname === "/api/usage/account") {
           invariant(route.request().method() === "GET" && url.search === "", "Account identity must use its fixed read-only route.");
           await route.fulfill({ status: 200, contentType: PRIVATE_DAYS_PUBLIC_MEDIA, body: JSON.stringify({ schemaVersion: 1, state: "ready", account: { accountId } }) }); return;
+        }
+        if (url.pathname === "/api/usage/dashboard") {
+          // One page read: identity, lifetime totals, publishing status and the stats window.
+          const query = usageDashboardFixtureQuery(route);
+          await fulfillUsageDashboard(route, query, { accountId, part: part => part === "account" ? accountReady(accountId)
+            : part === "totals" ? totalsUnavailable
+            : part === "consent" ? { status: 200, body: JSON.stringify({ schemaVersion: 1, state: "ready", value: consent }) }
+            : { status: 200, body: '{"schemaVersion":2,"ok":false,"error":"not_started"}' } });
+          return;
         }
         if (url.pathname === "/api/usage/stats") {
           invariant(route.request().method() === "GET" && parseStatsPublicSearch(url.search), "The stats fallback must use the numeric GET contract.");
@@ -325,7 +337,6 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
         for (const route of held.splice(0)) await route.fulfill({ status: 503, contentType: PRIVATE_DAYS_PUBLIC_MEDIA, body: '{"schemaVersion":1,"error":{"code":"unavailable"}}' }).catch(() => undefined);
         await settle(page);
         invariant(await page.locator(".usage-daily table tbody").count() === 2, "Superseded responses must not replace the selected range.");
-        let consent: LeaderboardConsentViewV1 = { schemaVersion: 1, consent: false, consentedAtMs: null, publicHandle: null };
         let consentWrites = 0, interruptConsent = true, refuseConsent = false;
         await page.route("**/api/usage/consent", async route => {
           if (route.request().method() === "POST") {

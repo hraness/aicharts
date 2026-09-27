@@ -1,10 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { readAccountTotals, warmUsageAccountSession } from "@/lib/usage/account-read-client";
+import { warmUsageAccountSession } from "@/lib/usage/account-read-client";
 import { retainUsageAccountLifecycle } from "@/lib/usage/account-session-events";
 import { currentUsageAccountScope, subscribeUsageAccountInvalidation, type UsageAccountScope } from "@/lib/usage/account-generation";
-import { readInUsageAccountGeneration } from "@/lib/usage/account-generation-read";
+import { readUsageAccountPart, subscribeUsageAccountRefresh } from "@/lib/usage/account-store";
 import { statsTotalsTokenTotal, type StatsTotals, type StatsTotalsCell } from "@/lib/usage/stats-totals-contract";
 import { formatStatsCompact, formatStatsDay, formatStatsInteger, statsLabel, statsRatio } from "./stats-view";
 import { assignSeriesSlots } from "./series-colors";
@@ -30,16 +30,14 @@ export function UsageTotalsPanel({ returnTo }: Readonly<{ returnTo: string }>) {
   const generation = useAccountGeneration();
   const visible = authority !== null && authority.generation === generation && currentUsageAccountScope(authority) ? totals : null;
 
-  const read = useCallback(async () => {
+  const read = useCallback(async (fresh = false) => {
     const current = owner.current, id = ++current.id;
     current.controller?.abort();
     const controller = new AbortController(); current.controller = controller;
     const deadline = setTimeout(() => { controller.abort(); if (current.id === id) { setTotals(null); setState("unavailable"); } }, 20_000);
     try {
-      const bound = await readInUsageAccountGeneration(() => readAccountTotals(controller.signal, { onAuthenticationRequired: () => {
-        if (current.id === id && !controller.signal.aborted) setTotals(null);
-      } }), reply => reply.accountId, () => current.id === id && !controller.signal.aborted,
-      reply => !reply.ok && reply.error === "authentication_required");
+      const bound = await readUsageAccountPart("totals", { signal: controller.signal, current: () => current.id === id && !controller.signal.aborted,
+        onAuthenticationRequired: () => { if (current.id === id && !controller.signal.aborted) setTotals(null); }, fresh });
       if (current.id !== id || controller.signal.aborted) return;
       if (bound === null) { setAuthority(null); setTotals(null); setState("unavailable"); return; }
       const { reply, scope } = bound;
@@ -57,13 +55,19 @@ export function UsageTotalsPanel({ returnTo }: Readonly<{ returnTo: string }>) {
       setAuthority(null); setTotals(null);
       if (reason === "identity-changed") { setState("loading"); if (current.controller === null) void read(); return; }
       current.id++; current.controller?.abort(); current.controller = null;
-      setState(reason === "confirmed-signout" || reason === "authentication-required" ? "authentication_required" : "unavailable");
+      // A suspended page reads again when it is restored; it is not an outage.
+      setState(reason === "confirmed-signout" || reason === "authentication-required" ? "authentication_required" : "loading");
+    });
+    const stopRefresh = subscribeUsageAccountRefresh(reason => {
+      if (!current.mounted) return;
+      if (reason === "restored") setState("loading");
+      void read();
     });
     warmUsageAccountSession();
     void Promise.resolve().then(() => { if (current.mounted) return read(); });
-    return () => { current.mounted = false; current.id++; current.controller?.abort(); unsubscribe(); release(); };
+    return () => { current.mounted = false; current.id++; current.controller?.abort(); unsubscribe(); stopRefresh(); release(); };
   }, [read]);
-  return <UsageTotalsView state={state} totals={visible} returnTo={returnTo} retry={() => { setState("loading"); void read(); }} />;
+  return <UsageTotalsView state={state} totals={visible} returnTo={returnTo} retry={() => { setState("loading"); void read(true); }} />;
 }
 
 const relative = new Intl.RelativeTimeFormat("en-US", { numeric: "auto" });

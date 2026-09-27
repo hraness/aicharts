@@ -31,6 +31,29 @@ function failure(request: Request, code: UsageConsentPublicError, accountId?: st
   return send(request, new TextEncoder().encode(`{"schemaVersion":1,"error":{"code":"${code}"}}`), code, accountId);
 }
 
+/** The one mapping from a transport outcome to the public reply and its bound
+ * account. Only handle and capacity refusals name the account among errors. */
+export function usageConsentPublicReplyFromOutcome(raw: unknown): Readonly<{ reply: UsageConsentPublicReply; accountId?: string }> {
+  const fail = (code: UsageConsentPublicError, accountId?: string) => Object.freeze({
+    reply: Object.freeze({ schemaVersion: 1, error: Object.freeze({ code }) } as const), ...(accountId === undefined ? {} : { accountId }) });
+  const negative = privateDaysSnapshot(raw, ["kind"]);
+  if (negative?.kind === "authentication_required") return fail("authentication_required");
+  const outcome = privateDaysSnapshot(raw, ["kind", "accountId", "result"]);
+  if (outcome?.kind !== "query" || !usageAccountId(outcome.accountId)) return fail("unavailable");
+  const success = privateDaysSnapshot(outcome.result, ["ok", "value"]);
+  let reply: UsageConsentPublicReply;
+  if (success?.ok === true) {
+    reply = { schemaVersion: 1, state: "ready", value: success.value as never };
+  } else {
+    const absent = privateDaysSnapshot(outcome.result, ["ok", "error"]);
+    if (absent?.ok === false && (absent.error === "handle_unavailable" || absent.error === "publishing_full")) return fail(absent.error, outcome.accountId);
+    if (absent?.ok !== false || absent.error !== "not_enrolled") return fail("unavailable");
+    reply = { schemaVersion: 1, state: "not_enrolled" };
+  }
+  const checked = parseUsageConsentPublicReply(reply);
+  return checked === null ? fail("unavailable") : Object.freeze({ reply: checked, accountId: outcome.accountId });
+}
+
 /** Authenticated private consent boundary. The request body only carries the
  * consent decision; account identity and session expiry are derived inside the
  * transport from the live request-owned session. */
@@ -78,25 +101,10 @@ export function createUsageConsentHandler(dependencies: UsageConsentRouteDepende
       if (request.signal.aborted || available() !== true) return failure(request, "unavailable");
       const raw = await query(request, input);
       if (request.signal.aborted || available() !== true) return failure(request, "unavailable");
-      const negative = privateDaysSnapshot(raw, ["kind"]);
-      if (negative?.kind === "authentication_required") return failure(request, "authentication_required");
-      const outcome = privateDaysSnapshot(raw, ["kind", "accountId", "result"]);
-      if (outcome?.kind !== "query" || !usageAccountId(outcome.accountId)) return failure(request, "unavailable");
-      const success = privateDaysSnapshot(outcome.result, ["ok", "value"]);
-      let reply: UsageConsentPublicReply;
-      if (success?.ok === true) {
-        reply = { schemaVersion: 1, state: "ready", value: success.value as never };
-      } else {
-        const absent = privateDaysSnapshot(outcome.result, ["ok", "error"]);
-        if (absent?.ok === false && (absent.error === "handle_unavailable" || absent.error === "publishing_full")) return failure(request, absent.error, outcome.accountId);
-        if (absent?.ok === false && absent.error === "not_enrolled") {
-          reply = { schemaVersion: 1, state: "not_enrolled" };
-        } else return failure(request, "unavailable");
-      }
-      const checked = parseUsageConsentPublicReply(reply);
-      if (checked === null) return failure(request, "unavailable");
-      const bytes = encodeUsageConsentPublicReply(checked);
-      return bytes === null ? failure(request, "unavailable") : send(request, bytes, undefined, outcome.accountId);
+      const mapped = usageConsentPublicReplyFromOutcome(raw);
+      if ("error" in mapped.reply) return failure(request, mapped.reply.error.code, mapped.accountId);
+      const bytes = encodeUsageConsentPublicReply(mapped.reply);
+      return bytes === null ? failure(request, "unavailable") : send(request, bytes, undefined, mapped.accountId);
     } catch { return failure(request, "unavailable"); }
   };
 }

@@ -5,10 +5,10 @@ import Link from "next/link";
 
 import { leaderboardPublicHandle, type LeaderboardConsentViewV1 } from "@/lib/usage/leaderboard-contract";
 import { setUsageConsent, type UsageConsentReadReply } from "@/lib/usage/consent-client";
-import { readAccountConsent, warmUsageAccountSession } from "@/lib/usage/account-read-client";
+import { warmUsageAccountSession } from "@/lib/usage/account-read-client";
 import { retainUsageAccountLifecycle } from "@/lib/usage/account-session-events";
 import { currentUsageAccountScope, invalidateUsageAccountGeneration, subscribeUsageAccountInvalidation, type UsageAccountScope } from "@/lib/usage/account-generation";
-import { readInUsageAccountGeneration } from "@/lib/usage/account-generation-read";
+import { readUsageAccountPart, storeUsageAccountConsent, subscribeUsageAccountRefresh } from "@/lib/usage/account-store";
 import { useAccountGeneration } from "./use-account-generation";
 import type { UsageConsentPublicReply } from "@/lib/usage/consent-public";
 
@@ -46,20 +46,28 @@ export function LeaderboardConsentControl({ returnTo = "/dashboard" }: Readonly<
   const [confirmed, setConfirmed] = useState(false);
   const requests = useRef({ id: 0, pending: null as AbortController | null, mutating: false });
 
+  const readStatus = useRef<() => void>(() => {});
   useEffect(() => {
     const release = retainUsageAccountLifecycle();
     const unsubscribe = subscribeUsageAccountInvalidation(reason => {
       const owner = requests.current;
       setScope(null); setHandle(""); setConfirmed(false);
       if (reason === "identity-changed" && !owner.mutating) {
-        setState({ kind: owner.pending === null ? "unavailable" : "loading" }); return;
+        // The account changed under this view: read its status afresh.
+        setState({ kind: "loading" }); if (owner.pending === null) readStatus.current(); return;
       }
       const mutating = owner.mutating;
       owner.id++; owner.pending?.abort(); owner.pending = null; owner.mutating = false;
+      // A suspended page reads again when it is restored; it is not an outage.
       setState({ kind: reason === "confirmed-signout" || reason === "authentication-required" ? "authentication_required"
-        : mutating ? "uncertain" : "unavailable" });
+        : mutating ? "uncertain" : "loading" });
     });
-    return () => { unsubscribe(); release(); };
+    const stopRefresh = subscribeUsageAccountRefresh(reason => {
+      if (requests.current.mutating) return;
+      if (reason === "restored") setState({ kind: "loading" });
+      readStatus.current();
+    });
+    return () => { unsubscribe(); stopRefresh(); release(); };
   }, []);
 
   const settle = useCallback((reply: UsageConsentPublicReply) => {
@@ -71,9 +79,12 @@ export function LeaderboardConsentControl({ returnTo = "/dashboard" }: Readonly<
     }
   }, []);
 
-  const issue = useCallback(async (run: (signal: AbortSignal) => Promise<UsageConsentReadReply>, mutationScope: UsageAccountScope | null) => {
+  /** A status read (run null) goes through the shared read model; a decision is
+   * one conditional request for the scope it was made in, never replayed. */
+  const issue = useCallback(async (run: ((signal: AbortSignal) => Promise<UsageConsentReadReply>) | null, mutationScope: UsageAccountScope | null, fresh = false) => {
     const mutation = mutationScope !== null;
     if (mutationScope !== null && !currentUsageAccountScope(mutationScope)) return;
+    if ((run === null) !== (mutationScope === null)) return;
     const owner = requests.current, id = ++owner.id;
     owner.pending?.abort();
     const controller = new AbortController(); owner.pending = controller; owner.mutating = mutation;
@@ -83,11 +94,8 @@ export function LeaderboardConsentControl({ returnTo = "/dashboard" }: Readonly<
       if (id === owner.id) setState({ kind: mutation ? "uncertain" : "unavailable" });
     }, 20_000);
     try {
-      // Only reads may run twice to establish identity. A mutation is one
-      // conditional request; interrupted outcomes require a fresh status read.
-      const bound = mutationScope === null
-        ? await readInUsageAccountGeneration(() => run(controller.signal), reply => reply.accountId ?? null,
-          current, reply => "error" in reply && reply.error.code === "authentication_required")
+      const bound = run === null || mutationScope === null
+        ? await readUsageAccountPart("consent", { signal: controller.signal, current, fresh })
         : { reply: await run(controller.signal), scope: mutationScope };
       if (!current()) return;
       if (bound === null || (mutationScope !== null && !currentUsageAccountScope(mutationScope))) {
@@ -103,7 +111,10 @@ export function LeaderboardConsentControl({ returnTo = "/dashboard" }: Readonly<
             : reply.error.code === "handle_unavailable" && previous.kind === "busy"
               ? { kind: "handle_unavailable", view: previous.view } : { kind: "uncertain" });
         }
-        else { setScope(bound.scope); settle(reply); }
+        else {
+          setScope(bound.scope); settle(reply);
+          if (mutation && bound.scope !== null) storeUsageAccountConsent(reply, bound.scope);
+        }
       }
     } catch {
       if (id === owner.id) setState({ kind: mutation ? "uncertain" : "unavailable" });
@@ -116,9 +127,10 @@ export function LeaderboardConsentControl({ returnTo = "/dashboard" }: Readonly<
   useEffect(() => {
     let active = true;
     const owner = requests.current;
+    readStatus.current = () => { if (active) void issue(null, null); };
     warmUsageAccountSession();
-    void Promise.resolve().then(() => { if (active) return issue(signal => readAccountConsent(signal), null); });
-    return () => { active = false; owner.id++; owner.pending?.abort(); };
+    void Promise.resolve().then(() => { if (active) return issue(null, null); });
+    return () => { active = false; readStatus.current = () => {}; owner.id++; owner.pending?.abort(); };
   }, [issue]);
 
   const publish = (event: FormEvent<HTMLFormElement>) => {
@@ -134,7 +146,9 @@ export function LeaderboardConsentControl({ returnTo = "/dashboard" }: Readonly<
     setState({ kind: "busy", view });
     void issue(signal => setUsageConsent({ consent: false, publicHandle: null }, scope.accountId, signal), scope);
   };
-  const retry = () => { setScope(null); setState({ kind: "loading" }); void issue(signal => readAccountConsent(signal), null); };
+  // "Check publishing status" and "Try again" always ask the server: after an
+  // interrupted decision, only a fresh read can say what was saved.
+  const retry = () => { setScope(null); setState({ kind: "loading" }); void issue(null, null, true); };
 
   return <LeaderboardConsentPanel state={state} handle={handle} confirmed={confirmed} setHandle={setHandle}
     setConfirmed={setConfirmed} publish={publish} withdraw={withdraw} retry={retry} returnTo={returnTo} />;

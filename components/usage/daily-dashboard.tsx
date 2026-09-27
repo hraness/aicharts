@@ -7,6 +7,7 @@ import { readAccountDays, warmUsageAccountSession } from "@/lib/usage/account-re
 import { retainUsageAccountLifecycle } from "@/lib/usage/account-session-events";
 import { currentUsageAccountScope, subscribeUsageAccountInvalidation, type UsageAccountScope } from "@/lib/usage/account-generation";
 import { readInUsageAccountGeneration } from "@/lib/usage/account-generation-read";
+import { subscribeUsageAccountRefresh } from "@/lib/usage/account-store";
 import { useAccountGeneration } from "./use-account-generation";
 import type { PrivateDaysV1, ProviderImportedTotals } from "@/lib/usage/private-days-contract";
 import type { PrivateDaysPublicReply, PrivateDaysRange } from "@/lib/usage/private-days-public";
@@ -110,17 +111,21 @@ export function DailyUsageDashboard({ todayUtcDay, returnTo = "/dashboard" }: Re
     && (storedView.scope.generation !== generation || !currentUsageAccountScope(storedView.scope)) ? { kind: "unavailable" } : storedView;
   const [inputError, setInputError] = useState<string | null>(null);
   const requests = useRef({ id: 0, pending: null as AbortController | null });
+  const reread = useRef<(quiet: boolean) => void>(() => {});
 
   useEffect(() => {
     const release = retainUsageAccountLifecycle();
     const unsubscribe = subscribeUsageAccountInvalidation(reason => {
       const owner = requests.current;
-      if (reason === "identity-changed") { setView({ kind: owner.pending === null ? "unavailable" : "loading" }); return; }
+      if (reason === "identity-changed") { setView({ kind: "loading" }); if (owner.pending === null) reread.current(false); return; }
       owner.id++; owner.pending?.abort(); owner.pending = null;
+      // A suspended page reads again when it is restored; it is not an outage.
       setView(reason === "confirmed-signout" || reason === "authentication-required"
-        ? { kind: "reply", reply: { schemaVersion: 1, error: { code: "authentication_required" } }, scope: null } : { kind: "unavailable" });
+        ? { kind: "reply", reply: { schemaVersion: 1, error: { code: "authentication_required" } }, scope: null } : { kind: "loading" });
     });
-    return () => { unsubscribe(); release(); };
+    // Days are not part of the shared read model: only a restored page reloads them.
+    const stopRefresh = subscribeUsageAccountRefresh(reason => { if (reason === "restored" && requests.current.pending === null) reread.current(false); });
+    return () => { unsubscribe(); stopRefresh(); release(); };
   }, []);
 
   const read = useCallback(async (selected: PrivateDaysRange, controller: AbortController, id: number) => {
@@ -149,6 +154,16 @@ export function DailyUsageDashboard({ todayUtcDay, returnTo = "/dashboard" }: Re
     setView({ kind: "loading" }); setInputError(null); setRange(selected);
     void read(selected, controller, id);
   }, [read]);
+  // Re-read the window on screen; a quiet refresh keeps the current view until it settles.
+  useEffect(() => {
+    reread.current = quiet => {
+      const owner = requests.current, id = ++owner.id;
+      owner.pending?.abort();
+      const controller = new AbortController(); owner.pending = controller;
+      if (!quiet) setView({ kind: "loading" });
+      void read(range, controller, id);
+    };
+  }, [range, read]);
 
   useEffect(() => {
     const owner = requests.current, id = ++owner.id;
