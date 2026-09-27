@@ -7,7 +7,7 @@ use std::io::IsTerminal;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use crate::cli_style::{self, Audience, Style};
+use hraness_cli_kit::{audience, Audience, Style, Symbol};
 
 fn hex(bytes: &[u8]) -> String {
     bytes.iter().map(|byte| format!("{byte:02x}")).collect()
@@ -33,7 +33,11 @@ fn step_line(name: &str, style: Style) -> Option<String> {
         "namespace" => (true, "Saved the key that keeps your usage private"),
         _ => return None,
     };
-    let symbol = if done { style.ok() } else { style.progress() };
+    let symbol = if done {
+        style.symbol(Symbol::Ok)
+    } else {
+        style.symbol(Symbol::Progress)
+    };
     Some(format!("{symbol} {text}"))
 }
 
@@ -41,8 +45,8 @@ fn pairing_lines(url: &str, audience: Audience, style: Style) -> String {
     match audience {
         Audience::Human => format!(
             "{} Open this link in your browser and approve this Mac:\n  {url}\n{} Waiting for your approval…\n",
-            style.next(),
-            style.progress()
+            style.symbol(Symbol::Next),
+            style.symbol(Symbol::Progress)
         ),
         Audience::Agent | Audience::Quiet => format!(
             "aicharts: open this URL in your browser to connect this collector:\naicharts: {url}\n"
@@ -109,7 +113,7 @@ fn summary(account: &[u8], device: &[u8], directory: &Path, audience: Audience) 
 
 pub(super) fn run(args: &[String]) -> Result<String, &'static str> {
     let directory = parse_options(args)?;
-    let audience = cli_style::detect_current();
+    let audience = audience::detect_current();
     let mut io = CliIo {
         audience,
         style: Style::stderr(),
@@ -137,10 +141,7 @@ pub(super) fn run(args: &[String]) -> Result<String, &'static str> {
 mod copy_tests {
     use super::*;
 
-    const PLAIN: Style = Style {
-        color: false,
-        ascii: false,
-    };
+    const PLAIN: Style = Style::PLAIN;
 
     #[test]
     fn every_durable_step_has_plain_progress_copy() {

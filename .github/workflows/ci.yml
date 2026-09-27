@@ -278,7 +278,7 @@ jobs:
       - name: Lint menu fixtures
         run: >-
           npx --yes
-          --package=https://github.com/hraness/desktop-foundation/releases/download/v0.8.0/hraness-desktop-foundation-0.8.0.tgz
+          --package=https://github.com/hraness/desktop-foundation/releases/download/v0.8.1/hraness-desktop-foundation-0.8.1.tgz
           companion lint-menu --strict --proper-noun "Claude Code" desktop/menubar/fixtures/*.json
 
   formal:

@@ -2,7 +2,7 @@
 //! that `companion lint-menu --strict` checks, and into the indented text
 //! tree (`renderMenuTree`) that fixtures and pull requests show.
 //!
-//! desktop-foundation 0.8.0 parses v2 snapshots but has no Rust serializer,
+//! desktop-foundation 0.8.1 parses v2 snapshots but has no Rust serializer,
 //! so this mirrors `docs/protocol-v2.md` for the fields this product uses.
 //! Fixtures are written under `fixtures/` and compared byte for byte;
 //! `UPDATE_MENU_FIXTURES=1 cargo test` rewrites them.

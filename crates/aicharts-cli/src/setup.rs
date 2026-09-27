@@ -18,8 +18,8 @@ use std::path::{Path, PathBuf};
 
 use aicharts_protocol::Provider;
 
-use crate::cli_style::{self, Audience, Style};
 use crate::service;
+use hraness_cli_kit::{audience, Audience, Style, Symbol};
 
 const DEFAULTS_DIR: &str = ".aicharts";
 
@@ -148,7 +148,7 @@ fn enrolled(_dir: &Path) -> bool {
 }
 
 fn step(style: Style, name: &str, detail: &str) -> String {
-    format!("{} {name}\n     {detail}\n", style.ok())
+    format!("{} {name}\n     {detail}\n", style.symbol(Symbol::Ok))
 }
 
 fn run_command(args: Vec<String>) -> Result<String, &'static str> {
@@ -166,7 +166,7 @@ pub(super) fn run(args: &[String]) -> Result<String, &'static str> {
         .filter(|home| home.is_absolute())
         .ok_or("home_required")?;
     let options = parse(args, &home)?;
-    let audience = cli_style::detect_current();
+    let audience = audience::detect_current();
     let style = Style::stderr();
     let mut steps: Vec<(&'static str, &'static str)> = vec![];
 

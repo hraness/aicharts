@@ -16,7 +16,7 @@ use std::path::{Path, PathBuf};
 use aicharts_protocol::Provider;
 use sha2::{Digest, Sha256};
 
-use crate::cli_style::{self, Audience, Style};
+use hraness_cli_kit::{audience, Audience, Style, Symbol};
 
 /// The launchd label. Predates the `app.hraness.*` companion scheme: existing
 /// hand-written agents use it, and Login Items already knows it.
@@ -278,7 +278,7 @@ fn real_directory(path: &Path) -> Result<(), &'static str> {
 /// `aicharts:` prefix; people get the same words as a notice.
 pub(crate) fn pre_prompt(audience: Audience, style: Style) -> String {
     match audience {
-        Audience::Human => format!("{} {PRE_PROMPT}\n", style.next()),
+        Audience::Human => format!("{} {PRE_PROMPT}\n", style.symbol(Symbol::Next)),
         Audience::Agent | Audience::Quiet => format!("aicharts: {PRE_PROMPT}\n"),
     }
 }
@@ -378,7 +378,7 @@ pub(super) fn run(args: &[String]) -> Result<String, &'static str> {
         .filter(|home| home.is_absolute())
         .ok_or("home_required")?;
     let json = rest.iter().skip(1).any(|arg| arg == "--json");
-    let audience = cli_style::detect_current();
+    let audience = audience::detect_current();
     let style = Style::stderr();
     match command {
         "install" => {
