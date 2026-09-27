@@ -134,8 +134,11 @@ pub(crate) fn plan(
         .map(|arg| format!("<string>{}</string>", xml(&arg)))
         .collect();
     let logs = home.join(".aicharts");
+    // Standard, not Background: Background QoS throttles CPU and disk, and a
+    // scan that takes minutes at normal priority then overruns its import and
+    // cycle deadlines on a busy machine.
     let body = format!(
-        "<plist version=\"1.0\"><dict>\n<key>Label</key><string>{}</string>\n<key>ProgramArguments</key><array>{arguments}</array>\n<key>RunAtLoad</key><true/>\n<key>KeepAlive</key><true/>\n<key>ProcessType</key><string>Background</string>\n<key>StandardOutPath</key><string>{}</string>\n<key>StandardErrorPath</key><string>{}</string>\n</dict></plist>\n",
+        "<plist version=\"1.0\"><dict>\n<key>Label</key><string>{}</string>\n<key>ProgramArguments</key><array>{arguments}</array>\n<key>RunAtLoad</key><true/>\n<key>KeepAlive</key><true/>\n<key>ProcessType</key><string>Standard</string>\n<key>StandardOutPath</key><string>{}</string>\n<key>StandardErrorPath</key><string>{}</string>\n</dict></plist>\n",
         xml(LABEL),
         xml(&logs.join("daemon.out.log").to_string_lossy()),
         xml(&logs.join("daemon.err.log").to_string_lossy()),
@@ -501,7 +504,7 @@ mod tests {
             "<string>--claude</string>",
             "<key>RunAtLoad</key><true/>",
             "<key>KeepAlive</key><true/>",
-            "<key>ProcessType</key><string>Background</string>",
+            "<key>ProcessType</key><string>Standard</string>",
             "daemon.err.log",
             "<!-- aicharts service io.aicharts.daemon sha256:",
         ] {
