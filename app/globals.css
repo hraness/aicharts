@@ -2174,3 +2174,12 @@ body {
   font-weight: 500;
   padding: 0;
 }
+
+/* Header links and appearance controls keep full phone-sized hit areas. */
+@media (max-width: 600px) {
+  header a, header button, header summary {
+    min-inline-size: 44px;
+    min-block-size: 44px;
+  }
+  header a { display: inline-flex; align-items: center; }
+}

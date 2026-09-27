@@ -15,5 +15,6 @@
   "prefixes": [
     "*"
   ],
-  "minimalRoutes": []
+  "minimalRoutes": [],
+  "appearance": "palette"
 }

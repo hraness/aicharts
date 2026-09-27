@@ -213,6 +213,7 @@ describe("workflow action supply chain", () => {
       "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
       "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
       "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+      "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
       "dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36",
       "oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6",
       "oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6",
