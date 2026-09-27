@@ -877,4 +877,48 @@ describe("actual AccountEnrollment V3 joins", () => {
     expect(receipt.unresolvedV2Bodies).toBe(1); // one sealed v2 body, retained verbatim
     expect((await snapshot()).control.phase).toBe("active");
   });
+
+  test("a retained body rejected by a tightened parser still migrates by its hash", async () => {
+    const device = await enrolled();
+    success(await stub().admitBatch({ uploadSecret: device.proof.uploadSecret, batch: legacyBatch(device.deviceId).bytes }));
+    // Fabricate the retained set a hardened write path would now refuse: the
+    // upload's rows exceed the per-record token ceiling. Its bytes are still
+    // the sealed evidence — hash-bound by the key — so migration must carry it.
+    const oobRow = { ...row(1, { client: "codex" }), tokens: { ...row(1).tokens, input: String(9_000_000n) } };
+    const uploadText = JSON.stringify({ schemaVersion: 2, operationId: hex(++operation), accountId: account,
+      deviceId: device.deviceId, generation: env.USAGE_ENROLLMENT_GENERATION, sequence: 1, expectedRevision: 0,
+      mode: "replace-window", takeover: null, report: { schemaVersion: 2, profile: "client-stats-v2", registryRevision: 1,
+        firstUtcDay: DAY, dayCount: 1, generatedAtMs: NOW, revision: 0, updatedAtMs: null,
+        sources: [{ client: "codex", status: "observed", tokenBasis: "reported", records: 1, warnings: 0, latestAtMs: NOW - 1 }],
+        rows: [oobRow] } });
+    expect(parseStatsUpload(JSON.parse(uploadText))).toBeNull();
+    const bodyHash = contributionHash(uploadText);
+    const projection = parseUsageStatsReport({ schemaVersion: 2, profile: "client-stats-v2", registryRevision: 1,
+      firstUtcDay: DAY, dayCount: 1, generatedAtMs: NOW, revision: 1, updatedAtMs: NOW,
+      sources: [{ client: "codex", status: "observed", tokenBasis: "reported", records: 1, warnings: 0, latestAtMs: NOW - 1 }],
+      rows: [oobRow] })!;
+    const projectionText = JSON.stringify(projection);
+    const receipt = { schemaVersion: 2, operationId: (JSON.parse(uploadText) as { operationId: string }).operationId, bodyHash,
+      sequence: 1, revision: 1, committedAtMs: NOW, client: "codex", firstUtcDay: DAY, dayCount: 1 };
+    await onState((state, storage) => storage.transactionSync(() => {
+      state.sql.exec("INSERT INTO usage_stats_devices (device_id, sequence, receipt) VALUES (?, ?, ?)",
+        device.deviceId, 1, JSON.stringify(receipt));
+      state.sql.exec("INSERT INTO usage_stats_days (client, utc_day, device_id, revision, body_hash, projection_hash, row_count, byte_count, projection) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "codex", DAY, device.deviceId, 1, bodyHash, contributionHash(projectionText), 1,
+        new TextEncoder().encode(projectionText).length, projectionText);
+      state.sql.exec("INSERT INTO usage_stats_control (id, revision, updated_at_ms, quarantined, immutable_bytes) VALUES (1, 1, ?, 0, 0)" +
+        " ON CONFLICT(id) DO UPDATE SET revision = 1", NOW);
+    }));
+    const prefix = `usage-stats/v2/${account}/${env.USAGE_ENROLLMENT_GENERATION}`;
+    const envelope = (value: string): R2PutOptions => ({ sha256: Uint8Array.from(contributionHash(value).match(/../gu)!.map(byte => Number.parseInt(byte, 16))).buffer,
+      httpMetadata: { contentType: "application/vnd.aicharts.stats-v2+json" }, customMetadata: { schemaVersion: "2" } });
+    await env.STAGING.put(`${prefix}/snapshots/${bodyHash}.json`, uploadText, envelope(uploadText));
+    const receiptText = JSON.stringify(receipt);
+    await env.CONTROL.put(`${prefix}/receipts/${String(1).padStart(16, "0")}-${bodyHash}.json`, receiptText, envelope(receiptText));
+    await preparedPopulation(device);
+    const request = await migrationRequest(device.deviceId);
+    const result = success(await migrationRpc().migrateContributions({ uploadSecret: device.proof.uploadSecret, request }));
+    expect(result.unresolvedV2Bodies).toBe(1);
+    expect((await snapshot()).control.phase).toBe("active");
+  });
 });
