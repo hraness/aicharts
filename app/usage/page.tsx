@@ -29,45 +29,21 @@ const metrics = [
   ["Clients", "55 sources", "Codex, Claude Code, Cursor, Devin, OpenCode, Warp, and the other supported sources, reported together. Run aicharts stats --list-clients for the full list."],
 ] as const;
 
-/* A fixed illustration of the dashboard, marked as an example and hidden from
- * assistive technology; it never shows real account data. */
-const previewDays = [38, 44, 31, 52, 47, 61, 29, 35, 58, 66, 49, 72, 55, 41, 63, 78, 57, 69, 84, 74] as const;
-const previewClients = [["Claude Code", "58%", 58], ["Codex", "31%", 31], ["Cursor", "8%", 8], ["Other clients", "3%", 3]] as const;
-
-function DashboardPreview() {
-  return <div className="usage-card usage-preview" aria-hidden="true">
-    <div className="usage-preview__top"><span className="usage-preview__label">Observed tokens · 20 days</span><span className="usage-preview__tag">Example</span></div>
-    <p className="usage-preview__figure">4.82B<small>tokens</small></p>
-    <p className="usage-preview__sub">4 clients · 2 Macs · source coverage complete</p>
-    <div className="usage-preview__plot">
-      {previewDays.map((height, index) => <span key={index} style={{ blockSize: `${height}%` }}>
-        <i data-series="0" style={{ flexGrow: 58 }} /><i data-series="1" style={{ flexGrow: 30 + (index % 4) * 3 }} /><i data-series="2" style={{ flexGrow: 8 + (index % 3) * 2 }} />
-      </span>)}
-    </div>
-    <ul className="usage-preview__rows">
-      {previewClients.map(([name, share, width], index) => <li key={name}>
-        <i data-series={index === 3 ? 5 : index} /><span>{name}</span><strong>{share}</strong><b><i data-series={index === 3 ? 5 : index} style={{ inlineSize: `${width}%` }} /></b>
-      </li>)}
-    </ul>
-  </div>;
-}
-
 export default function UsagePage() {
   return <>
     <SiteHeader current="/usage" />
     <main tabIndex={-1} className="usage-home" id="main-content">
-      <section className="usage-hero usage-hero--preview" aria-labelledby="usage-title">
+      <section className="usage-hero usage-hero--single" aria-labelledby="usage-title">
         <div className="usage-hero__copy">
-          <p className="usage-pill"><i aria-hidden="true" />In development <span>· build from source</span></p>
+          <p className="usage-eyebrow">Usage tracking</p>
           <h1 id="usage-title">See how many tokens your AI agents use</h1>
           <p className="usage-hero__lede">The AI Charts collector counts tokens, cost, and speed for each model across the coding agents on your machine. Prompts, transcripts, file paths, and provider credentials stay on your machine, and each total lists the sources it covers.</p>
           <div className="usage-hero__actions">
             <Link className="usage-button usage-button--primary" href="/dashboard">Open your dashboard <span className="usage-button__arrow" aria-hidden="true">→</span></Link>
             <Link className="usage-button usage-button--quiet" href="#usage-setup">Set up tracking</Link>
           </div>
-          <p className="usage-hero__note">The collector has no packaged release yet. Account sync runs on macOS only.</p>
+          <p className="usage-hero__note">In development: build the collector from source, as there is no packaged release yet. Account sync runs on macOS only.</p>
         </div>
-        <DashboardPreview />
       </section>
 
       <section className="usage-section" id="usage-setup" aria-labelledby="usage-setup-title">

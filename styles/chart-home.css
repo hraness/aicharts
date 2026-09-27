@@ -46,10 +46,10 @@
 .home-activity__list strong { font-size: 15px; font-weight: 550; letter-spacing: -.015em; min-inline-size: 0; overflow-wrap: anywhere; }
 .home-activity__detail { color: var(--muted); font-size: 13px; grid-column: 2; min-inline-size: 0; overflow-wrap: anywhere; }
 .home-activity__list time { color: var(--muted); font-family: var(--font-mono); font-size: 12px; }
-.home-calculator { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px 28px; margin-block: 26px 6px; padding: 16px 20px; border: 1px solid var(--grid); border-radius: 10px; background: color-mix(in oklab, var(--brand-key) 5%, var(--background)); }
-.home-calculator h2 { font-size: 17px; line-height: 1.3; font-weight: 550; letter-spacing: -.02em; }
+.home-calculator { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px 28px; margin-block: 26px 6px; padding-block: 28px 8px; border-top: 1px solid var(--grid); }
+.home-calculator h2 { font-size: 18px; line-height: 1.3; font-weight: 550; letter-spacing: -.02em; }
 .home-calculator p { color: var(--muted); font-size: 13px; line-height: 1.55; margin-top: 4px; max-width: 72ch; }
-.home-calculator__cta { flex-shrink: 0; font-size: 14px; font-weight: 550; text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: 9px 16px; min-height: 40px; display: inline-flex; align-items: center; gap: 6px; }
+.home-calculator__cta { flex-shrink: 0; font-size: 14px; font-weight: 550; text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: 9px 16px; min-height: 44px; display: inline-flex; align-items: center; gap: 6px; }
 .home-calculator__cta:hover { border-color: var(--foreground); text-decoration: underline; text-underline-offset: 4px; }
 .coding-home .chart-app { margin-inline: 0; }
 .coding-home .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
@@ -86,12 +86,8 @@
   .home-activity__list a { grid-template-columns: auto minmax(0, 1fr); }
   .home-activity__list time { grid-column: 2; }
   .home-index-strip__row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .home-calculator { padding: 14px 16px; }
   .home-calculator__cta { width: 100%; justify-content: center; }
 }
 @media (max-width: 480px) {
   .home-index-strip__row { grid-template-columns: minmax(0, 1fr); }
 }
-
-/* Decorative topic icons (agent-generated line art, public/icons/). */
-.home-calculator__icon { display: block; width: 88px; height: 88px; margin: 0 0 18px; }

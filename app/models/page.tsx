@@ -114,7 +114,7 @@ export default function ModelCardsPage() {
       <header
         aria-labelledby="model-cards-title"
         className="hraness-marketing-hero model-card-gallery__hero"
-        data-align="center"
+        data-align="start"
         data-analytics-surface="models_header"
         data-hraness-marketing="hero"
         data-tone="paper"

@@ -303,7 +303,6 @@
 
 /* All-time account totals above the windowed report. */
 .usage-totals { background: var(--usage-card); border: 1px solid var(--usage-card-border); border-radius: var(--usage-radius); box-shadow: var(--usage-card-shadow); display: grid; gap: 1.5rem 3rem; grid-template-columns: minmax(15rem, 1fr) minmax(0, 2fr); margin-block: 0 1rem; overflow: hidden; padding: 1.5rem; position: relative; }
-.usage-totals::before { background: radial-gradient(90% 120% at 0% 0%, var(--usage-tint-strong), transparent 55%); content: ""; inset: 0; pointer-events: none; position: absolute; }
 .usage-totals > * { position: relative; }
 .usage-totals h2 { color: var(--muted); font-size: .875rem; font-weight: 500; margin: 0; }
 .usage-totals h3 { color: var(--muted); font-size: .8125rem; font-weight: 500; letter-spacing: .02em; margin-block-end: .5rem; }

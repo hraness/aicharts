@@ -169,9 +169,7 @@
   --model-cards-header-block-size: 3.5rem;
   --model-cards-sticky-offset: var(--model-cards-header-block-size);
 
-  background:
-    radial-gradient(circle at 50% -10%, color-mix(in srgb, var(--brand-key) 12%, transparent), transparent 34rem),
-    var(--background);
+  background: var(--background);
   color: var(--foreground);
   display: flex;
   flex-direction: column;
@@ -292,10 +290,7 @@
 .model-card-detail__facts a:is(:hover, :focus-visible) { color: var(--foreground); }
 
 .model-release-radar {
-  background:
-    radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 38%),
-    color-mix(in srgb, var(--secondary) 30%, transparent);
-  border-block: 1px solid var(--grid);
+  border-block-start: 1px solid var(--grid);
   display: grid;
   gap: 1rem clamp(1rem, 2.5vw, 2.25rem);
   grid-template-columns: minmax(13rem, .72fr) minmax(20rem, 1.28fr);
@@ -707,7 +702,7 @@
 .model-card-gallery__hero .model-card-gallery__meta {
   display: grid;
   gap: .2rem;
-  justify-items: center;
+  justify-items: start;
 }
 .model-card-gallery__hero .model-card-gallery__meta > span + span::before {
   content: none;

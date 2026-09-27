@@ -84,7 +84,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
     <html
       className={initialPalette.className}
       data-hraness-material="lantern"
-      data-hraness-pattern="mesh"
+      data-hraness-pattern="none"
       data-palette="tokyo-night"
       lang="en"
       style={brandTheme}
