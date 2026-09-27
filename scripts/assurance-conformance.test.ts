@@ -34,7 +34,7 @@ function positiveOutput(id: "worker" | "ledger" | "browser-contract", cases = tr
 function mutationOutput() {
   const failures = manifest.cases.find(entry => entry.model === "M1")!.seeds.map(seed =>
     ` FAIL  test/assurance-conformance.worker.ts > ${mutation.testName} seed=${seed}\nError: ${mutation.expectedSemanticFailure} ${JSON.stringify({ seed, index: 4, input: { epoch: 1 }, expectedOutcome: "recovery_required", outcome: "ok" })}\n`);
-  return failures.join("\n") + "\n Test Files  1 failed (1)\n      Tests  3 failed | 27 passed (30)\n   Duration  6.52s (tests 4.04s)\n";
+  return failures.join("\n") + "\n Test Files  1 failed (1)\n      Tests  3 failed | 30 passed (33)\n   Duration  6.52s (tests 4.04s)\n";
 }
 const admitMutation = (output: string, overrides: Partial<ProofProcess> = {}) =>
   validateMutation(processResult(output, { exitCode: 1, ...overrides }), mutation.expectedSemanticFailure);
@@ -59,14 +59,24 @@ describe("conformance evidence admission", () => {
       (copy: typeof manifest) => { copy.cases.find(entry => entry.model === "M3")!.model = "M2-other"; },
     ]) { const copy = structuredClone(manifest); change(copy); expect(() => validateCaseInventory(copy)).toThrow(); }
   });
+  test("admits repaired models M1-M11 and refuses model names outside the reviewed range", () => {
+    for (const model of ["M8", "M9-late", "M10", "M11", "M11-retry"]) {
+      expect(casesSchema.safeParse({ ...manifest, cases: [{ ...manifest.cases[0], model }] }).success).toBe(true);
+    }
+    for (const model of ["M0", "M12", "M111", "m11", "M11-", "M11-Retry", "M8-1"]) {
+      expect(casesSchema.safeParse({ ...manifest, cases: [{ ...manifest.cases[0], model }] }).success).toBe(false);
+    }
+    expect(manifest.cases.find(entry => entry.model === "M11")?.adapter).toBe("worker");
+    expect(manifest.adapters.worker.expectedTests).toBe(33); expect(manifest.expectedTraceCount).toBe(42);
+  });
   test("zero exit alone cannot admit timeout, truncation, signal or missing test completion", () => {
     const output = positiveOutput("worker");
     for (const fault of [{ exitCode: 1 }, { exitCode: null }, { timedOut: true }, { signal: "SIGKILL" }, { outputExceeded: true }]) {
       expect(() => validateTraces(manifest, "worker", processResult(output, fault))).toThrow();
     }
-    for (const altered of [output.replace("30 passed (30)", "29 passed (30)"), output.replace("1 passed (1)", "1 failed (1)"),
+    for (const altered of [output.replace("33 passed (33)", "32 passed (33)"), output.replace("1 passed (1)", "1 failed (1)"),
       output.replace(/   Duration[^\n]+/u, ""), output + "\nUnhandled Errors\n", output + "\n FAIL  another test\n",
-      output + "\n      Tests  30 passed (30)\n"]) {
+      output + "\n      Tests  33 passed (33)\n"]) {
       expect(() => validateTraces(manifest, "worker", processResult(altered))).toThrow();
     }
   });
@@ -101,7 +111,7 @@ describe("conformance evidence admission", () => {
       output.replace('"seed":1066793', '"seed":1066794'), output.replace('"epoch":1', '"epoch":0'),
       output.replace('"expectedOutcome":"recovery_required"', '"expectedOutcome":"conflict"'),
       output.replace('"outcome":"ok"', '"outcome":"storage_unavailable"'),
-      output.replace("3 failed | 27 passed (30)", "3 failed | 26 passed (29)"),
+      output.replace("3 failed | 30 passed (33)", "3 failed | 29 passed (32)"),
       output.replace(/   Duration[^\n]+/u, ""), output + "\n FAIL  an extra test\n",
       ...["Unhandled Errors", "Failed to load", "Error during worker startup", "Transform failed", "timed out"].map(error => output + `\n${error}\n`)]) {
       expect(() => admitMutation(altered)).toThrow();

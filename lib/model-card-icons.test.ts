@@ -14,12 +14,11 @@ describe("model card icons", () => {
     expect(isLobeModelIconKey("google")).toBe(false);
   });
 
-  test("loads every pinned Lobe icon as an SVG data URL", () => {
+  test("loads every registered icon as an SVG data URL", () => {
     for (const key of lobeModelIconKeys) {
       const first = modelIconDataUrl(key);
-      expect(first.startsWith("data:image/svg+xml;base64,")).toBe(true);
-      expect(Buffer.from(first.split(",")[1] ?? "", "base64").toString("utf8"))
-        .toContain("<svg");
+      expect(first.startsWith("data:image/svg+xml")).toBe(true);
+      expect(decodeURIComponent(first.split(",")[1] ?? "")).toContain("<svg");
       expect(modelIconDataUrl(key)).toBe(first);
     }
   });

@@ -187,7 +187,10 @@ fn request(stream: &mut TlsStream) -> (String, Vec<u8>) {
     (headers, bytes)
 }
 fn respond(stream: &mut TlsStream, bytes: &[u8]) {
-    let headers = format!("HTTP/1.1 200 OK\r\nContent-Type: application/json; charset=utf-8\r\nContent-Length: {}\r\nConnection: close\r\n\r\n", bytes.len());
+    respond_status(stream, 200, bytes);
+}
+fn respond_status(stream: &mut TlsStream, status: u16, bytes: &[u8]) {
+    let headers = format!("HTTP/1.1 {status} OK\r\nContent-Type: application/json; charset=utf-8\r\nContent-Length: {}\r\nConnection: close\r\n\r\n", bytes.len());
     stream.write_all(headers.as_bytes()).unwrap();
     stream.write_all(bytes).unwrap();
     stream.flush().unwrap();
@@ -694,6 +697,153 @@ fn matching_selection_checks_final_snapshot_and_reports_its_revision_without_wri
 }
 
 #[test]
+fn drain_continues_after_a_committed_batch_and_stops_on_match_abandonment_or_limit() {
+    use serde_json::json;
+    use sha2::{Digest, Sha256};
+    for committed in [true, false] {
+        let original = batch(1, 12, 4);
+        let (fixture, observations) = observations();
+        let initial = serde_json::to_vec(&status_value(&original, None, 12, 1)).unwrap();
+        let first_heads = fixture["headReplyText"]
+            .as_str()
+            .unwrap()
+            .as_bytes()
+            .to_vec();
+        let mut matched: serde_json::Value =
+            serde_json::from_str(fixture["headReplyText"].as_str().unwrap()).unwrap();
+        for (index, entry) in matched["result"]["value"]["entries"]
+            .as_array_mut()
+            .unwrap()
+            .iter_mut()
+            .enumerate()
+        {
+            let id = entry["id"].clone();
+            let payload = fixture["payloadHashes"][index].clone();
+            *entry = json!({"id":id,"membershipHeadHash":h(50),"head":{"id":id,"headHash":h(50),"payloadHash":payload,
+                "reference":{"kind":"batch-v3","bodyHash":h(51),"index":index,"payloadHash":payload},
+                "deleted":false,"members":1,"legacySupport":false,"suppressedLegacy":false}});
+        }
+        matched["result"]["value"]["revision"] = json!(13);
+        matched["result"]["value"]["population"]["memberCount"] = json!(2);
+        matched["result"]["value"]["population"]["revision"] = json!(1);
+        let committed_head = Arc::new(Mutex::new(String::new()));
+        let head_slot = committed_head.clone();
+        let scope = original.scope();
+        let mut next_status = status_value(&original, None, 13, 2);
+        next_status["result"]["value"]["population"]["revision"] = json!(1);
+        next_status["result"]["value"]["population"]["memberCount"] = json!(2);
+        let server = Server::steps(if committed { 7 } else { 4 }, move |index, stream| {
+            let (headers, body) = request(stream);
+            match index {
+                0 | 2 => {
+                    assert!(headers.starts_with("POST /v3/contributions/status HTTP/1.1"));
+                    respond(stream, &initial);
+                }
+                1 => {
+                    assert!(headers.starts_with("POST /v3/contributions/heads HTTP/1.1"));
+                    respond(stream, &first_heads);
+                }
+                3 => {
+                    assert!(headers.starts_with("POST /v3/contributions HTTP/1.1"));
+                    let frozen = PreparedBatch::reopen(
+                        &scope,
+                        &body,
+                        &format!("{:x}", Sha256::digest(&body)),
+                    )
+                    .unwrap();
+                    assert_eq!(frozen.sequence(), 1);
+                    if committed {
+                        let terminal = committed_reply(&frozen);
+                        let value: serde_json::Value =
+                            serde_json::from_slice(&direct_bytes(&terminal)).unwrap();
+                        *head_slot.lock().unwrap() = value["result"]["value"]["receipt"]
+                            ["populationHead"]
+                            .as_str()
+                            .unwrap()
+                            .to_owned();
+                        respond(stream, &direct_bytes(&terminal));
+                    } else {
+                        respond(stream, &direct_bytes(&reply(&frozen, 13)));
+                    }
+                }
+                4 | 6 => {
+                    assert!(headers.starts_with("POST /v3/contributions/status HTTP/1.1"));
+                    let mut status = next_status.clone();
+                    status["result"]["value"]["population"]["headHash"] =
+                        json!(head_slot.lock().unwrap().clone());
+                    respond(stream, &serde_json::to_vec(&status).unwrap());
+                }
+                5 => {
+                    assert!(headers.starts_with("POST /v3/contributions/heads HTTP/1.1"));
+                    let mut heads = matched.clone();
+                    heads["result"]["value"]["population"]["headHash"] =
+                        json!(head_slot.lock().unwrap().clone());
+                    respond(stream, &serde_json::to_vec(&heads).unwrap());
+                }
+                _ => unreachable!(),
+            }
+        });
+        let path = scratch();
+        let transport = transport(server.addr, &original);
+        let mut outbox =
+            Outbox::initialize(&path.0, &KEY, transport.binding(), &progress(&original)).unwrap();
+        let result = crate::contribution_sync::command::drain(
+            &mut outbox,
+            &transport,
+            &Deadline::command().unwrap(),
+            original.scope().population_id(),
+            &observations,
+            3,
+        )
+        .unwrap();
+        let result: serde_json::Value = serde_json::from_str(&result).unwrap();
+        assert_eq!(result["quarantined"], 0);
+        let batches = result["batches"].as_array().unwrap();
+        assert_eq!(batches[0]["status"], "settled");
+        assert_eq!(batches[0]["sequence"], 1);
+        if committed {
+            assert_eq!(result["status"], "drained");
+            assert_eq!(batches.len(), 2);
+            assert_eq!(batches[0]["outcome"], "committed");
+            assert_eq!(batches[1]["status"], "selected_observations_match");
+            assert_eq!(batches[1]["canonicalRevision"], 13);
+            assert_eq!(transport.exchanges.get(), 7);
+        } else {
+            assert_eq!(result["status"], "stopped");
+            assert_eq!(batches.len(), 1);
+            assert_eq!(batches[0]["outcome"], "abandoned");
+            assert_eq!(transport.exchanges.get(), 4);
+        }
+        assert_eq!(outbox.checkpoint.last_sequence, 1);
+        assert_eq!(outbox.checkpoint.last_revision, 13);
+        assert!(outbox.checkpoint.flight.is_none());
+    }
+    // Out-of-range draining refuses before any exchange or state read.
+    let original = batch(1, 12, 4);
+    let (_, observations) = observations();
+    let path = scratch();
+    let server = Server::new(|_| {});
+    let transport = transport(server.addr, &original);
+    let mut outbox =
+        Outbox::initialize(&path.0, &KEY, transport.binding(), &progress(&original)).unwrap();
+    for limit in [0, 9] {
+        assert_eq!(
+            crate::contribution_sync::command::drain(
+                &mut outbox,
+                &transport,
+                &Deadline::command().unwrap(),
+                original.scope().population_id(),
+                &observations,
+                limit,
+            )
+            .err(),
+            Some("invalid_option")
+        );
+    }
+    assert_eq!(transport.exchanges.get(), 0);
+}
+
+#[test]
 fn failed_initial_cancel_status_remains_cancel_only_after_restart() {
     let original = batch(1, 12, 4);
     let expected = original.bytes().to_vec();
@@ -958,4 +1108,507 @@ fn idle_resume_is_observational_and_missing_terminal_after_writer_change_keeps_f
         fs::read(path.0.join("contribution-sync-v3.current")).unwrap(),
         before
     );
+}
+
+// -- account control ops (activate / migrate / grant / status) ---------------
+fn ops_binding() -> Binding {
+    Binding::new(
+        &format!("acct_{}", "a".repeat(32)),
+        &"b".repeat(64),
+        &"c".repeat(64),
+    )
+    .unwrap()
+}
+fn ops_transport(addr: SocketAddr) -> Transport {
+    Transport {
+        authority: Authority::Synthetic(SyntheticAuthority {
+            binding: ops_binding(),
+            allowed: Arc::new(AtomicBool::new(true)),
+            checks: Arc::new(AtomicUsize::new(0)),
+        }),
+        exchanges: Cell::new(0),
+        fixture: Some(ClientFixture { addr }),
+    }
+}
+fn envelope(value: serde_json::Value) -> Vec<u8> {
+    serde_json::to_vec(&serde_json::json!({
+        "schemaVersion": 3, "result": { "ok": true, "value": value } }))
+    .unwrap()
+}
+fn status_reply(
+    revision: u64,
+    phase: &str,
+    migrated: bool,
+    population: Option<serde_json::Value>,
+) -> Vec<u8> {
+    let binding = ops_binding();
+    envelope(serde_json::json!({
+        "schemaVersion": 3, "accountId": binding.account_id, "generation": binding.generation,
+        "revision": revision, "nextSequence": 1, "phase": phase,
+        "activationHash": if phase == "active" { serde_json::Value::String("5".repeat(64)) } else { serde_json::Value::Null },
+        "migrationManifestHash": if migrated { serde_json::Value::String("6".repeat(64)) } else { serde_json::Value::Null },
+        "population": population, "operation": null, "legacyResolution": "not_evaluated" }))
+}
+fn population_view(population: &str, revision: u64) -> serde_json::Value {
+    let binding = ops_binding();
+    serde_json::json!({ "id": population, "generation": binding.generation,
+        "deviceId": binding.device_id, "writerRevision": 1, "revision": revision,
+        "headHash": if revision == 0 { "0".repeat(64) } else { "7".repeat(64) }, "memberCount": 0 })
+}
+#[test]
+fn activate_on_unstarted_account_persists_then_dispatches_exact_bytes() {
+    let dir = scratch();
+    let first = Arc::new(Mutex::new(Vec::new()));
+    let captured = first.clone();
+    let _server = Server::steps(2, move |index, stream| {
+        let (_headers, body) = request(stream);
+        captured.lock().unwrap().push(body.clone());
+        if index == 0 {
+            // Status: no contribution control yet.
+            respond_status(
+                stream,
+                409,
+                &serde_json::to_vec(&serde_json::json!({
+                "schemaVersion": 3, "result": { "ok": false, "error": "not_started" } }))
+                .unwrap(),
+            );
+        } else {
+            // Activate: reply the exact receipt for the received request.
+            let request: serde_json::Value = serde_json::from_slice(&body).unwrap();
+            let mut receipt = request.clone();
+            receipt
+                .as_object_mut()
+                .unwrap()
+                .insert("bodyHash".into(), "8".repeat(64).into());
+            receipt
+                .as_object_mut()
+                .unwrap()
+                .insert("revision".into(), 1.into());
+            respond(stream, &envelope(receipt));
+        }
+    });
+    let transport = ops_transport(_server.addr);
+    let deadline = Deadline::command().unwrap();
+    let out = super::super::ops::activate(&dir.0, &KEY, &transport, &deadline).unwrap();
+    assert!(out.contains("\"activated\":true"));
+    let sent = first.lock().unwrap();
+    assert_eq!(sent.len(), 2);
+    let second: serde_json::Value = serde_json::from_slice(&sent[1]).unwrap();
+    assert!(second["operationId"]
+        .as_str()
+        .is_some_and(|id| id.len() == 64));
+    assert_eq!(second["mode"], "fresh-empty");
+    assert_eq!(second["expectedRevision"], 0);
+    assert_eq!(second["schemaVersion"], 3);
+    assert_eq!(
+        second["accountId"],
+        format!("acct_{}", "a".repeat(32)).as_str()
+    );
+    drop(transport);
+    let transport = ops_transport(_server.addr);
+    let deadline = Deadline::command().unwrap();
+    // The journal already settled; no exchange may occur at all.
+    let out = super::super::ops::activate(&dir.0, &KEY, &transport, &deadline).unwrap();
+    assert!(out.contains("\"activated\":true"));
+    assert_eq!(transport.exchanges.get(), 0);
+    drop(dir);
+}
+#[test]
+fn lost_activate_reply_resumes_the_same_operation() {
+    let dir = scratch();
+    let bodies = Arc::new(Mutex::new(Vec::<Vec<u8>>::new()));
+    let captured = bodies.clone();
+    let _server = Server::steps(3, move |index, stream| {
+        let (_h, body) = request(stream);
+        captured.lock().unwrap().push(body.clone());
+        match index {
+            0 => respond_status(
+                stream,
+                409,
+                &serde_json::to_vec(&serde_json::json!({
+                "schemaVersion": 3, "result": { "ok": false, "error": "not_started" } }))
+                .unwrap(),
+            ),
+            // Read the activate request, then drop the connection without
+            // answering: the exchange outcome is genuinely uncertain.
+            1 => {}
+            _ => {
+                let request: serde_json::Value = serde_json::from_slice(&body).unwrap();
+                let mut receipt = request.clone();
+                receipt
+                    .as_object_mut()
+                    .unwrap()
+                    .insert("bodyHash".into(), "8".repeat(64).into());
+                receipt
+                    .as_object_mut()
+                    .unwrap()
+                    .insert("revision".into(), 1.into());
+                respond(stream, &envelope(receipt));
+            }
+        }
+    });
+    let transport = ops_transport(_server.addr);
+    assert_eq!(
+        super::super::ops::activate(&dir.0, &KEY, &transport, &Deadline::command().unwrap())
+            .unwrap_err(),
+        super::UNCERTAIN
+    );
+    let transport = ops_transport(_server.addr);
+    let out = super::super::ops::activate(&dir.0, &KEY, &transport, &Deadline::command().unwrap())
+        .unwrap();
+    assert!(out.contains("\"activated\":true"));
+    let sent = bodies.lock().unwrap();
+    assert_eq!(sent.len(), 3);
+    // The resumed dispatch sends the byte-identical retained request.
+    assert_eq!(sent[1], sent[2]);
+    drop(dir);
+}
+#[test]
+fn migrate_reports_seal_counts_and_deduplicates() {
+    let dir = scratch();
+    let binding = ops_binding();
+    let _server = Server::steps(2, move |index, stream| {
+        let (_h, body) = request(stream);
+        if index == 0 {
+            respond_status(
+                stream,
+                409,
+                &serde_json::to_vec(&serde_json::json!({
+                "schemaVersion": 3, "result": { "ok": false, "error": "not_started" } }))
+                .unwrap(),
+            );
+        } else {
+            let request: serde_json::Value = serde_json::from_slice(&body).unwrap();
+            assert_eq!(request["expectedV1Revision"], 7);
+            assert_eq!(request["expectedV2Revision"], 11);
+            let mut receipt = request.clone();
+            let map = receipt.as_object_mut().unwrap();
+            map.insert("bodyHash".into(), "9".repeat(64).into());
+            map.insert("revision".into(), 1.into());
+            map.insert("manifestHash".into(), "d".repeat(64).into());
+            map.insert("deltaManifestHash".into(), "e".repeat(64).into());
+            map.insert("deltaCount".into(), 3.into());
+            map.insert("headCount".into(), 5.into());
+            map.insert("suppressedV1Heads".into(), 2.into());
+            map.insert("unresolvedV2Bodies".into(), 0.into());
+            respond(stream, &envelope(receipt));
+        }
+    });
+    let transport = ops_transport(_server.addr);
+    let out = super::super::ops::migrate(
+        &dir.0,
+        &KEY,
+        &transport,
+        &Deadline::command().unwrap(),
+        |_| Ok((7, 11)),
+    )
+    .unwrap();
+    assert!(out.contains("\"migrated\":true"), "{out}");
+    assert!(out.contains("\"headCount\":5"));
+    let _ = binding;
+    drop(dir);
+}
+#[test]
+fn grant_reconciles_population_state_before_writing() {
+    let dir = scratch();
+    let population = "f".repeat(64);
+    let inside = population.clone();
+    let _server = Server::steps(2, move |index, stream| {
+        let (_h, body) = request(stream);
+        if index == 0 {
+            respond(stream, &status_reply(1, "active", true, None));
+        } else {
+            let request: serde_json::Value = serde_json::from_slice(&body).unwrap();
+            assert_eq!(request["populationId"], inside);
+            assert_eq!(request["expectedRevision"], 1);
+            assert_eq!(request["expectedWriterRevision"], 0);
+            assert!(request["previousDeviceId"].is_null());
+            respond(
+                stream,
+                &envelope(serde_json::json!({
+                "schemaVersion": 3, "operationId": request["operationId"], "bodyHash": "a".repeat(64),
+                "revision": 2, "population": population_view(&inside, 0) })),
+            );
+        }
+    });
+    let transport = ops_transport(_server.addr);
+    let out = super::super::ops::grant(
+        &dir.0,
+        &KEY,
+        Some(&population),
+        &transport,
+        &Deadline::command().unwrap(),
+    )
+    .unwrap();
+    assert!(out.contains("\"granted\":true"), "{out}");
+    drop(dir);
+}
+#[test]
+fn status_reports_unstarted_and_control_views() {
+    let dir = scratch();
+    let _server = Server::new(move |stream| {
+        request(stream);
+        respond_status(
+            stream,
+            409,
+            &serde_json::to_vec(&serde_json::json!({
+            "schemaVersion": 3, "result": { "ok": false, "error": "not_started" } }))
+            .unwrap(),
+        );
+    });
+    let transport = ops_transport(_server.addr);
+    let out = super::super::ops::status(
+        &dir.0,
+        &KEY,
+        None,
+        &transport,
+        &Deadline::command().unwrap(),
+    )
+    .unwrap();
+    assert!(out.contains("\"not_started\""), "{out}");
+    drop(dir);
+    let dir = scratch();
+    let _server = Server::new(move |stream| {
+        request(stream);
+        respond(stream, &status_reply(4, "active", true, None));
+    });
+    let transport = ops_transport(_server.addr);
+    let out = super::super::ops::status(
+        &dir.0,
+        &KEY,
+        None,
+        &transport,
+        &Deadline::command().unwrap(),
+    )
+    .unwrap();
+    assert!(
+        out.contains("\"migrated\":true") && out.contains("\"revision\":4"),
+        "{out}"
+    );
+    drop(dir);
+}
+
+#[test]
+fn refused_intent_settles_durably_and_retry_uses_a_fresh_operation() {
+    let dir = scratch();
+    let bodies = Arc::new(Mutex::new(Vec::<Vec<u8>>::new()));
+    let captured = bodies.clone();
+    // Four exchanges: status, activate (refused), status, activate (receipt).
+    let _server = Server::steps(4, move |index, stream| {
+        let (_h, body) = request(stream);
+        captured.lock().unwrap().push(body.clone());
+        match index {
+            0 | 2 => respond_status(
+                stream,
+                409,
+                &serde_json::to_vec(&serde_json::json!({
+                "schemaVersion": 3, "result": { "ok": false, "error": "not_started" } }))
+                .unwrap(),
+            ),
+            1 => respond_status(
+                stream,
+                409,
+                &serde_json::to_vec(&serde_json::json!({
+                "schemaVersion": 3, "result": { "ok": false, "error": "conflict" } }))
+                .unwrap(),
+            ),
+            _ => {
+                let request: serde_json::Value = serde_json::from_slice(&body).unwrap();
+                let mut receipt = request.clone();
+                let map = receipt.as_object_mut().unwrap();
+                map.insert("bodyHash".into(), "8".repeat(64).into());
+                map.insert("revision".into(), 1.into());
+                respond(stream, &envelope(receipt));
+            }
+        }
+    });
+    let transport = ops_transport(_server.addr);
+    let deadline = Deadline::command().unwrap();
+    let err = super::super::ops::activate(&dir.0, &KEY, &transport, &deadline).unwrap_err();
+    assert_eq!(err, "contribution_sync_conflict");
+    let transport = ops_transport(_server.addr);
+    let out = super::super::ops::activate(&dir.0, &KEY, &transport, &Deadline::command().unwrap())
+        .unwrap();
+    assert!(out.contains("\"activated\":true"), "{out}");
+    let sent = bodies.lock().unwrap();
+    assert_eq!(sent.len(), 4);
+    let first: serde_json::Value = serde_json::from_slice(&sent[1]).unwrap();
+    let second: serde_json::Value = serde_json::from_slice(&sent[3]).unwrap();
+    assert_ne!(first["operationId"], second["operationId"]);
+    drop(dir);
+}
+
+#[test]
+fn pending_migration_abandons_through_exact_replay_and_retries_fresh() {
+    let dir = scratch();
+    let bodies = Arc::new(Mutex::new(Vec::<Vec<u8>>::new()));
+    let captured = bodies.clone();
+    // Steps: status (not_started), migrate dispatch drops (uncertain),
+    // status (not_started), cancel-migration (abandoned terminal),
+    // status (not_started), migrate (refused conflict — the account moved on).
+    let _server = Server::steps(5, move |index, stream| {
+        let (_h, body) = request(stream);
+        captured.lock().unwrap().push(body.clone());
+        match index {
+            0 | 3 => respond_status(
+                stream,
+                409,
+                &serde_json::to_vec(&serde_json::json!({
+                "schemaVersion": 3, "result": { "ok": false, "error": "not_started" } }))
+                .unwrap(),
+            ),
+            1 => {}
+            2 => {
+                let request: serde_json::Value = serde_json::from_slice(&body).unwrap();
+                respond(
+                    stream,
+                    &serde_json::to_vec(&serde_json::json!({
+                    "schemaVersion": 3, "result": { "ok": true, "value": {
+                        "outcome": "abandoned", "operationId": request["operationId"],
+                        "bodyHash": "9".repeat(64), "revision": 1 } } }))
+                    .unwrap(),
+                );
+            }
+            _ => respond_status(
+                stream,
+                409,
+                &serde_json::to_vec(&serde_json::json!({
+                "schemaVersion": 3, "result": { "ok": false, "error": "conflict" } }))
+                .unwrap(),
+            ),
+        }
+    });
+    let transport = ops_transport(_server.addr);
+    let deadline = Deadline::command().unwrap();
+    let revisions = |_: &std::path::Path| -> Result<(u64, u64), &'static str> { Ok((0, 0)) };
+    // Dispatch is lost: the intent persists pending and the op reports uncertain.
+    assert_eq!(
+        super::super::ops::migrate(&dir.0, &KEY, &transport, &deadline, revisions).unwrap_err(),
+        super::UNCERTAIN
+    );
+    // Cancel replays the retained request bytes byte-for-byte.
+    let out = super::super::ops::cancel_migration(&dir.0, &KEY, &transport, &deadline).unwrap();
+    assert!(out.contains("\"abandoned\""), "{out}");
+    let sent: Vec<Vec<u8>> = bodies.lock().unwrap().clone();
+    assert_eq!(
+        sent.len(),
+        3,
+        "{}",
+        sent.iter()
+            .map(|b| String::from_utf8_lossy(b).to_string())
+            .collect::<Vec<_>>()
+            .join(
+                "
+"
+            )
+    );
+    assert_eq!(sent[1], sent[2]);
+    // The abandoned intent is decided: a later migrate builds a fresh request
+    // and the server's conflict settles it as a refusal.
+    assert_eq!(
+        super::super::ops::migrate(&dir.0, &KEY, &transport, &deadline, revisions).unwrap_err(),
+        "contribution_sync_conflict"
+    );
+    drop(dir);
+}
+
+#[test]
+fn refused_migration_still_pending_server_side_cancels_through_retained_replay() {
+    let dir = scratch();
+    let bodies = Arc::new(Mutex::new(Vec::<Vec<u8>>::new()));
+    let captured = bodies.clone();
+    // A refused intent never proves the server settled: the operation may
+    // still hold pendingOperation and refuse every later reservation. Cancel
+    // must reconcile it by replaying the retained request anyway.
+    // Steps: status (not_started), migrate (refused conflict — settles
+    // locally, then sweeps one auto-abandon), cancel-migration (abandoned).
+    let _server = Server::steps(4, move |index, stream| {
+        let (_h, body) = request(stream);
+        captured.lock().unwrap().push(body.clone());
+        match index {
+            0 => respond_status(
+                stream,
+                409,
+                &serde_json::to_vec(&serde_json::json!({
+                "schemaVersion": 3, "result": { "ok": false, "error": "not_started" } }))
+                .unwrap(),
+            ),
+            1 => respond_status(
+                stream,
+                409,
+                &serde_json::to_vec(&serde_json::json!({
+                "schemaVersion": 3, "result": { "ok": false, "error": "conflict" } }))
+                .unwrap(),
+            ),
+            _ => {
+                let request: serde_json::Value = serde_json::from_slice(&body).unwrap();
+                respond(
+                    stream,
+                    &serde_json::to_vec(&serde_json::json!({
+                    "schemaVersion": 3, "result": { "ok": true, "value": {
+                        "outcome": "abandoned", "operationId": request["operationId"],
+                        "bodyHash": "9".repeat(64), "revision": 1 } } }))
+                    .unwrap(),
+                );
+            }
+        }
+    });
+    let transport = ops_transport(_server.addr);
+    let deadline = Deadline::command().unwrap();
+    let revisions = |_: &std::path::Path| -> Result<(u64, u64), &'static str> { Ok((0, 0)) };
+    assert_eq!(
+        super::super::ops::migrate(&dir.0, &KEY, &transport, &deadline, revisions).unwrap_err(),
+        "contribution_sync_conflict"
+    );
+    // A decided settle fires one best-effort abandon for just that intent —
+    // the refusal may still hold the server's pending slot.
+    let out = super::super::ops::cancel_migration(&dir.0, &KEY, &transport, &deadline).unwrap();
+    assert!(out.contains("\"abandoned\""), "{out}");
+    let sent = bodies.lock().unwrap();
+    assert_eq!(sent.len(), 4);
+    for replay in &sent[1..] {
+        assert_eq!(
+            sent[1], *replay,
+            "every cancel must replay the identical retained request"
+        );
+    }
+    drop(dir);
+}
+
+#[test]
+fn local_failures_never_settle_an_intent() {
+    // Codes that never reached a service verdict must leave the retained
+    // intent pending; only wire-decided refusals settle it.
+    for code in [
+        "attempt_custody",
+        "attempt_busy",
+        "attempt_recovery_required",
+        "attempt_missing",
+        "attempt_conflict",
+        "attempt_limit",
+        "attempt_storage_unavailable",
+        "attempt_invalid_record",
+        "attempt_invalid_successor",
+        "attempt_clock_regressed",
+        "attempt_outcome_unknown",
+        "attempt_stale_snapshot",
+        "contribution_ops_unavailable",
+        "contribution_ops_recovery_required",
+        "contribution_sync_random_unavailable",
+        "contribution_sync_identity_changed",
+        "contribution_sync_unsupported_provider",
+        "contribution_sync_exchange_limit",
+    ] {
+        assert!(!super::super::ops::settled_error(code), "{code}");
+    }
+    for code in [
+        "contribution_sync_conflict",
+        "contribution_sync_invalid_response",
+        "contribution_sync_storage_invalid",
+        "contribution_sync_recovery_required",
+        "contribution_sync_limit",
+        "contribution_sync_not_started",
+    ] {
+        assert!(super::super::ops::settled_error(code), "{code}");
+    }
 }

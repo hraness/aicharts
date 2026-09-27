@@ -25,6 +25,9 @@ type Options = Readonly<{
 const unavailable = () => new Error("usage_unavailable");
 const SESSION_BYTES = 32_768;
 const TRANSIENT_RETRY_DELAY_MS = 1_500;
+// Each transient retry waits this many base delays: 1.5 s, then 4.5 s. Two
+// retries ride out a brief backend stall well inside the 20 s view deadline.
+const TRANSIENT_RETRY_BACKOFF = [1, 3] as const;
 const SESSION_WARM_MS = 60_000;
 const SESSION_WARM_BOUND_MS = 15_000;
 
@@ -129,11 +132,11 @@ export function warmUsageAccountSession(options: Options = {}): void {
 /** One settle before a transient retry. The first attempt's server-side work
  * leaves the account object warm, so the retry is the fast path; a caller
  * abort still settles promptly instead of dispatching a stale read. */
-async function settleTransient(signal: AbortSignal, options: Options): Promise<void> {
+async function settleTransient(signal: AbortSignal, options: Options, factor: number): Promise<void> {
   await new Promise<void>((resolve, reject) => {
     const abort = () => { signal.removeEventListener("abort", abort); clearTimeout(timer); reject(unavailable()); };
     const timer = setTimeout(() => { signal.removeEventListener("abort", abort); resolve(); },
-      options.transientRetryDelayMs ?? TRANSIENT_RETRY_DELAY_MS);
+      (options.transientRetryDelayMs ?? TRANSIENT_RETRY_DELAY_MS) * factor);
     signal.addEventListener("abort", abort, { once: true });
     if (signal.aborted) abort();
   });
@@ -145,7 +148,7 @@ async function recoverRead<T>(read: () => Promise<T>, needsAuthentication: (repl
   let owned: T | undefined;
   const deliver = (reply: T): T => { owned = undefined; return reply; };
   // A thrown transport failure and a refused reply's error value are the same
-  // transient outcome here: both mark one bounded retry, never recursion.
+  // transient outcome here: both mark a bounded backoff retry, never recursion.
   const attempt = async (): Promise<{ reply: T | undefined; transient: boolean }> => {
     if (owned !== undefined) { dispose(owned); owned = undefined; }
     try {
@@ -187,8 +190,9 @@ async function recoverRead<T>(read: () => Promise<T>, needsAuthentication: (repl
       outcome = await attempt();
       if (signal.aborted) throw unavailable();
     }
-    if (outcome.transient) {
-      await settleTransient(signal, options);
+    for (const factor of TRANSIENT_RETRY_BACKOFF) {
+      if (!outcome.transient) break;
+      await settleTransient(signal, options, factor);
       outcome = await attempt();
       if (signal.aborted) throw unavailable();
     }

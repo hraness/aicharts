@@ -10,7 +10,7 @@ type ChipStyle = CSSProperties & Readonly<{
 }>;
 
 /**
- * Compact Lobe or monogram mark for a model lab. Reuses the picker chip
+ * Compact registry or monogram mark for a model lab. Reuses the picker chip
  * colors and CSS-mask glyph so every vendor surface stays on one icon
  * language.
  */

@@ -300,6 +300,26 @@
       },
       "validation": "decode-passed",
       "review": "accepted"
+    },
+    {
+      "slug": "opus-5-5-intelligence-index",
+      "promptSha256": "bb9fbb63630ff778f6f59570636710d3cc7eb3b215058d323d808a12affc140a",
+      "master": {
+        "path": "/images/blog/opus-5-5-intelligence-index.webp",
+        "width": 1536,
+        "height": 864,
+        "bytes": 50676,
+        "sha256": "75ec1742daa7fd250ed5402fa3bb42af8d8b4a237e4bcde275a5e8c496d58cb0"
+      },
+      "receiptPath": "artifacts/slopcamera/generated/gateway/20260925T142331481Z-image-b610dbf3-4b0/receipt.json",
+      "jobPath": "artifacts/slopcamera/generated/gateway-jobs/gateway_ed81c1ffbc75415f85306049c6668893.json",
+      "generator": {
+        "package": "@hraness/slopcamera",
+        "version": "3.2.5",
+        "sourceCommit": "66b4322030f4de24f4d5b6d0c2515c109259f901"
+      },
+      "validation": "decode-passed",
+      "review": "accepted"
     }
   ]
 }

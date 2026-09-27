@@ -31,6 +31,7 @@ struct Options {
     json: bool,
     publish_config: Option<PathBuf>,
     publish_interval_seconds: u64,
+    status_file: Option<PathBuf>,
 }
 
 fn parse_options(args: &[String]) -> Result<Options, &'static str> {
@@ -50,6 +51,7 @@ fn parse_options(args: &[String]) -> Result<Options, &'static str> {
     let mut publish_config = None;
     let mut publish_interval_seconds = DEFAULT_PUBLISH_INTERVAL_SECONDS;
     let mut publish_interval_set = false;
+    let mut status_file = None;
     let mut i = 1;
     while i < args.len() {
         match args[i].as_str() {
@@ -64,7 +66,8 @@ fn parse_options(args: &[String]) -> Result<Options, &'static str> {
             | "--interval-seconds"
             | "--retry-attempts"
             | "--publish-config"
-            | "--publish-interval-seconds") => {
+            | "--publish-interval-seconds"
+            | "--status-file") => {
                 i += 1;
                 let value = args
                     .get(i)
@@ -106,6 +109,13 @@ fn parse_options(args: &[String]) -> Result<Options, &'static str> {
                         }
                         publish_config = Some(path);
                     }
+                    "--status-file" if status_file.is_none() => {
+                        let path = PathBuf::from(value);
+                        if !path.is_absolute() || path.file_name().is_none() {
+                            return Err("invalid_status_file");
+                        }
+                        status_file = Some(path);
+                    }
                     "--publish-interval-seconds" if !publish_interval_set => {
                         publish_interval_seconds =
                             value.parse().map_err(|_| "invalid_publish_interval")?;
@@ -136,6 +146,9 @@ fn parse_options(args: &[String]) -> Result<Options, &'static str> {
     if publish_config.is_some() && (once || json) {
         return Err("invalid_option");
     }
+    if status_file.is_some() && once {
+        return Err("invalid_option");
+    }
     Ok(Options {
         state_dir: state_dir.ok_or("state_directory_required")?,
         key_file: key_file.ok_or("key_required")?,
@@ -147,6 +160,7 @@ fn parse_options(args: &[String]) -> Result<Options, &'static str> {
         json,
         publish_config,
         publish_interval_seconds,
+        status_file,
     })
 }
 
@@ -212,6 +226,97 @@ fn run_loop(
     }
 }
 
+/// Passes kept for `recentFailures`: one day at the default interval.
+const STATUS_HISTORY: usize = 96;
+
+/// The collector's own health report for the menu bar
+/// (`collector-status.json`, schema version 1): pass times, results and
+/// fixed error codes only, never paths, account identifiers or content.
+#[derive(Debug, Default)]
+struct PassHistory {
+    passes: std::collections::VecDeque<Option<&'static str>>,
+    last_success_at: Option<u64>,
+}
+
+impl PassHistory {
+    fn record(&mut self, at: u64, result: Result<(), &'static str>) {
+        if self.passes.len() == STATUS_HISTORY {
+            self.passes.pop_front();
+        }
+        self.passes.push_back(result.err());
+        if result.is_ok() {
+            self.last_success_at = Some(at);
+        }
+    }
+
+    fn render(&self, at: u64, interval_seconds: u64) -> String {
+        let mut counts: Vec<(&'static str, u32)> = Vec::new();
+        for code in self.passes.iter().flatten() {
+            match counts.iter_mut().find(|(known, _)| known == code) {
+                Some((_, count)) => *count += 1,
+                None => counts.push((code, 1)),
+            }
+        }
+        counts.sort_by(|a, b| b.1.cmp(&a.1).then(a.0.cmp(b.0)));
+        let last = self.passes.back().copied().flatten();
+        serde_json::json!({
+            "schemaVersion": 1,
+            "updatedAt": at,
+            "intervalSeconds": interval_seconds,
+            "lastPass": { "at": at, "ok": last.is_none(), "error": last },
+            "lastSuccessAt": self.last_success_at,
+            "recentFailures": counts
+                .iter()
+                .map(|(code, count)| serde_json::json!({ "code": code, "count": count }))
+                .collect::<Vec<_>>(),
+            "recentPasses": self.passes.len(),
+        })
+        .to_string()
+            + "\n"
+    }
+}
+
+/// Replaces the status file atomically with an owner-only file. A failure
+/// here never fails the pass: the report is advisory.
+#[cfg(unix)]
+fn write_status(path: &std::path::Path, text: &str) -> std::io::Result<()> {
+    use std::io::Write;
+    use std::os::unix::fs::OpenOptionsExt;
+    let parent = path
+        .parent()
+        .ok_or_else(|| std::io::Error::other("no parent"))?;
+    let name = path
+        .file_name()
+        .ok_or_else(|| std::io::Error::other("no file name"))?;
+    let mut temp_name = std::ffi::OsString::from(".");
+    temp_name.push(name);
+    temp_name.push(format!(".{}.tmp", std::process::id()));
+    let temp = parent.join(temp_name);
+    let _ = std::fs::remove_file(&temp);
+    let written = std::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .mode(0o600)
+        .custom_flags(libc::O_NOFOLLOW)
+        .open(&temp)
+        .and_then(|mut file| {
+            file.write_all(text.as_bytes())?;
+            file.sync_all()
+        })
+        .and_then(|()| std::fs::rename(&temp, path));
+    if written.is_err() {
+        let _ = std::fs::remove_file(&temp);
+    }
+    written
+}
+
+fn unix_now() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|elapsed| elapsed.as_secs())
+        .unwrap_or(0)
+}
+
 fn collect_args(options: &Options) -> Vec<String> {
     let mut args = vec![
         if options.complete_prefix {
@@ -250,8 +355,8 @@ fn publish_args(options: &Options) -> Option<Vec<String>> {
 }
 
 pub(super) fn run(args: &[String]) -> Result<String, &'static str> {
-    if args == ["daemon", "--help"] || args == ["daemon", "-h"] {
-        return Ok(super::HELP.to_owned());
+    if let Some(crate::help::Help::Page(page)) = crate::help::resolve(args) {
+        return Ok(page);
     }
     let options = parse_options(args)?;
     #[cfg(not(unix))]
@@ -274,6 +379,9 @@ pub(super) fn run(args: &[String]) -> Result<String, &'static str> {
                 }
             );
         }
+        let mut history = PassHistory::default();
+        let status_file = options.status_file.clone();
+        let interval_seconds = options.interval_seconds;
         run_loop(
             &options,
             || super::state::run(&collect_args),
@@ -282,11 +390,20 @@ pub(super) fn run(args: &[String]) -> Result<String, &'static str> {
                 None => Err("publish_not_configured"),
             },
             std::thread::sleep,
-            |result| match result {
-                Report::Collected(Ok(output)) => println!("{output}"),
-                Report::Collected(Err(error)) => eprintln!("aicharts: {error}"),
-                Report::Published(Ok(summary)) => print!("{summary}"),
-                Report::Published(Err(error)) => eprintln!("aicharts: publish {error}"),
+            |result| {
+                if let (Some(path), Report::Collected(outcome)) = (&status_file, &result) {
+                    let now = unix_now();
+                    history.record(now, outcome.as_ref().map(|_| ()).map_err(|code| *code));
+                    if write_status(path, &history.render(now, interval_seconds)).is_err() {
+                        eprintln!("aicharts: status_file_write_failed");
+                    }
+                }
+                match result {
+                    Report::Collected(Ok(output)) => println!("{output}"),
+                    Report::Collected(Err(error)) => eprintln!("aicharts: {error}"),
+                    Report::Published(Ok(summary)) => print!("{summary}"),
+                    Report::Published(Err(error)) => eprintln!("aicharts: publish {error}"),
+                }
             },
         )
     }
@@ -389,6 +506,90 @@ mod tests {
         options.once = true;
         let (result, events) = drive(&options, results, Vec::new());
         (result.expect("once returns"), events)
+    }
+
+    #[test]
+    fn status_file_is_absolute_and_loop_only() {
+        let mut base = args(&[
+            "daemon",
+            "--state-dir",
+            "state",
+            "--key-file",
+            "key",
+            "--codex",
+            "source",
+            "--status-file",
+            "/private/status/collector-status.json",
+        ]);
+        let options = parse_options(&base).unwrap();
+        assert_eq!(
+            options.status_file.as_deref(),
+            Some(std::path::Path::new(
+                "/private/status/collector-status.json"
+            ))
+        );
+        base.push("--once".to_owned());
+        assert_eq!(parse_options(&base).unwrap_err(), "invalid_option");
+        let relative = args(&[
+            "daemon",
+            "--state-dir",
+            "state",
+            "--key-file",
+            "key",
+            "--codex",
+            "source",
+            "--status-file",
+            "collector-status.json",
+        ]);
+        assert_eq!(parse_options(&relative).unwrap_err(), "invalid_status_file");
+    }
+
+    #[test]
+    fn pass_history_reports_recent_failures_without_paths() {
+        let mut history = PassHistory::default();
+        history.record(100, Err("source_byte_limit"));
+        history.record(200, Ok(()));
+        history.record(300, Err("ledger_busy_retry"));
+        history.record(400, Err("source_byte_limit"));
+        let report: serde_json::Value = serde_json::from_str(&history.render(400, 900)).unwrap();
+        assert_eq!(report["schemaVersion"], 1);
+        assert_eq!(report["updatedAt"], 400);
+        assert_eq!(report["intervalSeconds"], 900);
+        assert_eq!(report["lastPass"]["ok"], false);
+        assert_eq!(report["lastPass"]["error"], "source_byte_limit");
+        assert_eq!(report["lastSuccessAt"], 200);
+        assert_eq!(report["recentPasses"], 4);
+        assert_eq!(
+            report["recentFailures"],
+            serde_json::json!([
+                { "code": "source_byte_limit", "count": 2 },
+                { "code": "ledger_busy_retry", "count": 1 }
+            ])
+        );
+        for _ in 0..STATUS_HISTORY {
+            history.record(500, Ok(()));
+        }
+        let report: serde_json::Value = serde_json::from_str(&history.render(500, 900)).unwrap();
+        assert_eq!(report["recentFailures"], serde_json::json!([]));
+        assert_eq!(report["recentPasses"], STATUS_HISTORY);
+        assert_eq!(report["lastPass"]["ok"], true);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn status_file_is_replaced_atomically_and_owner_only() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir =
+            std::env::temp_dir().join(format!("aicharts-daemon-status-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("collector-status.json");
+        write_status(&path, "{\"a\":1}\n").unwrap();
+        write_status(&path, "{\"a\":2}\n").unwrap();
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), "{\"a\":2}\n");
+        let mode = std::fs::metadata(&path).unwrap().permissions().mode() & 0o777;
+        assert_eq!(mode, 0o600);
+        assert_eq!(std::fs::read_dir(&dir).unwrap().count(), 1);
+        std::fs::remove_dir_all(&dir).unwrap();
     }
 
     #[test]

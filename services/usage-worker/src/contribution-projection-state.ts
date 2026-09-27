@@ -1,10 +1,10 @@
-import { contributionAccount, contributionHash, contributionIdentity, ContributionFault, CONTRIBUTION_MAX_OPERATIONS,
-  CONTRIBUTION_MAX_TIME, type ContributionError } from "../../../lib/usage/contributions";
+import { contributionAccount, contributionHash, contributionIdentity, ContributionFault, CONTRIBUTION_MAX_IMMUTABLE_BYTES,
+  CONTRIBUTION_MAX_OPERATIONS, CONTRIBUTION_MAX_TIME, type ContributionError } from "../../../lib/usage/contributions";
 import { contributionIndexKey, contributionIndexStageHash, parseContributionIndexReference, readContributionIndexCells, stageContributionIndex,
   CONTRIBUTION_INDEX_MAX_IO_BYTES, type ContributionIndexLoader, type ContributionIndexReference, type ContributionIndexStage } from "../../../lib/usage/contribution-index";
 import { contributionRowCellKey, planContributionRollups } from "../../../lib/usage/contribution-rollups";
 import { statsInteger, statsOwnRecord } from "../../../lib/usage/stats-contract";
-import { ContributionState } from "./contributions-state";
+import { ContributionState, CONTRIBUTION_MAX_METADATA_BYTES } from "./contributions-state";
 import { CONTRIBUTION_JOURNAL_MAX_ENTRIES } from "./contributions-journal";
 import { isVerifiedContributionChunk, isVerifiedContributionRevision, readCommittedContributionRevision,
   CONTRIBUTION_REPLAY_CHUNK_ENTRIES, type CommittedContributionRevision, type ContributionReplayPhase,
@@ -16,6 +16,10 @@ export const CONTRIBUTION_PROJECTION_MAX_PUBLICATIONS = 64;
 export const CONTRIBUTION_PROJECTION_RETIRE_MS = 930_000;
 export const CONTRIBUTION_PROJECTION_PUBLISH_INTERVAL_MS = 16_000;
 export const CONTRIBUTION_PROJECTION_MAX_CONTROL_BYTES = 8_192;
+/** A lifetime ceiling warns once cumulative bytes reach seven eighths of it.
+ * Exact integer arithmetic; no ratio is stored. */
+export const CONTRIBUTION_STORAGE_WARNING_NUMERATOR = 7;
+export const CONTRIBUTION_STORAGE_WARNING_DENOMINATOR = 8;
 export const CONTRIBUTION_PROJECTION_SCHEMA = Object.freeze({
   usage_contribution_projection_control: `CREATE TABLE usage_contribution_projection_control (id INTEGER PRIMARY KEY CHECK (id = 1), account_id TEXT NOT NULL, generation TEXT NOT NULL, applied_revision INTEGER NOT NULL, applied_root TEXT CHECK (applied_root IS NULL OR length(applied_root) <= 2048), published_revision INTEGER NOT NULL, published_root TEXT CHECK (published_root IS NULL OR length(published_root) <= 2048), staged_source TEXT CHECK (staged_source IS NULL OR length(staged_source) <= 2048), staged_root TEXT CHECK (staged_root IS NULL OR length(staged_root) <= 2048), phase TEXT CHECK (phase IS NULL OR phase IN ('retract', 'add')), cursor INTEGER NOT NULL, updated_at_ms INTEGER NOT NULL, immutable_bytes INTEGER NOT NULL)`,
   usage_contribution_projection_pending: `CREATE TABLE usage_contribution_projection_pending (id INTEGER PRIMARY KEY CHECK (id = 1), plan_hash TEXT NOT NULL, metadata TEXT NOT NULL CHECK (length(metadata) <= 8192), write_bytes INTEGER NOT NULL)`,
@@ -32,13 +36,47 @@ export type ContributionProjectionControl = Readonly<{
 export type ContributionProjectionPublication = Readonly<{
   revision: number; root: ContributionIndexReference | null; publishedAtMs: number; expiresAtMs: number | null;
 }>;
+export type ContributionStorageBudgetWarning = "derived_immutable_near_ceiling" | "canonical_immutable_near_ceiling"
+  | "canonical_metadata_near_ceiling";
+/** Cumulative lifetime physical-storage position of one account against its
+ * frozen logical ceilings. Charged bytes only grow: abort, retirement and
+ * cutover never refund, so reaching a ceiling is a refusal, not a reclaim.
+ * `remainingBytes` counts exact bytes still admissible under each ceiling. */
+export type ContributionStorageBudget = Readonly<{
+  derivedImmutableBytes: number; derivedImmutableCeilingBytes: number;
+  canonicalImmutableBytes: number; canonicalImmutableCeilingBytes: number;
+  canonicalMetadataBytes: number; canonicalMetadataCeilingBytes: number;
+  remainingBytes: Readonly<{ derivedImmutable: number; canonicalImmutable: number; canonicalMetadata: number }>;
+  warnings: readonly ContributionStorageBudgetWarning[];
+}>;
 export type ContributionProjectionStatus = Readonly<{
   schemaVersion: 3; accountId: string; generation: string; sourceRevision: number; appliedRevision: number; publishedRevision: number;
   appliedLag: number; publishedLag: number; lag: number;
   nextPublicationAtMs: number | null; publicationWait: "interval" | "retention" | "clock_limit" | null;
   staged: Readonly<{ revision: number; phase: ContributionReplayPhase; cursor: number; count: number }> | null;
-  pending: boolean; immutableBytes: number; refusal: ContributionError | null;
+  pending: boolean; immutableBytes: number; budget: ContributionStorageBudget; refusal: ContributionError | null;
 }>;
+const nearCeiling = (bytes: number, ceiling: number): boolean =>
+  bytes * CONTRIBUTION_STORAGE_WARNING_DENOMINATOR >= ceiling * CONTRIBUTION_STORAGE_WARNING_NUMERATOR;
+/** Pure over already validated control rows; every value is an exact integer
+ * within its declared ceiling, so the products stay below 2^53. */
+export function contributionStorageBudget(derivedImmutableBytes: number, canonicalImmutableBytes: number,
+  canonicalMetadataBytes: number): ContributionStorageBudget {
+  invariant(statsInteger(derivedImmutableBytes, 0, CONTRIBUTION_PROJECTION_MAX_IMMUTABLE_BYTES)
+    && statsInteger(canonicalImmutableBytes, 0, CONTRIBUTION_MAX_IMMUTABLE_BYTES)
+    && statsInteger(canonicalMetadataBytes, 0, CONTRIBUTION_MAX_METADATA_BYTES));
+  const warnings: ContributionStorageBudgetWarning[] = [];
+  if (nearCeiling(derivedImmutableBytes, CONTRIBUTION_PROJECTION_MAX_IMMUTABLE_BYTES)) warnings.push("derived_immutable_near_ceiling");
+  if (nearCeiling(canonicalImmutableBytes, CONTRIBUTION_MAX_IMMUTABLE_BYTES)) warnings.push("canonical_immutable_near_ceiling");
+  if (nearCeiling(canonicalMetadataBytes, CONTRIBUTION_MAX_METADATA_BYTES)) warnings.push("canonical_metadata_near_ceiling");
+  return Object.freeze({ derivedImmutableBytes, derivedImmutableCeilingBytes: CONTRIBUTION_PROJECTION_MAX_IMMUTABLE_BYTES,
+    canonicalImmutableBytes, canonicalImmutableCeilingBytes: CONTRIBUTION_MAX_IMMUTABLE_BYTES,
+    canonicalMetadataBytes, canonicalMetadataCeilingBytes: CONTRIBUTION_MAX_METADATA_BYTES,
+    remainingBytes: Object.freeze({ derivedImmutable: CONTRIBUTION_PROJECTION_MAX_IMMUTABLE_BYTES - derivedImmutableBytes,
+      canonicalImmutable: CONTRIBUTION_MAX_IMMUTABLE_BYTES - canonicalImmutableBytes,
+      canonicalMetadata: CONTRIBUTION_MAX_METADATA_BYTES - canonicalMetadataBytes }),
+    warnings: Object.freeze(warnings) });
+}
 type Step = Readonly<{
   schemaVersion: 3; accountId: string; generation: string; source: CommittedContributionRevision; appliedRevision: number;
   previousRoot: ContributionIndexReference | null; phase: ContributionReplayPhase; cursor: number; consumed: number;
@@ -180,6 +218,18 @@ export class ContributionProjectionState {
       || !same(step.source, control.source) || !same(step.previousRoot, control.stagedRoot)
       || step.phase !== control.phase || step.cursor !== control.cursor) throw new ContributionFault("conflict");
   }
+  /** Every index root the projection still references: control roots, a
+   * pending step's previous and next roots and every retained publication row,
+   * expired or not (only an explicit publish prunes rows). Read-only. */
+  referencedRoots(): readonly ContributionIndexReference[] {
+    const control = this.control(), pending = this.pending(), values: ContributionIndexReference[] = [];
+    for (const root of [control.appliedRoot, control.publishedRoot, control.stagedRoot, pending?.step.previousRoot ?? null, pending?.step.root ?? null])
+      if (root) values.push(root);
+    const rows = this.sql.exec("SELECT root FROM usage_contribution_projection_publications LIMIT ?", CONTRIBUTION_PROJECTION_MAX_PUBLICATIONS + 1).toArray();
+    invariant(rows.length <= CONTRIBUTION_PROJECTION_MAX_PUBLICATIONS);
+    for (const row of rows) { const root = reference(row.root === null ? null : json(row.root)); if (root) values.push(root); }
+    return Object.freeze(values);
+  }
   publication(revision: number, now: number): ContributionProjectionPublication {
     const control = this.control(); this.#canonical(control, now);
     if (!statsInteger(revision, 0, control.publishedRevision)) throw new ContributionFault("invalid_input");
@@ -229,7 +279,8 @@ export class ContributionProjectionState {
       appliedLag: source.revision - control.appliedRevision, publishedLag: source.revision - control.publishedRevision, lag: source.revision - control.publishedRevision,
       ...this.#publicationWindow(control, current, now),
       staged: control.source ? Object.freeze({ revision: control.source.revision, phase: control.phase!, cursor: control.cursor, count: control.source.deltaCount }) : null,
-      pending: this.pending() !== null, immutableBytes: control.immutableBytes, refusal });
+      pending: this.pending() !== null, immutableBytes: control.immutableBytes,
+      budget: contributionStorageBudget(control.immutableBytes, source.immutableBytes, source.metadataBytes), refusal });
   }
   begin(proof: VerifiedContributionRevision, authority: ContributionProjectionAuthority): void {
     if (!isVerifiedContributionRevision(proof)) throw new ContributionFault("invalid_input");
@@ -302,6 +353,36 @@ export class ContributionProjectionState {
       this.sql.exec("UPDATE usage_contribution_projection_control SET published_revision=?,published_root=?,updated_at_ms=? WHERE id=1",
         control.appliedRevision, encode(control.appliedRoot), authority.observedAtMs);
       return this.publication(control.appliedRevision, authority.observedAtMs);
+    });
+  }
+  /** Repair cutover: replace the current publication's root at its unchanged
+   * revision. This is a compare-and-swap over the source revision (both
+   * frontiers equal it), the absence of staged and pending work, and the exact
+   * current root on the control row and the non-expiring publication row. It
+   * charges nothing: the replacement root's objects were reserved and charged
+   * when they were written. Cursors pinned to the retired root read
+   * `snapshot_expired` from now on; the caller records that root and its
+   * retirement horizon so no reclamation can touch it before the horizon. */
+  cutover(expected: ContributionIndexReference | null, root: ContributionIndexReference | null,
+    authority: ContributionProjectionAuthority): ContributionProjectionPublication {
+    if ((expected !== null && !parseContributionIndexReference(expected)) || (root !== null && !parseContributionIndexReference(root)))
+      throw new ContributionFault("invalid_input");
+    return this.storage.transactionSync(() => {
+      const control = this.control(), source = this.#authority(control, authority).control();
+      if (control.source !== null || this.pending() !== null || control.appliedRevision !== control.publishedRevision
+        || control.publishedRevision !== source.revision || source.pendingOperation !== null) throw new ContributionFault("conflict");
+      const current = this.publication(control.publishedRevision, authority.observedAtMs);
+      if (current.expiresAtMs !== null || !same(current.root, expected) || !same(control.publishedRoot, expected)
+        || !same(control.appliedRoot, expected)) throw new ContributionFault("conflict");
+      if (control.publishedRevision === 0 && root !== null) throw new ContributionFault("conflict");
+      if (authority.observedAtMs > CONTRIBUTION_MAX_TIME - CONTRIBUTION_PROJECTION_RETIRE_MS) throw new ContributionFault("limit");
+      this.sql.exec("UPDATE usage_contribution_projection_control SET applied_root=?,published_root=?,updated_at_ms=? WHERE id=1",
+        encode(root), encode(root), authority.observedAtMs);
+      this.sql.exec("UPDATE usage_contribution_projection_publications SET root=?,published_at_ms=? WHERE revision=? AND expires_at_ms IS NULL",
+        encode(root), authority.observedAtMs, control.publishedRevision);
+      const result = this.publication(control.publishedRevision, authority.observedAtMs);
+      invariant(same(result.root, root) && result.expiresAtMs === null && result.publishedAtMs === authority.observedAtMs);
+      return result;
     });
   }
 }

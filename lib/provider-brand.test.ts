@@ -1,45 +1,52 @@
 import { describe, expect, test } from "bun:test";
 
+import { providerMark, providerMarkGlyphDataUri } from "@hraness/design-kit";
 import { providerColors } from "./chart-colors.generated";
-import { lobeModelIconDataUrls } from "./model-card-icons.generated";
 import { brandMonogram, chipGlyphColor, providerBrand } from "./provider-brand";
 
+function registeredIconUrl(identity: string): string {
+  const mark = providerMark(identity);
+  if (mark === undefined) throw new Error(`Test expects a registered mark for ${identity}.`);
+  return providerMarkGlyphDataUri(mark, "#f7f6f2");
+}
+
 describe("provider brand resolution", () => {
-  test("charted providers get their generated chart color and pinned icon", () => {
+  test("charted providers get their generated chart color and registry icon", () => {
     const openAi = providerBrand("OpenAI");
     expect(openAi.chipColor).toBe(providerColors.openai);
-    expect(openAi.iconUrl).toBe(lobeModelIconDataUrls.openai);
+    expect(openAi.iconUrl).toBe(registeredIconUrl("openai"));
 
     const nvidia = providerBrand("NVIDIA");
     expect(nvidia.chipColor).toBe(providerColors.nvidia);
-    expect(nvidia.iconUrl).toBe(lobeModelIconDataUrls.nvidia);
+    expect(nvidia.iconUrl).toBe(registeredIconUrl("nvidia"));
   });
 
   test("folds the naming variants benchmark sources actually publish", () => {
     for (const alias of ["SpaceXAI", "xAI", "xai"]) {
       expect(providerBrand(alias).chipColor).toBe(providerColors.xai);
-      expect(providerBrand(alias).iconUrl).toBe(lobeModelIconDataUrls.xai);
+      expect(providerBrand(alias).iconUrl).toBe(registeredIconUrl("xai"));
     }
     for (const alias of ["Z AI", "Z.AI", "Z.ai", "zai"]) {
       expect(providerBrand(alias).chipColor).toBe(providerColors.z_ai);
     }
-    expect(providerBrand("Google DeepMind").iconUrl).toBe(lobeModelIconDataUrls.gemini);
+    expect(providerBrand("Google DeepMind").iconUrl).toBe(registeredIconUrl("gemini"));
     expect(providerBrand("Kimi").chipColor).toBe(providerColors.moonshot_ai);
-    expect(providerBrand("Moonshot AI").iconUrl).toBe(lobeModelIconDataUrls.moonshot);
+    expect(providerBrand("Moonshot AI").iconUrl).toBe(registeredIconUrl("moonshot"));
     expect(providerBrand("Alibaba").chipColor).toBe(providerColors.alibaba_cloud);
-    expect(providerBrand("Anthropic").iconUrl).toBe(lobeModelIconDataUrls.claude);
+    expect(providerBrand("Anthropic").iconUrl).toBe(registeredIconUrl("anthropic"));
   });
 
   test("matches a source slug when the display name is unknown", () => {
     const brand = providerBrand("Some New Lab Name", "openai");
     expect(brand.chipColor).toBe(providerColors.openai);
+    expect(brand.iconUrl).toBe(registeredIconUrl("openai"));
     expect(brand.monogram).toBe("SN");
   });
 
-  test("cognition keeps its chart color with a monogram instead of an icon", () => {
+  test("cognition keeps its chart color with the registered Devin mark", () => {
     const brand = providerBrand("Cognition");
     expect(brand.chipColor).toBe(providerColors.cognition);
-    expect(brand.iconUrl).toBeNull();
+    expect(brand.iconUrl).toBe(registeredIconUrl("devin"));
     expect(brand.monogram).toBe("C");
   });
 

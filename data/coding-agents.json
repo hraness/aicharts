@@ -3,7 +3,7 @@
   "source": {
     "name": "Artificial Analysis",
     "url": "https://artificialanalysis.ai/agents/coding-agents/",
-    "retrievedAt": "2026-09-23T03:44:34.316Z",
+    "retrievedAt": "2026-09-25T14:39:44.751Z",
     "method": "next-flight",
     "benchmarkDatasets": {
       "deepSwe": "deep-swe-v1.1",
@@ -12,6 +12,23 @@
     }
   },
   "updates": [
+    {
+      "id": "[\"model-added\",\"2026-09-25T14:39:44.751Z\",\"[\\\"Claude Code\\\",\\\"anthropic\\\",\\\"Opus 5.5\\\"]\"]",
+      "detectedAt": "2026-09-25T14:39:44.751Z",
+      "agent": "Claude Code",
+      "model": "Opus 5.5",
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "setting": "max",
+      "benchmarks": {
+        "aaIndex": 65.9885802549234,
+        "deepSwe": 68.4365781710915,
+        "terminalBench": 63.13131313131311,
+        "sweAtlas": 66.3978494623656
+      },
+      "kind": "model-added",
+      "variantCount": 1
+    },
     {
       "id": "[\"model-added\",\"2026-09-23T03:44:34.316Z\",\"[\\\"Codex\\\",\\\"openai\\\",\\\"GPT-6 Sol\\\"]\"]",
       "detectedAt": "2026-09-23T03:44:34.316Z",
@@ -479,6 +496,32 @@
       },
       "usage": {
         "totalTokens": 11374850.488998907
+      }
+    },
+    {
+      "id": "ab5074e404be48bbd4ac3c488ad9a3e2",
+      "agent": "Claude Code",
+      "model": "Opus 5.5",
+      "modelLabel": "Opus 5.5 (max)",
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "seriesId": "Claude Code:anthropic_claude-opus-5-5",
+      "seriesLabel": "Claude Code · Opus 5.5",
+      "setting": "max",
+      "settingRank": 6,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 65.9885802549234,
+        "deepSwe": 68.4365781710915,
+        "terminalBench": 63.13131313131311,
+        "sweAtlas": 66.3978494623656
+      },
+      "economics": {
+        "costUsd": 13.036383418426828,
+        "durationSeconds": 3867.0923410341024
+      },
+      "usage": {
+        "totalTokens": 15551383.220022004
       }
     },
     {

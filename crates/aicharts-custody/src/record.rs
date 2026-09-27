@@ -43,6 +43,18 @@ impl CredentialRef {
         self.purpose
     }
 
+    /// The name Keychain Access and the macOS consent dialog show for the
+    /// item. Lookups never use it; only items created after it was added
+    /// carry it, so older items keep showing their service name.
+    #[cfg(any(test, target_os = "macos"))]
+    pub(crate) fn label(&self) -> &'static str {
+        match self.purpose {
+            Purpose::Checkpoint => "AI Charts checkpoint key",
+            Purpose::Pairing => "AI Charts pairing key",
+            Purpose::Namespace => "AI Charts namespace key",
+        }
+    }
+
     #[cfg(any(test, target_os = "macos"))]
     pub(crate) fn service(&self) -> &'static str {
         match self.purpose {

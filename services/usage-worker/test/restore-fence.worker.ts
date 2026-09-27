@@ -159,6 +159,30 @@ describe("RestoreFence", () => {
     expect(view(await stub(accountId).read({ accountId, generation })).record?.established).toBe(false);
   });
 
+  it("expired leases do not count against the live-holder grant cap", async () => {
+    const accountId = account(), generation = enrollmentRandom();
+    const request = { accountId, generation, epoch: 0, workerVersion: VERSION, leaseMs: 1 };
+    // Simulate executions killed between grant and settle (e.g. the request
+    // CPU cap aborting a migration exchange): the attempt/lease pair stays
+    // registered past its deadline with no settle path left.
+    for (let index = 0; index < 64; index += 1)
+      lease(await stub(accountId).assertOpen({ ...request, attemptId: enrollmentRandom() }));
+    await new Promise(resolve => setTimeout(resolve, 30));
+    // Every lease is expired yet present: raw drain reporting still counts
+    // them, but a fresh grant must not refuse `limit` forever.
+    expect(view(await stub(accountId).read({ accountId, generation })).inFlight).toBe(64);
+    const grant = lease(await stub(accountId).assertOpen({ ...request, leaseMs: 5000, attemptId: enrollmentRandom() }));
+    expect(view(await stub(accountId).read({ accountId, generation })).inFlight).toBe(65);
+    // The stale leases still settle individually and keep their evidence.
+    expect((await stub(accountId).release({ accountId, token: grant.token, committed: true })).ok).toBe(true);
+    expect(view(await stub(accountId).read({ accountId, generation })).inFlight).toBe(64);
+    // And a live cap still binds: 64 fresh live leases refuse the next grant.
+    const accountId2 = account(), generation2 = enrollmentRandom();
+    for (let index = 0; index < 64; index += 1)
+      lease(await stub(accountId2).assertOpen({ ...request, accountId: accountId2, generation: generation2, leaseMs: 5000, attemptId: enrollmentRandom() }));
+    expect(fail(await stub(accountId2).assertOpen({ ...request, accountId: accountId2, generation: generation2, leaseMs: 5000, attemptId: enrollmentRandom() }))).toBe("limit");
+  });
+
   it("capacity refuses new attempts while existing unknown grants still reconcile and cancel", async () => {
     const accountId = account(), generation = enrollmentRandom();
     const cancellation = { accountId, generation, epoch: 0, workerVersion: VERSION, attemptId: enrollmentRandom() };

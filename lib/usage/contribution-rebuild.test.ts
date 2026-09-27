@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { contributionCellKey, MAX_CONTRIBUTION_ROLLUP_CELLS, MAX_CONTRIBUTION_ROLLUP_VALUE, parseContributionCell,
   planContributionRollups, type ContributionCell } from "./contribution-rollups";
 import { contributionRebuildRowCellKey, planContributionRebuildCells, type ContributionRebuildInput } from "./contribution-rebuild";
-import { parseUsageStatsRow, type UsageStatsRow } from "./stats-contract";
+import { parseUsageStatsRow, STATS_MAX_TOKENS_PER_RECORD, type UsageStatsRow } from "./stats-contract";
 
 const id = (value: number) => value.toString(16).padStart(32, "0");
 function row(day = 20, amount = "1", priced: "reported" | "estimated" | "none" = "none", timed = false): UsageStatsRow {
@@ -30,16 +30,19 @@ function fold(values: readonly ContributionRebuildInput[], size: number) {
 }
 const ordered = (cells: ReadonlyMap<string, ContributionCell>) => [...cells].sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0);
 
-test("independent rebuild keeps exact wide tokens and separate cost/timing cohorts", () => {
-  const values = [input(1, row(20, "9007199254740993", "reported", true)), input(2, row(20, "7", "reported", true)),
-    input(3, row(20, "3", "estimated")), input(4, row(20, "0"))];
+test("independent rebuild keeps exact tokens at the per-record bound and separate cost/timing cohorts", () => {
+  // Inputs require records=1, so 8,388,608 tokens is the admitted row cap.
+  const wide = String(STATS_MAX_TOKENS_PER_RECORD - 14n);
+  const estimatedRow = input(3, row(20, "3", "estimated")), unknownRow = input(4, row(20, "0"));
+  const values = [input(1, row(20, wide, "reported", true)),
+    input(2, row(20, "7", "reported", true)), estimatedRow, unknownRow];
   const actual = fold(values, 2), known = actual.get(contributionRebuildRowCellKey(values[0].row)!)!;
   expect(actual.size).toBe(3); expect(known.observations).toBe(2);
-  expect(known.tokens).toEqual({ input: "9007199254741000", cacheRead: "4", cacheWrite: "6", output: "8", reasoning: "10" });
-  expect(known.costMicrousd).toBe("14"); expect(known.durationMs).toBe("0"); expect(known.timedTokens).toBe("9007199254741000");
-  const estimated = actual.get(contributionRebuildRowCellKey(values[2].row)!)!;
+  expect(known.tokens).toEqual({ input: "8388601", cacheRead: "4", cacheWrite: "6", output: "8", reasoning: "10" });
+  expect(known.costMicrousd).toBe("14"); expect(known.durationMs).toBe("0"); expect(known.timedTokens).toBe("8388601");
+  const estimated = actual.get(contributionRebuildRowCellKey(estimatedRow.row)!)!;
   expect(estimated.costMicrousd).toBe("11"); expect(estimated.durationMs).toBeNull(); expect(estimated.timedTokens).toBe("0");
-  const unknown = actual.get(contributionRebuildRowCellKey(values[3].row)!)!;
+  const unknown = actual.get(contributionRebuildRowCellKey(unknownRow.row)!)!;
   expect(unknown.costMicrousd).toBeNull(); expect(unknown.durationMs).toBeNull(); expect(unknown.observations).toBe(1);
 });
 

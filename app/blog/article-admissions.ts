@@ -45,7 +45,7 @@ export type BlogArticleAdmission = Readonly<{
   /** How the note was drafted; the visible provenance note states it. */
   drafting: ArticleDraftingKind;
   /** The recorded reviewer. An AI reviewer is named as AI and never called human. */
-  reviewedBy: typeof REVIEWED_BY | typeof CLAUDE_REVIEWED_BY;
+  reviewedBy: typeof REVIEWED_BY | typeof CLAUDE_REVIEWED_BY | typeof WEEKDAY_MONITOR_REVIEWED_BY;
   reviewerType: "ai";
   /**
    * The answer a reader could not get from the obvious first result. Older
@@ -83,6 +83,8 @@ const REASSESS_ON = "2026-10-13" as const;
 const EVIDENCE_OWNER = "AI Charts editorial" as const;
 const REVIEWED_BY = "Codex editorial review" as const;
 const CLAUDE_REVIEWED_BY = "Claude Opus 5.5 (claude-opus-5-5) editorial review" as const;
+/** The scheduled AI monitor that scored the admission and named the reader task before drafting. */
+const WEEKDAY_MONITOR_REVIEWED_BY = "weekday-monitor AI editorial review" as const;
 /** Notes written before the drafting field existed were drafted by AI agents from their cited sources. */
 const AI_DRAFTED = "ai" as const;
 const AI_REVIEWER = "ai" as const;
@@ -184,6 +186,81 @@ export const BLOG_ARTICLE_ADMISSIONS = {
       voiceIntegrity: 2,
     },
     sourceCheckedOn: INTRODUCING_REVIEWED_ON,
+  },
+  "opus-5-5-intelligence-index": {
+    canonicalOwner: blogArticlePath("opus-5-5-intelligence-index"),
+    decision: "keep",
+    drafting: AI_DRAFTED,
+    evidenceOwner: EVIDENCE_OWNER,
+    evidenceType: "checked-dataset-analysis",
+    harmIfWrong:
+      "The Intelligence Index score of Claude Opus 5.5 could be quoted as a coding-agent result or set against the Claude Code · Opus 5 AA Index as one ranking, the $5.98 cost per Index task could be compared with a harness cost per task or a list price, a launch-week rank or frontier run could be repeated after new rows entered the chart, the effort-level rows could be read as measurements of one setting, or Anthropic’s vendor-run table and 40% cost claim could be cited as independent evidence.",
+    hostFit:
+      "AI Charts stores every Claude Opus 5.5 effort level in the checked Intelligence Index snapshot and the Claude Code · Opus 5 row in the checked coding-agent snapshot, so it can derive the rank, frontier walk, nearest-score table, effort ladder, and cost components from the same data the charts plot without adding a data surface.",
+    humanReviewedOn: null,
+    lifecycleState: "indexable",
+    nearestUrls: [
+      {
+        distinction:
+          "The AA Index page derives the coding-agent cost frontier from harness rows; this page places one model on the separate Intelligence Index frontier and uses the coding-agent snapshot only to separate the Claude Code · Opus 5 row from the Opus 5.5 subject.",
+        url: blogArticlePath("aa-index-cost-coding-agents"),
+      },
+      {
+        distinction:
+          "The GPT-6 Sol page places Sol on both charts and tabulates its effort ladder; this page places Claude Opus 5.5 on the Intelligence Index alone, walks the frontier from the top, splits the cost per task into its components, and names GPT-6 Sol only as the first frontier point from another model.",
+        url: blogArticlePath("gpt-6-sol-coding-agent-index"),
+      },
+      {
+        distinction:
+          "The Grok 4.7 page places one xAI model on both charts and compares it with Grok 4.6 in the same harness; this page never places Grok and has no same-harness predecessor, because the coding-agent snapshot stores no Opus 5.5 row.",
+        url: blogArticlePath("grok-4-7-coding-agent-index"),
+      },
+      {
+        distinction:
+          "The MiMo page places one open-weights model on the Intelligence Index cost frontier and tests an investor’s claims; this page places the chart’s leading configuration and reads the frontier downward from it.",
+        url: blogArticlePath("mimo-v2-6-pro-cost-frontier"),
+      },
+    ],
+    nonObviousAnswer:
+      "Claude Opus 5.5’s 57.6 is the top of the Intelligence Index, but the chart’s next three frontier points are the same model at lower effort, the last step from xhigh to max buys 1.6 points at 1.7x the cost, and the Claude Code · Opus 5 row that readers set beside it is a different model scored on three coding benchmarks inside a harness.",
+    observations: [
+      "Walking the Intelligence Index cost frontier down from its highest-scoring point, the first four points are Claude Opus 5.5 at max, xhigh, high, and medium effort, and the first point from another model is GPT-6 Sol (max) at 47.5 for $1.06 per task.",
+      "Across the five Claude Opus 5.5 effort levels, input-side cost stays between 60% and 63% of the cost per task while the reasoning share of output tokens rises from 33% at low to 70% at max.",
+      "The coding-agent snapshot stores no Claude Opus 5.5 row in any harness, and the Intelligence Index snapshot stores no Claude Opus 5 row, so the Opus 5 to Opus 5.5 step Anthropic describes cannot be measured on either chart from the checked data.",
+    ],
+    originalContribution:
+      "A snapshot-derived statement of Claude Opus 5.5 (max)’s Intelligence Index rank, frontier membership, absence of one-point neighbors, and the five highest-scoring configurations after it; a walk down the cost frontier showing the first four points are the same model at lower effort and naming the first point from another model; a five-level effort ladder stating what each step buys with the reasoning share of output tokens; a split of the cost per task into cache reads, cache writes, non-cached input, reasoning, and answer tokens across the levels; and an explicit separation of the Index row from the Claude Code · Opus 5 coding-agent row.",
+    overlapDecision:
+      "Keep separately: the GPT-6 Sol and Grok 4.7 pages share the effort-ladder table and the two-chart frame as structure, but no current route places Claude Opus 5.5, walks the frontier from the top, splits an Index cost per task into its components, or separates the Opus 5 coding-agent row from the Opus 5.5 Index row, and fewer than a third of the headings or claims overlap the Sol, Grok, AA Index, or MiMo pages.",
+    primaryEvidence:
+      "The checked Intelligence Index snapshot supplies every Intelligence Index score, cost per task and its components, output token count, effort level, and release date for each Claude Opus 5.5 row and the cohort around it; the checked coding-agent snapshot supplies the Claude Code · Opus 5 AA Index, cost, rank, and the absence of an Opus 5.5 row; Artificial Analysis’s model page supplies the rounded score, prices, cache discount, index token total, context window, and summary sentences; Anthropic’s announcement supplies the release date, prices, default effort, cost claim, benchmark setting, and vendor-run table.",
+    primarySourceIds: [
+      "artificialAnalysisIntelligenceIndex",
+      "artificialAnalysisClaudeOpus55Model",
+      "anthropicClaudeOpus55",
+      "artificialAnalysisCodingAgents",
+    ],
+    readerJob:
+      "Understand what Claude Opus 5.5’s leading Intelligence Index configuration measures, its score, cost per task, effort ladder, and nearest configurations, and how that Index placement differs from the separate Claude Code · Opus 5 coding-agent row.",
+    reassessOn: "2026-10-30",
+    refreshTriggers: [
+      "A data refresh adds, removes, or rescores a Claude Opus 5.5 row, a Claude Opus 5 row, or any row that changes the Intelligence Index rank, frontier walk, or nearest-score table",
+      "The coding-agent snapshot gains a Claude Opus 5.5 row in any harness",
+      "Artificial Analysis changes the Intelligence Index version, its evaluations, or the Claude Opus 5.5 model page prices or summary",
+      "Anthropic changes Claude Opus 5.5 prices, effort levels, or the default effort level",
+    ],
+    reviewedBy: WEEKDAY_MONITOR_REVIEWED_BY,
+    reviewerType: AI_REVIEWER,
+    reviewedOn: "2026-09-25",
+    scores: {
+      factualConfidence: 2,
+      hostFit: 2,
+      maintenanceValue: 2,
+      originalEvidence: 2,
+      readerUtility: 2,
+      voiceIntegrity: 2,
+    },
+    sourceCheckedOn: "2026-09-25",
   },
   "gpt-6-sol-coding-agent-index": {
     canonicalOwner: blogArticlePath("gpt-6-sol-coding-agent-index"),

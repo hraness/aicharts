@@ -92,7 +92,7 @@ impl AccountDiagnostic {
         match self.reason {
             Reason::Verified => "Both retained credentials match this enrollment. Server access and unattended execution have not been checked by this result.",
             Reason::Custody(C::InteractionRequired) | Reason::References(aicharts_custody::references::Error::Custody(C::InteractionRequired)) =>
-                "macOS requires interaction. With operator approval, repeat this same diagnostic using the verified stable-signed executable and AICHARTS_CUSTODY_INTERACTION=allow. Then unset that override and repeat to check unattended access. This refusal does not mean credentials are missing.",
+                "macOS needs you to approve AI Charts' saved keys again, usually after an update. Your keys are not missing. Run this same command once with AICHARTS_CUSTODY_INTERACTION=allow in front of it, enter your Mac password if asked and choose Always Allow. Then run it again without that setting to check that background runs can read the keys.",
             Reason::Custody(C::AccessDenied) | Reason::References(aicharts_custody::references::Error::Custody(C::AccessDenied)) =>
                 "macOS denied access or the operator cancelled. Verify the signed executable and review native access consent before another approved attempt. This refusal does not mean credentials are missing.",
             Reason::Custody(C::Unavailable | C::Busy) | Reason::References(aicharts_custody::references::Error::Custody(C::Unavailable | C::Busy)) =>

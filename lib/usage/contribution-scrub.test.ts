@@ -4,7 +4,7 @@ import { ContributionCellScrubFold, CONTRIBUTION_SCRUB_MAX_HEADS, CONTRIBUTION_S
   CONTRIBUTION_SCRUB_RESPONSE_BYTES, decodeContributionScrubRequest, encodeContributionScrubResult,
   parseContributionScrubReceipt, parseContributionScrubRequest, parseContributionScrubResult,
   type ContributionScrubReceipt, type ContributionScrubRequest } from "./contribution-scrub";
-import { parseUsageStatsRow, type UsageStatsRow } from "./stats-contract";
+import { parseUsageStatsRow, STATS_MAX_TOKENS_PER_RECORD, type UsageStatsRow } from "./stats-contract";
 
 const dimensions = { utcDay: 20_000, client: "claude", provider: null, model: null,
   tokenBasis: "reported" as const, breakdownCoverage: "partial" as const, costKind: "reported" as const, timed: true };
@@ -41,7 +41,7 @@ test("independent fold adds every sufficient statistic and keeps exact nullable 
 });
 
 test("fold permutation and cohort partition laws hold over bounded generated observations", () => {
-  fc.assert(fc.property(fc.array(fc.integer({ min: 1, max: 1_000_000 }), { maxLength: CONTRIBUTION_SCRUB_MAX_HEADS }), values => {
+  fc.assert(fc.property(fc.array(fc.integer({ min: 1, max: Math.floor(Number(STATS_MAX_TOKENS_PER_RECORD) / 20) }), { maxLength: CONTRIBUTION_SCRUB_MAX_HEADS }), values => {
     const forward = new ContributionCellScrubFold(dimensions), reverse = new ContributionCellScrubFold(dimensions);
     for (const value of values) forward.add(row(value));
     for (const value of [...values].reverse()) reverse.add(row(value));

@@ -47,8 +47,9 @@ test("complement refuses underflow, absent days, duplicate removal and incompati
 
 test("property: subtracting disjoint partitions equals a direct fold of every remaining row without mutating inputs", () => {
   const scalar = fc.bigInt({ min: 0n, max: 999_999_999_999_999_999_999_999n });
+  const tokScalar = fc.bigInt({ min: 0n, max: 3_000_000n });
   const values = fc.array(fc.record({ group: fc.integer({ min: 0, max: 7 }), day: fc.integer({ min: 0, max: 6 }),
-    tokens: fc.tuple(scalar, scalar, scalar, scalar, scalar), cost: scalar, duration: scalar,
+    tokens: fc.tuple(tokScalar, tokScalar, tokScalar, tokScalar, tokScalar), cost: scalar, duration: scalar,
     known: fc.boolean(), complete: fc.boolean(), priced: fc.integer({ min: 0, max: 2 }), fullyPriced: fc.boolean(), timed: fc.boolean() }), { maxLength: 48 });
   assertProperty(fc.property(values, fc.uniqueArray(fc.integer({ min: 0, max: 7 }), { maxLength: 8 }), (values, remove) => {
     const source = values.map(value => {

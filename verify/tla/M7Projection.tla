@@ -2,6 +2,9 @@
 EXTENDS Naturals
 \* Small coherent day projection. Constructors/reads do not migrate or audit
 \* into SQL. Explicit registered maintenance rebuilds only derived evidence.
+\* UnsafeScrub removes the invalid-authority guard from the full scrub: a scrub
+\* proceeds while authoritative evidence is still valid (negative control only).
+CONSTANT UnsafeScrub
 VARIABLE s
 Init == s = [schema |-> 7, canonical |-> 1, projection |-> 0, sourceOwner |-> 0,
   writer |-> 1, authoritativeValid |-> TRUE, registered |-> FALSE,
@@ -21,7 +24,7 @@ CommitCorrection == /\ s.registered /\ s.schema = 8 /\ s.authoritativeValid
 CorruptDerived == /\ s.projection # 0 /\ s' = [s EXCEPT !.projection = 0]
 CorruptAuthority == /\ s.authoritativeValid /\ s.auditCached
   /\ s' = [s EXCEPT !.authoritativeValid = FALSE]
-ScrubRefuses == /\ s.registered /\ ~s.authoritativeValid
+ScrubRefuses == /\ s.registered /\ (UnsafeScrub \/ ~s.authoritativeValid)
   /\ s' = [s EXCEPT !.scrubbed = TRUE, !.refused = TRUE]
 Close == /\ ~s.closed /\ s' = [s EXCEPT !.closed = TRUE]
 RefuseClosedMaintenance == /\ s.closed /\ ~s.registered /\ ~s.refused

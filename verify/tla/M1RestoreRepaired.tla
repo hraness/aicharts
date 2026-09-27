@@ -3,8 +3,10 @@ EXTENDS Naturals, FiniteSets
 
 \* Two independent executions, one epoch transition. The clock is diagnostic.
 \* A terminal immutable tail has no remaining SQL/visibility continuation.
+\* OpCount independent executions; the development profile uses 2, nightly 3.
+CONSTANT OpCount
 VARIABLE s
-Ops == {1, 2}
+Ops == 1..OpCount
 Live == {o \in Ops : s.disposition[o] = "live"}
 CanPublish == {o \in Ops : s.stage[o] \in {"running", "ready"}}
 Init == s = [epoch |-> 0, phase |-> "open", clock |-> 0,

@@ -1,8 +1,9 @@
 import { STATS_MAX_BYTES, statsInteger, statsOwnRecord } from "./stats-contract";
-import { createMetricSnapshot, createMetricSnapshotJson, createMetricPublicSnapshotJson, disposeMetricSnapshot, evaluateMetricQueryCooperatively, metricReportMetadata, metricResultJson,
+import { createMetricSnapshot, createMetricSnapshotJson, createMetricPublicSnapshotJson, disposeMetricSnapshot, evaluateMetricQueryCooperatively, metricDefinition, metricReportMetadata, metricResultJson,
   parseMetricQuery, type MetricQuery, type MetricReportMetadata, type MetricResult, type MetricSnapshot } from "./metric-explorer";
 import { MAX_METRIC_VIEW_BYTES, metricPresentation, encodeMetricPresentation } from "../../components/usage/stats-metric-presentation";
 import { statsBoundRowsCsv } from "../../components/usage/stats-export";
+import { metricCsv } from "./metric-export";
 import { parseStatsRange, type StatsRange } from "./stats-http-contract";
 import { STATS_PUBLIC_MAX_BYTES, statsPublicStatus, type StatsPublicReply } from "./stats-public";
 import { usageAccountId } from "./account-public";
@@ -13,6 +14,14 @@ export const MAX_METRIC_RETAINED_RESULTS = 2;
 export const MAX_METRIC_ACTIVE_EXPORTS = 1;
 export const MAX_METRIC_REQUEST_ID = 2_147_483_647;
 export type MetricWorkerSlot = "main" | "detail";
+/** Exports: the full result as JSON, every bound source row as CSV, or one
+ * metric's total and groups as a per-metric CSV (D4/D12). */
+export type MetricExportFormat = "json" | "csv" | Readonly<{ metricCsv: string }>;
+export function parseMetricExportFormat(value: unknown): MetricExportFormat | null {
+  if (value === "json" || value === "csv") return value;
+  const record = statsOwnRecord(value, ["metricCsv"]);
+  return record !== null && typeof record.metricCsv === "string" && metricDefinition(record.metricCsv) !== undefined ? { metricCsv: record.metricCsv } : null;
+}
 export type MetricWorkerError = "invalid_request" | "invalid_report" | "query_failed" | "cancelled" | "view_limit" | "export_failed" | "closed";
 export type MetricHostedInput = Readonly<{ body: Blob; status: number; accountId: string | null; range: StatsRange }>;
 export type MetricHostedAdmission = Readonly<{ schemaVersion: 2; ok: true; accountId: string; metadata: MetricReportMetadata }>
@@ -68,9 +77,10 @@ export class MetricWorkerCore {
     }
     if (raw.kind === "export") {
       const payload = statsOwnRecord(raw.payload, ["resultId", "format"]);
-      if (payload === null || !statsInteger(payload.resultId, 1, MAX_METRIC_REQUEST_ID) || (payload.format !== "json" && payload.format !== "csv")) { this.#error(id, "invalid_request"); return; }
+      const format = payload === null ? null : parseMetricExportFormat(payload.format);
+      if (payload === null || format === null || !statsInteger(payload.resultId, 1, MAX_METRIC_REQUEST_ID)) { this.#error(id, "invalid_request"); return; }
       // Export IDs do not supersede the active query generation.
-      void this.#export(id, payload.resultId, payload.format); return;
+      void this.#export(id, payload.resultId, format); return;
     }
     if (raw.kind === "cancel" && statsInteger(raw.payload, 1, MAX_METRIC_REQUEST_ID)) {
       if (this.#latest === raw.payload) this.#latest = id;
@@ -141,13 +151,13 @@ export class MetricWorkerCore {
       }
     } finally { this.#running = false; }
   }
-  async #export(id: number, resultId: number, format: "json" | "csv") {
+  async #export(id: number, resultId: number, format: MetricExportFormat) {
     const result = this.#results.get("main");
     if (this.#exporting || this.#running || this.#pending !== null || result === undefined || result.id !== resultId) { this.#error(id, "cancelled"); return; }
     this.#exporting = true;
     const generation = this.#latest;
     try {
-      const text = format === "json" ? await metricResultJson(result.value) : await statsBoundRowsCsv(result.value);
+      const text = format === "json" ? await metricResultJson(result.value) : format === "csv" ? await statsBoundRowsCsv(result.value) : await metricCsv(result.value, format.metricCsv);
       if (this.#closed || this.#latest !== generation || this.#results.get("main") !== result) { this.#error(id, "cancelled"); return; }
       const blob = new Blob([text], { type: format === "json" ? "application/json;charset=utf-8" : "text/csv;charset=utf-8" });
       this.#reply({ kind: "export", id, resultId, blob });

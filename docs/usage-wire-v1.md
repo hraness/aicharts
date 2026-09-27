@@ -1,6 +1,6 @@
 # Usage measurement wire v1
 
-This is the local-only foundation for AI Charts Usage. No authenticated ingestion route is enabled by this contract. A structurally valid packet is self-reported data, not proof of authentic provider usage. Identity enrollment, durable admission, provider reconciliation and publishing remain separate work.
+This is the local-only foundation for AI Charts usage measurement. No authenticated ingestion route is enabled by this contract. A structurally valid packet is self-reported data, not proof of authentic provider usage. Identity enrollment, durable admission, provider reconciliation and publishing remain separate work.
 
 The separate [admission v1 contract](usage-admission-v1.md) wraps exact single-Usage frames with operation identities, predecessor hashes, bounded batches and terminal journals. It does not change these measurement bytes or turn structurally valid frames into authenticated usage.
 

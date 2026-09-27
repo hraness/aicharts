@@ -450,9 +450,9 @@
         "S16"
       ],
       "regression": "qualification-inventory",
-      "owner": "docs/usage-activation.md",
+      "owner": "docs/usage-claims.md",
       "obligation": "Claim inventory cites exact source/artifact/live evidence and does not promote dated activation to current proof.",
-      "status": "open",
+      "status": "fixed",
       "evidenceClass": "source-or-assurance-gap"
     }
   ],

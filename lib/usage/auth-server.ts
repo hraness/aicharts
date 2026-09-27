@@ -184,7 +184,7 @@ function beginAccountSession(request: Request, options: UsageAuthOptions, privat
     const fetcher = options.fetch ?? globalThis.fetch;
     const validTime = (value: number) => Number.isSafeInteger(value) && !Object.is(value, -0)
       && value >= 0 && value <= 8_640_000_000_000_000;
-    let open = true, readStarted = false, providerAttempted = false, observed = 0;
+    let open = true, readStarted = false, providerAttempted = false, providerRejected = false, observed = 0;
     let expiresAtMs: number | null = null;
     const finish = () => { open = false; };
     const current = () => {
@@ -213,7 +213,12 @@ function beginAccountSession(request: Request, options: UsageAuthOptions, privat
         // Do not reject a response after dispatch: let the SDK consume its body
         // and clean up. The read below fences the eventual session projection.
         providerAttempted = true;
-        return fetcher(input, init);
+        const response = await fetcher(input, init);
+        // A 401 is the provider's definite refusal of this session — unlike a
+        // network or server failure it settles as reauthentication, not an
+        // ambiguous outage.
+        if (response.status === 401) providerRejected = true;
+        return response;
       },
     });
     const unavailable = (): UsageAccountSessionRead => Object.freeze({ kind: "unavailable" });
@@ -224,7 +229,12 @@ function beginAccountSession(request: Request, options: UsageAuthOptions, privat
         const session = await authority.serverAccountSession(ownedRequest);
         if (!current()) return unavailable();
         if (session === null) {
-          if (providerAttempted) { finish(); return unavailable(); }
+          if (providerAttempted) {
+            finish();
+            return providerRejected
+              ? Object.freeze({ kind: "authentication_required" })
+              : unavailable();
+          }
           // No valid local session and no provider attempt. Keep the configuration
           // fence current until the request owner delivers this negative outcome.
           return Object.freeze({ kind: "authentication_required" });

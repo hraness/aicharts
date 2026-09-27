@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { resolve } from "node:path";
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { checkAssuranceRegistry, numericConstant, repositoryReader, type RegistryReader } from "./assurance-registry";
+import { checkAssuranceRegistry, metricSupportErrors, numericConstant, repositoryReader, type RegistryReader } from "./assurance-registry";
 
 const reader = repositoryReader(resolve(import.meta.dir, ".."));
 function mutate(file: string, change: (original: string) => string): RegistryReader {
@@ -31,6 +31,28 @@ describe("executable assurance inventory", () => {
       data.metrics = data.metrics.filter((row: { family: string }) => row.family !== removed); return JSON.stringify(data);
     }));
     expect(family.errors).toContain("metrics: all 17 catalog families required");
+  });
+  test("support states, surfaces and unavailable reasons are cross-checked per metric row", () => {
+    const implemented = { id: "accounted-tokens", status: "implemented", shipping: "required", supportState: "implemented-unqualified", surfaces: { view: true as const, filters: true as const, drilldown: true as const, export: true as const } };
+    const planned = { id: "compare-accounts", status: "planned", shipping: "source-conditional", supportState: "planned-incomplete", surfaces: { view: "unavailable-reason", filters: "not-applicable", drilldown: "not-applicable", export: "not-applicable" }, unavailableReason: "needs-account-dimensions" };
+    expect(metricSupportErrors(implemented)).toEqual([]);
+    expect(metricSupportErrors(planned)).toEqual([]);
+    expect(metricSupportErrors({ ...implemented, supportState: "profile-unobservable" })).toContain("accounted-tokens: observable metric marked profile-unobservable");
+    expect(metricSupportErrors({ ...planned, supportState: "profile-unobservable" })).toContain("compare-accounts: observable metric marked profile-unobservable");
+    expect(metricSupportErrors({ ...planned, shipping: "profile-unobservable" })).toContain("compare-accounts: unobservable metric must be profile-unobservable, not planned");
+    expect(metricSupportErrors({ ...implemented, surfaces: { ...implemented.surfaces, view: "hidden" } })).toContain("accounted-tokens: implemented metric lacks a declared view surface");
+    expect(metricSupportErrors({ ...planned, unavailableReason: undefined })).toContain("compare-accounts: planned-incomplete requires an unavailable reason");
+    expect(metricSupportErrors({ ...implemented, status: "planned" })).toContain("accounted-tokens: implemented-unqualified requires status implemented or qualified");
+    expect(metricSupportErrors({ ...planned, status: "implemented" })).toContain("compare-accounts: status implemented requires an implemented support state");
+    expect(metricSupportErrors({ ...implemented, supportState: "implemented-qualified" })).toContain("accounted-tokens: implemented-qualified and status qualified must agree");
+    expect(metricSupportErrors({ ...implemented, unavailableReason: "needs-observation-facts" })).toContain("accounted-tokens: implemented metric carries an unavailable reason");
+    expect(metricSupportErrors({ ...planned, surfaces: { ...planned.surfaces, export: true } })).toContain("compare-accounts: planned-incomplete metric declares a live surface");
+    expect(metricSupportErrors({ ...implemented, supportState: "activation-gated" })).toEqual([]);
+    const registry = checkAssuranceRegistry(mutate("verify/assurance/metrics.json", original => original.replace('"supportState": "implemented-unqualified"', '"supportState": "profile-unobservable"')));
+    expect(registry.errors.some(error => error.endsWith("observable metric marked profile-unobservable"))).toBe(true);
+    const counts = checkAssuranceRegistry(reader).counts;
+    expect(counts["metrics:implemented-unqualified"]).toBeGreaterThan(90);
+    expect(counts["metrics:profile-unobservable"]).toBe(0);
   });
   test("a new owned SQL table requires a registered lifecycle", () => {
     const result = checkAssuranceRegistry(mutate("services/usage-worker/src/admission-schema.ts", original => `${original}\nCREATE TABLE unregistered_numeric_events (id INTEGER);`));

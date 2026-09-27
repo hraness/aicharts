@@ -3,6 +3,9 @@ EXTENDS Naturals, FiniteSets
 \* Two independent source/occurrence pairs and two monotone revisions each.
 \* Source stamps and canonical facts publish in one transaction. Partial scans
 \* are refused by the caller before that transaction. Outbox bytes are frozen.
+\* UnsafeFreeze removes the single-frozen-batch guard: a second freeze replaces
+\* frozen outbox bytes before their settlement (negative control only).
+CONSTANT UnsafeFreeze
 VARIABLE s
 Ids == {1, 2}
 Zero == [i \in Ids |-> 0]
@@ -15,7 +18,7 @@ CommitScan(i) == /\ s.facts[i] < 2
   /\ s' = [s EXCEPT !.facts[i] = @ + 1, !.cursor[i] = @ + 1,
     !.revision = @ + 1]
 RefuseIncompleteScan == /\ ~s.refused /\ s' = [s EXCEPT !.refused = TRUE]
-Freeze == /\ s.frozen = Zero /\ Pending # {}
+Freeze == /\ (UnsafeFreeze \/ s.frozen = Zero) /\ Pending # {}
   /\ s' = [s EXCEPT !.frozen = [i \in Ids |-> IF i \in Pending THEN s.facts[i] ELSE 0],
     !.revision = @ + 1, !.freezes = @ + 1]
 ExactRetry == /\ s.frozen # Zero /\ ~s.retried

@@ -2166,7 +2166,7 @@ fn parse_all_messages_streaming<S: MessageSink>(
                         Some(&claude_home),
                     )
                 },
-                |path| sessions::claudecode::parse_claude_file_with_home(path, Some(&claude_home)),
+                |path| crate::offline_checkpoint::parse_claude(path, &claude_home),
             )
         })
         .collect();
@@ -2386,7 +2386,7 @@ fn parse_all_messages_streaming<S: MessageSink>(
         pricing,
         &mut all_messages,
         ClientId::Cursor,
-        sessions::cursor::parse_cursor_file,
+        crate::offline_checkpoint::parse_cursor,
     );
 
     parse_cached_lane(
@@ -3279,7 +3279,7 @@ fn parse_all_messages_streaming<S: MessageSink>(
                     db_path,
                     &source_cache,
                     pricing,
-                    sessions::devin::parse_devin_cli_sqlite,
+                    crate::offline_checkpoint::parse_devin_cli,
                 )
             })
             .collect();
@@ -3474,7 +3474,7 @@ fn parse_all_messages_streaming<S: MessageSink>(
                                     &scan_result.devin_dbs,
                                 )
                             });
-                            sessions::devin::parse_devin_desktop_ndjson_with_lookup(path, lookup)
+                            crate::offline_checkpoint::parse_devin_desktop(path, lookup)
                         } else if let Some(fingerprint) = fingerprint {
                             let lookup_cell = devin_desktop_lookup_cell_for_snapshot(
                                 &devin_desktop_lookups,
@@ -13765,17 +13765,17 @@ mod tests {
             );
 
             // Parent contributes its two turns. The two forks each replay the
-            // parent history (skipped) and then emit one own turn that lands on
-            // the identical cumulative total (140/14). Sibling forks sharing a
-            // cumulative total is the signature of a replayed row, so the
-            // fork-parent-scoped dedup key collapses them into one. Real fork
-            // fan-out replays the same upstream totals into 10-100+ siblings;
-            // two distinct turns reaching a byte-identical cumulative vector by
-            // chance does not happen in practice because the cumulative encodes
-            // each fork's divergent context size.
-            assert_eq!(messages.len(), 3);
-            assert_eq!(messages.iter().map(|m| m.tokens.input).sum::<i64>(), 140);
-            assert_eq!(messages.iter().map(|m| m.tokens.output).sum::<i64>(), 14);
+            // parent history (skipped at collection by the replay gate) and
+            // then emit one own turn that lands on the identical cumulative
+            // total (140/14). Identical cumulative values across siblings are
+            // legitimate: each child advances the shared counter snapshot from
+            // the same fork baseline, so distinct own turns can coincide on
+            // totals. The dedup key is scoped by the logical turn id — replayed
+            // copies carry the parent's turn id and collapse; the siblings'
+            // distinct own turns carry their own turn ids and both survive.
+            assert_eq!(messages.len(), 4);
+            assert_eq!(messages.iter().map(|m| m.tokens.input).sum::<i64>(), 150);
+            assert_eq!(messages.iter().map(|m| m.tokens.output).sum::<i64>(), 15);
         }
     }
 

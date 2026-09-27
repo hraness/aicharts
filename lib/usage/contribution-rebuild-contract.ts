@@ -22,10 +22,21 @@ export type ContributionRebuildError = ContributionError | "deadline" | "not_cau
 export const isContributionRebuildError = (value: unknown): value is ContributionRebuildError =>
   isContributionError(value) || value === "deadline" || value === "not_caught_up";
 export type ContributionRebuildReadRequest = Readonly<{ schemaVersion: 3; accountId: string; generation: string; jobId: string }>;
+export type ContributionRebuildAction = "begin" | "advance" | "abort" | "publish";
 export type ContributionRebuildRequest = ContributionRebuildReadRequest & (
   Readonly<{ action: "begin"; expectedVersion: 0; expectedRevision: number }>
-  | Readonly<{ action: "advance" | "abort"; expectedVersion: number }>);
-export type ContributionRebuildPhase = "building" | "comparing" | "match" | "mismatch" | "aborted";
+  | Readonly<{ action: "advance" | "abort" | "publish"; expectedVersion: number }>);
+/** `published` records an explicit, separately reviewed repair cutover: the
+ * verified scratch root replaced the current publication at the unchanged
+ * source revision. `advance` never reaches it. */
+export type ContributionRebuildPhase = "building" | "comparing" | "match" | "mismatch" | "aborted" | "published";
+/** SELECT-only readiness of a retained job relative to the current canonical
+ * position. `ready` means the next `advance` or `publish` may be attempted;
+ * every refusal names the exact anchor rule that would refuse it. `terminal`
+ * jobs are aborted or published and only readable. `unobserved` means the
+ * reader supplied no authority and the anchor was not evaluated. */
+export type ContributionRebuildReadiness = "ready" | "terminal" | "not_caught_up" | "legacy_unresolved" | "conflict"
+  | "recovery_required" | "generation_conflict" | "clock_regressed" | "storage_invalid" | "unobserved";
 export type ContributionRebuildBudget = Readonly<{
   sourceObjects: number; sourceBytes: number; indexObjects: number; indexBytes: number; writeObjects: number; writeBytes: number;
 }>;
@@ -40,10 +51,15 @@ export type ContributionRebuildReceipt = Readonly<{
   publishedRoot: ContributionIndexReference | null; scratchRoot: ContributionIndexReference | null;
   version: number; phase: ContributionRebuildPhase; processedHeads: number; liveHeads: number;
   checkedCells: number; headSteps: number; comparisonSteps: number; chargedBytes: number;
-  action: "begin" | "advance" | "abort"; expectedVersion: number; completedAtMs: number;
+  action: ContributionRebuildAction; expectedVersion: number; completedAtMs: number;
   difference: ContributionRebuildDifference | null; budget: ContributionRebuildBudget;
 }>;
-export type ContributionRebuildStatus = Readonly<{ receipt: ContributionRebuildReceipt; pending: boolean; chargedBytes: number }>;
+export type ContributionRebuildStatus = Readonly<{
+  receipt: ContributionRebuildReceipt; pending: boolean; chargedBytes: number; readiness: ContributionRebuildReadiness;
+}>;
+export const isContributionRebuildReadiness = (value: unknown): value is ContributionRebuildReadiness =>
+  value === "ready" || value === "terminal" || value === "not_caught_up" || value === "legacy_unresolved" || value === "conflict"
+  || value === "recovery_required" || value === "generation_conflict" || value === "clock_regressed" || value === "storage_invalid" || value === "unobserved";
 export type ContributionRebuildResult = Readonly<{ ok: true; value: ContributionRebuildReceipt }>
   | Readonly<{ ok: false; error: ContributionRebuildError }>;
 export type ContributionRebuildStatusResult = Readonly<{ ok: true; value: ContributionRebuildStatus | null }>
@@ -51,7 +67,9 @@ export type ContributionRebuildStatusResult = Readonly<{ ok: true; value: Contri
 const bytes = (text: string) => new TextEncoder().encode(text).byteLength;
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 const phase = (value: unknown): value is ContributionRebuildPhase =>
-  value === "building" || value === "comparing" || value === "match" || value === "mismatch" || value === "aborted";
+  value === "building" || value === "comparing" || value === "match" || value === "mismatch" || value === "aborted" || value === "published";
+const action = (value: unknown): value is ContributionRebuildAction =>
+  value === "begin" || value === "advance" || value === "abort" || value === "publish";
 export function parseContributionRebuildReadRequest(value: unknown): ContributionRebuildReadRequest | null {
   try {
     const raw = statsOwnRecord(value, ["schemaVersion", "accountId", "generation", "jobId"]);
@@ -68,7 +86,7 @@ export function parseContributionRebuildRequest(value: unknown): ContributionReb
     if (!raw || !owner) return null;
     if (raw.action === "begin" && statsInteger(raw.expectedVersion, 0, 0) && statsInteger(raw.expectedRevision, 1, CONTRIBUTION_MAX_OPERATIONS))
       return Object.freeze({ ...owner, action: "begin", expectedVersion: 0, expectedRevision: raw.expectedRevision });
-    return (raw.action === "advance" || raw.action === "abort") && !("expectedRevision" in raw)
+    return (raw.action === "advance" || raw.action === "abort" || raw.action === "publish") && !("expectedRevision" in raw)
       && statsInteger(raw.expectedVersion, 1, CONTRIBUTION_REBUILD_MAX_VERSION - 1)
       ? Object.freeze({ ...owner, action: raw.action, expectedVersion: raw.expectedVersion }) : null;
   } catch { return null; }
@@ -112,16 +130,18 @@ export function parseContributionRebuildReceipt(value: unknown): ContributionReb
       || !statsInteger(raw.processedHeads, 0, raw.headCount) || !statsInteger(raw.liveHeads, 0, raw.processedHeads)
       || !statsInteger(raw.checkedCells, 0, 262_144) || !statsInteger(raw.headSteps, 0, 16_384)
       || !statsInteger(raw.comparisonSteps, 0, 16_384) || !statsInteger(raw.chargedBytes, 0, 4_294_967_296)
-      || (raw.action !== "begin" && raw.action !== "advance" && raw.action !== "abort")
+      || !action(raw.action)
       || !statsInteger(raw.expectedVersion, 0, raw.version - 1) || raw.expectedVersion !== raw.version - 1
       || !statsInteger(raw.completedAtMs, 0, 8_640_000_000_000_000)) return null;
     const publishedRoot = raw.publishedRoot === null ? null : parseContributionIndexReference(raw.publishedRoot);
     const scratchRoot = raw.scratchRoot === null ? null : parseContributionIndexReference(raw.scratchRoot);
     const difference = raw.difference === null ? null : parseContributionRebuildDifference(raw.difference), budget = parseContributionRebuildBudget(raw.budget);
     if ((raw.publishedRoot !== null && !publishedRoot) || (raw.scratchRoot !== null && !scratchRoot)
-      || (raw.difference !== null && !difference) || !budget || (raw.phase === "mismatch") !== (difference !== null)
+      || (raw.difference !== null && !difference) || !budget || (raw.phase === "mismatch" && difference === null)
+      || (difference !== null && raw.phase !== "mismatch" && raw.phase !== "published")
       || (raw.phase === "building" && raw.processedHeads >= raw.headCount)
-      || ((raw.phase === "comparing" || raw.phase === "match" || raw.phase === "mismatch") && raw.processedHeads !== raw.headCount)
+      || ((raw.phase === "comparing" || raw.phase === "match" || raw.phase === "mismatch" || raw.phase === "published") && raw.processedHeads !== raw.headCount)
+      || (raw.phase === "published") !== (raw.action === "publish") || (raw.phase === "aborted") !== (raw.action === "abort")
       || (scratchRoot?.cells ?? 0) > raw.liveHeads || raw.checkedCells > Math.min(scratchRoot?.cells ?? 0, publishedRoot?.cells ?? 0)
       || (raw.phase === "match" && ((scratchRoot?.cells ?? 0) !== raw.checkedCells || (publishedRoot?.cells ?? 0) !== raw.checkedCells))) return null;
     const result: ContributionRebuildReceipt = Object.freeze({ schemaVersion: 3, profile: "canonical-index-rebuild-v3", scope: "full-index",

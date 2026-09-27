@@ -1,7 +1,7 @@
 //! Explicit enrolled command only. No daemon/default sync or activation join.
 use std::path::{Path, PathBuf};
 
-const HELP: &str = "AI Charts contribution sync — explicit V3 publication\n\n  aicharts contribution-sync --inspect --state-dir DIR --key-file KEY\n  aicharts contribution-sync --initialize --state-dir DIR --key-file KEY --population-id HEX\n  aicharts contribution-sync --send --state-dir DIR --key-file KEY --population-id HEX --claude FILE\n  aicharts contribution-sync --resume --state-dir DIR --key-file KEY\n  aicharts contribution-sync --cancel --state-dir DIR --key-file KEY\n\nRequires existing macOS enrollment, an already active V3 account, and an already\nowned population. This command never activates V3 or grants/transfers ownership.\nOnly one explicit Claude file is accepted, up to 64 MiB and 8,192 observations.\nCoverage remains partial; corrections, deletion and incomplete source warnings\nrequire reconciliation. A call checks at most 32 pages and sends at most one batch.\nRun --send again for additional bounded batches. Account-wide activation remains\nunsuitable while aggregate-only clients need their existing publication path.\n\nExact bytes are retained before sending. --resume retries the persisted action\nwithout reading source files. --cancel persists a one-way cancellation decision\nand fresh server revision before dispatch; it can refresh a refused cancellation.\nUnknown status never clears a flight. Terminal replies are authenticated and\ncorrelated before retirement. Never delete checkpoint files to recover or restore\nan older valid directory as a reset; independent custody/device fencing is needed\nfor backup rollback recovery. No automatic retries or live activation occur.\n\n--inspect is local-only: it reports the MAC-checked local checkpoint, not current\nenrollment or remote authority. It creates nothing and performs no sync, repair,\nsource reading or network request. Paths must be absolute.\n";
+const HELP: &str = "AI Charts contribution sync: explicit V3 publication\n\n  aicharts contribution-sync --status --state-dir DIR --key-file KEY [--population-id HEX]\n  aicharts contribution-sync --migrate --state-dir DIR --key-file KEY\n  aicharts contribution-sync --activate --state-dir DIR --key-file KEY\n  aicharts contribution-sync --grant --state-dir DIR --key-file KEY [--population-id HEX]\n  aicharts contribution-sync --inspect --state-dir DIR --key-file KEY\n  aicharts contribution-sync --initialize --state-dir DIR --key-file KEY [--population-id HEX]\n  aicharts contribution-sync --send --state-dir DIR --key-file KEY [--population-id HEX] (--claude FILE | --codex FILE) [--max-batches N]\n  aicharts contribution-sync --resume --state-dir DIR --key-file KEY\n  aicharts contribution-sync --cancel --state-dir DIR --key-file KEY\n\nRequires existing macOS enrollment. V3 account setup is explicit and opt-in:\n--migrate carries retained V1/V2 history into V3; --activate covers accounts\nwith no retained history; --grant claims a population (default: this device's\nderived primary). Control intents persist exact request bytes before dispatch,\nso a retry always replays the identical idempotent operation and settles from\nthe retained terminal. This command never deletes account data or the journal.\nOnly one explicit Claude or Codex file is accepted, up to 64 MiB and 8,192\nobservations. Coverage remains partial; corrections, deletion and incomplete\nsource warnings require reconciliation. Codex observations whose identity is a\nsame-timestamp slot, or from a regressed or forked history, are quarantined and\nnever sent. A call checks at most 32 pages per batch and sends one batch unless\n--max-batches N (1-8) drains further pending batches, each re-checking the\nserver position. Run --send again for additional bounded batches. Account-wide activation remains\nunsuitable while aggregate-only clients need their existing publication path.\n\nExact bytes are retained before sending. --resume retries the persisted action\nwithout reading source files. --cancel persists a one-way cancellation decision\nand fresh server revision before dispatch; it can refresh a refused cancellation.\nUnknown status never clears a flight. Terminal replies are authenticated and\ncorrelated before retirement. Never delete checkpoint files to recover or restore\nan older valid directory as a reset; independent custody/device fencing is needed\nfor backup rollback recovery. No automatic retries or live activation occur.\n\n--inspect is local-only: it reports the MAC-checked local checkpoint, not current\nenrollment or remote authority. It creates nothing and performs no sync, repair,\nsource reading or network request. Paths must be absolute.\n";
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Command {
     Inspect,
@@ -9,14 +9,22 @@ enum Command {
     Send,
     Resume,
     Cancel,
+    Status,
+    Activate,
+    Migrate,
+    Grant,
+    Onboard,
+    CancelMigration,
 }
 struct Options {
     command: Command,
     directory: PathBuf,
     key: PathBuf,
     population: Option<String>,
-    source: Option<PathBuf>,
+    source: Option<(aicharts_protocol::Provider, PathBuf)>,
+    max_batches: u8,
 }
+pub(super) const MAX_BATCHES: u8 = 8;
 fn path(value: &str) -> Result<PathBuf, &'static str> {
     if value.len() < 2
         || value.len() > 1023
@@ -35,11 +43,11 @@ fn path(value: &str) -> Result<PathBuf, &'static str> {
     Ok(value.into())
 }
 fn options(args: &[String]) -> Result<Options, &'static str> {
-    if args.first().map(String::as_str) != Some("contribution-sync") || args.len() > 10 {
+    if args.first().map(String::as_str) != Some("contribution-sync") || args.len() > 12 {
         return Err("invalid_option");
     }
-    let (mut command, mut directory, mut key, mut population, mut source) =
-        (None, None, None, None, None);
+    let (mut command, mut directory, mut key, mut population, mut source, mut max_batches) =
+        (None, None, None, None, None, None);
     let mut index = 1;
     while index < args.len() {
         let action = match args[index].as_str() {
@@ -48,6 +56,12 @@ fn options(args: &[String]) -> Result<Options, &'static str> {
             "--send" => Some(Command::Send),
             "--resume" => Some(Command::Resume),
             "--cancel" => Some(Command::Cancel),
+            "--status" => Some(Command::Status),
+            "--onboard" => Some(Command::Onboard),
+            "--activate" => Some(Command::Activate),
+            "--migrate" => Some(Command::Migrate),
+            "--grant" => Some(Command::Grant),
+            "--cancel-migration" => Some(Command::CancelMigration),
             _ => None,
         };
         if let Some(action) = action {
@@ -64,14 +78,36 @@ fn options(args: &[String]) -> Result<Options, &'static str> {
             "--population-id" if population.is_none() && super::wire::identity(value, 64) => {
                 population = Some(value.clone())
             }
-            "--claude" if source.is_none() => source = Some(path(value)?),
+            "--claude" if source.is_none() => {
+                source = Some((aicharts_protocol::Provider::ClaudeCode, path(value)?))
+            }
+            "--codex" if source.is_none() => {
+                source = Some((aicharts_protocol::Provider::Codex, path(value)?))
+            }
+            "--max-batches" if max_batches.is_none() => {
+                let count: u8 = value.parse().map_err(|_| "invalid_option")?;
+                if !(1..=MAX_BATCHES).contains(&count) || *value != count.to_string() {
+                    return Err("invalid_option");
+                }
+                max_batches = Some(count);
+            }
             _ => return Err("invalid_option"),
         }
         index += 2;
     }
     let command = command.ok_or("invalid_option")?;
-    if matches!(command, Command::Initialize | Command::Send) != population.is_some()
-        || (command == Command::Send) != source.is_some()
+    if (command == Command::Send) != source.is_some()
+        || (max_batches.is_some() && command != Command::Send)
+        || matches!(
+            command,
+            Command::Activate
+                | Command::Migrate
+                | Command::Resume
+                | Command::Cancel
+                | Command::Inspect
+                | Command::CancelMigration
+        ) && (population.is_some() || source.is_some())
+        || matches!(command, Command::Onboard) && source.is_some()
     {
         return Err("invalid_option");
     }
@@ -81,6 +117,7 @@ fn options(args: &[String]) -> Result<Options, &'static str> {
         key: key.ok_or("key_required")?,
         population,
         source,
+        max_batches: max_batches.unwrap_or(1),
     })
 }
 pub(super) fn run(args: &[String]) -> Result<String, &'static str> {
@@ -117,9 +154,19 @@ fn retained_terminal(
 }
 #[cfg(target_os = "macos")]
 fn local_inspect(directory: &Path, key: &[u8; 32]) -> Result<String, &'static str> {
-    let checkpoint = super::disk::Disk::reader(directory, key)?
-        .inspect_local()?
-        .ok_or("contribution_sync_checkpoint_missing")?;
+    let ops = super::ops::local_ops(directory, key)?;
+    let checkpoint = match super::disk::Disk::reader(directory, key)?.inspect_local()? {
+        Some(checkpoint) => checkpoint,
+        None => {
+            return ops
+                .map(|ops| {
+                    serde_json::to_string(&serde_json::json!({ "schemaVersion": 1,
+                    "scope": "local-ops", "remoteState": "not_observed", "ops": ops["ops"] }))
+                    .map_err(|_| super::INVALID)
+                })
+                .unwrap_or(Err("contribution_sync_checkpoint_missing"))
+        }
+    };
     let flight = checkpoint.flight.as_ref().map(|flight| {
         let batch = flight.body.reopen()?;
         let (action, cancellation_revision) = match flight.action {
@@ -131,12 +178,13 @@ fn local_inspect(directory: &Path, key: &[u8; 32]) -> Result<String, &'static st
     }).transpose()?;
     serde_json::to_string(&serde_json::json!({ "schemaVersion": 1, "scope": "local-checkpoint", "remoteState": "not_observed",
         "binding": checkpoint.binding, "lastSequence": checkpoint.last_sequence, "durableRevisionFloor": checkpoint.last_revision,
-        "terminal": retained_terminal(&checkpoint)?, "flight": flight }))
+        "terminal": retained_terminal(&checkpoint)?, "flight": flight, "ops": ops }))
         .map_err(|_| super::INVALID)
 }
 #[cfg(target_os = "macos")]
 fn read_source(
     transport: &super::https::Transport,
+    provider: aicharts_protocol::Provider,
     path: &Path,
 ) -> Result<aicharts_core::contribution_producer::NativeObservations, &'static str> {
     use std::{io::BufReader, os::unix::fs::MetadataExt};
@@ -147,7 +195,7 @@ fn read_source(
     if before.len() > aicharts_core::contribution_producer::MAX_SOURCE_BYTES {
         return Err("source_byte_limit");
     }
-    let observations = transport.read_claude(BufReader::new(&mut file))?;
+    let observations = transport.read_native(provider, BufReader::new(&mut file))?;
     let after = file
         .metadata()
         .map_err(|_| "contribution_sync_source_unavailable")?;
@@ -295,7 +343,53 @@ pub(super) fn send(
     {
         return Err(super::CONFLICT);
     }
-    Ok(format!("{{\"schemaVersion\":3,\"status\":\"selected_observations_match\",\"coverage\":\"partial\",\"canonicalRevision\":{},\"observations\":{}}}", progress.revision, observations.len()))
+    Ok(format!("{{\"schemaVersion\":3,\"status\":\"selected_observations_match\",\"coverage\":\"partial\",\"canonicalRevision\":{},\"observations\":{},\"quarantined\":{}}}", progress.revision, observations.len(), observations.quarantine().total()))
+}
+/// Continuous draining: repeat bounded single-batch sends while each batch
+/// settles committed and pages remain, at most `max_batches` times. Every
+/// iteration re-reads the authenticated server position; an abandoned or
+/// non-settled outcome, a matching selection, or the command deadline stops the
+/// loop. A single batch returns the plain send result unchanged.
+#[cfg(target_os = "macos")]
+pub(super) fn drain(
+    outbox: &mut super::Outbox,
+    transport: &super::https::Transport,
+    deadline: &super::https::Deadline,
+    population: &str,
+    observations: &aicharts_core::contribution_producer::NativeObservations,
+    max_batches: u8,
+) -> Result<String, &'static str> {
+    if !(1..=MAX_BATCHES).contains(&max_batches) {
+        return Err("invalid_option");
+    }
+    if max_batches == 1 {
+        return send(outbox, transport, deadline, population, observations);
+    }
+    let mut batches = Vec::new();
+    let mut status = "drained";
+    for _ in 0..max_batches {
+        let result = send(outbox, transport, deadline, population, observations)?;
+        let parsed: serde_json::Value =
+            serde_json::from_str(&result).map_err(|_| super::INVALID)?;
+        let settled_committed = parsed["status"] == "settled" && parsed["outcome"] == "committed";
+        let matched = parsed["status"] == "selected_observations_match";
+        batches.push(parsed);
+        if matched {
+            status = "drained";
+            break;
+        }
+        status = if settled_committed {
+            "batch_limit"
+        } else {
+            "stopped"
+        };
+        if !settled_committed {
+            break;
+        }
+    }
+    serde_json::to_string(&serde_json::json!({ "schemaVersion": 3, "status": status,
+        "batches": batches, "quarantined": observations.quarantine().total() }))
+    .map_err(|_| super::INVALID)
 }
 #[cfg(target_os = "macos")]
 fn run_macos(options: Options) -> Result<String, &'static str> {
@@ -307,14 +401,62 @@ fn run_macos(options: Options) -> Result<String, &'static str> {
     let transport = super::https::Transport::enrolled(&options.directory)?;
     let binding = transport.binding();
     if options.command == Command::Initialize {
-        let status = transport.status(
-            options.population.as_deref().ok_or("invalid_option")?,
-            None,
-            &deadline,
+        let population = population_or_journal(
+            options.population.as_deref(),
+            &options.directory,
+            &key,
+            binding,
         )?;
+        let status = transport.status(&population, None, &deadline)?;
         let progress = status.progress.ok_or("contribution_sync_writer_conflict")?;
         super::Outbox::initialize(&options.directory, &key, binding, &progress)?;
         return Ok("{\"schemaVersion\":3,\"status\":\"initialized\"}".into());
+    }
+    match options.command {
+        Command::Status => {
+            return super::ops::status(
+                &options.directory,
+                &key,
+                options.population.as_deref(),
+                &transport,
+                &deadline,
+            )
+        }
+        Command::Activate => {
+            return super::ops::activate(&options.directory, &key, &transport, &deadline)
+        }
+        Command::Migrate => {
+            return super::ops::migrate(
+                &options.directory,
+                &key,
+                &transport,
+                &deadline,
+                crate::stats_sync::account_revisions,
+            )
+        }
+        Command::CancelMigration => {
+            return super::ops::cancel_migration(&options.directory, &key, &transport, &deadline)
+        }
+        Command::Grant => {
+            return super::ops::grant(
+                &options.directory,
+                &key,
+                options.population.as_deref(),
+                &transport,
+                &deadline,
+            )
+        }
+        Command::Onboard => {
+            return super::ops::onboard(
+                &options.directory,
+                &key,
+                options.population.as_deref(),
+                &transport,
+                &deadline,
+                crate::stats_sync::account_revisions,
+            )
+        }
+        _ => {}
     }
     let mut outbox = super::Outbox::recover(&options.directory, &key, binding)?;
     match options.command {
@@ -328,20 +470,38 @@ fn run_macos(options: Options) -> Result<String, &'static str> {
             if outbox.checkpoint.flight.is_some() {
                 return Err("contribution_sync_resume_required");
             }
-            let observations = read_source(
-                &transport,
-                options.source.as_deref().ok_or("invalid_option")?,
-            )?;
-            send(
+            let (provider, path) = options.source.as_ref().ok_or("invalid_option")?;
+            let observations = read_source(&transport, *provider, path)?;
+            drain(
                 &mut outbox,
                 &transport,
                 &deadline,
-                options.population.as_deref().ok_or("invalid_option")?,
+                &population_or_journal(
+                    options.population.as_deref(),
+                    &options.directory,
+                    &key,
+                    binding,
+                )?,
                 &observations,
+                options.max_batches,
             )
         }
         _ => Err("invalid_option"),
     }
+}
+/// Send/initialize may omit --population-id only when the ops journal retains
+/// exactly one settled grant; otherwise the flag stays required.
+#[cfg(target_os = "macos")]
+fn population_or_journal(
+    explicit: Option<&str>,
+    directory: &Path,
+    key: &[u8; 32],
+    binding: &super::Binding,
+) -> Result<String, &'static str> {
+    if let Some(population) = explicit {
+        return Ok(population.into());
+    }
+    super::ops::journal_population(directory, key, binding).ok_or("invalid_option")
 }
 
 #[cfg(test)]

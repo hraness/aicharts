@@ -155,6 +155,9 @@ fn reference_is_fixed_scope_nonzero_and_role_separated() {
         assert_eq!(value.item_id(), &[12; 32]);
         assert_eq!(value.purpose(), purpose);
         assert!(value.service().starts_with("io.aicharts.usage.production."));
+        // The consent dialog names the item by its label, never the raw service.
+        assert!(value.label().starts_with("AI Charts ") && value.label().ends_with(" key"));
+        assert!(!value.label().contains("io.aicharts"));
         assert_eq!(value.account().len(), 132);
         assert!(value
             .account()

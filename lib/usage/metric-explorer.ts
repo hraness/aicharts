@@ -1,14 +1,14 @@
 import { parseUsageStatsJson, parseUsageStatsReport, statsInteger, statsOwnRecord, STATS_DAY_MS, STATS_MAX_DAY, type UsageStatsReport, type UsageStatsRow } from "./stats-contract";
 import { isStatsClient, isStatsModel, isStatsProvider } from "./stats-registry";
 import { addMetricRow, decodeMetricRow, finishMetricFold, mergeMetricAccumulatorInto, subtractMetricAccumulatorInto, metricAccumulator, metricFoldView, type DecodedMetricRow, type MetricAccumulator, type MetricFold } from "./metric-explorer-fold";
-import { metricDefinition, metricMeasure, type MetricMeasure } from "./metric-explorer-values";
+import { metricDefinition, metricMeasure, type MetricComparisonContext, type MetricMeasure, type MetricReason, type MetricValueContext } from "./metric-explorer-values";
 import { parseStatsPublicReply, type StatsPublicReply } from "./stats-public";
 import type { StatsRange } from "./stats-http-contract";
 
 export { MAX_METRIC_CATALOG_BYTES, MAX_METRIC_CATALOG_ROWS } from "./metric-explorer-catalog";
-export { METRIC_REASON_TEXT, metricCollectionPath, metricDefinition, metricExplanation, metricRecommendedDimension, metricMeasure, SUPPORTED_METRIC_IDS } from "./metric-explorer-values";
+export { METRIC_REASON_TEXT, metricCollectionPath, metricDefinition, metricChange, metricExplanation, metricRecommendedDimension, metricMeasure, SIGNED_METRIC_IDS, SUPPORTED_METRIC_IDS } from "./metric-explorer-values";
 export type { MetricFold } from "./metric-explorer-fold";
-export type { MetricMeasure, MetricReason, MetricValue } from "./metric-explorer-values";
+export type { MetricChange, MetricComparisonContext, MetricMeasure, MetricReason, MetricValue, MetricValueContext } from "./metric-explorer-values";
 export const MAX_METRIC_QUERY_IDS = 32;
 export const MAX_METRIC_QUERY_DIMENSIONS = 2;
 export const MAX_METRIC_TOP_K = 50;
@@ -31,13 +31,24 @@ export type MetricReportMetadata = Omit<UsageStatsReport, "rows">;
 type SnapshotData = { report: UsageStatsReport; rows: readonly DecodedMetricRow[]; snapshotDay: number | null; digest?: Promise<string> };
 const snapshots = new WeakMap<MetricSnapshot, SnapshotData>();
 const results = new WeakSet<MetricResult>();
-export type MetricGroup = Readonly<{ key: string; dimensions: readonly string[]; fold: MetricFold; measures: readonly MetricMeasure[]; other: boolean }>;
+/** `previous` holds the same cohort's measures for the previous period once
+ * exposure is matched; it is null when the cohort has no previous observations. */
+export type MetricGroup = Readonly<{ key: string; dimensions: readonly string[]; fold: MetricFold; measures: readonly MetricMeasure[]; other: boolean;
+  previous: readonly MetricMeasure[] | null }>;
+/** Matched comparison evidence. `matched` is exposure (both same-length windows
+ * inside the report, complete, every day observed); `cohort` records whether
+ * the two windows observe identical groups along the query dimensions. */
+export type MetricComparison = Readonly<{
+  firstUtcDay: number; dayCount: number; fold: MetricFold; matched: boolean; reason: MetricReason | null;
+  measures: readonly MetricMeasure[];
+  cohort: Readonly<{ matched: boolean; reason: MetricReason | null; currentOnly: number; previousOnly: number }>;
+}>;
 export type MetricResult = Readonly<{
   schemaVersion: 1; snapshot: MetricSnapshot; query: MetricQuery;
   fold: MetricFold; measures: readonly MetricMeasure[]; rows: readonly UsageStatsRow[];
   groups: readonly MetricGroup[]; totalGroups: number; otherGroups: number;
   composition: readonly MetricGroup[];
-  previous: Readonly<{ firstUtcDay: number; dayCount: number; fold: MetricFold; matched: false; reason: "period-coverage-unavailable" }> | null;
+  previous: MetricComparison | null;
   refreshSnapshot: Readonly<{ utcDay: number | null; rows: readonly UsageStatsRow[]; fold: MetricFold }>;
   coverage: Readonly<{ selectedSourceClients: number; sourceIssues: number; unknownBasisRecords: bigint;
     filteredOutRows: number; unobservedDays: number; includesCurrentOrFutureDay: boolean }>;
@@ -156,6 +167,8 @@ function* metricQuerySteps(snapshot: MetricSnapshot, value: unknown): Generator<
   if (query.firstUtcDay < data.report.firstUtcDay || query.firstUtcDay + query.dayCount > data.report.firstUtcDay + data.report.dayCount) return { ok: false, code: "metric_range_unavailable" };
   const total = metricAccumulator(), previous = metricAccumulator(), refreshSnapshot = metricAccumulator();
   const groups = new Map<string, { dimensions: readonly string[]; accumulator: MetricAccumulator }>();
+  const previousGroups = new Map<string, { dimensions: readonly string[]; accumulator: MetricAccumulator }>();
+  const generatedUtcDay = Math.floor(data.report.generatedAtMs / STATS_DAY_MS);
   const selectedRows: UsageStatsRow[] = [], snapshotRows: UsageStatsRow[] = [];
   const providers = new Set<string>(), models = new Set<string>();
   const firstPrevious = query.firstUtcDay - query.dayCount;
@@ -180,7 +193,16 @@ function* metricQuerySteps(snapshot: MetricSnapshot, value: unknown): Generator<
     const selected = source.utcDay >= query.firstUtcDay && source.utcDay < query.firstUtcDay + query.dayCount;
     if (selected && dimensionsMatch && source.tokenBasis === "unavailable") unknownBasisRecords += BigInt(source.records);
     if (!dimensionsMatch || !basis) { filteredOutRows++; continue; }
-    if (previousAvailable && source.utcDay >= firstPrevious && source.utcDay < query.firstUtcDay) addMetricRow(previous, row);
+    if (previousAvailable && source.utcDay >= firstPrevious && source.utcDay < query.firstUtcDay) {
+      addMetricRow(previous, row);
+      const dimensions = dimensionsFor(source, query.groupBy), key = JSON.stringify(dimensions);
+      let group = previousGroups.get(key);
+      if (group === undefined) {
+        if (previousGroups.size >= MAX_METRIC_GROUPS) return { ok: false, code: "metric_group_limit" };
+        group = { dimensions, accumulator: metricAccumulator() }; previousGroups.set(key, group);
+      }
+      addMetricRow(group.accumulator, row);
+    }
     if (!selected) { filteredOutRows++; continue; }
     addMetricRow(total, row); selectedRows.push(source);
     const dimensions = dimensionsFor(source, query.groupBy), key = JSON.stringify(dimensions);
@@ -193,15 +215,38 @@ function* metricQuerySteps(snapshot: MetricSnapshot, value: unknown): Generator<
   }
   const sources = data.report.sources.filter(source => dimensionMatches(source.client, query.filters.client) && source.client !== "warp");
   const sourceIssues = sources.filter(source => !["observed", "empty"].includes(source.status) || source.warnings > 0).length;
-  const fold = finishMetricFold(total), context = { firstUtcDay: query.firstUtcDay, dayCount: query.dayCount,
-    asOfUtcDay: Math.min(query.firstUtcDay + query.dayCount, Math.floor(data.report.generatedAtMs / STATS_DAY_MS)),
-    groupBy: query.groupBy, population: fold, costKind: query.costKind, sourceIssues };
-  const measures = (value: MetricFold) => Object.freeze(query.metricIds.map(id => metricMeasure(id, value, context)));
+  const fold = finishMetricFold(total), includesCurrentOrFutureDay = query.firstUtcDay + query.dayCount > generatedUtcDay;
+  // Matched exposure is derived from observed days only: both same-length
+  // windows lie inside the report, the selected window is complete, and every
+  // day of both windows carries observations. Anything less keeps the existing
+  // refusal; a populated but partially observed prior window is not evidence.
+  const previousFold = previousAvailable ? finishMetricFold(previous) : null;
+  const exposure = previousFold !== null && !includesCurrentOrFutureDay && fold.days.length === query.dayCount && previousFold.days.length === query.dayCount;
+  let currentOnly = 0, previousOnly = 0;
+  if (previousFold !== null) {
+    for (const key of groups.keys()) { if (++work % MAX_METRIC_COOPERATIVE_BATCH === 0) yield; if (!previousGroups.has(key)) currentOnly++; }
+    for (const key of previousGroups.keys()) { if (++work % MAX_METRIC_COOPERATIVE_BATCH === 0) yield; if (!groups.has(key)) previousOnly++; }
+  }
+  const cohortMatched = exposure && currentOnly === 0 && previousOnly === 0;
+  const comparison: Omit<MetricComparisonContext, "counterpart"> | null = previousFold === null ? null : { population: previousFold, matched: exposure,
+    reason: exposure ? null : "period-coverage-unavailable", cohortMatched, cohortReason: !exposure ? "period-coverage-unavailable" : cohortMatched ? null : "matched-cohort-unavailable" };
+  const context: MetricValueContext = { firstUtcDay: query.firstUtcDay, dayCount: query.dayCount,
+    asOfUtcDay: Math.min(query.firstUtcDay + query.dayCount, generatedUtcDay),
+    groupBy: query.groupBy, population: fold, costKind: query.costKind, sourceIssues, previous: comparison === null ? null : { ...comparison, counterpart: previousFold } };
+  const contextFor = (counterpart: MetricFold | null): MetricValueContext => comparison === null ? context : { ...context, previous: { ...comparison, counterpart } };
+  const measures = (value: MetricFold, counterpart: MetricFold | null) => Object.freeze(query.metricIds.map(id => metricMeasure(id, value, contextFor(counterpart))));
+  // The previous window's own values use that window's boundaries and no
+  // comparison of their own; a comparison never compares against a comparison.
+  const previousContext: MetricValueContext | null = previousFold === null ? null : { firstUtcDay: firstPrevious, dayCount: query.dayCount,
+    asOfUtcDay: Math.min(query.firstUtcDay, generatedUtcDay), groupBy: query.groupBy, population: previousFold, costKind: query.costKind, sourceIssues, previous: null };
+  const previousMeasures = (value: MetricFold | null) => value === null || previousContext === null ? null
+    : Object.freeze(query.metricIds.map(id => metricMeasure(id, value, previousContext)));
   const ordered: { key: string; dimensions: readonly string[]; accumulator: MetricAccumulator; rank: MetricMeasure["value"] | undefined }[] = [];
   for (const [key, group] of groups) {
     if (++work % MAX_METRIC_COOPERATIVE_BATCH === 0) yield;
+    const prior = previousGroups.get(key);
     ordered.push({ key, ...group, rank: query.sortBy === "label" ? undefined : query.sortBy === "records" ? { kind: "integer", amount: group.accumulator.totals.records }
-      : metricMeasure(query.sortBy, metricFoldView(group.accumulator), context).value });
+      : metricMeasure(query.sortBy, metricFoldView(group.accumulator), contextFor(prior === undefined ? null : metricFoldView(prior.accumulator))).value });
   }
   yield;
   ordered.sort((a, b) => {
@@ -213,13 +258,22 @@ function* metricQuerySteps(snapshot: MetricSnapshot, value: unknown): Generator<
   });
   yield;
   const kept: MetricGroup[] = ordered.slice(0, query.topK).map(group => {
-    const value = finishMetricFold(group.accumulator);
-    return Object.freeze({ key: group.key, dimensions: group.dimensions, fold: value, measures: measures(value), other: false });
+    const value = finishMetricFold(group.accumulator), prior = previousGroups.get(group.key);
+    const counterpart = prior === undefined ? null : finishMetricFold(prior.accumulator);
+    return Object.freeze({ key: group.key, dimensions: group.dimensions, fold: value, measures: measures(value, counterpart), other: false, previous: previousMeasures(counterpart) });
   });
   const omittedCount = Math.max(0, ordered.length - query.topK);
   if (omittedCount > 0) {
     const other = yield* metricOtherFold(total, ordered, query.topK);
-    kept.push(Object.freeze({ key: "other", dimensions: Object.freeze(["Other"]), fold: other, measures: measures(other), other: true }));
+    // Other's counterpart is the previous population minus the retained
+    // groups' previous folds, so retained and Other changes partition the total.
+    let counterpart: MetricFold | null = null;
+    if (previousFold !== null) {
+      const rest = metricAccumulator(); mergeMetricAccumulatorInto(rest, previous);
+      for (const group of ordered.slice(0, query.topK)) { const prior = previousGroups.get(group.key); if (prior !== undefined) subtractMetricAccumulatorInto(rest, prior.accumulator); }
+      counterpart = finishMetricFold(rest);
+    }
+    kept.push(Object.freeze({ key: "other", dimensions: Object.freeze(["Other"]), fold: other, measures: measures(other, counterpart), other: true, previous: previousMeasures(counterpart) }));
   }
   // The chart keeps one global set of token-leading categories independently
   // of table sorting. Every day shares those slots and an exact Other fold.
@@ -227,18 +281,20 @@ function* metricQuerySteps(snapshot: MetricSnapshot, value: unknown): Generator<
     : a.accumulator.totals.total < b.accumulator.totals.total ? 1 : a.key < b.key ? -1 : a.key > b.key ? 1 : 0);
   const composition: MetricGroup[] = byTokens.slice(0, MAX_METRIC_COMPOSITION_SERIES).map(group => {
     const value = finishMetricFold(group.accumulator);
-    return Object.freeze({ key: group.key, dimensions: group.dimensions, fold: value, measures: Object.freeze([]), other: false });
+    return Object.freeze({ key: group.key, dimensions: group.dimensions, fold: value, measures: Object.freeze([]), other: false, previous: null });
   });
   if (byTokens.length > MAX_METRIC_COMPOSITION_SERIES) {
     const value = yield* metricOtherFold(total, byTokens, MAX_METRIC_COMPOSITION_SERIES);
-    composition.push(Object.freeze({ key: "other", dimensions: Object.freeze(["Other"]), fold: value, measures: Object.freeze([]), other: true }));
+    composition.push(Object.freeze({ key: "other", dimensions: Object.freeze(["Other"]), fold: value, measures: Object.freeze([]), other: true, previous: null }));
   }
-  const result: MetricResult = Object.freeze({ schemaVersion: 1, snapshot, query, fold, measures: measures(fold), rows: Object.freeze(selectedRows),
+  const result: MetricResult = Object.freeze({ schemaVersion: 1, snapshot, query, fold, measures: measures(fold, previousFold), rows: Object.freeze(selectedRows),
     groups: Object.freeze(kept), totalGroups: ordered.length, otherGroups: omittedCount, composition: Object.freeze(composition),
-    previous: previousAvailable ? Object.freeze({ firstUtcDay: firstPrevious, dayCount: query.dayCount, fold: finishMetricFold(previous), matched: false, reason: "period-coverage-unavailable" }) : null,
+    previous: previousFold === null || comparison === null ? null : Object.freeze({ firstUtcDay: firstPrevious, dayCount: query.dayCount, fold: previousFold, matched: exposure,
+      reason: comparison.reason, measures: previousMeasures(previousFold) ?? Object.freeze([]),
+      cohort: Object.freeze({ matched: cohortMatched, reason: comparison.cohortReason, currentOnly, previousOnly }) }),
     refreshSnapshot: Object.freeze({ utcDay: snapshotRows.length === 0 ? null : data.snapshotDay, rows: Object.freeze(snapshotRows), fold: finishMetricFold(refreshSnapshot) }),
     coverage: Object.freeze({ selectedSourceClients: sources.length, sourceIssues, unknownBasisRecords, filteredOutRows,
-      unobservedDays: query.dayCount - fold.days.length, includesCurrentOrFutureDay: query.firstUtcDay + query.dayCount > Math.floor(data.report.generatedAtMs / STATS_DAY_MS) }),
+      unobservedDays: query.dayCount - fold.days.length, includesCurrentOrFutureDay }),
     facets: Object.freeze({ clients: Object.freeze(data.report.sources.map(source => source.client)), providers: Object.freeze([...providers].sort()), models: Object.freeze([...models].sort()), hasEstimated }) });
   results.add(result);
   return { ok: true, value: result };
@@ -280,8 +336,12 @@ export async function metricResultJson(result: MetricResult): Promise<string> {
   if (!isMetricResult(result)) throw new Error("metric_result_invalid");
   const digest = await metricSnapshotDigest(result.snapshot);
   const json = JSON.stringify({ schemaVersion: 1, profile: "metric-explorer-v1", snapshot: { ...result.snapshot, sha256: digest }, query: result.query,
-    scope: "observed numeric aggregates; source gaps remain unknown", comparison: "unavailable without matched population and exposure evidence",
-    coverage: result.coverage, measures: result.measures, groups: result.groups.map(({ key, dimensions, measures, other }) => ({ key, dimensions, measures, other })),
+    scope: "observed numeric aggregates; source gaps remain unknown",
+    comparison: result.previous?.matched ? "matched previous period: same-length window inside the report with observations on every day of both; group changes need identical cohorts"
+      : "unavailable without matched population and exposure evidence",
+    previous: result.previous === null ? null : { firstUtcDay: result.previous.firstUtcDay, dayCount: result.previous.dayCount, matched: result.previous.matched,
+      reason: result.previous.reason, cohort: result.previous.cohort, daysWithRecords: result.previous.fold.days.length, measures: result.previous.measures },
+    coverage: result.coverage, measures: result.measures, groups: result.groups.map(({ key, dimensions, measures, other, previous }) => ({ key, dimensions, measures, other, previous })),
     totalGroups: result.totalGroups, otherGroups: result.otherGroups,
     grouping: "Global aggregation precedes top-K; Other merges all omitted contributions. Ratios and distinct-day counts are not additive.",
   }, (_, value: unknown) => typeof value === "bigint" ? value.toString() : value);

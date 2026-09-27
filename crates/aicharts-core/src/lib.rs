@@ -308,6 +308,17 @@ fn values(t: &Tokens) -> [u64; 6] {
         t.reasoning_output,
     ]
 }
+/// Checked u64 counter addition through the kernel: a sum beyond u64 is an
+/// invalid counter, never a wrapped or saturated one.
+fn add_counter(total: u64, value: u64) -> Result<u64, Error> {
+    let sum = aicharts_metrics::checked_add_bounded(
+        u128::from(total),
+        u128::from(value),
+        u128::from(u64::MAX),
+    )
+    .map_err(|_| Error::InvalidCounters)?;
+    u64::try_from(sum).map_err(|_| Error::InvalidCounters)
+}
 fn bounded(tokens: Tokens) -> Result<Tokens, Error> {
     tokens.total().map_err(|_| Error::InvalidCounters)?;
     Ok(tokens)
@@ -611,10 +622,15 @@ fn parse_claude<R: BufRead>(
         let (cache_write_5m, cache_write_1h) = if let Some(creation) = raw.cache_creation {
             let five = creation.ephemeral_5m_input_tokens.unwrap_or(0);
             let hour = creation.ephemeral_1h_input_tokens.unwrap_or(0);
-            let total = five.checked_add(hour).ok_or(Error::InvalidCounters)?;
-            if raw.cache_creation_input_tokens.is_some_and(|v| v != total) {
-                return Err(Error::InvalidCounters);
-            }
+            // A declared total must equal the TTL split; an absent total is the
+            // split's checked sum. The kernel refuses any other partition.
+            let total = match raw.cache_creation_input_tokens {
+                Some(total) => u128::from(total),
+                None => aicharts_metrics::checked_add(u128::from(five), u128::from(hour))
+                    .map_err(|_| Error::InvalidCounters)?,
+            };
+            aicharts_metrics::CacheWrites::with_ttl(total, u128::from(five), u128::from(hour))
+                .map_err(|_| Error::InvalidCounters)?;
             (five, hour)
         } else if raw.cache_creation_input_tokens.unwrap_or(0) != 0 {
             out.warn(Warning::ClaudeCacheTtlUnknown);
@@ -733,15 +749,9 @@ fn parse_devin<R: BufRead>(
             output,
             reasoning_output: 0,
         })?;
-        totals[0] = totals[0]
-            .checked_add(prompt)
-            .ok_or(Error::InvalidCounters)?;
-        totals[1] = totals[1]
-            .checked_add(output)
-            .ok_or(Error::InvalidCounters)?;
-        totals[2] = totals[2]
-            .checked_add(cached)
-            .ok_or(Error::InvalidCounters)?;
+        for (total, value) in totals.iter_mut().zip([prompt, output, cached]) {
+            *total = add_counter(*total, value)?;
+        }
         if !any_tokens(&tokens) {
             continue;
         }

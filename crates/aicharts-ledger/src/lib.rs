@@ -572,12 +572,20 @@ fn status(tx: &Connection) -> Result<LedgerStatus> {
         if usage.id.as_slice() != id || record_revision == 0 || record_revision > current_revision {
             return Err(Error::InvalidState);
         }
-        tokens = tokens
-            .checked_add(usage.tokens.total().map_err(|_| Error::InvalidState)?)
+        let total = usage.tokens.total().map_err(|_| Error::InvalidState)?;
+        for (target, value) in [
+            (&mut tokens, total),
+            (&mut output_tokens, usage.tokens.output),
+        ] {
+            *target = aicharts_metrics::checked_add_bounded(
+                u128::from(*target),
+                u128::from(value),
+                u128::from(u64::MAX),
+            )
+            .ok()
+            .and_then(|sum| u64::try_from(sum).ok())
             .ok_or(Error::Limit)?;
-        output_tokens = output_tokens
-            .checked_add(usage.tokens.output)
-            .ok_or(Error::Limit)?;
+        }
     }
     let mut mask = 0;
     let mut statement = tx.prepare(&format!(

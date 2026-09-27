@@ -502,7 +502,7 @@ The integration owner controls manifests/lockfiles, shared schemas/capacity/metr
 
 ### Phase 3 — Exact metric kernel and theorem pilot
 
-- **Status:** In progress — production Kani/Lean gates admitted on macOS and, from PR #422, executed on the required ubuntu-24.04 Formal verification job with reviewed Linux Kani exceptions; source refinement and unbounded claims remain open
+- **Status:** In progress — production Kani/Lean gates admitted on macOS and, from PR #422, executed on the required ubuntu-24.04 Formal verification job with reviewed Linux Kani exceptions; rounding harness bounded to a deterministic domain, conformance through M12 and the nightly suite landed; source refinement and unbounded claims remain open
 - **Depends on:** 0, 1A
 - **Objective:** Production arithmetic/normalization and core aggregation laws have appropriate proof evidence.
 - **Scope:** A new I/O-free owned metric kernel (proposed crates/aicharts-metrics), Kani harnesses, profile mappings and one theorem-route pilot. The integrator owns changes to existing callers shared with ingestion lanes.
@@ -514,7 +514,7 @@ The integration owner controls manifests/lockfiles, shared schemas/capacity/metr
 
 ### Phase 4 — Source qualification, incremental ingestion and health
 
-- **Status:** In progress
+- **Status:** In progress — checkpoint generation 3, incremental ingestion across all advertised local sources and a per-publication source-health-v1 summary landed; private provider qualification and hosted publication remain open
 - **Depends on:** 0, 1A
 - **Objective:** Advertised source support has evidence, collection scales with changes, and failed refreshes remain visible.
 - **Scope:** F18/F19; vendor compatibility target, source/version manifest, numeric health channel, checkpoints and refresh acquisition.
@@ -526,10 +526,10 @@ The integration owner controls manifests/lockfiles, shared schemas/capacity/metr
 
 ### Phase 5 — Canonical account contributions and migration
 
-- **Status:** In progress — durable contributions, bounded retained-data migration and exact head/query RPC/HTTP joins; native durable producer and full recovery qualification remain open
+- **Status:** In progress — durable contributions, bounded retained-data migration, exact head/query RPC/HTTP joins, native rich-fact producers with revision-ledger sync and the reviewed rebuild cutover CAS landed; full recovery and live contribution qualification remain open
 - **Depends on:** 1B, 2B, 3
 - **Objective:** Multi-device reporting, corrections and v1/v2 transitions have one lossless ownership model.
-- **Scope:** Contribution/control schemas, source overlap/replacement proofs, writer transfer, generation/capacity contract and numeric private facts.
+- **Scope:** Contribution/control schemas, source overlap/replacement proofs, writer transfer (retired with the writer concept in PR #427), generation/capacity contract and numeric private facts.
 - **Out of scope:** Treating device totals as automatically disjoint or buying a new data platform.
 - **Approach:** Prefer independent contributions with stable observation/provenance identity; use complete snapshots only within explicitly owned scopes. Retain v1 compatibility until a verified takeover covers its facts. Separate canonical controls from derived stats.
 - **Acceptance:** Mirrored histories deduplicate, disjoint histories sum, incomplete scans never erase, moving corrections update old/new cells, old writer callbacks refuse, and retry/rejection uses capacity once. Genuine old database fixtures migrate atomically or recover with original bytes intact.
@@ -538,7 +538,7 @@ The integration owner controls manifests/lockfiles, shared schemas/capacity/metr
 
 ### Phase 6 — Derived storage, queries and retention
 
-- **Status:** In progress — exact correction cells, indexed queries, coalesced publication and bounded automatic work; independent rebuild, physical retention and operational qualification remain open
+- **Status:** In progress — exact correction cells, indexed queries, coalesced publication, bounded automatic work, the reviewed rebuild cutover CAS and the flag-off reclamation ledger (M12) landed; legacy resolution, live reclamation activation and operational qualification remain open
 - **Depends on:** 3, 5
 - **Objective:** Dashboard queries are bounded and fast while every result remains rebuildable from canonical facts.
 - **Scope:** F20/F21; indexes/exact manifests, sufficient statistics, partition rebuilds, snapshot cursors, resource accounting and GC.
@@ -572,7 +572,7 @@ resolution, physical reclamation and live recovery remain open.
 
 ### Phase 7 — Metric explorer and dashboard completeness
 
-- **Status:** In progress — bounded worker-backed local/hosted explorer and catalog; production qualification and canonical/rich integration remain open
+- **Status:** In progress — bounded worker-backed local/hosted explorer and catalog plus rich metric explorer, saved views, CSV export and per-metric coverage states; production qualification and canonical/rich integration remain open
 - **Depends on:** 1C, 3; 6 before hosted completion
 - **Objective:** A cohesive private product answers all catalog questions supported by available evidence.
 - **Scope:** Overview and explorer, definition/coverage disclosure, comparisons, filters, distributions, table/export/share, local mode and accessibility.
@@ -584,7 +584,7 @@ resolution, physical reclamation and live recovery remain open.
 
 ### Phase 8 — Rich numeric instrumentation and drilldown
 
-- **Status:** In progress — additive local numeric fact contract and qualified-profile adapters; hosted joins await canonical publication
+- **Status:** In progress — additive local numeric fact contract, qualified-profile adapters and bounded rich-fact producers with lineage; hosted joins await canonical publication
 - **Depends on:** 3, 4, 5, 6
 - **Objective:** Session, turn, request, context, timing and reliability metrics have real attributable evidence.
 - **Scope:** F24; bounded local numeric OTel/producer adapters and opted-in private numeric facts; per-observation histograms/lineage and coverage.
@@ -608,7 +608,7 @@ resolution, physical reclamation and live recovery remain open.
 
 ### Phase 10 — Privacy, account lifecycle and recovery operations
 
-- **Status:** Not started
+- **Status:** In progress — account lifecycle RPC (status, export, device list/revoke, two-step erase; the writer transfer was retired with the per-client writer in PR #427) with erasure tombstone, resumable steps and restore-fence sealing landed; manual billing/budgets/alerts and live recovery drills remain open
 - **Depends on:** 5, 6, 8
 - **Objective:** Users can inspect, export, move and remove their data, and operators can recover without resurrecting revoked authority.
 - **Scope:** F22/F25/F26; account-controlled devices/transfer, export/erase, retention/tombstones, consent/index liveness, health, backup/restore and incident procedures; numeric manual billing, budgets, transparent forecasts and opt-in in-product alerts per the shipping matrix.
@@ -620,7 +620,7 @@ resolution, physical reclamation and live recovery remain open.
 
 ### Phase 7B — Final metric and account-journey integration
 
-- **Status:** Not started
+- **Status:** In progress — local account journeys, saved views, exports and coverage states landed on the merged branch; canonical/lifecycle browser journeys await hosted qualification
 - **Depends on:** 6, 7, 8, 10
 - **Objective:** Newly supported rich metrics and lifecycle operations work throughout the complete product.
 - **Scope:** Dashboard/explorer/account views, private drilldown, exports, accessibility and end-to-end browser journeys after Phases 6, 7, 8 and 10.
@@ -632,7 +632,7 @@ resolution, physical reclamation and live recovery remain open.
 
 ### Phase 11 — Independent review and converged assurance gate
 
-- **Status:** Not started
+- **Status:** In progress — fuzz, fault-matrix, security and nightly suites landed with their receipts; the converged gate and independent review run on the merged integration candidate
 - **Depends on:** 1A, 1B, 1C, 2A, 2B, 3–10, 7B
 - **Objective:** The exact integration candidate meets the claimed correctness, performance and support envelope.
 - **Scope:** Full claim/metric/capability coverage, independent specification and implementation review, required CI, security/fuzz/fault/performance/native/browser evidence.
@@ -644,7 +644,7 @@ resolution, physical reclamation and live recovery remain open.
 
 ### Phase 12 — Delivery and production qualification
 
-- **Status:** Not started
+- **Status:** In progress — completion PR #441 merged as `2356eff` and the site production-verified; after the notice-policy fixes (#444, #446) the Linux CLI qualification passed at `40874b2`; Worker redeploy, usage flags, immutable publication and live drills stay owner-gated
 - **Depends on:** 11
 - **Objective:** Deliver the verified artifact and the fully working supported product, with exact production evidence.
 - **Scope:** Task-owned protected-main PRs, required independent review/CI, immutable distribution, deployment, account/provider/native acceptance and scheduled cutover.
@@ -1472,3 +1472,611 @@ pass result. Conformance traces M4-abandon, M4-devices and M4-overlap and the
 stats suite encode the new semantics; F09's writer transfer is retired with the
 writer concept. Open: the M4 TLA+ modules still describe the retired writer
 transfer as historical evidence, and the v1 uploader remains a manual path.
+
+### 2026-09-25 — Enrolled-device totals read and the Tokscale reconciliation
+
+The account totals projection shipped behind the coordinator's workload
+token, so a custody install could publish snapshots but could not ask what
+the account sums to without a browser session. A device read on the
+upload-secret family now closes that: `v2/snapshots/totals` accepts only
+the exact schema-2 identity body (account, device, generation), reuses the
+status path's fenced read, secret-commitment and namespace-anchor checks,
+answers through the same totals projection the dashboard renders, and sits
+under the same production admission gate as upload and status. The CLI
+exposes it as `stats-totals`, which opens custody and the strict transport
+only — never the ledger, sources, or enrollment state — and validates the
+full wire projection before rendering.
+
+Reconciling this Mac against the Tokscale public profile separated three
+phenomena that look identical in a single number. Cursor reconciles almost
+exactly: days where only cursor data existed aggregate to 1.02× between
+the server and the immutable CSV, and Tokscale's extra ~2.4B is June–
+September 2025 CSV rows outside the 366-day publishable window, not a
+counting difference. Devin and Claude local totals are newer and larger
+than Tokscale's own cached parse of the same surviving files because its
+parsers skip `adaptive`-mode sessions and rows without a generation model
+(24.6B of real DB tokens versus its 3.8B) — those are Tokscale
+undercounts, not gaps here.
+
+The material discrepancy is Codex and it is a server-side overcount. The
+local corpus still holds the rollout files for every disputed July–August
+day; raw per-turn `last_token_usage` deltas sum to ~123.4B and the
+fork-aware local total is ~104.5B, while the server carries ~230B
+attributable to codex. 2,037 Codex Desktop/VS Code forked rollouts each
+report a final cumulative `total_token_usage` near 12B — an inherited
+shared counter, not per-session usage — and summing those values as
+session totals would project ~14.3TB. Upstream history shows the
+submitting build straddled parser corrections (reasoning tokens counted
+twice, legacy replay turns escaping the child boundary); the server's
+monotonic per-day merge then preserved the inflated values permanently,
+since submitted days can only rise. The remaining ~118B device gap is
+consistent with roughly double-counted codex history plus days whose
+files were deleted before either tool could re-audit them; it is not
+explained by missing local sources alone.
+
+### 2026-09-24 — PR #422 merged and production-verified; completion program opened
+
+PR #422 was squash-merged to main as `fc95b51` at 20:45Z with the required
+Check, Menubar, Formal verification and Required jobs green (CI run
+36055796464). GitHub Production deployment 6647776777 resolved to Vercel
+deployment `dpl_3TA2bNgxfeQzY7Cf67XF6scjyUrm` on project
+`prj_0ppMfRRMDfiVsQ1JaekoxSZ7Mwgn`; the canonical origin served `/`,
+`/dashboard` and `/usage/sessions` with status 200 and an
+`X-Hraness-Delivery-Proof` header equal to the token recomputed from that
+identity. No feature flag, Worker deployment or user data changed.
+
+The remaining phases (3 source refinement, 4, 5, 6, 7, 8, 10, 7B, 11, 12)
+were split into nine disjoint-ownership lanes on the completion branch
+`codex/system-assurance-completion-20260924`: formal, kernel, cloud lifecycle,
+cloud storage, UI, native ingestion, native facts, delivery gates and delivery
+docs. The integrator owns this plan, the `check` chain, CI wiring and every
+registry not assigned to a lane; lanes propose edits to shared files. Lane
+paragraphs below record what each lane implemented, validated and left open.
+
+### 2026-09-24 — Kernel lane: production arithmetic routed through the kernel
+
+Phase 3 source refinement (SR-4 to SR-7) routed the remaining production
+arithmetic through `aicharts-metrics`. A new `decimal` module supplies
+canonical integer parsing and exact scaled half-up rounding; the detailed CLI
+cost conversion moved from an `f64` product to it, which corrected
+`0.0001245` USD (124 to 125 micro-USD) and a fabricated micro-dollar near
+2^53, both pinned as regressions. Row totals, summaries, the Claude cache TTL
+partition, Devin totals, ledger status counters and CLI collection counters
+now use `checked_sum`, `checked_add_bounded` and `CacheWrites::with_ttl` with
+unchanged results on valid input. A malformed checked-in tariff rate refuses
+the client's projection (incomplete source, warning, `ProjectionRefused` in
+measured health) rather than reading as an absent tariff; a test-only catalog
+seam exercises this end to end. Each report row's cost and timed cohorts are
+paired through `match_quantities` with the explorer's selection, and the
+TypeScript explorer applies the same pairing. `scripts/generate-kernel-vectors.ts`
+emits five seeded vector files (at least 2,064 cases each, production edges
+included) with a `--check` drift gate now wired into `check:generated`,
+evaluated by both the Rust kernel and the shared TypeScript. Focused cargo,
+clippy, fmt, bun, tsc and eslint gates passed. Kani/Lean coverage of the
+decimal functions and any live qualification remain open.
+
+### 2026-09-24 — Delivery docs lane: recorded evidence, publication path, claims
+
+Phase 12 delivery evidence and release path. The lane recorded PR #422's
+merge, deployment and proof facts in `docs/usage-activation.md` and added
+`usage:deployment:verify`, which recomputes the delivery-proof token from the
+inspected deployment identity and requires it on the three fixed pages; it
+passed for `fc95b51` at 22:33:45Z and for the next merge `1cf93bd` at
+22:53:14Z, and failed closed for `fc95b51` once the alias moved. The
+Cloudflare Worker was not redeployed; the runbook and worker guide state the
+schema-13 recovery-artifact prerequisite. The nonpublishing Linux
+qualification run 36066135869 at `fc95b51` failed at `read-link-map`
+(33,690,505 bytes over the 32 MiB bound); the shared bound was raised to
+64 MiB with boundary tests, and the tree remains Linux-unqualified until a new
+dispatch passes. A tag-triggered `cli-publish.yml` republishes a retained
+qualification as an immutable GitHub Release with OIDC provenance and
+post-publish digest and attestation verification; it is tested and unexecuted,
+with the macOS notarized release left to the owner. A claim inventory
+(`docs/usage-claims.md`, 67 rows) with `usage:claims:check` closed F26 and
+corrected two overclaims; the check runs inside `usage:assurance:check` and
+`release:publish:check` runs inside `check`.
+
+### 2026-09-24 — Delivery gates lane: fuzz, fault matrix, security and nightly
+
+Phase 11 gates. `bun run usage:fuzz` runs the new `crates/aicharts-fuzz`
+crate: seeded xorshift stateful and property suites for ledger command
+sequences over real SQLite (commit, freeze, settle, reopen, backup, restore),
+usage and admission wire round trips with byte corruption and single-violation
+injection, and metrics arithmetic, token-partition and dominance laws, across
+four named seeds, admitting one receipt per suite and seed at the configured
+workload; 28 receipts passed at 1,000 iterations in 4 m 14 s.
+`bun run usage:fault-matrix` inventories eleven existing injected-failure
+suites (six worker files, five cargo groups) by exact test name, fails when
+any is missing, and passed all eleven in 53 s; it covers crash-before,
+crash-after, lost-reply, restore-race and capacity exhaustion and records
+disk-full as an uncovered gap. `bun run security:check` audits both Cargo
+locks and bun.lock, verifies every dependency, crate, action and bunx target
+is pinned and hashed, scans tracked files for credential shapes, and
+re-applies the PostHog boundary plus a privacy canary over analytics and
+discovery surfaces; its first run found the real RUSTSEC-2026-0285 advisory
+against the exact `rustls = 0.23.44` pin, which the integrator raised to
+0.23.45. `test:property` now reaches nested `lib/**` property files (108
+tests). A daily 09:00 UTC nightly workflow runs the TLA nightly profile,
+200,000-iteration fuzz, the fault matrix, the security gate and an optional
+perf baseline; a non-required security workflow runs on every pull request.
+All implemented and locally passing; none live-qualified.
+
+### 2026-09-24 — Completion integration: all six remaining lanes merged
+
+All outstanding lanes landed on `codex/system-assurance-completion-20260924`
+with `--no-ff` merges: formal assurance (conformance M8–M11, Lean route, Kani
+coverage, nightly TLA), cloud account lifecycle (lifecycle RPC, erasure
+tombstone, restore fence), cloud storage (rebuild cutover CAS, reclamation
+ledger, M12 model), native ingestion (checkpoint generation 3, incremental
+sources, source-health-v1), native facts (rich-fact producers, revision
+ledger, contribution sync) and the UI lane (rich metric explorer, saved
+views, CSV export, coverage states). Three merge seams needed repair, none
+semantic: the M11 cutover configs predated the JobCount/Quota
+parameterization and now pin the development bounds their cases measured;
+the lifecycle lane's worker files carried latent type errors its validation
+never reached (missing `schemaVersion` on the erase withdrawal view, an
+`account_erased` fence refusal now carried by a dedicated `FenceRefusal`
+sentinel outside `AdmissionFault`'s domain, and a test RPC call whose mapped
+stub type exceeded the instantiation budget); and the conformance schedule's
+status expectation gained the rebuild contract's `readiness` field
+(`unobserved` without supplied authority). The nightly manifest gained the
+measured 1,511,899-state M12 wide-reclamation case. Integrated evidence so
+far: adapters 195/195, conformance 42 traces 0 failures, theorems 26+9,
+TLA baseline+repaired complete suite 87/87 including all cutover cases.
+The contributions flag remains off in every deployment; the reclamation
+ledger is implemented but not live-qualified.
+
+### 2026-09-25 — Main integrated: writer transfer retired, browser contracts repaired, full gate
+
+The completion branch absorbed `origin/main` at `b8c013b` (device-partitioned
+snapshots and lifetime totals from PR #427 through the 25 September rollout
+evidence). Six textual conflicts resolved mechanically: the path-filtered CI
+keeps main's shape with the branch's publication check, protocol adapter and
+conformance gates and Lean-before-Kani ordering; the collector's help text is
+main's with the branch's `--incremental` paragraph; both evidence logs keep
+both entries; `surfaces.json` carries main's six stats surfaces plus the
+reclamation ledger; the workflow action-pin multiset was regenerated. Four
+joins were semantic. First, the lifecycle lane's writer transfer
+(`transfer_request`, `transfer_grant`, `transfer_complete`) had nothing left
+to move once snapshots became per (client, day, device), so the operations,
+their views, RPCs and traces are retired from the lifecycle contract and the
+enrollment object; device revocation and the two-step erase stay. Second,
+main's four new account-scoped tables (`usage_stats_retired`,
+`usage_stats_day_totals`, `usage_admission_day_totals` and its cursor) join
+the export sections, and the erase step also drops the retired
+(client, day) tables so an unmigrated store erases completely; the coverage
+test that pins every `costs.json` surface to a section or a reason caught the
+gap. Third, a failed publication no longer stops later clients, so the
+contribution-sync test expects the remaining `publish` calls while every
+contribution send stays withheld for that cycle. Fourth, the UI lane's
+browser contracts had only ever run against a stale build: wrapping
+`<label>` selects need role queries, leaving a rich metric must re-select a
+classic one, the matched trend hint excludes the comparison paragraph,
+per-group changes may be negative, saved views keep their query string, and
+hour-of-day is refused in both grouping controls. The rich explorer remounts
+per facts revision. Evidence on the merged tree at host load 50–73 on 18 cores from concurrent
+sessions: typecheck, lint, Rust fmt, clippy and 470 CLI tests (19 autosubmit
+tests after the expectation fix), skill and eleven release checks, generated
+data, the assurance registry with claims and metric coverage (48 explorer and
+50 rich metrics exported), 83 cost surfaces, conformance 42 traces with 0
+failures, build, browser run 11 (pairing, stats desktop and mobile, sessions,
+dashboard, atlas), Bun 2221 of 2223 and vitest 716 of 721 tests. The seven
+misses are timeouts in tests byte-identical to main, which main's CI run
+36090166125 finishes in 20–50 % of their budgets, and the adapter gate's
+180 s cold build bound could not be met at this load (the bound is checked,
+not widened); the pull request's `Required` check on GitHub runners is the
+binding aggregate for those. Not activated: the contributions flag stays off
+in every deployment, the Worker is not redeployed, and no live drill ran.
+
+Main moved again before the pull request had a check. GitHub creates no
+`pull_request` run while it cannot build the merge ref, and the branch
+conflicted with the canonical product messaging (#438), the enrolled-device
+totals read (#439) and its plan record (#440); the workflow file itself was
+sound. The second absorption (`f796696`) resolved four CLI help strings,
+keeping the branch's extended text under main's colon heads, and the plan
+log kept both entries; the branch adds no em-dash copy of its own. An
+independent read-only review of the four joins and the browser repairs
+confirmed each of them (no transfer symbol left anywhere, every
+`CREATE TABLE` name in an export section or a stated exclusion, autosubmit
+continuing past a failed publication while withholding every contribution
+send, each browser assertion at least as strong as before) and found one
+test-only weakening: the three sign-out checks in the stats contract had
+started comparing the URL without its query string, which would have
+accepted a sign-out that rewrote the saved view. They now capture the URL
+before the click and require it unchanged and still on `/usage/details`.
+The review's missing case is added: a store rewritten into the retired
+(client, day) ownership shape erases down to the admission tables. Two
+review notes are recorded, not acted on, because no build of this branch's
+Worker has run anywhere: the persisted lifecycle object is exact-keyed to
+`{ erasure }`, and the export cursor is positional over the section list;
+both would need a tolerance only for state that does not exist.
+
+The first CI run for the pull request (36099527593) passed every job except
+Worker: the protocol adapter and conformance gates, moved into that
+unfiltered job by the first integration, need the pinned Rust toolchain
+(`rustup which --toolchain 1.97.1`) and warm dependency artifacts under
+their checked 180 s bounds, which the lane branches' formal job had
+provided implicitly and a bare Bun job does not. The adapter gate takes
+3 s on a warm build directory and fails its bound cold, so the job now
+installs the toolchain, restores a cache of the two gate build directories
+and the crate registry, builds the gate dependencies without a bound
+(the conformance pre-build with `CARGO_INCREMENTAL` unset, as the gate
+strips it), then runs the bounded gates and saves the cache even on
+failure; the bounds themselves are unchanged. Focused evidence on the
+re-merged tree at host load 47–50: typecheck, lint, Rust fmt, clippy and
+123 focused CLI tests, 114 focused Bun tests, worker tsc with 105 focused
+worker tests and the 5 erase tests, generated data, the assurance
+registry, the pin audit, build and browser run 12 (pairing, stats desktop
+and mobile, dashboard, atlas) with the restored sign-out checks.
+
+The second run (36101030837) carried that wiring. With a cold cache the
+unbounded pre-build took 78 s for the adapter dependencies and crate and
+14 s for the conformance test binary, and the bounded gates then ran on
+Linux for the first time in this repository's CI: the adapter gate reached
+discovery 34 s after starting against its 180 s build bound, and the
+conformance gate passed in 28 s. Discovery failed on
+`adapter_test_count_drift:codex`. Main's PR #434 added three Codex parser
+tests (a null-`info` token count as a rate-limit heartbeat, a missing
+`info` key as a schema mismatch, an unresolvable model refusing the
+measurement fallback) without qualifying them in
+`vendor/tokscale-core/QUALIFICATION.json`; main's CI does not run the
+adapter gate, so the manifest still expected 74 Codex tests where the
+compiled crate lists 77. The manifest now expects 77. Discovery of the
+test executable built from the merged vendor tree lists 2287 tests: 77
+Codex, 77 Claude Code, 24 Cursor, 14 Devin and 6 offline, a qualified
+selection of 198. The same run's receipt retention followed the
+conformance stages' `node_modules` symlink and their tool symlinks into a
+1.01 GB artifact of 213,348 files; the upload now excludes both and keeps
+the receipts, logs, traces and staged sources.
+
+### 2026-09-25 — PR #441 merged and production-verified; Linux notices attribution
+
+The completion branch merged to protected `main` as squash commit
+`2356eff8e3113bf7cdb94d691c086d640e2ea022`
+([PR 441](https://github.com/hraness/aicharts/pull/441)) at 06:49:29Z after
+CI run 36102541354 on head `f4ecca3` (Changes, Checks, Build, Worker with
+the adapter and conformance gates, Rust, Menubar, Formal verification and
+`Required` all passed, plus the supply-chain workflow and CodeQL). Main had
+moved by one unrelated commit (#442); the merge was clean. GitHub
+deployment 6655372605 (Production, success, 06:51:07Z) resolved to Vercel
+`dpl_H4hVYpFsJ9VqwfexFHSNDZWBah8D` (project `prj_0ppMfRRMDfiVsQ1JaekoxSZ7Mwgn`,
+Ready, URL `https://aicharts-cki4omw9r-hraness.vercel.app`), and at
+06:51:37Z `bun run usage:deployment:verify --sha 2356eff…` found `/`,
+`/dashboard` and `/usage/sessions` at HTTP 200 with
+`X-Hraness-Delivery-Proof: v1.b8d6279f57266c1cfc729f38fe834b9bfa28a554d0526343abbcff0eb9bdfbde`,
+the recomputed token. The Cloudflare Worker was not redeployed.
+
+Linux CLI qualification run 36104682547 on `2356eff` passed the stages that
+had stopped run 36066135869: `read-link-map` (the 64 MiB bound), the ELF and
+runtime-library checks against glibc 2.34, and all fourteen installed smoke
+tests. It then refused at `notices` with `notices_unmapped_crate`: the
+reviewed attribution list of workspace crates predated the kernel lane,
+whose `aicharts-metrics` crate is now in the CLI graph. The crate has no
+dependencies and inherits the workspace MIT license, so the closeout adds it
+to the list and a regression that each of the seven workspace crates in the
+CLI graph passes attribution; that regression fails with exactly the CI
+error when the list omits the crate. The tree stays Linux-unqualified until
+a dispatch on the merged fix passes.
+
+The fix merged as `f495d9f` ([PR 444](https://github.com/hraness/aicharts/pull/444)),
+which also qualified the Devin row-bound test that #442 added without a
+manifest update (the adapter manifest now expects 15 Devin tests, matching
+discovery); its first Build attempt hit the homepage browser flake that main
+also shows (a transient duplicate `#model-updates` or `#chart` section during
+a bookmark redirect), and the rerun passed. The site was production-verified
+again at `f495d9f` (`dpl_2wBgHwhjCaiPZiLqJZrjoJrpuFG4`, three pages, recomputed
+token). Qualification run 36108512661 on `f495d9f` again stopped at `notices`
+with `notices_unmapped_crate`, now for a registry crate: the delivery-gates
+integrator raised `rustls` to 0.23.45 for RUSTSEC-2026-0285 without moving its
+notice-policy entry off 0.23.44. The 0.23.45 archive digest equals the
+`Cargo.lock` checksum and its three license texts are byte-identical to
+0.23.44's, so only the version and checksum change. A diff of the CLI's Linux
+dependency graph against the policy found no other unmapped crate. A new
+regression requires every policy entry to be a locked registry package with
+the same archive checksum; it fails naming `rustls@0.23.44` without the fix.
+
+The rustls policy fix merged as `40874b2` ([PR 446](https://github.com/hraness/aicharts/pull/446))
+and the site was production-verified at that commit
+(`dpl_o6HJWcj3qVrBecbBwQqQ3X9uQ8TX`, three pages, recomputed token). Linux CLI
+qualification run [36109602971](https://github.com/hraness/aicharts/actions/runs/36109602971)
+on `40874b2` passed (`checksPassed: true`) through all smoke stages and
+`persist-assets`, retaining the qualification artifact. This is the first
+Linux qualification of the system-assurance tree. It is artifact admission
+only: no `cli-v` tag or immutable release was published, and the macOS
+notarized release, Worker redeploy, usage flags and live drills remain
+owner-gated.
+
+### 2026-09-25 — Parser-semantics hardening: admission bound, fork-tree properties, formal coverage
+
+The Tokscale reconciliation's root cause (replayed inherited cumulative
+counters counted as own turns) closed as a permanent assurance layer rather
+than a one-off fix. The work merged as `7743848`
+([PR 449](https://github.com/hraness/aicharts/pull/449)) after a semantic
+merge with main's assurance manifests.
+
+- Admission plausibility bound: `MAX_TOKENS_PER_RECORD = 8_388_608` enforced in
+  both the shared report contract (`STATS_MAX_TOKENS_PER_RECORD`) and the
+  CLI's `validate_report`, so an impossible per-record token total can never
+  commit under the monotonic server merge. Every registered client is
+  event-granular and `replace-snapshot` clients are `tokenBasis: unavailable`,
+  so no legitimate row approaches the bound.
+- Codex nested-fork dedup fix: generated fork-tree metamorphic tests (own
+  turns, replay prefixes, shared cumulative counters, UUIDv7/v4 id modes)
+  caught that replayed turns at depth ≥ 2 emitted dedup keys scoped to the
+  immediate parent rather than the logical turn, inflating ~2×. Dedup keys
+  are now scoped by `current_turn_id`; `CHECKPOINT_GENERATION` moved to 3 so
+  retained generation-2 keys cannot survive the format change.
+- Golden fixture: `codex_inherited_cumulative_replay.jsonl` pins the shared
+  12.9M-counter miniature to expected disjoint per-day totals.
+- Differential oracle: the generated suite asserts dedup-level sums equal the
+  generator's ground truth even when per-file parses intentionally overcount
+  under non-v7 ids.
+- TLA+: `M12MonotonicMerge` proves the unguarded merge commits a replayed
+  overcount (`m12-unguarded-overcount-commits`) and that a committed overcount
+  persists under retry (`m12-committed-overcount-persists`), with
+  `m12-guarded-merge-sanity` covering the admitted bounded merge; frozen
+  traces bind module and config hashes.
+- Kani: 21st harness `cumulative_baseline_delta_conserves_the_counter` proves
+  `baseline + delta = snapshot` on `checked_replace` with underflow refused;
+  mutation `baseline-delta-clamps-underflow` fails when the kernel clamps.
+  Manifests: 56 covers, 14 mutations, repinned unreachable-assertion bindings
+  on the merged `proofs.rs`.
+- Lean: eight dedup/lineage laws (`dedupSeen_retains`, `dedupSeen_absorbs`,
+  `dedupSeen_all_seen`, `dedupSeen_append`, `dedupSum_all_seen`,
+  `dedupSum_append`, `dedup_replay_neutral`, `dedupSum_distinct`) verified on
+  the pinned toolchain; 17 mathematical theorems total on allowed axioms.
+- Wide-arithmetic tests were reframed: admission generators now produce
+  physically plausible rows (tokens ≤ records × bound), and layers that fold
+  admitted rows exercise >2^53 sums through accumulated max-bound rows
+  (`records: 1` for contribution deltas).
+
+Evidence: `bun run check` green on the merged tree (2225 test files' worth
+across unit, worker, browser and script suites); full TLA+ suite (17
+baseline + 88 repaired cases) green; Kani receipt binds 21 harnesses and 14
+mutations; theorems receipt binds 26 production + 17 mathematical theorems
+with 5 negative controls; adapter qualification binds 204 tests including
+the raised codex group (81) and the merged devin group (16).
+
+### 2026-09-25 — Worker redeployed on the completion tree
+
+With owner authorization, the production Worker `aicharts-usage-local-only`
+was redeployed from `1831da3` through wrangler `versions upload` and
+`versions deploy`. Version `a9bf7b17-dbaa-4147-a233-c954eb110c6b` reached 100%
+traffic at 16:41:49Z with `bd2bac95` retained as the rollback version.
+Pre-promotion, `wrangler versions view` on the uploaded build showed every
+binding, var, namespace id, compatibility flag and export identical to the
+live version — same generation and worker-version pins, public read `0`, no
+contributions or reclamation var, so no new storage write is reachable and
+the rollback stays compatible. A pre-deploy review of `2e593f7..main` found
+every new write path unreachable under the deployed flag set except one real
+defect: #449's per-record token bound had been placed in the shared row
+parser, so committed pre-bound history would have failed stored-day re-reads
+once deployed. #456 moved enforcement to `parseStatsUpload` (upload admission
+only) with tests before the deploy. Post-deploy, the consent, stats and
+totals routes return their structured refusals; authenticated readback rides
+the device's own collector cycle.
+
+### 2026-09-25 — Contributions and public leaderboard read activated
+
+Same `1831da3` tree, redeployed as version `e19bc6be` at 100% with two flag
+changes: `CONTRIBUTIONS_ENABLED=1` and `PUBLIC_READ_ENABLED=1` (worker), and
+`AICHARTS_USAGE_PUBLIC_READ_ENABLED=1` added to the Vercel production
+environment (effective on its next deployment). Verified live: the public
+index is empty (`entries: []`), so the runbook's re-publication precondition
+was already satisfied; v3 routes return contract refusals rather than
+`unavailable`. Reclamation and fence-control stay unset as destructive
+operator capabilities. Still separate: per-account V3 `activate`/`migrate`/
+`grant` ops (no CLI driver exists — the upload credential never leaves the
+signed binary's custody), and leaderboard publication which needs the
+account owner's consent and handle.
+
+### 2026-09-25 — CLI V3 lifecycle driver and schema-ladder foundation
+
+The enrolled collector now drives the full account lifecycle that the
+activated Worker exposes: `aicharts contribution-sync` gained `--status`,
+`--activate`, `--migrate`, `--grant` and a one-pass `--onboard` that observes
+then activates or migrates as retained history requires and grants the
+population. Each control operation persists its exact request bytes into a
+keyed, MAC-authenticated journal (`contribution-ops-v3`) under the state key
+before dispatch — an uncertain exchange replays identical bytes, a decided
+refusal settles durably, and a later retry opens a fresh operation on current
+evidence. `--migrate` reads the exact v1/v2 revisions via the stats status
+read and seals them into v3; `--grant` defaults to the device's derived
+primary population, and `--send`/`--initialize` may omit `--population-id`
+when the journal retains exactly one successful grant. `--inspect` reports
+the ops journal without creating files. 59 focused contribution-sync tests
+pass, including crash-staged journal recovery, tamper refusal, lost-reply
+replay, refused-intent fresh retry, and refused-grant population resolution.
+
+On the Worker, `services/usage-worker/src/enrollment.ts` now owns the schema
+ladder in one place: `SCHEMA_LATEST` plus an ordered `SCHEMA_FAMILIES` table
+(version ⇒ required family table), replacing five scattered literal ranges.
+Adding schema step N now means bumping the constant, appending one table
+entry, and extending the ordered migration chain — an unknown newer version
+still fails closed so an older binary never rewrites state it cannot read.
+
+The first live migration attempt against the owner account refused with
+`limit`: the single-shot cap `CONTRIBUTION_MIGRATION_MAX_JOURNALS` was 256
+while the account retains 952 committed v1 journals. The cap is a transaction
+budget, not a storage invariant, so it moved to 4,096 — matching the
+`expectedV1Revision` wire bound; past that, chunked migration is the
+follow-on. In the same change the CLI gained `--cancel-migration`: it replays
+the retained pending request to `/v3/contributions/migrate/cancel`, records
+the abandoned terminal on the migrate record, and lets `--migrate` retry
+fresh — the escape for a wedged `pendingOperation`. The focused suite is now
+60 tests.
+
+#### Chunked migration implementation phases
+
+- **C1 — scratch-backed capture** (`services/usage-worker/src/
+  contributions-migration.ts`): introduce a durable scratch table
+  `usage_migration_scratch` (real table; the schema checks are whitelists so
+  no family bump is needed — verified: `SCHEMA_FAMILIES` and the
+  `ADMISSION_SCHEMA`/`STATS_SCHEMA` exact-DDL checks iterate expected names
+  only). Kind-discriminated rows: `meta` (JSON cursor: operationId,
+  pinned v1/v2 revisions, throughRevision, per-device sequence,
+  sourceBytes, previousTime), `head` rows (occurrence_id, operation blob,
+  journal_revision, utc_day), `page` rows (ordinal, artifact text).
+  `decideAdmission` inputs come from per-batch scratch SELECTs — the same
+  ~256-row lookup `admission.heads(batch)` already performs.
+- **C2 — segmented replay**: `service.migrate` splits into bounded
+  `transactionSync` stages of ~64 journals each, resumable via the meta
+  cursor; each stage re-asserts `admission.control().revision` equals the
+  reserve-time pin (drift -> `conflict`, client replays identical request
+  and the stage picks up at the cursor). All stages run inside the existing
+  `migrate` RPC loop driven by the CLI's durable-op replay.
+- **C3 — streamed assembly**: the manifest/page/entries JSON is produced by
+  incremental `"["+parts.join(",")+"]"` string assembly (byte-identical to
+  `JSON.stringify(entries)`); page artifacts land in scratch rows, read back
+  lazily by `ensureContributionMigration` for R2 writes. `deltaBytes` bound
+  in the operation-metadata parser lifts past 16 MiB (the delta journal is
+  an R2 artifact, not row data).
+- **C4 — stored-vs-charged bytes**: `body_bytes` stores manifest+journal
+  bytes only (<<16 MiB); capacity charging keeps counting the full bundle
+  (`seal.immutableBytes` unchanged). `commitMigration`'s recapture becomes a
+  paged rescan of scratch recomputing the manifest hash — same tamper
+  guarantee without a second full capture.
+- **C5 — cancel + tests**: `--cancel-migration` wipes the pending op and
+  scratch atomically; new tests assert byte-identical manifests between
+  one-shot (small accounts) and chunked (the same fixture replayed at >1
+  segment), wedge/resume per stage, and the over-cap behavior.
+
+Gate per phase: `bun run scripts/usage-worker-tools.ts test` +
+`usage:assurance:check`; ship through a PR; redeploy Worker; then run
+`contribution-sync --migrate` on the live account (custody consent already
+qualified), then `--grant`, then the owner consent+handle step.
+
+Current live state: worker `449df2b9` (= `5be3f87`, widened bounds) serves
+100%; account contributions control sits at `prepared`/`not_started`
+control — revision 0, nothing committed; `--status` is green.
+
+### 2026-09-26 — Chunked migration implemented: durable scratch, staged capture, streamed assembly
+
+C1–C5 landed on `chunked-migration`, with one design deviation driven by a
+runtime fact: workerd's storage authorizer refuses `CREATE TEMP TABLE`
+(`SQLITE_AUTH`), so scratch lives in durable `migration_*` tables
+(`migration_meta/heads/frag/delta/page/dpage`). That is strictly better for
+resumability — a mid-flight capture survives object eviction and resumes at
+the committed cursor — and the frozen schema manifest stays exact because
+`enrollment.ts`'s `#objects()` scan now excludes the `migration_*` namespace
+(all scratch contents are re-parsed and re-verified, never trusted).
+
+Key shape:
+
+- `advanceContributionMigration` drives one bounded stage per
+  `transactionSync`: capture (64 journals), rest descriptors, head replay
+  (8,192 rows), seal (16 fragments), deltas (8,192), entries (8,192),
+  manifest pages (64), delta pages (64). Every stage re-asserts the pinned
+  admission/stats revisions (`conflict` on drift); `metaStore` persists the
+  cursor inside the same transaction, so a rolled-back stage replays
+  idempotently.
+- `MigrationStage` list: `capture → rest → heads → seal → deltas → entries
+  → pages → dpages → ready`; the `migrate` handler loops up to
+  `CONTRIBUTION_MIGRATION_STAGE_ROUNDS` (4,096) inside one RPC.
+- Journal bounds widened for the full-head envelope: `MAX_ENTRIES` 8,448 →
+  262,144 (= `CONTRIBUTION_MAX_HEADS`), root artifact 16,384 → 131,072
+  bytes; page geometry unchanged (256 entries / 262,144 bytes).
+  `CONTRIBUTION_MIGRATION_MAX_HEADS` 65,536 → 262,144 and a new
+  `CONTRIBUTION_MIGRATION_MAX_BUNDLE_BYTES` (256 MiB) bounds total charged
+  bytes now that manifest/journal bytes live in R2 rather than one row.
+- `ensureContributionJournal` verifies streaming: page descriptors, sizes,
+  sorted unique ids and the entries hash are recomputed iteratively before
+  any R2 write; `bundle.pages` is a lazy `Iterable` bound to the scratch
+  table, never a second materialized delta list.
+- Commit-time recapture (`stagedMigrationSnapshot`) re-asserts the pin and
+  reloads the seal/digests from scratch — same tamper guarantee, no second
+  full replay; `clearMigrationScratch` runs inside the commit transaction
+  and on `abandon`.
+- Partial-init recovery: scratch tables present without a `meta` row mean an
+  interrupted begin → the next `advance` resets and restarts cleanly.
+
+Tests: the contributions suite is now 32 cases, all green, including a
+9,000-head staged migration through the real RPC (journal root of 36 page
+descriptors, >8,448-entry delta journal, active commit, scratch wiped) and a
+cursor-resume test that survives `abortAllDurableObjects` mid-capture and
+reproduces an identical seal/manifest. Full worker suite: 725 tests across
+43 files green; worker `tsc --noEmit` clean; `usage:assurance:check` clean
+with the six scratch surfaces registered and the three capacity constants
+re-pinned.
+
+Remaining: independent review, PR through protected workflow, Worker
+redeploy, then live `--migrate` → `--grant` → owner consent/handle.
+
+
+### 2026-09-26 — Chunked migration shipped and deployed
+
+`#467` merged the staged migration implementation (`b43bfb9`): durable
+`migration_*` scratch tables, one bounded segment per `transactionSync`,
+durable-cursor resume across object eviction, streamed journal assembly with
+widened bounds (262,144 entries, 131,072-byte root), and the commit-time
+snapshot re-pin. Registry, cost-surface, and lifecycle-export registrations
+accompany the new tables.
+
+Post-merge self-review found and fixed four defects before merge: the
+delta-page cursor captured once per stage (duplicated page window), a
+missing null-day skip in delta emission, a missing scratch-vs-stored day
+comparison, and a v1Sources field-order parity drift in the seal digest.
+
+Production Worker `dfcbfb8e-7897-4918-ae2b-7e074c0115e3` (source `b43bfb9`)
+replaced `449df2b9` at 100% traffic on 2026-09-26 ~05:50 UTC via
+`wrangler versions upload`/`deploy`, preserving the pinned enrollment
+generation, worker version, four Durable Object bindings, two R2 buckets and
+all nine enabled flags.
+
+
+### 2026-09-26 — Proof-of-storage cursor shipped and deployed
+
+`#468` (`1a5a971`) added the durable ensure cursor the owner-sized account
+requires: `ensureContributionMigration` walks a flat ordered item index —
+sources, bodies, manifest pages, manifest, delta pages, journal root —
+persisted into `migration_meta` (`ensureIndex`, `ensureInspected`) every 16
+items and on budget expiry. A spent 25-second in-call budget throws
+`storage_unavailable` after the checkpoint; the client's identical replay
+resumes at the cursor. The journal seal uses
+`sealVerifiedContributionJournal` — every page is individually ensured under
+the cursor, so the tail call verifies bundle consistency rather than
+re-reading every artifact.
+
+A self-review caught a double-counted `inspected` prefix on resume (the
+bound would falsely fire at scale); the byte counter now persists beside
+the index so accounting resumes exactly at the checkpoint.
+
+Production Worker `76bbc3c4-ab90-4af6-8bb8-4b1c5a607269` (source `1a5a971`)
+replaced `dfcbfb8e` at 100% on 2026-09-26 ~06:50 UTC.
+
+### 2026-09-26 — Deterministic work budgets, lease-lifetime bounds and the pending-operation wedge
+
+Four production observations closed the remaining live-qualification blockers for the owner-scale migration.
+
+`#478` (`a6f9b51`) ended the rounds loop before the request CPU cap with a clean `storage_unavailable`; `exceededCpu` discards the call's entire buffered write set, so a call that dies at the cap makes zero durable progress regardless of committed-looking cursors mid-call.
+
+`#479` (`f06308b`) replaced the elapsed-time budget after a live clock probe proved both `Date.now()` and `performance.now()` freeze for a synchronous Durable Object request's whole duration. `STAGE_WORK_BUDGET = 2,048` weighted work units now bounds stage rounds deterministically, and a regression test pins the partial-cursor commit on a mid-segment expiry.
+
+`#475`/`#480` repaired two restore-fence bounds the migration traffic exposed: the grant cap now counts only unexpired leases (a killed request's lease cannot outlive it), and the fence-read sanity bound tracks `RESTORE_FENCE_MAX_ATTEMPTS` rather than the live-holder bound — accumulated expired leases are valid state, not corruption.
+
+The live loop then surfaced a real reconciliation gap: an op refused locally (`storage_invalid`) had reserved `pendingOperation` server-side and never settled — every later reservation conflicted at ready, ~400 bounded calls in. `--cancel-migration` only replayed unsettled intents, so the wedge was unreachable. `#484` replays every retained migrate intent through the idempotent cancel route until the live one abandons, pins `expectedRevision` to the live control revision (an abandon consumes one), and raises the ops-journal bound to 256 records since a restartable operation mints a fresh intent per decided refusal. The live wedge cleared with `abandoned` at revision 1; migration replay resumed under the work budget.
+
+Operational note: the `/tmp` deploy-config dir is not durable — its loss produced a recovered config missing `AICHARTS_USAGE_CONTRIBUTIONS_ENABLED` and with public read off, and two probe uploads carried it before the regression was caught by the structured `--status` refusal. Production deploys must re-derive vars from `docs/usage-activation.md` rather than a scratch directory.
+
+`sa/migration-v2-pin-at-rest` relaxes the migration pin to its actual requirement. `migrationPin` originally re-checked both source revisions on every call, so any committed stats snapshot during staging burned the in-flight request — under a live multi-device feed the migration could never finish. The V1 lineage is already frozen once any snapshot is committed (fresh admissions refuse after `hasCommittedSnapshot`), so only its pin is kept as a corruption guard. The V2 pin moves into `restSegment`'s own transaction — the one place days, device receipts and the control row must be observed consistently — and the seal then binds exactly that observed revision; the request's `expectedV2Revision` becomes a floor (`<=`) instead of an equality, so a corpus captured later than the client minted remains admissible. Drift before or after the pin is therefore ordinary progress, not a wedge.
+
+`#498` closes the reserve-side wedge the pin fix exposed next: an op that reaches `ready` commits `pendingOperation` inside the reserve transaction before the wire verdict lands, so a decided refusal can leave the slot held — and every later migration then conflicts at reserve after a full ~400-call restage. The observed burn order was pin-drift kills (fixed by `#496`), then orphaned-pending kills — each invisible without the deployed `innerfault` channel because `failure()` maps the inner code. `--migrate` now replays the just-settled intent's exact bytes to the cancel route once on any decided settle — idempotent, best-effort — so the slot releases in-band. Abandons consume a control revision (`expectedRevision+1` fencing), so a cancel landing while an op is in flight still stales that op's minted pin — sweep order matters: cancel first, mint after.
+
+Two custody facts this session made load-bearing: adhoc-signed rebuilds change the binary's cdhash, so a keychain item ACL'd to prior builds re-prompts on every build (observed as indefinite `SecItemCopyMatching` hangs in non-interactive callers, not errors — `SecurityAgent` waits for a click). The durable fix is the documented `custody:signing` identity (`AI Charts Custody (Local)`, designated requirement `io.aicharts.cli`): one "Always Allow" grant binds the item to the identity, and every later rebuild under it is silent. Worker observability must also be enabled in the deploy config (`observability.enabled`) for `console.log` diagnostics to reach `wrangler tail` — tail otherwise shows envelope events only.
+
+**2026-09-27 (continued):** The first live multi-device account reached ensure and
+failed three times on retained-content invariants the ensure stage invented
+rather than on storage. (1) `preserve-history` stored projections are merged
+envelopes; re-deriving them from the last upload's bytes is impossible — now
+verified by their own hash chain at `rest` capture (b05c94a). (2) Retained
+upload bodies that predate tightened write-path bounds (per-row token
+ceiling) fail today's `parseStatsUpload` — the seal now binds hash-verified
+bytes + the server-issued receipt instead of re-validating the payload under
+the current schema. A synthetic injection test covers a body the hardened
+parser refuses. Live result: migration `bd7a2044` committed 239,101 heads
+(219,902 suppressed, 25 opaque V2 bodies) at revision 12; grant followed at
+revision 13. `--send` publication is gated by `source_warnings` — real
+transcripts always carry coverage warnings (unknown_models, unmeasured_*),
+and generation-5 Claude slugs are absent from the model map — so the
+publication path cannot currently accept any real file. Leaderboard consent
+remains a browser-session decision by design.

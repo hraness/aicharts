@@ -7,6 +7,7 @@ import {
   INDEXABLE_ROBOTS,
   NOINDEX_ROBOTS,
   type ArticleDiscovery,
+  type ArticleParty,
 } from "@hraness/web-discovery";
 import type { Metadata } from "next";
 
@@ -33,6 +34,13 @@ import {
 export const BLOG_SOCIAL_IMAGE_PATH = "/blog/opengraph-image" as const;
 
 export { BLOG_ARTICLE_AUTHOR };
+
+const BLOG_ARTICLE_AUTHOR_PARTY: ArticleParty = {
+  kind: "Organization",
+  name: BLOG_ARTICLE_AUTHOR.name,
+  sameAs: ["https://github.com/hraness"],
+  url: "https://hraness.com",
+};
 
 const blogSearchSite = {
   ...searchSite,
@@ -83,7 +91,7 @@ function articleDiscovery(
 ): ArticleDiscovery {
   const section = blogArticleSection(article);
   return {
-    authors: [{ kind: "Organization", name: BLOG_ARTICLE_AUTHOR.name }],
+    authors: [BLOG_ARTICLE_AUTHOR_PARTY],
     canonicalPath: blogArticlePath(article.slug),
     category: section,
     ...(article.sourceIds.length === 0 ? {} : {
@@ -226,6 +234,8 @@ export function blogArticleJsonLd(
     author: {
       "@type": "Organization",
       name: BLOG_ARTICLE_AUTHOR.name,
+      url: BLOG_ARTICLE_AUTHOR_PARTY.url,
+      sameAs: BLOG_ARTICLE_AUTHOR_PARTY.sameAs,
     },
     publisher: {
       "@type": "Organization",

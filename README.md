@@ -1,8 +1,8 @@
 # AI Charts
 
-[AI Charts](https://aicharts.io) publishes charts of AI model benchmarks and
-personal token usage. Compare models and coding agents on benchmark score, cost,
-speed, and token use, then inspect the source and configuration behind a result.
+[AI Charts](https://aicharts.io) plots published AI benchmark scores against
+cost and tokens per task, marking the best score at every budget. A local
+collector measures your own agents' token use.
 
 The repository also contains a local collector that measures your own coding
 agents' token use. It is in development and has no packaged release yet, so
@@ -69,19 +69,24 @@ See [detailed usage reports](docs/usage-details.md) for commands, acquisition
 requirements, and what parser support does and does not cover. The [scheduled publisher guide](docs/usage-autosubmit.md) covers
 native refresh profiles, dry runs, failure recovery and a reversible macOS cutover.
 
-The Rust workspace contains a local-only Codex/Claude Code usage reader, a closed numeric wire format, a private numeric SQLite ledger and matching TypeScript validation/rollups. Explicit collection can retain measurements across restarts with atomic source checkpoints and a pending-queue preview. The separate `inspect` command reads retained numeric totals without source scanning, writes or SQLite recovery. It does not enable sign-in, uploads, a public leaderboard or background collection. See [the local usage guide](docs/usage-local.md) for explicit source selection, private namespace keys and current measurement/recovery limitations.
+The Rust workspace contains a local-only Codex/Claude Code usage reader, a closed numeric wire format, a private numeric SQLite ledger and matching TypeScript validation/rollups. Explicit collection can retain measurements across restarts with atomic source checkpoints and a pending-queue preview. The separate `inspect` command reads retained numeric totals without source scanning, writes or SQLite recovery. The `inspect` command does not enable sign-in, uploads, a public leaderboard or background collection. See [the local usage guide](docs/usage-local.md) for explicit source selection, private namespace keys and current measurement/recovery limitations.
 
 The [session usage view](https://aicharts.io/usage/sessions) opens local numeric reports for session totals, model mix, and time breakdowns with their source coverage. Reports stay in the browser tab. See [session collection and timing](docs/usage-sessions.md) for the command, concurrent-work denominators and source coverage.
 
 The website includes Hraness Accounts sign-in and device enrollment, each
 switched on separately in production. The [identity design](docs/usage-identity.md)
-and [activation runbook](docs/usage-activation.md) list what is live in
-production today and what still needs testing against real providers.
+and [activation runbook](docs/usage-activation.md) record dated production
+evidence, the exact-deployment health check (`bun run usage:deployment:verify`)
+and what still needs testing against real providers. The
+[claim inventory](docs/usage-claims.md) lists every support, platform and
+live-status statement in this README and the usage guides with its evidence.
 
-## Menu-bar companion
+## Menu bar
 
-AI Charts includes an unbundled macOS menu-bar companion for the repository's
-`outputs/` directory. Build it explicitly, then run the foreground singleton:
+The AI Charts menu bar shows whether usage collection is working: when the
+last pass ran, when your usage last synced, and any failures in plain words,
+with the collector's error log one click away. It also opens the usage
+dashboard and lists your two newest outputs. Build it explicitly, then run it:
 
 ```sh
 bun run menubar:build
@@ -89,19 +94,30 @@ bun run menubar:install
 bun run menubar
 ```
 
-`menubar:install` copies the release-built companion to
+`menubar:install` copies the release-built binary to
 `~/Library/Application Support/AI Charts/bin/aicharts-menubar` atomically. The
 launcher never compiles on startup: it uses that installed copy when present,
-or a prebuilt checkout binary otherwise. A second invocation exits through the
-binary's per-output-directory lock. Use `bun run menubar:uninstall` to remove
-the installed copy. No app bundle, signing, or notarization is part of this
-companion.
+or a prebuilt checkout binary otherwise. A second copy exits with status 3 and
+says AI Charts is already in your menu bar. Use `bun run menubar:uninstall` to
+remove the installed copy.
+
+To open it at login, run `aicharts menubar install` (or turn on "Open at
+login" in its menu). macOS then shows a notice that `aicharts-menubar` can open
+at login. `aicharts menubar status` says whether it is running and opens at
+login, `aicharts menubar start` opens it now, and `aicharts menubar uninstall`
+removes the login item. Nothing here runs `launchctl`; the login item takes
+effect at your next login.
+
+The menu reads two files from `~/.aicharts` (or `AICHARTS_HOME`):
+`collector-status.json`, which `aicharts daemon --status-file
+~/.aicharts/collector-status.json` writes after each pass, and `autosubmit-runtime/last-cycle.json`, which each publishing
+cycle writes. Both hold times, results and fixed error codes, never account
+IDs, paths or session content.
 
 The build uses the committed Cargo lockfile. Installation stages the replacement
 in a private temporary directory and refuses symlinked or externally writable
 managed directories. Launch also refuses symlinked or externally writable
-executables. These checks preserve the explicit per-user installation boundary;
-the companion is not an updater or a privileged service.
+executables. The menu bar is not an updater or a privileged service.
 
 ## AI Charts agent skill
 
@@ -133,6 +149,8 @@ The [`data-refresh.yml`](.github/workflows/data-refresh.yml) workflow checks fir
 12. Official card dates live in the manually reviewed [`data/model-release-dates.json`](data/model-release-dates.json) ledger, keyed by stable canonical model ID. Marketplace and sitemap timestamps never populate it or appear as official release dates.
 
 The repository keeps default workflow-token permissions read-only and grants write capabilities only inside this workflow. GitHub's repository-level “Allow GitHub Actions to create and approve pull requests” setting must remain enabled so that the scoped token can open its data PR; the workflow never submits reviews. First-party sources refresh independently, so one outage retains that source's last-known-good slice while healthy sources continue. A new candidate updates the durable release-review issue before benchmark refreshes run. Dependency installation is retried, and any unhealthy run creates or updates a separate automation-health issue. Source-shape changes, suspicious data loss, failed required CI, and unmerged update PRs still fail closed for publication, leaving the last-known-good production snapshot in place.
+
+Publication is bound to the CI run for the update PR's exact head commit. The workflow names that run, waits up to 25 minutes for its `Required` result, reconciles the branch once if `main` moves, and lets GitHub squash-merge when the check passes. Pull-request CI tests the merge with current `main`, so a red `main` fails the update PR without any fault in the refreshed data; the health issue then quotes the CI run and states which case applies, and the PR is closed so the next scheduled run rebuilds from current `main`. To retry sooner than the schedule, run `gh workflow run data-refresh.yml -f mode=full` (or `benchmarks` or `releases`) and read the run's step summary; the health issue closes itself after a healthy full run.
 
 To refresh locally:
 

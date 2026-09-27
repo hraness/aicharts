@@ -1,7 +1,7 @@
 import { STATS_MAX_BYTES, STATS_MAX_SOURCES, STATS_MAX_RECORDS, parseUsageStatsReport, statsInteger, statsOwnRecord, type UsageStatsReport } from "./stats-contract";
 import { isStatsClient } from "./stats-registry";
 import { parseMetricQuery, type MetricQuery, type MetricReportMetadata } from "./metric-explorer";
-import { MAX_METRIC_REQUEST_ID, type MetricWorkerReply, type MetricWorkerSlot, type MetricHostedInput } from "./metric-explorer-worker-core";
+import { MAX_METRIC_REQUEST_ID, type MetricExportFormat, type MetricWorkerReply, type MetricWorkerSlot, type MetricHostedInput } from "./metric-explorer-worker-core";
 import { MAX_METRIC_VIEW_BYTES, decodeMetricPresentation, type MetricPresentation } from "../../components/usage/stats-metric-presentation";
 import { STATS_PUBLIC_MAX_BYTES, parseStatsPublicReply, statsPublicStatus, type StatsPublicReply } from "./stats-public";
 import { parseStatsRange } from "./stats-http-contract";
@@ -159,7 +159,7 @@ export class MetricReportSession {
       return view;
     } finally { if (this.#query === request.id) this.#query = null; }
   }
-  async export(view: MetricPresentation, format: "json" | "csv"): Promise<Blob> {
+  async export(view: MetricPresentation, format: MetricExportFormat): Promise<Blob> {
     const binding = this.#views.get(view);
     if (this.#closed || this.#query !== null || this.#export !== null || binding?.slot !== "main" || binding.id !== this.#main) throw cancelled();
     const request = this.#request("export", { resultId: binding.id, format }); this.#export = request.id;

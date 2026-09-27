@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "claim": "bounded-generated-production-conformance-only",
   "tracePrefix": "ASSURANCE_CONFORMANCE ",
-  "expectedTraceCount": 39,
+  "expectedTraceCount": 42,
   "adapters": {
     "worker": {
       "command": [
@@ -11,7 +11,7 @@
         "test-assurance-conformance"
       ],
       "source": "services/usage-worker/test/assurance-conformance.worker.ts",
-      "expectedTests": 30
+      "expectedTests": 33
     },
     "ledger": {
       "command": [
@@ -286,6 +286,33 @@
         "corrupt-old-authority-fixture:ok",
         "checkpoint-extension:ok",
         "full-scrub:storage_invalid"
+      ],
+      "minSteps": 3,
+      "maxSteps": 256
+    },
+    {
+      "model": "M11",
+      "adapter": "worker",
+      "seeds": [
+        1066793,
+        539363619,
+        1592639710
+      ],
+      "requiredCoverage": [
+        "begin:ok",
+        "begin-state:ok",
+        "head-step:ok",
+        "head-step-state:ok",
+        "head-step-retry:ok",
+        "reopen-retry:ok",
+        "stale-begin:conflict",
+        "comparison:ok",
+        "comparison-state:ok",
+        "comparison-retry:ok",
+        "old-version:conflict",
+        "future-version:conflict",
+        "begin-replay:ok",
+        "status:ok"
       ],
       "minSteps": 3,
       "maxSteps": 256

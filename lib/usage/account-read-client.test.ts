@@ -104,22 +104,30 @@ for (const client of clients) {
     expect(reply).toEqual(bound(client.absent)); expect(calls).toBe(2); expect(cleared).toBe(0);
   });
 
-  test(`${client.name}: a thrown transport failure retries once on the same read`, async () => {
+  test(`${client.name}: a thrown transport failure retries twice on the same read`, async () => {
     let calls = 0;
     const pending = client.read(new AbortController().signal, { transientRetryDelayMs: 0, fetch: port(input => {
       expect(input).toBe(client.path); calls++; throw new Error("PRIVATE_TRANSPORT_CANARY");
     }) });
     if (client.name === "stats") expect(await pending).toEqual(client.down);
     else await expect(pending).rejects.toEqual(new Error("usage_unavailable"));
-    expect(calls).toBe(2);
+    expect(calls).toBe(3);
   });
 
-  test(`${client.name}: persistent unavailability retries exactly once and surfaces the checked reply`, async () => {
+  test(`${client.name}: persistent unavailability retries exactly twice and surfaces the checked reply`, async () => {
     let calls = 0;
     const reply = await client.read(new AbortController().signal, { transientRetryDelayMs: 0, fetch: port(input => {
       expect(input).toBe(client.path); calls++; return json(client.down, 503);
     }) });
-    expect(reply).toEqual(client.down); expect(calls).toBe(2);
+    expect(reply).toEqual(client.down); expect(calls).toBe(3);
+  });
+
+  test(`${client.name}: a second transient refusal backs off into a third read`, async () => {
+    let calls = 0;
+    const reply = await client.read(new AbortController().signal, { transientRetryDelayMs: 0, fetch: port(input => {
+      expect(input).toBe(client.path); return ++calls < 3 ? json(client.down, 503) : json(client.absent);
+    }) });
+    expect(reply).toEqual(bound(client.absent)); expect(calls).toBe(3);
   });
 
   test(`${client.name}: deliberate refusals return without a retry`, async () => {

@@ -648,7 +648,7 @@ pub(crate) mod unix {
                     return Err("source_file_limit");
                 }
                 progress.note(&format!(
-                    "collecting — source set {}/{trees}, file {}/{tree_files}, {total_files} visited",
+                    "collecting: source set {}/{trees}, file {}/{tree_files}, {total_files} visited",
                     tree + 1,
                     index + 1
                 ));
@@ -1027,7 +1027,7 @@ pub(crate) mod unix {
                         .map(|warning| warning.code())
                         .collect::<Vec<_>>()
                         .join(", ");
-                    Ok(format!("AI Charts local ledger — revision {}\nSources: {}; usage occurrences: {}; pending records: {}\nObserved tokens: {}; output tokens: {}\nCapacity: {} of {} sources, {} of {} occurrences, {} of {} source associations\nCoverage: partial; prompt counts, activity and model pricing unavailable.\nWarnings: {warnings}\nNothing uploaded.\n",status.revision,status.sources,status.usage_occurrences,status.pending_records,status.tokens,status.output_tokens,status.sources,aicharts_ledger::MAX_SOURCES,status.usage_occurrences,aicharts_ledger::MAX_OCCURRENCES,status.associations,aicharts_ledger::MAX_ASSOCIATIONS))
+                    Ok(format!("AI Charts local ledger: revision {}\nSources: {}; usage occurrences: {}; pending records: {}\nObserved tokens: {}; output tokens: {}\nCapacity: {} of {} sources, {} of {} occurrences, {} of {} source associations\nCoverage: partial; prompt counts, activity and model pricing unavailable.\nWarnings: {warnings}\nNothing uploaded.\n",status.revision,status.sources,status.usage_occurrences,status.pending_records,status.tokens,status.output_tokens,status.sources,aicharts_ledger::MAX_SOURCES,status.usage_occurrences,aicharts_ledger::MAX_OCCURRENCES,status.associations,aicharts_ledger::MAX_ASSOCIATIONS))
                 }
             }
             Command::Outbox => {

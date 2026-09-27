@@ -7,7 +7,8 @@ import type { AdmissionObservation, AdmissionOwner, AdmissionTransaction } from 
 import { AdmissionFault } from "./admission-policy";
 import { ensureContributionBody } from "./contributions-objects";
 import { ensureContributionJournal } from "./contributions-journal";
-import { captureContributionMigration, ensureContributionMigration } from "./contributions-migration";
+import { advanceContributionMigration, CONTRIBUTION_MIGRATION_STAGE_ROUNDS, ensureContributionMigration,
+  stagedMigrationSnapshot, type ContributionMigrationBundle } from "./contributions-migration";
 import { ContributionState, type ContributionGrantReceipt } from "./contributions-state";
 import { readNamespaceAnchor, sameNamespaceAnchor } from "./namespace-anchor";
 import { uploadSecretCommitment } from "./pairing";
@@ -35,6 +36,16 @@ function failure(error: unknown): ContributionResult<never> {
  * fence checks around this helper. Every continuation re-enters the same owner
  * transaction; no authentication, revocation, namespace or writer decision is
  * inferred from an earlier successful await. Numeric content stays in R2. */
+// The client's exchange deadline is 45s; the proof-of-storage loop keeps 25s
+// per call so its durable cursor persists before a disconnect.
+const ENSURE_BUDGET_MS = 25_000;
+// A request killed by the runtime CPU cap discards that request's buffered
+// writes — including committed transactionSync output — and workerd freezes
+// both clocks for the request's duration, so only a deterministic work
+// counter can bound the stage loop. The unit weights reflect measured item
+// costs: one journal ≈ a 256-op decode+verify+reencode, one head/delta a
+// row check, one page a serialized and hashed artifact.
+const STAGE_WORK_BUDGET = 2_048;
 export class AccountContributions {
   constructor(readonly env: Env, readonly state: ContributionState, readonly transaction: AdmissionTransaction,
     readonly beforeCommit?: () => Promise<void>) {}
@@ -141,23 +152,40 @@ export class AccountContributions {
         return receipt;
       });
       const terminal = locate(); if (terminal) return { ok: true, value: terminal };
-      const bundle = this.#run(observation, request, (owner, now) => this.state.reserveMigration(request,
-        captureContributionMigration(this.state.sql, owner), authority(owner, request.deviceId, now)));
+      // The staged capture commits bounded progress per transactionSync; an
+      // RPC timeout between rounds simply rolls back the last segment and the
+      // client's identical replay resumes at the durable cursor.
+      let bundle: ContributionMigrationBundle | null = null;
+      // expired is a weighted work-unit counter, not a clock: both Date.now
+      // and performance.now are frozen for the request's whole duration, so
+      // only deterministic work counts can bound the loop before the CPU cap.
+      let spent = 0;
+      const expired = (cost = 1) => (spent += cost) > STAGE_WORK_BUDGET;
+      for (let rounds = 0; rounds < CONTRIBUTION_MIGRATION_STAGE_ROUNDS && bundle === null && !expired(0); rounds++)
+        bundle = this.#run(observation, request, (owner, now) => {
+          const snapshot = advanceContributionMigration(this.state.sql, owner, request, expired);
+          return snapshot === null ? null : this.state.reserveMigration(request, snapshot, authority(owner, request.deviceId, now));
+        });
+      if (bundle === null) throw new ContributionFault("storage_unavailable");
+      const migration = bundle;
       const admitted = () => { try {
         return this.#run(observation, request, () => {
           const control = this.state.control(), operation = this.state.operation(request.operationId);
           return control.phase === "prepared" && control.revision === request.expectedRevision && control.pendingOperation === request.operationId
-            && operation?.outcome === "pending" && operation.intent.bodyHash === bundle.bodyHash;
+            && operation?.outcome === "pending" && operation.intent.bodyHash === migration.bodyHash;
         });
       } catch { return false; } };
       let proof;
-      try { proof = await ensureContributionMigration(this.env, bundle, admitted); }
+      // ENSURE_BUDGET_MS bounds one exchange's R2 proof work; a spent budget
+      // throws storage_unavailable after the durable cursor lands, and the
+      // client's identical replay resumes the item sequence.
+      try { proof = await ensureContributionMigration(this.env, migration, admitted, this.state.sql, ENSURE_BUDGET_MS); }
       catch (error) { const result = locate(); if (result) return { ok: true, value: result }; throw error; }
       const after = locate(); if (after) return { ok: true, value: after };
       await this.#before(observation, request);
       const final = locate(); if (final) return { ok: true, value: final };
-      return { ok: true, value: this.#run(observation, request, (owner, now) => this.state.commitMigration(bundle, proof,
-        authority(owner, request.deviceId, now), () => captureContributionMigration(this.state.sql, owner))) };
+      return { ok: true, value: this.#run(observation, request, (owner, now) => this.state.commitMigration(migration, proof,
+        authority(owner, request.deviceId, now), () => stagedMigrationSnapshot(this.state.sql))) };
     } catch (error) { return failure(error); }
   }
   /** Explicit cancellation of the same migration request is available even

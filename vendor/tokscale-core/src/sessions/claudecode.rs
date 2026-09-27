@@ -412,6 +412,18 @@ fn extract_agent_id_from_text(text: &str) -> Option<String> {
     }
 }
 
+/// A reported usage field below zero is clamped to zero when measured.
+fn usage_needs_clamp(usage: &AnthropicUsage) -> bool {
+    [
+        usage.input_tokens,
+        usage.output_tokens,
+        usage.cache_read_input_tokens,
+        usage.cache_creation_input_tokens,
+    ]
+    .iter()
+    .any(|value| value.is_some_and(|value| value < 0))
+}
+
 /// Parse a Claude Code JSONL file
 pub fn parse_claude_file(path: &Path) -> Vec<UnifiedMessage> {
     let home_dir = crate::paths::home_dir();
@@ -530,7 +542,9 @@ pub fn parse_claude_file_with_cache_and_home(
         let mut handled = false;
         buffer.clear();
         buffer.extend_from_slice(trimmed.as_bytes());
-        if let Ok(entry) = crate::offline_io::simd_slice::<ClaudeEntry>(&mut buffer) {
+        let entry = crate::offline_io::simd_slice::<ClaudeEntry>(&mut buffer).ok();
+        let recognized = entry.is_some();
+        if let Some(entry) = entry {
             // Detect sidechain on the first parseable entry (any type).
             // All lines in a subagent file carry isSidechain: true.
             if !sidechain_detected {
@@ -601,7 +615,10 @@ pub fn parse_claude_file_with_cache_and_home(
             if entry.entry_type == "assistant" {
                 let message = match entry.message {
                     Some(m) => m,
-                    None => continue,
+                    None => {
+                        crate::offline_io::record_schema_mismatch();
+                        continue;
+                    }
                 };
 
                 if let Some(model) = message.model.as_deref() {
@@ -682,7 +699,11 @@ pub fn parse_claude_file_with_cache_and_home(
 
                 let raw_model = match message.model {
                     Some(m) => m,
-                    None => continue,
+                    None => {
+                        // Usage that names no model cannot be attributed.
+                        crate::offline_io::record_schema_mismatch();
+                        continue;
+                    }
                 };
                 let provider_choice = claude_provider_choice(
                     &raw_model,
@@ -696,6 +717,12 @@ pub fn parse_claude_file_with_cache_and_home(
                 let model = canonicalize_claude_model(&raw_model);
 
                 let parsed_timestamp = parse_claude_entry_timestamp(entry.timestamp.as_deref());
+                if pending_request_start_timestamp_ms.is_none() && parsed_timestamp.is_none() {
+                    crate::offline_io::record_fallback();
+                }
+                if usage_needs_clamp(&usage) {
+                    crate::offline_io::record_clamped();
+                }
                 let timestamp = pending_request_start_timestamp_ms
                     .unwrap_or_else(|| parsed_timestamp.unwrap_or(fallback_timestamp));
                 let duration_ms =
@@ -760,6 +787,9 @@ pub fn parse_claude_file_with_cache_and_home(
             let provider_confidence = stored_claude_provider_confidence(&message.provider_id);
             messages.push(message);
             provider_confidences.push(provider_confidence);
+        } else if !recognized {
+            // Neither a transcript entry nor a headless stream event.
+            crate::offline_io::record_schema_mismatch();
         }
     }
 
@@ -1102,7 +1132,10 @@ fn extract_claude_tool_result_message(
     let model = canonicalize_claude_model(&raw_model);
     let timestamp = parse_claude_entry_timestamp(context.entry.timestamp.as_deref())
         .or_else(|| extract_claude_timestamp(&value))
-        .unwrap_or(context.fallback_timestamp);
+        .unwrap_or_else(|| {
+            crate::offline_io::record_fallback();
+            context.fallback_timestamp
+        });
 
     let mut message = UnifiedMessage::new_with_dedup(
         context.client_id,
@@ -1482,7 +1515,21 @@ fn extract_claude_headless_message(
         provider_hint.as_deref().or(default_provider_hint),
     );
     let model = canonicalize_claude_model(&raw_model);
-    let timestamp = extract_claude_timestamp(value).unwrap_or(fallback_timestamp);
+    let timestamp = extract_claude_timestamp(value).unwrap_or_else(|| {
+        crate::offline_io::record_fallback();
+        fallback_timestamp
+    });
+    if [
+        "input_tokens",
+        "output_tokens",
+        "cache_read_input_tokens",
+        "cache_creation_input_tokens",
+    ]
+    .iter()
+    .any(|field| extract_i64(usage.get(*field)).is_some_and(|value| value < 0))
+    {
+        crate::offline_io::record_clamped();
+    }
 
     Some(UnifiedMessage::new(
         client_id,
@@ -1710,10 +1757,16 @@ fn finalize_headless_state(
         state.provider_id.as_deref().or(default_provider_hint),
     );
     let model = canonicalize_claude_model(&raw_model);
-    let timestamp = state.timestamp_ms.unwrap_or(fallback_timestamp);
     if state.input == 0 && state.output == 0 && state.cache_read == 0 && state.cache_write == 0 {
         *state = ClaudeHeadlessState::default();
         return None;
+    }
+    let timestamp = state.timestamp_ms.unwrap_or_else(|| {
+        crate::offline_io::record_fallback();
+        fallback_timestamp
+    });
+    if state.input < 0 || state.output < 0 || state.cache_read < 0 || state.cache_write < 0 {
+        crate::offline_io::record_clamped();
     }
 
     let message = UnifiedMessage::new(

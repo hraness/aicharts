@@ -224,7 +224,8 @@ export function workerProfileQuery(report: UsageStatsReport): MetricQuery {
   const query = parseMetricQuery({ schemaVersion: 1, firstUtcDay: report.firstUtcDay, dayCount: report.dayCount,
     filters: { client: "*", provider: "*", model: "*" }, basis: "reported", costKind: "estimated", groupBy: ["model", "utc-day"],
     metricIds: [...SUPPORTED_METRIC_IDS].filter(id => !["cache-write-unknown-tokens", "cache-write-volume-unknown", "model-consumed-tokens", "utc-day-tokens",
-      "utc-week-tokens", "utc-month-tokens", "weekday-token-heatmap", "cumulative-tokens", "cache-read-token-share", "cache-write-token-share"].includes(id)),
+      "utc-week-tokens", "utc-month-tokens", "weekday-token-heatmap", "cumulative-tokens", "cache-read-token-share", "cache-write-token-share",
+      "previous-period-token-change", "previous-period-token-change-percent", "compare-periods", "compare-clients", "compare-models", "composition-share-change"].includes(id)),
     topK: 50, sortBy: "accounted-tokens", sortDirection: "desc" });
   invariant(query && query.metricIds.length === 32, "Protocol fixture must select exactly 32 admitted metrics.");
   return query;

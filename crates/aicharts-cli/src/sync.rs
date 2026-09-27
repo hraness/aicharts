@@ -5,7 +5,7 @@ use aicharts_protocol::Provider;
 use std::io::Write;
 use std::path::PathBuf;
 
-const HELP: &str = "AI Charts sync — one supervised publishing pass
+const HELP: &str = "AI Charts sync: one supervised publishing pass
 
   aicharts sync --complete-prefix --state-dir DIR --key-file KEY
     [--codex FILE_OR_DIR ...] [--claude FILE_OR_DIR ...] [--devin FILE_OR_DIR ...]
@@ -241,7 +241,11 @@ pub(super) fn execute(args: &[String]) -> i32 {
         return 1;
     }
     if let Some(error) = error {
-        eprintln!("aicharts: {error}");
+        if crate::errors::wants_json(args) {
+            eprintln!("aicharts: {error}");
+        } else {
+            crate::errors::report_stderr(error, args);
+        }
     }
     code
 }

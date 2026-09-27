@@ -252,9 +252,20 @@ fn persisted_reports_reject_invalid_coverage_and_private_identifiers() {
             r.rows[0].timed_tokens = "166".into();
             r
         },
+        {
+            // An inherited cumulative counter admitted as usage: the forked-
+            // rollout failure mode. The wire bound is 2^23 tokens per record.
+            let mut r = report.clone();
+            r.rows[0].tokens.input = "8388609".into();
+            r
+        },
     ] {
         assert!(validate_report(&invalid).is_err());
     }
+    let mut boundary = report.clone();
+    boundary.rows[0].tokens.input =
+        (8_388_608u128 - [30u128, 10, 20, 5].into_iter().sum::<u128>()).to_string();
+    validate_report(&boundary).unwrap();
 }
 
 #[test]

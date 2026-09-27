@@ -242,12 +242,13 @@ test("lld maps, empty maps and maps bound to another output refuse", () => {
   }
 });
 
-test("complete bfd maps above 8 MiB and at the shared 32 MiB bound retain exact attribution", () => {
-  assert.equal(LINUX_LINK_MAP_MAX_BYTES, 32 * 1024 * 1024);
+test("complete bfd maps above 8 MiB, at the measured fc95b51 size and at the shared 64 MiB bound retain exact attribution", () => {
+  assert.equal(LINUX_LINK_MAP_MAX_BYTES, 64 * 1024 * 1024);
   const f = fixture(), expected = planLinuxNotices(f.input);
   assert.equal(expected.ok, true);
   const measuredMap = f.input.linkMapBytes;
-  for (const size of [8 * 1024 * 1024 + 1, LINUX_LINK_MAP_MAX_BYTES]) {
+  // 33,690,505 bytes is the map that run 36066135869 refused under the old 32 MiB bound.
+  for (const size of [8 * 1024 * 1024 + 1, 33_690_505, LINUX_LINK_MAP_MAX_BYTES]) {
     // Ignored map whitespace changes size without changing any LOAD or OUTPUT.
     const padded = Buffer.alloc(size, 0x20); measuredMap.copy(padded); padded[size - 1] = 0x0a;
     f.input.linkMapBytes = padded;
@@ -494,6 +495,16 @@ test("custody attribution rejects unknown or renamed workspace crates, foreign s
   }
 });
 
+test("every reviewed workspace crate in the CLI graph is attributed to the project license", async () => {
+  for (const name of ["aicharts-core", "aicharts-custody", "aicharts-import", "aicharts-ledger", "aicharts-metrics", "aicharts-platform-process", "aicharts-protocol"]) {
+    await diskFixture(async f => {
+      addCustody(f, { id: `path+file:///source/${name}#0.1.0`, name, manifest_path: `${f.input.sourceDirectory}/crates/${name}/Cargo.toml` });
+      // The bare fixture carries no Rust notices, so passing attribution stops at that later stage.
+      assert.deepEqual(await collectLinuxNotices(f.input), { ok: false, error: "notices_rust_missing" }, name);
+    });
+  }
+});
+
 test("collector refuses unmapped crate instead of admitting nonempty notice bytes", async () => {
   await diskFixture(async (f, policy, save) => {
     policy.packages = []; await save();
@@ -593,6 +604,18 @@ test("hashed linker output must be byte-identical to the exposed executable", as
     await writeFile(f.input.executablePath, "first executable");
     assert.equal((await collectLinuxNotices(f.input)).error, "notices_rust_missing");
   });
+});
+
+test("every mapped registry crate is the exact locked version and archive checksum", async () => {
+  const policy = JSON.parse(await readFile(new URL("../../distribution/cli/linux-notices.json", import.meta.url), "utf8"));
+  const lock = await readFile(new URL("../../Cargo.lock", import.meta.url), "utf8");
+  const locked = new Map();
+  for (const block of lock.split(/\n\[\[package\]\]\n/u).slice(1)) {
+    const field = name => block.match(new RegExp(`^${name} = "([^"]+)"$`, "mu"))?.[1];
+    if (field("source") === registry) locked.set(`${field("name")}@${field("version")}`, field("checksum"));
+  }
+  assert.ok(locked.size > 100);
+  for (const pkg of policy.packages) assert.equal(locked.get(`${pkg.name}@${pkg.version}`), pkg.checksum, `${pkg.name}@${pkg.version}`);
 });
 
 test("source mapping is unique, pinned and covers SQLite and Unicode notices", async () => {

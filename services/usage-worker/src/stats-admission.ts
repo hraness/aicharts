@@ -1,5 +1,6 @@
 import { parseStatsResult, statsHex, type StatsReceipt, type StatsResult, type StatsStatus, type StatsStatusRequest, type StatsUpload } from "../../../lib/usage/stats-http-contract";
 import type { StatsAbandonRequest, StatsAbandonment } from "../../../lib/usage/stats-http-contract";
+import type { StatsTotals, StatsTotalsDeviceRequest } from "../../../lib/usage/stats-totals-contract";
 import { AdmissionFault } from "./admission-policy";
 import type { AdmissionObservation, AdmissionOwner } from "./account-admission";
 import type { EnrollmentResult } from "./enrollment";
@@ -57,6 +58,14 @@ export class AccountStats {
     try {
       await this.#authenticate(observation, request, secret);
       return { ok: true, value: this.#run(observation, request, () => this.state.status(request.deviceId)) };
+    } catch (error) { return { ok: false, error: error instanceof StatsFault || error instanceof AdmissionFault ? error.code : "storage_unavailable" }; }
+  }
+  /** The same lifetime totals the coordinator reads, authenticated by the
+   * enrolled device's upload secret instead of a session-asserted account. */
+  async totals(request: StatsTotalsDeviceRequest, secret: string, observation: AdmissionObservation): Promise<StatsResult<StatsTotals>> {
+    try {
+      await this.#authenticate(observation, request, secret);
+      return { ok: true, value: this.#run(observation, request, (owner, now) => this.state.totals(owner, now)) };
     } catch (error) { return { ok: false, error: error instanceof StatsFault || error instanceof AdmissionFault ? error.code : "storage_unavailable" }; }
   }
   async abandon(request: StatsAbandonRequest, secret: string, observation: AdmissionObservation): Promise<StatsResult<StatsAbandonment>> {

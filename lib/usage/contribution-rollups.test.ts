@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { MAX_CONTRIBUTION_ROLLUP_CELLS, MAX_CONTRIBUTION_ROLLUP_DELTAS, MAX_CONTRIBUTION_ROLLUP_VALUE,
   contributionCellKey, contributionRowCellKey, parseContributionCell, planContributionRollups, type ContributionCell, type ResolvedContributionDelta } from "./contribution-rollups";
-import { parseUsageStatsRow, STATS_TOKEN_KEYS, type UsageStatsRow } from "./stats-contract";
+import { parseUsageStatsRow, STATS_MAX_TOKENS_PER_RECORD, STATS_TOKEN_KEYS, type UsageStatsRow } from "./stats-contract";
 
 const id = (value: number) => value.toString(16).padStart(32, "0");
 const row = (input: string, changes: Partial<UsageStatsRow> = {}): UsageStatsRow => {
@@ -49,10 +49,12 @@ test("cost, category, timing and token-basis eligibility never collapse into an 
   expect([...f.cells.values()].find(cell => cell.dimensions.timed)!.durationMs).toBe("0");
   expect([...f.cells.values()].find(cell => cell.dimensions.costKind === "none")!.costMicrousd).toBeNull();
 });
-test("admitted sums can exceed the source's 24-digit scalar without lossy Number conversion", () => {
-  const f = store(), maximum = row("999999999999999999999999");
+test("admitted sums stay exact at the per-record bound without lossy Number conversion", () => {
+  // Deltas require records=1, so the per-record bound caps each admitted
+  // row at 8,388,608 tokens; cell sums stay bigint-exact regardless.
+  const f = store(), maximum = row(String(STATS_MAX_TOKENS_PER_RECORD));
   f.apply([{ id: id(1), before: null, after: maximum }, { id: id(2), before: null, after: maximum }]);
-  const cell = [...f.cells.values()][0]; expect(cell.tokens.input).toBe("1999999999999999999999998");
+  const cell = [...f.cells.values()][0]; expect(cell.tokens.input).toBe("16777216");
   expect(parseContributionCell(cell)).toEqual(cell);
   f.apply([{ id: id(1), before: maximum, after: null }]);
   expect([...f.cells.values()][0].tokens.input).toBe(maximum.tokens.input);

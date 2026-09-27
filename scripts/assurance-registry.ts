@@ -11,6 +11,23 @@ const path = text.refine(value => !isAbsolute(value) && !value.split(/[\\/]/u).i
 const phase = z.enum(["0", "1A", "1B", "1C", "2A", "2B", "3", "4", "5", "6", "7", "7B", "8", "9", "10", "11", "12"]);
 const metricFamilies = ["token-volume", "mix", "trends", "typical-sizes", "costs", "cache-economics", "billing-and-limits", "latency-and-generation", "activity-and-concurrency", "sessions-turns-and-agents", "context-and-compaction", "reliability", "coverage-and-freshness", "comparisons", "budgets-and-forecasts", "operations", "benchmark-context"] as const;
 const mandatoryControls = new Set(["worker:leaderboard_index", "worker:restore_fence", "worker:fence_lease", "worker:fence_attempt", "worker:account_enrollment", "worker:usage_admission_control", "worker:usage_admission_devices", "worker:usage_stats_control", "worker:usage_stats_devices", "worker:usage_stats_writers", "worker:usage_stats_day_sources", "ledger:sender_binding", "ledger:sender_accepted", "ledger:sender_settled", "r2:enrollment-namespace-anchors"]);
+export const metricSupportStates = ["implemented-qualified", "implemented-unqualified", "activation-gated", "planned-incomplete", "profile-unobservable"] as const;
+export const metricUnavailableReasons = ["needs-observation-facts", "needs-billing-evidence", "needs-source-health", "needs-tariff-evidence", "needs-account-dimensions", "separate-benchmark-population"] as const;
+const surface = z.union([z.literal(true), z.string().regex(/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/u)]);
+export function metricSupportErrors(row: { id: string; status: string; shipping: string; supportState: string; surfaces: Record<string, true | string>; unavailableReason?: string }): string[] {
+  const errors: string[] = [];
+  const implemented = row.supportState === "implemented-qualified" || row.supportState === "implemented-unqualified" || row.supportState === "activation-gated";
+  if (implemented && row.status === "planned") errors.push(`${row.id}: ${row.supportState} requires status implemented or qualified`);
+  if (!implemented && row.status !== "planned") errors.push(`${row.id}: status ${row.status} requires an implemented support state`);
+  if ((row.supportState === "implemented-qualified") !== (row.status === "qualified")) errors.push(`${row.id}: implemented-qualified and status qualified must agree`);
+  if (row.supportState === "profile-unobservable" && row.shipping !== "profile-unobservable") errors.push(`${row.id}: observable metric marked profile-unobservable`);
+  if (row.shipping === "profile-unobservable" && row.supportState === "planned-incomplete") errors.push(`${row.id}: unobservable metric must be profile-unobservable, not planned`);
+  if (implemented && row.surfaces.view !== true) errors.push(`${row.id}: implemented metric lacks a declared view surface`);
+  if (implemented && row.unavailableReason !== undefined) errors.push(`${row.id}: implemented metric carries an unavailable reason`);
+  if (!implemented && row.unavailableReason === undefined) errors.push(`${row.id}: ${row.supportState} requires an unavailable reason`);
+  if (!implemented && Object.values(row.surfaces).some(value => value === true)) errors.push(`${row.id}: ${row.supportState} metric declares a live surface`);
+  return errors;
+}
 const metric = z.object({
   id, version: z.literal(1), family: z.enum(metricFamilies), question: text, unit: text, grain: text,
   sourceCapabilities: z.array(text).min(1), numerator: text, denominator: text.nullable(),
@@ -18,7 +35,9 @@ const metric = z.object({
   availability: z.enum(["existing-aggregate", "local-profile", "new-facts", "billing-evidence"]),
   shipping: z.enum(["required", "source-conditional", "profile-unobservable"]),
   producer: text, implementationPhase: phase, uiPhase: z.enum(["7", "7B", "9"]),
-  status: z.enum(["planned", "implemented", "qualified"]), evidence: z.array(path).min(1),
+  status: z.enum(["planned", "implemented", "qualified"]),
+  supportState: z.enum(metricSupportStates), surfaces: z.object({ view: surface, filters: surface, drilldown: surface, export: surface }).strict(),
+  unavailableReason: z.enum(metricUnavailableReasons).optional(), evidence: z.array(path).min(1),
   exactness: z.object({ kind: z.enum(["exact", "model", "explicit-approximation"]), contract: text }).strict(),
   acceptance: z.array(z.object({ id, obligation: text }).strict()).min(1),
   verification: z.array(path),
@@ -176,8 +195,10 @@ export function checkAssuranceRegistry(reader: RegistryReader): RegistryResult {
     counts.metrics = rows.length; counts.metricFamilies = new Set(rows.map(row => row.family)).size;
     unique(rows.map(row => row.id), "metrics");
     if (counts.metricFamilies !== 17) errors.push("metrics: all 17 catalog families required");
+    for (const state of metricSupportStates) counts[`metrics:${state}`] = rows.filter(row => row.supportState === state).length;
     for (const row of rows) {
       links(row.evidence, row.id);
+      errors.push(...metricSupportErrors(row));
       unique(row.acceptance.map(item => item.id), `${row.id}: acceptance`);
       const executed = new Set<string>();
       for (const receiptPath of row.verification) {

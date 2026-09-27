@@ -747,9 +747,10 @@ test("artifact diagnostics retain regular-file guards and cap only their size te
   assert.equal(arbitrary.reason, "io_failed"); assert.equal(arbitrary.observedBytes, null); assert.equal(JSON.stringify(arbitrary).includes("PRIVATE_"), false);
 });
 
-test("runner delivers complete linker maps above 8 MiB and at the collector boundary", async t => {
-  assert.equal(LINUX_LINK_MAP_MAX_BYTES, 32 * 1024 * 1024);
-  for (const size of [8 * 1024 * 1024 + 1, LINUX_LINK_MAP_MAX_BYTES]) {
+test("runner delivers complete linker maps above 8 MiB, at the measured fc95b51 size and at the collector boundary", async t => {
+  assert.equal(LINUX_LINK_MAP_MAX_BYTES, 64 * 1024 * 1024);
+  // 33,690,505 bytes is the map that run 36066135869 refused under the old 32 MiB bound.
+  for (const size of [8 * 1024 * 1024 + 1, 33_690_505, LINUX_LINK_MAP_MAX_BYTES]) {
     const f = fixture(t), execute = f.host.execute, collectNotices = f.host.collectNotices;
     const measuredMap = Buffer.alloc(size, 0x20);
     Buffer.from("Linker script and memory map\nLOAD SYNTHETIC_MAP_CANARY\n").copy(measuredMap);

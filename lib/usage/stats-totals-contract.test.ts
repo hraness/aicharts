@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
-import { decodeStatsTotalsResponse, encodeStatsTotalsRequest, encodeStatsTotalsResponse, parseStatsTotals, parseStatsTotalsQuery,
-  parseStatsTotalsResult, STATS_TOTALS_RESPONSE_BYTES, statsAddTokens, statsTotalsTokenTotal, type StatsTotals } from "./stats-totals-contract";
+import { decodeStatsTotalsResponse, encodeStatsTotalsDeviceRequest, encodeStatsTotalsRequest, encodeStatsTotalsResponse, parseStatsTotals,
+  parseStatsTotalsDeviceRequest, parseStatsTotalsQuery, parseStatsTotalsResult, STATS_TOTALS_RESPONSE_BYTES, statsAddTokens,
+  statsTotalsTokenTotal, type StatsTotals, type StatsTotalsDeviceRequest } from "./stats-totals-contract";
 
 const account = `acct_${"a".repeat(32)}`, device = "1".repeat(64);
 const tokens = { input: "18", cacheRead: "5", cacheWrite: "6", output: "10", reasoning: "1" };
@@ -31,6 +32,22 @@ test("totals parse exactly, refuse drift and round-trip through bounded bytes", 
   expect(parseStatsTotalsResult({ ok: false, error: "not_enrolled" })).toEqual({ ok: false, error: "not_enrolled" });
   expect(parseStatsTotalsResult({ ok: false, error: "takeover_required" })).toBeNull();
   expect(decodeStatsTotalsResponse(new TextEncoder().encode("{}"))).toBeNull();
+});
+
+test("device totals request is the enrolled identity and nothing more", () => {
+  const generation = "2".repeat(64);
+  const request: StatsTotalsDeviceRequest = { schemaVersion: 2, accountId: account, deviceId: device, generation };
+  expect(parseStatsTotalsDeviceRequest(request)).toEqual(request);
+  const invalid: unknown[] = [
+    { ...request, schemaVersion: 1 }, { ...request, accountId: "acct_short" }, { ...request, deviceId: "0".repeat(64) },
+    { ...request, generation: "zz".padEnd(64, "0") }, { ...request, uploadSecret: "PRIVATE_CANARY" }, { ...request, sessionExpiresAtMs: 5 },
+    { ...request, firstUtcDay: 20_000, dayCount: 1 },
+  ];
+  for (const value of invalid) expect(parseStatsTotalsDeviceRequest(value)).toBeNull();
+  const encoded = encodeStatsTotalsDeviceRequest(request);
+  expect(encoded).not.toBeNull(); expect(encoded!.byteLength).toBeLessThanOrEqual(512);
+  expect(JSON.parse(new TextDecoder().decode(encoded!))).toEqual(request);
+  expect(encodeStatsTotalsDeviceRequest({ ...request, extra: 1 })).toBeNull();
 });
 
 test("token arithmetic is exact past double precision", () => {

@@ -11,7 +11,7 @@ pub use observed::{
 };
 pub use tokscale_core::offline::{
     all_clients, clients, collect, collect_profile, collect_since, profile_clients, token_basis,
-    LocalImport, ReadReceipt, UPSTREAM_COMMIT,
+    LocalImport, ReadReceipt, CHECKPOINT_CLIENTS, UPSTREAM_COMMIT,
 };
 pub use tokscale_core::sessions::{CostSource, UnifiedMessage};
 #[cfg(test)]

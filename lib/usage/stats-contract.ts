@@ -1,3 +1,4 @@
+import { err, ok, type Result } from "../result";
 import { isStatsClient, isStatsModel, isStatsProvider, STATS_REGISTRY_REVISION } from "./stats-registry";
 
 export const STATS_PROFILE = "client-stats-v2" as const;
@@ -7,6 +8,13 @@ export const STATS_MAX_BYTES = 32 * 1024 * 1024;
 export const STATS_MAX_SOURCES = 64;
 export const STATS_MAX_RECORDS = 10_000_000;
 export const STATS_MAX_DAY = 99_999_999;
+/** Largest plausible token count a single usage record can honestly report.
+ * Model context windows are near 1M; 2^23 leaves wide headroom while still
+ * refusing cumulative-counter leaks (forked Codex rollouts report a shared
+ * ~12B baseline, which lands at tens of millions per record). Committed cells
+ * only ever grow, so admission is the only place an impossible value can be
+ * stopped. */
+export const STATS_MAX_TOKENS_PER_RECORD = 8_388_608n;
 export const STATS_DAY_MS = 86_400_000;
 export const STATS_TOKEN_KEYS = ["input", "cacheRead", "cacheWrite", "output", "reasoning"] as const;
 export type StatsTokenKey = typeof STATS_TOKEN_KEYS[number];
@@ -66,7 +74,51 @@ function array(value: unknown, maximum: number): readonly unknown[] | null {
   return owned;
 }
 export const statsRowKey = (row: UsageStatsRow): string => [String(row.utcDay).padStart(8, "0"), row.client, row.provider ?? "", row.model ?? "", row.tokenBasis].join("\u0000");
-export const statsTokenTotal = (tokens: StatsTokens): bigint => STATS_TOKEN_KEYS.reduce((total, key) => total + BigInt(tokens[key]), 0n);
+
+export const STATS_U128_MAX = (1n << 128n) - 1n;
+/** The 24-digit `statsDecimal` ceiling, as the native kernel's `MAX_DECIMAL`. */
+export const STATS_MAX_DECIMAL = 10n ** 24n - 1n;
+export type StatsArithmeticError = "overflow" | "limit";
+/** Full-width addition, then a separate profile limit, as the native kernel's
+ * `checked_add_bounded`. Overflow and limit refusals stay distinct. */
+export function statsCheckedAddBounded(left: bigint, right: bigint, limit: bigint): Result<bigint, StatsArithmeticError> {
+  if (left < 0n || right < 0n || left > STATS_U128_MAX || right > STATS_U128_MAX) return err("overflow");
+  const sum = left + right;
+  if (sum > STATS_U128_MAX) return err("overflow");
+  return sum > limit ? err("limit") : ok(sum);
+}
+/** Five bounded buckets never exceed this, so a refusal is a corrupted row. */
+const STATS_MAX_TOKEN_TOTAL = 5n * STATS_MAX_DECIMAL;
+export const statsTokenTotal = (tokens: StatsTokens): bigint => STATS_TOKEN_KEYS.reduce((total, key) => {
+  const sum = statsCheckedAddBounded(total, BigInt(tokens[key]), STATS_MAX_TOKEN_TOTAL);
+  if (!sum.ok) throw new Error("stats_token_total_invalid");
+  return sum.value;
+}, 0n);
+export type StatsPricingError = StatsArithmeticError | "missing_rate";
+/** The native retail estimate, as the kernel's `price_microusd`: rates are
+ * pico-USD per token in bucket order (input, cache read, cache write, output,
+ * reasoning); a used bucket needs a rate, an unused bucket does not; one
+ * half-up rounding per observation, then the 24-digit profile limit. This is
+ * the differential reference for the native estimate; hosted views never
+ * price usage themselves. */
+export function statsPriceMicrousd(tokens: readonly [bigint, bigint, bigint, bigint, bigint], rates: readonly [bigint | null, bigint | null, bigint | null, bigint | null, bigint | null]): Result<bigint, StatsPricingError> {
+  let pico = 0n;
+  for (let index = 0; index < 5; index++) {
+    const count = tokens[index]!, rate = rates[index]!;
+    if (count < 0n || count > STATS_U128_MAX || (rate !== null && (rate < 0n || rate > STATS_U128_MAX))) return err("overflow");
+    if (count === 0n) continue;
+    if (rate === null) return err("missing_rate");
+    const amount = count * rate;
+    if (amount > STATS_U128_MAX) return err("overflow");
+    const sum = statsCheckedAddBounded(pico, amount, STATS_U128_MAX);
+    if (!sum.ok) return sum;
+    pico = sum.value;
+  }
+  const offset = statsCheckedAddBounded(pico, 500_000n, STATS_U128_MAX);
+  if (!offset.ok) return offset;
+  const rounded = offset.value / 1_000_000n;
+  return rounded > STATS_MAX_DECIMAL ? err("limit") : ok(rounded);
+}
 
 const sourceKeys = ["client", "status", "tokenBasis", "records", "warnings", "latestAtMs"];
 const rowKeys = ["utcDay", "client", "provider", "model", "tokens", "records", "reportedCostMicrousd", "reportedCostRecords", "estimatedCostMicrousd", "estimatedCostRecords", "durationMs", "timedRecords", "timedTokens", "tokenBasis", "breakdownCoverage"];
@@ -80,6 +132,11 @@ function source(value: unknown): SourceCoverage | null {
   if (["empty", "not_found", "unavailable"].includes(raw.status) && (raw.records !== 0 || raw.latestAtMs !== null)) return null;
   return Object.freeze({ ...raw }) as SourceCoverage;
 }
+/** Admission plausibility: a row's tokens may not exceed its records times the
+ * per-record bound. Only new uploads are held to it; committed history and
+ * replies derived from it keep parsing, so a pre-bound overcount stays readable
+ * instead of turning every read of that account into a storage failure. */
+export const statsRowWithinRecordBound = (row: UsageStatsRow): boolean => statsTokenTotal(row.tokens) <= BigInt(row.records) * STATS_MAX_TOKENS_PER_RECORD;
 export function parseUsageStatsRow(value: unknown): UsageStatsRow | null {
   try {
     const raw = statsOwnRecord(value, rowKeys);

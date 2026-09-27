@@ -944,16 +944,20 @@ fn parse_codex_reader<R: BufRead>(
                     }
                     if parsed_timestamp.is_some() || total_usage.is_some() {
                         // Fork/subagent children replay the same upstream
-                        // token_count history into many sibling files. Those
+                        // token_count history into many descendant files. Those
                         // replays carry identical cumulative totals but a
                         // distinct per-file session id, so a session-scoped key
                         // never collapses them and the totals get counted once
-                        // per sibling. Scope the key to the fork parent instead
-                        // so sibling replays share one key. Unrelated sessions
-                        // keep their own id and never merge.
+                        // per descendant. The logical turn's id is identical in
+                        // every replay at every depth, so it is the primary
+                        // scope; the fork parent id follows for streams whose
+                        // records carry no turn id, and the file's own session
+                        // id is the last resort. Unrelated sessions keep their
+                        // own ids and never merge.
                         let dedup_scope_id = state
-                            .session_forked_from_id
+                            .current_turn_id
                             .as_deref()
+                            .or(state.session_forked_from_id.as_deref())
                             .or(state.session_id_from_meta.as_deref())
                             .unwrap_or(session_id);
                         set_codex_dedup_key(
@@ -3778,5 +3782,576 @@ mod tests {
             messages[1].is_turn_start,
             "the deferred turn-start marker must still apply"
         );
+    }
+
+    // ------------------------------------------------------------------
+    // Generated fork-tree metamorphic tests.
+    //
+    // The failure mode these pin down (observed in a real corpus: ~2k
+    // Desktop/VS Code rollouts sharing one ~12B cumulative counter): a
+    // forked child's rollout replays the parent's `total_token_usage`
+    // cumulative snapshots and `last_token_usage` deltas before the child's
+    // own turns. An implementation that sums either field naively counts
+    // inherited usage once per descendant. These tests generate random fork
+    // trees, serialize them as real rollout JSONL, and check the parser
+    // against a by-construction oracle plus the metamorphic laws a broken
+    // implementation cannot satisfy: the shared counter's absolute
+    // magnitude, the number of times a prefix is replayed, file order, and
+    // file deletion must all behave exactly.
+
+    #[derive(Clone, Copy, Debug, Default, PartialEq)]
+    struct GenTokens {
+        input: u64,
+        cached: u64,
+        output: u64,
+        reasoning: u64,
+    }
+
+    impl GenTokens {
+        fn add(&mut self, other: &Self) {
+            self.input += other.input;
+            self.cached += other.cached;
+            self.output += other.output;
+            self.reasoning += other.reasoning;
+        }
+    }
+
+    struct GenRng(u64);
+
+    impl GenRng {
+        fn next(&mut self) -> u64 {
+            // xorshift64* — deterministic, dependency-free.
+            let mut x = self.0;
+            x ^= x >> 12;
+            x ^= x << 25;
+            x ^= x >> 27;
+            self.0 = x;
+            x.wrapping_mul(0x2545F4914F6CDD1D)
+        }
+        fn below(&mut self, n: u64) -> u64 {
+            self.next() % n
+        }
+    }
+
+    struct GenSession {
+        parent: Option<usize>,
+        /// true => `source:"vscode", thread_source:"user"` fork shape;
+        /// false => `source.subagent.thread_spawn` shape.
+        user_fork: bool,
+        turns: Vec<GenTokens>,
+    }
+
+    struct GenTree {
+        sessions: Vec<GenSession>,
+        /// Account-level cumulative base shared by every session, matching
+        // the observed counter that grows across an entire installation.
+        counter_base: u64,
+        /// false mints UUID v4-shaped ids: the causal order key is absent,
+        /// the task/turn boundary checks fail open, and replayed parent
+        /// turns emit — leaving cross-file dedup as the only line of defense.
+        v7: bool,
+    }
+
+    fn gen_tree(seed: u64) -> GenTree {
+        let mut rng = GenRng(seed | 1);
+        let v7 = rng.below(2) == 0;
+        let counter_base = match rng.below(3) {
+            0 => 0,
+            1 => rng.below(10_000_000_000),
+            _ => 12_000_000_000 + rng.below(1_000_000_000),
+        };
+        let count = 1 + rng.below(6) as usize;
+        let mut sessions: Vec<GenSession> = Vec::new();
+        for i in 0..count {
+            let parent = if i == 0 || rng.below(4) == 0 {
+                None
+            } else {
+                let candidate = rng.below(i as u64) as usize;
+                // Depth stays at or under 3, matching observed nesting.
+                let mut depth = 1usize;
+                let mut cursor = sessions[candidate].parent;
+                while let Some(p) = cursor {
+                    depth += 1;
+                    cursor = sessions[p].parent;
+                }
+                if depth > 3 {
+                    None
+                } else {
+                    Some(candidate)
+                }
+            };
+            let turns: Vec<GenTokens> = (0..rng.below(5))
+                .map(|_| {
+                    let input = rng.below(1_000_000);
+                    let output = rng.below(200_000);
+                    GenTokens {
+                        input,
+                        cached: rng.below(input + 1),
+                        output,
+                        reasoning: rng.below(output + 1),
+                    }
+                })
+                .collect();
+            sessions.push(GenSession {
+                parent,
+                user_fork: rng.below(2) == 0,
+                turns,
+            });
+        }
+        GenTree {
+            sessions,
+            counter_base,
+            v7,
+        }
+    }
+
+    /// What one turn contributes to the parsed disjoint buckets: inclusive
+    /// `input_tokens` and `output_tokens` are normalized to exclusive input
+    /// minus cached reads and exclusive output minus reasoning.
+    fn gen_parsed_contribution(turn: &GenTokens) -> GenTokens {
+        GenTokens {
+            input: turn.input - turn.cached,
+            output: turn.output - turn.reasoning,
+            ..*turn
+        }
+    }
+
+    fn gen_own_sum(sessions: &[GenSession], index: usize) -> GenTokens {
+        let mut total = GenTokens::default();
+        for turn in &sessions[index].turns {
+            total.add(&gen_parsed_contribution(turn));
+        }
+        total
+    }
+
+    /// The cumulative `total_token_usage` seen at each session's own turns.
+    /// The real counter continues each child's stream from the parent's
+    /// fork-time snapshot: siblings of one parent share the same baseline
+    /// and advance it independently, so distinct own turns legitimately
+    /// reach identical cumulative values — dedup must key on the turn, not
+    /// the totals.
+    fn gen_own_cumulatives(tree: &GenTree) -> Vec<Vec<GenTokens>> {
+        fn final_of(tree: &GenTree, index: usize) -> GenTokens {
+            let mut total = match tree.sessions[index].parent {
+                Some(p) => final_of(tree, p),
+                None => GenTokens {
+                    input: tree.counter_base,
+                    cached: tree.counter_base,
+                    output: tree.counter_base,
+                    reasoning: 0,
+                },
+            };
+            for t in &tree.sessions[index].turns {
+                total.add(t);
+            }
+            total
+        }
+        tree.sessions
+            .iter()
+            .enumerate()
+            .map(|(i, s)| {
+                let mut run = match s.parent {
+                    Some(p) => final_of(tree, p),
+                    None => GenTokens {
+                        input: tree.counter_base,
+                        cached: tree.counter_base,
+                        output: tree.counter_base,
+                        reasoning: 0,
+                    },
+                };
+                s.turns
+                    .iter()
+                    .map(|t| {
+                        run.add(t);
+                        run
+                    })
+                    .collect()
+            })
+            .collect()
+    }
+
+    fn gen_usage_json(usage: &GenTokens) -> String {
+        format!(
+            "{{\"input_tokens\":{i},\"cached_input_tokens\":{c},\"output_tokens\":{o},\"reasoning_output_tokens\":{r},\"total_tokens\":{t}}}",
+            i = usage.input,
+            c = usage.cached,
+            o = usage.output,
+            r = usage.reasoning,
+            t = usage.input + usage.output + usage.reasoning,
+        )
+    }
+
+    /// Session `index`'s meta id embeds `base_ms` in the UUID v7 timestamp
+    /// field; its own turns get ids with ms > `base_ms`, so the parser's
+    /// minted-at/after-session boundary check behaves exactly as on real
+    /// Desktop rollouts. Parent ids always carry smaller ms than their
+    /// children, matching a parent that existed before the fork.
+    fn gen_base_ms(index: usize) -> u64 {
+        0x190_0000 + (index as u64) * 0x100
+    }
+
+    fn gen_uuid(tree: &GenTree, ms: u64, uniq: u64) -> String {
+        if tree.v7 {
+            // RFC 9562 UUIDv7: 48-bit ms split 8+4 hex across the first two
+            // groups, then the version-7 nibble group and random tails.
+            format!(
+                "{:08x}-{:04x}-7{:03x}-8000-{:012x}",
+                ms >> 16,
+                ms & 0xffff,
+                uniq & 0xfff,
+                uniq
+            )
+        } else {
+            // Legacy v4 shape: random-looking, carries no timestamp.
+            format!(
+                "{:08x}-{:04x}-4{:03x}-8000-{:012x}",
+                (ms ^ 0x5a5a5a) as u32,
+                uniq as u16,
+                (uniq >> 4) & 0xfff,
+                uniq
+            )
+        }
+    }
+
+    fn gen_meta(tree: &GenTree, index: usize, seq: &mut u64) -> String {
+        let s = &tree.sessions[index];
+        let id = gen_uuid(tree, gen_base_ms(index), index as u64);
+        let source = match s.parent {
+            None => "\"source\":\"vscode\",\"thread_source\":\"user\"".to_string(),
+            Some(p) if s.user_fork => format!(
+                "\"forked_from_id\":\"{}\",\"source\":\"vscode\",\"thread_source\":\"user\"",
+                gen_uuid(tree, gen_base_ms(p), p as u64)
+            ),
+            Some(p) => format!(
+                "\"forked_from_id\":\"{}\",\"source\":{{\"subagent\":{{\"thread_spawn\":{{\"parent_thread_id\":\"{}\",\"depth\":1}}}}}}",
+                gen_uuid(tree, gen_base_ms(p), p as u64),
+                gen_uuid(tree, gen_base_ms(p), p as u64)
+            ),
+        };
+        format!(
+            "{{\"timestamp\":\"{}\",\"type\":\"session_meta\",\"payload\":{{\"id\":\"{id}\",{source},\"model_provider\":\"openai\",\"cwd\":\"/repo-{index}\"}}}}",
+            gen_stamp(seq),
+        )
+    }
+
+    fn gen_stamp(seq: &mut u64) -> String {
+        *seq += 1;
+        format!(
+            "2026-07-15T14:{:02}:{:02}.{:03}Z",
+            (*seq / 60_000) % 60,
+            (*seq / 1_000) % 60,
+            *seq % 1_000,
+        )
+    }
+
+    /// Serialized rollout for `index`: own meta, the parent's entire recorded
+    /// stream replayed verbatim, then for each own turn a task_started +
+    /// turn_context + token_count + task_complete lifecycle continuing the
+    /// shared cumulative counter — the shape real Desktop/VS Code forks write.
+    fn gen_rollout(tree: &GenTree, index: usize, seq: &mut u64) -> String {
+        gen_rollout_marked(tree, index, seq, true)
+    }
+
+    fn gen_rollout_marked(tree: &GenTree, index: usize, seq: &mut u64, task_marks: bool) -> String {
+        let mut out = gen_meta(tree, index, seq);
+        if let Some(p) = tree.sessions[index].parent {
+            let replay = gen_rollout_marked(tree, p, seq, task_marks);
+            let replay = if task_marks {
+                replay
+            } else {
+                replay
+                    .split('\n')
+                    .filter(|l| {
+                        !l.contains("\"type\":\"task_started\"")
+                            && !l.contains("\"type\":\"task_complete\"")
+                    })
+                    .collect::<Vec<_>>()
+                    .join("\n")
+            };
+            out.push('\n');
+            out.push_str(&replay);
+        }
+        let cumulative = &gen_own_cumulatives(tree)[index];
+        let base_ms = gen_base_ms(index);
+        for (k, turn) in tree.sessions[index].turns.iter().enumerate() {
+            let turn_id = gen_uuid(tree, base_ms + 8 + k as u64, (index * 16 + k) as u64);
+            out.push('\n');
+            out.push_str(&format!(
+                "{{\"timestamp\":\"{}\",\"type\":\"event_msg\",\"payload\":{{\"type\":\"task_started\",\"turn_id\":\"{turn_id}\"}}}}",
+                gen_stamp(seq),
+            ));
+            out.push('\n');
+            out.push_str(&format!(
+                "{{\"timestamp\":\"{}\",\"type\":\"turn_context\",\"payload\":{{\"turn_id\":\"{turn_id}\",\"model\":\"gpt-5.5\",\"cwd\":\"/repo-{index}\"}}}}",
+                gen_stamp(seq),
+            ));
+            out.push('\n');
+            out.push_str(&format!(
+                "{{\"timestamp\":\"{}\",\"type\":\"event_msg\",\"payload\":{{\"type\":\"token_count\",\"info\":{{\"total_token_usage\":{},\"last_token_usage\":{}}}}}}}",
+                gen_stamp(seq),
+                gen_usage_json(&cumulative[k]),
+                gen_usage_json(turn),
+            ));
+            out.push('\n');
+            out.push_str(&format!(
+                "{{\"timestamp\":\"{}\",\"type\":\"event_msg\",\"payload\":{{\"type\":\"task_complete\",\"turn_id\":\"{turn_id}\"}}}}",
+                gen_stamp(seq),
+            ));
+        }
+        out
+    }
+
+    fn gen_parsed_sum(tree: &GenTree) -> GenTokens {
+        let mut total = GenTokens::default();
+        for i in 0..tree.sessions.len() {
+            let mut seq = 100u64;
+            let file = create_test_file(&gen_rollout(tree, i, &mut seq));
+            for m in parse_codex_file(file.path()) {
+                total.add(&GenTokens {
+                    input: m.tokens.input as u64,
+                    cached: m.tokens.cache_read as u64,
+                    output: m.tokens.output as u64,
+                    reasoning: m.tokens.reasoning as u64,
+                });
+            }
+        }
+        total
+    }
+
+    /// The collection-level view: identical `dedup_key` emissions across
+    /// files are one logical event. Replayed parent turns carry parent-scoped
+    /// keys with their original cumulative totals, so a replay collapses
+    /// against the parent's own record even when the turn-boundary
+    /// classification failed open (legacy non-v7 ids).
+    fn gen_dedup_sum(tree: &GenTree) -> GenTokens {
+        let mut seen = std::collections::HashSet::new();
+        let mut total = GenTokens::default();
+        for i in 0..tree.sessions.len() {
+            let mut seq = 100u64;
+            let file = create_test_file(&gen_rollout(tree, i, &mut seq));
+            for m in parse_codex_file(file.path()) {
+                match m.dedup_key {
+                    Some(ref key) if !seen.insert(key.clone()) => continue,
+                    _ => total.add(&GenTokens {
+                        input: m.tokens.input as u64,
+                        cached: m.tokens.cache_read as u64,
+                        output: m.tokens.output as u64,
+                        reasoning: m.tokens.reasoning as u64,
+                    }),
+                }
+            }
+        }
+        total
+    }
+
+    /// The independent oracle: the naive sum every broken implementation
+    /// produces — each session's own turns plus every replayed ancestor turn.
+    fn gen_naive_sum(tree: &GenTree) -> GenTokens {
+        let mut total = GenTokens::default();
+        for i in 0..tree.sessions.len() {
+            let mut cursor = Some(i);
+            while let Some(j) = cursor {
+                for turn in &tree.sessions[j].turns {
+                    total.add(&gen_parsed_contribution(turn));
+                }
+                cursor = tree.sessions[j].parent;
+            }
+        }
+        total
+    }
+
+    fn gen_truth(tree: &GenTree) -> GenTokens {
+        let mut truth = GenTokens::default();
+        for i in 0..tree.sessions.len() {
+            truth.add(&gen_own_sum(&tree.sessions, i));
+        }
+        truth
+    }
+
+    fn gen_has_descendant(tree: &GenTree, node: usize, survivors: &[bool]) -> bool {
+        (0..tree.sessions.len()).any(|i| {
+            survivors[i] && {
+                let mut cursor = tree.sessions[i].parent;
+                while let Some(p) = cursor {
+                    if p == node {
+                        return true;
+                    }
+                    cursor = tree.sessions[p].parent;
+                }
+                false
+            }
+        })
+    }
+
+    #[test]
+    fn generated_fork_lineages_count_each_turn_exactly_once() {
+        let mut saw_inflation = false;
+        let mut saw_v7 = false;
+        let mut saw_v4 = false;
+        for seed in 1..=200u64 {
+            let tree = gen_tree(seed);
+            let truth = gen_truth(&tree);
+            // Dedup-level collection: the accounting the server sees. Must
+            // equal the unique logical turns for every id flavor — the replay
+            // boundary check (v7) and parent-scoped dedup keys (v4) are two
+            // independent mechanisms converging on the same law.
+            let dedup = gen_dedup_sum(&tree);
+            assert_eq!(
+                dedup, truth,
+                "seed {seed} v7={}: deduplicated total must equal the unique \
+                 logical turns",
+                tree.v7,
+            );
+            // Per-file: with v7 causal ordering the parser must already
+            // isolate own turns; legacy v4 may emit replays (dedup rescues
+            // them), so that level is only asserted in the v7 mode.
+            if tree.v7 {
+                saw_v7 = true;
+                let parsed = gen_parsed_sum(&tree);
+                assert_eq!(
+                    parsed, truth,
+                    "seed {seed}: v7 fork boundary must isolate own turns",
+                );
+            } else {
+                saw_v4 = true;
+            }
+            // The differential oracle: a naive sum over `last_token_usage`
+            // counts every turn once per descendant — exactly the inflation
+            // the parser must not reproduce.
+            let naive = gen_naive_sum(&tree);
+            assert!(naive.input >= truth.input);
+            assert!(naive.output >= truth.output);
+            saw_inflation |= naive != truth;
+        }
+        assert!(
+            saw_inflation,
+            "generation must exercise real replay inflation — otherwise the \
+             equality above cannot distinguish the parser from a naive sum"
+        );
+        assert!(saw_v7 && saw_v4, "generation must cover both id flavors");
+    }
+
+    #[test]
+    fn generated_fork_deletion_loses_exactly_own_turns() {
+        for seed in 1..=120u64 {
+            let tree = gen_tree(seed.wrapping_mul(0x9E3779B97F4A7C15) | 1);
+            let truth = gen_truth(&tree);
+            for removed in 0..tree.sessions.len() {
+                let mut survivors = vec![true; tree.sessions.len()];
+                survivors[removed] = false;
+                let mut seen = std::collections::HashSet::new();
+                let mut parsed = GenTokens::default();
+                for i in 0..tree.sessions.len() {
+                    if i == removed {
+                        continue;
+                    }
+                    let mut seq = 100u64;
+                    let file = create_test_file(&gen_rollout(&tree, i, &mut seq));
+                    for m in parse_codex_file(file.path()) {
+                        match m.dedup_key {
+                            Some(ref key) if !seen.insert(key.clone()) => continue,
+                            _ => parsed.add(&GenTokens {
+                                input: m.tokens.input as u64,
+                                cached: m.tokens.cache_read as u64,
+                                output: m.tokens.output as u64,
+                                reasoning: m.tokens.reasoning as u64,
+                            }),
+                        }
+                    }
+                }
+                let mut expected = truth;
+                // A removed session's own turns disappear only when no
+                // surviving descendant still replays them — a child file
+                // carries the parent's stream as a backup copy (v4 mode; v7
+                // children never emit the replay, so the loss is total).
+                if tree.v7 || !gen_has_descendant(&tree, removed, &survivors) {
+                    let own = gen_own_sum(&tree.sessions, removed);
+                    expected.input -= own.input;
+                    expected.cached -= own.cached;
+                    expected.output -= own.output;
+                    expected.reasoning -= own.reasoning;
+                }
+                assert_eq!(
+                    parsed, expected,
+                    "seed {seed} v7={}, removed {removed}: deletion must lose \
+                     exactly the turns no surviving file replays",
+                    tree.v7,
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn generated_replay_duplication_is_counted_once() {
+        for seed in 1..=80u64 {
+            let tree = gen_tree(seed.wrapping_mul(0xD1B54A32D192ED03) | 1);
+            let truth = gen_truth(&tree);
+            let mut seen = std::collections::HashSet::new();
+            let mut parsed = GenTokens::default();
+            for i in 0..tree.sessions.len() {
+                let mut seq = 100u64;
+                let mut body = gen_rollout(&tree, i, &mut seq);
+                if let Some(p) = tree.sessions[i].parent {
+                    // Retry/copy failure shape: the replayed parent stream
+                    // appears twice inside the child rollout.
+                    let replay = gen_rollout(&tree, p, &mut seq);
+                    let mut duplicated = String::new();
+                    let mut lines = body.split('\n');
+                    duplicated.push_str(lines.next().unwrap());
+                    duplicated.push('\n');
+                    duplicated.push_str(&replay);
+                    duplicated.push('\n');
+                    duplicated.push_str(&replay);
+                    for line in lines {
+                        duplicated.push('\n');
+                        duplicated.push_str(line);
+                    }
+                    body = duplicated;
+                }
+                let file = create_test_file(&body);
+                for m in parse_codex_file(file.path()) {
+                    match m.dedup_key {
+                        Some(ref key) if !seen.insert(key.clone()) => continue,
+                        _ => parsed.add(&GenTokens {
+                            input: m.tokens.input as u64,
+                            cached: m.tokens.cache_read as u64,
+                            output: m.tokens.output as u64,
+                            reasoning: m.tokens.reasoning as u64,
+                        }),
+                    }
+                }
+            }
+            assert_eq!(
+                parsed, truth,
+                "seed {seed} v7={}: duplicating a replayed prefix must not \
+                 change the deduplicated total",
+                tree.v7,
+            );
+        }
+    }
+
+    #[test]
+    fn checked_in_fork_inherited_counter_fixture_counts_only_own_turns() {
+        // Mirrors the observed corpus shape: a Desktop fork replays parent
+        // records carrying a ~12B shared cumulative counter, then continues
+        // the same counter for its own two turns (deltas 6,580 and 6,320).
+        let file = create_test_file(include_str!(
+            "../../tests/fixtures/codex_fork_inherited_counter.jsonl"
+        ));
+        let messages = parse_codex_file(file.path());
+        let (mut input, mut cached, mut output, mut reasoning) = (0u64, 0u64, 0u64, 0u64);
+        for m in &messages {
+            input += m.tokens.input as u64;
+            cached += m.tokens.cache_read as u64;
+            output += m.tokens.output as u64;
+            reasoning += m.tokens.reasoning as u64;
+        }
+        // Disjoint buckets: exclusive input = input − cached, exclusive
+        // output = output − reasoning. Own deltas (6100/4000/400/80) and
+        // (5700/3000/500/120) normalize to (2100+2700, 7000, 320+380, 200).
+        assert_eq!((input, cached, output, reasoning), (4_800, 7_000, 700, 200));
+        // The naive counter reading would report ~24B (two ~12B inherited
+        // snapshots plus own continuation); the honest answer is ~19.4k.
+        assert!(input + output + reasoning < 100_000);
     }
 }

@@ -12,7 +12,7 @@ export const casesSchema = z.object({ schemaVersion: z.literal(1),
   claim: z.literal("bounded-generated-production-conformance-only"), tracePrefix: z.literal("ASSURANCE_CONFORMANCE "),
   expectedTraceCount: z.number().int().min(1).max(128),
   adapters: z.object({ worker: adapter, ledger: adapter, "browser-contract": adapter }).strict(),
-  cases: z.array(z.object({ model: z.string().regex(/^M[1-7](?:-[a-z]+)?$/u), adapter: adapterId,
+  cases: z.array(z.object({ model: z.string().regex(/^M(?:[1-9]|1[01])(?:-[a-z]+)?$/u), adapter: adapterId,
     seeds: z.array(z.number().int().min(1).max(0xffffffff)).min(1).max(16),
     requiredCoverage: z.array(z.string().regex(/^[a-z0-9-]+:[a-z0-9_-]+$/u)).min(1).max(64),
     minSteps: z.number().int().min(3).max(256), maxSteps: z.number().int().min(3).max(256) }).strict()).min(1).max(32),
@@ -99,7 +99,7 @@ export const mutationsSchema = z.object({ schemaVersion: z.literal(1), claim: z.
 }).strict();
 type Mutation = z.infer<typeof mutationsSchema>["mutations"][number];
 
-export function validateMutation(result: ProofProcess, marker: string, expectedTests = 30): void {
+export function validateMutation(result: ProofProcess, marker: string, expectedTests = 33): void {
   const output = stripVTControlCharacters(result.output);
   // Compile errors and infrastructure deaths are not semantic counterexamples.
   // All three M1 schedules must fail at the unchanged outcome assertion.
@@ -127,7 +127,8 @@ async function inputs(): Promise<Map<string, Buffer>> {
   const paths = ["Cargo.toml", "Cargo.lock", "rust-toolchain.toml", "package.json", "bun.lock", "bunfig.toml", "tsconfig.json",
     "scripts/assurance-conformance.ts", "scripts/assurance-conformance.test.ts", "scripts/assurance-proof-common.ts", "scripts/usage-worker-tools.ts",
     "services/usage-worker/vitest.config.ts", "services/usage-worker/wrangler.jsonc", "services/usage-worker/tsconfig.json", "services/usage-worker/worker-configuration.d.ts"];
-  const directories = ["services/usage-worker/src", "lib", "data", "fixtures/usage", "verify/conformance", "verify/tla", "crates", "vendor"];
+  // components/usage holds the metric presentation modules that lib/usage imports at runtime.
+  const directories = ["services/usage-worker/src", "lib", "components/usage", "data", "fixtures/usage", "verify/conformance", "verify/tla", "crates", "vendor"];
   let total = 0; const files = new Map<string, Buffer>();
   const add = async (path: string) => {
     const bytes = await readProofFile(resolve(root, path), 16_777_216); total += bytes.length;

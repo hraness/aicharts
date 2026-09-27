@@ -35,7 +35,14 @@
       "producer": "kernel owner: normalized token facts and query contribution fold",
       "implementationPhase": "3",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/wire.ts",
@@ -96,7 +103,14 @@
       "producer": "kernel owner: normalized token facts and query contribution fold",
       "implementationPhase": "3",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/wire.ts",
@@ -157,7 +171,14 @@
       "producer": "kernel owner: normalized token facts and query contribution fold",
       "implementationPhase": "3",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/wire.ts",
@@ -218,7 +239,14 @@
       "producer": "kernel owner: normalized token facts and query contribution fold",
       "implementationPhase": "3",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/wire.ts",
@@ -279,7 +307,14 @@
       "producer": "kernel owner: normalized token facts and query contribution fold",
       "implementationPhase": "3",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/wire.ts",
@@ -340,7 +375,14 @@
       "producer": "kernel owner: normalized token facts and query contribution fold",
       "implementationPhase": "3",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/wire.ts",
@@ -401,7 +443,14 @@
       "producer": "kernel owner: normalized token facts and query contribution fold",
       "implementationPhase": "3",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/wire.ts",
@@ -462,7 +511,14 @@
       "producer": "kernel owner: normalized token facts and query contribution fold",
       "implementationPhase": "3",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/wire.ts",
@@ -523,6 +579,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/wire.ts",
@@ -583,6 +647,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/wire.ts",
@@ -642,7 +714,14 @@
       "producer": "kernel owner: normalized token facts and query contribution fold",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/wire.ts",
@@ -710,6 +789,14 @@
       "implementationPhase": "10",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-billing-evidence",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/wire.ts",
@@ -770,6 +857,14 @@
       "implementationPhase": "10",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-billing-evidence",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/wire.ts",
@@ -832,6 +927,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/wire.ts",
@@ -894,6 +997,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/wire.ts",
@@ -956,6 +1067,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/wire.ts",
@@ -1018,6 +1137,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/wire.ts",
@@ -1080,6 +1207,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/wire.ts",
@@ -1142,6 +1277,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/wire.ts",
@@ -1202,7 +1345,14 @@
       "producer": "kernel and query owners: eligible-population contribution fold",
       "implementationPhase": "6",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/stats-contract.ts",
@@ -1262,7 +1412,14 @@
       "producer": "kernel and query owners: eligible-population contribution fold",
       "implementationPhase": "6",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/stats-contract.ts",
@@ -1322,7 +1479,14 @@
       "producer": "kernel and query owners: eligible-population contribution fold",
       "implementationPhase": "6",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/stats-contract.ts",
@@ -1381,7 +1545,14 @@
       "producer": "kernel and query owners: eligible-population contribution fold",
       "implementationPhase": "6",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/stats-contract.ts",
@@ -1440,7 +1611,14 @@
       "producer": "kernel and query owners: eligible-population contribution fold",
       "implementationPhase": "6",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/stats-contract.ts",
@@ -1499,7 +1677,14 @@
       "producer": "kernel and query owners: eligible-population contribution fold",
       "implementationPhase": "6",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/stats-contract.ts",
@@ -1558,7 +1743,14 @@
       "producer": "kernel and query owners: eligible-population contribution fold",
       "implementationPhase": "6",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/stats-contract.ts",
@@ -1620,6 +1812,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/stats-contract.ts",
@@ -1681,6 +1881,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/stats-contract.ts",
@@ -1742,6 +1950,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/stats-contract.ts",
@@ -1800,7 +2016,14 @@
       "producer": "kernel and query owners: eligible-population contribution fold",
       "implementationPhase": "6",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/stats-contract.ts",
@@ -1859,7 +2082,14 @@
       "producer": "query owner: canonical time-bucket contribution fold",
       "implementationPhase": "6",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/rollups.ts",
@@ -1918,7 +2148,14 @@
       "producer": "query owner: canonical time-bucket contribution fold",
       "implementationPhase": "6",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/rollups.ts",
@@ -1977,7 +2214,14 @@
       "producer": "query owner: canonical time-bucket contribution fold",
       "implementationPhase": "6",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/rollups.ts",
@@ -2039,6 +2283,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/rollups.ts",
@@ -2097,7 +2349,14 @@
       "producer": "query owner: canonical time-bucket contribution fold",
       "implementationPhase": "6",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/rollups.ts",
@@ -2156,7 +2415,14 @@
       "producer": "query owner: canonical time-bucket contribution fold",
       "implementationPhase": "6",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/rollups.ts",
@@ -2215,7 +2481,14 @@
       "producer": "query owner: canonical time-bucket contribution fold",
       "implementationPhase": "6",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/rollups.ts",
@@ -2274,7 +2547,14 @@
       "producer": "query owner: canonical time-bucket contribution fold",
       "implementationPhase": "6",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/rollups.ts",
@@ -2333,7 +2613,14 @@
       "producer": "query owner: canonical time-bucket contribution fold",
       "implementationPhase": "6",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/rollups.ts",
@@ -2392,7 +2679,14 @@
       "producer": "query owner: canonical time-bucket contribution fold",
       "implementationPhase": "6",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/rollups.ts",
@@ -2453,7 +2747,14 @@
       "producer": "query owner: canonical time-bucket contribution fold",
       "implementationPhase": "6",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/rollups.ts",
@@ -2515,6 +2816,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/rollups.ts",
@@ -2573,7 +2882,14 @@
       "producer": "query owner: canonical time-bucket contribution fold",
       "implementationPhase": "6",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/rollups.ts",
@@ -2632,7 +2948,14 @@
       "producer": "query owner: canonical time-bucket contribution fold",
       "implementationPhase": "6",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/rollups.ts",
@@ -2691,7 +3014,14 @@
       "producer": "query owner: canonical time-bucket contribution fold",
       "implementationPhase": "6",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/rollups.ts",
@@ -2750,7 +3080,14 @@
       "producer": "instrumentation and query owners: typed observation distributions",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -2810,7 +3147,14 @@
       "producer": "instrumentation and query owners: typed observation distributions",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -2870,7 +3214,14 @@
       "producer": "instrumentation and query owners: typed observation distributions",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -2930,7 +3281,14 @@
       "producer": "instrumentation and query owners: typed observation distributions",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -2990,7 +3348,14 @@
       "producer": "instrumentation and query owners: typed observation distributions",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -3050,7 +3415,14 @@
       "producer": "instrumentation and query owners: typed observation distributions",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -3110,7 +3482,14 @@
       "producer": "instrumentation and query owners: typed observation distributions",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -3170,7 +3549,14 @@
       "producer": "instrumentation and query owners: typed observation distributions",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -3230,7 +3616,14 @@
       "producer": "instrumentation and query owners: typed observation distributions",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -3290,7 +3683,14 @@
       "producer": "instrumentation and query owners: typed observation distributions",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -3350,7 +3750,14 @@
       "producer": "instrumentation and query owners: typed observation distributions",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -3410,7 +3817,14 @@
       "producer": "instrumentation and query owners: typed observation distributions",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -3472,7 +3886,14 @@
       "producer": "instrumentation and query owners: typed observation distributions",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -3534,7 +3955,14 @@
       "producer": "instrumentation and query owners: typed observation distributions",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -3596,7 +4024,14 @@
       "producer": "instrumentation and query owners: typed observation distributions",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -3658,7 +4093,14 @@
       "producer": "instrumentation and query owners: typed observation distributions",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -3720,7 +4162,14 @@
       "producer": "instrumentation and query owners: typed observation distributions",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -3782,7 +4231,14 @@
       "producer": "instrumentation and query owners: typed observation distributions",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -3845,6 +4301,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -3907,6 +4371,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -3966,6 +4438,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -4024,7 +4504,14 @@
       "producer": "instrumentation and query owners: typed observation distributions",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -4083,7 +4570,14 @@
       "producer": "instrumentation and query owners: typed observation distributions",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -4148,7 +4642,14 @@
       "producer": "kernel and query owners: versioned price and charge contribution fold",
       "implementationPhase": "3",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/stats/pricing.rs",
@@ -4213,7 +4714,14 @@
       "producer": "kernel and query owners: versioned price and charge contribution fold",
       "implementationPhase": "3",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/stats/pricing.rs",
@@ -4279,6 +4787,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/stats/pricing.rs",
@@ -4343,6 +4859,14 @@
       "implementationPhase": "6",
       "uiPhase": "7",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/stats/pricing.rs",
@@ -4406,7 +4930,14 @@
       "producer": "kernel and query owners: versioned price and charge contribution fold",
       "implementationPhase": "6",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/stats/pricing.rs",
@@ -4471,6 +5002,14 @@
       "implementationPhase": "6",
       "uiPhase": "7",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/stats/pricing.rs",
@@ -4536,6 +5075,14 @@
       "implementationPhase": "6",
       "uiPhase": "7",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/stats/pricing.rs",
@@ -4601,6 +5148,14 @@
       "implementationPhase": "6",
       "uiPhase": "7",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/stats/pricing.rs",
@@ -4664,7 +5219,14 @@
       "producer": "kernel and query owners: versioned price and charge contribution fold",
       "implementationPhase": "6",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/stats/pricing.rs",
@@ -4729,7 +5291,14 @@
       "producer": "kernel and query owners: versioned price and charge contribution fold",
       "implementationPhase": "6",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/stats/pricing.rs",
@@ -4794,7 +5363,14 @@
       "producer": "kernel and query owners: versioned price and charge contribution fold",
       "implementationPhase": "6",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/stats/pricing.rs",
@@ -4859,7 +5435,14 @@
       "producer": "kernel and query owners: versioned price and charge contribution fold",
       "implementationPhase": "6",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/stats/pricing.rs",
@@ -4926,6 +5509,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/stats/pricing.rs",
@@ -4993,6 +5584,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-tariff-evidence",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/stats/pricing.rs",
@@ -5052,7 +5651,14 @@
       "producer": "kernel and query owners: cache quantities and matched tariff counterfactuals",
       "implementationPhase": "6",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/wire.ts",
@@ -5112,7 +5718,14 @@
       "producer": "kernel and query owners: cache quantities and matched tariff counterfactuals",
       "implementationPhase": "6",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/wire.ts",
@@ -5172,6 +5785,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/wire.ts",
@@ -5232,6 +5853,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/wire.ts",
@@ -5292,6 +5921,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/wire.ts",
@@ -5351,7 +5988,14 @@
       "producer": "kernel and query owners: cache quantities and matched tariff counterfactuals",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/wire.ts",
@@ -5411,7 +6055,14 @@
       "producer": "kernel and query owners: cache quantities and matched tariff counterfactuals",
       "implementationPhase": "6",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/wire.ts",
@@ -5479,6 +6130,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-tariff-evidence",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/wire.ts",
@@ -5544,6 +6203,14 @@
       "implementationPhase": "6",
       "uiPhase": "7",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-tariff-evidence",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/wire.ts",
@@ -5601,6 +6268,14 @@
       "implementationPhase": "10",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-billing-evidence",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "docs/usage-details.md",
@@ -5657,6 +6332,14 @@
       "implementationPhase": "10",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-billing-evidence",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "docs/usage-details.md",
@@ -5713,6 +6396,14 @@
       "implementationPhase": "10",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-billing-evidence",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "docs/usage-details.md",
@@ -5769,6 +6460,14 @@
       "implementationPhase": "10",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-billing-evidence",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "docs/usage-details.md",
@@ -5825,6 +6524,14 @@
       "implementationPhase": "10",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-billing-evidence",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "docs/usage-details.md",
@@ -5882,6 +6589,14 @@
       "implementationPhase": "10",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-billing-evidence",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "docs/usage-details.md",
@@ -5939,6 +6654,14 @@
       "implementationPhase": "10",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-billing-evidence",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "docs/usage-details.md",
@@ -5996,6 +6719,14 @@
       "implementationPhase": "10",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-billing-evidence",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "docs/usage-details.md",
@@ -6064,6 +6795,14 @@
       "implementationPhase": "10",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-billing-evidence",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "docs/usage-details.md",
@@ -6130,6 +6869,14 @@
       "implementationPhase": "10",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-billing-evidence",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "docs/usage-details.md",
@@ -6196,6 +6943,14 @@
       "implementationPhase": "10",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-billing-evidence",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "docs/usage-details.md",
@@ -6256,7 +7011,14 @@
       "producer": "instrumentation owner: request lifecycle and numeric stream timing",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/session-telemetry.ts",
@@ -6318,7 +7080,14 @@
       "producer": "instrumentation owner: request lifecycle and numeric stream timing",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/session-telemetry.ts",
@@ -6380,7 +7149,14 @@
       "producer": "instrumentation owner: request lifecycle and numeric stream timing",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/session-telemetry.ts",
@@ -6443,6 +7219,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/session-telemetry.ts",
@@ -6505,6 +7289,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/session-telemetry.ts",
@@ -6566,7 +7358,14 @@
       "producer": "instrumentation owner: request lifecycle and numeric stream timing",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/session-telemetry.ts",
@@ -6629,6 +7428,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/session-telemetry.ts",
@@ -6691,6 +7498,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/session-telemetry.ts",
@@ -6753,6 +7568,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/session-telemetry.ts",
@@ -6813,6 +7636,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/session-telemetry.ts",
@@ -6872,7 +7703,14 @@
       "producer": "instrumentation owner: request lifecycle and numeric stream timing",
       "implementationPhase": "6",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/session-telemetry.ts",
@@ -6933,6 +7771,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/sessions.ts",
@@ -6994,6 +7840,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/sessions.ts",
@@ -7055,6 +7909,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/sessions.ts",
@@ -7116,6 +7978,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/sessions.ts",
@@ -7177,6 +8047,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/sessions.ts",
@@ -7238,6 +8116,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/sessions.ts",
@@ -7299,6 +8185,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/sessions.ts",
@@ -7360,6 +8254,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/sessions.ts",
@@ -7421,6 +8323,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/sessions.ts",
@@ -7482,6 +8392,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/sessions.ts",
@@ -7543,6 +8461,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/sessions.ts",
@@ -7603,6 +8529,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/sessions.ts",
@@ -7664,6 +8598,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/sessions.ts",
@@ -7724,6 +8666,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -7783,6 +8733,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -7845,6 +8803,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -7907,6 +8873,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -7969,6 +8943,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -8027,7 +9009,14 @@
       "producer": "instrumentation owner: session, terminal-turn and lineage facts",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -8086,7 +9075,14 @@
       "producer": "instrumentation owner: session, terminal-turn and lineage facts",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -8148,7 +9144,14 @@
       "producer": "instrumentation owner: session, terminal-turn and lineage facts",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -8210,7 +9213,14 @@
       "producer": "instrumentation owner: session, terminal-turn and lineage facts",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -8273,6 +9283,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -8335,6 +9353,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -8397,6 +9423,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -8459,7 +9493,14 @@
       "producer": "instrumentation owner: session, terminal-turn and lineage facts",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -8522,7 +9563,14 @@
       "producer": "instrumentation owner: session, terminal-turn and lineage facts",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -8585,7 +9633,14 @@
       "producer": "instrumentation owner: session, terminal-turn and lineage facts",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -8648,7 +9703,14 @@
       "producer": "instrumentation owner: session, terminal-turn and lineage facts",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -8711,7 +9773,14 @@
       "producer": "instrumentation owner: session, terminal-turn and lineage facts",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -8780,6 +9849,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -8842,7 +9919,14 @@
       "producer": "instrumentation owner: session, terminal-turn and lineage facts",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -8903,6 +9987,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -8964,6 +10056,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/turns.ts",
@@ -9025,6 +10125,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/compaction.ts",
@@ -9084,7 +10192,14 @@
       "producer": "instrumentation owner: numeric context samples and compaction lifecycle",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/compaction.ts",
@@ -9144,7 +10259,14 @@
       "producer": "instrumentation owner: numeric context samples and compaction lifecycle",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/compaction.ts",
@@ -9204,7 +10326,14 @@
       "producer": "instrumentation owner: numeric context samples and compaction lifecycle",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/compaction.ts",
@@ -9264,7 +10393,14 @@
       "producer": "instrumentation owner: numeric context samples and compaction lifecycle",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/compaction.ts",
@@ -9324,7 +10460,14 @@
       "producer": "instrumentation owner: numeric context samples and compaction lifecycle",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/compaction.ts",
@@ -9387,6 +10530,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/compaction.ts",
@@ -9449,7 +10600,14 @@
       "producer": "instrumentation owner: numeric context samples and compaction lifecycle",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/compaction.ts",
@@ -9512,7 +10670,14 @@
       "producer": "instrumentation owner: numeric context samples and compaction lifecycle",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/compaction.ts",
@@ -9576,6 +10741,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/compaction.ts",
@@ -9638,7 +10811,14 @@
       "producer": "instrumentation owner: numeric context samples and compaction lifecycle",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/compaction.ts",
@@ -9701,7 +10881,14 @@
       "producer": "instrumentation owner: numeric context samples and compaction lifecycle",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/compaction.ts",
@@ -9762,6 +10949,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/compaction.ts",
@@ -9822,6 +11017,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/compaction.ts",
@@ -9884,6 +11087,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/compaction.ts",
@@ -9944,7 +11155,14 @@
       "producer": "instrumentation owner: enumerated request attempts and explicit terminal outcomes",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/session-telemetry.ts",
@@ -10005,7 +11223,14 @@
       "producer": "instrumentation owner: enumerated request attempts and explicit terminal outcomes",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/session-telemetry.ts",
@@ -10066,7 +11291,14 @@
       "producer": "instrumentation owner: enumerated request attempts and explicit terminal outcomes",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/session-telemetry.ts",
@@ -10127,7 +11359,14 @@
       "producer": "instrumentation owner: enumerated request attempts and explicit terminal outcomes",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/session-telemetry.ts",
@@ -10189,7 +11428,14 @@
       "producer": "instrumentation owner: enumerated request attempts and explicit terminal outcomes",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/session-telemetry.ts",
@@ -10252,6 +11498,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/session-telemetry.ts",
@@ -10318,6 +11572,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/session-telemetry.ts",
@@ -10379,7 +11641,14 @@
       "producer": "instrumentation owner: enumerated request attempts and explicit terminal outcomes",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/session-telemetry.ts",
@@ -10441,7 +11710,14 @@
       "producer": "instrumentation owner: enumerated request attempts and explicit terminal outcomes",
       "implementationPhase": "8",
       "uiPhase": "7B",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/session-telemetry.ts",
@@ -10504,6 +11780,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/session-telemetry.ts",
@@ -10566,6 +11850,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/session-telemetry.ts",
@@ -10628,6 +11920,14 @@
       "implementationPhase": "4",
       "uiPhase": "7",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-source-health",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/session-telemetry.ts",
@@ -10690,6 +11990,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/session-telemetry.ts",
@@ -10746,6 +12054,14 @@
       "implementationPhase": "4",
       "uiPhase": "7",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-source-health",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/stats.rs",
@@ -10802,6 +12118,14 @@
       "implementationPhase": "4",
       "uiPhase": "7",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-source-health",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/stats.rs",
@@ -10861,6 +12185,14 @@
       "implementationPhase": "4",
       "uiPhase": "7",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-source-health",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/stats.rs",
@@ -10920,6 +12252,14 @@
       "implementationPhase": "4",
       "uiPhase": "7",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-source-health",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/stats.rs",
@@ -10979,6 +12319,14 @@
       "implementationPhase": "4",
       "uiPhase": "7",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-source-health",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/stats.rs",
@@ -11034,6 +12382,14 @@
       "implementationPhase": "4",
       "uiPhase": "7",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-source-health",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/stats.rs",
@@ -11089,6 +12445,14 @@
       "implementationPhase": "4",
       "uiPhase": "7",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-source-health",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/stats.rs",
@@ -11144,6 +12508,14 @@
       "implementationPhase": "4",
       "uiPhase": "7",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-source-health",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/stats.rs",
@@ -11201,6 +12573,14 @@
       "implementationPhase": "4",
       "uiPhase": "7",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-source-health",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/stats.rs",
@@ -11258,6 +12638,14 @@
       "implementationPhase": "4",
       "uiPhase": "7",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-source-health",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/stats.rs",
@@ -11315,6 +12703,14 @@
       "implementationPhase": "4",
       "uiPhase": "7",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-source-health",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/stats.rs",
@@ -11373,7 +12769,14 @@
       "producer": "ingestion owner: bounded source-attempt health and coverage facts",
       "implementationPhase": "4",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/stats.rs",
@@ -11433,7 +12836,14 @@
       "producer": "ingestion owner: bounded source-attempt health and coverage facts",
       "implementationPhase": "4",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/stats.rs",
@@ -11496,6 +12906,14 @@
       "implementationPhase": "4",
       "uiPhase": "7",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-source-health",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/stats.rs",
@@ -11552,6 +12970,14 @@
       "implementationPhase": "4",
       "uiPhase": "7",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-source-health",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/stats.rs",
@@ -11607,6 +13033,14 @@
       "implementationPhase": "4",
       "uiPhase": "7",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-source-health",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/stats.rs",
@@ -11662,6 +13096,14 @@
       "implementationPhase": "4",
       "uiPhase": "7",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-source-health",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/stats.rs",
@@ -11723,7 +13165,14 @@
       "producer": "query and UI owners: compatible, snapshot-pinned cohort comparisons",
       "implementationPhase": "6",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "components/usage/stats-view.ts",
@@ -11785,7 +13234,14 @@
       "producer": "query and UI owners: compatible, snapshot-pinned cohort comparisons",
       "implementationPhase": "6",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "components/usage/stats-view.ts",
@@ -11847,7 +13303,14 @@
       "producer": "query and UI owners: compatible, snapshot-pinned cohort comparisons",
       "implementationPhase": "6",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "components/usage/stats-view.ts",
@@ -11910,6 +13373,14 @@
       "implementationPhase": "6",
       "uiPhase": "7",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-account-dimensions",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "components/usage/stats-view.ts",
@@ -11972,6 +13443,14 @@
       "implementationPhase": "6",
       "uiPhase": "7",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-account-dimensions",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "components/usage/stats-view.ts",
@@ -12035,6 +13514,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "components/usage/stats-view.ts",
@@ -12102,6 +13589,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "components/usage/stats-view.ts",
@@ -12165,6 +13660,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "components/usage/stats-view.ts",
@@ -12227,6 +13730,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "components/usage/stats-view.ts",
@@ -12289,6 +13800,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "components/usage/stats-view.ts",
@@ -12349,7 +13868,14 @@
       "producer": "query and UI owners: compatible, snapshot-pinned cohort comparisons",
       "implementationPhase": "6",
       "uiPhase": "7",
-      "status": "planned",
+      "status": "implemented",
+      "supportState": "implemented-unqualified",
+      "surfaces": {
+        "view": true,
+        "filters": true,
+        "drilldown": true,
+        "export": true
+      },
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "components/usage/stats-view.ts",
@@ -12417,6 +13943,14 @@
       "implementationPhase": "8",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-observation-facts",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "components/usage/stats-view.ts",
@@ -12472,6 +14006,14 @@
       "implementationPhase": "10",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-billing-evidence",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/stats-contract.ts",
@@ -12526,6 +14068,14 @@
       "implementationPhase": "10",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-billing-evidence",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/stats-contract.ts",
@@ -12587,6 +14137,14 @@
       "implementationPhase": "10",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-billing-evidence",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/stats-contract.ts",
@@ -12648,6 +14206,14 @@
       "implementationPhase": "10",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-billing-evidence",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/stats-contract.ts",
@@ -12703,6 +14269,14 @@
       "implementationPhase": "10",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-billing-evidence",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/stats-contract.ts",
@@ -12759,6 +14333,14 @@
       "implementationPhase": "10",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-billing-evidence",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/stats-contract.ts",
@@ -12815,6 +14397,14 @@
       "implementationPhase": "10",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-billing-evidence",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/stats-contract.ts",
@@ -12871,6 +14461,14 @@
       "implementationPhase": "10",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-billing-evidence",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/stats-contract.ts",
@@ -12926,6 +14524,14 @@
       "implementationPhase": "10",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-billing-evidence",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/stats-contract.ts",
@@ -12981,6 +14587,14 @@
       "implementationPhase": "10",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-billing-evidence",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/stats-contract.ts",
@@ -13036,6 +14650,14 @@
       "implementationPhase": "10",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-billing-evidence",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/stats-contract.ts",
@@ -13091,6 +14713,14 @@
       "implementationPhase": "10",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-billing-evidence",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/stats-contract.ts",
@@ -13145,6 +14775,14 @@
       "implementationPhase": "10",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-billing-evidence",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/stats-contract.ts",
@@ -13198,6 +14836,14 @@
       "implementationPhase": "10",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-billing-evidence",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/usage/stats-contract.ts",
@@ -13252,6 +14898,14 @@
       "implementationPhase": "4",
       "uiPhase": "7",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-source-health",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/state.rs",
@@ -13307,6 +14961,14 @@
       "implementationPhase": "4",
       "uiPhase": "7",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-source-health",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/state.rs",
@@ -13362,6 +15024,14 @@
       "implementationPhase": "4",
       "uiPhase": "7",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-source-health",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/state.rs",
@@ -13417,6 +15087,14 @@
       "implementationPhase": "4",
       "uiPhase": "7",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-source-health",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/state.rs",
@@ -13472,6 +15150,14 @@
       "implementationPhase": "4",
       "uiPhase": "7",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-source-health",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/state.rs",
@@ -13527,6 +15213,14 @@
       "implementationPhase": "4",
       "uiPhase": "7",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-source-health",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/state.rs",
@@ -13582,6 +15276,14 @@
       "implementationPhase": "4",
       "uiPhase": "7",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-source-health",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/state.rs",
@@ -13637,6 +15339,14 @@
       "implementationPhase": "4",
       "uiPhase": "7",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-source-health",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/state.rs",
@@ -13692,6 +15402,14 @@
       "implementationPhase": "6",
       "uiPhase": "7",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-source-health",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/state.rs",
@@ -13747,6 +15465,14 @@
       "implementationPhase": "6",
       "uiPhase": "7",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-source-health",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/state.rs",
@@ -13802,6 +15528,14 @@
       "implementationPhase": "4",
       "uiPhase": "7",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-source-health",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/state.rs",
@@ -13857,6 +15591,14 @@
       "implementationPhase": "4",
       "uiPhase": "7",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-source-health",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/state.rs",
@@ -13912,6 +15654,14 @@
       "implementationPhase": "4",
       "uiPhase": "7",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-source-health",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/state.rs",
@@ -13967,6 +15717,14 @@
       "implementationPhase": "4",
       "uiPhase": "7",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-source-health",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "crates/aicharts-cli/src/state.rs",
@@ -14026,6 +15784,14 @@
       "implementationPhase": "9",
       "uiPhase": "9",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "separate-benchmark-population",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/benchmark-atlas.ts",
@@ -14086,6 +15852,14 @@
       "implementationPhase": "9",
       "uiPhase": "9",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "separate-benchmark-population",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/benchmark-atlas.ts",
@@ -14146,6 +15920,14 @@
       "implementationPhase": "9",
       "uiPhase": "9",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "separate-benchmark-population",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/benchmark-atlas.ts",
@@ -14204,6 +15986,14 @@
       "implementationPhase": "9",
       "uiPhase": "9",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "separate-benchmark-population",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/benchmark-atlas.ts",
@@ -14261,6 +16051,14 @@
       "implementationPhase": "9",
       "uiPhase": "9",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "separate-benchmark-population",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "lib/benchmark-atlas.ts",
@@ -14321,6 +16119,14 @@
       "implementationPhase": "10",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-billing-evidence",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "docs/usage-details.md",
@@ -14379,6 +16185,14 @@
       "implementationPhase": "10",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-billing-evidence",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "docs/usage-details.md",
@@ -14437,6 +16251,14 @@
       "implementationPhase": "10",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-billing-evidence",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "docs/usage-details.md",
@@ -14495,6 +16317,14 @@
       "implementationPhase": "10",
       "uiPhase": "7B",
       "status": "planned",
+      "supportState": "planned-incomplete",
+      "surfaces": {
+        "view": "unavailable-reason",
+        "filters": "not-applicable",
+        "drilldown": "not-applicable",
+        "export": "not-applicable"
+      },
+      "unavailableReason": "needs-billing-evidence",
       "evidence": [
         "kb/plans/system-assurance-and-usage-analytics.md",
         "docs/usage-details.md",

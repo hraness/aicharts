@@ -1,14 +1,17 @@
 import { contributionHash, contributionIdentity, contributionPayloadHash, ContributionFault } from "../../../lib/usage/contributions";
-import { contributionIndexKey, readContributionIndexCells } from "../../../lib/usage/contribution-index";
-import { ContributionCellScrubFold, CONTRIBUTION_SCRUB_DEADLINE_MS, CONTRIBUTION_SCRUB_MAX_HEADS,
-  CONTRIBUTION_SCRUB_MAX_INDEX_READS, CONTRIBUTION_SCRUB_MAX_READ_BYTES, CONTRIBUTION_SCRUB_MAX_READS, CONTRIBUTION_SCRUB_MAX_SOURCE_BYTES,
-  parseContributionScrubRequest, parseContributionScrubReceipt, type ContributionScrubError, type ContributionScrubResult } from "../../../lib/usage/contribution-scrub";
+import { contributionIndexKey, readContributionIndexCells, type ContributionIndexReference } from "../../../lib/usage/contribution-index";
+import type { ContributionRebuildStatus } from "../../../lib/usage/contribution-rebuild-contract";
+import { ContributionCellScrubFold, CONTRIBUTION_SCRUB_DEADLINE_MS, CONTRIBUTION_SCRUB_JOB_MAX_INDEX_READS, CONTRIBUTION_SCRUB_JOB_MAX_READ_BYTES,
+  CONTRIBUTION_SCRUB_MAX_HEADS, CONTRIBUTION_SCRUB_MAX_INDEX_READS, CONTRIBUTION_SCRUB_MAX_READ_BYTES, CONTRIBUTION_SCRUB_MAX_READS,
+  CONTRIBUTION_SCRUB_MAX_SOURCE_BYTES, parseContributionScrubJobReceipt, parseContributionScrubJobRequest, parseContributionScrubRequest,
+  parseContributionScrubReceipt, type ContributionScrubError, type ContributionScrubJobResult, type ContributionScrubResult } from "../../../lib/usage/contribution-scrub";
 import { statsInteger } from "../../../lib/usage/stats-contract";
 import { readContributionIndexObject } from "./contribution-index-objects";
 import { readContributionBody } from "./contributions-objects";
 import { readCommittedContributionRevision } from "./contribution-replay";
 import type { ContributionState } from "./contributions-state";
 import type { ContributionProjectionState } from "./contribution-projection-state";
+import { ContributionRebuildFault, type ContributionRebuildState } from "./contribution-rebuild-state";
 
 /** Synchronous trusted owned-state read: check current stored account authority,
  * account/generation and clock. It does not query remote authority. The RPC
@@ -149,4 +152,105 @@ export async function scrubContributionCell(bucket: R2Bucket, input: unknown, ca
     return result;
   } catch (cause) { return { ok: false, error: cause instanceof Fault || cause instanceof ContributionFault ? cause.code : "storage_unavailable" }; }
   finally { retired = true; clearTimeout(timer); }
+}
+
+/** Scrub envelope for larger accounts (plan 6.3): one cell of a rebuild job's
+ * verified scratch root against the job's pinned published root. The whole
+ * account head walk is the job itself (bounded at sixteen heads per step,
+ * durably cursored, resumable, M11-modelled); this read adds no source I/O,
+ * at most seven index reads per root, and refuses unless the job is anchored
+ * (`ready`) at the requested version with no pending step. No table, object,
+ * quota or alarm is changed. */
+export async function scrubContributionJobCell(bucket: R2Bucket, input: unknown, rebuild: ContributionRebuildState,
+  observe: () => ContributionScrubObservation): Promise<ContributionScrubJobResult> {
+  const request = parseContributionScrubJobRequest(input);
+  if (!request) return { ok: false, error: "invalid_input" };
+  let retired = false, lastObserved = 0;
+  let finalRefresh: (() => void) | null = null;
+  const started = performance.now(), deadline = started + CONTRIBUTION_SCRUB_DEADLINE_MS;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const live = () => { if (retired || performance.now() >= deadline) throw new Fault("deadline"); };
+  const readPosition = (): ContributionRebuildStatus => {
+    live();
+    const authority = observe();
+    require(authority.active && authority.accountId === request.accountId, "unauthorized");
+    require(authority.generation === request.generation, "generation_conflict");
+    require(statsInteger(authority.observedAtMs, lastObserved, 8_640_000_000_000_000), "clock_regressed");
+    lastObserved = authority.observedAtMs;
+    const status = rebuild.status(request.jobId, authority);
+    require(status !== null, "invalid_input");
+    if (!status) throw new Fault("invalid_input");
+    const receipt = status.receipt;
+    require(receipt.accountId === request.accountId, "unauthorized");
+    require(receipt.generation === request.generation, "generation_conflict");
+    // A job that moved (abort, publish or a later step) is a conflict at the
+    // caller's expected version; an unfinished job at that version is out of scope.
+    require(receipt.version === request.expectedVersion && receipt.sourceRevision === request.expectedRevision && !status.pending, "conflict");
+    require(receipt.phase === "comparing" || receipt.phase === "match" || receipt.phase === "mismatch", "scope_limit");
+    // The anchor pins the source revision, head count, publication root and
+    // both projection frontiers; its exact refusal is reported, not "conflict".
+    if (status.readiness !== "ready") throw new Fault(status.readiness === "unobserved" || status.readiness === "terminal" ? "storage_invalid" : status.readiness);
+    require(receipt.headCount === 0 || receipt.scratchRoot !== null);
+    return status;
+  };
+  const run = async (): Promise<ContributionScrubJobResult> => {
+    const original = readPosition();
+    const refresh = () => {
+      const current = readPosition();
+      require(same(current.receipt, original.receipt), "conflict");
+    };
+    finalRefresh = refresh;
+    const indexKey = `${String(request.dimensions.utcDay).padStart(8, "0")}:${JSON.stringify([request.dimensions.utcDay,
+      request.dimensions.client, request.dimensions.provider, request.dimensions.model, request.dimensions.tokenBasis,
+      request.dimensions.breakdownCoverage, request.dimensions.costKind, request.dimensions.timed])}`;
+    const owner = { accountId: request.accountId, generation: request.generation };
+    const counters = { scratchObjects: 0, indexObjects: 0, scratchBytes: 0, indexBytes: 0 };
+    const readCell = async (root: ContributionIndexReference | null, kind: "scratch" | "index") => {
+      let guardError: ContributionScrubError | null = null;
+      const found = await readContributionIndexCells(owner, root, [indexKey], async reference => {
+        try {
+          refresh();
+          const objects = kind === "scratch" ? counters.scratchObjects : counters.indexObjects;
+          require(objects < CONTRIBUTION_SCRUB_MAX_INDEX_READS && counters.scratchObjects + counters.indexObjects < CONTRIBUTION_SCRUB_JOB_MAX_INDEX_READS, "limit");
+          require(counters.scratchBytes + counters.indexBytes + reference.byteLength <= CONTRIBUTION_SCRUB_JOB_MAX_READ_BYTES, "limit");
+          if (kind === "scratch") counters.scratchObjects++; else counters.indexObjects++;
+          const text = await readContributionIndexObject(bucket, request, reference);
+          refresh();
+          if (kind === "scratch") counters.scratchBytes += reference.byteLength; else counters.indexBytes += reference.byteLength;
+          return text;
+        } catch (cause) {
+          guardError = cause instanceof Fault || cause instanceof ContributionFault || cause instanceof ContributionRebuildFault ? cause.code : "storage_unavailable";
+          throw cause;
+        }
+      });
+      refresh();
+      if (!found.ok) throw new Fault(guardError ?? (found.error === "capacity" ? "limit" : found.error === "storage_unavailable" ? "storage_unavailable" : "storage_invalid"));
+      const objects = kind === "scratch" ? counters.scratchObjects : counters.indexObjects, bytes = kind === "scratch" ? counters.scratchBytes : counters.indexBytes;
+      require(found.value.readObjects === objects && found.value.readBytes === bytes);
+      const cell = found.value.cells.get(indexKey) ?? null;
+      if (cell) require(contributionIndexKey(cell) === indexKey);
+      return cell;
+    };
+    const expected = await readCell(original.receipt.scratchRoot, "scratch");
+    const published = await readCell(original.receipt.publishedRoot, "index");
+    const receipt = parseContributionScrubJobReceipt(request, { schemaVersion: 3, profile: "canonical-cell-scrub-v3", scope: "rebuild-job",
+      accountId: request.accountId, generation: request.generation, revision: request.expectedRevision, jobId: request.jobId,
+      version: request.expectedVersion, phase: original.receipt.phase, headCount: original.receipt.headCount,
+      scratchRootHash: original.receipt.scratchRoot?.hash ?? null, rootHash: original.receipt.publishedRoot?.hash ?? null,
+      dimensions: request.dimensions, verdict: same(expected, published) ? "match" : "mismatch", expected, published,
+      ...counters, readBytes: counters.scratchBytes + counters.indexBytes });
+    require(receipt !== null);
+    return { ok: true, value: receipt! };
+  };
+  try {
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => { retired = true; reject(new Fault("deadline")); }, CONTRIBUTION_SCRUB_DEADLINE_MS);
+    });
+    const result = await Promise.race([run(), timeout]);
+    live();
+    if (finalRefresh) (finalRefresh as () => void)();
+    return result;
+  } catch (cause) {
+    return { ok: false, error: cause instanceof Fault || cause instanceof ContributionFault || cause instanceof ContributionRebuildFault ? cause.code : "storage_unavailable" };
+  } finally { retired = true; clearTimeout(timer); }
 }

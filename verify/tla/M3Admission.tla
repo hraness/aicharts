@@ -3,6 +3,9 @@ EXTENDS Naturals, Sequences, FiniteSets
 \* One fixed request per device. Each immutable terminal decision binds the
 \* exact request and one account revision, including rejection. Revocation
 \* after freeze cannot rewrite that frozen decision.
+\* UnsafeRevocation removes the revocation check from the frozen decision: a
+\* revoked device's request is accepted and published (negative control only).
+CONSTANT UnsafeRevocation
 VARIABLE s
 Devices == {1, 2}
 Init == s = [revision |-> 0, owner |-> 0, stage |-> "idle", decision |-> "none",
@@ -13,7 +16,7 @@ Reserve(d) == /\ s.stage = "idle" /\ d \notin s.completed
   /\ s' = [s EXCEPT !.owner = d, !.stage = "reserved", !.charged = @ \cup {d}]
 FreezeDecision == /\ s.stage = "object"
   /\ s' = [s EXCEPT !.stage = "frozen",
-    !.decision = IF s.owner \in s.revoked \/ s.head # 0 THEN "reject" ELSE "accept",
+    !.decision = IF (~UnsafeRevocation /\ s.owner \in s.revoked) \/ s.head # 0 THEN "reject" ELSE "accept",
     !.frozenAuthorized = s.owner \notin s.revoked /\ s.head = 0]
 PutImmutable == /\ s.stage = "reserved"
   /\ s' = [s EXCEPT !.stage = "object", !.object = @ \cup {s.owner}]

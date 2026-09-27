@@ -1,0 +1,98 @@
+{
+  "appId": "aicharts",
+  "items": [
+    {
+      "kind": "header",
+      "label": "AI Charts"
+    },
+    {
+      "detail": "Last sync 2 hours ago",
+      "kind": "status",
+      "label": "Publishing",
+      "symbol": "status.running"
+    },
+    {
+      "detail": "The AI Charts service refused the upload · 2 hours ago",
+      "kind": "status",
+      "label": "2 agents didn't publish",
+      "symbol": "status.attention"
+    },
+    {
+      "kind": "separator"
+    },
+    {
+      "id": "dashboard",
+      "kind": "action",
+      "label": "Open usage dashboard",
+      "opens": "browser",
+      "role": "primary",
+      "shortcut": "CmdOrCtrl+O",
+      "symbol": "action.open"
+    },
+    {
+      "kind": "separator"
+    },
+    {
+      "kind": "label",
+      "label": "No outputs yet",
+      "subtitle": "Agents save finished files here"
+    },
+    {
+      "id": "outputs.folder",
+      "kind": "action",
+      "label": "Open outputs folder",
+      "opens": "finder",
+      "symbol": "action.folder"
+    },
+    {
+      "kind": "separator"
+    },
+    {
+      "alternate": {
+        "id": "errors.reveal",
+        "label": "Show error log in Finder",
+        "symbol": "action.folder"
+      },
+      "id": "errors.open",
+      "kind": "action",
+      "label": "Show error log",
+      "symbol": "action.help"
+    },
+    {
+      "id": "login",
+      "kind": "action",
+      "label": "Open at login",
+      "state": "off",
+      "subtitle": "macOS shows a notice when you turn this on"
+    },
+    {
+      "kind": "separator"
+    },
+    {
+      "alternate": {
+        "id": "support.diagnostics",
+        "label": "Copy diagnostics",
+        "symbol": "action.copy"
+      },
+      "id": "support",
+      "kind": "action",
+      "label": "Updates & support",
+      "opens": "browser",
+      "symbol": "action.support"
+    },
+    {
+      "kind": "quit",
+      "label": "Quit AI Charts"
+    }
+  ],
+  "mark": {
+    "letters": "Ac",
+    "symbol": "mark.chart",
+    "tone": "attention"
+  },
+  "name": "AI Charts",
+  "revision": 1,
+  "tooltip": "AI Charts · Publishing",
+  "type": "snapshot",
+  "version": 2
+}

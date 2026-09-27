@@ -154,6 +154,49 @@ delegated path is verified: two active schedules invoking the same publisher
 duplicate work. Until a completed cycle proves the delegated delivery, leave the
 previous publisher's own job enabled exactly as the cutover section requires.
 
+## Native contribution sending (opt-in)
+
+`--contribution-sync` is off by default. With the flag, the cycle runs the
+explicit contribution sender (`aicharts contribution-sync --send`) once per
+configured native source after every configured client published cleanly and
+before sinks. It never runs in `--dry-run`, after a failed refresh, publish or
+resume, or once the cycle budget is spent. The flag and the `contributionSync`
+block must appear together: the flag without the block reports
+`autosubmit_contribution_sync_unconfigured`, and the block without the flag
+reports `autosubmit_contribution_sync_flag_required`, so a configuration edit
+alone never starts a new write path.
+
+```json
+"contributionSync": {
+  "stateDir": "/Users/example/Library/Application Support/aicharts/contribution",
+  "keyFile": "/Users/example/Library/Application Support/aicharts/key",
+  "populationId": "<64 lowercase hex characters>",
+  "sources": [
+    { "provider": "claude", "file": "/Users/example/.claude/projects/example/session.jsonl" },
+    { "provider": "codex", "file": "/Users/example/.codex/sessions/example.jsonl" }
+  ],
+  "maxBatches": 3
+}
+```
+
+`stateDir` is the sender's own checkpoint directory (it must differ from
+`runtimeDir` and `home`), `keyFile` its checkpoint key, `populationId` the
+already owned population, and `sources` one to eight distinct absolute Claude
+or Codex files. `maxBatches` (1–8, default 1) is passed to the sender as
+`--max-batches`, so one cycle drains up to that many settled, committed
+batches for each source and stops when the selection already matches the
+server. Each source is reported as a `contribution_sync` step whose status is
+the sender's own fixed word (`settled`, `drained`, `batch_limit`, `stopped`,
+`selected_observations_match`, or `sent` for anything else); output paths,
+identifiers and payloads are never relayed. A failed or uncertain send reports
+the sender's fixed error code, marks the cycle `partial_failure`, stops later
+sources for that cycle and leaves the sender's retained flight for the next
+explicit `--resume`; sinks still run. Outside qualified macOS custody the
+sender refuses with its existing
+`contribution_sync_requires_qualified_macos_custody` code. This hook is
+implemented and tested with a fake runner; it is not live-qualified, and it
+never activates V3 or grants ownership.
+
 ## MiniMax Code capture
 
 Capture an invocation you intend to run with your existing MiniMax installation:

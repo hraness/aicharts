@@ -264,7 +264,7 @@ describe("public model cards", () => {
     for (const markup of [live, portrait, social]) {
       expect(markup).toContain(card.displayTitle);
       expect(markup).toContain(card.harnessLabel);
-      expect(markup).toContain("data:image/svg+xml;base64,");
+      expect(markup).toContain("data:image/svg+xml");
       expect(markup).not.toContain("with fallback");
       expect(markup).not.toContain("Artificial Analysis");
       expect(markup).not.toContain(card.sourceDate);
@@ -408,6 +408,33 @@ describe("public model cards", () => {
     expect(markdown).toContain("https://artificialanalysis.ai/models/claude-opus-5-5");
     expect(markdownForPath("/models/anthropic/claude-opus-5-5/index").found).toBe(true);
     expect(markdownForPath("/models/anthropic/claude-opus-5-5").found).toBe(false);
+  });
+
+  test("publishes Claude Code · Opus 5.5 on its unlisted coding-agent route", async () => {
+    const opus55 = MODEL_CARD_PRESENTATIONS.find(card => (
+      card.path === "/models/unlisted/opus-5-5.b958c16d6e9d4ca8979907a4/max"
+    ));
+    if (opus55 === undefined) throw new Error("Expected the Claude Code · Opus 5.5 coding-agent card.");
+    expect(opus55).toMatchObject({
+      canonicalModelId: "unlisted/opus-5-5.b958c16d6e9d4ca8979907a4",
+      model: "Opus 5.5",
+      profileSlug: "max",
+      providerId: "anthropic",
+    });
+    const [creatorSlug, modelSlug] = opus55.canonicalModelId.split("/");
+    const detailPage = await ModelCardPage({
+      params: Promise.resolve({
+        creatorSlug: creatorSlug ?? "unlisted",
+        modelSlug: modelSlug ?? "",
+        profileSlug: opus55.profileSlug,
+      }),
+    });
+    const detailMarkup = renderToStaticMarkup(detailPage);
+    expect(detailMarkup).toContain("<h1>Opus 5.5 Max</h1>");
+    expect(detailMarkup).toContain("Claude Code");
+    expect(detailMarkup).toContain("Anthropic");
+    expect(markdownForPath(opus55.path).found).toBe(true);
+    expect(INDEX_MODEL_PAGES.some(page => page.path === "/models/anthropic/claude-opus-5-5/index")).toBeTrue();
   });
 
   test("seeds Deedy commentary under the MiMo Index page", async () => {

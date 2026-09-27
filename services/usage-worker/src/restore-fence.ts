@@ -2,7 +2,7 @@ import { DurableObject } from "cloudflare:workers";
 import { enrollmentAccount, enrollmentHex, enrollmentSnapshot, enrollmentTime } from "./enrollment-contract";
 
 export type RestoreFenceError = "invalid_input" | "unauthorized" | "not_found" | "recovery_required"
-  | "conflict" | "expired" | "storage_invalid" | "storage_unavailable" | "clock_regressed" | "limit";
+  | "conflict" | "expired" | "storage_invalid" | "storage_unavailable" | "clock_regressed" | "limit" | "account_erased";
 export type RestoreFenceResult<T> = { ok: true; value: T } | { ok: false; error: RestoreFenceError };
 
 /** Active Worker deployment identity. Pinned by the operator at publish time; a
@@ -10,7 +10,10 @@ export type RestoreFenceResult<T> = { ok: true; value: T } | { ok: false; error:
  * or mismatched deployment cannot commit under a stale authority. */
 export type RestoreFenceDeployment = Readonly<{ workerVersion: string }>;
 
-export type RestoreFencePhase = "open" | "closed";
+/** `erased` is the terminal lifecycle tombstone: it survives any restore of
+ * the account object, refuses every lease, close and publish, and can never
+ * be reopened. Only the account's own confirmed erasure may set it. */
+export type RestoreFencePhase = "open" | "closed" | "erased";
 
 /** One append-only account/generation authority record. `epoch` only ever moves
  * forward through `publish`; `phase` is the open/closed state the runbook
@@ -58,7 +61,7 @@ const err = (error: RestoreFenceError): RestoreFenceResult<never> => ({ ok: fals
 function validRecord(value: unknown): value is RestoreFenceRecord {
   const record = enrollmentSnapshot(value, ["schemaVersion", "accountId", "generation", "epoch", "workerVersion", "phase", "established", "updatedAtMs"]);
   return record !== null && record.schemaVersion === 1 && enrollmentAccount(record.accountId) && enrollmentHex(record.generation)
-    && enrollmentHex(record.workerVersion) && (record.phase === "open" || record.phase === "closed")
+    && enrollmentHex(record.workerVersion) && (record.phase === "open" || record.phase === "closed" || record.phase === "erased")
     && (record.established === true || record.established === false) && enrollmentTime(record.updatedAtMs)
     && typeof record.epoch === "number" && Number.isSafeInteger(record.epoch) && record.epoch >= RESTORE_FENCE_GENESIS_EPOCH;
 }
@@ -143,6 +146,20 @@ export class RestoreFence extends DurableObject<Env> {
   #inFlight(): number {
     if (this.#objects().length === 0) return 0;
     const rows = this.ctx.storage.sql.exec("SELECT COUNT(*) AS count FROM fence_lease").toArray();
+    const count = rows[0]?.count;
+    // Expired but unsettled leases are durable evidence for late release and
+    // readback; they can accumulate past the live-holder cap, so the stored
+    // count's corruption bound is the attempt lifetime, not the lease cap.
+    if (typeof count !== "number" || !Number.isSafeInteger(count) || count < 0 || count > RESTORE_FENCE_MAX_ATTEMPTS) throw new Error("storage_invalid");
+    return count;
+  }
+  /** Live holders only: an execution killed mid-flight (for example on the
+   * request CPU cap) can never settle its lease, so counting expired leases
+   * against the grant cap would wedge the account permanently once leaked
+   * rows reach RESTORE_FENCE_MAX_LEASES. Drain gates keep the conservative
+   * raw count — an expired lease may still represent a running operation. */
+  #liveHolders(now: number): number {
+    const rows = this.ctx.storage.sql.exec("SELECT COUNT(*) AS count FROM fence_lease WHERE deadline_ms > ?", now).toArray();
     const count = rows[0]?.count;
     if (typeof count !== "number" || !Number.isSafeInteger(count) || count < 0 || count > RESTORE_FENCE_MAX_LEASES) throw new Error("storage_invalid");
     return count;
@@ -231,12 +248,13 @@ export class RestoreFence extends DurableObject<Env> {
         // close. It neither creates another holder nor changes its deadline.
         return ok(Object.freeze({ token: attemptId, epoch: prior.epoch, established: prior.established, deadlineMs: prior.deadlineMs }));
       }
+      if (record.phase === "erased") return err("account_erased");
       if (record.phase !== "open") return err("recovery_required");
       return this.#grant(record, revision, now, leaseMs, attemptId);
     });
   }
   #grant(record: RestoreFenceRecord, revision: number, now: number, leaseMs: number, attemptId: string): RestoreFenceResult<RestoreFenceLease> {
-    if (this.#inFlight() >= RESTORE_FENCE_MAX_LEASES || revision >= RESTORE_FENCE_MAX_ATTEMPTS) return err("limit");
+    if (this.#liveHolders(now) >= RESTORE_FENCE_MAX_LEASES || revision >= RESTORE_FENCE_MAX_ATTEMPTS) return err("limit");
     const deadlineMs = now + leaseMs;
     if (!enrollmentTime(deadlineMs)) return err("clock_regressed");
     this.ctx.storage.sql.exec("INSERT INTO fence_attempt (attempt_id, epoch, worker_version, deadline_ms, established, terminal, committed) VALUES (?, ?, ?, ?, ?, 0, 0)",
@@ -326,6 +344,7 @@ export class RestoreFence extends DurableObject<Env> {
     return this.#transaction<RestoreFenceView>(value.accountId, (record, revision, now) => {
       if (record === null || record.generation !== value.generation) return err("recovery_required");
       if (record.epoch !== value.epoch || record.workerVersion !== workerVersion) return err("recovery_required");
+      if (record.phase === "erased") return err("account_erased");
       if (record.phase === "closed") {
         return ok(Object.freeze({ record, inFlight: this.#inFlight(), observedAtMs: now }));
       }
@@ -351,6 +370,7 @@ export class RestoreFence extends DurableObject<Env> {
       if (record.phase === "open" && record.epoch === value.epoch && record.workerVersion === value.workerVersion) {
         return ok(Object.freeze({ record, inFlight: this.#inFlight(), observedAtMs: now }));
       }
+      if (record.phase === "erased") return err("account_erased");
       if (record.phase !== "closed") return err("recovery_required");
       if (this.#inFlight() !== 0) return err("recovery_required");
       if ((value.epoch as number) <= record.epoch) return err("recovery_required");
@@ -358,6 +378,30 @@ export class RestoreFence extends DurableObject<Env> {
         workerVersion: value.workerVersion as string, phase: "open", updatedAtMs: now });
       this.#write(revision, reopened);
       return ok(Object.freeze({ record: reopened, inFlight: 0, observedAtMs: now }));
+    });
+  }
+
+  /**
+   * Terminal lifecycle tombstone (Phase 10). Set only by the account object's
+   * confirmed erasure after its local scrub committed. Idempotent, allowed
+   * while the erasing execution still holds its own lease, and irreversible:
+   * `assertOpen`, `close` and `publish` refuse `account_erased` forever, so a
+   * restored older account payload cannot revive the account.
+   */
+  async erase(input: unknown): Promise<RestoreFenceResult<RestoreFenceView>> {
+    const value = fenceSnapshot(input, ["accountId", "generation", "epoch", "workerVersion"]);
+    if (value === null || !enrollmentAccount(value.accountId) || !enrollmentHex(value.generation)
+      || !enrollmentHex(value.workerVersion) || typeof value.epoch !== "number" || !Number.isSafeInteger(value.epoch)) return err("invalid_input");
+    if (!this.ctx.id.equals(this.env.RESTORE_FENCES.idFromName(restoreFenceName(value.accountId)))) return err("unauthorized");
+    const workerVersion = this.#workerVersion();
+    if (workerVersion === null || value.workerVersion !== workerVersion) return err("recovery_required");
+    return this.#transaction<RestoreFenceView>(value.accountId, (record, revision, now) => {
+      if (record === null || record.generation !== value.generation) return err("recovery_required");
+      if (record.phase === "erased") return ok(Object.freeze({ record, inFlight: this.#inFlight(), observedAtMs: now }));
+      if (record.epoch !== value.epoch || record.workerVersion !== workerVersion) return err("recovery_required");
+      const erased: RestoreFenceRecord = Object.freeze({ ...record, phase: "erased", updatedAtMs: now });
+      this.#write(revision, erased);
+      return ok(Object.freeze({ record: erased, inFlight: this.#inFlight(), observedAtMs: now }));
     });
   }
 }

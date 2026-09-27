@@ -386,7 +386,7 @@ mod unix {
                 "sourcesRead":legacy_scan.verification.len(),"linesRead":lines,"bytesScanned":bytes,"measurementCoverage":"partial"
             })).map_err(|_| "summary_encode_failed")
         } else {
-            Ok(format!("AI Charts namespace reindex — local only\nLegacy revision: {}; pending records retained: {}\nExact matches: {matched}; missing: {missing}; conflicting: {conflicting}; new: {new}\n{}\nOld state and key retained. Nothing promoted, acknowledged or uploaded.\n",
+            Ok(format!("AI Charts namespace reindex: local only\nLegacy revision: {}; pending records retained: {}\nExact matches: {matched}; missing: {missing}; conflicting: {conflicting}; new: {new}\n{}\nOld state and key retained. Nothing promoted, acknowledged or uploaded.\n",
                 legacy.snapshot().revision, legacy.status().pending_records,
                 if options.prepare { "New account-bound shadow prepared; active state is unchanged." }
                 else if ready { "Explicit sources cover the legacy measurements; shadow preparation is available." }

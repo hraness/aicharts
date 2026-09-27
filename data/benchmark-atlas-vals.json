@@ -16,9 +16,9 @@
       "totalModels": 65,
       "source": {
         "url": "https://www.vals.ai/benchmarks/vals_index",
-        "retrievedAt": "2026-09-23T13:38:11.750Z",
-        "sha256": "b0c283142fa3096a03609ea708da09652e59f1503f5f9a2ef2d06626da1b626f",
-        "observedAt": "2026-09-22T00:00:00.000Z",
+        "retrievedAt": "2026-09-25T15:34:59.729Z",
+        "sha256": "b99902ee631d2073658f65a28eec15013cf11be39f753d97d3d492f103bbfd5f",
+        "observedAt": "2026-09-23T00:00:00.000Z",
         "revision": "vals_index v2"
       },
       "rows": [
@@ -2908,15 +2908,15 @@
           "provider": "Xiaomi",
           "effort": null,
           "harness": null,
-          "score": 59.694,
-          "standardError": 1.258,
-          "costUsdPerTest": 0.197196,
-          "latencySeconds": 2681.856,
+          "score": 59.584,
+          "standardError": 1.133,
+          "costUsdPerTest": 0.19671,
+          "latencySeconds": 2701.771,
           "components": [
             {
               "id": "finance_agent",
               "label": "Finance Agent v2",
-              "score": 56.681
+              "score": 56.277
             },
             {
               "id": "emb",
@@ -2956,15 +2956,15 @@
           "provider": "Xiaomi",
           "effort": null,
           "harness": null,
-          "score": 59.732,
-          "standardError": 1.292,
-          "costUsdPerTest": 0.389103,
-          "latencySeconds": 3109.649,
+          "score": 59.47,
+          "standardError": 1.177,
+          "costUsdPerTest": 0.38918,
+          "latencySeconds": 3139.768,
           "components": [
             {
               "id": "finance_agent",
               "label": "Finance Agent v2",
-              "score": 58.306
+              "score": 57.339
             },
             {
               "id": "emb",
@@ -3159,9 +3159,9 @@
       "totalModels": 68,
       "source": {
         "url": "https://www.vals.ai/benchmarks/fabv2",
-        "retrievedAt": "2026-09-23T13:38:11.750Z",
-        "sha256": "8253d7a092188677e18f64165f4f338e5b99be804498c7d5476f877cd246914b",
-        "observedAt": "2026-09-22T00:00:00.000Z",
+        "retrievedAt": "2026-09-25T15:34:59.729Z",
+        "sha256": "ad99dddb97a61e076cabdc113bf5d2775402cf1339446e081afc95b9b902a6e7",
+        "observedAt": "2026-09-23T00:00:00.000Z",
         "revision": "finance_agent v2"
       },
       "rows": [
@@ -7077,60 +7077,60 @@
           "provider": "Xiaomi",
           "effort": null,
           "harness": null,
-          "score": 56.681,
-          "standardError": 2.074,
-          "costUsdPerTest": 0.074935,
-          "latencySeconds": 282.588,
+          "score": 56.277,
+          "standardError": 0.462,
+          "costUsdPerTest": 0.071536,
+          "latencySeconds": 421.99,
           "components": [
             {
               "id": "all_pass",
               "label": "All-Pass",
-              "score": 44.235
+              "score": 44.427
             },
             {
               "id": "general_qualitative_analysis",
               "label": "General Qualitative Analysis",
-              "score": 71.518
+              "score": 72.532
             },
             {
               "id": "general_quantitative_analysis",
               "label": "General Quantitative Analysis",
-              "score": 72.055
+              "score": 70.307
             },
             {
               "id": "market_analysis",
               "label": "Market Analysis",
-              "score": 63.064
+              "score": 63.375
             },
             {
               "id": "comparables",
               "label": "Comparables",
-              "score": 50.959
+              "score": 49.039
             },
             {
               "id": "precedents",
               "label": "Precedents",
-              "score": 27.061
+              "score": 30.251
             },
             {
               "id": "adjustments",
               "label": "Adjustments",
-              "score": 51.432
+              "score": 51.35
             },
             {
               "id": "earnings_analysis",
               "label": "Earnings Analysis",
-              "score": 74.526
+              "score": 74.518
             },
             {
               "id": "disclosure_analysis",
               "label": "Disclosure Analysis",
-              "score": 72.2
+              "score": 70.915
             },
             {
               "id": "financial_modeling",
               "label": "Financial Modeling",
-              "score": 27.311
+              "score": 24.202
             }
           ]
         },
@@ -7140,60 +7140,60 @@
           "provider": "Xiaomi",
           "effort": null,
           "harness": null,
-          "score": 58.306,
-          "standardError": 2.05,
-          "costUsdPerTest": 0.19837,
-          "latencySeconds": 437.244,
+          "score": 57.339,
+          "standardError": 0.574,
+          "costUsdPerTest": 0.198909,
+          "latencySeconds": 648.075,
           "components": [
             {
               "id": "all_pass",
               "label": "All-Pass",
-              "score": 46.163
+              "score": 45.837
             },
             {
               "id": "general_qualitative_analysis",
               "label": "General Qualitative Analysis",
-              "score": 76.527
+              "score": 75.128
             },
             {
               "id": "general_quantitative_analysis",
               "label": "General Quantitative Analysis",
-              "score": 79.34
+              "score": 79.823
             },
             {
               "id": "market_analysis",
               "label": "Market Analysis",
-              "score": 69.28
+              "score": 63.454
             },
             {
               "id": "comparables",
               "label": "Comparables",
-              "score": 46.748
+              "score": 46.041
             },
             {
               "id": "precedents",
               "label": "Precedents",
-              "score": 28.866
+              "score": 30.879
             },
             {
               "id": "adjustments",
               "label": "Adjustments",
-              "score": 52.609
+              "score": 51.572
             },
             {
               "id": "earnings_analysis",
               "label": "Earnings Analysis",
-              "score": 76.947
+              "score": 77.669
             },
             {
               "id": "disclosure_analysis",
               "label": "Disclosure Analysis",
-              "score": 66.814
+              "score": 66.658
             },
             {
               "id": "financial_modeling",
               "label": "Financial Modeling",
-              "score": 27.62
+              "score": 24.83
             }
           ]
         },
@@ -7466,8 +7466,8 @@
       "totalModels": 68,
       "source": {
         "url": "https://www.vals.ai/benchmarks/legal_research",
-        "retrievedAt": "2026-09-23T13:38:11.750Z",
-        "sha256": "c163b99e1a0e2be1a20e1f44d2914a932e31049d0b5c6767a7803cb35e0b3a74",
+        "retrievedAt": "2026-09-25T15:34:59.729Z",
+        "sha256": "0dfa5f2f26ac084af46a3f6ebee877e33636224ca7e1b81f442906b3dc7f4941",
         "observedAt": "2026-09-22T00:00:00.000Z",
         "revision": "legal_research v1"
       },
@@ -11430,12 +11430,12 @@
       "mode": "agentic",
       "runner": "external",
       "costBasis": "cost-per-test",
-      "totalModels": 26,
+      "totalModels": 28,
       "source": {
         "url": "https://www.vals.ai/benchmarks/tax_agent_bench",
-        "retrievedAt": "2026-09-23T13:38:11.750Z",
-        "sha256": "38c3cccec98fbbecd9bf665e2258eb151f0001a74affc0be2eed9912b5485161",
-        "observedAt": "2026-09-22T00:00:00.000Z",
+        "retrievedAt": "2026-09-25T15:34:59.729Z",
+        "sha256": "03d4f34866d713d9dd1294fa193b1f6573e992312dd37c1eb4a1a2e25e5c4415",
+        "observedAt": "2026-09-23T00:00:00.000Z",
         "revision": "tax_agent_bench v1"
       },
       "rows": [
@@ -12640,6 +12640,102 @@
           ]
         },
         {
+          "id": "xiaomi-mimo-v2-6-flash",
+          "modelId": "xiaomi/mimo-v2.6-flash",
+          "provider": "Xiaomi",
+          "effort": null,
+          "harness": null,
+          "score": 59.904,
+          "standardError": 3.13,
+          "costUsdPerTest": 0.048982,
+          "latencySeconds": 1038.928,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 30.57
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 66.014
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 56.298
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 61.439
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 62.435
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 54.86
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 55.733
+            }
+          ]
+        },
+        {
+          "id": "xiaomi-mimo-v2-6-pro",
+          "modelId": "xiaomi/mimo-v2.6-pro",
+          "provider": "Xiaomi",
+          "effort": null,
+          "harness": null,
+          "score": 64.939,
+          "standardError": 3.214,
+          "costUsdPerTest": 0.134306,
+          "latencySeconds": 1547.695,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 32.642
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 58.414
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 59.833
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 73.88
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 75.514
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 59.147
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 65.674
+            }
+          ]
+        },
+        {
           "id": "zai-glm-5-3",
           "modelId": "zai/glm-5.3",
           "provider": "Fireworks AI",
@@ -12704,8 +12800,8 @@
       "totalModels": 98,
       "source": {
         "url": "https://www.vals.ai/benchmarks/medcode",
-        "retrievedAt": "2026-09-23T13:38:11.750Z",
-        "sha256": "f51ab09f75f1f2a43e4795332d87d10d469da5713ee9e294dfd8a018c22ed0b0",
+        "retrievedAt": "2026-09-25T15:34:59.729Z",
+        "sha256": "ff36a029386330bc843a65c13cdb0f8e3595e38940b99d6fd4e0717bed483ebc",
         "observedAt": "2026-09-22T00:00:00.000Z",
         "revision": "medcode v1"
       },

@@ -37,7 +37,7 @@ describe("page metadata ownership", () => {
       },
       twitter: { card: "summary_large_image", title: searchSite.title },
     });
-    expect(homeHeading).toBe("Compare AI models");
+    expect(homeHeading).toBe(site.tagline);
   });
 
   test("gives focused comparison workspaces distinct indexable identities", () => {

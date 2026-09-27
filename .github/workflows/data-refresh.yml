@@ -44,7 +44,9 @@ jobs:
   refresh:
     name: Refresh benchmark and release data
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # Validation takes about 15 minutes; publication then waits on required
+    # CI for up to two bounded rounds (see PUBLISH_* below).
+    timeout-minutes: 90
     env:
       ARENA_MEDIA_PATH: data/arena-media.json
       ATLAS_AUDIO_PATH: data/benchmark-atlas-audio.json
@@ -56,6 +58,11 @@ jobs:
       DEEP_SWE_PATH: data/deep-swe-evidence.json
       FIRST_PARTY_RELEASE_PATH: data/first-party-release-radar.json
       INTELLIGENCE_PATH: data/artificial-analysis-intelligence-v4-3.json
+      # Publication polls every 10 seconds: 3 minutes for a CI run to appear
+      # for the update PR head (once per dispatch) and 25 minutes for that
+      # run's Required result. A cold Worker gate needs about 20 minutes.
+      PUBLISH_DISPATCH_WAIT: "18"
+      PUBLISH_REQUIRED_WAIT: "150"
       REFRESH_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || github.event.schedule == '23 * * * *' && 'releases' || github.event.schedule == '17 */4 * * *' && 'benchmarks' || github.event.schedule == '43 10 * * *' && 'full' || 'full' }}
       REFRESH_BRANCH: automation/model-data-refresh-${{ github.run_id }}-${{ github.run_attempt }}
       RELEASE_RADAR_PATH: data/model-release-radar.json
@@ -384,65 +391,179 @@ jobs:
           git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/${REFRESH_BRANCH}"
 
           run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+          # A run that timed out or was cancelled mid-publication can leave its
+          # update PR open. This branch carries a fresher snapshot of the same
+          # owned files, so retire those PRs before opening the current one.
+          while IFS= read -r stale_number; do
+            [[ -z "$stale_number" ]] && continue
+            gh pr close "$stale_number" --delete-branch --comment "Superseded by the newer refresh in ${run_url}." || true
+          done < <(gh pr list --state open --limit 50 --json number,headRefName --jq '.[] | select(.headRefName | startswith("automation/model-data-refresh-")) | .number')
+
           printf -v pr_body 'Automated model-data refresh from %s.\n\nAll checked snapshots were validated with `bun run check` before this PR was created. Imports retain their admitted task, version, and scoring boundaries. Arena publishes complete overall media cohorts; Open ASR reproduces a reviewed pinned cohort. Historical Intelligence Index v4.1.1 remains unchanged. Required CI runs automatically because this PR is opened by the data-refresh app.' "$run_url"
           pr_url="$(gh pr create --base main --head "$REFRESH_BRANCH" --title "chore: refresh model data" --body "$pr_body")"
           echo "pr_url=${pr_url}" >> "$GITHUB_OUTPUT"
           pr_number="${pr_url##*/}"
 
-          # The strict required-status rule refuses a merge while the generated
-          # branch is behind main. Reconcile main movement observed during the
-          # refresh or CI window, then let the automatic PR checks satisfy the
-          # required status before enabling squash auto-merge.
+          # Every exit records why publication stopped. The health report and
+          # the durable alert quote this text instead of guessing.
+          detail=""
+          finish() {
+            detail="$1"
+            echo "detail=${detail}" >> "$GITHUB_OUTPUT"
+            echo "$detail"
+          }
+          abandon() {
+            finish "$1"
+            gh pr merge "$pr_url" --disable-auto >/dev/null 2>&1 || true
+            gh pr close "$pr_url" --delete-branch --comment "Publication stopped: ${detail} The next scheduled refresh rebuilds this update from current main." || true
+            exit 1
+          }
+          pr_field() { gh pr view "$pr_url" --json "$1" --jq ".$1"; }
+          # The newest CI run whose head is this commit. Pull-request runs
+          # report their check runs on the head SHA, so this is the run that
+          # produces the required `Required` check.
+          ci_run_for() {
+            gh run list --workflow ci.yml --commit "$1" --limit 5 --json databaseId,url,status,conclusion \
+              --jq 'sort_by(.databaseId) | reverse | .[0] // empty'
+          }
+          required_conclusion() {
+            gh run view "$1" --json jobs --jq '[.jobs[] | select(.name == "Required")] | .[0].conclusion // ""'
+          }
+
+          redispatched=false
+          # Two bounded rounds: a second one only follows an update-branch
+          # merge, which produces a new head commit and a new CI run.
           for publish_round in 1 2; do
+            head_sha="$(pr_field headRefOid)"
+
+            # 1. Required CI must exist for this exact head. Only a
+            #    pull_request event produces check runs inside the PR's merge
+            #    rollup (a workflow_dispatch run on the branch does not count),
+            #    so if none appears within PUBLISH_DISPATCH_WAIT, close and
+            #    reopen the PR once to raise a fresh pull_request event.
+            ci_run=""
+            dispatch_waited=0
+            while [[ "$dispatch_waited" -lt "$PUBLISH_DISPATCH_WAIT" ]]; do
+              ci_run="$(ci_run_for "$head_sha")"
+              if [[ -n "$ci_run" ]]; then break; fi
+              dispatch_waited=$((dispatch_waited + 1))
+              if [[ "$dispatch_waited" -eq "$PUBLISH_DISPATCH_WAIT" && "$redispatched" == "false" ]]; then
+                redispatched=true
+                dispatch_waited=0
+                echo "No pull_request CI run appeared for ${head_sha}; reopening the PR to raise a new event."
+                if gh pr close "$pr_url"; then
+                  gh pr reopen "$pr_url" || abandon "The update PR could not be reopened after closing it to raise a new pull_request event."
+                fi
+              fi
+              sleep 10
+            done
+            if [[ -z "$ci_run" ]]; then
+              abandon "Required CI was not dispatched for ${head_sha} within $((PUBLISH_DISPATCH_WAIT * 10)) seconds, even after the PR was reopened once."
+            fi
+            ci_run_id="$(jq -r '.databaseId' <<< "$ci_run")"
+            ci_run_url="$(jq -r '.url' <<< "$ci_run")"
+            echo "ci_run_url=${ci_run_url}" >> "$GITHUB_OUTPUT"
+            echo "Required CI for ${head_sha}: ${ci_run_url}"
+
+            # 2. Enable squash auto-merge once GitHub has computed a merge
+            #    state; it refuses the request while that state is unknown.
+            #    GitHub squashes as soon as Required passes on an up-to-date
+            #    branch, and the request survives an update-branch commit.
             for settle_attempt in {1..36}; do
-              merge_state="$(gh pr view "$pr_url" --json mergeStateStatus --jq '.mergeStateStatus')"
+              merge_state="$(pr_field mergeStateStatus)"
               if [[ "$merge_state" != "UNKNOWN" ]]; then break; fi
               sleep 10
             done
+            if [[ "$(pr_field autoMergeRequest)" == "null" && "$(pr_field state)" == "OPEN" ]]; then
+              gh pr merge "$pr_url" --auto --squash --delete-branch || true
+            fi
 
+            # 3. Wait for the outcome of this head: merged, a conclusive
+            #    Required result, main movement, or a conflict.
+            required=""
+            ci_status=""
+            merge_grace=0
+            for merge_attempt in $(seq 1 "$PUBLISH_REQUIRED_WAIT"); do
+              if [[ "$(pr_field state)" != "OPEN" ]]; then break; fi
+              merge_state="$(pr_field mergeStateStatus)"
+              if [[ "$merge_state" == "BEHIND" || "$merge_state" == "DIRTY" ]]; then break; fi
+              if [[ "$(pr_field headRefOid)" != "$head_sha" ]]; then break; fi
+              ci_status="$(gh run view "$ci_run_id" --json status --jq '.status')"
+              if [[ "$ci_status" == "completed" ]]; then
+                required="$(required_conclusion "$ci_run_id")"
+                if [[ "$required" != "success" ]]; then break; fi
+                if [[ "$merge_state" == "CLEAN" || "$merge_state" == "HAS_HOOKS" || "$merge_state" == "UNSTABLE" ]]; then
+                  # Auto-merge normally lands first. An explicit merge still
+                  # goes through branch protection; it never bypasses it.
+                  gh pr merge "$pr_url" --squash --delete-branch || true
+                fi
+                # Required passed: give the queued squash a short grace period.
+                merge_grace=$((merge_grace + 1))
+                if [[ "$merge_grace" -gt 30 ]]; then break; fi
+              fi
+              sleep 10
+            done
+
+            pr_state="$(pr_field state)"
+            if [[ "$pr_state" == "MERGED" ]]; then
+              finish "Merged after Required CI passed: ${ci_run_url}."
+              break
+            fi
+            if [[ "$pr_state" != "OPEN" ]]; then
+              finish "Update PR was closed outside this run before it merged."
+              exit 1
+            fi
+            merge_state="$(pr_field mergeStateStatus)"
+            if [[ "$merge_state" == "DIRTY" ]]; then
+              abandon "The refreshed snapshot conflicts with main (mergeStateStatus DIRTY); another change touched an owned data file."
+            fi
+            if [[ "$ci_status" == "completed" && -z "$required" ]]; then
+              abandon "CI run ${ci_run_url} completed without a Required result; it was probably cancelled."
+            fi
+            if [[ -n "$required" && "$required" != "success" ]]; then
+              # Pull-request CI tests the merge with current main, so a red
+              # main fails this PR without any fault in the refreshed data.
+              main_ci="$(gh run list --workflow ci.yml --branch main --event push --status completed --limit 10 --json conclusion,url,headSha --jq '[.[] | select(.conclusion == "success" or .conclusion == "failure")] | .[0] // empty')"
+              main_conclusion="$(jq -r '.conclusion // "unknown"' <<< "$main_ci")"
+              main_url="$(jq -r '.url // "unknown"' <<< "$main_ci")"
+              main_sha="$(jq -r '.headSha // "unknown"' <<< "$main_ci")"
+              if [[ "$main_conclusion" != "success" ]]; then
+                abandon "Required CI concluded ${required} (${ci_run_url}) against a main whose own latest CI is ${main_conclusion} at ${main_sha:0:7} (${main_url}); the refreshed data was not implicated. The next scheduled refresh retries after main is fixed forward."
+              fi
+              abandon "Required CI concluded ${required} for the refreshed data: ${ci_run_url}. Main's latest CI is green at ${main_sha:0:7}, so the failure needs a reviewed admission change."
+            fi
             if [[ "$merge_state" == "BEHIND" ]]; then
-              before_sha="$(gh pr view "$pr_url" --json headRefOid --jq '.headRefOid')"
+              if [[ "$publish_round" -eq 2 ]]; then
+                abandon "Main moved again after the branch was reconciled once; the next scheduled refresh rebuilds from current main."
+              fi
+              # The strict required-status rule refuses a merge while the
+              # generated branch is behind main. Reconcile once; the merge
+              # commit gets its own CI run in round two.
               gh api --method PUT "repos/${GITHUB_REPOSITORY}/pulls/${pr_number}/update-branch"
               for head_attempt in {1..30}; do
                 sleep 2
-                head_sha="$(gh pr view "$pr_url" --json headRefOid --jq '.headRefOid')"
-                if [[ "$head_sha" != "$before_sha" ]]; then break; fi
+                if [[ "$(pr_field headRefOid)" != "$head_sha" ]]; then break; fi
               done
-              if [[ "$head_sha" == "$before_sha" ]]; then
-                echo "The generated branch could not be reconciled with main."
-                exit 1
+              if [[ "$(pr_field headRefOid)" == "$head_sha" ]]; then
+                abandon "The generated branch could not be reconciled with main."
               fi
               continue
             fi
-
-            # Enable auto-merge. GitHub queues the squash once required CI
-            # checks pass and the branch is up-to-date.
-            gh pr merge "$pr_url" --auto --squash --delete-branch
-
-            merge_state=""
-            for merge_attempt in {1..90}; do
-              pr_state="$(gh pr view "$pr_url" --json state --jq '.state')"
-              if [[ "$pr_state" != "OPEN" ]]; then break; fi
-              merge_state="$(gh pr view "$pr_url" --json mergeStateStatus --jq '.mergeStateStatus')"
-              if [[ "$merge_state" == "BEHIND" ]]; then break; fi
-              if [[ "$merge_attempt" -lt 90 ]]; then sleep 10; fi
-            done
-            if [[ "$pr_state" != "OPEN" ]]; then break; fi
-            if [[ "$merge_state" != "BEHIND" ]]; then
-              echo "Update PR could not be merged automatically (mergeStateStatus: ${merge_state})."
-              break
+            if [[ "$(pr_field headRefOid)" != "$head_sha" ]]; then
+              if [[ "$publish_round" -eq 2 ]]; then
+                abandon "The update PR head changed twice during publication."
+              fi
+              continue
             fi
-            gh pr merge "$pr_url" --disable-auto || true
+            if [[ "$required" == "success" ]]; then
+              abandon "Required CI passed (${ci_run_url}) but the squash did not land within the grace period (mergeStateStatus ${merge_state})."
+            fi
+            abandon "Required CI did not finish within $((PUBLISH_REQUIRED_WAIT * 10)) seconds: ${ci_run_url} (status ${ci_status:-unknown}, mergeStateStatus ${merge_state})."
           done
 
-          pr_state="$(gh pr view "$pr_url" --json state --jq '.state')"
-          if [[ "$pr_state" != "MERGED" ]]; then
-            gh pr close "$pr_url" --delete-branch || true
-            pr_state="$(gh pr view "$pr_url" --json state --jq '.state')"
-          fi
-          if [[ "$pr_state" != "MERGED" ]]; then
-            echo "Update PR finished publication in unexpected state: ${pr_state}."
-            exit 1
+          if [[ "$(pr_field state)" != "MERGED" ]]; then
+            abandon "Update PR finished publication without merging (state $(pr_field state))."
           fi
       - name: Report health and manage the durable alert
         if: always()
@@ -465,6 +586,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           INTELLIGENCE_OUTCOME: ${{ steps.intelligence.outcome }}
           PUBLISH_CI_RUN_URL: ${{ steps.publish.outputs.ci_run_url }}
+          PUBLISH_DETAIL: ${{ steps.publish.outputs.detail }}
           PUBLISH_OUTCOME: ${{ steps.publish.outcome }}
           PUBLISH_PR_URL: ${{ steps.publish.outputs.pr_url }}
           RELEASE_OUTCOME: ${{ steps.release_radar.outcome }}
@@ -571,6 +693,9 @@ jobs:
             if [[ -n "$PUBLISH_CI_RUN_URL" ]]; then
               echo "- Required CI: ${PUBLISH_CI_RUN_URL}."
             fi
+            if [[ -n "$PUBLISH_DETAIL" ]]; then
+              echo "- Publication: ${PUBLISH_DETAIL}"
+            fi
             if [[ -f "$BENCHMARK_PATH" ]]; then
               jq -r '"- Benchmark snapshot: \(.records | length) configurations across \([.records[].providerId] | unique | length) providers; retrieved \(.source.retrievedAt)."' "$BENCHMARK_PATH"
             fi
@@ -658,8 +783,8 @@ jobs:
           fi
 
           if [[ "$unhealthy" == "true" ]]; then
-            printf -v issue_body 'The scheduled model-data refresh is unhealthy. Valid updates publish only after the normal pull-request gate has passed; failed sources remain on their last-known-good snapshots.\n\n- Run: %s\n- Mode: `%s`\n- OpenRouter: `%s`\n- First-party releases: `%s`\n- Artificial Analysis coding agents: `%s`\n- AA Intelligence efficiency: `%s`\n- Direct DeepSWE: `%s`\n- Terminal-Bench 4: `%s`\n- Terminal-Bench-Science 0.1: `%s`\n- Reasoning atlas: `%s`\n- Multimodal atlas: `%s`\n- Arena media: `%s`\n- Pinned audio atlas: `%s`\n- Vals AI private boards: `%s`\n- Calculator inputs: `%s`\n- Usage price catalog: `%s`\n- Radar reconciliation: `%s`\n- Validation: `%s`\n- Publication: `%s`\n- Update PR: %s\n- Required CI: %s\n\nThis issue is updated on repeated failures and closes automatically after a healthy full refresh.' \
-              "$run_url" "$REFRESH_MODE" "$RELEASE_OUTCOME" "$FIRST_PARTY_RELEASE_OUTCOME" "$BENCHMARK_OUTCOME" "$INTELLIGENCE_OUTCOME" "$DEEP_SWE_OUTCOME" "$TERMINAL_BENCH_OUTCOME" "$TERMINAL_BENCH_SCIENCE_OUTCOME" "$ATLAS_REASONING_OUTCOME" "$ATLAS_MULTIMODAL_OUTCOME" "$ARENA_MEDIA_OUTCOME" "$ATLAS_AUDIO_OUTCOME" "$ATLAS_VALS_OUTCOME" "$CALCULATOR_OUTCOME" "$USAGE_PRICES_OUTCOME" "$RELEASE_RECONCILE_OUTCOME" "$VALIDATION_OUTCOME" "$PUBLISH_OUTCOME" "${PUBLISH_PR_URL:-not created}" "${PUBLISH_CI_RUN_URL:-not dispatched}"
+            printf -v issue_body 'The scheduled model-data refresh is unhealthy. Valid updates publish only after the normal pull-request gate has passed; failed sources remain on their last-known-good snapshots.\n\n- Run: %s\n- Mode: `%s`\n- OpenRouter: `%s`\n- First-party releases: `%s`\n- Artificial Analysis coding agents: `%s`\n- AA Intelligence efficiency: `%s`\n- Direct DeepSWE: `%s`\n- Terminal-Bench 4: `%s`\n- Terminal-Bench-Science 0.1: `%s`\n- Reasoning atlas: `%s`\n- Multimodal atlas: `%s`\n- Arena media: `%s`\n- Pinned audio atlas: `%s`\n- Vals AI private boards: `%s`\n- Calculator inputs: `%s`\n- Usage price catalog: `%s`\n- Radar reconciliation: `%s`\n- Validation: `%s`\n- Publication: `%s`\n- Update PR: %s\n- Required CI: %s\n- Publication detail: %s\n\nThis issue is updated on repeated failures and closes automatically after a healthy full refresh.' \
+              "$run_url" "$REFRESH_MODE" "$RELEASE_OUTCOME" "$FIRST_PARTY_RELEASE_OUTCOME" "$BENCHMARK_OUTCOME" "$INTELLIGENCE_OUTCOME" "$DEEP_SWE_OUTCOME" "$TERMINAL_BENCH_OUTCOME" "$TERMINAL_BENCH_SCIENCE_OUTCOME" "$ATLAS_REASONING_OUTCOME" "$ATLAS_MULTIMODAL_OUTCOME" "$ARENA_MEDIA_OUTCOME" "$ATLAS_AUDIO_OUTCOME" "$ATLAS_VALS_OUTCOME" "$CALCULATOR_OUTCOME" "$USAGE_PRICES_OUTCOME" "$RELEASE_RECONCILE_OUTCOME" "$VALIDATION_OUTCOME" "$PUBLISH_OUTCOME" "${PUBLISH_PR_URL:-not created}" "${PUBLISH_CI_RUN_URL:-not dispatched}" "${PUBLISH_DETAIL:-not recorded; see the run log}"
             if [[ -z "$issue_number" ]]; then
               gh issue create --title "$REFRESH_ISSUE_TITLE" --body "$issue_body"
             else

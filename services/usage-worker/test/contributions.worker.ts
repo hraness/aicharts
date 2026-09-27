@@ -5,7 +5,7 @@ import { ensureContributionJournal, readContributionJournalRoot, readContributio
   type VerifiedContributionJournal } from "../src/contributions-journal";
 import { ContributionState, CONTRIBUTION_MAX_METADATA_BYTES } from "../src/contributions-state";
 import { ensureContributionBody, readContributionBody, resolveContributionReference, type VerifiedContributionBody } from "../src/contributions-objects";
-import { CONTRIBUTION_IDENTITY, CONTRIBUTION_MAX_IMMUTABLE_BYTES, CONTRIBUTION_MAX_MEMBERS, CONTRIBUTION_MAX_MUTATIONS,
+import { CONTRIBUTION_IDENTITY, CONTRIBUTION_MAX_HEADS, CONTRIBUTION_MAX_IMMUTABLE_BYTES,
   CONTRIBUTION_PROFILE, ContributionFault, contributionBodyHash, contributionHash, contributionPayloadHash,
   parseContributionBatch, type ContributionAuthority, type ContributionBatch, type ContributionMutation, type ContributionResult,
   type ContributionMigrationRequest, type ContributionMigrationReceipt, type ContributionTerminal } from "../../../lib/usage/contributions";
@@ -15,7 +15,9 @@ import { enrollmentAccountName, type EnrollmentProof } from "../src/enrollment-c
 import { PAIRING_TTL_MS, uploadSecretCommitment } from "../src/pairing";
 import { admissionHex, decodeAdmissionBatch, encodeAdmissionBatch, encodeAdmissionOperation } from "../../../lib/usage/admission";
 import { AdmissionState, admissionIdBytes, type AdmissionAuthority } from "../src/admission-state";
-import { captureContributionMigration, CONTRIBUTION_MIGRATION_MAX_JOURNALS } from "../src/contributions-migration";
+import { advanceContributionMigration, captureContributionMigration, clearMigrationScratch, contributionMigrationBundle,
+  ensureContributionMigration, stagedMigrationSnapshot,
+  CONTRIBUTION_MIGRATION_MAX_HEADS, CONTRIBUTION_MIGRATION_STAGE_ROUNDS } from "../src/contributions-migration";
 import { ADMISSION_POLICY_V1 } from "../src/admission-policy";
 import { DAY_MS, encodeUsageBatch } from "../../../lib/usage/wire";
 import { StatsState } from "../src/stats-state";
@@ -234,7 +236,10 @@ describe("V3 additive SQL and immutable numeric bodies", () => {
     expect(deltas).toMatchObject([{ id: hex(1, 32), before: { bodyHash: contributionBodyHash(first), index: 0 }, after: { bodyHash: contributionBodyHash(moved), index: 0 } }]);
   });
   test("multi-page replacement journals retain every removed reference and reserve every emitted byte", async () => {
-    expect(CONTRIBUTION_JOURNAL_MAX_ENTRIES).toBe(CONTRIBUTION_MAX_MEMBERS + CONTRIBUTION_MAX_MUTATIONS);
+    // Migration delta journals carry one entry per retained legacy head, so
+    // the shared journal bound is the protocol head ceiling, not the smaller
+    // batch-only member+mutation envelope.
+    expect(CONTRIBUTION_JOURNAL_MAX_ENTRIES).toBe(CONTRIBUTION_MAX_HEADS);
     await fresh();
     await publish(await request(Array.from({ length: 256 }, (_, index) => ({ id: index + 1, input: index + 1 }))));
     await publish(await request([{ id: 257, input: 257 }]));
@@ -331,8 +336,13 @@ describe("sealed retained-history migration", () => {
     await expectsFault(capture, "storage_invalid"); expect(replay).not.toHaveBeenCalled();
     await onState((state, storage) => storage.transactionSync(() => {
       state.sql.exec("UPDATE usage_admission_control SET head_count=1,live_count=1 WHERE id=1");
-      for (let revision = 2; revision <= CONTRIBUTION_MIGRATION_MAX_JOURNALS + 1; revision++)
-        state.sql.exec("INSERT INTO usage_admission_journal SELECT ?,batch,journal,committed_at_ms FROM usage_admission_journal WHERE revision=1", revision);
+      // The retained journal table itself cannot exceed 4,096 revisions, so
+      // the reachable overflow is the head count: push retained heads past
+      // the migration bound with synthetic rows (checked before any parse).
+      for (let index = 2; index <= CONTRIBUTION_MIGRATION_MAX_HEADS + 1; index++) {
+        const id = new Uint8Array(16); new DataView(id.buffer).setUint32(12, index);
+        state.sql.exec("INSERT INTO usage_admission_heads VALUES (?,zeroblob(184),1,NULL)", id);
+      }
     }));
     await expectsFault(capture, "limit"); expect(replay).not.toHaveBeenCalled();
   });
@@ -650,5 +660,265 @@ describe("actual AccountEnrollment V3 joins", () => {
     const reserved = (await snapshot()).control.immutableBytes;
     success(await stub().admitContributions({ uploadSecret: device.proof.uploadSecret, request: batch }));
     expect((await snapshot()).control.immutableBytes).toBe(reserved);
+  });
+
+  test("staged migration carries accounts beyond the original one-shot journal cap", async () => {
+    const device = await enrolled();
+    const HEADS = 9_000;
+    for (let batch = 0; batch < Math.ceil(HEADS / 256); batch++) {
+      const count = Math.min(256, HEADS - batch * 256);
+      const operations = Array.from({ length: count }, (_, index) => {
+        const sequence = batch * 256 + index + 1;
+        const id = admissionIdBytes(hex(sequence, 32));
+        const frame = success(encodeUsageBatch({ utcDay: DAY, registryRevision: 1, usage: [{ id, executionId: new Uint8Array(16),
+          accountId: new Uint8Array(16), offsetMs: 1, provider: 1 as const, authMode: 0 as const, evidence: 1 as const, modelId: 0,
+          contextTier: 0 as const, tokens: { inputUncached: BigInt(sequence), cacheRead: 0n, cacheWrite5m: 0n, cacheWrite1h: 0n,
+            output: 0n, reasoningOutput: 0n } }], prompts: [], intervals: [] }, ADMISSION_POLICY_V1));
+        return success(encodeAdmissionOperation({ accountId: admissionIdBytes(account.slice(5)), deviceId: admissionIdBytes(device.deviceId),
+          generation: admissionIdBytes(env.USAGE_ENROLLMENT_GENERATION), action: 1 as const, sequence, occurrenceId: id,
+          expectedHeadHash: new Uint8Array(32), frame }, ADMISSION_POLICY_V1));
+      });
+      const encoded = success(encodeAdmissionBatch(operations, ADMISSION_POLICY_V1));
+      success(await stub().admitBatch({ uploadSecret: device.proof.uploadSecret,
+        batch: success(decodeAdmissionBatch(encoded, ADMISSION_POLICY_V1)).bytes }));
+    }
+    await preparedPopulation(device);
+    const request = await migrationRequest(device.deviceId);
+    // The proof-of-storage budget splits this scale across several exchanges;
+    // the identical request replays until the terminal receipt.
+    let migration: ContributionMigrationReceipt | undefined;
+    for (let attempts = 0; attempts < 40 && !migration; attempts++) {
+      const reply = await migrationRpc().migrateContributions({ uploadSecret: device.proof.uploadSecret, request });
+      if (!reply.ok) expect(reply.error).toBe("storage_unavailable"); else migration = reply.value;
+    }
+    if (!migration) throw new Error("staged migration did not complete in 40 exchanges");
+    expect(migration.headCount).toBe(HEADS);
+    expect(migration.deltaCount).toBe(HEADS);
+    const root = await readContributionJournalRoot(env.STAGING, account, migration.deltaManifestHash);
+    expect(root.count).toBe(HEADS);
+    expect(root.pages.length).toBe(Math.ceil(HEADS / 256));
+    expect(root.pages.length).toBeGreaterThan(33);
+    const snapshot = await onState(state => state.control());
+    expect(snapshot.phase).toBe("active"); expect(snapshot.headCount).toBe(HEADS);
+    expect(await onState(state => state.sql.exec("SELECT name FROM sqlite_schema WHERE name GLOB 'migration_*'").toArray())).toEqual([]);
+  }, 120_000);
+
+  test("staged capture resumes through a durable cursor and reproduces the same seal", async () => {
+    const device = await enrolled();
+    for (let batch = 0; batch < 4; batch++) success(await stub().admitBatch({ uploadSecret: device.proof.uploadSecret,
+      batch: legacyBatch(device.deviceId, 10 + batch, batch + 1, batch + 1).bytes }));
+    success(await stub().admitStatsSnapshot({ uploadSecret: device.proof.uploadSecret, request: legacyStats(device.deviceId) }));
+    await preparedPopulation(device);
+    const authority = await onState(state => JSON.parse(state.sql.exec("SELECT payload FROM account_enrollment WHERE id=1").one().payload as string) as AdmissionAuthority);
+    const request = await migrationRequest(device.deviceId);
+    const advance = () => onState((state, storage) => storage.transactionSync(() =>
+      advanceContributionMigration(state.sql, authority, request)));
+    let steps = 0, snapshot = await advance();
+    for (let rounds = 0; snapshot === null && rounds < CONTRIBUTION_MIGRATION_STAGE_ROUNDS; rounds++) {
+      steps += 1;
+      if (steps === 3) { await abortAllDurableObjects(); await enable(); }
+      snapshot = await advance();
+    }
+    if (!snapshot) throw new Error("staged capture did not reach ready");
+    expect(steps).toBeGreaterThan(1);
+    const rerun = await onState(state => captureContributionMigration(state.sql, authority));
+    expect(JSON.stringify(rerun.seal)).toBe(JSON.stringify(snapshot.seal));
+    expect(rerun.manifest.hash).toBe(snapshot.manifest.hash);
+    expect(snapshot.seal.v1HeadCount).toBe(4);
+    // The snapshot's lazy iterables bind the producing object's storage; the
+    // bundle assembly therefore runs inside the object context.
+    const journalCount = await onState(() => contributionMigrationBundle(request, snapshot).journal.root.count);
+    expect(journalCount).toBe(4);
+    await onState(state => clearMigrationScratch(state.sql));
+  });
+
+  test("proof-of-storage resumes at the durable ensure cursor after a spent exchange budget", async () => {
+    const device = await enrolled();
+    success(await stub().admitBatch({ uploadSecret: device.proof.uploadSecret, batch: legacyBatch(device.deviceId).bytes }));
+    success(await stub().admitBatch({ uploadSecret: device.proof.uploadSecret, batch: legacyBatch(device.deviceId, 15, 2, 2).bytes }));
+    await preparedPopulation(device);
+    const admission = await onState(state => JSON.parse(state.sql.exec("SELECT payload FROM account_enrollment WHERE id=1").one().payload as string) as AdmissionAuthority);
+    const request = await migrationRequest(device.deviceId), granted = authority({ deviceId: device.deviceId });
+    const { cursor, receipt } = await runInDurableObject(stub(), async (_instance, context) => {
+      const state = new ContributionState(context.storage), sql = state.sql;
+      const bundle = context.storage.transactionSync(() =>
+        state.reserveMigration(request, captureContributionMigration(sql, admission, request), granted));
+      let tick = 0;
+      const spent = vi.spyOn(performance, "now").mockImplementation(() => { tick += 9_000; return tick; });
+      try {
+        await expect(ensureContributionMigration(env, bundle, () => true, sql, 25_000)).rejects.toMatchObject({ code: "storage_unavailable" });
+      } finally { spent.mockRestore(); }
+      const cursor = (JSON.parse(sql.exec("SELECT v FROM migration_meta WHERE k='meta'").one().v as string) as { ensureIndex?: number }).ensureIndex;
+      const proof = await ensureContributionMigration(env, bundle, () => true, sql, 60_000);
+      const out = context.storage.transactionSync(() => state.commitMigration(bundle, proof, granted, () => stagedMigrationSnapshot(sql)));
+      return { cursor, receipt: out };
+    });
+    expect(cursor).toBeGreaterThan(0);
+    expect(receipt.headCount).toBe(2);
+    expect((await snapshot()).control.phase).toBe("active");
+  });
+
+  test("a spent stage budget still commits the partial segment cursor", async () => {
+    const device = await enrolled();
+    for (let batch = 0; batch < 8; batch++) success(await stub().admitBatch({ uploadSecret: device.proof.uploadSecret,
+      batch: legacyBatch(device.deviceId, 10 + batch, batch + 1, batch + 1).bytes }));
+    success(await stub().admitStatsSnapshot({ uploadSecret: device.proof.uploadSecret, request: legacyStats(device.deviceId) }));
+    await preparedPopulation(device);
+    const authority = await onState(state => JSON.parse(state.sql.exec("SELECT payload FROM account_enrollment WHERE id=1").one().payload as string) as AdmissionAuthority);
+    const request = await migrationRequest(device.deviceId);
+    // The request bound commits before any budget decision — a spent budget
+    // may only stop new work, never discard the request binding.
+    await onState((state, storage) => storage.transactionSync(() => advanceContributionMigration(state.sql, authority, request)));
+    // An expiry that trips after each journal replays the kill boundary a
+    // CPU-aborted request hits: the partial segment must still commit.
+    const advance = (perItemBudget: number) => onState((state, storage) => storage.transactionSync(() => {
+      let ticks = 0;
+      return advanceContributionMigration(state.sql, authority, request, () => ++ticks > perItemBudget);
+    }));
+    const through = () => onState(state =>
+      (JSON.parse(state.sql.exec("SELECT v FROM migration_meta WHERE k='meta'").one().v as string) as { throughRevision: number }).throughRevision);
+    expect(await advance(1)).toBeNull();
+    expect(await through()).toBe(1);
+    expect(await advance(3)).toBeNull();
+    expect(await through()).toBe(4);
+    let snapshot: Awaited<ReturnType<typeof advance>>;
+    for (let rounds = 0; rounds < CONTRIBUTION_MIGRATION_STAGE_ROUNDS && !(snapshot = await advance(64)); rounds++) void rounds;
+    expect(snapshot!.seal.v1HeadCount).toBe(8);
+    await onState(state => clearMigrationScratch(state.sql));
+  });
+
+  test("a fresh migration request resets orphaned staged scratch after source drift", async () => {
+    const device = await enrolled();
+    success(await stub().admitBatch({ uploadSecret: device.proof.uploadSecret, batch: legacyBatch(device.deviceId).bytes }));
+    success(await stub().admitStatsSnapshot({ uploadSecret: device.proof.uploadSecret, request: legacyStats(device.deviceId) }));
+    await preparedPopulation(device);
+    const admission = await onState(state => JSON.parse(state.sql.exec("SELECT payload FROM account_enrollment WHERE id=1").one().payload as string) as AdmissionAuthority);
+    const stale = await migrationRequest(device.deviceId);
+    await onState((state, storage) => storage.transactionSync(() => advanceContributionMigration(state.sql, admission, stale)));
+    // The account's V2 revision moves under the staged capture — a live stats
+    // feed keeps streaming while a migration is in flight. The pinned request
+    // still completes: the seal binds the V2 state restSegment observed.
+    const drifted = legacyStats(device.deviceId, "codex");
+    success(await stub().admitStatsSnapshot({ uploadSecret: device.proof.uploadSecret, request: { ...drifted, operationId: hex(++operation),
+      sequence: 2, expectedRevision: 1 } }));
+    const assembled = await onState((state, storage) => storage.transactionSync(() => {
+      for (let rounds = 0; rounds < CONTRIBUTION_MIGRATION_STAGE_ROUNDS; rounds++) {
+        const result = advanceContributionMigration(state.sql, admission, stale);
+        if (result) return result;
+      }
+      return null;
+    }));
+    expect(assembled).not.toBeNull();
+    expect(assembled!.seal.v2Revision).toBe(2);
+    const receipt = success(await migrationRpc().migrateContributions({ uploadSecret: device.proof.uploadSecret, request: stale }));
+    expect(receipt.headCount).toBe(1);
+    expect(receipt.expectedV2Revision).toBe(1);
+    expect((await snapshot()).control.phase).toBe("active");
+    expect(await onState(state => state.sql.exec("SELECT name FROM sqlite_schema WHERE name GLOB 'migration_*'").toArray())).toEqual([]);
+  });
+
+  test("a live stats writer cannot wedge the staged migration", async () => {
+    const device = await enrolled();
+    for (let batch = 0; batch < 3; batch++) success(await stub().admitBatch({ uploadSecret: device.proof.uploadSecret,
+      batch: legacyBatch(device.deviceId, 10 + batch, batch + 1, batch + 1).bytes }));
+    success(await stub().admitStatsSnapshot({ uploadSecret: device.proof.uploadSecret, request: legacyStats(device.deviceId) }));
+    await preparedPopulation(device);
+    const admission = await onState(state => JSON.parse(state.sql.exec("SELECT payload FROM account_enrollment WHERE id=1").one().payload as string) as AdmissionAuthority);
+    const request = await migrationRequest(device.deviceId);
+    const advance = () => onState((state, storage) => storage.transactionSync(() =>
+      advanceContributionMigration(state.sql, admission, request)));
+    await advance(); // captureBegin: pins the immutable V1 lineage only.
+    // A second device publishes mid-staging — V2 drifts while V1 stays frozen.
+    const drifted = legacyStats(device.deviceId, "codex");
+    for (let seq = 2; seq <= 4; seq++) {
+      const expectedRevision = await onState(state => new StatsState(state.sql).control().revision);
+      success(await stub().admitStatsSnapshot({ uploadSecret: device.proof.uploadSecret,
+        request: { ...drifted, operationId: hex(++operation), sequence: seq, expectedRevision } }));
+    }
+    let assembled: Awaited<ReturnType<typeof advance>> = null;
+    for (let rounds = 0; rounds < CONTRIBUTION_MIGRATION_STAGE_ROUNDS && !(assembled = await advance()); rounds++) void rounds;
+    if (!assembled) throw new Error("staged capture did not reach ready");
+    expect(assembled.seal.v2Revision).toBe(4);
+    expect(assembled.seal.v1Revision).toBe(3);
+    const receipt = success(await migrationRpc().migrateContributions({ uploadSecret: device.proof.uploadSecret, request }));
+    expect(receipt.headCount).toBe(3);
+    expect(receipt.expectedV2Revision).toBe(1);
+    expect((await snapshot()).control.phase).toBe("active");
+    // The V2 write surface is superseded post-migration — later attempts
+    // refuse rather than reopening the feed the bundle already sealed.
+    const expectedRevision = await onState(state => new StatsState(state.sql).control().revision);
+    const late = legacyStats(device.deviceId, "codex");
+    expect(await stub().admitStatsSnapshot({ uploadSecret: device.proof.uploadSecret,
+      request: { ...late, operationId: hex(++operation), sequence: 5, expectedRevision } })).toEqual({ ok: false, error: "profile_superseded" });
+  });
+
+  test("preserve-history merged days migrate without re-derivation from the last upload", async () => {
+    const device = await enrolled();
+    success(await stub().admitBatch({ uploadSecret: device.proof.uploadSecret, batch: legacyBatch(device.deviceId).bytes }));
+    // Two preserve-history writes over the same day: the second merges into
+    // the prior cell, so the stored projection is an envelope — more rows
+    // than the last upload's bytes alone would produce.
+    const first = legacyStats(device.deviceId, "codex");
+    success(await stub().admitStatsSnapshot({ uploadSecret: device.proof.uploadSecret,
+      request: { ...first, mode: "preserve-history", report: { ...first.report, sources: [{ ...first.report.sources[0], records: 1 }] } } }));
+    const next = legacyStats(device.deviceId, "codex");
+    success(await stub().admitStatsSnapshot({ uploadSecret: device.proof.uploadSecret, request: { ...next, mode: "preserve-history",
+      operationId: hex(++operation), sequence: 2, expectedRevision: 1,
+      report: { ...next.report, sources: [{ ...next.report.sources[0], records: 1 }],
+        rows: [row(16, { client: "codex", provider: "openai", model: "gpt-5" })] } } }));
+    const stored = await onState(state => {
+      const raw = state.sql.exec("SELECT projection FROM usage_stats_days WHERE utc_day = ? LIMIT 1", DAY).one();
+      return parseUsageStatsReport(JSON.parse(raw.projection as string) as unknown);
+    });
+    expect(stored!.rows).toHaveLength(2); // merged envelope, not the last upload's single row
+    await preparedPopulation(device);
+    const receipt = success(await migrationRpc().migrateContributions({ uploadSecret: device.proof.uploadSecret,
+      request: await migrationRequest(device.deviceId) }));
+    expect(receipt.unresolvedV2Bodies).toBe(1); // one sealed v2 body, retained verbatim
+    expect((await snapshot()).control.phase).toBe("active");
+  });
+
+  test("a retained body rejected by a tightened parser still migrates by its hash", async () => {
+    const device = await enrolled();
+    success(await stub().admitBatch({ uploadSecret: device.proof.uploadSecret, batch: legacyBatch(device.deviceId).bytes }));
+    // Fabricate the retained set a hardened write path would now refuse: the
+    // upload's rows exceed the per-record token ceiling. Its bytes are still
+    // the sealed evidence — hash-bound by the key — so migration must carry it.
+    const oobRow = { ...row(1, { client: "codex" }), tokens: { ...row(1).tokens, input: String(9_000_000n) } };
+    const uploadText = JSON.stringify({ schemaVersion: 2, operationId: hex(++operation), accountId: account,
+      deviceId: device.deviceId, generation: env.USAGE_ENROLLMENT_GENERATION, sequence: 1, expectedRevision: 0,
+      mode: "replace-window", takeover: null, report: { schemaVersion: 2, profile: "client-stats-v2", registryRevision: 1,
+        firstUtcDay: DAY, dayCount: 1, generatedAtMs: NOW, revision: 0, updatedAtMs: null,
+        sources: [{ client: "codex", status: "observed", tokenBasis: "reported", records: 1, warnings: 0, latestAtMs: NOW - 1 }],
+        rows: [oobRow] } });
+    expect(parseStatsUpload(JSON.parse(uploadText))).toBeNull();
+    const bodyHash = contributionHash(uploadText);
+    const projection = parseUsageStatsReport({ schemaVersion: 2, profile: "client-stats-v2", registryRevision: 1,
+      firstUtcDay: DAY, dayCount: 1, generatedAtMs: NOW, revision: 1, updatedAtMs: NOW,
+      sources: [{ client: "codex", status: "observed", tokenBasis: "reported", records: 1, warnings: 0, latestAtMs: NOW - 1 }],
+      rows: [oobRow] })!;
+    const projectionText = JSON.stringify(projection);
+    const receipt = { schemaVersion: 2, operationId: (JSON.parse(uploadText) as { operationId: string }).operationId, bodyHash,
+      sequence: 1, revision: 1, committedAtMs: NOW, client: "codex", firstUtcDay: DAY, dayCount: 1 };
+    await onState((state, storage) => storage.transactionSync(() => {
+      state.sql.exec("INSERT INTO usage_stats_devices (device_id, sequence, receipt) VALUES (?, ?, ?)",
+        device.deviceId, 1, JSON.stringify(receipt));
+      state.sql.exec("INSERT INTO usage_stats_days (client, utc_day, device_id, revision, body_hash, projection_hash, row_count, byte_count, projection) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "codex", DAY, device.deviceId, 1, bodyHash, contributionHash(projectionText), 1,
+        new TextEncoder().encode(projectionText).length, projectionText);
+      state.sql.exec("INSERT INTO usage_stats_control (id, revision, updated_at_ms, quarantined, immutable_bytes) VALUES (1, 1, ?, 0, 0)" +
+        " ON CONFLICT(id) DO UPDATE SET revision = 1", NOW);
+    }));
+    const prefix = `usage-stats/v2/${account}/${env.USAGE_ENROLLMENT_GENERATION}`;
+    const envelope = (value: string): R2PutOptions => ({ sha256: Uint8Array.from(contributionHash(value).match(/../gu)!.map(byte => Number.parseInt(byte, 16))).buffer,
+      httpMetadata: { contentType: "application/vnd.aicharts.stats-v2+json" }, customMetadata: { schemaVersion: "2" } });
+    await env.STAGING.put(`${prefix}/snapshots/${bodyHash}.json`, uploadText, envelope(uploadText));
+    const receiptText = JSON.stringify(receipt);
+    await env.CONTROL.put(`${prefix}/receipts/${String(1).padStart(16, "0")}-${bodyHash}.json`, receiptText, envelope(receiptText));
+    await preparedPopulation(device);
+    const request = await migrationRequest(device.deviceId);
+    const result = success(await migrationRpc().migrateContributions({ uploadSecret: device.proof.uploadSecret, request }));
+    expect(result.unresolvedV2Bodies).toBe(1);
+    expect((await snapshot()).control.phase).toBe("active");
   });
 });

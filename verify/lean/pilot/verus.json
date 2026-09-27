@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "purpose": "Historical two-route pilot; maintained production theorem lane is fresh Aeneas extraction. This Verus file is not a second shipping implementation.",
+  "purpose": "Historical two-route pilot record only; no runner, gate or CI job executes this Verus snapshot. The maintained production theorem lane is fresh Aeneas extraction (usage:formal:theorems). This Verus file is not a second shipping implementation.",
   "verus": "0.2026.09.20.aef82ed",
   "commit": "aef82eda71838deef4a8cd0260fda6c9504be9b9",
   "rust": "1.98.1",
@@ -26,6 +26,9 @@
     "Proof-only executable bodies and types; not a machine-checked refinement of the compiled production crate.",
     "All u128 arithmetic and sixteen-byte owner IDs retained; constructor invariant is an explicit precondition of disjoint.",
     "No pricing, I/O, Rust ABI or arbitrary-length occurrence merge proof.",
-    "Linux artifact checksum is pinned; no Linux execution result is claimed by this macOS pilot."
-  ]
+    "Linux artifact checksum is pinned; no Linux execution result is claimed by this macOS pilot.",
+    "Historical macOS pilot record: no maintained runner re-executes it, its source hashes are frozen at the pilot commit and it contributes no evidence to the current gate."
+  ],
+  "status": "historical",
+  "runner": null
 }

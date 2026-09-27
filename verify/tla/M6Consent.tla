@@ -2,6 +2,10 @@
 EXTENDS Naturals
 \* Decision 0 is absent, 1 grants, 2 withdraws. Publication may lag the source.
 \* This checks ordered delivery/ABA custody, not Phase 10's visibility deadline.
+\* UnsafeStaleDelivery removes the index-version stamp and tombstone fences from
+\* delivery: a delayed grant resurrects a delivered withdrawal (negative control
+\* only).
+CONSTANT UnsafeStaleDelivery
 VARIABLE s
 Init == s = [source |-> 0, hint |-> 0, captured |-> 0, stamp |-> 0,
   delivery |-> "idle", indexVersion |-> 0, member |-> FALSE, tombstone |-> 0,
@@ -13,7 +17,7 @@ DispatchHint(v) == /\ s.delivery = "idle" /\ v \in 1..s.source
 SourceReply == /\ s.delivery = "waiting"
   /\ s' = [s EXCEPT !.captured = s.source, !.delivery = "ready"]
 ApplyDelivery == /\ s.delivery = "ready" /\ s.hint = s.captured
-  /\ s.stamp = s.indexVersion /\ s.captured >= s.tombstone
+  /\ (UnsafeStaleDelivery \/ (s.stamp = s.indexVersion /\ s.captured >= s.tombstone))
   /\ s' = [s EXCEPT !.indexVersion = s.captured, !.member = s.captured = 1,
     !.tombstone = IF s.captured = 2 THEN 2 ELSE s.tombstone,
     !.published = @ \/ s.captured = 1, !.delivery = "idle"]

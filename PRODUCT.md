@@ -12,7 +12,7 @@ Developers who use Codex and Claude Code and want a trustworthy, privacy-preserv
 
 ## Product Purpose
 
-AI Charts Usage turns local numeric usage measurements into personal analytics and, only with explicit consent, public leaderboard measurements. The product must make it easy to understand activity, throughput, turn shape, subscriptions, and coverage without uploading chat logs or transcripts.
+AI Charts turns local numeric usage measurements into personal analytics and, only with explicit consent, public leaderboard measurements. The product must make it easy to understand activity, throughput, turn shape, subscriptions, and coverage without uploading chat logs or transcripts.
 
 ## Positioning
 

@@ -10,7 +10,8 @@ import type { PairingHttpRequestLifetime, PairingHttpVerifier } from "./pairing-
 import { enrollmentAccountName } from "./enrollment-contract";
 import { rpcResultSnapshot as rpcSnapshot } from "./rpc-result";
 import { statsHash, statsUploadText } from "./stats-state";
-import { STATS_TOTALS_REQUEST_BYTES, STATS_TOTALS_URL, decodeStatsTotalsRequest, encodeStatsTotalsResponse, statsTotalsHttpLength } from "../../../lib/usage/stats-totals-contract";
+import { STATS_TOTALS_DEVICE_URL, STATS_TOTALS_REQUEST_BYTES, STATS_TOTALS_RESPONSE_BYTES, STATS_TOTALS_URL,
+  decodeStatsTotalsRequest, encodeStatsTotalsResponse, parseStatsTotals, parseStatsTotalsDeviceRequest, statsTotalsHttpLength } from "../../../lib/usage/stats-totals-contract";
 
 export interface StatsHttpEnvironment {
   readonly ACCOUNT_ENROLLMENTS: Readonly<{
@@ -153,6 +154,7 @@ export interface StatsUploadHttpEnvironment {
     getByName(name: string): Readonly<{
       admitStatsSnapshot(input: unknown): Promise<unknown>;
       readStatsStatus(input: unknown): Promise<unknown>;
+      readStatsTotals(input: unknown): Promise<unknown>;
       abandonStatsSnapshot(input: unknown): Promise<unknown>;
     }>;
   }>;
@@ -171,11 +173,11 @@ export function createStatsUploadHttpHandler(dependencies: PairingHttpEffects) {
   let outstanding = 0;
   return async (request: Request, env: StatsUploadHttpEnvironment, ctx: PairingHttpRequestLifetime): Promise<Response> => {
     let started: number, length: number | null, secret: string;
-    const statusQuery = request.url === STATS_STATUS_URL, abandon = request.url === STATS_ABANDON_URL;
-    const cap = statusQuery ? STATS_HTTP_REQUEST_BYTES : abandon ? STATS_ABANDON_BYTES : STATS_UPLOAD_BYTES;
+    const statusQuery = request.url === STATS_STATUS_URL, abandon = request.url === STATS_ABANDON_URL, totalsQuery = request.url === STATS_TOTALS_DEVICE_URL;
+    const cap = statusQuery ? STATS_HTTP_REQUEST_BYTES : totalsQuery ? STATS_TOTALS_REQUEST_BYTES : abandon ? STATS_ABANDON_BYTES : STATS_UPLOAD_BYTES;
     try {
       started = dependencies.now();
-      if ((!statusQuery && !abandon && request.url !== STATS_UPLOAD_URL) || request.method !== "POST"
+      if ((!statusQuery && !abandon && !totalsQuery && request.url !== STATS_UPLOAD_URL) || request.method !== "POST"
         || request.headers.get("content-type") !== "application/json" || request.headers.get("accept") !== "application/json"
         || request.headers.has("content-encoding") || request.headers.has("cookie")) return deviceFailure("invalid_input");
       length = statsHttpLength(request.headers, cap);
@@ -195,16 +197,18 @@ export function createStatsUploadHttpHandler(dependencies: PairingHttpEffects) {
         const raw = statsJsonValue(bytes, cap);
         const statusInput = statusQuery ? parseStatsStatusRequest(raw) : null;
         const abandonInput = abandon ? parseStatsAbandonRequest(raw) : null;
-        const uploadInput = !statusQuery && !abandon ? parseStatsUpload(raw) : null;
-        const input = statusInput ?? abandonInput ?? uploadInput;
+        const totalsInput = totalsQuery ? parseStatsTotalsDeviceRequest(raw) : null;
+        const uploadInput = !statusQuery && !abandon && !totalsQuery ? parseStatsUpload(raw) : null;
+        const input = statusInput ?? abandonInput ?? totalsInput ?? uploadInput;
         if (!input) return deviceFailure("invalid_input");
         const bodyHash = uploadInput ? statsHash(statsUploadText(uploadInput)) : null;
-        // Status reads keep the tight stage; fenced mutations carry the
+        // Device reads keep the tight stage; fenced mutations carry the
         // once-per-lifetime account history audit's cold bound.
-        return await work.stage(statusQuery ? PAIRING_HTTP_STAGE_MS : PAIRING_HTTP_STAGE_MUTATION_MS, async () => {
+        return await work.stage(statusQuery || totalsQuery ? PAIRING_HTTP_STAGE_MS : PAIRING_HTTP_STAGE_MUTATION_MS, async () => {
           guard();
           const stub = env.ACCOUNT_ENROLLMENTS.getByName(enrollmentAccountName(input.accountId));
           const rpc = statusQuery ? stub.readStatsStatus({ uploadSecret: secret, request: input })
+            : totalsQuery ? stub.readStatsTotals({ uploadSecret: secret, request: input })
             : abandon ? stub.abandonStatsSnapshot({ uploadSecret: secret, request: input }) : stub.admitStatsSnapshot({ uploadSecret: secret, request: input });
           const boxed = await new Promise<{ raw: unknown }>((resolve, reject) => { void rpc.then(raw => resolve({ raw }), reject); });
           const response = rpcSnapshot(boxed.raw);
@@ -212,6 +216,7 @@ export function createStatsUploadHttpHandler(dependencies: PairingHttpEffects) {
             guard();
             if (!response.envelope || !response.dispose) return deviceFailure("storage_unavailable");
             const result = statusInput ? parseStatsResult(response.envelope, parseStatsStatus)
+              : totalsInput ? parseStatsResult(response.envelope, parseStatsTotals)
               : abandonInput ? parseStatsResult(response.envelope, value => {
                 const terminal = parseStatsAbandonment(value);
                 if (!terminal) return null;
@@ -229,7 +234,7 @@ export function createStatsUploadHttpHandler(dependencies: PairingHttpEffects) {
               });
             if (!result) return deviceFailure("storage_unavailable");
             if (!result.ok) return deviceFailure(result.error);
-            const encoded = statsJsonBytes({ schemaVersion: 2, result }, 2_048);
+            const encoded = statsJsonBytes({ schemaVersion: 2, result }, totalsQuery ? STATS_TOTALS_RESPONSE_BYTES : 2_048);
             if (!encoded) return deviceFailure("storage_unavailable");
             const reply = pairingHttpResponse(encoded);
             reply.headers.set("content-length", String(encoded.byteLength));

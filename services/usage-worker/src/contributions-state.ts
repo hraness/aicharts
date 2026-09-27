@@ -12,7 +12,8 @@ import { parseContributionCancelRequest, type ContributionCancelRequest } from "
 import { contributionObjectKey, isVerifiedContributionBody, type VerifiedContributionBody } from "./contributions-objects";
 import { contributionDeltaBundle, isVerifiedContributionJournal, type VerifiedContributionJournal, type ContributionJournalBundle } from "./contributions-journal";
 import { sealedLegacyHead } from "./contributions-legacy";
-import { contributionMigrationBundle, isVerifiedContributionMigration, type ContributionMigrationBundle,
+import { clearMigrationScratch, contributionMigrationBundle, CONTRIBUTION_MIGRATION_MAX_BUNDLE_BYTES,
+  CONTRIBUTION_MIGRATION_MAX_SOURCE_BYTES, isVerifiedContributionMigration, type ContributionMigrationBundle,
   type ContributionMigrationSnapshot, type VerifiedContributionMigration } from "./contributions-migration";
 
 /** Conservative retained metadata reservations include journals, heads, and
@@ -178,7 +179,7 @@ export class ContributionState {
     if (!row) return null;
     const control = this.control();
     invariant(row.id === operationId && (row.kind === "batch" || row.kind === "grant" || row.kind === "activation" || row.kind === "migration") && contributionIdentity(row.body_hash)
-      && statsInteger(row.body_bytes, row.kind === "batch" || row.kind === "migration" ? 1 : 0, row.kind === "batch" ? CONTRIBUTION_MAX_BYTES : row.kind === "migration" ? 16_777_216 : 0)
+      && statsInteger(row.body_bytes, row.kind === "batch" || row.kind === "migration" ? 1 : 0, row.kind === "batch" ? CONTRIBUTION_MAX_BYTES : row.kind === "migration" ? CONTRIBUTION_MIGRATION_MAX_BUNDLE_BYTES : 0)
       && statsInteger(row.metadata_bytes, METADATA_BASE, CONTRIBUTION_MAX_METADATA_BYTES) && contributionIdentity(row.device_id)
       && contributionIdentity(row.generation) && (row.kind === "activation" || row.kind === "migration" ? row.population_id === null : contributionIdentity(row.population_id))
       && statsInteger(row.sequence, row.kind === "batch" ? 1 : 0, row.kind === "batch" ? Number.MAX_SAFE_INTEGER : 0)
@@ -188,7 +189,7 @@ export class ContributionState {
     const migrationMetadata = row.kind === "migration" ? statsOwnRecord(metadata, ["request", "seal", "manifestHash", "deltaManifestHash", "deltaBytes", "deltaCount"]) : null;
     const batchMetadata = row.kind === "batch" ? statsOwnRecord(metadata, ["operationId", "accountId", "generation", "deviceId", "populationId", "bodyHash", "byteLength", "sequence", "expectedRevision", "metadataBytes", "deltaManifestHash", "deltaBytes", "deltaCount"]) : migrationMetadata;
     invariant(cancellation !== null || row.kind !== "batch" && row.kind !== "migration" || (batchMetadata && contributionIdentity(batchMetadata.deltaManifestHash)
-      && statsInteger(batchMetadata.deltaBytes, 1, 16_777_216) && statsInteger(batchMetadata.deltaCount, 0, CONTRIBUTION_MAX_MEMBERS + 256)));
+      && statsInteger(batchMetadata.deltaBytes, 1, CONTRIBUTION_MIGRATION_MAX_SOURCE_BYTES) && statsInteger(batchMetadata.deltaCount, 0, CONTRIBUTION_MAX_HEADS)));
     const intent: ContributionIntent = { operationId, accountId: control.accountId, generation: row.generation, deviceId: row.device_id,
       populationId: row.population_id as string | null, bodyHash: row.body_hash, byteLength: row.body_bytes, sequence: row.sequence,
       expectedRevision: row.expected_revision, metadataBytes: row.metadata_bytes, deltaManifestHash: batchMetadata?.deltaManifestHash as string ?? null,
@@ -213,7 +214,7 @@ export class ContributionState {
       invariant(request && seal && contributionIdentity(migrationMetadata?.manifestHash) && request.operationId === operationId
         && request.accountId === control.accountId && request.generation === row.generation && request.deviceId === row.device_id
         && request.expectedRevision === row.expected_revision && seal.accountId === request.accountId && seal.generation === request.generation
-        && request.expectedV1Revision === seal.v1Revision && request.expectedV2Revision === seal.v2Revision
+        && request.expectedV1Revision === seal.v1Revision && request.expectedV2Revision <= seal.v2Revision
         && contributionHash(`aicharts:contribution-migration:v3\0${JSON.stringify(request)}\0${migrationMetadata.manifestHash}`) === row.body_hash);
       if (row.outcome === "pending") invariant(row.terminal === null && row.published_revision === null && control.pendingOperation === operationId);
       else if (row.outcome === "abandoned") {
@@ -306,7 +307,7 @@ export class ContributionState {
       this.#capacity(control, bundle.byteLength + snapshot.seal.immutableBytes, METADATA_BASE + snapshot.seal.metadataBytes);
       const metadata = { request, seal: snapshot.seal, manifestHash: snapshot.manifest.hash, deltaManifestHash: bundle.journal.artifact.hash,
         deltaBytes: bundle.journal.byteLength, deltaCount: bundle.journal.root.count };
-      invariant(JSON.stringify(metadata).length <= 4_096 && bundle.byteLength <= 16_777_216);
+      invariant(JSON.stringify(metadata).length <= 4_096 && bundle.byteLength <= CONTRIBUTION_MIGRATION_MAX_BUNDLE_BYTES);
       this.sql.exec("INSERT INTO usage_contribution_operations VALUES (?, 'migration', ?, ?, ?, ?, ?, NULL, 0, ?, ?, 'pending', NULL, NULL, NULL, NULL)",
         request.operationId, bundle.bodyHash, bundle.byteLength, METADATA_BASE, request.deviceId, request.generation, request.expectedRevision, JSON.stringify(metadata));
       // Reserve newly writable artifacts now; legacy bytes already exist and
@@ -343,6 +344,7 @@ export class ContributionState {
       this.sql.exec("UPDATE usage_contribution_control SET revision=?, updated_at_ms=?, head_count=?, immutable_bytes=?, metadata_bytes=?, pending_operation=NULL, phase='active', activation_operation=?, activation_hash=?, migration_manifest_hash=?, legacy_seal=? WHERE id=1",
         receipt.revision, authority.observedAtMs, current.seal.v1HeadCount, control.immutableBytes + current.seal.immutableBytes,
         control.metadataBytes + current.seal.metadataBytes, request.operationId, bundle.bodyHash, current.manifest.hash, JSON.stringify(current.seal));
+      clearMigrationScratch(this.sql);
       return receipt;
     });
   }
@@ -564,6 +566,7 @@ export class ContributionState {
       if (operation.terminal) return operation.terminal as ContributionTerminal;
       if (control.revision >= CONTRIBUTION_MAX_OPERATIONS) throw new ContributionFault("limit");
       const terminal = this.#abandon(operation.intent, control.revision + 1);
+      if (operation.kind === "migration") clearMigrationScratch(this.sql);
       this.sql.exec("UPDATE usage_contribution_control SET revision=?, updated_at_ms=?, pending_operation=NULL WHERE id=1", control.revision + 1, authority.observedAtMs);
       return terminal;
     });

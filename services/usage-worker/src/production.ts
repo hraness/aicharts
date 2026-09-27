@@ -1,5 +1,5 @@
 import { STATS_HTTP_URL, STATS_UPLOAD_URL, STATS_STATUS_URL, STATS_ABANDON_URL } from "../../../lib/usage/stats-http-contract";
-import { STATS_TOTALS_URL } from "../../../lib/usage/stats-totals-contract";
+import { STATS_TOTALS_DEVICE_URL, STATS_TOTALS_URL } from "../../../lib/usage/stats-totals-contract";
 import { createStatsHttpHandler, createStatsTotalsHttpHandler, createStatsUploadHttpHandler, type StatsHttpEnvironment, type StatsUploadHttpEnvironment } from "./stats-http";
 import { contributionHttpCap } from "../../../lib/usage/contributions-http-contract";
 import { createContributionHttpHandler, type ContributionHttpEnvironment } from "./contributions-http";
@@ -30,6 +30,7 @@ export type ProductionEnvironment = Env & {
   readonly AICHARTS_USAGE_PUBLIC_READ_ENABLED?: unknown;
   readonly AICHARTS_USAGE_STATS_ENABLED?: unknown;
   readonly AICHARTS_USAGE_CONTRIBUTIONS_ENABLED?: unknown;
+  readonly AICHARTS_USAGE_RECLAMATION_ENABLED?: unknown;
 };
 type Lifetime = PairingHttpRequestLifetime;
 type Handler<E> = (request: Request, env: E, ctx: Lifetime) => Promise<Response>;
@@ -79,6 +80,16 @@ const bindingReady = (env: ProductionEnvironment, names: readonly string[]): boo
   } catch { return false; }
 });
 
+/** Physical reclamation has no HTTP route. Its capability is the exact string
+ * `"1"` plus the account, content and control bindings, and it stays unset in
+ * every deployment; this predicate exists so the shape is checked, not so the
+ * job runs. Never derive it from any other flag. */
+export function reclamationCapabilityReady(env: ProductionEnvironment): boolean {
+  return flagReady(env, "AICHARTS_USAGE_RECLAMATION_ENABLED") && flagReady(env, "AICHARTS_USAGE_WORKER_ENABLED")
+    && flagReady(env, "AICHARTS_USAGE_STATS_ENABLED") && flagReady(env, "AICHARTS_USAGE_CONTRIBUTIONS_ENABLED") && generationReady(env)
+    && bindingReady(env, ["ACCOUNT_ENROLLMENTS", "STAGING", "CONTROL"]);
+}
+
 /**
  * Compose the production-shaped routes once per isolate. The master and
  * per-route fences are intentionally exact string values; every other state
@@ -108,7 +119,8 @@ export function createProductionRouter(options: ProductionRouterOptions = {}) {
     let path: "pairing" | "terminal" | "admission" | "privateDays" | "consent" | "leaderboard" | "stats" | "statsUpload" | "statsTotals" | "contributions" | "contributionQuery" | null = null;
     if (request.url === STATS_HTTP_URL) path = "stats";
     else if (request.url === STATS_TOTALS_URL) path = "statsTotals";
-    else if (request.url === STATS_UPLOAD_URL || request.url === STATS_STATUS_URL || request.url === STATS_ABANDON_URL) path = "statsUpload";
+    else if (request.url === STATS_UPLOAD_URL || request.url === STATS_STATUS_URL || request.url === STATS_ABANDON_URL
+      || request.url === STATS_TOTALS_DEVICE_URL) path = "statsUpload";
     else if (contributionHttpCap(request.url) !== null) path = "contributions";
     else if (request.url === CONTRIBUTION_QUERY_URL) path = "contributionQuery";
     else if (request.url === PAIRING_HTTP_URL) path = "pairing";

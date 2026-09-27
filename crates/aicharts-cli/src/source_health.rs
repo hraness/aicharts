@@ -12,6 +12,18 @@ pub(crate) const MAX_SOURCE_HEALTH_BYTES: usize = 131_072;
 pub(crate) const MAX_SOURCE_HEALTH_CLIENTS: usize = 55;
 #[cfg_attr(not(unix), allow(dead_code))]
 pub(crate) const MAX_SOURCE_HEALTH_CODES: usize = aicharts_import::MAX_SOURCE_HEALTH_CODES;
+/// Incremental collection needs a fixture-supported checkpoint parser and an
+/// exclusive source profile; every other selector replays its stores.
+pub(crate) fn incremental_profile(options: &crate::stats::Options) -> Result<&str, &'static str> {
+    if options.clients.len() != 1 {
+        return Err("stats_sync_one_client_required");
+    }
+    let client = options.clients[0].as_str();
+    if !aicharts_import::CHECKPOINT_CLIENTS.contains(&client) || options.source_roots.is_empty() {
+        return Err("stats_incremental_profile_required");
+    }
+    Ok(client)
+}
 #[cfg(unix)]
 const INVALID: &str = "source_health_invalid";
 #[cfg(unix)]
@@ -711,7 +723,8 @@ mod tests {
         health.parsed_bytes = Some(9_007_199_254_740_991);
         health.verified_bytes = 9_007_199_254_740_991;
         health.reused_files = 65_536;
-        health.schema_mismatch_records = Some(9_007_199_254_740_991);
+        // Unmeasured coverage carries the longest code list, the worst case.
+        health.schema_mismatch_records = None;
         health.clamped_records = Some(9_007_199_254_740_991);
         health.fallback_records = Some(9_007_199_254_740_991);
         health.estimated_records = Some(2_000_000);

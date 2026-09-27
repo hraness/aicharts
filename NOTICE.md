@@ -22,6 +22,6 @@ Arena media ratings derive from the owner-released [Arena leaderboard dataset](h
 
 The speech-recognition comparison retains selected publisher-reported results from the [Hugging Face Open ASR leaderboard](https://github.com/huggingface/open_asr_leaderboard), with its exact source revision and evaluation scope in the checked data. Research and multimodal benchmark projections retain the benchmark owners, source links, dates, and comparison boundaries described at [AI Charts data and method](https://aicharts.io/data).
 
-Model cards render vendor marks from the MIT-licensed [Lobe Icons](https://github.com/lobehub/lobe-icons) collection, pinned through `@lobehub/icons-static-svg`. LobeHub and the represented vendors are not affiliated with or responsible for AI Charts. The marks remain trademarks of their respective owners.
+Model cards render vendor marks from the shared `@hraness/design-kit` provider-mark registry, which vendors the MIT-licensed [Lobe Icons](https://github.com/lobehub/lobe-icons) collection. LobeHub and the represented vendors are not affiliated with or responsible for AI Charts. The marks remain trademarks of their respective owners.
 
 The MIT License applies to the original application code in this repository. It does not grant rights to third-party datasets, names, product marks, logos, or other material owned by their respective holders.

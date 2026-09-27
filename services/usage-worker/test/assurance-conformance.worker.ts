@@ -13,6 +13,9 @@ import { parseUsageStatsReport } from "../../../lib/usage/stats-contract";
 import { parseStatsUpload, type StatsUpload } from "../../../lib/usage/stats-http-contract";
 import { statsHash } from "../src/stats-state";
 import { LEADERBOARD_INDEX_NAME } from "../../../lib/usage/leaderboard-contract";
+import { CONTRIBUTION_IDENTITY, CONTRIBUTION_PROFILE } from "../../../lib/usage/contributions";
+import type { ContributionRebuildReadRequest, ContributionRebuildReceipt } from "../../../lib/usage/contribution-rebuild-contract";
+import { ContributionProjectionState } from "../src/contribution-projection-state";
 
 // Every identity, token and bucket object in this file is synthetic. A fixed
 // clock lies in the runtime's future so local alarms do not race the adapter.
@@ -513,4 +516,109 @@ test.each(CONFORMANCE_SEEDS)("M1 reordered cancellation prevents a lost grant fr
       await observe(), { inFlight: 0, established: false });
   }
   trace.finish(["cancel:ok", "cancel-retry:ok", "late-grant:conflict", "release-conflict:conflict"]);
+});
+
+/** Activates the canonical contribution profile for one synthetic account, admits one seeded observation and
+ * publishes projection revision 3, mirroring the rebuild integration fixture. Alarms are removed afterwards so
+ * the generated rebuild schedule is the only remaining work. */
+async function contributionAccount(account: string, device: Device, tokens: number): Promise<void> {
+  const stub = accountStub(account), deviceId = admissionHex(device.id), generation = env.USAGE_ENROLLMENT_GENERATION;
+  const population = hex(5), operation = () => hex(++serial);
+  await runInDurableObject(stub, instance => { replaceEnvironment(instance, original => ({ ...original, AICHARTS_USAGE_STATS_ENABLED: "1",
+    AICHARTS_USAGE_CONTRIBUTIONS_ENABLED: "1" } as Env)); });
+  success(await stub.activateContributions({ uploadSecret: device.proof.uploadSecret, request: {
+    schemaVersion: 3, accountId: account, generation, deviceId, operationId: operation(), expectedRevision: 0, mode: "fresh-empty" } }));
+  success(await stub.grantContributionPopulation({ uploadSecret: device.proof.uploadSecret, request: {
+    schemaVersion: 3, accountId: account, generation, deviceId, operationId: operation(), populationId: population, expectedRevision: 1,
+    expectedWriterRevision: 0, previousDeviceId: null, abandonOperationId: null } }));
+  success(await stub.admitContributions({ uploadSecret: device.proof.uploadSecret, request: {
+    schemaVersion: 3, accountId: account, generation, deviceId, operationId: operation(), profile: CONTRIBUTION_PROFILE,
+    identityScheme: CONTRIBUTION_IDENTITY, grain: "observation", sequence: 1, expectedRevision: 2, populationId: population, writerRevision: 1,
+    expectedPopulationRevision: 0, expectedPopulationHead: "0".repeat(64), replacement: null,
+    mutations: [{ kind: "put", id: hex(1, 16), expectedHeadHash: null, row: {
+      utcDay: DAY, client: "codex", provider: null, model: null, records: 1,
+      tokens: { input: String(tokens), cacheRead: "0", cacheWrite: "0", output: "9", reasoning: "0" },
+      reportedCostMicrousd: null, reportedCostRecords: 0, estimatedCostMicrousd: null, estimatedCostRecords: 0,
+      durationMs: null, timedRecords: 0, timedTokens: "0", tokenBasis: "reported", breakdownCoverage: "complete" } }] } }));
+  for (let step = 1; step <= 12; step++) {
+    vi.setSystemTime(NOW + step * 16_000);
+    const result = success(await stub.advanceContributionProjection({ schemaVersion: 3, accountId: account, generation }));
+    if (result.publishedRevision === 3) break;
+  }
+  await runInDurableObject(stub, async (_instance, state) => {
+    expect(new ContributionProjectionState(state.storage).status(Date.now()).publishedRevision).toBe(3);
+    await state.storage.deleteAlarm();
+  });
+}
+
+test.each(CONFORMANCE_SEEDS)("M11 generated rebuild step retries replay exact receipts without new charge seed=%i", async seed => {
+  const account = accountId(), device = await enroll(account), stub = accountStub(account), random = scheduleRandom(seed);
+  await contributionAccount(account, device, 7 + random(100));
+  const generation = env.USAGE_ENROLLMENT_GENERATION, jobId = hex(99);
+  const read: ContributionRebuildReadRequest = { schemaVersion: 3, accountId: account, generation, jobId };
+  const beginRequest = { ...read, action: "begin" as const, expectedVersion: 0 as const, expectedRevision: 3 };
+  const advance = (expectedVersion: number) => ({ ...read, action: "advance" as const, expectedVersion });
+  const trace = new ConformanceTrace("M11", seed);
+  const image = async () => runInDurableObject(stub, async (_instance, state) => {
+    const projection = new ContributionProjectionState(state.storage).control();
+    // The rebuild job table is created by the first begin (schema 13); before that the image records its absence.
+    const present = state.storage.sql.exec("SELECT name FROM sqlite_schema WHERE name='usage_contribution_rebuild_jobs'").toArray().length === 1;
+    return { schema: state.storage.sql.exec("SELECT schema_version FROM account_enrollment WHERE id=1").one().schema_version,
+      jobs: present ? state.storage.sql.exec("SELECT id, version FROM usage_contribution_rebuild_jobs ORDER BY id").toArray()
+        .map(row => ({ id: row.id, version: row.version })) : null,
+      publishedRevision: projection.publishedRevision, publishedRoot: projection.publishedRoot, charged: projection.immutableBytes,
+      objects: (await env.STAGING.list()).objects.length };
+  });
+  const baseline = await image(), model = { ...baseline, jobs: null as { id: unknown; version: unknown }[] | null };
+  expect(baseline.publishedRevision).toBe(3);
+  const receipts: Record<string, ContributionRebuildReceipt> = {};
+  const compare = async (command: string, input: unknown, result: { ok: true; value: ContributionRebuildReceipt } | { ok: false; error: string },
+    expectedOutcome: string, expectedReceipt?: ContributionRebuildReceipt) => {
+    if (expectedReceipt && result.ok) expect(result.value).toEqual(expectedReceipt);
+    trace.compare(command, input, outcome(result), expectedOutcome, await image(), model);
+    if (result.ok) receipts[command] = result.value;
+  };
+  // Each state image is taken after the command, so the model moves before the comparison.
+  const begun = await stub.executeContributionRebuild(beginRequest);
+  model.jobs = [{ id: jobId, version: 1 }]; model.schema = 13;
+  await compare("begin", {}, begun, "ok");
+  const initial = receipts.begin;
+  expect(initial).toMatchObject({ version: 1, phase: "building", sourceRevision: 3, processedHeads: 0, chargedBytes: 0 });
+  trace.compare("begin-state", {}, "ok", "ok", await image(), model);
+  for (let replay = 0; replay < random(3); replay++) await compare("begin-replay", { replay }, await stub.executeContributionRebuild(beginRequest), "ok", initial);
+  const stepped = await stub.executeContributionRebuild(advance(1));
+  expect(stepped.ok && stepped.value.chargedBytes).toBeGreaterThan(0);
+  // The rebuilt stage is content-addressed and equals the published index, so the object count never moves
+  // while the reservation is still charged to the projection.
+  model.jobs = [{ id: jobId, version: 2 }];
+  if (stepped.ok) model.charged = baseline.charged + stepped.value.chargedBytes;
+  await compare("head-step", {}, stepped, "ok");
+  const first = receipts["head-step"];
+  expect(first).toMatchObject({ version: 2, phase: "comparing", processedHeads: 1, liveHeads: 1 });
+  trace.compare("head-step-state", {}, "ok", "ok", await image(), model);
+  for (let retry = 0; retry < 1 + random(3); retry++) await compare("head-step-retry", { retry }, await stub.executeContributionRebuild(advance(1)), "ok", first);
+  await evictDurableObject(stub);
+  await runInDurableObject(stub, instance => { replaceEnvironment(instance, original => ({ ...original, AICHARTS_USAGE_STATS_ENABLED: "1",
+    AICHARTS_USAGE_CONTRIBUTIONS_ENABLED: "1" } as Env)); });
+  await compare("reopen-retry", {}, await stub.executeContributionRebuild(advance(1)), "ok", first);
+  // A begin for the same job binds its source revision: any other expected revision conflicts at every version.
+  await compare("stale-begin", { expectedRevision: 2 }, await stub.executeContributionRebuild({ ...beginRequest, expectedRevision: 2 }), "conflict");
+  const compared = await stub.executeContributionRebuild(advance(2));
+  model.jobs = [{ id: jobId, version: 3 }];
+  await compare("comparison", {}, compared, "ok");
+  const matched = receipts.comparison;
+  expect(matched).toMatchObject({ version: 3, phase: "match", checkedCells: 1, sourceRevision: 3, chargedBytes: first.chargedBytes });
+  trace.compare("comparison-state", {}, "ok", "ok", await image(), model);
+  for (const command of scheduleShuffle(seed, ["comparison-retry", "old-version", "future-version", "begin-replay", "status"])) {
+    if (command === "status") {
+      const status = await stub.readContributionRebuild(read);
+      if (status.ok) expect(status.value).toEqual({ receipt: matched, pending: false, chargedBytes: first.chargedBytes, readiness: "unobserved" });
+      trace.compare(command, {}, outcome(status), "ok", await image(), model);
+    } else if (command === "comparison-retry") await compare(command, {}, await stub.executeContributionRebuild(advance(2)), "ok", matched);
+    else if (command === "old-version") await compare(command, {}, await stub.executeContributionRebuild(advance(1)), "conflict");
+    else if (command === "future-version") await compare(command, {}, await stub.executeContributionRebuild(advance(3)), "conflict");
+    else await compare(command, {}, await stub.executeContributionRebuild(beginRequest), "ok", initial);
+  }
+  trace.finish(["begin:ok", "begin-state:ok", "head-step:ok", "head-step-state:ok", "head-step-retry:ok", "reopen-retry:ok", "stale-begin:conflict",
+    "comparison:ok", "comparison-state:ok", "comparison-retry:ok", "old-version:conflict", "future-version:conflict", "begin-replay:ok", "status:ok"]);
 });

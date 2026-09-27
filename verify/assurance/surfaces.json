@@ -443,6 +443,66 @@
       "controlEvidence": false
     },
     {
+      "id": "worker:migration_meta",
+      "table": "migration_meta",
+      "owner": "services/usage-worker/src/contributions-migration.ts",
+      "kind": "derived",
+      "retentionPolicy": "derived-projections",
+      "rebuildFrom": "retained legacy admission journal and stats state; wiped on migration commit or abandon",
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": false
+    },
+    {
+      "id": "worker:migration_heads",
+      "table": "migration_heads",
+      "owner": "services/usage-worker/src/contributions-migration.ts",
+      "kind": "derived",
+      "retentionPolicy": "derived-projections",
+      "rebuildFrom": "retained legacy admission journal and stats state; wiped on migration commit or abandon",
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": false
+    },
+    {
+      "id": "worker:migration_frag",
+      "table": "migration_frag",
+      "owner": "services/usage-worker/src/contributions-migration.ts",
+      "kind": "derived",
+      "retentionPolicy": "derived-projections",
+      "rebuildFrom": "retained legacy admission journal and stats state; wiped on migration commit or abandon",
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": false
+    },
+    {
+      "id": "worker:migration_delta",
+      "table": "migration_delta",
+      "owner": "services/usage-worker/src/contributions-migration.ts",
+      "kind": "derived",
+      "retentionPolicy": "derived-projections",
+      "rebuildFrom": "retained legacy admission journal and stats state; wiped on migration commit or abandon",
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": false
+    },
+    {
+      "id": "worker:migration_page",
+      "table": "migration_page",
+      "owner": "services/usage-worker/src/contributions-migration.ts",
+      "kind": "derived",
+      "retentionPolicy": "derived-projections",
+      "rebuildFrom": "retained legacy admission journal and stats state; wiped on migration commit or abandon",
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": false
+    },
+    {
+      "id": "worker:migration_dpage",
+      "table": "migration_dpage",
+      "owner": "services/usage-worker/src/contributions-migration.ts",
+      "kind": "derived",
+      "retentionPolicy": "derived-projections",
+      "rebuildFrom": "retained legacy admission journal and stats state; wiped on migration commit or abandon",
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": false
+    },
+    {
       "id": "r2:canonical-contribution-artifacts",
       "table": null,
       "owner": "services/usage-worker/src/contributions-journal.ts",
@@ -576,6 +636,16 @@
       "id": "worker:usage_stats_day_sources",
       "table": "usage_stats_day_sources",
       "owner": "services/usage-worker/src/stats-state.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "worker:usage_reclamation_ledger",
+      "table": "usage_reclamation_ledger",
+      "owner": "services/usage-worker/src/reclamation-state.ts",
       "kind": "authoritative",
       "retentionPolicy": "authority-and-deletion-controls",
       "rebuildFrom": null,

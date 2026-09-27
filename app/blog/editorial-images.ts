@@ -209,6 +209,15 @@ export const BLOG_EDITORIAL_IMAGES = {
     "20260924T145006571Z-image-99c4db4e-93e/receipt.json",
     "gateway_235223fbc0b94eba89ffd87e7b556768.json",
   ),
+  "opus-5-5-intelligence-index": image(
+    "opus-5-5-intelligence-index",
+    "Five matte ivory spheres of decreasing size rest one per step on a rising charcoal staircase, with a brass line along the top step.",
+    "Each effort level of Claude Opus 5.5 is its own row on the Intelligence Index, and the top four steps of the cost frontier belong to the same model.",
+    "75ec1742daa7fd250ed5402fa3bb42af8d8b4a237e4bcde275a5e8c496d58cb0",
+    "bb9fbb63630ff778f6f59570636710d3cc7eb3b215058d323d808a12affc140a",
+    "20260925T142331481Z-image-b610dbf3-4b0/receipt.json",
+    "gateway_ed81c1ffbc75415f85306049c6668893.json",
+  ),
 } as const satisfies EditorialImageRecord;
 
 export function blogEditorialImage<Slug extends BlogSlug>(

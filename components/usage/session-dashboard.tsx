@@ -7,7 +7,10 @@ import { summarizeSessions, type SessionSummary } from "@/lib/usage/sessions";
 import { joinCompactionEvents, type CompactionEvent, type SessionCompactions } from "@/lib/usage/compaction";
 import { readCompactionFile, readSessionFile } from "./local-report-file";
 import { SESSION_EXAMPLE } from "@/lib/usage/session-example";
+import { CopyCommand } from "./copy-command";
 import { RichMetricPanel } from "./rich-metric-panel";
+import { RichMetricExplorer, type RichExplorerAbsence } from "./rich-metric-explorer";
+import { openRichFactsDocument, type RichFactsDocument } from "@/lib/usage/rich-metric-explorer-view";
 
 const labels: Record<SessionPhase, string> = { inference: "Inference", reply_wait: "Reply wait", approval_wait: "Approval wait", tool_wait: "Tool wait", unknown: "Unknown" };
 const numbers = new Intl.NumberFormat("en-US");
@@ -152,13 +155,24 @@ export function SessionDashboard() {
     for (const s of compactions?.sessions ?? []) map.set(`${s.session.provider}:${s.session.sessionId}`, s);
     return map;
   }, [compactions]);
+  const [facts, setFacts] = useState<Readonly<{ document: RichFactsDocument | null; absence: RichExplorerAbsence | null; version: number }>>({ document: null, absence: null, version: 0 });
+  const [factsMetric, setFactsMetric] = useState("token-size-median");
+  const factsSequence = useRef(0);
+  useEffect(() => {
+    const id = ++factsSequence.current;
+    if (filtered === null || filtered.sessions.length === 0) { setFacts({ document: null, absence: "not-loaded", version: id }); return; }
+    void openRichFactsDocument(JSON.stringify(filtered)).then(opened => {
+      if (factsSequence.current !== id) return;
+      setFacts(opened.ok ? { document: opened.value, absence: null, version: id }
+        : { document: null, absence: opened.error === "session_window_limit" ? "window" : opened.error === "record_limit" || opened.error === "body_limit" ? "limit" : "invalid", version: id });
+    });
+  }, [filtered]);
   const sorted = useMemo(() => [...(summary?.sessions ?? [])].sort((a, b) => b.session.window.endMs - a.session.window.endMs || a.session.sessionId.localeCompare(b.session.sessionId)), [summary]);
   const detail = sorted.find(s => `${s.session.provider}:${s.session.sessionId}` === selected) ?? sorted[0];
   const conversations = [...new Set(report?.sessions.flatMap(s => s.conversationId === null ? [] : [`${s.provider}:${s.conversationId}`]) ?? [])].sort();
   const reading = (complete: number | null, observed: number | null) => complete !== null ? percent(complete) : observed !== null && observed > 0 ? `≥ ${percent(observed)}` : "Unknown";
 
   return <section className="usage-daily usage-sessions" aria-labelledby="sessions-title">
-    <Link className="usage-inline-link" href="/dashboard">Usage overview</Link>
     <header className="usage-daily__heading"><div><h1 id="sessions-title">Your sessions, in detail</h1>
       <p>See the model mix and where time goes, within a conversation and across concurrent sessions.</p></div></header>
     <div className="usage-sessions__controls">
@@ -186,8 +200,7 @@ export function SessionDashboard() {
     <div aria-live="polite" className="usage-daily__announcement">{loading ? "Reading report." : example ? "Synthetic example loaded." : report ? `${report.sessions.length} sessions loaded.` : "No report opened."}</div>
     {report === null ? <div className="usage-sessions__intro">
       <h2>Start with your local measurements</h2><p>Export numeric observations from an explicit Codex, Claude Code or Devin session file. Open the report here to inspect a session without sending its transcript.</p>
-      <pre><code>aicharts sessions --occurrence-key-file ./aicharts.key \
-  --codex ./session.jsonl --json &gt; ./sessions.json</code></pre>
+      <CopyCommand command="aicharts sessions --occurrence-key-file ./aicharts.key --codex ./session.jsonl --json > ./sessions.json" label="Session report command" note="local only" />
       <p>Historical files provide token totals. Live timing requires instrumented observations; unknown time stays visible.</p>
       <Link className="usage-inline-link" href="https://github.com/hraness/aicharts/blob/main/docs/usage-sessions.md">Collector and timing guide</Link>
     </div> : <>
@@ -231,6 +244,7 @@ export function SessionDashboard() {
           </tr>; })}</tbody></table></div>
         {sorted.length > limit && <button className="usage-button usage-button--quiet" type="button" onClick={() => setLimit(n => n + 100)}>Show more sessions</button>}
         {detail && <SessionDetail value={detail} />}
+        <RichMetricExplorer key={facts.version} standalone source={{ document: facts.document, absence: facts.absence ?? "not-loaded", label: example ? "Adapted from the synthetic example" : "Adapted from the selected sessions" }} metricId={factsMetric} onMetric={setFactsMetric} />
       </>}
     </>}
   </section>;

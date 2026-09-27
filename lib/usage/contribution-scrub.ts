@@ -131,3 +131,77 @@ export class ContributionCellScrubFold {
     if (!result) throw new Error("invalid_scrub_fold"); return result;
   }
 }
+
+/** Rebuild-job cell scrub (plan 6.3): the scrub envelope for accounts above
+ * `CONTRIBUTION_SCRUB_MAX_HEADS`. The head walk itself is the bounded,
+ * resumable, durably cursored rebuild job (M11): its scratch root is folded
+ * from every canonical head at sixteen heads per step. This read qualifies one
+ * cell of that verified scratch root against the job's pinned published root
+ * with no source reads at all, so a mismatch is per-cell evidence of exactly
+ * which cohort the published index disagrees on. It inherits the job's
+ * qualification limits: it does not audit canonical SQL from genesis and it
+ * does not certify legacy imports. */
+export const CONTRIBUTION_SCRUB_JOB_MAX_INDEX_READS = 14;
+export const CONTRIBUTION_SCRUB_JOB_MAX_READ_BYTES = 3_670_016;
+export type ContributionScrubJobRequest = ContributionScrubRequest & Readonly<{ jobId: string; expectedVersion: number }>;
+export type ContributionScrubJobPhase = "comparing" | "match" | "mismatch";
+export type ContributionScrubJobReceipt = Readonly<{
+  schemaVersion: 3; profile: "canonical-cell-scrub-v3"; scope: "rebuild-job";
+  accountId: string; generation: string; revision: number; jobId: string; version: number; phase: ContributionScrubJobPhase;
+  headCount: number; scratchRootHash: string | null; rootHash: string | null; dimensions: ContributionCellDimensions;
+  verdict: "match" | "mismatch"; expected: ContributionCell | null; published: ContributionCell | null;
+  scratchObjects: number; indexObjects: number; scratchBytes: number; indexBytes: number; readBytes: number;
+}>;
+export type ContributionScrubJobResult = Readonly<{ ok: true; value: ContributionScrubJobReceipt }>
+  | Readonly<{ ok: false; error: ContributionScrubError }>;
+export function parseContributionScrubJobRequest(value: unknown): ContributionScrubJobRequest | null {
+  try {
+    const raw = statsOwnRecord(value, ["schemaVersion", "accountId", "generation", "expectedRevision", "dimensions", "jobId", "expectedVersion"]);
+    if (!raw) return null;
+    const { jobId, expectedVersion, ...rest } = raw, base = parseContributionScrubRequest(rest);
+    return base && contributionIdentity(jobId) && statsInteger(expectedVersion, 1, 1_000_000)
+      ? Object.freeze({ ...base, jobId, expectedVersion }) : null;
+  } catch { return null; }
+}
+export function parseContributionScrubJobReceipt(input: ContributionScrubJobRequest, value: unknown): ContributionScrubJobReceipt | null {
+  try {
+    const request = parseContributionScrubJobRequest(input), raw = statsOwnRecord(value, ["schemaVersion", "profile", "scope", "accountId", "generation",
+      "revision", "jobId", "version", "phase", "headCount", "scratchRootHash", "rootHash", "dimensions", "verdict", "expected", "published",
+      "scratchObjects", "indexObjects", "scratchBytes", "indexBytes", "readBytes"]), selected = raw ? dimensions(raw.dimensions) : null;
+    if (!request || raw?.schemaVersion !== 3 || raw.profile !== "canonical-cell-scrub-v3" || raw.scope !== "rebuild-job"
+      || raw.accountId !== request.accountId || raw.generation !== request.generation || raw.revision !== request.expectedRevision
+      || raw.jobId !== request.jobId || raw.version !== request.expectedVersion
+      || (raw.phase !== "comparing" && raw.phase !== "match" && raw.phase !== "mismatch")
+      || !statsInteger(raw.headCount, 0, 1_000_000)
+      || (raw.scratchRootHash !== null && !contributionIdentity(raw.scratchRootHash)) || (raw.rootHash !== null && !contributionIdentity(raw.rootHash))
+      || !selected || !same(selected, request.dimensions)
+      || !statsInteger(raw.scratchObjects, raw.scratchRootHash === null ? 0 : 1, CONTRIBUTION_SCRUB_MAX_INDEX_READS)
+      || (raw.scratchRootHash === null && raw.scratchObjects !== 0)
+      || !statsInteger(raw.indexObjects, raw.rootHash === null ? 0 : 1, CONTRIBUTION_SCRUB_MAX_INDEX_READS)
+      || (raw.rootHash === null && raw.indexObjects !== 0) || raw.scratchObjects + raw.indexObjects > CONTRIBUTION_SCRUB_JOB_MAX_INDEX_READS
+      || !statsInteger(raw.scratchBytes, raw.scratchObjects, raw.scratchObjects * 262_144)
+      || !statsInteger(raw.indexBytes, raw.indexObjects, raw.indexObjects * 262_144)
+      || !statsInteger(raw.readBytes, 0, CONTRIBUTION_SCRUB_JOB_MAX_READ_BYTES) || raw.readBytes !== raw.scratchBytes + raw.indexBytes) return null;
+    const expected = raw.expected === null ? null : parseContributionCell(raw.expected), published = raw.published === null ? null : parseContributionCell(raw.published);
+    const verdict = same(expected, published) ? "match" : "mismatch";
+    if ((raw.expected !== null && (!expected || !same(expected.dimensions, selected)))
+      || (raw.published !== null && (!published || !same(published.dimensions, selected)))
+      || (raw.scratchRootHash === null && expected !== null) || (raw.rootHash === null && published !== null)
+      || (raw.phase === "match" && verdict !== "match") || raw.verdict !== verdict) return null;
+    return Object.freeze({ schemaVersion: 3, profile: "canonical-cell-scrub-v3", scope: "rebuild-job", accountId: request.accountId,
+      generation: request.generation, revision: request.expectedRevision, jobId: request.jobId, version: request.expectedVersion, phase: raw.phase,
+      headCount: raw.headCount, scratchRootHash: raw.scratchRootHash as string | null, rootHash: raw.rootHash as string | null, dimensions: selected,
+      verdict, expected, published, scratchObjects: raw.scratchObjects, indexObjects: raw.indexObjects,
+      scratchBytes: raw.scratchBytes, indexBytes: raw.indexBytes, readBytes: raw.readBytes });
+  } catch { return null; }
+}
+export function parseContributionScrubJobResult(request: ContributionScrubJobRequest, value: unknown): ContributionScrubJobResult | null {
+  try {
+    const success = statsOwnRecord(value, ["ok", "value"]);
+    if (success?.ok === true) { const receipt = parseContributionScrubJobReceipt(request, success.value); return receipt ? { ok: true, value: receipt } : null; }
+    const failure = statsOwnRecord(value, ["ok", "error"]);
+    return parseContributionScrubJobRequest(request) && failure?.ok === false
+      && (isContributionError(failure.error) || failure.error === "deadline" || failure.error === "not_caught_up" || failure.error === "scope_limit")
+      ? { ok: false, error: failure.error } : null;
+  } catch { return null; }
+}

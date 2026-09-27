@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1",
+  "case": "m12-committed-overcount-persists",
+  "invariant": "ResubmitHonestCorrects",
+  "provenance": "TLC 1.7.4 structured output; TLA values retained verbatim, not production adapter replay",
+  "states": [
+    {
+      "index": 1,
+      "action": "Init",
+      "location": "Initial predicate",
+      "state": "/\\ pending = {}\n/\\ submitted = {}\n/\\ wasOver = FALSE\n/\\ stored = 0\n/\\ drained = FALSE"
+    },
+    {
+      "index": 2,
+      "action": "Submit",
+      "location": "Submit line 29, col 5 to line 32, col 45 of module M12MonotonicMerge",
+      "state": "/\\ pending = {120}\n/\\ submitted = {120}\n/\\ wasOver = FALSE\n/\\ stored = 0\n/\\ drained = FALSE"
+    },
+    {
+      "index": 3,
+      "action": "Submit",
+      "location": "Submit line 29, col 5 to line 32, col 45 of module M12MonotonicMerge",
+      "state": "/\\ pending = {120, 240}\n/\\ submitted = {120, 240}\n/\\ wasOver = FALSE\n/\\ stored = 0\n/\\ drained = FALSE"
+    },
+    {
+      "index": 4,
+      "action": "Merge",
+      "location": "Merge line 37, col 5 to line 42, col 30 of module M12MonotonicMerge",
+      "state": "/\\ pending = {240}\n/\\ submitted = {120, 240}\n/\\ wasOver = FALSE\n/\\ stored = 120\n/\\ drained = TRUE"
+    },
+    {
+      "index": 5,
+      "action": "Merge",
+      "location": "Merge line 37, col 5 to line 42, col 30 of module M12MonotonicMerge",
+      "state": "/\\ pending = {}\n/\\ submitted = {120, 240}\n/\\ wasOver = TRUE\n/\\ stored = 240\n/\\ drained = TRUE"
+    }
+  ],
+  "kind": "witness",
+  "moduleSha256": "527c3beaa8ae6f8a3c0d8c039696bc594da61464846667470e69424d542178ef",
+  "configSha256": "2d4f82906785f31738b45df7c278dd2a28c0e0bd25bee9cc376843669d5d1fb4",
+  "counts": "{'generated': 20, 'distinct': 12, 'queued': 4}",
+  "tlcArtifactSha256": "936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88"
+}

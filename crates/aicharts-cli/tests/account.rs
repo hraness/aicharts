@@ -113,9 +113,7 @@ fn account_help_explains_local_verification_without_opening_state() {
     assert!(output.stderr.is_empty());
     let text = String::from_utf8(output.stdout).unwrap();
     assert!(text.contains("aicharts account --state-dir ABSOLUTE_DIR [--json]"));
-    assert!(
-        text.contains("without advancing enrollment, opening the ledger or contacting a server")
-    );
+    assert!(text.contains("it never contacts a server or changes anything"));
     assert!(text.contains("aicharts account --state-dir ABSOLUTE_DIR --diagnose [--json]"));
 }
 

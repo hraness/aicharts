@@ -1,23 +1,27 @@
-import { isMetricResult, METRIC_REASON_TEXT, metricDefinition, parseMetricQuery, type MetricGroup, type MetricResult } from "@/lib/usage/metric-explorer";
+import { isMetricResult, METRIC_REASON_TEXT, metricDefinition, parseMetricQuery, SIGNED_METRIC_IDS, type MetricComparison, type MetricGroup, type MetricResult } from "@/lib/usage/metric-explorer";
 import { STATS_MAX_DAY, STATS_MAX_ROWS, statsInteger, statsOwnRecord } from "@/lib/usage/stats-contract";
 import { isStatsClient, isStatsModel, isStatsProvider } from "@/lib/usage/stats-registry";
 import { metricStatsProjection } from "./stats-metric-projection";
 
 export const MAX_METRIC_VIEW_BYTES = 2_097_152;
-export type MetricPresentationGroup = Pick<MetricGroup, "key" | "dimensions" | "measures" | "other"> & Readonly<{ daysWithRecords: number }>;
+export type MetricPresentationGroup = Pick<MetricGroup, "key" | "dimensions" | "measures" | "other" | "previous"> & Readonly<{ daysWithRecords: number }>;
+export type MetricPresentationComparison = Omit<MetricComparison, "fold"> & Readonly<{ daysWithRecords: number }>;
 /** Only bounded display data crosses the worker boundary. Source rows and
  * each group's full per-day cohort trees remain with the captured report. */
 export type MetricPresentation = Pick<MetricResult, "schemaVersion" | "snapshot" | "query" | "measures" | "totalGroups" | "otherGroups" | "coverage" | "facets"> & Readonly<{
   groups: readonly MetricPresentationGroup[];
   rowCount: number; snapshotRowCount: number; snapshotUtcDay: number | null;
+  previous: MetricPresentationComparison | null;
   projection: ReturnType<typeof metricStatsProjection>;
 }>;
 export function metricPresentation(result: MetricResult): MetricPresentation {
   if (!isMetricResult(result)) throw new Error("metric_result_invalid");
   const { schemaVersion, snapshot, query, measures, totalGroups, otherGroups, coverage, facets } = result;
   return Object.freeze({ schemaVersion, snapshot, query, measures, totalGroups, otherGroups, coverage, facets,
-    groups: Object.freeze(result.groups.map(({ key, dimensions, measures, other, fold }) => Object.freeze({ key, dimensions, measures, other, daysWithRecords: fold.days.length }))),
+    groups: Object.freeze(result.groups.map(({ key, dimensions, measures, other, previous, fold }) => Object.freeze({ key, dimensions, measures, other, previous, daysWithRecords: fold.days.length }))),
     rowCount: result.rows.length, snapshotRowCount: result.refreshSnapshot.rows.length, snapshotUtcDay: result.refreshSnapshot.utcDay,
+    previous: result.previous === null ? null : Object.freeze({ firstUtcDay: result.previous.firstUtcDay, dayCount: result.previous.dayCount, matched: result.previous.matched,
+      reason: result.previous.reason, measures: result.previous.measures, cohort: result.previous.cohort, daysWithRecords: result.previous.fold.days.length }),
     projection: metricStatsProjection(result) });
 }
 /** This is a serialized display ceiling, not a claim about physical heap.
@@ -34,6 +38,8 @@ function object(value: unknown, keys: readonly string[]): Record<string, unknown
 function list(value: unknown, maximum: number): readonly unknown[] { if (!Array.isArray(value) || value.length > maximum) invalid(); return value; }
 function integer(value: unknown, max = Number.MAX_SAFE_INTEGER): number { if (!statsInteger(value, 0, max)) invalid(); return value; }
 function amount(value: unknown): bigint { if (typeof value !== "bigint" || value < 0n || value.toString().length > 80) invalid(); return value; }
+/** Only matched comparison values may be negative. */
+function signed(value: unknown): bigint { if (typeof value !== "bigint" || value.toString().length > 81) invalid(); return value; }
 function text(value: unknown, max = 512): string { if (typeof value !== "string" || value.length > max) invalid(); return value; }
 function totals(value: unknown): void {
   const fields = object(value, ["tokens", "input", "cacheRead", "cacheWrite", "output", "reasoning", "records", "tokenRecords", "partialRecords", "activeDays",
@@ -55,15 +61,15 @@ function measures(value: unknown, ids: readonly string[]): void {
     const eligible = amount(measure.eligibleRecords), selected = amount(measure.selectedRecords), excluded = amount(measure.excludedRecords);
     if (eligible > selected || excluded !== selected - eligible || (measure.value === null) !== (measure.status === "unavailable")) invalid();
     if (measure.value !== null) {
-      const kind = (measure.value as { kind?: unknown }).kind;
-      if (kind === "integer") amount(object(measure.value, ["kind", "amount"]).amount);
-      else if (kind === "ratio") { const ratio = object(measure.value, ["kind", "numerator", "denominator"]); amount(ratio.numerator); if (amount(ratio.denominator) === 0n) invalid(); }
+      const kind = (measure.value as { kind?: unknown }).kind, numeric = SIGNED_METRIC_IDS.has(ids[index]) ? signed : amount;
+      if (kind === "integer") numeric(object(measure.value, ["kind", "amount"]).amount);
+      else if (kind === "ratio") { const ratio = object(measure.value, ["kind", "numerator", "denominator"]); numeric(ratio.numerator); if (amount(ratio.denominator) === 0n) invalid(); }
       else invalid();
     }
   });
 }
 function validatePresentation(value: unknown): asserts value is MetricPresentation {
-  const view = object(value, ["schemaVersion", "snapshot", "query", "measures", "totalGroups", "otherGroups", "coverage", "facets", "groups", "rowCount", "snapshotRowCount", "snapshotUtcDay", "projection"]);
+  const view = object(value, ["schemaVersion", "snapshot", "query", "measures", "totalGroups", "otherGroups", "coverage", "facets", "groups", "rowCount", "snapshotRowCount", "snapshotUtcDay", "previous", "projection"]);
   if (view.schemaVersion !== 1) invalid();
   const query = parseMetricQuery(view.query); if (query === null) invalid();
   const snapshot = object(view.snapshot, ["schemaVersion", "profile", "revision", "generatedAtMs"]);
@@ -75,10 +81,23 @@ function validatePresentation(value: unknown): asserts value is MetricPresentati
   measures(view.measures, query.metricIds);
   const groups = list(view.groups, 51); if (groups.length !== totalGroups - otherGroups + Number(otherGroups > 0)) invalid();
   for (const item of groups) {
-    const group = object(item, ["key", "dimensions", "measures", "other", "daysWithRecords"]);
+    const group = object(item, ["key", "dimensions", "measures", "other", "previous", "daysWithRecords"]);
     text(group.key); const dimensions = list(group.dimensions, 2); dimensions.forEach(value => text(value, 128));
     if (typeof group.other !== "boolean" || dimensions.length !== (group.other ? 1 : query.groupBy.length)) invalid();
     measures(group.measures, query.metricIds); integer(group.daysWithRecords, query.dayCount);
+    if (group.previous !== null) { if (view.previous === null) invalid(); measures(group.previous, query.metricIds); }
+  }
+  if (view.previous !== null) {
+    const previous = object(view.previous, ["firstUtcDay", "dayCount", "matched", "reason", "measures", "cohort", "daysWithRecords"]);
+    if (previous.dayCount !== query.dayCount || integer(previous.firstUtcDay, STATS_MAX_DAY) + query.dayCount !== query.firstUtcDay || typeof previous.matched !== "boolean") invalid();
+    if (previous.reason !== null && !Object.hasOwn(METRIC_REASON_TEXT, String(previous.reason))) invalid();
+    if (previous.matched !== (previous.reason === null)) invalid();
+    measures(previous.measures, query.metricIds); integer(previous.daysWithRecords, query.dayCount);
+    if (previous.matched && previous.daysWithRecords !== query.dayCount) invalid();
+    const cohort = object(previous.cohort, ["matched", "reason", "currentOnly", "previousOnly"]);
+    if (typeof cohort.matched !== "boolean" || cohort.matched !== (cohort.reason === null) || (cohort.reason !== null && !Object.hasOwn(METRIC_REASON_TEXT, String(cohort.reason)))) invalid();
+    integer(cohort.currentOnly, STATS_MAX_ROWS); integer(cohort.previousOnly, STATS_MAX_ROWS);
+    if (cohort.matched && (!previous.matched || cohort.currentOnly !== 0 || cohort.previousOnly !== 0)) invalid();
   }
   const coverage = object(view.coverage, ["selectedSourceClients", "sourceIssues", "unknownBasisRecords", "filteredOutRows", "unobservedDays", "includesCurrentOrFutureDay"]);
   integer(coverage.selectedSourceClients, 64); integer(coverage.sourceIssues, 64); amount(coverage.unknownBasisRecords);
@@ -118,7 +137,7 @@ export function decodeMetricPresentation(bytes: ArrayBuffer): MetricPresentation
       const fields = Object.keys(item);
       if (fields.length === 1 && fields[0] === "$metricInteger") {
         const decimal = (item as { $metricInteger: unknown }).$metricInteger;
-        if (typeof decimal !== "string" || !/^(?:0|[1-9][0-9]{0,79})$/u.test(decimal)) throw new Error("metric_view_integer");
+        if (typeof decimal !== "string" || !/^(?:0|-?[1-9][0-9]{0,79})$/u.test(decimal)) throw new Error("metric_view_integer");
         return BigInt(decimal);
       }
       if (fields.length === 1 && fields[0] === "$metricMap") {

@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 import fc from "fast-check";
 import { parseUsageStatsJson, parseUsageStatsReport, statsTokenTotal, type UsageStatsReport } from "./stats-contract";
+import { parseStatsUpload } from "./stats-http-contract";
 import { STATS_CLIENTS } from "./stats-registry";
 import nativeFixture from "../../fixtures/usage/stats-v2.json";
 
@@ -46,6 +47,29 @@ test("duplicate rows, coverage mismatches and out-of-range data are rejected", (
     { ...raw, rows: [{ ...raw.rows[0], utcDay: raw.firstUtcDay + 1 }] },
     { ...raw, sources: [{ ...raw.sources[0], status: "not_found" }] }, { ...raw, revision: 1 },
     { ...raw, sources: [{ ...raw.sources[0], latestAtMs: raw.generatedAtMs + 1 }] }]) expect(parseUsageStatsReport(value)).toBeNull();
+});
+test("implausible per-record token totals are refused at upload admission but committed history still parses", () => {
+  const raw = statsFixture(), row = raw.rows[0];
+  const upload = (rows: UsageStatsReport["rows"], records = 1) => parseStatsUpload({ schemaVersion: 2, operationId: "11".repeat(32),
+    accountId: `acct_${"22".repeat(16)}`, deviceId: "33".repeat(32), generation: "44".repeat(32), sequence: 1, expectedRevision: 0,
+    mode: "replace-window", takeover: null, report: { ...raw, sources: [{ ...raw.sources[0], records }], rows } });
+  // The row's other buckets carry 65 tokens; 1 record admits 8_388_608 total.
+  const admitted = { ...row, tokens: { ...row.tokens, input: String(8_388_608n - 65n) } };
+  expect(statsTokenTotal(admitted.tokens)).toBe(8_388_608n);
+  expect(upload([admitted])).not.toBeNull();
+  const refused = { ...row, tokens: { ...row.tokens, input: String(8_388_608n - 65n + 1n) } };
+  expect(upload([refused])).toBeNull();
+  // The failure mode this prevents: a forked rollout's inherited cumulative
+  // counter admitted as usage — 12B over a few hundred records.
+  const leaked = { ...row, records: 300, tokens: { ...row.tokens, input: "12000000000" } };
+  expect(upload([leaked], 300)).toBeNull();
+  // Averages stay legal: many records may carry a large total.
+  const honest = { ...row, records: 300, tokens: { ...row.tokens, input: String(300n * 8_388_608n - 65n) } };
+  expect(upload([honest], 300)).not.toBeNull();
+  // A value committed before the bound existed is stored history: stored-day
+  // re-reads and query replies must keep parsing it rather than refusing the account.
+  const committed = parseUsageStatsReport({ ...raw, revision: 7, updatedAtMs: raw.generatedAtMs, sources: [{ ...raw.sources[0], records: 300 }], rows: [leaked] });
+  expect(committed?.rows[0].tokens.input).toBe("12000000000");
 });
 test("known zero costs differ from unknown and cost populations cannot overlap", () => {
   const raw = statsFixture(), row = raw.rows[0];
