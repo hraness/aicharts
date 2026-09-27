@@ -11,21 +11,36 @@ const bytes = (text: string) => new TextEncoder().encode(text);
 
 test("queries keep canonical part order, require a range exactly when stats is named, and round-trip through the path", () => {
   const all = { parts: ["account", "totals", "consent", "stats"], range: { firstUtcDay: 20_700, dayCount: 30 } };
-  expect(usageDashboardPath(all)).toBe("/api/usage/dashboard?parts=account,totals,consent,stats&firstUtcDay=20700&dayCount=30");
-  expect(usageDashboardPath({ parts: ["account", "consent"], range: null })).toBe("/api/usage/dashboard?parts=account,consent");
+  expect(usageDashboardPath(all)).toBe("/api/usage/dashboard?parts=account.totals.consent.stats&firstUtcDay=20700&dayCount=30");
+  expect(usageDashboardPath({ parts: ["account", "consent"], range: null })).toBe("/api/usage/dashboard?parts=account.consent");
   for (const refused of [
     { parts: [], range: null }, { parts: ["stats"], range: null }, { parts: ["account"], range: { firstUtcDay: 1, dayCount: 1 } },
     { parts: ["totals", "account"], range: null }, { parts: ["account", "account"], range: null }, { parts: ["days"], range: null },
     { parts: ["stats"], range: { firstUtcDay: -1, dayCount: 1 } }, { parts: ["stats"], range: { firstUtcDay: 1, dayCount: 0 } },
     { parts: "account", range: null }, null, "account",
   ]) expect(parseUsageDashboardQuery(refused)).toBeNull();
-  for (const search of ["?parts=account", "?parts=account,totals,consent,stats&firstUtcDay=0&dayCount=1", "?parts=stats&firstUtcDay=20700&dayCount=90"]) {
+  for (const search of ["?parts=account", "?parts=account.totals.consent.stats&firstUtcDay=0&dayCount=1", "?parts=stats&firstUtcDay=20700&dayCount=90"]) {
     const query = parseUsageDashboardSearch(search);
     expect(query).not.toBeNull(); expect(usageDashboardPath(query)).toBe(`/api/usage/dashboard${search}`);
   }
-  for (const search of ["", "?", "?parts=", "?parts=totals,account", "?parts=account&firstUtcDay=1&dayCount=1", "?parts=stats",
-    "?parts=stats&dayCount=1&firstUtcDay=1", "?parts=stats&firstUtcDay=01&dayCount=1", "?parts=account&extra=1", "?parts=account,",
-    "?parts=Account", "?parts=account%2Ctotals", "?parts=account#x"]) expect(parseUsageDashboardSearch(search)).toBeNull();
+  for (const search of ["", "?", "?parts=", "?parts=totals.account", "?parts=account&firstUtcDay=1&dayCount=1", "?parts=stats",
+    "?parts=stats&dayCount=1&firstUtcDay=1", "?parts=stats&firstUtcDay=01&dayCount=1", "?parts=account&extra=1", "?parts=account.",
+    "?parts=account,totals", "?parts=Account", "?parts=account%2Ctotals", "?parts=account%2Etotals", "?parts=account#x"]) expect(parseUsageDashboardSearch(search)).toBeNull();
+});
+
+// Regression: production re-serializes query strings like URLSearchParams,
+// which percent-encoded the old "," separator and refused every multi-part read.
+test("every canonical path survives URLSearchParams and URL re-serialization unchanged", () => {
+  assertProperty(fc.property(fc.subarray([...USAGE_DASHBOARD_PARTS], { minLength: 1 }), fc.integer({ min: 0, max: 30_000 }), fc.integer({ min: 1, max: 366 }),
+    (parts, firstUtcDay, dayCount) => {
+      const path = usageDashboardPath({ parts, range: parts.includes("stats") ? { firstUtcDay, dayCount } : null });
+      if (path === null) return;
+      const search = path.slice(path.indexOf("?"));
+      expect(path).toMatch(/^\/api\/usage\/dashboard\?[A-Za-z0-9._~=&-]+$/u);
+      expect(`?${new URLSearchParams(search).toString()}`).toBe(search);
+      expect(new URL(path, "https://aicharts.io").search).toBe(search);
+      expect(parseUsageDashboardSearch(`?${new URLSearchParams(search).toString()}`)).toEqual(parseUsageDashboardSearch(search));
+    }));
 });
 
 const partArbitrary = (part: UsageDashboardPart) => fc.record({
