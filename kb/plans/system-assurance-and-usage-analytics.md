@@ -2105,3 +2105,44 @@ Model map gained `claude-opus-5`, `claude-opus-5-5`, `claude-sonnet-5`,
 attribution. Live evidence: first real Claude transcript drained 912
 observations across sequences 1-4; a sweep is publishing the remaining
 local transcripts (#514 merged).
+
+**2026-09-27 (capacity closeout):** Two protocol bounds were conflating
+distinct constraints and silently dropping real usage mid-sweep.
+(1) `CONTRIBUTION_MAX_HEADS` (262,144) capped the whole account ledger below
+one heavy account's migrated history — raised to the association scale
+(1,048,576) with `JOURNAL_MAX_ENTRIES`/`ROOT_BYTES` and `MIGRATION_MAX_HEADS`
+following (#518). (2) `CONTRIBUTION_MAX_MEMBERS` (8,192) doubled as both the
+`replacement` enumeration bound and the population cardinality cap — after
+the sweep published ~8,192 members, every subsequent `put` refused `limit`.
+Puts now bound membership at `CONTRIBUTION_MAX_ASSOCIATIONS`; the 8,192 bound
+governs only full-enumeration replacements, which refuse `limit` rather than
+`storage_invalid` on over-bound copies. The head-query population check and
+both CLI wire parsers follow the association bound (#520). Conformance caught
+one wrong-module import resolving `undefined` (M11 `begin` →
+`storage_invalid`) — a bound imported from `contribution-contract` instead of
+its defining module `contributions`. Live evidence: the full local transcript
+sweep drained — 137 files published (~167 sequences, revision 180), with the
+remaining refusals all decided integrity boundaries (`no_observations`,
+`legacy_unresolved`, `invalid_counters`). Leaderboard consent still pending
+the browser-session decision.
+
+
+**2026-09-27 (capacity closeout):** Two protocol bounds were conflating
+distinct constraints and silently dropping real usage mid-sweep.
+(1) `CONTRIBUTION_MAX_HEADS` (262,144) capped the whole account ledger below
+one heavy account's migrated history — raised to the association scale
+(1,048,576) with `JOURNAL_MAX_ENTRIES`/`ROOT_BYTES` and `MIGRATION_MAX_HEADS`
+following (#518). (2) `CONTRIBUTION_MAX_MEMBERS` (8,192) doubled as both the
+`replacement` enumeration bound and the population cardinality cap — after
+the sweep published ~8,192 members, every subsequent `put` refused `limit`.
+Puts now bound membership at `CONTRIBUTION_MAX_ASSOCIATIONS`; the 8,192 bound
+governs only full-enumeration replacements, which refuse `limit` rather than
+`storage_invalid` on over-bound copies. The head-query population check and
+both CLI wire parsers follow the association bound (#520). Conformance caught
+one wrong-module import resolving `undefined` (M11 `begin` →
+`storage_invalid`) — a bound imported from `contribution-contract` instead of
+its defining module `contributions`. Live evidence: the full local transcript
+sweep drained — 137 files published (~167 sequences, revision 180), with the
+remaining refusals all decided integrity boundaries (`no_observations`,
+`legacy_unresolved`, `invalid_counters`). Leaderboard consent still pending
+the browser-session decision.
