@@ -33,15 +33,15 @@
 /* A flat introduction keeps the chart, the product's proof, right below the
  * promise: no backdrop, texture, or tinted panel behind the heading. */
 .chart-page-intro.chart-home-hero {
-  padding-block: clamp(2rem, 5vw, 3.5rem) clamp(1.25rem, 3vw, 2rem);
+  padding-block: clamp(1.5rem, 3vw, 2rem) 1rem;
 }
 .chart-home-hero h1 {
   font-family: var(--font-text, var(--font-sans));
-  font-size: clamp(2.25rem, 1.6rem + 3vw, 3.5rem);
+  font-size: clamp(2rem, 1.5rem + 2vw, 3rem);
   font-weight: 550;
   letter-spacing: -.035em;
   line-height: 1.05;
-  max-inline-size: 18ch;
+  max-inline-size: 24ch;
   text-wrap: balance;
 }
 .chart-home-hero > .chart-home-hero__lede {
