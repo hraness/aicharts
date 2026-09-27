@@ -114,29 +114,29 @@ export function createIntroducingAiChartsArticle(
     showRelatedProducts: true,
     body: [
       paragraph(
-        "AI Charts plots published benchmark results for AI models and coding agents, and each chart names the source and retrieval date behind its numbers.",
+        "AI Charts plots published benchmark results for AI models and coding agents against cost, time, and token use. Each chart names the source of its numbers and the date they were retrieved, because a score is hard to use without knowing what produced it and when.",
       ),
       heading("A score means little without its setup"),
       paragraph(
-        "The same model can appear on a coding leaderboard several times with different results, because a coding-agent result belongs to a whole configuration: the model, the agent harness that runs it, and the effort setting. The benchmark has a version, the run has a cost, and the table was true on one date. A leaderboard screenshot usually drops most of that.",
+        "The same model can appear on a coding leaderboard several times with different results. That is because a coding-agent result belongs to a whole configuration: the model, the agent harness that runs it, and the effort setting. The benchmark also has a version, each run has a cost, and the table was true on one date. A leaderboard screenshot usually loses most of that.",
       ),
       paragraph(
         "On the ",
         { href: "/coding", text: "coding-agent chart" },
-        ", each point is one named configuration. Hover it to see its model, harness, and effort setting, its scores, and its cost, time, and total token use where the source reports them. The chart names its source and the date the snapshot was retrieved. In the benchmarks library, results also show the uncertainty interval the source reports, labeled with the source's own interval type. Each benchmark snapshot records its source, its named version, and when it was retrieved.",
+        ", each point is one named configuration. Hover over it to see the model, harness, and effort setting, the scores, and the cost, time, and total token use where the source reports them. In the benchmarks library, results also show the uncertainty interval the source reports, labeled with the source's own interval type.",
       ),
       heading("Who it is for"),
       paragraph(
-        "AI Charts is for someone choosing a model or coding agent who wants to weigh score against cost, time, or tokens. A typical question is which configurations score about as well as the leader for much less per task. On the chart, the answer is the cost frontier: a configuration stays on it only when nothing cheaper scores at least as well. The note ",
+        "AI Charts is for someone choosing a model or coding agent who wants to weigh score against cost, time, or tokens. A typical question is which configurations score about as well as the leader for much less per task. The chart answers it with the cost frontier: a configuration is on the frontier only when nothing cheaper scores at least as well. The note ",
         links.aaIndexCost,
         " walks through that trade-off on one dated snapshot.",
       ),
       paragraph(
-        "If you want one overall rank across every task, use something else. AI Charts builds no composite score of its own. Where a source publishes an index, such as Artificial Analysis's, AI Charts shows that index as the source defines it. Reasoning, research, memory, image, video, and audio results stay on their own scales. AI Charts also cannot tell you how a model will do on your own codebase. The note ",
+        "If you want one overall rank across every kind of task, use something else, because AI Charts builds no composite score of its own. Where a source publishes an index, such as Artificial Analysis's, AI Charts shows that index as the source defines it. Reasoning, research, memory, image, video, and audio results stay on their own scales. AI Charts also cannot tell you how a model will do on your own codebase. The note ",
         links.holdouts,
         " explains why a test set the model never saw is still worth building.",
       ),
-      heading("What you can open today"),
+      heading("What is on the site today"),
       paragraph(
         `The homepage chart plots model configurations by Artificial Analysis Intelligence Index score against cost or output tokens per task. In the snapshot retrieved ${intelligenceRetrievedOn}, it uses Intelligence Index v${intelligenceVersion}, and the earlier v${ARTIFICIAL_ANALYSIS_INTELLIGENCE_VERSION} results stay a separate dataset. Scores are never relabeled from one version to another.`,
       ),
@@ -153,12 +153,12 @@ export function createIntroducingAiChartsArticle(
       paragraph(
         "The ",
         { href: "/data", text: "data page" },
-        " lists, for every entry, the question it answers, the measure, the source, the exact version, the comparison rules, and the limits. Charted entries link a JSON download of the plotted data.",
+        " lists, for every entry, the question it answers, what it measures, the source, the version, which comparisons are valid, and the limits. Charted entries link a JSON download of the plotted data.",
       ),
       paragraph(
         "The ",
         { href: "/blog", text: "notes" },
-        " each take one benchmark, study, or result and explain what it measures and where the evidence stops. ",
+        " each take one benchmark, study, or result and explain what it measures and how far the evidence goes. ",
         links.harnessTax,
         " covers a study that ran the same models in different harnesses on two public suites. ",
         links.terminalBenchScience,
@@ -166,9 +166,9 @@ export function createIntroducingAiChartsArticle(
       ),
       heading("Where the catalog is going"),
       paragraph(
-        "The aim is a catalog where any published benchmark result a person might use to pick a model can be read with its configuration, version, cost, and date. Benchmarks that have only a source guide today are meant to become charts once their data can be checked the same way. New notes will follow the questions readers bring to the charts, one benchmark or result at a time, and each benchmark will keep its own scale.",
+        "The aim is a catalog in which any published benchmark result someone might use to pick a model can be read with its configuration, version, cost, and date. Benchmarks that have only a source guide today are meant to become charts once their data can be checked the same way. New notes will follow the questions readers bring to the charts, and each benchmark will keep its own scale.",
       ),
-      heading("Limits and status"),
+      heading("What AI Charts does not do, and its status"),
       paragraph(
         `AI Charts does not run evaluations. The scores, costs, and token counts come from the benchmark owners and aggregators it cites, and it is not affiliated with them or with the model providers in the data. Cost figures keep the source's denominator, such as per task or per full evaluation, so two costs are comparable only when that denominator matches. The charts show dated snapshots: the Intelligence Index snapshot is checked for updates every four hours and the coding-agent snapshot daily, and the earlier v${ARTIFICIAL_ANALYSIS_INTELLIGENCE_VERSION} data is frozen. Some vendor-run results, such as CursorBench, appear as supplemental evidence for a model running inside that vendor's product, not as an independent standard.`,
       ),
