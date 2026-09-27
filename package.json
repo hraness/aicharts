@@ -120,10 +120,11 @@
     "usage:claims:check": "bun scripts/assurance-claims.ts",
     "usage:fuzz": "bun scripts/assurance-fuzz.ts",
     "security:check": "bun scripts/assurance-security.ts",
-    "usage:fault-matrix": "bun scripts/assurance-fault-matrix.ts"
+    "usage:fault-matrix": "bun scripts/assurance-fault-matrix.ts",
+    "sync:icons": "bun run ./scripts/sync-icons.ts"
   },
   "dependencies": {
-    "@hraness/design-kit": "github:hraness/design-kit#v0.21.0",
+    "@hraness/design-kit": "github:hraness/design-kit#v0.22.0",
     "@hraness/site-footer": "github:hraness/site-footer#v0.19.2",
     "@hraness/suite-accounts": "github:hraness/suite-accounts#v0.9.15",
     "@hraness/ui": "github:hraness/ui#v0.5.18",

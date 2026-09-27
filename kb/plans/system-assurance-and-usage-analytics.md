@@ -2080,3 +2080,15 @@ transcripts always carry coverage warnings (unknown_models, unmeasured_*),
 and generation-5 Claude slugs are absent from the model map — so the
 publication path cannot currently accept any real file. Leaderboard consent
 remains a browser-session decision by design.
+
+**2026-09-27 (closeout):** Owner account migrated and onboarded on production:
+`bd7a2044` sealed 239,101 V1 heads (219,902 suppressed, 25 opaque V2 bodies) at
+revision 12 under live multi-device V2 writes; grant committed at revision 13
+(`populationOwned`). Production worker `b7a4f6ef` serves clean merged main:
+drift-tolerant pin (#496), abandon sweep (#498), preserve-history hash-chain
+verification (#500), retained-body hash binding (#505). Public leaderboard route
+healthy and empty pending the browser-session consent decision for handle
+`hraness`. Remaining gaps: `--send` refuses any source warning so real
+transcripts cannot publish (unknown_models on generation-5 Claude slugs plus
+unmeasured_* coverage); needs a warnings-classification or acknowledge
+decision. Leaderboard consent is web-only by design.

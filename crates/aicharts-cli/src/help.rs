@@ -37,6 +37,7 @@ pub(crate) fn root() -> String {
 {TAGLINE}
 
 Start here
+  setup                    Set up AI Charts on this Mac
   stats --list-clients     List the agents AI Charts can read
   stats --home ~ --all     Show the last 30 days of token use
   help publish             Publish your usage to aicharts.io
@@ -58,6 +59,7 @@ Publish to aicharts.io (macOS)
   account                  Show which account this Mac is connected to
 
 Automatic publishing
+  service                  Manage the background collector (macOS)
   daemon                   Keep collecting every 15 minutes
   autosubmit               Run one scheduled publishing cycle
   refresh                  Save usage from a provider account (Cursor, Warp)
@@ -326,6 +328,55 @@ Example
   aicharts daemon --once --state-dir ~/.aicharts/state --key-file ~/.aicharts/key --claude ~/.claude/projects
 "
         }
+        "setup" => {
+            "Usage: aicharts setup (--codex | --claude | --devin) PATH ... [options]
+
+Set up AI Charts on this Mac: create the private key and local ledger,
+connect your AI Charts account (one browser approval), and install the
+background collector so usage publishes on its own. Each step skips work
+that is already done, so a re-run continues where it stopped.
+
+Nothing is uploaded during setup. The collector publishes on its own
+schedule after your next login.
+
+Options
+  --state-dir DIR        Ledger folder (default ~/.aicharts/state)
+  --key-file KEY         Private key file (default ~/.aicharts/checkpoint.key)
+  --codex PATH           Codex session file or folder (repeatable)
+  --claude PATH          Claude Code project file or folder (repeatable)
+  --devin PATH           Devin ATIF export file or folder (repeatable)
+  --publish-config PATH  Also publish on a schedule (aicharts autosubmit)
+  --json                 Print machine-readable output
+
+Example
+  aicharts setup --claude ~/.claude/projects --codex ~/.codex/sessions
+"
+        }
+        "service" => {
+            "Usage: aicharts service install (--codex | --claude | --devin) PATH ... [options]
+       aicharts service uninstall
+       aicharts service status [--json]
+
+Manage the io.aicharts.daemon LaunchAgent that runs aicharts daemon: it
+collects token counts every 15 minutes and publishes on its own schedule.
+macOS shows \"Background Items Added\" once; the agent takes effect at the
+next login and turns off in System Settings › General › Login Items.
+
+A LaunchAgent file written by hand or another tool is left alone.
+
+Options
+  --state-dir DIR        Ledger folder
+  --key-file KEY         Private key file
+  --codex PATH           Codex session file or folder (repeatable)
+  --claude PATH          Claude Code project file or folder (repeatable)
+  --devin PATH           Devin ATIF export file or folder (repeatable)
+  --publish-config PATH  Publish on a schedule (aicharts autosubmit)
+  --json                 Print machine-readable output
+
+Example
+  aicharts service install --state-dir ~/.aicharts/state --key-file ~/.aicharts/checkpoint.key --claude ~/.claude/projects
+"
+        }
         "menubar" => {
             "Usage: aicharts menubar install | uninstall | status | start [--json]
 
@@ -393,7 +444,8 @@ pub(crate) fn resolve(args: &[String]) -> Option<Help> {
     match path.first().map(String::as_str) {
         Some("publish") if path.len() == 1 => return Some(Help::Page(PUBLISH.to_owned())),
         Some("advanced") if path.len() == 1 => return Some(Help::Page(ADVANCED.to_owned())),
-        Some(command) if path.len() == 1 => {
+        Some(command) if path.len() == 1 || matches!(command, "setup" | "service") => {
+            // `service install --help` and `setup --help` share the one page.
             if let Some(page) = command_page(command) {
                 return Some(Help::Page(page.to_owned()));
             }

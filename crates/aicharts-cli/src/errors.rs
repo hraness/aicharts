@@ -30,7 +30,9 @@ const COMMANDS: &[&str] = &[
     "refresh",
     "reindex-plan",
     "reindex-prepare",
+    "service",
     "sessions",
+    "setup",
     "stats",
     "stats-health",
     "stats-sync",
@@ -185,6 +187,26 @@ pub(crate) fn explain(code: &str, args: &[String]) -> Explained {
         "menubar_start_failed" => explained(
             "Couldn't run the AI Charts menu bar.",
             "aicharts menubar --help".to_owned(),
+        ),
+        "service_command_required" => explained(
+            "Name a collector command: install, uninstall or status.",
+            "aicharts service --help".to_owned(),
+        ),
+        "service_requires_macos" => explained(
+            "The background collector installs only on macOS.",
+            "aicharts stats --help".to_owned(),
+        ),
+        "service_not_ours" => explained(
+            "A LaunchAgent named io.aicharts.daemon exists but AI Charts did not write it, so it is left alone.",
+            "aicharts service status".to_owned(),
+        ),
+        "service_unwritable" => explained(
+            "Couldn't write or read the login entry in ~/Library/LaunchAgents.",
+            "aicharts service --help".to_owned(),
+        ),
+        "service_binary_required" => explained(
+            "Couldn't find a stable aicharts executable path for the login entry.",
+            "aicharts service --help".to_owned(),
         ),
         "home_required" => explained(
             "Couldn't find your home folder. Set HOME and try again.",

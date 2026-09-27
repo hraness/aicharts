@@ -233,7 +233,11 @@ Prefer one long-lived job: `aicharts daemon ... --publish-config
 /absolute/private/autosubmit.json` collects every 15 minutes and runs this
 cycle on its own schedule (`--publish-interval-seconds`, default one hour) in
 the same process, with `RunAtLoad` and `KeepAlive` so it survives crashes and
-logins. A separate `io.aicharts.autosubmit` LaunchAgent whose
+logins. `aicharts setup` walks through the key, ledger, enrollment and this
+agent; `aicharts service install` writes the same `io.aicharts.daemon`
+LaunchAgent alone. Both print the login-item notice before the file lands,
+the agent takes effect at the next login, and `aicharts service status` and
+`uninstall` manage it. A separate `io.aicharts.autosubmit` LaunchAgent whose
 `ProgramArguments` are the absolute binary path, `autosubmit`, `--config-file`
 and the absolute private configuration path, with `RunAtLoad`,
 `ProcessType=Background` and a deliberate `StartInterval`, still works. Do not
