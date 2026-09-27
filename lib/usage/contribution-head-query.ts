@@ -2,7 +2,7 @@ import { contributionAccount, contributionHex, contributionIdentity, CONTRIBUTIO
   isContributionError, type ContributionResult } from "./contribution-contract";
 import { statsInteger, statsOwnRecord } from "./stats-contract";
 import { statsJsonBytes, statsJsonValue } from "./stats-http-contract";
-import type { ContributionHead, ContributionPopulation, ContributionReference } from "./contributions";
+import { CONTRIBUTION_MAX_ASSOCIATIONS, type ContributionHead, type ContributionPopulation, type ContributionReference } from "./contributions";
 
 export const CONTRIBUTION_HEAD_QUERY_MAX_IDS = 256;
 export const CONTRIBUTION_HEAD_QUERY_REQUEST_BYTES = 16_384;
@@ -87,7 +87,7 @@ function population(value: unknown): ContributionPopulation | null {
   const raw = statsOwnRecord(value, ["id", "generation", "deviceId", "writerRevision", "revision", "headHash", "memberCount"]);
   return raw && contributionIdentity(raw.id) && contributionIdentity(raw.generation) && contributionIdentity(raw.deviceId)
     && statsInteger(raw.writerRevision, 1, CONTRIBUTION_MAX_OPERATIONS) && revision(raw.revision)
-    && contributionHex(raw.headHash) && ((raw.revision === 0) === (raw.headHash === ZERO_HASH)) && statsInteger(raw.memberCount, 0, 8_192)
+    && contributionHex(raw.headHash) && ((raw.revision === 0) === (raw.headHash === ZERO_HASH)) && statsInteger(raw.memberCount, 0, CONTRIBUTION_MAX_ASSOCIATIONS)
     ? Object.freeze({ id: raw.id, generation: raw.generation, deviceId: raw.deviceId, writerRevision: raw.writerRevision,
       revision: raw.revision, headHash: raw.headHash, memberCount: raw.memberCount }) : null;
 }
