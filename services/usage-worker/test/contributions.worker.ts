@@ -606,20 +606,14 @@ describe("actual AccountEnrollment V3 joins", () => {
     expect(await onState(state => state.sql.exec("SELECT COUNT(*) AS n FROM usage_admission_heads").one().n)).toBe(1);
     expect(await onState(state => state.sql.exec("SELECT COUNT(*) AS n FROM usage_stats_days").one().n)).toBe(1);
   });
-  test("fresh cutover refuses new V1/V2 writes even if the new V3 route is disabled", async () => {
+  test("an active contribution profile keeps the V1 and V2 publishers every private read uses", async () => {
     const device = await rpcFresh();
-    await runInDurableObject(stub(), instance => {
-      const owner = instance as unknown as { env: Env };
-      owner.env = { ...owner.env, AICHARTS_USAGE_CONTRIBUTIONS_ENABLED: "0" } as Env;
-    });
-    const before = await onState(state => ({ v1: state.sql.exec("SELECT * FROM usage_admission_control").toArray(),
-      v2: state.sql.exec("SELECT * FROM usage_stats_control").toArray() }));
-    expect(await stub().admitBatch({ uploadSecret: device.proof.uploadSecret, batch: legacyBatch(device.deviceId).bytes }))
-      .toEqual({ ok: false, error: "profile_superseded" });
-    expect(await stub().admitStatsSnapshot({ uploadSecret: device.proof.uploadSecret, request: legacyStats(device.deviceId) }))
-      .toEqual({ ok: false, error: "profile_superseded" });
-    expect(await onState(state => ({ v1: state.sql.exec("SELECT * FROM usage_admission_control").toArray(),
-      v2: state.sql.exec("SELECT * FROM usage_stats_control").toArray() }))).toEqual(before);
+    expect(await onState(state => state.control().phase)).toBe("active");
+    success(await stub().admitBatch({ uploadSecret: device.proof.uploadSecret, batch: legacyBatch(device.deviceId).bytes }));
+    success(await stub().admitStatsSnapshot({ uploadSecret: device.proof.uploadSecret, request: legacyStats(device.deviceId) }));
+    expect(await onState(state => state.control().phase)).toBe("active");
+    expect(await onState(state => state.sql.exec("SELECT COUNT(*) AS n FROM usage_admission_heads").one().n)).toBe(1);
+    expect(await onState(state => state.sql.exec("SELECT COUNT(*) AS n FROM usage_stats_days").one().n)).toBe(1);
   });
   test("a retained legacy immutable continuation prevents fresh activation until it settles", async () => {
     const device = await enrolled();
@@ -859,12 +853,14 @@ describe("actual AccountEnrollment V3 joins", () => {
     expect(receipt.headCount).toBe(3);
     expect(receipt.expectedV2Revision).toBe(1);
     expect((await snapshot()).control.phase).toBe("active");
-    // The V2 write surface is superseded post-migration — later attempts
-    // refuse rather than reopening the feed the bundle already sealed.
+    // Aggregate publishing continues after migration: the private reads,
+    // totals and leaderboard projection all read the V2 snapshots.
     const expectedRevision = await onState(state => new StatsState(state.sql).control().revision);
     const late = legacyStats(device.deviceId, "codex");
-    expect(await stub().admitStatsSnapshot({ uploadSecret: device.proof.uploadSecret,
-      request: { ...late, operationId: hex(++operation), sequence: 5, expectedRevision } })).toEqual({ ok: false, error: "profile_superseded" });
+    success(await stub().admitStatsSnapshot({ uploadSecret: device.proof.uploadSecret,
+      request: { ...late, operationId: hex(++operation), sequence: 5, expectedRevision } }));
+    expect(await onState(state => new StatsState(state.sql).control().revision)).toBe(expectedRevision + 1);
+    expect((await snapshot()).control.phase).toBe("active");
   });
 
   test("preserve-history merged days migrate without re-derivation from the last upload", async () => {

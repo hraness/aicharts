@@ -3,7 +3,7 @@ import { parseStatsQuery, parseStatsStatusRequest, parseStatsUpload, statsIntege
 import { parseStatsTotalsDeviceRequest, parseStatsTotalsQuery, type StatsTotals, type StatsTotalsResult } from "../../../lib/usage/stats-totals-contract";
 import { parseStatsAbandonRequest, type StatsAbandonment } from "../../../lib/usage/stats-http-contract";
 import type { UsageStatsReport } from "../../../lib/usage/stats-contract";
-import { StatsState, StatsFault, RETIRED_STATS_SCHEMA, STATS_SCHEMA, statsHash, statsUploadText } from "./stats-state";
+import { StatsState, StatsFault, RETIRED_STATS_SCHEMA, STATS_SCHEMA } from "./stats-state";
 import { AccountStats } from "./stats-admission";
 import { CONTRIBUTION_SCHEMA, ContributionState, type ContributionGrantReceipt } from "./contributions-state";
 import { AccountContributions } from "./contributions-admission";
@@ -29,7 +29,7 @@ import { ContributionFault, CONTRIBUTION_MAX_TIME, isContributionError, parseCon
   parseContributionStatusRequest, parseContributionAbandonRequest, type ContributionError, type ContributionResult,
   type ContributionBatch, type ContributionTerminal, type ContributionStatus, type ContributionActivationReceipt } from "../../../lib/usage/contributions";
 import { createHash, timingSafeEqual } from "node:crypto";
-import { admissionHex, equalAdmissionBytes, type AdmissionBatch } from "../../../lib/usage/admission";
+import { admissionHex, type AdmissionBatch } from "../../../lib/usage/admission";
 import { uploadSecretCommitment } from "./pairing";
 import { AccountAdmission, type AdmissionObservation } from "./account-admission";
 import { AdmissionFault, batchAccount, ownedAdmissionBatch } from "./admission-policy";
@@ -828,18 +828,10 @@ export class AccountEnrollment extends DurableObject<Env> {
     let committed = false;
     try {
       const admission = new AdmissionState(this.ctx.storage.sql);
+      // Aggregate publishing stays open after contribution activation: every
+      // private read, total and leaderboard projection reads these stores.
       return await new AccountAdmission(this.env, admission, (observation, run) => {
-        const result = this.#transaction(observation, (state, now) => {
-          // Every continuation is guarded inside the committing transaction:
-          // an activation during an R2 await cannot revive a legacy writer.
-          if (this.#contributionsActive()) {
-            if (!state || state.phase !== "active") throw new AdmissionFault("not_enrolled");
-            const settled = admission.progress(batch.deviceId, state);
-            if (!settled.batch || !settled.journal || !equalAdmissionBytes(settled.batch.bytes, batch.bytes))
-              throw new AdmissionFault("profile_superseded");
-          }
-          return { state, result: ok(run(state, now)) };
-        });
+        const result = this.#transaction(observation, (state, now) => ({ state, result: ok(run(state, now)) }));
         committed ||= observation.committed;
         return result;
       }).admit({ uploadSecret, batch }, acquired.value.fence);
@@ -1476,16 +1468,9 @@ export class AccountEnrollment extends DurableObject<Env> {
     if (!acquired.ok) return { ok: false, error: acquired.error as StatsError };
     const observation: AdmissionObservation = { generation, observed: Date.now(), fence: acquired.value.fence, committed: false };
     try {
-      const stats = new StatsState(this.ctx.storage.sql), bodyHash = statsHash(statsUploadText(request));
+      const stats = new StatsState(this.ctx.storage.sql);
       return await new AccountStats(this.env, stats, (seen, run) =>
-        this.#transaction(seen, (state, now) => {
-          if (this.#contributionsActive()) {
-            const receipt = stats.progress(request.deviceId).receipt;
-            if (!receipt || receipt.bodyHash !== bodyHash || receipt.operationId !== request.operationId || receipt.sequence !== request.sequence)
-              throw new StatsFault("profile_superseded");
-          }
-          return { state, result: ok(run(state, now)) };
-        })).admit(request, dto.uploadSecret, observation);
+        this.#transaction(seen, (state, now) => ({ state, result: ok(run(state, now)) }))).admit(request, dto.uploadSecret, observation);
     } finally { await this.#fenceSettle(request.accountId, acquired.value.token, observation.committed); }
   }
   async readStatsStatus(input: unknown): Promise<StatsResult<StatsStatus>> {
@@ -1542,16 +1527,7 @@ export class AccountEnrollment extends DurableObject<Env> {
     try {
       const stats = new StatsState(this.ctx.storage.sql);
       return await new AccountStats(this.env, stats, (seen, run) =>
-        this.#transaction(seen, (state, now) => {
-          if (this.#contributionsActive()) {
-            const progress = stats.progress(request.deviceId), receipt = progress.receipt;
-            const committed = receipt?.bodyHash === request.bodyHash && receipt.operationId === request.operationId
-              && receipt.sequence === request.sequence && receipt.revision === request.expectedRevision + 1;
-            const abandoned = progress.sequence === request.sequence - 1 && stats.control().revision > request.expectedRevision;
-            if (!committed && !abandoned) throw new StatsFault("profile_superseded");
-          }
-          return { state, result: ok(run(state, now)) };
-        })).abandon(request, dto.uploadSecret, observation);
+        this.#transaction(seen, (state, now) => ({ state, result: ok(run(state, now)) }))).abandon(request, dto.uploadSecret, observation);
     } finally { await this.#fenceSettle(request.accountId, acquired.value.token, observation.committed); }
   }
   async readUsageStats(input: unknown): Promise<StatsResult<UsageStatsReport>> {
