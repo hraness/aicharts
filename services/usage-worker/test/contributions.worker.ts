@@ -339,10 +339,12 @@ describe("sealed retained-history migration", () => {
       // The retained journal table itself cannot exceed 4,096 revisions, so
       // the reachable overflow is the head count: push retained heads past
       // the migration bound with synthetic rows (checked before any parse).
-      for (let index = 2; index <= CONTRIBUTION_MIGRATION_MAX_HEADS + 1; index++) {
-        const id = new Uint8Array(16); new DataView(id.buffer).setUint32(12, index);
-        state.sql.exec("INSERT INTO usage_admission_heads VALUES (?,zeroblob(184),1,NULL)", id);
-      }
+      // A recursive CTE fills the million-row bound in one statement.
+      state.sql.exec(`WITH RECURSIVE seq(value) AS (
+          SELECT 2 UNION ALL SELECT value + 1 FROM seq WHERE value < ?)
+        INSERT INTO usage_admission_heads
+        SELECT unhex(substr(printf('%032x', value), 1, 32)), zeroblob(184), 1, NULL FROM seq`,
+        CONTRIBUTION_MIGRATION_MAX_HEADS + 1);
     }));
     await expectsFault(capture, "limit"); expect(replay).not.toHaveBeenCalled();
   });

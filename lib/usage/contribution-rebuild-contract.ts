@@ -1,4 +1,4 @@
-import { contributionAccount, contributionIdentity, CONTRIBUTION_MAX_OPERATIONS, isContributionError,
+import { contributionAccount, contributionIdentity, CONTRIBUTION_MAX_HEADS, CONTRIBUTION_MAX_OPERATIONS, isContributionError,
   type ContributionError } from "./contribution-contract";
 import { parseContributionIndexReference, type ContributionIndexReference } from "./contribution-index";
 import { contributionIndexKey, CONTRIBUTION_INDEX_MAX_KEY_BYTES } from "./contribution-index-contract";
@@ -125,7 +125,7 @@ export function parseContributionRebuildReceipt(value: unknown): ContributionReb
       "action", "expectedVersion", "completedAtMs", "difference", "budget"]);
     if (!raw || raw.schemaVersion !== 3 || raw.profile !== "canonical-index-rebuild-v3" || raw.scope !== "full-index"
       || !contributionAccount(raw.accountId) || !contributionIdentity(raw.generation) || !contributionIdentity(raw.jobId)
-      || !statsInteger(raw.sourceRevision, 1, CONTRIBUTION_MAX_OPERATIONS) || !statsInteger(raw.headCount, 0, 262_144)
+      || !statsInteger(raw.sourceRevision, 1, CONTRIBUTION_MAX_OPERATIONS) || !statsInteger(raw.headCount, 0, CONTRIBUTION_MAX_HEADS)
       || !statsInteger(raw.version, 1, CONTRIBUTION_REBUILD_MAX_VERSION) || !phase(raw.phase)
       || !statsInteger(raw.processedHeads, 0, raw.headCount) || !statsInteger(raw.liveHeads, 0, raw.processedHeads)
       || !statsInteger(raw.checkedCells, 0, 262_144) || !statsInteger(raw.headSteps, 0, 16_384)
