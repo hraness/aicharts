@@ -35,13 +35,13 @@
 .chart-page-intro.chart-home-hero {
   padding-block: clamp(1.5rem, 3vw, 2rem) 1rem;
 }
-.chart-home-hero h1 {
+.chart-page-intro.chart-home-hero h1 {
   font-family: var(--font-text, var(--font-sans));
-  font-size: clamp(2rem, 1.5rem + 2vw, 3rem);
+  font-size: clamp(2rem, 1.5rem + 1vw, 2.375rem);
   font-weight: 550;
   letter-spacing: -.035em;
   line-height: 1.05;
-  max-inline-size: 24ch;
+  max-inline-size: 35ch;
   text-wrap: balance;
 }
 .chart-home-hero > .chart-home-hero__lede {
@@ -54,7 +54,7 @@
 .chart-home-hero > .chart-page-intro__actions {
   align-items: center;
   gap: .75rem 1.5rem;
-  margin-top: 1.5rem;
+  margin-top: 1rem;
 }
 .chart-home-hero .chart-home-hero__primary {
   align-items: center;
