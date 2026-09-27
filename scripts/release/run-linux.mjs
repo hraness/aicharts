@@ -571,7 +571,9 @@ async function runWith(value, host = HOST) {
     checked(host.hydrate({ destinationDirectory: installedRoot, sourceFiles: installedFiles.files.map(({ path, mode, bytes }) => ({ path, mode, bytes })) }), "install_failed");
     const installedBinary = path.join(installedRoot, "bin/aicharts"); need(sha(host.readFile(installedBinary, CAPS.binary, true)) === binaryHash, "install_failed");
     versionOutput((await smoke(["--version", "--json"], 0, installedBinary)).stdout, version);
-    need((await smoke(["--help"], 0, installedBinary)).stdout.includes("--complete-prefix"), "smoke_failed");
+    // Root help is grouped and short; option detail lives on each command's
+    // own page. Probe `sync --help`, which documents --complete-prefix.
+    need((await smoke(["sync", "--help"], 0, installedBinary)).stdout.includes("--complete-prefix"), "smoke_failed");
     const statsHome = path.join(directories.smoke, "stats-home"), statsFiles = statsSources(synthetic);
     checked(host.hydrate({ destinationDirectory: statsHome, sourceFiles: statsFiles }), "smoke_failed");
     for (const [date, observed] of [["2026-09-10", true], ["2026-09-11", false]]) {
