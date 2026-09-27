@@ -268,9 +268,14 @@ function restSegment(sql: SqlStorage, meta: MigrationMeta): void {
   const bodies = new Map<string, { bodyHash: string; deviceId: string; revision: number; committedAtMs: number; days: LegacyDay[] }>();
   const days: LegacyDay[] = rawDays.map(raw => {
     checked(typeof raw.projection === "string"); const report = parseUsageStatsReport(JSON.parse(raw.projection) as unknown);
+    // The day's own hash chain — stored projection text hashing to its pinned
+    // projection_hash — is the retained-content invariant. Re-derivation from
+    // the last upload is impossible for preserve-history envelopes, so the
+    // seal binds this checked pair rather than a recomputed projection.
     checked(report && typeof raw.client === "string" && typeof raw.body_hash === "string" && typeof raw.projection_hash === "string"
       && typeof raw.device_id === "string" && typeof raw.utc_day === "number" && typeof raw.revision === "number"
-      && typeof raw.byte_count === "number" && typeof raw.ownership_revision === "number" && report.updatedAtMs !== null);
+      && typeof raw.byte_count === "number" && typeof raw.ownership_revision === "number" && report.updatedAtMs !== null
+      && new TextEncoder().encode(raw.projection).length === raw.byte_count && contributionHash(raw.projection) === raw.projection_hash);
     const day = { client: raw.client, day: raw.utc_day, revision: raw.revision, bodyHash: raw.body_hash, projectionHash: raw.projection_hash,
       bytes: raw.byte_count, deviceId: raw.device_id, ownershipRevision: raw.ownership_revision, report };
     const body = bodies.get(day.bodyHash);
@@ -699,12 +704,14 @@ export async function ensureContributionMigration(env: Pick<Env, "STAGING" | "CO
       checked(receipt && receipt.bodyHash === body.bodyHash && receipt.operationId === request.operationId && receipt.sequence === request.sequence
         && receipt.revision === body.revision && receipt.committedAtMs === body.committedAtMs && receipt.client === request.report.sources[0].client
         && receipt.firstUtcDay === request.report.firstUtcDay && receipt.dayCount === request.report.dayCount);
+      // Retained day content is proven by its own stored hash chain — the
+      // projection text hashed into usage_stats_days at commit — and cannot be
+      // re-derived from the body's upload bytes: preserve-history writes store
+      // an envelope merged with the prior cell, so rows carried forward are
+      // absent from the last upload. The day<->body provenance the seal binds
+      // is the write path's own bodyHash/receipt correlation, re-checked here.
       for (const day of body.days) {
-        const rows = request.report.rows.filter(row => row.utcDay === day.day), source = request.report.sources[0], bases = new Set(rows.map(row => row.tokenBasis));
-        const projected = parseUsageStatsReport({ ...request.report, firstUtcDay: day.day, dayCount: 1, revision: receipt.revision, updatedAtMs: receipt.committedAtMs,
-          sources: [{ ...source, status: rows.length ? "observed" : "empty", records: rows.reduce((sum, row) => sum + row.records, 0),
-            tokenBasis: bases.size > 1 ? "mixed" : [...bases][0] ?? source.tokenBasis, latestAtMs: rows.length ? source.latestAtMs : null }], rows });
-        checked(projected && contributionHash(JSON.stringify(projected)) === day.projectionHash && JSON.stringify(projected) === JSON.stringify(day.report));
+        checked(day.day >= request.report.firstUtcDay && day.day < request.report.firstUtcDay + request.report.dayCount);
       }
       index += 1; doneThisCall += 1; continue;
     }

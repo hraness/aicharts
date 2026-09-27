@@ -851,4 +851,30 @@ describe("actual AccountEnrollment V3 joins", () => {
     expect(await stub().admitStatsSnapshot({ uploadSecret: device.proof.uploadSecret,
       request: { ...late, operationId: hex(++operation), sequence: 5, expectedRevision } })).toEqual({ ok: false, error: "profile_superseded" });
   });
+
+  test("preserve-history merged days migrate without re-derivation from the last upload", async () => {
+    const device = await enrolled();
+    success(await stub().admitBatch({ uploadSecret: device.proof.uploadSecret, batch: legacyBatch(device.deviceId).bytes }));
+    // Two preserve-history writes over the same day: the second merges into
+    // the prior cell, so the stored projection is an envelope — more rows
+    // than the last upload's bytes alone would produce.
+    const first = legacyStats(device.deviceId, "codex");
+    success(await stub().admitStatsSnapshot({ uploadSecret: device.proof.uploadSecret,
+      request: { ...first, mode: "preserve-history", report: { ...first.report, sources: [{ ...first.report.sources[0], records: 1 }] } } }));
+    const next = legacyStats(device.deviceId, "codex");
+    success(await stub().admitStatsSnapshot({ uploadSecret: device.proof.uploadSecret, request: { ...next, mode: "preserve-history",
+      operationId: hex(++operation), sequence: 2, expectedRevision: 1,
+      report: { ...next.report, sources: [{ ...next.report.sources[0], records: 1 }],
+        rows: [row(16, { client: "codex", provider: "openai", model: "gpt-5" })] } } }));
+    const stored = await onState(state => {
+      const raw = state.sql.exec("SELECT projection FROM usage_stats_days WHERE utc_day = ? LIMIT 1", DAY).one();
+      return parseUsageStatsReport(JSON.parse(raw.projection as string) as unknown);
+    });
+    expect(stored!.rows).toHaveLength(2); // merged envelope, not the last upload's single row
+    await preparedPopulation(device);
+    const receipt = success(await migrationRpc().migrateContributions({ uploadSecret: device.proof.uploadSecret,
+      request: await migrationRequest(device.deviceId) }));
+    expect(receipt.unresolvedV2Bodies).toBe(1); // one sealed v2 body, retained verbatim
+    expect((await snapshot()).control.phase).toBe("active");
+  });
 });
