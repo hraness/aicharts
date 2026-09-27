@@ -1,6 +1,5 @@
 import { admissionHex, equalAdmissionBytes } from "../../../lib/usage/admission";
 import { contributionHash, contributionPayloadHash, ContributionFault, parseContributionLegacySeal,
-  CONTRIBUTION_MAX_HEADS,
   type ContributionDelta, type ContributionLegacySeal, type ContributionMigrationRequest } from "../../../lib/usage/contributions";
 import { parseUsageStatsReport, STATS_TOKEN_KEYS, type UsageStatsReport } from "../../../lib/usage/stats-contract";
 import { parseStatsReceipt, statsInteger } from "../../../lib/usage/stats-http-contract";
@@ -18,9 +17,10 @@ import { enrollmentStorageCall } from "./namespace-anchor";
 // Retained heads replay through a scratch table rather than an in-memory map,
 // and page/delta artifacts stream into scratch as they are produced, so the
 // durable-object heap stays bounded at any account size. The bound is now a
-// scope and stage budget, not a memory invariant; 262,144 matches
-// CONTRIBUTION_MAX_HEADS, the protocol ceiling a sealed account may carry.
-export const CONTRIBUTION_MIGRATION_MAX_HEADS = CONTRIBUTION_MAX_HEADS;
+// scope and stage budget, not a memory invariant; it deliberately matches
+// CONTRIBUTION_MAX_HEADS, the protocol ceiling a sealed account may carry
+// (kept a literal for the assurance registry).
+export const CONTRIBUTION_MIGRATION_MAX_HEADS = 1_048_576;
 // The retained journal table itself CHECKs revision <= 4,096, so a journal cap
 // at the table maximum covers every reachable account.
 export const CONTRIBUTION_MIGRATION_MAX_JOURNALS = 4_096;
