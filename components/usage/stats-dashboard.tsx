@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
-import { readAccountStats, warmUsageAccountSession } from "@/lib/usage/account-read-client";
+import { warmUsageAccountSession } from "@/lib/usage/account-read-client";
 import { retainUsageAccountLifecycle } from "@/lib/usage/account-session-events";
 import { currentUsageAccountScope, subscribeUsageAccountInvalidation, type UsageAccountScope } from "@/lib/usage/account-generation";
-import { readInUsageAccountGeneration } from "@/lib/usage/account-generation-read";
+import { readUsageAccountStats, subscribeUsageAccountRefresh } from "@/lib/usage/account-store";
 import { createUsageStatsExample } from "@/lib/usage/stats-example";
 import { RICH_FACT_MAX_BYTES } from "@/lib/usage/rich-fact-contract";
 import { openRichFactsDocument, type RichFactsDocument } from "@/lib/usage/rich-metric-explorer-view";
@@ -88,8 +88,11 @@ export function StatsDashboard({ todayUtcDay, remoteEnabled = false, startWithAc
     window.history.replaceState(window.history.state, "", `${window.location.pathname}${search}${window.location.hash}`);
   }, []);
   const pending = useRef({ id: 0, controller: null as AbortController | null,
-    kind: null as "account" | "local" | "example" | null, loaded: null as Loaded | null });
+    kind: null as "account" | "local" | "example" | null, loaded: null as Loaded | null,
+    /** The account window on screen (or being restored); null outside account mode. */
+    account: null as Readonly<{ range: StatsRange; selection?: StatsSelection }> | null });
   const picker = useRef<HTMLInputElement>(null);
+  const refreshAccount = useRef<(restored: boolean) => void>(() => {});
 
   useEffect(() => {
     const lifecycleOwner = pending.current;
@@ -103,30 +106,32 @@ export function StatsDashboard({ todayUtcDay, remoteEnabled = false, startWithAc
         owner.id++; owner.controller.abort(); owner.controller = null; owner.kind = null;
       }
       if (owner.loaded?.scope === "account") { owner.loaded.session.close(); owner.loaded = null; setLoaded(null); }
-      if (reason === "confirmed-signout" || reason === "authentication-required") setStatus("authentication_required");
+      if (reason === "confirmed-signout" || reason === "authentication-required") { owner.account = null; setStatus("authentication_required"); }
+      // A suspended page is cleared here and reads its window again on restore.
       else if (hadAccountWork) setStatus(owner.controller === null ? "unavailable" : "loading");
     });
+    // A background revalidation or a restored page re-reads the same window;
+    // the report on screen stays until its replacement is ready.
+    const stopRefresh = subscribeUsageAccountRefresh(reason => refreshAccount.current(reason === "restored"));
     return () => {
-      unsubscribe(); release();
+      unsubscribe(); stopRefresh(); release();
       lifecycleOwner.id++; lifecycleOwner.controller?.abort(); lifecycleOwner.loaded?.session.close(); lifecycleOwner.loaded = null;
     };
   }, []);
 
-  const read = useCallback(async (selected: StatsRange, id: number, controller: AbortController, selection?: StatsSelection) => {
+  const read = useCallback(async (selected: StatsRange, id: number, controller: AbortController, selection?: StatsSelection, fresh = false) => {
     const owner = pending.current;
+    owner.account = Object.freeze({ range: selected, ...(selection === undefined ? {} : { selection }) });
     const deadline = new StatsReadDeadline(controller.signal);
     const expired = () => { if (owner.id === id && !controller.signal.aborted) setStatus("unavailable"); };
     deadline.signal.addEventListener("abort", expired, { once: true });
     try {
-      const bound = await readInUsageAccountGeneration(signal => readAccountStats(selected.firstUtcDay, selected.dayCount, signal ?? controller.signal, {
-        statsDeadline: deadline,
+      const bound = await readUsageAccountStats(selected, { signal: deadline.signal, current: () => owner.id === id && deadline.active(), fresh,
         onAuthenticationRequired: () => {
           if (owner.id === id && deadline.active() && owner.loaded?.scope === "account") {
             owner.loaded.session.close(); owner.loaded = null; setLoaded(null);
           }
-        },
-      }), reply => reply.accountId ?? null, () => owner.id === id && deadline.active(),
-      reply => !reply.ok && reply.error === "authentication_required", { signal: deadline.signal, dispose: disposeStatsReadReply });
+        } });
       if (owner.id !== id || !deadline.active()) { if (bound !== null) disposeStatsReadReply(bound.reply); return; }
       if (bound === null) { setStatus("unavailable"); return; }
       const { reply, scope: authority } = bound;
@@ -157,8 +162,20 @@ export function StatsDashboard({ todayUtcDay, remoteEnabled = false, startWithAc
     if (!remoteEnabled) return;
     const owner = pending.current, id = ++owner.id;
     owner.controller?.abort(); const controller = new AbortController(); owner.controller = controller; owner.kind = "account";
-    setStatus("loading"); void read(selected, id, controller, selection);
+    // Every explicit load, range change, refresh or retry asks the server.
+    setStatus("loading"); void read(selected, id, controller, selection, true);
   };
+  useEffect(() => {
+    refreshAccount.current = restored => {
+      const owner = pending.current, shown = owner.account;
+      // Only account mode refreshes; a local or example report is never replaced.
+      if (!remoteEnabled || shown === null || owner.kind === "local" || owner.kind === "example"
+        || (owner.loaded !== null && owner.loaded.scope !== "account") || owner.controller !== null) return;
+      const id = ++owner.id, controller = new AbortController(); owner.controller = controller; owner.kind = "account";
+      if (restored) setStatus("loading");
+      void read(shown.range, id, controller, owner.loaded?.scope === "account" ? owner.loaded.selection : shown.selection);
+    };
+  }, [read, remoteEnabled]);
   useEffect(() => {
     const owner = pending.current;
     if (remoteEnabled) warmUsageAccountSession();
@@ -173,7 +190,7 @@ export function StatsDashboard({ todayUtcDay, remoteEnabled = false, startWithAc
 
   const importFile = async (file: File) => {
     const owner = pending.current, id = ++owner.id; owner.controller?.abort();
-    const controller = new AbortController(); owner.controller = controller; owner.kind = "local";
+    const controller = new AbortController(); owner.controller = controller; owner.kind = "local"; owner.account = null;
     setStatus("loading");
     try {
       const session = await MetricReportSession.open(file, controller.signal);
@@ -186,7 +203,7 @@ export function StatsDashboard({ todayUtcDay, remoteEnabled = false, startWithAc
   };
   const example = async () => {
     const owner = pending.current, id = ++owner.id; owner.controller?.abort();
-    const controller = new AbortController(); owner.controller = controller; owner.kind = "example";
+    const controller = new AbortController(); owner.controller = controller; owner.kind = "example"; owner.account = null;
     setStatus("loading");
     try {
       const session = await MetricReportSession.open(createUsageStatsExample(todayUtcDay), controller.signal);
@@ -199,7 +216,7 @@ export function StatsDashboard({ todayUtcDay, remoteEnabled = false, startWithAc
   };
   const clear = () => {
     const owner = pending.current; owner.id++; owner.controller?.abort(); owner.controller = null;
-    owner.kind = null; owner.loaded?.session.close(); owner.loaded = null;
+    owner.kind = null; owner.account = null; owner.loaded?.session.close(); owner.loaded = null;
     setLoaded(null); setStatus("idle");
   };
   const showFallback = status === "stats_not_started" && loaded === null && fallback !== undefined;

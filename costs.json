@@ -1254,6 +1254,17 @@
       "owner": "app/api/usage/totals/route.ts",
       "note": "Lifetime account totals: one bounded worker read per request (256 KiB reply cap), private, no-store, no persistence."
     },
+    "route:/api/usage/dashboard": {
+      "kind": "served",
+      "retention": "ephemeral",
+      "owner": "app/api/usage/dashboard/route.ts",
+      "budget": {
+        "liveAccountReadsPerRequest": 1,
+        "workerReadsPerRequest": 3,
+        "concurrentReadsPerProcess": 8
+      },
+      "note": "One private no-store page read: a single request-owned live Accounts read, then at most one totals, consent-status and stats Worker read in parallel for that account, framed with each standalone endpoint's bounded body. No persistence; replaces four separate private reads per page."
+    },
     "worker:migration_meta": {
       "assurancePolicy": "derived-projections",
       "budget": {

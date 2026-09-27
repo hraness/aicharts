@@ -21,6 +21,25 @@ function send(request: Request, reply: StatsPublicReply, accountId?: string): Re
 }
 const failure = (request: Request, error: StatsPublicError, accountId?: string) => send(request, { schemaVersion: 2, ok: false, error }, accountId);
 
+/** The one mapping from a transport outcome to the public reply and its bound account. */
+export function statsPublicReplyFromOutcome(raw: unknown, range: StatsRange): Readonly<{ reply: StatsPublicReply; accountId?: string }> {
+  const fail = (error: StatsPublicError, accountId?: string) => Object.freeze({ reply: Object.freeze({ schemaVersion: 2, ok: false, error } as const),
+    ...(accountId === undefined ? {} : { accountId }) });
+  const negative = privateDaysSnapshot(raw, ["kind"]);
+  if (negative?.kind === "authentication_required") return fail("authentication_required");
+  const query = privateDaysSnapshot(raw, ["kind", "accountId", "result"]);
+  if (query?.kind !== "query" || !usageAccountId(query.accountId)) return fail("unavailable");
+  const success = privateDaysSnapshot(query.result, ["ok", "value"]);
+  if (success?.ok === true) {
+    const reply = parseStatsPublicReply({ schemaVersion: 2, ok: true, value: success.value }, range);
+    return reply === null ? fail("unavailable") : Object.freeze({ reply, accountId: query.accountId });
+  }
+  const absent = privateDaysSnapshot(query.result, ["ok", "error"]);
+  if (absent?.ok === false && absent.error === "limit") return fail("range_too_large", query.accountId);
+  return absent?.ok === false && (absent.error === "not_enrolled" || absent.error === "not_started")
+    ? fail(absent.error, query.accountId) : fail("unavailable");
+}
+
 export function createStatsPublicHandler(dependencies: StatsPublicDependencies) {
   return async (request: Request): Promise<Response> => {
     try {
@@ -38,19 +57,8 @@ export function createStatsPublicHandler(dependencies: StatsPublicDependencies) 
       if (range === null) return failure(request, "invalid_request");
       const raw = await dependencies.query(request, range);
       if (request.signal.aborted || dependencies.available() !== true) return failure(request, "unavailable");
-      const negative = privateDaysSnapshot(raw, ["kind"]);
-      if (negative?.kind === "authentication_required") return failure(request, "authentication_required");
-      const query = privateDaysSnapshot(raw, ["kind", "accountId", "result"]);
-      if (query?.kind !== "query" || !usageAccountId(query.accountId)) return failure(request, "unavailable");
-      const success = privateDaysSnapshot(query.result, ["ok", "value"]);
-      if (success?.ok === true) {
-        const reply = parseStatsPublicReply({ schemaVersion: 2, ok: true, value: success.value }, range);
-        return reply === null ? failure(request, "unavailable") : send(request, reply, query.accountId);
-      }
-      const absent = privateDaysSnapshot(query.result, ["ok", "error"]);
-      if (absent?.ok === false && absent.error === "limit") return failure(request, "range_too_large", query.accountId);
-      return absent?.ok === false && (absent.error === "not_enrolled" || absent.error === "not_started")
-        ? failure(request, absent.error, query.accountId) : failure(request, "unavailable");
+      const mapped = statsPublicReplyFromOutcome(raw, range);
+      return send(request, mapped.reply, mapped.accountId);
     } catch { return failure(request, "unavailable"); }
   };
 }

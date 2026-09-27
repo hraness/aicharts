@@ -3,11 +3,13 @@ import { createSuiteOidcRelyingParty } from "@hraness/suite-accounts/oidc-rp";
 import { fc } from "../property-test";
 import type { UsageAuthEnvironment } from "./auth-server";
 import type { PrivateDaysTransportDependencies } from "./private-days-transport";
+import type { UsageUserInfoCache } from "./userinfo-cache";
 
 // Next enforces this import boundary in the application build. Bun tests run
 // server code directly, without replacing the SDK or its cryptographic checks.
 mock.module("server-only", () => ({}));
 const { createUsageAuthServer, handleUsageAuth, beginUsageAccountSession } = await import("./auth-server");
+const { createUsageUserInfoCache, USAGE_USERINFO_REUSE_MS } = await import("./userinfo-cache");
 const { sealPairingCustody } = await import("./pairing-custody");
 
 const origin = "https://aicharts.io";
@@ -162,7 +164,7 @@ function deferred<T>() {
 }
 
 /** Synthetic provider transport; the real SDK verifies these ES256 tokens. */
-async function fixture(options: { pairing?: boolean } = {}) {
+async function fixture(options: { pairing?: boolean; userInfoCache?: UsageUserInfoCache } = {}) {
   cookieCanaries.clear();
   const keys = await crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]);
   const publicKey = await crypto.subtle.exportKey("jwk", keys.publicKey);
@@ -215,6 +217,7 @@ async function fixture(options: { pairing?: boolean } = {}) {
   const server = createUsageAuthServer({
     environment: () => environment,
     now: () => clockMs,
+    ...(options.userInfoCache === undefined ? {} : { userInfoCache: options.userInfoCache }),
     randomBytes: length => { randomEffect(length); return crypto.getRandomValues(new Uint8Array(length)); },
     ...(options.pairing ? { pairingIntent: (id: string) => {
       resolvedIntents.push(id);
@@ -2462,6 +2465,90 @@ describe("finite private-read Accounts outcomes", () => {
       expect(await pending).toEqual({ kind: "unavailable" }); expect(scope.current()).toBe(false);
       expect(f.calls).toEqual([]);
     }
+  });
+
+  test("a live verdict answers the same bearer's private reads within its window, then Accounts is asked again", async () => {
+    const f = await fixture({ userInfoCache: createUsageUserInfoCache() }), { cookie } = await f.login();
+    f.environment(privateReady); f.calls.length = 0;
+    const read = async () => {
+      const scope = f.server.beginPrivateReadSession(request("/private", { headers: { cookie } }))!;
+      const outcome = await scope.readOutcome(); scope.finish(); return outcome;
+    };
+    const session = { kind: "authenticated", value: { suiteAccountId: accountId, expiresAtMs: nowMs + 600_000 } } as const;
+    expect(await read()).toEqual(session); expect(await read()).toEqual(session);
+    expect(f.calls).toEqual([endpoints.userInfo]);
+    f.time(nowMs + USAGE_USERINFO_REUSE_MS - 1); expect(await read()).toEqual(session);
+    expect(f.calls).toEqual([endpoints.userInfo]);
+    f.time(nowMs + USAGE_USERINFO_REUSE_MS); expect(await read()).toEqual(session);
+    expect(f.calls).toEqual([endpoints.userInfo, endpoints.userInfo]);
+    // A clock that runs backwards cannot stretch the stored verdict.
+    f.time(nowMs); expect(await read()).toEqual(session);
+    expect(f.calls).toEqual([endpoints.userInfo, endpoints.userInfo, endpoints.userInfo]);
+  });
+
+  test("refusals, failures and mismatches are never replayed, and a replay is still checked against the session", async () => {
+    for (const mode of ["refused", "interrupted", "mismatch"] as const) {
+      const f = await fixture({ userInfoCache: createUsageUserInfoCache() }), { cookie } = await f.login();
+      f.environment(privateReady); f.calls.length = 0;
+      if (mode === "refused") f.userInfoStatus(401);
+      else if (mode === "interrupted") f.userInfoStatus(500);
+      else f.userInfo({ suite_account_id: `acct_${"a".repeat(32)}` });
+      const first = f.server.beginPrivateReadSession(request("/private", { headers: { cookie } }))!;
+      expect(await first.readOutcome()).toEqual(mode === "refused" ? { kind: "authentication_required" } : { kind: "unavailable" });
+      f.userInfoStatus(200); f.userInfo({});
+      const second = f.server.beginPrivateReadSession(request("/private", { headers: { cookie } }))!;
+      // A mismatched 200 was stored, but the SDK re-checks every replay and still refuses it.
+      expect(await second.readOutcome()).toEqual(mode === "mismatch" ? { kind: "unavailable" }
+        : { kind: "authenticated", value: { suiteAccountId: accountId, expiresAtMs: nowMs + 600_000 } });
+      expect(f.calls).toEqual(mode === "mismatch" ? [endpoints.userInfo] : [endpoints.userInfo, endpoints.userInfo]);
+    }
+  });
+
+  test("another bearer, concurrent reads and the pairing scope each keep their own live check", async () => {
+    const cache = createUsageUserInfoCache();
+    const f = await fixture({ userInfoCache: cache }), { cookie } = await f.login();
+    f.environment(privateReady); f.calls.length = 0;
+    const scopes = [0, 1, 2].map(() => f.server.beginPrivateReadSession(request("/private", { headers: { cookie } }))!);
+    const outcomes = await Promise.all(scopes.map(scope => scope.readOutcome()));
+    for (const outcome of outcomes) expect(outcome.kind).toBe("authenticated");
+    expect(f.calls).toEqual([endpoints.userInfo]);
+    f.accessToken({ jti: "synthetic-second-bearer" });
+    const other = await f.login();
+    f.environment(privateReady); f.calls.length = 0;
+    const next = f.server.beginPrivateReadSession(request("/private", { headers: { cookie: other.cookie } }))!;
+    expect((await next.readOutcome()).kind).toBe("authenticated"); expect(f.calls).toEqual([endpoints.userInfo]);
+    f.calls.length = 0;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const pairing = f.server.beginAccountSession(request("/private", { headers: { cookie: other.cookie } }))!;
+      expect((await pairing.readOutcome()).kind).toBe("authenticated"); pairing.finish();
+    }
+    expect(f.calls).toEqual([endpoints.userInfo, endpoints.userInfo]);
+  });
+
+  test("the reuse window is bounded and the cache passes every other provider request through untouched", async () => {
+    for (const windowMs of [0, -1, 1.5, USAGE_USERINFO_REUSE_MS + 1, Number.NaN]) expect(() => createUsageUserInfoCache(windowMs)).toThrow();
+    const cache = createUsageUserInfoCache(1_000);
+    const seen: string[] = [];
+    const fetcher = async (input: RequestInfo | URL, init?: RequestInit) => {
+      seen.push(`${init?.method ?? "GET"} ${input instanceof Request ? input.url : String(input)}`);
+      return Response.json({ sub: "x" });
+    };
+    const bearer = { headers: { authorization: "Bearer a.b.c" } };
+    for (const [input, init] of [
+      ["https://account.hraness.com/api/auth/jwks", bearer],
+      ["https://account.hraness.com/api/auth/oauth2/userinfo", { method: "POST", ...bearer }],
+      ["https://account.hraness.com/api/auth/oauth2/userinfo", {}],
+      ["https://account.hraness.com/api/auth/oauth2/userinfo", { headers: { authorization: "Basic x" } }],
+    ] as const) {
+      await cache.fetch(fetcher, input, init, () => nowMs); await cache.fetch(fetcher, input, init, () => nowMs);
+    }
+    expect(seen).toHaveLength(8);
+    seen.length = 0;
+    const url = "https://account.hraness.com/api/auth/oauth2/userinfo";
+    const replayed = await (await cache.fetch(fetcher, url, bearer, () => nowMs)).json();
+    expect(await (await cache.fetch(fetcher, url, bearer, () => nowMs + 999)).json()).toEqual(replayed);
+    expect(seen).toEqual([`GET ${url}`]);
+    await cache.fetch(fetcher, url, bearer, () => nowMs + 1_000); expect(seen).toHaveLength(2);
   });
 
   test("a private-read flag change during userinfo permits cleanup and suppresses the result", async () => {

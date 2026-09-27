@@ -6,6 +6,7 @@ import { resolve } from "node:path";
 import { metricBenchmarkFixture } from "../lib/usage/metric-explorer.bench";
 import { parseUsageStatsReport } from "../lib/usage/stats-contract";
 import { USAGE_ACCOUNT_MEDIA } from "../lib/usage/account-public";
+import { fulfillUsageDashboard, usageDashboardFixtureQuery } from "./usage-dashboard-fixture";
 
 type Probe = { started: number; active: boolean; longTasks: number[]; frames: number[]; inputFrames: number[] };
 type ProbeWindow = Window & { metricPerformanceProbe?: Probe };
@@ -45,6 +46,7 @@ export async function verifyUsageStatsMaximum(browser: Browser, baseUrl: string,
       invariant(request.method() === "GET" && url.search === "" && request.postData() === null, "Account identity must use its fixed read contract.");
       await route.fulfill({ status: 401, contentType: USAGE_ACCOUNT_MEDIA, body: '{"schemaVersion":1,"error":{"code":"authentication_required"}}' }); return;
     }
+    if (url.pathname === "/api/usage/dashboard") { await fulfillUsageDashboard(route, usageDashboardFixtureQuery(route), "authentication_required"); return; }
     if (url.pathname.startsWith("/api/usage/")) {
       await route.fulfill({ status: 401, contentType: "application/json", body: '{"schemaVersion":1,"error":{"code":"authentication_required"}}' }); return;
     }

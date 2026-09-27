@@ -1,22 +1,26 @@
 import "server-only";
-import { privateDaysSnapshot } from "./private-days-http-contract";
-import {
-  PAIRING_HTTP_CAPACITY, PAIRING_HTTP_CLIENT_MS, PAIRING_HTTP_COLD_READ_RETRY_MS, PAIRING_HTTP_MEDIA,
-  PAIRING_HTTP_STAGE_MS, pairingHttpBody, pairingHttpDiscard, pairingHttpToken,
-} from "./pairing-http-contract";
+import { PAIRING_HTTP_CAPACITY, PAIRING_HTTP_CLIENT_MS } from "./pairing-http-contract";
 import { pairingHttpWork } from "./pairing-http-work";
-import type { StatsSessionScope, StatsTransportDependencies } from "./stats-transport";
+import { usageWorkloadToken, type StatsSessionScope, type StatsTransportDependencies } from "./stats-transport";
 import { decodeStatsTotalsResponse, encodeStatsTotalsRequest, parseStatsTotalsQuery, statsTotalsHttpLength,
-  STATS_TOTALS_RESPONSE_BYTES, STATS_TOTALS_URL, type StatsTotalsQuery, type StatsTotalsResult } from "./stats-totals-contract";
+  STATS_TOTALS_RESPONSE_BYTES, STATS_TOTALS_URL, type StatsTotalsResult } from "./stats-totals-contract";
+import { usageWorkerCall, verifyUsageSession, type UsageWorkerPort, type VerifiedUsageAccount } from "./usage-worker-read";
 
 export type StatsTotalsTransportOutcome = Readonly<{ kind: "query"; accountId: string; result: StatsTotalsResult }>
   | Readonly<{ kind: "authentication_required" }> | Readonly<{ kind: "unavailable" }>;
 const unavailable = () => new Error("stats_totals_transport_unavailable");
 const failed = (): StatsTotalsTransportOutcome => Object.freeze({ kind: "unavailable" });
-function ownValue(value: unknown, key: string): unknown {
-  if (value === null || typeof value !== "object") return undefined;
-  const descriptor = Object.getOwnPropertyDescriptor(value, key);
-  return descriptor !== undefined && "value" in descriptor ? descriptor.value : undefined;
+
+/** Lifetime totals for an account this request already verified. */
+export async function readUsageTotalsForAccount(port: UsageWorkerPort, account: VerifiedUsageAccount): Promise<StatsTotalsTransportOutcome> {
+  const query = parseStatsTotalsQuery({ schemaVersion: 2, accountId: account.suiteAccountId, sessionExpiresAtMs: account.expiresAtMs });
+  if (query === null) throw unavailable();
+  const encoded = encodeStatsTotalsRequest(query);
+  if (encoded === null) throw unavailable();
+  const result = await usageWorkerCall(port, { url: STATS_TOTALS_URL, body: encoded, expiresAtMs: query.sessionExpiresAtMs,
+    maxBytes: STATS_TOTALS_RESPONSE_BYTES, kind: "read", length: headers => statsTotalsHttpLength(headers, STATS_TOTALS_RESPONSE_BYTES),
+    decode: bytes => decodeStatsTotalsResponse(bytes) });
+  return Object.freeze({ kind: "query", accountId: query.accountId, result });
 }
 
 /** No product input at all: the account and expiry come from one live
@@ -30,8 +34,8 @@ export function createStatsTotalsTransport(dependencies: StatsTransportDependenc
       if (available() !== true) return failed();
       const startedAt = now();
       if (request.signal.aborted) throw unavailable();
-      const token = ownValue(ownValue(getContext(), "headers"), "x-vercel-oidc-token");
-      if (!pairingHttpToken(token) || outstanding >= PAIRING_HTTP_CAPACITY) throw unavailable();
+      const token = usageWorkloadToken(getContext());
+      if (token === null || outstanding >= PAIRING_HTTP_CAPACITY) throw unavailable();
       outstanding++;
       let observed = startedAt;
       const sample = () => {
@@ -43,58 +47,15 @@ export function createStatsTotalsTransport(dependencies: StatsTransportDependenc
         const session: StatsSessionScope | null = beginSession(request);
         if (session === null) throw unavailable();
         work.onStop(() => { session.finish(); });
-        let query: StatsTotalsQuery | null = null;
         const guard = () => {
           work.guard();
-          if (request.signal.aborted || available() !== true || session.current() !== true || (query !== null && sample() >= query.sessionExpiresAtMs)) throw unavailable();
+          if (request.signal.aborted || available() !== true || session.current() !== true) throw unavailable();
           work.guard();
         };
         guard();
-        const raw = await work.stage(PAIRING_HTTP_STAGE_MS, () => session.readOutcome());
-        guard();
-        const negative = privateDaysSnapshot(raw, ["kind"]);
-        if (negative?.kind === "authentication_required") { guard(); return Object.freeze({ kind: "authentication_required" }); }
-        const authenticated = privateDaysSnapshot(raw, ["kind", "value"]);
-        if (authenticated?.kind !== "authenticated") throw unavailable();
-        const account = privateDaysSnapshot(authenticated.value, ["suiteAccountId", "expiresAtMs"]);
-        if (account === null) throw unavailable();
-        query = parseStatsTotalsQuery({ schemaVersion: 2, accountId: account.suiteAccountId, sessionExpiresAtMs: account.expiresAtMs });
-        if (query === null) throw unavailable();
-        const captured = query, encoded = encodeStatsTotalsRequest(captured);
-        if (encoded === null) throw unavailable();
-        const controller = new AbortController(); work.onStop(() => { controller.abort(); });
-        const open = () => fetcher(STATS_TOTALS_URL, { method: "POST",
-          headers: { "content-type": "application/json", accept: "application/json", "accept-encoding": "identity", authorization: `Bearer ${token}` },
-          body: encoded, redirect: "manual", credentials: "omit", cache: "no-store", signal: controller.signal,
-        });
-        const read = async (): Promise<StatsTotalsTransportOutcome | null> => {
-          const response = await open();
-          let reading = false;
-          try {
-            guard();
-            // A worker 503 usually means the account object is still booting;
-            // the response is drained and the same read is retried once below.
-            if (response.status === 503) return null;
-            if (response.status !== 200 || response.url !== STATS_TOTALS_URL || response.redirected
-              || response.headers.get("content-type") !== PAIRING_HTTP_MEDIA || response.headers.has("content-encoding")
-              || response.headers.has("location") || response.headers.has("set-cookie")) throw unavailable();
-            const length = statsTotalsHttpLength(response.headers, STATS_TOTALS_RESPONSE_BYTES);
-            reading = true;
-            const bytes = await pairingHttpBody(response.body, STATS_TOTALS_RESPONSE_BYTES, length, work);
-            guard();
-            const domain = decodeStatsTotalsResponse(bytes);
-            if (domain === null) throw unavailable();
-            guard(); return Object.freeze({ kind: "query", accountId: captured.accountId, result: domain });
-          } finally { if (!reading) await pairingHttpDiscard(response); }
-        };
-        guard();
-        const first = await read();
-        if (first !== null) return first;
-        await new Promise<void>(resolve => { setTimeout(resolve, PAIRING_HTTP_COLD_READ_RETRY_MS); });
-        guard();
-        const second = await read();
-        if (second === null) throw unavailable();
-        return second;
+        const verified = await verifyUsageSession(work, guard, session);
+        if (verified.kind === "authentication_required") return verified;
+        return readUsageTotalsForAccount({ work, guard, sample, fetch: fetcher, setTimeout, token }, verified.account);
       }, startedAt);
     } catch { return failed(); }
   };

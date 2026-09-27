@@ -1,17 +1,16 @@
 import "server-only";
-import { parseUsageConsentDecision, parseUsageConsentRequest, type UsageConsentRequestV1 } from "./consent-contract";
+import { parseUsageConsentDecision, parseUsageConsentRequest } from "./consent-contract";
 import {
   decodeUsageConsentHttpResponse, encodeUsageConsentHttpRequest,
   USAGE_CONSENT_HTTP_URL, type UsageConsentQueryResult,
 } from "./consent-http-contract";
-import {
-  PAIRING_HTTP_CAPACITY, PAIRING_HTTP_CLIENT_MS, PAIRING_HTTP_COLD_READ_RETRY_MS, PAIRING_HTTP_MEDIA,
-  PAIRING_HTTP_STAGE_MS, pairingHttpBody, pairingHttpDiscard, pairingHttpToken,
-} from "./pairing-http-contract";
+import { PAIRING_HTTP_CAPACITY, PAIRING_HTTP_CLIENT_MS } from "./pairing-http-contract";
 import { privateDaysHttpLength, privateDaysSnapshot } from "./private-days-http-contract";
 import { pairingHttpWork, type PairingHttpEffects } from "./pairing-http-work";
 import type { PrivateDaysSessionScope } from "./private-days-transport";
 import { usageAccountId } from "./account-public";
+import { usageWorkloadToken } from "./stats-transport";
+import { usageWorkerCall, verifyUsageSession, type UsageWorkerPort, type VerifiedUsageAccount } from "./usage-worker-read";
 
 /** Same trusted request-owned port as private days: readOutcome() verifies the
  * live Accounts session and derives the opaque account id and expiry. The
@@ -30,11 +29,6 @@ export type UsageConsentTransportOutcome = Readonly<{ kind: "query"; accountId: 
   | Readonly<{ kind: "authentication_required" }> | Readonly<{ kind: "unavailable" }>;
 const unavailable = () => new Error("usage_consent_transport_unavailable");
 const failed = (): UsageConsentTransportOutcome => Object.freeze({ kind: "unavailable" });
-function ownValue(value: unknown, key: string): unknown {
-  if (value === null || typeof value !== "object") return undefined;
-  const descriptor = Object.getOwnPropertyDescriptor(value, key);
-  return descriptor !== undefined && "value" in descriptor ? descriptor.value : undefined;
-}
 function parseOperation(value: unknown): UsageConsentOperationInput | null {
   const status = privateDaysSnapshot(value, ["operation"]);
   if (status?.operation === "status") return Object.freeze({ operation: "status" });
@@ -42,6 +36,24 @@ function parseOperation(value: unknown): UsageConsentOperationInput | null {
   if (set?.operation !== "set" || !usageAccountId(set.expectedAccountId)) return null;
   const decision = parseUsageConsentDecision({ consent: set.consent, publicHandle: set.publicHandle });
   return decision === null ? null : Object.freeze({ operation: "set", ...decision, expectedAccountId: set.expectedAccountId });
+}
+
+/** One consent operation for an account this request already verified. Status is
+ * a read and may ride out a cold object; a decision is sent exactly once. */
+export async function runUsageConsentForAccount(port: UsageWorkerPort, account: VerifiedUsageAccount,
+  operation: UsageConsentOperationInput): Promise<UsageConsentTransportOutcome> {
+  if (operation.operation === "set" && operation.expectedAccountId !== account.suiteAccountId) throw unavailable();
+  const query = parseUsageConsentRequest(operation.operation === "status"
+    ? { schemaVersion: 1, accountId: account.suiteAccountId, sessionExpiresAtMs: account.expiresAtMs, operation: "status" }
+    : { schemaVersion: 1, accountId: account.suiteAccountId, sessionExpiresAtMs: account.expiresAtMs, operation: "set",
+        consent: operation.consent, publicHandle: operation.publicHandle });
+  if (query === null) throw unavailable();
+  const encoded = encodeUsageConsentHttpRequest(query);
+  if (encoded === null) throw unavailable();
+  const result = await usageWorkerCall(port, { url: USAGE_CONSENT_HTTP_URL, body: encoded, expiresAtMs: query.sessionExpiresAtMs,
+    maxBytes: 1_024, kind: operation.operation === "status" ? "read" : "mutation",
+    length: headers => privateDaysHttpLength(headers, 1_024), decode: bytes => decodeUsageConsentHttpResponse(bytes) });
+  return Object.freeze({ kind: "query", accountId: query.accountId, result });
 }
 
 export function createUsageConsentTransport(dependencies: UsageConsentTransportDependencies) {
@@ -54,8 +66,8 @@ export function createUsageConsentTransport(dependencies: UsageConsentTransportD
       const startedAt = now(), operation = parseOperation(input);
       if (operation === null || request.signal.aborted) throw unavailable();
       // Capture only the actual platform request context, before the first await.
-      const token = ownValue(ownValue(getContext(), "headers"), "x-vercel-oidc-token");
-      if (!pairingHttpToken(token) || outstanding >= PAIRING_HTTP_CAPACITY) throw unavailable();
+      const token = usageWorkloadToken(getContext());
+      if (token === null || outstanding >= PAIRING_HTTP_CAPACITY) throw unavailable();
       outstanding++;
       let observed = startedAt;
       const sample = () => {
@@ -67,64 +79,15 @@ export function createUsageConsentTransport(dependencies: UsageConsentTransportD
         const session = beginSession(request);
         if (session === null) throw unavailable();
         work.onStop(() => { session.finish(); });
-        let query: UsageConsentRequestV1 | null = null;
         const guard = () => {
           work.guard();
-          if (request.signal.aborted || available() !== true || session.current() !== true || (query !== null && sample() >= query.sessionExpiresAtMs)) throw unavailable();
+          if (request.signal.aborted || available() !== true || session.current() !== true) throw unavailable();
           work.guard();
         };
         guard();
-        const raw = await work.stage(PAIRING_HTTP_STAGE_MS, () => session.readOutcome());
-        guard();
-        const negative = privateDaysSnapshot(raw, ["kind"]);
-        if (negative?.kind === "authentication_required") { guard(); return Object.freeze({ kind: "authentication_required" }); }
-        const authenticated = privateDaysSnapshot(raw, ["kind", "value"]);
-        if (authenticated?.kind !== "authenticated") throw unavailable();
-        const account = privateDaysSnapshot(authenticated.value, ["suiteAccountId", "expiresAtMs"]);
-        if (account === null) throw unavailable();
-        if (operation.operation === "set" && operation.expectedAccountId !== account.suiteAccountId) throw unavailable();
-        query = parseUsageConsentRequest(operation.operation === "status"
-          ? { schemaVersion: 1, accountId: account.suiteAccountId,
-              sessionExpiresAtMs: account.expiresAtMs, operation: "status" }
-          : { schemaVersion: 1, accountId: account.suiteAccountId,
-              sessionExpiresAtMs: account.expiresAtMs, operation: "set",
-              consent: operation.consent, publicHandle: operation.publicHandle });
-        if (query === null) throw unavailable();
-        const captured = query, encoded = encodeUsageConsentHttpRequest(captured);
-        if (encoded === null) throw unavailable();
-        const controller = new AbortController(); work.onStop(() => { controller.abort(); });
-        const open = () => fetcher(USAGE_CONSENT_HTTP_URL, { method: "POST",
-          headers: { "content-type": "application/json", accept: "application/json", "accept-encoding": "identity", authorization: `Bearer ${token}` },
-          body: encoded, redirect: "manual", credentials: "omit", cache: "no-store", signal: controller.signal,
-        });
-        const read = async (): Promise<UsageConsentTransportOutcome | null> => {
-          const response = await open();
-          let reading = false;
-          try {
-            guard();
-            // A worker 503 usually means the account object is still booting;
-            // the response is drained and the same read is retried once below.
-            if (response.status === 503) return null;
-            if (response.status !== 200 || response.url !== USAGE_CONSENT_HTTP_URL || response.redirected
-              || response.headers.get("content-type") !== PAIRING_HTTP_MEDIA || response.headers.has("content-encoding")
-              || response.headers.has("location") || response.headers.has("set-cookie")) throw unavailable();
-            const length = privateDaysHttpLength(response.headers, 1_024);
-            reading = true;
-            const bytes = await pairingHttpBody(response.body, 1_024, length, work);
-            guard();
-            const domain = decodeUsageConsentHttpResponse(bytes);
-            if (domain === null) throw unavailable();
-            guard(); return Object.freeze({ kind: "query", accountId: captured.accountId, result: domain });
-          } finally { if (!reading) await pairingHttpDiscard(response); }
-        };
-        guard();
-        const first = await read();
-        if (first !== null) return first;
-        await new Promise<void>(resolve => { setTimeout(resolve, PAIRING_HTTP_COLD_READ_RETRY_MS); });
-        guard();
-        const second = await read();
-        if (second === null) throw unavailable();
-        return second;
+        const verified = await verifyUsageSession(work, guard, session);
+        if (verified.kind === "authentication_required") return verified;
+        return runUsageConsentForAccount({ work, guard, sample, fetch: fetcher, setTimeout, token }, verified.account, operation);
       }, startedAt);
       return result;
     } catch { return failed(); }

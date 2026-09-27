@@ -2,6 +2,7 @@ import { beforeEach, expect, test } from "bun:test";
 import fc from "fast-check";
 import {
   acceptUsageAccountReply,
+  adoptUsageAccountReply,
   captureUsageAccountRead,
   currentUsageAccountRead,
   currentUsageAccountScope,
@@ -193,6 +194,55 @@ test("subscriptions added while clearing join only the next invalidation", () =>
     invalidateUsageAccountGeneration("lifecycle"); expect(later).toBe(0);
     invalidateUsageAccountGeneration("lifecycle"); expect(later).toBe(1);
   } finally { first(); unsubscribeLater(); }
+});
+
+test("adoption accepts the establishing reply's own payload once, still invalidating every other in-flight read", () => {
+  const adopting = captureUsageAccountRead(), sibling = captureUsageAccountRead();
+  const reasons: UsageAccountInvalidationReason[] = [];
+  const unsubscribe = subscribeUsageAccountInvalidation(reason => { reasons.push(reason); });
+  try {
+    const first = adoptUsageAccountReply(adopting, A);
+    expect(first.kind).toBe("accepted");
+    if (first.kind !== "accepted") throw new Error("expected adoption");
+    expect(first.scope.accountId).toBe(A); expect(currentUsageAccountScope(first.scope)).toBe(true);
+    expect(reasons).toEqual(["identity-changed"]);
+    // A sibling from the same identity-less generation that names the adopted
+    // account needs no second read; one naming any other account does.
+    expect(adoptUsageAccountReply(sibling, A)).toEqual({ kind: "accepted", scope: first.scope });
+    expect(adoptUsageAccountReply(sibling, B)).toEqual({ kind: "stale" });
+    expect(acceptUsageAccountReply(sibling, A)).toEqual({ kind: "stale" });
+    const same = adoptUsageAccountReply(captureUsageAccountRead(), A);
+    expect(same).toEqual({ kind: "accepted", scope: first.scope }); expect(reasons).toEqual(["identity-changed"]);
+    const switched = adoptUsageAccountReply(captureUsageAccountRead(), B);
+    expect(switched.kind === "accepted" && switched.scope.accountId).toBe(B);
+    expect(currentUsageAccountScope(first.scope)).toBe(false); expect(reasons).toEqual(["identity-changed", "identity-changed"]);
+    for (const invalid of ["acct_x", null, 1, undefined]) expect(adoptUsageAccountReply(captureUsageAccountRead(), invalid)).toEqual({ kind: "stale" });
+  } finally { unsubscribe(); }
+});
+
+test("any boundary after the first adoption leaves identity-less siblings stale", () => {
+  for (const boundary of ["confirmed-signout", "authentication-required", "lifecycle", "switch"] as const) {
+    invalidateUsageAccountGeneration("lifecycle");
+    const adopting = captureUsageAccountRead(), sibling = captureUsageAccountRead();
+    expect(adoptUsageAccountReply(adopting, A).kind).toBe("accepted");
+    if (boundary === "switch") expect(adoptUsageAccountReply(captureUsageAccountRead(), B).kind).toBe("accepted");
+    else invalidateUsageAccountGeneration(boundary);
+    expect(adoptUsageAccountReply(sibling, A)).toEqual(boundary === "switch" ? { kind: "stale" } : { kind: "stale" });
+    // Re-adopting the same account later does not revive the retired lineage.
+    expect(adoptUsageAccountReply(captureUsageAccountRead(), A).kind).toBe("accepted");
+    expect(adoptUsageAccountReply(sibling, A)).toEqual({ kind: "stale" });
+  }
+});
+
+test("an invalidation during adoption's own notification leaves the adopting reply stale", () => {
+  const ticket = captureUsageAccountRead();
+  const unsubscribe = subscribeUsageAccountInvalidation(reason => { if (reason === "identity-changed") invalidateUsageAccountGeneration("lifecycle"); });
+  try { expect(adoptUsageAccountReply(ticket, A)).toEqual({ kind: "stale" }); }
+  finally { unsubscribe(); }
+  const reentrant = captureUsageAccountRead();
+  const adopting = subscribeUsageAccountInvalidation(reason => { if (reason === "identity-changed") acceptUsageAccountReply(captureUsageAccountRead(), B); });
+  try { expect(adoptUsageAccountReply(reentrant, A)).toEqual({ kind: "stale" }); }
+  finally { adopting(); }
 });
 
 test("reentrant lifecycle invalidation cannot return an accepted scope from the identity-changing reply", () => {

@@ -12,6 +12,7 @@ import { USAGE_ACCOUNT_HEADER, USAGE_ACCOUNT_MEDIA } from "../lib/usage/account-
 import { parseStatsPublicSearch, STATS_PUBLIC_MAX_BYTES, STATS_PUBLIC_MEDIA } from "../lib/usage/stats-public";
 import { STATS_HTTP_RESPONSE_ROWS } from "../lib/usage/stats-http-contract";
 import type { UsageStatsBrowserRuntime } from "./usage-stats-performance";
+import { accountReady, fulfillUsageDashboard, totalsUnavailable, usageDashboardFixtureQuery } from "./usage-dashboard-fixture";
 import { diagnosticCdp, diagnosticRecord, memoryProcessTotals, metricQueryTrace, MetricTrace, MetricWorkerCdp, ownedMetricTargets, summarizeCpuProfile } from "./usage-stats-cdp";
 
 type WireSpan = { worker: number; id: number; kind: string; started: number; finished?: number; reply?: string; viewBytes?: number };
@@ -88,6 +89,14 @@ async function episode(browser: Browser, baseUrl: string, fixture: string, hoste
       await route.fulfill({ status: hosted ? 200 : 401, contentType: USAGE_ACCOUNT_MEDIA, body: JSON.stringify(hosted
         ? { schemaVersion: 1, state: "ready", account: { accountId: `acct_${"c".repeat(32)}` } }
         : { schemaVersion: 1, error: { code: "authentication_required" } }) }); return;
+    }
+    if (url.pathname === "/api/usage/dashboard") {
+      const query = usageDashboardFixtureQuery(route), owner = `acct_${"c".repeat(32)}`;
+      if (!hosted || (query.parts.includes("stats") && !hosted.body)) { await fulfillUsageDashboard(route, query, "authentication_required"); return; }
+      invariant(query.range === null || (query.range.firstUtcDay === hosted.firstUtcDay && query.range.dayCount === hosted.dayCount), "Hosted diagnostic must bind the exact requested range.");
+      await fulfillUsageDashboard(route, query, { accountId: owner, part: part => part === "account" ? accountReady(owner) : part === "totals" ? totalsUnavailable
+        : part === "consent" ? { status: 200, body: '{"schemaVersion":1,"state":"not_enrolled"}' } : { status: 200, body: hosted.body! } });
+      return;
     }
     if (url.pathname === "/api/usage/stats" && hosted?.body) {
       const range = parseStatsPublicSearch(url.search);
@@ -301,7 +310,7 @@ async function hostedEpisode(browser: Browser, root: CDPSession, baseUrl: string
       try {
         samples.push({ padded, actualRows: report.rows.length, jsonBytes: bytes, acquiredBytes: Buffer.byteLength(fixture.body), whitespaceBytes: padded ? STATS_PUBLIC_MAX_BYTES - bytes : 0,
           wallMs, ...await sample(run.page), heap: { page: await diagnosticCdp(pageCdp, "Runtime.getHeapUsage"), worker: await target.session.send("Runtime.getHeapUsage") },
-          transfer: await run.page.evaluate(() => performance.getEntriesByType("resource").filter(entry => new URL(entry.name).pathname === "/api/usage/stats")
+          transfer: await run.page.evaluate(() => performance.getEntriesByType("resource").filter(entry => new URL(entry.name).pathname === "/api/usage/dashboard")
             .map(entry => { const value = entry as PerformanceResourceTiming; return { durationMs: value.duration, startMs: value.startTime, responseStartMs: value.responseStart, responseEndMs: value.responseEnd, encodedBodySize: value.encodedBodySize, decodedBodySize: value.decodedBodySize }; })) });
       } finally { await target.session.close(); }
       await closeReport(run);

@@ -1,10 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { readAccountSummary, signOutUsageAccount, warmUsageAccountSession } from "@/lib/usage/account-read-client";
+import { signOutUsageAccount, warmUsageAccountSession } from "@/lib/usage/account-read-client";
 import { retainUsageAccountLifecycle } from "@/lib/usage/account-session-events";
 import { currentUsageAccountScope, subscribeUsageAccountInvalidation, type UsageAccountScope } from "@/lib/usage/account-generation";
-import { readInUsageAccountGeneration } from "@/lib/usage/account-generation-read";
+import { readUsageAccountPart, subscribeUsageAccountRefresh } from "@/lib/usage/account-store";
 import { useAccountGeneration } from "./use-account-generation";
 
 export type AccountControlState = "loading" | "ready" | "authentication_required" | "unavailable" | "signing_out" | "sign_out_failed";
@@ -20,7 +20,7 @@ export function UsageAccountControl({ returnTo }: Readonly<{ returnTo: string }>
   const generation = useAccountGeneration();
   const visibleAccountId = authority !== null && authority.generation === generation && currentUsageAccountScope(authority) ? accountId : null;
 
-  const read = useCallback(async () => {
+  const read = useCallback(async (fresh = false) => {
     const current = owner.current, id = ++current.id;
     current.controller?.abort();
     const controller = new AbortController(); current.controller = controller;
@@ -29,10 +29,8 @@ export function UsageAccountControl({ returnTo }: Readonly<{ returnTo: string }>
       if (current.id === id) { setAccountId(null); setState("unavailable"); }
     }, 20_000);
     try {
-      const bound = await readInUsageAccountGeneration(() => readAccountSummary(controller.signal, { onAuthenticationRequired: () => {
-        if (current.id === id && !controller.signal.aborted) setAccountId(null);
-      } }), reply => "account" in reply ? reply.account.accountId : null, () => current.id === id && !controller.signal.aborted,
-      reply => "error" in reply && reply.error.code === "authentication_required");
+      const bound = await readUsageAccountPart("account", { signal: controller.signal, current: () => current.id === id && !controller.signal.aborted,
+        onAuthenticationRequired: () => { if (current.id === id && !controller.signal.aborted) setAccountId(null); }, fresh });
       if (current.id !== id || controller.signal.aborted) return;
       if (bound === null) { setAuthority(null); setAccountId(null); setState("unavailable"); return; }
       const { reply, scope } = bound;
@@ -54,11 +52,18 @@ export function UsageAccountControl({ returnTo }: Readonly<{ returnTo: string }>
         return;
       }
       current.id++; current.controller?.abort(); current.controller = null;
-      setState(reason === "confirmed-signout" || reason === "authentication-required" ? "authentication_required" : "unavailable");
+      // A suspended page reads again when it is restored; it is not an outage.
+      setState(reason === "confirmed-signout" || reason === "authentication-required" ? "authentication_required" : "loading");
+    });
+    // A background revalidation or a restored page: re-read (usually from memory).
+    const stopRefresh = subscribeUsageAccountRefresh(reason => {
+      if (!current.mounted) return;
+      if (reason === "restored") setState("loading");
+      void read();
     });
     warmUsageAccountSession();
     void Promise.resolve().then(() => { if (current.mounted) return read(); });
-    return () => { current.mounted = false; current.id++; current.controller?.abort(); unsubscribe(); release(); };
+    return () => { current.mounted = false; current.id++; current.controller?.abort(); unsubscribe(); stopRefresh(); release(); };
   }, [read]);
 
   const signOut = async (switchAccount: boolean) => {
@@ -87,7 +92,7 @@ export function UsageAccountControl({ returnTo }: Readonly<{ returnTo: string }>
     } catch { if (current.id === id && current.mounted) setCopyState("failed"); }
   };
   return <UsageAccountPanel state={state} accountId={visibleAccountId} copyState={copyState} copy={() => void copy()} returnTo={returnTo}
-    retry={() => { setState("loading"); setCopyState("idle"); void read(); }} signOut={switchAccount => void signOut(switchAccount)} />;
+    retry={() => { setState("loading"); setCopyState("idle"); void read(true); }} signOut={switchAccount => void signOut(switchAccount)} />;
 }
 
 export function UsageAccountPanel({ state, accountId, copyState, copy, retry, signOut, returnTo }: Readonly<{
