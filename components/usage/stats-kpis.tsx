@@ -23,10 +23,12 @@ export function StatsKpis({ totals, basis, dayCount, latest, latestLabel, prior,
   const cache = statsCacheReadShare(totals);
   const change = known && priorMatched && prior !== null && prior.tokenRecords > 0 && prior.tokens > 0n ? statsRatio(totals.tokens - prior.tokens, prior.tokens) : null;
   const tiles: Tile[] = [
+    // The one exact total on the page (`.usage-stats__exact`); the matched
+    // change, when both periods are complete, rides beside it.
     { key: "tokens", label: `${basis} tokens`, tone: "lead",
       value: known ? <Exact value={totals.tokens} /> : "—",
-      detail: change !== null ? <span data-trend={change >= 0 ? "up" : "down"}>{change >= 0 ? "▲" : "▼"} {Math.abs(change).toFixed(1)}% vs previous {dayCount} days</span>
-        : known ? `${formatStatsInteger(totals.tokens)} exact` : "No token observations" },
+      detail: <><span className="usage-stats__exact">{known ? `${formatStatsInteger(totals.tokens)} exact` : "No token observations"}</span>
+        {change !== null && <span data-trend={change >= 0 ? "up" : "down"}>{change >= 0 ? "▲" : "▼"} {Math.abs(change).toFixed(1)}% vs previous {dayCount} days</span>}</> },
     { key: "per-day", label: "Per active day", value: perDay === null ? "—" : <Exact value={perDay} />,
       detail: `${totals.activeDays} of ${dayCount} ${dayCount === 1 ? "day" : "days"} active` },
     { key: "latest", label: latestLabel,

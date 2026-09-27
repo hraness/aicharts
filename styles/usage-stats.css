@@ -355,7 +355,8 @@
 .usage-kpis dd { display: grid; gap: .3rem; margin: 0; min-inline-size: 0; }
 .usage-kpis dd > strong { font-size: 1.7rem; font-variant-numeric: tabular-nums; font-weight: 650; letter-spacing: -.025em; line-height: 1.1; overflow-wrap: anywhere; }
 .usage-kpis__tile[data-tone="lead"] dd > strong { font-size: 2.6rem; letter-spacing: -.035em; }
-.usage-kpis dd > span { color: var(--muted); font-size: .8125rem; line-height: 1.4; }
+.usage-kpis dd > span { color: var(--muted); display: grid; font-size: .8125rem; gap: .15rem; line-height: 1.4; }
+.usage-kpis .usage-stats__exact { color: inherit; font-size: inherit; }
 .usage-kpis [data-trend="up"] { color: var(--success); font-weight: 600; }
 .usage-kpis [data-trend="down"] { color: var(--warning); font-weight: 600; }
 .usage-stats__subhead { color: var(--muted); font-size: .875rem; margin-block-start: .2rem; }
@@ -403,7 +404,10 @@
   .usage-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (max-width: 600px) {
-  .usage-kpis { gap: .5rem; grid-template-columns: 1fr 1fr; order: 1; }
+  /* The trend stays inside the first screen; the tiles follow it. */
+  .usage-kpis { gap: .5rem; grid-template-columns: 1fr 1fr; order: 3; }
+  .usage-stats__trend > .usage-stats__legend { margin-block: .9rem 0; order: 1; }
+  .usage-stats__trend > .usage-stats__hint { order: 2; }
   .usage-kpis__tile { padding: .8rem .85rem .85rem; }
   .usage-kpis__tile[data-tone="lead"] { grid-column: 1 / -1; }
   .usage-kpis__tile[data-tone="lead"] dd > strong { font-size: 2.25rem; }
