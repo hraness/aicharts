@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { CONTRIBUTION_MAX_MEMBERS, CONTRIBUTION_MAX_MUTATIONS, CONTRIBUTION_MAX_POPULATIONS, parseContributionReference,
+import { CONTRIBUTION_MAX_ASSOCIATIONS, CONTRIBUTION_MAX_MEMBERS, CONTRIBUTION_MAX_MUTATIONS, CONTRIBUTION_MAX_POPULATIONS, parseContributionReference,
   type ContributionHead, type ContributionPopulation } from "./contributions";
 import { CONTRIBUTION_HEAD_QUERY_MAX_IDS, CONTRIBUTION_HEAD_QUERY_REQUEST_BYTES, CONTRIBUTION_HEAD_QUERY_RESPONSE_BYTES,
   decodeContributionHeadQuery, encodeContributionHeadQueryResult, parseContributionHeadPage, parseContributionHeadQuery,
@@ -92,7 +92,7 @@ test("maximum named V1 references fit the bounded transport and mirror canonical
   const bytes = encodeContributionHeadQueryResult(input, { ok: true, value });
   expect(bytes).not.toBeNull(); expect(bytes!.byteLength).toBeLessThan(CONTRIBUTION_HEAD_QUERY_RESPONSE_BYTES);
   expect(JSON.parse(new TextDecoder().decode(bytes!))).toEqual({ schemaVersion: 3, result: { ok: true, value } });
-  expect(parseContributionHeadPage(input, { ...value, population: population(CONTRIBUTION_MAX_MEMBERS + 1) })).toBeNull();
+  expect(parseContributionHeadPage(input, { ...value, population: population(CONTRIBUTION_MAX_ASSOCIATIONS + 1) })).toBeNull();
   for (const fields of [{ members: CONTRIBUTION_MAX_POPULATIONS + 1 }, { reference: { ...value.entries[0].head.reference, index: 256 } },
     { reference: { ...value.entries[0].head.reference, bodyHash: "PRIVATE_PROMPT_CANARY" } }])
     expect(parseContributionHeadPage(input, { ...value, entries: [{ ...value.entries[0], head: { ...value.entries[0].head, ...fields } }, ...value.entries.slice(1)] })).toBeNull();
