@@ -619,6 +619,61 @@ fn command_send_revalidates_position_and_persists_exact_bytes_before_single_uplo
 }
 
 #[test]
+fn warned_source_settles_and_reports_coverage_instead_of_blocking() {
+    use sha2::{Digest, Sha256};
+    let original = batch(1, 12, 4);
+    let (fixture, observations) = observations();
+    assert!(!observations.warnings().is_empty());
+    let initial = serde_json::to_vec(&status_value(&original, None, 12, 1)).unwrap();
+    let final_status = serde_json::to_vec(&status_value(&original, None, 12, 1)).unwrap();
+    let heads = fixture["headReplyText"]
+        .as_str()
+        .unwrap()
+        .as_bytes()
+        .to_vec();
+    let path = scratch();
+    let scope = original.scope();
+    let server = Server::steps(4, move |index, stream| {
+        let (headers, body) = request(stream);
+        match index {
+            0 | 2 => {
+                assert!(headers.starts_with("POST /v3/contributions/status HTTP/1.1"));
+                respond(stream, if index == 0 { &initial } else { &final_status });
+            }
+            1 => {
+                assert!(headers.starts_with("POST /v3/contributions/heads HTTP/1.1"));
+                respond(stream, &heads);
+            }
+            3 => {
+                assert!(headers.starts_with("POST /v3/contributions HTTP/1.1"));
+                let frozen =
+                    PreparedBatch::reopen(&scope, &body, &format!("{:x}", Sha256::digest(&body)))
+                        .unwrap();
+                respond(stream, &direct_bytes(&committed_reply(&frozen)));
+            }
+            _ => unreachable!(),
+        }
+    });
+    let transport = transport(server.addr, &original);
+    let mut outbox =
+        Outbox::initialize(&path.0, &KEY, transport.binding(), &progress(&original)).unwrap();
+    let result = crate::contribution_sync::command::send(
+        &mut outbox,
+        &transport,
+        &Deadline::command().unwrap(),
+        original.scope().population_id(),
+        &observations,
+    )
+    .unwrap();
+    let result: serde_json::Value = serde_json::from_str(&result).unwrap();
+    assert_eq!(result["status"], "settled");
+    assert_eq!(result["outcome"], "committed");
+    let warnings = result["source"]["warnings"].as_array().unwrap();
+    assert!(warnings.iter().any(|warning| warning == "unknown_models"));
+    assert_eq!(result["source"]["coverage"], "partial");
+}
+
+#[test]
 fn matching_selection_checks_final_snapshot_and_reports_its_revision_without_writing() {
     use serde_json::json;
     for drift in [false, true] {

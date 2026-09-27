@@ -217,7 +217,7 @@ fn paths_are_bounded_literal_absolute_names_and_help_needs_no_files() {
     assert!(path(&format!("/{}", vec!["x"; 64].join("/"))).is_ok());
     let help = run(&args(&["contribution-sync", "--help"])).unwrap();
     assert!(help.contains("--inspect"));
-    assert!(help.contains("Coverage remains partial"));
+    assert!(help.contains("Coverage is partial by design"));
     assert!(help.contains("explicit and opt-in"));
 }
 

@@ -1,7 +1,7 @@
 //! Explicit enrolled command only. No daemon/default sync or activation join.
 use std::path::{Path, PathBuf};
 
-const HELP: &str = "AI Charts contribution sync: explicit V3 publication\n\n  aicharts contribution-sync --status --state-dir DIR --key-file KEY [--population-id HEX]\n  aicharts contribution-sync --migrate --state-dir DIR --key-file KEY\n  aicharts contribution-sync --activate --state-dir DIR --key-file KEY\n  aicharts contribution-sync --grant --state-dir DIR --key-file KEY [--population-id HEX]\n  aicharts contribution-sync --inspect --state-dir DIR --key-file KEY\n  aicharts contribution-sync --initialize --state-dir DIR --key-file KEY [--population-id HEX]\n  aicharts contribution-sync --send --state-dir DIR --key-file KEY [--population-id HEX] (--claude FILE | --codex FILE) [--max-batches N]\n  aicharts contribution-sync --resume --state-dir DIR --key-file KEY\n  aicharts contribution-sync --cancel --state-dir DIR --key-file KEY\n\nRequires existing macOS enrollment. V3 account setup is explicit and opt-in:\n--migrate carries retained V1/V2 history into V3; --activate covers accounts\nwith no retained history; --grant claims a population (default: this device's\nderived primary). Control intents persist exact request bytes before dispatch,\nso a retry always replays the identical idempotent operation and settles from\nthe retained terminal. This command never deletes account data or the journal.\nOnly one explicit Claude or Codex file is accepted, up to 64 MiB and 8,192\nobservations. Coverage remains partial; corrections, deletion and incomplete\nsource warnings require reconciliation. Codex observations whose identity is a\nsame-timestamp slot, or from a regressed or forked history, are quarantined and\nnever sent. A call checks at most 32 pages per batch and sends one batch unless\n--max-batches N (1-8) drains further pending batches, each re-checking the\nserver position. Run --send again for additional bounded batches. Account-wide activation remains\nunsuitable while aggregate-only clients need their existing publication path.\n\nExact bytes are retained before sending. --resume retries the persisted action\nwithout reading source files. --cancel persists a one-way cancellation decision\nand fresh server revision before dispatch; it can refresh a refused cancellation.\nUnknown status never clears a flight. Terminal replies are authenticated and\ncorrelated before retirement. Never delete checkpoint files to recover or restore\nan older valid directory as a reset; independent custody/device fencing is needed\nfor backup rollback recovery. No automatic retries or live activation occur.\n\n--inspect is local-only: it reports the MAC-checked local checkpoint, not current\nenrollment or remote authority. It creates nothing and performs no sync, repair,\nsource reading or network request. Paths must be absolute.\n";
+const HELP: &str = "AI Charts contribution sync: explicit V3 publication\n\n  aicharts contribution-sync --status --state-dir DIR --key-file KEY [--population-id HEX]\n  aicharts contribution-sync --migrate --state-dir DIR --key-file KEY\n  aicharts contribution-sync --activate --state-dir DIR --key-file KEY\n  aicharts contribution-sync --grant --state-dir DIR --key-file KEY [--population-id HEX]\n  aicharts contribution-sync --inspect --state-dir DIR --key-file KEY\n  aicharts contribution-sync --initialize --state-dir DIR --key-file KEY [--population-id HEX]\n  aicharts contribution-sync --send --state-dir DIR --key-file KEY [--population-id HEX] (--claude FILE | --codex FILE) [--max-batches N]\n  aicharts contribution-sync --resume --state-dir DIR --key-file KEY\n  aicharts contribution-sync --cancel --state-dir DIR --key-file KEY\n\nRequires existing macOS enrollment. V3 account setup is explicit and opt-in:\n--migrate carries retained V1/V2 history into V3; --activate covers accounts\nwith no retained history; --grant claims a population (default: this device's\nderived primary). Control intents persist exact request bytes before dispatch,\nso a retry always replays the identical idempotent operation and settles from\nthe retained terminal. This command never deletes account data or the journal.\nOnly one explicit Claude or Codex file is accepted, up to 64 MiB and 8,192\nobservations. Coverage is partial by design: lines that cannot be measured or\nattributed are skipped, and Codex observations whose identity is a Codex observations whose identity is a\nsame-timestamp slot, or from a regressed or forked history, are quarantined and\nnever sent. Every send result reports the source warnings and quarantine\ncounts so withheld coverage is visible rather than blocking publication. A call checks at most 32 pages per batch and sends one batch unless\n--max-batches N (1-8) drains further pending batches, each re-checking the\nserver position. Run --send again for additional bounded batches. Account-wide activation remains\nunsuitable while aggregate-only clients need their existing publication path.\n\nExact bytes are retained before sending. --resume retries the persisted action\nwithout reading source files. --cancel persists a one-way cancellation decision\nand fresh server revision before dispatch; it can refresh a refused cancellation.\nUnknown status never clears a flight. Terminal replies are authenticated and\ncorrelated before retirement. Never delete checkpoint files to recover or restore\nan older valid directory as a reset; independent custody/device fencing is needed\nfor backup rollback recovery. No automatic retries or live activation occur.\n\n--inspect is local-only: it reports the MAC-checked local checkpoint, not current\nenrollment or remote authority. It creates nothing and performs no sync, repair,\nsource reading or network request. Paths must be absolute.\n";
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Command {
     Inspect,
@@ -214,26 +214,43 @@ fn read_source(
     if !same(&before, &after) || !same(&after, &named) {
         return Err("contribution_sync_source_changed");
     }
-    if !observations.warnings().is_empty() {
-        return Err("contribution_sync_source_warnings");
-    }
     if observations.is_empty() {
         return Err("contribution_sync_no_observations");
     }
     Ok(observations)
+}
+/// Source coverage summary carried on every send result. Warnings describe
+/// what the producer could not measure or had to withhold; the produced
+/// observations are always measured and the quarantine already withheld
+/// unstable rows, so warnings never gate publication.
+#[cfg(target_os = "macos")]
+fn coverage(
+    observations: &aicharts_core::contribution_producer::NativeObservations,
+) -> serde_json::Value {
+    let quarantine = observations.quarantine();
+    serde_json::json!({
+        "coverage": observations.coverage(),
+        "linesRead": observations.lines_read(),
+        "warnings": observations.warnings().iter().map(|warning| warning.code()).collect::<Vec<_>>(),
+        "quarantined": quarantine,
+    })
 }
 #[cfg(target_os = "macos")]
 fn settlement(
     outbox: &mut super::Outbox,
     binding: &super::Binding,
     terminal: super::AuthenticatedTerminal,
+    observations: Option<&aicharts_core::contribution_producer::NativeObservations>,
 ) -> Result<String, &'static str> {
     outbox.settle(binding, &terminal)?;
     let retained = retained_terminal(&outbox.checkpoint)?.ok_or(super::INVALID)?;
-    serde_json::to_string(&serde_json::json!({ "schemaVersion": 3, "status": "settled",
+    let mut result = serde_json::json!({ "schemaVersion": 3, "status": "settled",
         "sequence": outbox.checkpoint.last_sequence, "outcome": retained["outcome"],
-        "terminalRevision": retained["terminalRevision"], "durableRevisionFloor": outbox.checkpoint.last_revision }))
-        .map_err(|_| super::INVALID)
+        "terminalRevision": retained["terminalRevision"], "durableRevisionFloor": outbox.checkpoint.last_revision });
+    if let Some(observations) = observations {
+        result["source"] = coverage(observations);
+    }
+    serde_json::to_string(&result).map_err(|_| super::INVALID)
 }
 #[cfg(target_os = "macos")]
 pub(super) fn recover_action(
@@ -265,7 +282,7 @@ pub(super) fn recover_action(
     // Exact immutable terminal evidence is independent of present population
     // ownership. No current-writer capability is needed to retire that same body.
     if let Some(terminal) = status.terminal {
-        return settlement(outbox, binding, terminal);
+        return settlement(outbox, binding, terminal, None);
     }
     let progress = status.progress.ok_or("contribution_sync_writer_conflict")?;
     if cancel {
@@ -275,7 +292,7 @@ pub(super) fn recover_action(
         let flight = outbox.flight(binding, &progress)?;
         transport.dispatch(&flight, deadline)?
     };
-    settlement(outbox, binding, terminal)
+    settlement(outbox, binding, terminal, None)
 }
 #[cfg(target_os = "macos")]
 pub(super) fn send(
@@ -328,7 +345,7 @@ pub(super) fn send(
             let flight = outbox.flight(binding, &final_progress)?;
             transport.dispatch(&flight, deadline)?
         };
-        return settlement(outbox, binding, terminal);
+        return settlement(outbox, binding, terminal, Some(observations));
     }
     let final_progress = transport
         .status(population, None, deadline)?
@@ -343,7 +360,14 @@ pub(super) fn send(
     {
         return Err(super::CONFLICT);
     }
-    Ok(format!("{{\"schemaVersion\":3,\"status\":\"selected_observations_match\",\"coverage\":\"partial\",\"canonicalRevision\":{},\"observations\":{},\"quarantined\":{}}}", progress.revision, observations.len(), observations.quarantine().total()))
+    serde_json::to_string(&serde_json::json!({
+        "schemaVersion": 3, "status": "selected_observations_match",
+        "coverage": "partial", "canonicalRevision": progress.revision,
+        "observations": observations.len(),
+        "quarantined": observations.quarantine().total(),
+        "source": coverage(observations),
+    }))
+    .map_err(|_| super::INVALID)
 }
 /// Continuous draining: repeat bounded single-batch sends while each batch
 /// settles committed and pages remain, at most `max_batches` times. Every
@@ -388,7 +412,8 @@ pub(super) fn drain(
         }
     }
     serde_json::to_string(&serde_json::json!({ "schemaVersion": 3, "status": status,
-        "batches": batches, "quarantined": observations.quarantine().total() }))
+        "batches": batches, "quarantined": observations.quarantine().total(),
+        "source": coverage(observations) }))
     .map_err(|_| super::INVALID)
 }
 #[cfg(target_os = "macos")]

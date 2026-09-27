@@ -91,11 +91,13 @@ impl<'de> Deserialize<'de> for ModelLabel {
             }
             fn visit_str<E: de::Error>(self, value: &str) -> Result<Self::Value, E> {
                 // Unknown strings are never copied or retained as model labels.
+                // A `[…]` suffix is a context-window qualifier on the same model.
+                let model = value.split('[').next().unwrap_or(value);
                 Ok(ModelLabel(
                     MODELS
                         .iter()
                         .copied()
-                        .find(|m| m.starts_with("claude-") && *m == value),
+                        .find(|m| m.starts_with("claude-") && *m == model),
                 ))
             }
         }
@@ -496,9 +498,13 @@ const MODELS: &[&str] = &[
     "claude-opus-4-5-20251101",
     "claude-opus-4-6",
     "claude-opus-4-7",
+    "claude-opus-5",
+    "claude-opus-5-5",
     "claude-sonnet-4-20250514",
     "claude-sonnet-4-5-20250929",
     "claude-sonnet-4-6",
+    "claude-sonnet-5",
+    "claude-fable-5-1",
     "claude-haiku-4-5-20251001",
 ];
 
