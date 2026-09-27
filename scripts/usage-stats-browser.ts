@@ -590,6 +590,7 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
         await expandFilters();
         await page.getByLabel("Client", { exact: true }).selectOption("codex");
         await choosePeriod(90); await page.getByRole("heading", { name: "Weekly usage" }).waitFor();
+        await page.locator(".usage-stats[aria-busy='false']").waitFor();
         invariant(await page.getByLabel("Client", { exact: true }).inputValue() === "codex", "Account range refresh must preserve client selection.");
         await expandFilters();
         statsMode = "range_too_large"; await page.getByRole("button", { name: "Refresh", exact: true }).click();
