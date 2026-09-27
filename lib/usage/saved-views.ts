@@ -25,7 +25,7 @@ export type SavedView = Readonly<{
 export type SavedViewError = "saved_view_version" | "saved_view_invalid" | "saved_view_private" | "saved_view_limit";
 export type SavedViewParse = Readonly<{ ok: true; value: SavedView; migratedFrom: number | null }> | Readonly<{ ok: false; error: SavedViewError }>;
 export const DEFAULT_SAVED_VIEW: SavedView = Object.freeze({ schemaVersion: SAVED_VIEW_VERSION, range: null, client: "*", provider: "*", model: "*", basis: "reported",
-  grouping: "client", secondGrouping: null, metric: "accounted-tokens", costKind: "reported", chart: "tokens", split: null });
+  grouping: "client", secondGrouping: null, metric: "accounted-tokens", costKind: "reported", chart: "tokens", split: "client" });
 /** Keys owned by the current schema. Foreign parameters are preserved untouched. */
 export const SAVED_VIEW_KEYS = ["view", "range", "client", "provider", "model", "basis", "group", "then", "metric", "cost", "chart", "split"] as const;
 /** Version 1 spelled the range as `days` or `from`/`to` and the second grouping as `second`. */
@@ -128,7 +128,7 @@ export function savedViewSearch(view: SavedView, base: string | URLSearchParams 
   if (view.range !== null) own.set("range", savedViewRangeText(view.range));
   for (const [key, value, fallback] of [["client", view.client, "*"], ["provider", view.provider, "*"], ["model", view.model, "*"], ["basis", view.basis, "reported"],
     ["group", view.grouping, "client"], ["then", view.secondGrouping ?? "none", "none"], ["metric", view.metric, "accounted-tokens"], ["cost", view.costKind, "reported"],
-    ["chart", view.chart, "tokens"], ["split", view.split ?? "none", "none"]] as const) if (value !== fallback) own.set(key, value);
+    ["chart", view.chart, "tokens"], ["split", view.split ?? "none", DEFAULT_SAVED_VIEW.split ?? "none"]] as const) if (value !== fallback) own.set(key, value);
   const text = [query.toString(), own.toString()].filter(part => part !== "").join("&");
   if (new TextEncoder().encode(text).byteLength > MAX_SAVED_VIEW_SEARCH_BYTES) throw new Error("saved_view_limit");
   return `?${text}`;

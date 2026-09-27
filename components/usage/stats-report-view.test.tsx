@@ -38,10 +38,27 @@ test("the dashboard renders the activity calendar, metric and composition contro
   expect(html).toContain('aria-label="Chart metric"');
   expect(html).toContain('aria-pressed="true">Tokens<');
   expect(html).toContain('aria-label="Stack bars by"');
-  expect(html).toContain('aria-pressed="true">Total<');
+  // Stacked by client by default: the colored split answers "which agent" first.
+  const stack = html.slice(html.indexOf('aria-label="Stack bars by"'));
+  expect(stack.slice(0, stack.indexOf("</div>"))).toContain('aria-pressed="true">Clients<');
+  expect(html).toContain('aria-label="Stacked by clients — share of tokens"');
   expect(html).toContain("Records per active day");
   expect(html).toContain("Tokens per record");
   expect(html).not.toContain("not inference speed or time spent working");
+});
+
+test("the period opens with velocity tiles derived from the same exact totals", () => {
+  const html = renderToStaticMarkup(<StatsReportView report={createUsageStatsExample(20_700)} scope="account" todayUtcDay={20_700} variant="overview" />);
+  expect(html).toContain('aria-label="Period at a glance"');
+  for (const label of ["Reported tokens", "Per active day", "Today so far", "Records per day", "Cache reads"]) expect(html).toContain(`<dt>${label}</dt>`);
+  expect(html.indexOf("Period at a glance")).toBeLessThan(html.indexOf('id="stats-trend-title"'));
+  // Five y-axis labels frame the bars; the hover card only exists while hovering.
+  expect(html.match(/class="usage-stats__scale"[^]*?<\/div>/u)?.[0].match(/<span>/gu)).toHaveLength(5);
+  expect(html).not.toContain("usage-stats__tooltip");
+  // Clients keep one hue: Codex rows and segments use the same slot everywhere.
+  expect(html).toMatch(/<tr[^>]*data-series="0"><th scope="row"><button[^>]*>Codex CLI</u);
+  const local = renderToStaticMarkup(<StatsReportView report={createUsageStatsExample(20_700)} scope="local" todayUtcDay={20_700} variant="overview" />);
+  expect(local).toContain("<dt>Latest day · Sep 4</dt>");
 });
 
 test("local entry point labels its privacy boundary without claiming any account is connected", () => {

@@ -321,7 +321,7 @@
 .model-release-radar__note,
 .model-release-radar li small {
   color: var(--muted);
-  font-size: .68rem;
+  font-size: .75rem;
 }
 
 .model-release-radar__heading > small {
@@ -379,7 +379,7 @@
 .model-release-radar li strong { font-size: .82rem; }
 .model-release-radar li .model-release-radar__early-score {
   color: color-mix(in oklch, var(--release-provider) 42%, var(--foreground));
-  font-size: .67rem;
+  font-size: .75rem;
   font-variant-numeric: tabular-nums;
   font-weight: 600;
   letter-spacing: .005em;
@@ -443,7 +443,7 @@
 }
 
 .model-card-gallery__scope-filter strong { font-size: .8rem; }
-.model-card-gallery__scope-filter small { color: var(--muted); font-size: .62rem; margin-block-start: .2rem; }
+.model-card-gallery__scope-filter small { color: var(--muted); font-size: .75rem; margin-block-start: .2rem; }
 .model-card-gallery__scope-filter[data-selected] {
   background: var(--foreground);
   border-color: var(--foreground);

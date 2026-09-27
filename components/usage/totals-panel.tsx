@@ -7,6 +7,7 @@ import { currentUsageAccountScope, subscribeUsageAccountInvalidation, type Usage
 import { readInUsageAccountGeneration } from "@/lib/usage/account-generation-read";
 import { statsTotalsTokenTotal, type StatsTotals, type StatsTotalsCell } from "@/lib/usage/stats-totals-contract";
 import { formatStatsCompact, formatStatsDay, formatStatsInteger, statsLabel, statsRatio } from "./stats-view";
+import { assignSeriesSlots } from "./series-colors";
 import { useAccountGeneration } from "./use-account-generation";
 
 export type TotalsPanelState = "loading" | "ready" | "authentication_required" | "not_enrolled" | "unavailable";
@@ -65,6 +66,17 @@ export function UsageTotalsPanel({ returnTo }: Readonly<{ returnTo: string }>) {
   return <UsageTotalsView state={state} totals={visible} returnTo={returnTo} retry={() => { setState("loading"); void read(); }} />;
 }
 
+const relative = new Intl.RelativeTimeFormat("en-US", { numeric: "auto" });
+const absolute = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" });
+/** How long ago the account last accepted an upload, with a tone that flags a
+ * collector that has gone quiet. Hourly collectors normally stay "fresh". */
+export function totalsFreshness(updatedAtMs: number, nowMs: number): Readonly<{ text: string; tone: "fresh" | "idle" | "stale" }> {
+  const minutes = Math.max(0, Math.round((nowMs - updatedAtMs) / 60_000));
+  const text = minutes < 1 ? "just now" : minutes < 60 ? relative.format(-minutes, "minute")
+    : minutes < 48 * 60 ? relative.format(-Math.round(minutes / 60), "hour") : relative.format(-Math.round(minutes / 1440), "day");
+  return { text, tone: minutes <= 150 ? "fresh" : minutes <= 24 * 60 ? "idle" : "stale" };
+}
+
 function Share({ label, detail, tokens, total, badge, series }: Readonly<{ label: ReactNode; detail: string; tokens: bigint; total: bigint; badge?: string; series?: number }>) {
   const share = statsRatio(tokens, total);
   return <li className="usage-totals__row" data-series={series}>
@@ -75,7 +87,8 @@ function Share({ label, detail, tokens, total, badge, series }: Readonly<{ label
   </li>;
 }
 
-export function UsageTotalsView({ state, totals, returnTo, retry }: Readonly<{ state: TotalsPanelState; totals: StatsTotals | null; returnTo: string; retry: () => void }>) {
+export function UsageTotalsView({ state, totals, returnTo, retry, nowMs }: Readonly<{ state: TotalsPanelState; totals: StatsTotals | null; returnTo: string; retry: () => void;
+  /** Reference time for upload freshness; defaults to when the service generated these totals. */ nowMs?: number }>) {
   if (state === "loading" || (state === "ready" && totals === null)) {
     return <section className="usage-totals usage-totals--loading" aria-busy="true" aria-labelledby="usage-totals-title"><h2 id="usage-totals-title">All time</h2>
       <p className="usage-totals__sr">Loading your account totals.</p><span className="usage-totals__skeleton" aria-hidden="true" /><span className="usage-totals__skeleton" aria-hidden="true" /></section>;
@@ -97,17 +110,24 @@ export function UsageTotalsView({ state, totals, returnTo, retry }: Readonly<{ s
   const total = tokensOf(totals.total);
   const clients = [...totals.clients].sort((a, b) => tokensOf(b) > tokensOf(a) ? 1 : tokensOf(b) < tokensOf(a) ? -1 : 0);
   const devices = [...totals.devices].sort((a, b) => tokensOf(b) > tokensOf(a) ? 1 : tokensOf(b) < tokensOf(a) ? -1 : 0);
+  const slots = assignSeriesSlots("client", clients.map(client => client.client));
+  const freshness = totalsFreshness(totals.updatedAtMs, nowMs ?? totals.generatedAtMs);
   return <section className="usage-totals" aria-labelledby="usage-totals-title">
     <div className="usage-totals__headline">
       <h2 id="usage-totals-title">All time</h2>
       <p className="usage-totals__figure"><strong>{formatStatsCompact(total)}</strong> tokens</p>
       <p className="usage-totals__exact">{formatStatsInteger(total)} exact</p>
       <p className="usage-totals__meta">{formatStatsInteger(totals.total.days)} active days · {span(totals.total)} · {totals.devices.length} {totals.devices.length === 1 ? "device" : "devices"}</p>
+      <p className="usage-totals__updated" data-tone={freshness.tone} title={`Last accepted upload ${absolute.format(totals.updatedAtMs)}`}>
+        {freshness.tone === "stale" ? `No upload since ${freshness.text} — check the collector` : `Last upload ${freshness.text}`}</p>
       {!totals.legacyComplete && <p className="usage-totals__notice">Earlier uploads are still being indexed ({formatStatsInteger(totals.legacyVerifiedRevision)} of {formatStatsInteger(totals.legacyRevision)} batches). Totals grow as indexing finishes.</p>}
     </div>
     <div className="usage-totals__lists">
-      <div><h3>By client</h3><ol>{clients.map((client, index) => <Share key={client.client} series={Math.min(index, 5)} label={statsLabel(client.client, "client")} tokens={tokensOf(client)} total={total}
-        detail={`${formatStatsInteger(client.days)} days · ${basisText[client.basis]}`} />)}</ol></div>
+      <div><h3>By client</h3>
+        <div className="usage-totals__stack" aria-hidden="true">{clients.map((client, index) => <i key={client.client} data-series={slots[index]}
+          style={{ flexGrow: Math.max(statsRatio(tokensOf(client), total), tokensOf(client) > 0n ? .5 : 0) }} />)}</div>
+        <ol>{clients.map((client, index) => <Share key={client.client} series={slots[index]} label={statsLabel(client.client, "client")} tokens={tokensOf(client)} total={total}
+        detail={`${formatStatsInteger(client.days)} days · ${basisText[client.basis]}${client.lastUtcDay === null ? "" : ` · through ${formatStatsDay(client.lastUtcDay)}`}`} />)}</ol></div>
       <div><h3>By device</h3><ol>{devices.map(device => <Share key={device.deviceId} label={<code title={device.deviceId}>{shortDevice(device.deviceId)}</code>} tokens={tokensOf(device)} total={total}
         badge={device.revokedAtMs !== null ? "Revoked" : undefined}
         detail={`${device.clients.map(client => statsLabel(client.client, "client")).join(", ") || "No clients yet"} · enrolled ${formatStatsDay(Math.floor(device.enrolledAtMs / 86_400_000))}`} />)}</ol></div>
