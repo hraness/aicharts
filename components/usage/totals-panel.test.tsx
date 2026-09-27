@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import { parseStatsTotals, type StatsTotals } from "@/lib/usage/stats-totals-contract";
-import { UsageTotalsView, type TotalsPanelState } from "./totals-panel";
+import { totalsFreshness, UsageTotalsView, type TotalsPanelState } from "./totals-panel";
 
 const day = 20_000, now = day * 86_400_000;
 const split = (total: bigint) => ({ input: String(total / 4n), cacheRead: String(total / 2n), cacheWrite: "0", output: String(total / 4n), reasoning: String(total - total / 4n - total / 2n - total / 4n) });
@@ -29,6 +29,20 @@ test("ready totals lead with the figure and rank clients and devices by tokens w
   expect(html.indexOf(`title="${"a".repeat(64)}"`)).toBeLessThan(html.indexOf(`title="${"b".repeat(64)}"`));
   expect(html).toContain("Revoked"); expect(html).toContain("No clients yet");
   expect(html).not.toContain("<table");
+});
+
+test("the panel says when the account last accepted an upload and flags a quiet collector", () => {
+  expect(totalsFreshness(now - 38 * 60_000, now)).toEqual({ text: "38 minutes ago", tone: "fresh" });
+  expect(totalsFreshness(now - 5 * 3_600_000, now)).toEqual({ text: "5 hours ago", tone: "idle" });
+  expect(totalsFreshness(now - 26 * 3_600_000, now)).toEqual({ text: "26 hours ago", tone: "stale" });
+  expect(totalsFreshness(now - 3 * 86_400_000, now)).toEqual({ text: "3 days ago", tone: "stale" });
+  expect(totalsFreshness(now + 5_000, now)).toEqual({ text: "just now", tone: "fresh" });
+  const fresh = renderToStaticMarkup(<UsageTotalsView state="ready" totals={fixture()} returnTo="/dashboard" retry={() => {}} nowMs={now} />);
+  expect(fresh).toContain('data-tone="fresh"'); expect(fresh).toContain("Last upload 1 minute ago");
+  const stale = renderToStaticMarkup(<UsageTotalsView state="ready" totals={fixture()} returnTo="/dashboard" retry={() => {}} nowMs={now + 2 * 86_400_000} />);
+  expect(stale).toContain('data-tone="stale"'); expect(stale).toContain("check the collector");
+  // One stacked share bar, in the same client hues as the rows (Codex keeps slot 0).
+  expect(fresh).toMatch(/usage-totals__stack[^]*data-series="0"/u);
 });
 
 test("loading, signed-out, unenrolled and failed states never show figures", () => {

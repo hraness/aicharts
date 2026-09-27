@@ -11,18 +11,18 @@
 @media (max-width: 700px) { .leaderboard-home { padding-block-start: 1.5rem; } .leaderboard-home .usage-hero h1 { font-size: 1.8rem; } }
 .usage-board { padding-block-end: 3rem; }
 .usage-board__table-scroll { background: var(--usage-card); border: 1px solid var(--usage-card-border); border-radius: var(--usage-radius); box-shadow: var(--usage-card-shadow); overflow-x: auto; scrollbar-color: var(--muted) transparent; }
-.usage-board table { border-collapse: collapse; font-size: .85rem; font-variant-numeric: tabular-nums; inline-size: 100%; min-inline-size: 40rem; }
-.usage-board table caption { color: var(--muted); font-size: .8rem; padding: 1rem 1rem .75rem; text-align: start; }
+.usage-board table { border-collapse: collapse; font-size: .9rem; font-variant-numeric: tabular-nums; inline-size: 100%; min-inline-size: 40rem; }
+.usage-board table caption { color: var(--muted); font-size: .875rem; padding: 1rem 1rem .75rem; text-align: start; }
 .usage-board :is(th, td) { padding: .75rem 1rem; text-align: end; white-space: nowrap; }
 .usage-board th { font-weight: 500; }
-.usage-board thead th { color: var(--muted); font-size: .75rem; }
+.usage-board thead th { color: var(--muted); font-size: .8125rem; }
 .usage-board tbody tr { transition: background 120ms ease; }
 .usage-board tbody tr:hover { background: var(--usage-tint); }
 .usage-board :is(th:first-child, th[scope="row"], .usage-board__handle) { text-align: start; }
 .usage-board thead { background: var(--usage-control); }
 .usage-board tbody tr + tr { border-top: 1px solid color-mix(in srgb, var(--grid) 75%, transparent); }
 .usage-board__handle { font-weight: 600; overflow-wrap: anywhere; white-space: normal; }
-.usage-board__hint { color: var(--muted); font-size: .8rem; margin-block-start: .75rem; max-inline-size: 75ch; }
+.usage-board__hint { color: var(--muted); font-size: .875rem; margin-block-start: .75rem; max-inline-size: 75ch; }
 
 .usage-consent { background: var(--usage-card); border: 1px solid var(--usage-card-border); border-radius: var(--usage-radius); box-shadow: var(--usage-card-shadow); margin-block-end: 3rem; padding: clamp(1.25rem, 3vw, 1.75rem); }
 .usage-consent .usage-daily__heading { margin-block-end: .75rem; }
@@ -31,25 +31,32 @@
 .usage-consent__published p { color: var(--muted); margin-block-end: 1.5rem; max-inline-size: 70ch; }
 .usage-consent__handle { color: var(--foreground); font-weight: 600; }
 .usage-consent__form { border-block-start: 1px solid var(--grid); display: grid; gap: 1rem; justify-items: start; padding-block: 1.25rem 0; }
-.usage-consent__handle-field { inline-size: 100%; display: grid; font-size: .8rem; font-weight: 600; gap: .4rem; }
+.usage-consent__handle-field { inline-size: 100%; display: grid; font-size: .875rem; font-weight: 600; gap: .4rem; }
 .usage-consent__handle-field input { background: var(--background); border: 1px solid var(--grid); border-radius: var(--usage-radius-sm); caret-color: var(--foreground); color: var(--foreground); font: inherit; font-variant-numeric: tabular-nums; min-block-size: 2.75rem; inline-size: min(100%, 22rem); min-inline-size: 0; padding: .55rem .65rem; }
 .usage-consent__handle-field input:hover { border-color: var(--muted); }
 .usage-consent__handle-field input:focus-visible { border-color: var(--hraness-site-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--hraness-site-accent) 22%, transparent); }
-.usage-consent__form > span { color: var(--muted); font-size: .8rem; margin-block-start: -.75rem; }
+.usage-consent__form > span { color: var(--muted); font-size: .875rem; margin-block-start: -.75rem; }
 .usage-consent__check { min-block-size: 2.75rem; padding-block: .5rem; cursor: pointer; align-items: start; display: flex; font-weight: 600; gap: .65rem; max-inline-size: 60ch; }
 .usage-consent__check input { accent-color: var(--hraness-site-accent); block-size: 1.1rem; inline-size: 1.1rem; margin-block-start: .15rem; }
-.usage-consent__copy { color: var(--muted); font-size: .85rem; margin-block: 0; max-inline-size: 70ch; }
+.usage-consent__copy { color: var(--muted); font-size: .9rem; margin-block: 0; max-inline-size: 70ch; }
 .usage-consent button { cursor: pointer; font-family: inherit; }
 .usage-consent .usage-button--quiet { background: var(--background); }
 .usage-consent button:disabled { cursor: not-allowed; opacity: .5; transform: none; }
 .usage-consent :is(button, input, a):focus-visible { outline: 2px solid var(--hraness-site-accent); outline-offset: 3px; }
 .usage-consent ::selection { background: var(--foreground); color: var(--background); }
 
-.usage-board__coverage span { color: var(--muted); display: block; font-size: .75rem; margin-block-start: .2rem; }
+.usage-board__coverage span { color: var(--muted); display: block; font-size: .8125rem; margin-block-start: .2rem; }
 .usage-consent__leaderboard-link { margin-block-start: 0; margin-inline-end: 1.5rem; min-block-size: 2.75rem; align-items: center; }
 
-.usage-publishing-notice { align-items: center; background: var(--usage-control); border-radius: 999px; color: var(--muted); display: flex; font-size: .8rem; gap: .55rem; inline-size: fit-content; margin-block: 1rem 1.25rem; max-inline-size: 100%; padding: .45rem .9rem; }
+.usage-publishing-notice { align-items: center; background: var(--usage-control); border-radius: 999px; color: var(--muted); display: flex; font-size: .875rem; gap: .55rem; inline-size: fit-content; margin-block: 1rem 1.25rem; max-inline-size: 100%; padding: .45rem .9rem; }
 .usage-publishing-notice::before { background: var(--faint); block-size: .45rem; border-radius: 50%; content: ""; flex: none; inline-size: .45rem; }
 
 .usage-consent__local-link { align-items: center; margin-block-start: 0; margin-inline-start: 1.5rem; min-block-size: 2.75rem; }
 @media (max-width: 450px) { .usage-consent__local-link { display: flex; margin-block-start: .75rem; margin-inline-start: 0; } }
+
+/* Consent sits inside one card: its states are rows, not nested cards. */
+.usage-consent .usage-daily__notice, [data-hraness-material="lantern"] .usage-consent .usage-consent__form { background: none; border: 0; border-block-start: 1px solid var(--grid); border-radius: 0; box-shadow: none; margin: 0; padding: 1rem 0 0; }
+.usage-consent .usage-daily__notice h3 { font-size: 1rem; }
+.usage-consent .usage-daily__notice p { margin-block: .35rem .75rem; }
+.usage-consent .usage-daily__notice .usage-inline-link { margin-block-start: 0; }
+.usage-consent { margin-block-end: 2rem; }

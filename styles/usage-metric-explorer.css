@@ -1,34 +1,34 @@
 .usage-metrics { border-block-start: 1px solid var(--grid); margin-block: 3rem; padding-block-start: 1.75rem; }
-.usage-metrics .usage-stats__section-heading p { color: var(--muted); font-size: .85rem; margin-block-start: .4rem; max-inline-size: 65ch; }
+.usage-metrics .usage-stats__section-heading p { color: var(--muted); font-size: .9rem; margin-block-start: .4rem; max-inline-size: 65ch; }
 .usage-metrics__tabs { border-block-end: 1px solid var(--grid); display: flex; gap: .25rem; margin-block: 1.25rem; overflow-x: auto; scrollbar-color: var(--muted) var(--background); }
-.usage-metrics__tabs button { background: transparent; border: 0; border-block-end: 2px solid transparent; color: var(--muted); flex: 0 0 auto; font-size: .8rem; min-block-size: 2.75rem; padding: .65rem .8rem; }
+.usage-metrics__tabs button { background: transparent; border: 0; border-block-end: 2px solid transparent; color: var(--muted); flex: 0 0 auto; font-size: .875rem; min-block-size: 2.75rem; padding: .65rem .8rem; }
 .usage-metrics__tabs button[aria-selected="true"] { border-block-end-color: var(--foreground); color: var(--foreground); font-weight: 600; }
 .usage-metrics__tabs button:hover { background: var(--surface-raised); color: var(--foreground); }
 .usage-metrics__workspace { align-items: start; display: grid; gap: 2rem; grid-template-columns: minmax(14rem, .72fr) minmax(0, 1.65fr); }
-.usage-metrics__catalog label { font-size: .8rem; }
+.usage-metrics__catalog label { font-size: .875rem; }
 .usage-metrics__catalog input { inline-size: 100%; min-block-size: 2.75rem; }
 .usage-metrics__list { list-style: none; margin: .5rem 0 0; padding: 0; }
 .usage-metrics__list li { border-block-end: 1px solid var(--grid); }
 .usage-metrics__list button { align-items: start; background: transparent; border: 0; color: var(--foreground); display: flex; flex-direction: column; gap: .2rem; inline-size: 100%; min-block-size: 3.5rem; padding: .75rem; text-align: start; }
 .usage-metrics__list button:hover { background: var(--surface-raised); }
 .usage-metrics__list button[aria-pressed="true"] { background: var(--secondary); box-shadow: inset 0 -2px var(--foreground); font-weight: 600; }
-.usage-metrics__list button span { font-size: .85rem; overflow-wrap: anywhere; }
-.usage-metrics__list small { color: var(--muted); font-size: .7rem; font-weight: 400; }
-.usage-metrics__pagination { align-items: center; display: flex; font-size: .75rem; gap: .75rem; justify-content: space-between; padding-block-start: .9rem; }
+.usage-metrics__list button span { font-size: .9rem; overflow-wrap: anywhere; }
+.usage-metrics__list small { color: var(--muted); font-size: .8125rem; font-weight: 400; }
+.usage-metrics__pagination { align-items: center; display: flex; font-size: .8125rem; gap: .75rem; justify-content: space-between; padding-block-start: .9rem; }
 .usage-metrics__pagination button { background: transparent; border: 1px solid var(--grid); border-radius: .35rem; color: var(--foreground); min-block-size: 2.75rem; padding-inline: .75rem; }
 .usage-metrics__detail { min-inline-size: 0; scroll-margin-block-start: 1rem; }
 .usage-metrics__detail:focus-visible { outline: 2px solid var(--foreground); outline-offset: 5px; }
 .usage-metrics__detail h3 { font-size: 1.1rem; font-weight: 550; line-height: 1.4; max-inline-size: 55ch; text-wrap: balance; }
 .usage-metrics__value { align-items: baseline; display: flex; flex-wrap: wrap; gap: .35rem .65rem; margin-block: .85rem; }
 .usage-metrics__value strong { font-size: 1.7rem; font-variant-numeric: tabular-nums; font-weight: 550; letter-spacing: -.02em; overflow-wrap: anywhere; }
-.usage-metrics__value span { color: var(--muted); font-size: .8rem; }
-.usage-metrics__detail > p, .usage-metrics__unavailable { font-size: .85rem; line-height: 1.6; max-inline-size: 65ch; }
+.usage-metrics__value span { color: var(--muted); font-size: .875rem; }
+.usage-metrics__detail > p, .usage-metrics__unavailable { font-size: .9rem; line-height: 1.6; max-inline-size: 65ch; }
 .usage-metrics__unavailable p + p { margin-block-start: .6rem; }
 .usage-metrics__unavailable a { display: inline-block; padding-block: .65rem; }
 .usage-metrics__definition { border-block: 1px solid var(--grid); margin-block: 1.25rem; padding-block: .3rem; }
 .usage-metrics__definition > div { display: grid; gap: 1rem; grid-template-columns: 8rem minmax(0, 1fr); padding-block: .55rem; }
-.usage-metrics__definition dt { color: var(--muted); font-size: .75rem; }
-.usage-metrics__definition dd { font-size: .75rem; font-variant-numeric: tabular-nums; margin: 0; overflow-wrap: anywhere; }
+.usage-metrics__definition dt { color: var(--muted); font-size: .8125rem; }
+.usage-metrics__definition dd { font-size: .8125rem; font-variant-numeric: tabular-nums; margin: 0; overflow-wrap: anywhere; }
 .usage-metrics__definition code { font-family: inherit; font-variant-numeric: tabular-nums; }
 .usage-metrics__controls { align-items: end; display: flex; flex-wrap: wrap; gap: .75rem; margin-block: 1.25rem; }
 .usage-metrics__controls select { min-block-size: 2.75rem; }
@@ -44,22 +44,22 @@
 @media (max-width: 390px) { .usage-metrics__list { grid-template-columns: minmax(0, 1fr); } }
 .usage-rich { margin-block-start: .5rem; }
 .usage-rich .usage-stats__section-heading h3 { font-size: 1rem; font-weight: 550; }
-.usage-rich .usage-stats__section-heading p { color: var(--muted); font-size: .8rem; margin-block-start: .35rem; max-inline-size: 65ch; }
+.usage-rich .usage-stats__section-heading p { color: var(--muted); font-size: .875rem; margin-block-start: .35rem; max-inline-size: 65ch; }
 .usage-rich__exports { display: flex; flex-wrap: wrap; gap: .25rem 1rem; }
 .usage-rich__controls { display: grid; gap: .75rem 1rem; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); margin-block: 1.25rem; }
-.usage-rich__controls label { display: grid; font-size: .75rem; gap: .35rem; }
+.usage-rich__controls label { display: grid; font-size: .8125rem; gap: .35rem; }
 .usage-rich__controls select { inline-size: 100%; min-block-size: 2.75rem; }
 .usage-rich__question { font-size: 1rem; font-weight: 550; margin-block: 1rem .25rem; max-inline-size: 55ch; text-wrap: balance; }
-.usage-rich__reason { font-size: .85rem; line-height: 1.6; max-inline-size: 65ch; }
+.usage-rich__reason { font-size: .9rem; line-height: 1.6; max-inline-size: 65ch; }
 .usage-rich__distribution { margin-block: 1.25rem; }
 .usage-rich__percentiles td { font-variant-numeric: tabular-nums; white-space: nowrap; }
-.usage-rich__percentiles code { color: var(--muted); font-family: inherit; font-size: .7rem; }
+.usage-rich__percentiles code { color: var(--muted); font-family: inherit; font-size: .8125rem; }
 .usage-rich__histogram { display: grid; gap: .3rem; list-style: none; margin: 1rem 0 0; padding: 0; }
-.usage-rich__histogram li { align-items: center; display: grid; font-size: .72rem; font-variant-numeric: tabular-nums; gap: .5rem; grid-template-columns: minmax(8rem, 12rem) minmax(0, 1fr) 3.5rem; min-block-size: 1.25rem; }
+.usage-rich__histogram li { align-items: center; display: grid; font-size: .8125rem; font-variant-numeric: tabular-nums; gap: .5rem; grid-template-columns: minmax(8rem, 12rem) minmax(0, 1fr) 3.5rem; min-block-size: 1.25rem; }
 .usage-rich__bin { color: var(--muted); overflow-wrap: anywhere; }
 .usage-rich__bar { background: linear-gradient(to right, var(--usage-bar-base), var(--usage-bar-top)); block-size: .75rem; border-radius: 0 4px 4px 0; display: block; inline-size: var(--share, 0%); min-inline-size: 1px; }
 .usage-rich__count { text-align: end; }
-.usage-rich__drilldown summary span { color: var(--muted); font-size: .75rem; margin-inline-start: .5rem; }
+.usage-rich__drilldown summary span { color: var(--muted); font-size: .8125rem; margin-inline-start: .5rem; }
 .usage-rich__drilldown .usage-stats__text-button { min-block-size: 2.75rem; }
 @media (max-width: 720px) { .usage-rich__histogram li { grid-template-columns: minmax(0, 1fr) 3rem; } .usage-rich__histogram .usage-rich__bar { grid-column: 1 / -1; } .usage-rich__controls { grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); } }
 .usage-metrics__exports { display: flex; flex-wrap: wrap; gap: .5rem; }
