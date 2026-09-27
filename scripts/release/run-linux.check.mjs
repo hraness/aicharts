@@ -121,7 +121,7 @@ function fixture(t) {
       assert.equal(options.cwd, join(outputDirectory, "smoke"));
       const response = value => result(JSON.stringify(value));
       if (args[0] === "--version") return response({ schemaVersion: 1, operation: "version", version: "0.1.0", provenance: "unverified", build: { os: "linux", arch: "x86_64", sourceCommit: null } });
-      if (args[0] === "--help") return result("synthetic help --complete-prefix\n");
+      if (args[0] === "--help" || (args[0] === "sync" && args[1] === "--help")) return result("synthetic help --complete-prefix\n");
       if (args[0] === "stats") {
         assert.equal(executable, join(outputDirectory, "install/aicharts-0.1.0-" + TARGET + "/bin/aicharts"));
         const home = join(options.cwd, "stats-home"), date = args[8];
@@ -633,7 +633,7 @@ test("post-smoke installed binary or BUILD mutation cannot receive qualification
     const f = fixture(t); const original = f.host.execute;
     f.host.execute = async (executable, args, options) => {
       const observed = await original(executable, args, options);
-      if (executable.includes("/install/") && args[0] === "--help") {
+      if (executable.includes("/install/") && args[0] === "sync" && args[1] === "--help") {
         const root = dirname(dirname(executable));
         assert.equal(fs.existsSync(join(root, member)), true);
         fs.appendFileSync(join(root, member), "mutation after successful smoke");
