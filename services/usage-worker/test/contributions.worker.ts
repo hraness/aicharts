@@ -5,7 +5,7 @@ import { ensureContributionJournal, readContributionJournalRoot, readContributio
   type VerifiedContributionJournal } from "../src/contributions-journal";
 import { ContributionState, CONTRIBUTION_MAX_METADATA_BYTES } from "../src/contributions-state";
 import { ensureContributionBody, readContributionBody, resolveContributionReference, type VerifiedContributionBody } from "../src/contributions-objects";
-import { CONTRIBUTION_IDENTITY, CONTRIBUTION_MAX_HEADS, CONTRIBUTION_MAX_IMMUTABLE_BYTES,
+import { CONTRIBUTION_IDENTITY, CONTRIBUTION_MAX_HEADS, CONTRIBUTION_MAX_IMMUTABLE_BYTES, CONTRIBUTION_MAX_MEMBERS,
   CONTRIBUTION_PROFILE, ContributionFault, contributionBodyHash, contributionHash, contributionPayloadHash,
   parseContributionBatch, type ContributionAuthority, type ContributionBatch, type ContributionMutation, type ContributionResult,
   type ContributionMigrationRequest, type ContributionMigrationReceipt, type ContributionTerminal } from "../../../lib/usage/contributions";
@@ -262,6 +262,19 @@ describe("V3 additive SQL and immutable numeric bodies", () => {
     await onState(state => state.commit(clear, body, authority(), journal));
     expect(await onState(state => state.members(POPULATION))).toEqual([]);
     expect((await snapshot()).control.immutableBytes).toBe(reserved.control.immutableBytes);
+  });
+  test("populations grow past the replacement enumeration bound; replacement on an unbounded copy refuses as limit", async () => {
+    // Ordinary puts bound membership by the association table, not the 8,192-item
+    // replacement enumeration; only a full replacement needs the smaller bound.
+    await fresh();
+    await onState(state => {
+      state.sql.exec("UPDATE usage_contribution_populations SET member_count=? WHERE id=?", CONTRIBUTION_MAX_MEMBERS, POPULATION);
+      state.sql.exec("UPDATE usage_contribution_control SET membership_count=? WHERE id=1", CONTRIBUTION_MAX_MEMBERS);
+    });
+    await publish(await request([{ id: 9, input: 7 }]));
+    expect(await onState(state => state.population(POPULATION)?.memberCount)).toBe(CONTRIBUTION_MAX_MEMBERS + 1);
+    const swap = await request([{ id: 9, input: 7 }], POPULATION, DEVICE, { replacement: { members: [hex(9, 32)] } });
+    await expectsFault(() => onState(state => state.reserve(swap, authority())), "limit");
   });
   test("a journal proof cannot be minted from a missing page, forged charge or copied capability", async () => {
     await fresh(); const batch = await request([{ id: 1, input: 120 }]);

@@ -180,7 +180,7 @@ export function parseContributionPopulation(value: unknown): ContributionPopulat
     const raw = statsOwnRecord(value, ["id", "generation", "deviceId", "writerRevision", "revision", "headHash", "memberCount"]);
     return raw && contributionIdentity(raw.id) && contributionIdentity(raw.generation) && contributionIdentity(raw.deviceId)
       && statsInteger(raw.writerRevision, 1, CONTRIBUTION_MAX_OPERATIONS) && statsInteger(raw.revision, 0, CONTRIBUTION_MAX_OPERATIONS)
-      && contributionHex(raw.headHash) && statsInteger(raw.memberCount, 0, CONTRIBUTION_MAX_MEMBERS)
+      && contributionHex(raw.headHash) && statsInteger(raw.memberCount, 0, CONTRIBUTION_MAX_ASSOCIATIONS)
       && ((raw.revision === 0) === (raw.headHash === CONTRIBUTION_ZERO_HASH))
       ? Object.freeze({ id: raw.id, generation: raw.generation, deviceId: raw.deviceId, writerRevision: raw.writerRevision,
         revision: raw.revision, headHash: raw.headHash, memberCount: raw.memberCount }) : null;
@@ -480,6 +480,9 @@ export function planContribution(view: ContributionView, value: ContributionBatc
     memberships.set(mutation.id, { id: mutation.id, headHash: next.headHash });
   }
   if (batch.replacement) {
+    // A full enumeration is bounded by the replacement wire limit; populations
+    // grown past it by ordinary puts refuse replacement as a capacity fault.
+    if (population.memberCount > CONTRIBUTION_MAX_MEMBERS) throw new ContributionFault("limit");
     const desired = new Set(batch.replacement.members), current = view.members();
     if (current.length !== population.memberCount || current.length > CONTRIBUTION_MAX_MEMBERS
       || new Set(current.map(member => member.id)).size !== current.length) throw new ContributionFault("storage_invalid");
@@ -488,7 +491,7 @@ export function planContribution(view: ContributionView, value: ContributionBatc
   }
   if (headCount < 0 || membershipCount < 0 || populationCount < 0) throw new ContributionFault("storage_invalid");
   if (headCount > CONTRIBUTION_MAX_HEADS || membershipCount > CONTRIBUTION_MAX_ASSOCIATIONS
-    || populationCount > CONTRIBUTION_MAX_MEMBERS || [...heads.values()].some(head => head.members > CONTRIBUTION_MAX_POPULATIONS))
+    || populationCount > CONTRIBUTION_MAX_ASSOCIATIONS || [...heads.values()].some(head => head.members > CONTRIBUTION_MAX_POPULATIONS))
     throw new ContributionFault("limit");
   const populationHead = contributionHash(`aicharts:population-history:v3\0${JSON.stringify([population.headHash, bodyHash])}`);
   const updatedPopulation = { ...population, revision: population.revision + 1, headHash: populationHead, memberCount: populationCount };
