@@ -13,7 +13,8 @@ assert.ok(process.argv.slice(2).every(argument => argument === "--production"), 
 const config = JSON.parse(await readFile(resolve(root, "scripts/public-site-browser.json"), "utf8"));
 const manifest = JSON.parse(await readFile(resolve(root, ".next/prerender-manifest.json"), "utf8"));
 const allowed = route => config.prefixes.some(prefix => prefix === "*" || route === prefix || (prefix !== "/" && route.startsWith(prefix + "/")));
-const routes = [...new Set([...config.routes, ...Object.keys(manifest.routes).filter(route => allowed(route) && !route.includes("[") && !route.startsWith("/_") && !route.startsWith("/api/") && !/\.[a-z0-9]+$/iu.test(route) && !/\/(opengraph-image|twitter-image|icon|apple-icon)(\/|$)/u.test(route))])].sort();
+// Prerendered route handlers (downloads such as /data/benchmark-atlas/<id>) have no RSC data route.
+const routes = [...new Set([...config.routes, ...Object.keys(manifest.routes).filter(route => allowed(route) && manifest.routes[route].dataRoute !== null && !route.includes("[") && !route.startsWith("/_") && !route.startsWith("/api/") && !/\.[a-z0-9]+$/iu.test(route) && !/\/(opengraph-image|twitter-image|icon|apple-icon)(\/|$)/u.test(route))])].sort();
 assert.ok(routes.includes("/") && routes.every(route => route.startsWith("/") && !route.startsWith("//")), "Invalid public route inventory");
 assert.ok(routes.length <= 2500, "Unexpectedly large public route inventory");
 const artifacts = resolve(process.env.SITE_BROWSER_ARTIFACTS ?? "/tmp/public-site-browser");
