@@ -71,6 +71,8 @@ describe("focused chart destinations", () => {
     expect(tableStart).toBeGreaterThan(html.indexOf('id="chart"'));
     expect(html).toContain(`<h2 id="coding-configurations-title">All ${snapshot.records.length} configurations</h2>`);
     expect(table).toContain("<caption>Coding-agent configurations in the current snapshot</caption>");
+    // A keyboard user must be able to scroll the wide table on a narrow screen.
+    expect(html).toMatch(/<div aria-label="[^"]+" class="coding-configurations__scroll" role="region" tabindex="0">/u);
     expect(table.match(/<tr>/gu)).toHaveLength(snapshot.records.length + 1);
     const costs = [...table.matchAll(/<td data-column="costUsd">([^<]*)</gu)].map(match => match[1]);
     const rows = codingConfigurationRows(snapshot.records);

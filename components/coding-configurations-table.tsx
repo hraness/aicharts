@@ -13,13 +13,13 @@ export function CodingConfigurationsTable({ snapshot }: Readonly<{ snapshot: Cod
   const rows = codingConfigurationRows(snapshot.records);
   return <section aria-labelledby="coding-configurations-title" className="coding-configurations">
     <h2 id="coding-configurations-title">{`All ${rows.length} configurations`}</h2>
-    <div className="coding-configurations__scroll">
+    <div aria-label="Coding-agent configurations, scroll horizontally for all columns" className="coding-configurations__scroll" role="region" tabIndex={0}>
       <table className="coding-configurations__table">
         <caption>Coding-agent configurations in the current snapshot</caption>
         <thead>
           <tr>
             {CODING_CONFIGURATION_IDENTITY_LABELS.map(label => <th key={label} scope="col">{label}</th>)}
-            {CODING_CONFIGURATION_COLUMNS.map(column => <th key={column.id} scope="col">{column.label}</th>)}
+            {CODING_CONFIGURATION_COLUMNS.map(column => <th data-column={column.id} key={column.id} scope="col">{column.label}</th>)}
           </tr>
         </thead>
         <tbody>
