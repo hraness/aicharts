@@ -2677,19 +2677,17 @@ describe("AI Charts blog discovery", () => {
       expect(structured).not.toHaveProperty("aggregateRating");
       for (const variant of [structured, blogArticleJsonLd(article, null)]) {
         const authors = [variant.author].flat() as Record<string, unknown>[];
-        expect(authors).toEqual([expect.objectContaining({
-          "@type": "Organization",
-          "@id": "https://hraness.com/#organization",
-          name: "Hraness",
-          url: "https://hraness.com",
-        })]);
-        expect(variant.publisher).toEqual({
+        const hraness = {
           "@type": "Organization",
           "@id": "https://hraness.com/#organization",
           name: "Hraness",
           url: "https://hraness.com/",
           logo: "https://hraness.com/icon.png",
-        });
+          sameAs: ["https://github.com/hraness"],
+        };
+        // Author and publisher share one @id, so they must agree field for field.
+        expect(authors).toEqual([hraness]);
+        expect(variant.publisher).toEqual(hraness);
       }
     }
 
