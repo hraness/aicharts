@@ -3,7 +3,7 @@
   "source": {
     "method": "models-api",
     "name": "OpenRouter",
-    "retrievedAt": "2026-09-23T23:45:58.249Z",
+    "retrievedAt": "2026-09-28T15:36:46.769Z",
     "timestampMeaning": "source-added-at",
     "url": "https://openrouter.ai/api/v1/models?sort=newest"
   },
@@ -637,7 +637,6 @@
     {
       "capabilities": {
         "inputModalities": [
-          "audio",
           "file",
           "image",
           "text",
@@ -660,7 +659,6 @@
     {
       "capabilities": {
         "inputModalities": [
-          "audio",
           "file",
           "image",
           "text",
@@ -769,7 +767,6 @@
     {
       "capabilities": {
         "inputModalities": [
-          "audio",
           "file",
           "image",
           "text",
@@ -954,7 +951,6 @@
     {
       "capabilities": {
         "inputModalities": [
-          "audio",
           "file",
           "image",
           "text",
@@ -1105,7 +1101,6 @@
     {
       "capabilities": {
         "inputModalities": [
-          "audio",
           "file",
           "image",
           "text",
