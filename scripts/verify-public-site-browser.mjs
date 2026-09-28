@@ -49,7 +49,7 @@ try {
   }
   browser = await chromium.launch();
   for (const width of [360, 390, 1440]) for (const theme of ["light", "dark"]) {
-    const context = await browser.newContext({ viewport: { width, height: width === 360 ? 740 : width === 390 ? 844 : 900 }, colorScheme: theme });
+    const context = await browser.newContext({ viewport: { width, height: width === 360 ? 740 : width === 390 ? 844 : 900 }, colorScheme: theme, hasTouch: width < 600 });
     try {
       const page = await context.newPage();
       const errors = [];
