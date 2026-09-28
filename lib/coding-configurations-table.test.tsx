@@ -49,4 +49,12 @@ describe("coding configurations table", () => {
     expect(present).toEqual([...present].sort((left, right) => right - left));
     expect(rows).toHaveLength(snapshot.records.length);
   });
+
+  test("escapes backslashes and pipes so a cell cannot split its Markdown row", () => {
+    const [first] = snapshot.records;
+    const markdown = codingConfigurationsMarkdownTable([{ ...first!, agent: "Agent \\| Pipe\nLine" }]);
+    const row = markdown.split("\n").at(-1)!;
+    expect(row).toContain("| Agent \\\\\\| Pipe Line |");
+    expect(row.replace(/\\./gu, "").split("|")).toHaveLength(markdown.split("\n")[0]!.split("|").length);
+  });
 });

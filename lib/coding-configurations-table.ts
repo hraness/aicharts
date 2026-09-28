@@ -90,7 +90,7 @@ export function codingConfigurationCell(column: CodingConfigurationColumn, recor
 }
 
 function markdownCell(text: string): string {
-  return text.replace(/\|/gu, "\\|");
+  return text.replace(/[\\|]/gu, character => `\\${character}`).replace(/\s+/gu, " ");
 }
 
 export function codingConfigurationsMarkdownTable(records: readonly CodingAgentRecord[]): string {
