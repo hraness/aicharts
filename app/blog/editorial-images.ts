@@ -218,6 +218,15 @@ export const BLOG_EDITORIAL_IMAGES = {
     "20260925T142331481Z-image-b610dbf3-4b0/receipt.json",
     "gateway_ed81c1ffbc75415f85306049c6668893.json",
   ),
+  "opus-5-5-coding-agent-index": image(
+    "opus-5-5-coding-agent-index",
+    "A tall matte ivory block stands near the right end of a long low charcoal table, with one thin brass line running left along the table’s edge.",
+    "Claude Code · Opus 5.5 holds the coding-agent chart’s top score and its highest cost per task at once, and every cheaper configuration on the frontier gives up index points.",
+    "af876643af23b783d4949bfe0d1737f32974f15342fa7cb2be324be5365a3725",
+    "89bf0ca0420013ffe9078b787fb535bd633bdd214f074bca7751872cd248d0af",
+    "20260928T144950178Z-image-998872d6-f05/receipt.json",
+    "gateway_df0cd393e68145e5afd13c915ab310d8.json",
+  ),
 } as const satisfies EditorialImageRecord;
 
 export function blogEditorialImage<Slug extends BlogSlug>(

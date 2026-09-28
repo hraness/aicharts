@@ -320,6 +320,26 @@
       },
       "validation": "decode-passed",
       "review": "accepted"
+    },
+    {
+      "slug": "opus-5-5-coding-agent-index",
+      "promptSha256": "89bf0ca0420013ffe9078b787fb535bd633bdd214f074bca7751872cd248d0af",
+      "master": {
+        "path": "/images/blog/opus-5-5-coding-agent-index.webp",
+        "width": 1536,
+        "height": 864,
+        "bytes": 38880,
+        "sha256": "af876643af23b783d4949bfe0d1737f32974f15342fa7cb2be324be5365a3725"
+      },
+      "receiptPath": "artifacts/slopcamera/generated/gateway/20260928T144950178Z-image-998872d6-f05/receipt.json",
+      "jobPath": "artifacts/slopcamera/generated/gateway-jobs/gateway_df0cd393e68145e5afd13c915ab310d8.json",
+      "generator": {
+        "package": "@hraness/slopcamera",
+        "version": "3.2.5",
+        "sourceCommit": "66b4322030f4de24f4d5b6d0c2515c109259f901"
+      },
+      "validation": "decode-passed",
+      "review": "accepted"
     }
   ]
 }
