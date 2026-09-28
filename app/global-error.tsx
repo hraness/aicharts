@@ -18,7 +18,7 @@ export default function GlobalError(props: RouteErrorPageProps) {
       className={initialPalette.className}
       data-palette="tokyo-night"
       data-hraness-material="lantern"
-      data-hraness-pattern="mesh"
+      data-hraness-pattern="none"
       lang="en"
       suppressHydrationWarning
     >

@@ -1,4 +1,3 @@
-import { HeroBackdrop } from "@hraness/design-kit/react";
 import { createPublicSiteMetadata } from "@hraness/web-discovery";
 import { MarketingRelated } from "@hraness/design-kit/react/server";
 import Link from "next/link";
@@ -22,14 +21,6 @@ import {
   site,
 } from "./site";
 
-function TopicIcon({ className, size, slug }: Readonly<{ className: string; size: number; slug: string }>) {
-  // Decorative local SVG; next/image cannot optimize vector sources.
-  return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img className={className} src={`/icons/${slug}.svg`} alt="" aria-hidden="true" width={size} height={size} loading="lazy" decoding="async" />
-  );
-}
-
 import "@/styles/chart-home.css";
 
 export const metadata = createPublicSiteMetadata(searchSite, { canonicalPath: "/" });
@@ -40,14 +31,13 @@ export default function Home() {
   return <>
     <SiteHeader current="/" />
     <main tabIndex={-1} className="chart-home hraness-marketing-main" id="main-content">
-      <header className="chart-page-intro chart-home-hero hraness-material-wall">
-        <HeroBackdrop seed="aicharts" />
+      <header className="chart-page-intro chart-home-hero">
         <p className="chart-page-intro__eyebrow">{homeEyebrow}</p>
         <h1 id="home-title">{homeHeading}</h1>
-        <p>{homeLede}</p>
+        <p className="chart-home-hero__lede">{homeLede}</p>
         <p className="chart-page-intro__actions">
-          <Link href={homePrimaryAction.href}>{homePrimaryAction.label}</Link>
-          <Link href={homeSecondaryAction.href}>{homeSecondaryAction.label}</Link>
+          <Link className="chart-home-hero__primary" href={homePrimaryAction.href}>{homePrimaryAction.label}</Link>
+          <Link className="chart-home-hero__secondary" href={homeSecondaryAction.href}>{homeSecondaryAction.label} <span aria-hidden="true">→</span></Link>
         </p>
       </header>
       <ChartNavigation current="/" />
@@ -57,7 +47,6 @@ export default function Home() {
       <HomeActivityFeed />
       <section aria-labelledby="home-calculator-title" className="home-calculator" data-analytics-surface="home_calculator">
         <div className="home-calculator__copy">
-          <TopicIcon className="home-calculator__icon" size={88} slug="cost-compare" />
           <h2 id="home-calculator-title">Subscription vs API vs GPUs</h2>
           <p>One maxed ChatGPT Pro seat implies a monthly token volume. The calculator prices it five ways: the subscription sticker, OpenAI and DeepSeek API rates, GPUs you buy, and GPUs you rent.</p>
         </div>

@@ -124,8 +124,8 @@
     "sync:icons": "bun run ./scripts/sync-icons.ts"
   },
   "dependencies": {
-    "@hraness/design-kit": "github:hraness/design-kit#v0.22.0",
-    "@hraness/site-footer": "github:hraness/site-footer#v0.19.3",
+    "@hraness/design-kit": "github:hraness/design-kit#v0.23.0",
+    "@hraness/site-footer": "github:hraness/site-footer#v0.20.0",
     "@hraness/suite-accounts": "github:hraness/suite-accounts#v0.9.15",
     "@hraness/ui": "github:hraness/ui#v0.5.18",
     "@hraness/vercel-delivery": "github:hraness/vercel-delivery#v0.1.2",

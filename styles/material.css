@@ -1,14 +1,14 @@
 /* Shared enclosure paint only. Benchmark hues, plot geometry, local exports,
  * and private usage surfaces retain their own semantics and behavior. */
 [data-hraness-material="lantern"] .site-header.hraness-material-chrome {
-  --hraness-marketing-header-background: var(--hraness-material-chrome-paint);
-  --hraness-marketing-header-backdrop: var(--hraness-material-chrome-blur);
+  --hraness-marketing-header-background: var(--background);
+  --hraness-marketing-header-backdrop: none;
   border-block-end-color: var(--hraness-material-seam);
 }
 
 [data-hraness-material="lantern"] .plain-header.hraness-material-chrome {
   --surface: var(--plain-background);
-  background: var(--hraness-material-chrome-paint);
+  background: var(--background);
   border-block-end: 1px solid var(--hraness-material-seam);
 }
 
@@ -17,7 +17,7 @@
 }
 
 [data-hraness-material="lantern"] .ui-top-bar.hraness-material-chrome {
-  background: var(--hraness-material-chrome-paint);
+  background: var(--background);
   border-block-end-color: var(--hraness-material-seam);
 }
 
@@ -30,29 +30,57 @@
   caret-color: var(--hraness-material-focus);
 }
 
-/* A compact lit introduction keeps the chart close to the product promise. */
+/* A flat introduction keeps the chart, the product's proof, right below the
+ * promise: no backdrop, texture, or tinted panel behind the heading. */
 .chart-page-intro.chart-home-hero {
-  isolation: isolate;
-  overflow: clip;
-  position: relative;
-  border-radius: var(--radius-lg);
-  margin-block: .75rem;
-  padding: clamp(1.25rem, 2.5vw, 1.75rem);
+  padding-block: clamp(1.5rem, 3vw, 2rem) 1rem;
 }
-@media (min-width: 720px) {
-  .chart-home-hero { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; column-gap: clamp(1rem, 3vw, 2.5rem); }
-  .chart-home-hero > .chart-page-intro__actions { grid-column: 2; grid-row: 1 / -1; margin-top: 0; }
+.chart-page-intro.chart-home-hero h1 {
+  font-family: var(--font-text, var(--font-sans));
+  font-size: clamp(2rem, 1.5rem + 1vw, 2.375rem);
+  font-weight: 550;
+  letter-spacing: -.035em;
+  line-height: 1.05;
+  max-inline-size: 35ch;
+  text-wrap: balance;
 }
-.chart-home-hero > :not([data-hraness-hero-backdrop]) { position: relative; z-index: 1; }
-.chart-home-hero h1 { text-wrap: balance; }
-.chart-home-hero > p { text-wrap: pretty; }
+.chart-home-hero > .chart-home-hero__lede {
+  font-size: clamp(1.0625rem, 1rem + .3vw, 1.1875rem);
+  line-height: 1.55;
+  margin-top: 1rem;
+  max-inline-size: 42rem;
+  text-wrap: pretty;
+}
+.chart-home-hero > .chart-page-intro__actions {
+  align-items: center;
+  gap: .75rem 1.5rem;
+  margin-top: 1rem;
+}
+.chart-home-hero .chart-home-hero__primary {
+  align-items: center;
+  background: var(--foreground);
+  border-radius: 999px;
+  color: var(--background);
+  display: inline-flex;
+  min-block-size: 44px;
+  padding-inline: 1.25rem;
+  text-decoration: none;
+}
+.chart-home-hero .chart-home-hero__primary:hover { background: color-mix(in oklab, var(--foreground) 86%, var(--background)); }
+.chart-home-hero .chart-home-hero__secondary {
+  align-items: center;
+  display: inline-flex;
+  gap: .35rem;
+  min-block-size: 44px;
+  text-decoration: none;
+}
+.chart-home-hero .chart-home-hero__secondary:hover { text-decoration: underline; }
 
-[data-hraness-material="lantern"] :is(.home-calculator, .home-activity__list a, .home-index-strip__row .model-logo-card) {
-  border-color: transparent;
+[data-hraness-material="lantern"] :is(.home-activity__list a, .home-index-strip__row .model-logo-card) {
+  border-color: var(--grid);
   background-color: var(--surface);
-  box-shadow: var(--hraness-material-lift);
+  box-shadow: none;
 }
-[data-hraness-material="lantern"] .home-calculator__cta { border-color: transparent; box-shadow: var(--hraness-material-lift); }
 [data-hraness-material="lantern"] :is(.home-activity, .coding-benchmark-links, .aicharts-ask-ai) { border-top: 0; }
 [data-hraness-material="lantern"] :is(.home-activity__heading p, .home-index-strip__heading p, .home-calculator p, .home-activity__detail) { font-size: 1rem; line-height: 1.65; }
 [data-hraness-material="lantern"] :is(.home-activity__kind, .home-activity__list time) { font-size: .8125rem; letter-spacing: 0; text-transform: none; }
@@ -92,7 +120,7 @@
   .usage-stats input, .usage-stats select
 ) {
   background: var(--surface);
-  border-color: transparent;
+  border-color: var(--line);
   border-radius: var(--radius-lg);
   box-shadow: var(--hraness-material-inset);
   caret-color: var(--hraness-material-focus);
@@ -105,7 +133,7 @@
   .usage-stats__toolbar, .usage-stats__custom, .usage-stats__notice, .usage-stats__day-detail,
   .usage-totals
 ) {
-  border: 1px solid transparent;
+  border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   background: var(--surface);
   box-shadow: var(--hraness-material-lift);

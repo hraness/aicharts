@@ -253,7 +253,7 @@ async function verifyBenchmarkAtlas(browser: Browser, baseUrl: string): Promise<
     const pareto = page.locator(".intelligence-efficiency__frontier-line");
     invariant(await pareto.isVisible(), "The original Pareto curve must be visible on a fresh visit, without a disclosure.");
     const paretoPosition = await page.locator(".intelligence-efficiency__svg").boundingBox();
-    invariant(paretoPosition !== null && paretoPosition.y < 600, "The Pareto chart must lead the homepage, not be buried below the benchmark library.");
+    invariant(paretoPosition !== null && paretoPosition.y < 600, `The Pareto chart must lead the homepage, not be buried below the benchmark library (top: ${paretoPosition?.y ?? "missing"}px; limit: 600px).`);
     invariant(await page.locator("#advanced-charts").count() === 0, "Primary Pareto charts must not be hidden as advanced content.");
     const intelligence = page.locator(".intelligence-efficiency");
     invariant((await intelligence.textContent())?.includes("Intelligence Index v4.3"), "The leading Pareto chart must identify the admitted current index version.");
@@ -391,7 +391,9 @@ async function verifyBenchmarkAtlas(browser: Browser, baseUrl: string): Promise<
           page.waitForURL(`${baseUrl}${bookmark.destination}`, { waitUntil: "domcontentloaded" }),
           page.goto(`${baseUrl}${bookmark.source}`, { waitUntil: "domcontentloaded" }),
         ]);
-        await page.locator(bookmark.target).waitFor({ state: "visible" });
+        // Cached Next.js routes may retain a hidden copy of the same anchor.
+        // Require the destination's visible target rather than matching that copy.
+        await page.locator(bookmark.target).filter({ visible: true }).waitFor({ state: "visible" });
         invariant(page.url() === `${baseUrl}${bookmark.destination}`, bookmark.message);
       } catch (cause: unknown) {
         throw new Error(bookmark.message, { cause });

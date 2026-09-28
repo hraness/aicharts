@@ -82,7 +82,11 @@ describe("formal tool provisioning admission", () => {
     const ciJobs = Object.values(workflow.jobs as Record<string, { steps?: { run?: string }[] }>);
     const ciRuns = new Set(ciJobs.flatMap(job => (job.steps ?? []).map(step => step.run)));
     for (const command of gateCommands) expect(ciRuns.has(command)).toBe(true);
-    expect(workflow.jobs.build.steps.map((step: { run?: string }) => step.run).filter(Boolean).slice(-2)).toEqual(["bun run build", "bun run test:browser"]);
+    expect(workflow.jobs.build.steps.map((step: { run?: string }) => step.run).filter(Boolean).slice(-5)).toEqual([
+      "bun run build", "bun run test:browser", "node node_modules/playwright-core/cli.js install --with-deps chromium",
+      "node scripts/verify-public-site-browser.mjs", "node scripts/verify-public-site-browser.mjs --production",
+    ]);
+    expect(workflow.jobs.build.steps.find((step: { run?: string }) => step.run === "node scripts/verify-public-site-browser.mjs --production").if).toBe("github.event_name == 'workflow_dispatch' && inputs.production");
     expect(workflow.jobs.menubar.steps.some((step: { run?: string }) => step.run?.includes("cargo build --release --locked"))).toBe(true);
     for (const name of ["rust", "menubar", "formal"]) expect(workflow.jobs[name].needs).toEqual(["changes"]);
     expect(workflow.jobs.checks.if).toBeUndefined();
