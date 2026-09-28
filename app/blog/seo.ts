@@ -42,6 +42,47 @@ const BLOG_ARTICLE_AUTHOR_PARTY: ArticleParty = {
   url: "https://hraness.com",
 };
 
+/** The Hraness organization node that hraness.com defines; linked by @id rather than redefined. */
+export const HRANESS_ORGANIZATION_ID = "https://hraness.com/#organization" as const;
+
+const hranessAuthor = {
+  "@type": "Organization",
+  "@id": HRANESS_ORGANIZATION_ID,
+  name: BLOG_ARTICLE_AUTHOR.name,
+  url: BLOG_ARTICLE_AUTHOR_PARTY.url,
+  sameAs: BLOG_ARTICLE_AUTHOR_PARTY.sameAs,
+} as const;
+
+export const BLOG_PUBLISHER_JSON_LD = {
+  "@type": "Organization",
+  "@id": HRANESS_ORGANIZATION_ID,
+  name: "Hraness",
+  url: "https://hraness.com/",
+  logo: "https://hraness.com/icon.png",
+} as const;
+
+/**
+ * The pinned shared builder cannot emit @id on parties, so the article node is
+ * post-processed here: the Hraness author gains its @id and the publisher
+ * becomes the Hraness organization.
+ */
+function linkHranessParties(
+  jsonLd: Readonly<Record<string, unknown>>,
+): Readonly<Record<string, unknown>> {
+  const withId = (party: unknown) => (
+    typeof party === "object" && party !== null
+      && (party as { name?: unknown }).name === BLOG_ARTICLE_AUTHOR.name
+      ? { ...hranessAuthor, ...(party as object), "@id": HRANESS_ORGANIZATION_ID }
+      : party
+  );
+  const author = jsonLd.author;
+  return {
+    ...jsonLd,
+    author: Array.isArray(author) ? author.map(withId) : withId(author),
+    publisher: BLOG_PUBLISHER_JSON_LD,
+  };
+}
+
 const blogSearchSite = {
   ...searchSite,
   description: blogDescription,
@@ -215,7 +256,7 @@ export function blogArticleJsonLd(
     blogEditorialImage(article.slug) ?? null,
 ): Readonly<Record<string, unknown>> {
   if (editorialImage !== null) {
-    return articleJsonLd(searchSite, articleDiscovery(article, editorialImage));
+    return linkHranessParties(articleJsonLd(searchSite, articleDiscovery(article, editorialImage)));
   }
   const path = blogArticlePath(article.slug);
   const url = absoluteWebUrl(searchSite.origin, path);
@@ -231,17 +272,8 @@ export function blogArticleJsonLd(
     description: article.seoDescription,
     datePublished: isoDateTime(article.publishedAt),
     dateModified: isoDateTime(article.updatedAt),
-    author: {
-      "@type": "Organization",
-      name: BLOG_ARTICLE_AUTHOR.name,
-      url: BLOG_ARTICLE_AUTHOR_PARTY.url,
-      sameAs: BLOG_ARTICLE_AUTHOR_PARTY.sameAs,
-    },
-    publisher: {
-      "@type": "Organization",
-      name: site.name,
-      url: absoluteWebUrl(searchSite.origin, "/"),
-    },
+    author: hranessAuthor,
+    publisher: BLOG_PUBLISHER_JSON_LD,
     isPartOf: {
       "@id": `${absoluteWebUrl(searchSite.origin, "/")}#website`,
     },

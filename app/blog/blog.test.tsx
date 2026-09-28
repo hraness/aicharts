@@ -2675,6 +2675,22 @@ describe("AI Charts blog discovery", () => {
       expect(structured.articleSection).toBe(blogArticleSection(article));
       expect(structured).not.toHaveProperty("review");
       expect(structured).not.toHaveProperty("aggregateRating");
+      for (const variant of [structured, blogArticleJsonLd(article, null)]) {
+        const authors = [variant.author].flat() as Record<string, unknown>[];
+        expect(authors).toEqual([expect.objectContaining({
+          "@type": "Organization",
+          "@id": "https://hraness.com/#organization",
+          name: "Hraness",
+          url: "https://hraness.com",
+        })]);
+        expect(variant.publisher).toEqual({
+          "@type": "Organization",
+          "@id": "https://hraness.com/#organization",
+          name: "Hraness",
+          url: "https://hraness.com/",
+          logo: "https://hraness.com/icon.png",
+        });
+      }
     }
 
     const imageLessCollection = blogCollectionJsonLd(imageLessLookup);
