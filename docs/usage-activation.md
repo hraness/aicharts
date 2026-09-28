@@ -6,6 +6,25 @@ rollback checks are complete.
 
 ## Recorded production evidence
 
+On September 28 (UTC), worker version
+`f971b7c1-7f1f-419e-94fa-90c819a500de` (commit `7e38d5f`,
+[PR 533](https://github.com/hraness/aicharts/pull/533)) was uploaded with
+`wrangler versions upload` and promoted to 100% traffic at 00:27Z. Its
+bindings (all eleven vars with full values, four Durable Object namespaces and
+both buckets), runtime settings and script settings matched the live
+`216b9313-cf74-447e-b95b-674f63007042`, which is the retained rollback version.
+The revision admits Cursor rows up to 2^30 tokens per record, because Cursor
+reports one record per agent request; every other client keeps 2^23. After
+promotion a malformed snapshot request returned 400 and the device totals read
+succeeded. The primary collector then published Cursor for September 11–27
+(revision 315), including ten days the old bound refused, and its scheduled
+cycle completed with Claude Code, Devin CLI, Codex and Cursor published. The
+same day it backfilled its own history: Codex from July 30 (revision 302) and
+Devin CLI from September 5 (revision 303). Claude Code needed no backfill; its
+September 2–10 days are the retained heads of an earlier qualification
+enrollment on the same Mac, so republishing them from this device would count
+them twice.
+
 On September 27 (UTC), worker version
 `216b9313-cf74-447e-b95b-674f63007042` (commit `516b2b9`,
 [PR 525](https://github.com/hraness/aicharts/pull/525)) was uploaded with
