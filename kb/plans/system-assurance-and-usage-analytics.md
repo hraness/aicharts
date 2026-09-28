@@ -2146,3 +2146,14 @@ sweep drained — 137 files published (~167 sequences, revision 180), with the
 remaining refusals all decided integrity boundaries (`no_observations`,
 `legacy_unresolved`, `invalid_counters`). Leaderboard consent still pending
 the browser-session decision.
+
+**2026-09-28 (Cursor request bound):** The 2^23 per-record admission bound
+assumed every registered client is event-granular. Cursor is not: its usage
+API reports one record per agent request, and a request bundles every model
+call in that run. Of 57,950 cached Cursor events on the primary collector, 143
+exceed 8,388,608 tokens; the largest is 83,659,624 (82.4M cache reads, billed
+$106.05). Ten of the seventeen days since 2026-09-11 therefore failed
+`stats_report_invalid` locally and could never publish. Cursor rows now use
+their own 2^30 bound (`STATS_MAX_TOKENS_PER_REQUEST_RECORD`, mirrored by the
+CLI's `max_tokens_per_record`); every event-granular client keeps 2^23, so the
+forked-rollout leak guard is unchanged.

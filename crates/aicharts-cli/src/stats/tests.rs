@@ -269,6 +269,25 @@ fn persisted_reports_reject_invalid_coverage_and_private_identifiers() {
 }
 
 #[test]
+fn cursor_request_records_have_their_own_plausibility_bound() {
+    // One observed Cursor agent request: 83,659,624 tokens, almost all cache
+    // reads, billed $106.05. Event-granular clients still refuse that total.
+    let other = [30u128, 10, 20, 5].into_iter().sum::<u128>();
+    let with = |client: &str, total: u128| {
+        let mut r = report_fixture();
+        r.sources[0].client = client.into();
+        r.rows[0].client = client.into();
+        r.rows[0].tokens.input = (total - other).to_string();
+        r
+    };
+    validate_report(&with("cursor", 83_659_624)).unwrap();
+    validate_report(&with("cursor", 1_073_741_824)).unwrap();
+    assert!(validate_report(&with("cursor", 1_073_741_825)).is_err());
+    assert!(validate_report(&with("codex", 83_659_624)).is_err());
+    assert_eq!(max_tokens_per_record("claude"), 8_388_608);
+}
+
+#[test]
 fn native_report_matches_shared_json_fixture() {
     let expected: Report =
         serde_json::from_str(include_str!("../../../../fixtures/usage/stats-v2.json")).unwrap();
