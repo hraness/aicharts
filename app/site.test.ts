@@ -8,6 +8,7 @@ import {
   homePrimaryAction,
   homeSecondaryAction,
   notFoundRecoveryLinks,
+  modelCardTitle,
   notFoundSearchSite,
   searchSite,
   site,
@@ -16,8 +17,13 @@ import {
 describe("AI Charts public positioning", () => {
   test("carries the canonical product messaging", () => {
     // Canonical lines come from the portfolio messaging record (hraness/jungle
-    // a9988b903): the title is the product name plus the tagline.
-    expect(searchSite.title).toBe(`${site.name} | ${site.tagline}`);
+    // a9988b903). The search title leads with the product name and names the
+    // comparison a searcher looks for; the tagline stays the visible heading.
+    expect(searchSite.title.startsWith(`${site.name}: `)).toBeTrue();
+    for (const fact of ["benchmark scores", "cost per task"]) {
+      expect(searchSite.title).toContain(fact);
+    }
+    expect(searchSite.title.length).toBeLessThanOrEqual(60);
     expect(searchSite.title).not.toContain("&");
     expect(site.tagline).toBe("See which model wins at each price.");
     expect(site.category).toBe("AI model comparison charts");
@@ -40,6 +46,13 @@ describe("AI Charts public positioning", () => {
     expect(searchSite.description).toBe(site.description);
     expect(searchSite.origin).toBe("https://aicharts.io");
     expect(site.description.length).toBeLessThanOrEqual(160);
+  });
+
+  test("names the reader's comparison in model page titles", () => {
+    const title = modelCardTitle("Claude Opus 5.5 Max");
+    expect(title.startsWith("Claude Opus 5.5 Max")).toBeTrue();
+    expect(title).toContain("cost per task");
+    expect(title.endsWith(`| ${site.name}`)).toBeTrue();
   });
 
   test("keeps the 404 page out of homepage identity", () => {

@@ -44,7 +44,7 @@ describe("page metadata ownership", () => {
     for (const [metadata, path, title] of [
       [codingMetadata, "/coding", "Coding agent comparisons | AI Charts"],
       [benchmarksMetadata, "/benchmarks", "AI benchmark explorer | AI Charts"],
-      [calculatorMetadata, "/calculator", "Subscription vs API vs GPUs | AI Charts"],
+      [calculatorMetadata, "/calculator", "ChatGPT Pro vs API vs GPUs: cost calculator | AI Charts"],
     ] as const) {
       expect(metadata).toMatchObject({
         title,

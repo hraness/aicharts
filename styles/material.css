@@ -82,7 +82,7 @@
   box-shadow: none;
 }
 [data-hraness-material="lantern"] :is(.home-activity, .coding-benchmark-links, .aicharts-ask-ai) { border-top: 0; }
-[data-hraness-material="lantern"] :is(.home-activity__heading p, .home-index-strip__heading p, .home-calculator p, .home-activity__detail) { font-size: 1rem; line-height: 1.65; }
+[data-hraness-material="lantern"] :is(.home-activity__heading p, .home-index-strip__heading p, .home-about p, .home-calculator p, .home-activity__detail) { font-size: 1rem; line-height: 1.65; }
 [data-hraness-material="lantern"] :is(.home-activity__kind, .home-activity__list time) { font-size: .8125rem; letter-spacing: 0; text-transform: none; }
 [data-hraness-material="lantern"] .plain-publication { line-height: 1.75; }
 [data-hraness-material="lantern"] .plain-publication :is(pre, .plain-publication__table-scroll) { min-inline-size: 0; max-inline-size: 100%; overflow-x: auto; overscroll-behavior-inline: contain; }

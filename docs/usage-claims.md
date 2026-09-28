@@ -20,7 +20,7 @@ Dated evidence is evidence for its own commit at its own time. Rerun the named c
 
 | Surface | State on 2026-09-25 |
 | --- | --- |
-| Linux x86-64 CLI | Qualified by run 36109602971 for `40874b2186a399ecde237c019aa75a8b2c4a0793` on 2026-09-25 (artifact retained), after runs 36066135869 (`fc95b51`, `read-link-map`), 36104682547 (`2356eff`, unmapped `aicharts-metrics`) and 36108512661 (`f495d9f`, stale `rustls` notice entry) refused. An earlier qualification, run 35498763628 for `c6b2b3e`, dates from 2026-09-20. No release or tag exists; `.github/workflows/cli-publish.yml` is implemented and unexecuted. |
+| Linux x86-64 CLI | Qualified by run 36109602971 for `40874b2186a399ecde237c019aa75a8b2c4a0793` on 2026-09-25 (artifact retained), after runs 36066135869 (`fc95b51`, `read-link-map`), 36104682547 (`2356eff`, unmapped `aicharts-metrics`) and 36108512661 (`f495d9f`, stale `rustls` notice entry) refused. An earlier qualification, run 35498763628 for `c6b2b3e`, dates from 2026-09-20. Tag `cli-v0.1.0` at `a451604` published release "aicharts CLI 0.1.0 (Linux x86-64)" through publish run 36366527153 on 2026-09-28. |
 | macOS | Source-only for the CLI and companion. One real enrollment and one accepted native upload were recorded on 2026-09-16; on 2026-09-19 the retained CLI returned `attempt_recovery_required`. No notarized or publicly distributed macOS build exists; it needs Apple credentials held by the owner. |
 | Windows | Unsupported. No build, qualification or documentation claim. |
 | Next.js site (`aicharts.io`) | Exact-deployment health verified by `bun run usage:deployment:verify` for `fc95b51` and `1cf93bd` on 2026-09-24, and for `2356eff` (PR 441), `f495d9f` (PR 444) and `40874b2` (PR 446) on 2026-09-25; usage routes remain fenced by the recorded flags. |
@@ -79,8 +79,11 @@ Dated evidence is evidence for its own commit at its own time. Rerun the named c
 | for a proposed Linux CLI, skill, and source distribution | docs/usage-release-archives.md | `bun run release:manifest:check`; no release exists | source-only |
 | Linux ELF/runtime compatibility, complete notices, authenticated immutable acquisition and safe installation remain separate release requirements | docs/usage-release-assembly.md | Separation statement; Linux evidence is run 35498763628 (2026-09-20) | unqualified |
 | qualified Linux toolchain/runtime notices, ELF compatibility, complete source provenance | docs/usage-release-build.md | Separation statement; Linux evidence is run 35498763628 (2026-09-20) | unqualified |
-| turns one retained, nonpublishing Linux qualification into an immutable GitHub Release | docs/usage-release-publish.md | `bun run release:publish:check`; workflow unexecuted | source-only |
-| It is intended as the canonical distribution path for the Linux CLI profile | docs/usage-release-publish.md | No `cli-v*` tag or release exists | unqualified |
+| turns one retained, nonpublishing Linux qualification into an immutable GitHub Release | docs/usage-release-publish.md | Publish run 36366527153 for tag `cli-v0.1.0`, 2026-09-28 | evidenced |
+| It is intended as the canonical distribution path for the Linux CLI profile | docs/usage-release-publish.md | Release `cli-v0.1.0`, 2026-09-28 | evidenced |
+| The first release, [`cli-v0.1.0`] | docs/usage-release-publish.md | Release `cli-v0.1.0`, 2026-09-28 | evidenced |
+| triggered publish run 36366527153, which succeeded on 2026-09-28 | docs/usage-release-publish.md | Publish run 36366527153 for `a451604`, 2026-09-28 | evidenced |
+| and it published `cli-v0.1.0` on 2026-09-28 | docs/usage-release-source.md | Publish run 36366527153, 2026-09-28 | evidenced |
 | selects the newest successful `workflow_dispatch` run of "Qualify Linux CLI" on `main` | docs/usage-release-publish.md | `scripts/release/publish-workflow.test.ts` | source-only |
 | requires `qualified`, `smoke.passed` and `notices.complete` to be true | docs/usage-release-publish.md | `scripts/release/verify-publication.check.mjs` | source-only |
 | produced a passing receipt binding the four checksummed assets | docs/usage-release-publish.md | Local verifier run 2026-09-24 against artifact `linux-qualification-c6b2b3e665cc82b72ab7d64a6a147624c6d1a783-1` | evidenced |

@@ -4,15 +4,23 @@
 cost and tokens per task, marking the best score at every budget. A local
 collector measures your own agents' token use.
 
-The repository also contains a local collector that measures your own coding
-agents' token use. It is in development and has no packaged release yet, so
-[build it from source](docs/usage-local.md#build-and-run). Reports you open on the site stay in your browser tab.
+The collector is in development. A Linux x86-64 build for local reports
+is on [GitHub Releases](https://github.com/hraness/aicharts/releases/latest); on a
+Mac, [build it from source](docs/usage-local.md#build-and-run). Reports you open on the site stay in your browser tab.
 Account sync needs a collector enrolled on a Mac and works only while the site's
 account service is enabled.
 
 The homepage leads with an interactive Pareto frontier: compare model capability against output tokens or cost, then inspect the configuration behind each point. The original coding-agent charts have a focused home at [`/coding`](https://aicharts.io/coding). The separate [`/benchmarks`](https://aicharts.io/benchmarks) library covers coding, reasoning, research, memory, images, video, audio, and world models. Charted results, source guides, and emerging evaluations are labeled separately, and older research cohorts are labeled with their dates.
 
 The site header links Charts (`/`), Benchmarks (`/benchmarks`), Usage (`/usage`), Dashboard (`/dashboard`), Leaderboard (`/leaderboard`), and Notes (`/blog`). Coding comparisons, model pages, and source data are linked where relevant. Legacy root chart and atlas links resolve to the matching workspace; new shares use that workspace’s URL. Each canonical page also has a Markdown representation through `Accept: text/markdown`.
+
+## Compared with
+
+Other places to compare models: [Artificial Analysis](https://artificialanalysis.ai/leaderboards/models) runs the Intelligence Index and Coding Agent Index charted here, and its own leaderboards cover more than 250 models with speed and latency. [Arena](https://arena.ai) (formerly LMArena) ranks models by people's votes in blind side-by-side chats. [Epoch AI](https://epoch.ai/benchmarks) runs its own benchmarks and tracks how capabilities change over time. [OpenRouter](https://openrouter.ai/rankings) lists live API prices and which models its users send the most tokens to. AI Charts puts published scores against cost per task, draws the best score at each budget, and keeps each benchmark on its own scale.
+
+For measuring your own usage, [ccusage](https://ccusage.com) and [Tokscale](https://tokscale.ai) also read coding agents' local logs. ccusage runs without an install and prints daily, weekly, monthly, and session reports. Tokscale adds a web dashboard and a public leaderboard, and the AI Charts collector builds on its open-source parsers. AI Charts shows which sources each total covers, and on a Mac it can sync daily totals to your dashboard.
+
+Checked Sep 28, 2026.
 
 ## Current benchmark portfolio
 

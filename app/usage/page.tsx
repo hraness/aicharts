@@ -4,7 +4,12 @@ import Link from "next/link";
 import { ChartPageFooter } from "@/components/chart-navigation";
 import { SiteHeader } from "@/components/site-header";
 import { CopyCommand } from "@/components/usage/copy-command";
-import { searchSite } from "@/app/site";
+import {
+  formatCheckedOn,
+  homeAlternativesCheckedOn,
+  searchSite,
+  usageReleaseUrl,
+} from "@/app/site";
 
 import "@/styles/usage.css";
 
@@ -42,8 +47,13 @@ export default function UsagePage() {
             <Link className="usage-button usage-button--primary" href="/dashboard">Open your dashboard <span className="usage-button__arrow" aria-hidden="true">→</span></Link>
             <Link className="usage-button usage-button--quiet" href="#usage-setup">Set up tracking</Link>
           </div>
-          <p className="usage-hero__note">In development: build the collector from source, as there is no packaged release yet. Account sync runs on macOS only.</p>
+          <p className="usage-hero__note">In development. A Linux x86-64 build for local reports is on <a href={usageReleaseUrl}>GitHub Releases</a>; on a Mac, build from source. Account sync runs on macOS only.</p>
         </div>
+      </section>
+
+      <section className="usage-section usage-similar" aria-labelledby="usage-similar-title">
+        <h2 id="usage-similar-title">Similar tools</h2>
+        <p><a href="https://ccusage.com">ccusage</a> and <a href="https://tokscale.ai">Tokscale</a> also read coding agents&rsquo; local logs. ccusage runs without an install and prints daily, weekly, monthly, and session reports. Tokscale adds a web dashboard and a public leaderboard, and the AI Charts collector builds on its open-source parsers. AI Charts shows which sources each total covers, and on a Mac it can sync daily totals to your dashboard. Checked {formatCheckedOn(homeAlternativesCheckedOn)}.</p>
       </section>
 
       <section className="usage-section" id="usage-setup" aria-labelledby="usage-setup-title">

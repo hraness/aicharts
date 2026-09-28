@@ -93,6 +93,14 @@ describe("benchmark dataset surface", () => {
     for (const dataset of ATLAS_DATASETS) expect(markup).toContain(`dateTime="${dataset.source.retrievedAt}"`);
     expect(renderedJsonLd(markup, "aicharts-benchmark-atlas-structured-data")).toEqual(atlasDataCatalogJsonLd());
   });
+  test("credits each atlas dataset to the benchmark owner named on /data", () => {
+    const catalog = atlasDataCatalogJsonLd();
+    expect(catalog.dataset).toHaveLength(ATLAS_DATASETS.length);
+    for (const dataset of catalog.dataset) {
+      const entry = ATLAS_ENTRIES.find(candidate => dataset["@id"] === `https://aicharts.io/data#atlas-${candidate.id}`)!;
+      expect(dataset.creator).toEqual({ "@type": "Organization", name: entry.source.name });
+    }
+  });
   test("publishes canonical, indexable page metadata", () => {
     expect(metadata).toMatchObject({
       title: "Benchmark data and method | AI Charts",

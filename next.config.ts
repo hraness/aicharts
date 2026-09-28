@@ -10,6 +10,24 @@ const POSTHOG_UI_HOSTS = new Set([
   "https://us.posthog.com",
 ]);
 
+/**
+ * Model routes that moved to a checked model-card identity. Index-only pages
+ * and provisional `/models/unlisted/...` cards fold into the one canonical card
+ * for that model once its catalog identity and first-party release date land.
+ */
+export const MODEL_ROUTE_REDIRECTS = [
+  ["/models/anthropic/claude-opus-5-5/index", "/models/anthropic/claude-opus-5.5/max"],
+  ["/models/openai/gpt-6-sol/index", "/models/openai/gpt-6-sol/max"],
+  ["/models/openai/gpt-6-luna/index", "/models/openai/gpt-6-luna/max"],
+  ["/models/xai/grok-4-7/index", "/models/spacexai/grok-4.7/xhigh"],
+  ["/models/unlisted/opus-5-5.b958c16d6e9d4ca8979907a4/max", "/models/anthropic/claude-opus-5.5/max"],
+  ["/models/unlisted/gpt-6-sol.51d76cb8a0598a113a64caf1/max", "/models/openai/gpt-6-sol/max"],
+  ["/models/unlisted/gpt-6-luna.e5786855c646d1b4080cc158/max", "/models/openai/gpt-6-luna/max"],
+  ["/models/unlisted/grok-4-7.4d350d6b4877df4c73975497/xhigh", "/models/spacexai/grok-4.7/xhigh"],
+  ["/models/unlisted/grok-4-6.8d0cb9ac05267687236dffd8/xhigh", "/models/spacexai/grok-4.6/xhigh"],
+  ["/models/unlisted/glm-5-3.fffd32adf07098d3cd835ee1/default", "/models/zai/glm-5.3/default"],
+] as const satisfies readonly (readonly [`/models/${string}`, `/models/${string}`])[];
+
 const nextConfig: NextConfig = {
   async redirects() {
     return [
@@ -31,6 +49,11 @@ const nextConfig: NextConfig = {
         permanent: true,
         source: "/:path*",
       },
+      ...MODEL_ROUTE_REDIRECTS.map(([source, destination]) => ({
+        destination,
+        permanent: true,
+        source,
+      })),
       {
         destination: "/blog/open-models-coding-agent-benchmarks",
         permanent: true,

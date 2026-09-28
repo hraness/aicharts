@@ -112,6 +112,20 @@
     ]
   },
   {
+    "canonicalModelId": "anthropic/claude-opus-5.5",
+    "status": "verified",
+    "releasedOn": "2026-09-22",
+    "stage": "public-release",
+    "basis": "announcement",
+    "verifiedOn": "2026-09-28",
+    "sources": [
+      {
+        "title": "Introducing Claude Opus 5.5",
+        "url": "https://www.anthropic.com/claude-opus-5-5"
+      }
+    ]
+  },
+  {
     "canonicalModelId": "anthropic/claude-sonnet-4.6",
     "status": "verified",
     "releasedOn": "2026-02-17",
@@ -446,6 +460,42 @@
     ]
   },
   {
+    "canonicalModelId": "openai/gpt-6-luna",
+    "status": "verified",
+    "releasedOn": "2026-09-22",
+    "stage": "public-release",
+    "basis": "announcement",
+    "verifiedOn": "2026-09-28",
+    "sources": [
+      {
+        "title": "Introducing GPT-6 Sol and Luna",
+        "url": "https://openai.com/index/introducing-gpt-6-sol-and-luna/"
+      },
+      {
+        "title": "OpenAI API changelog",
+        "url": "https://developers.openai.com/changelog"
+      }
+    ]
+  },
+  {
+    "canonicalModelId": "openai/gpt-6-sol",
+    "status": "verified",
+    "releasedOn": "2026-09-22",
+    "stage": "public-release",
+    "basis": "announcement",
+    "verifiedOn": "2026-09-28",
+    "sources": [
+      {
+        "title": "Introducing GPT-6 Sol and Luna",
+        "url": "https://openai.com/index/introducing-gpt-6-sol-and-luna/"
+      },
+      {
+        "title": "OpenAI API changelog",
+        "url": "https://developers.openai.com/changelog"
+      }
+    ]
+  },
+  {
     "canonicalModelId": "spacexai/grok-4.5",
     "status": "verified",
     "releasedOn": "2026-07-16",
@@ -456,6 +506,34 @@
       {
         "title": "Introducing Grok 4.5",
         "url": "https://x.ai/news/grok-4-5"
+      }
+    ]
+  },
+  {
+    "canonicalModelId": "spacexai/grok-4.6",
+    "status": "verified",
+    "releasedOn": "2026-08-12",
+    "stage": "public-release",
+    "basis": "announcement",
+    "verifiedOn": "2026-09-28",
+    "sources": [
+      {
+        "title": "Introducing Grok 4.6",
+        "url": "https://x.ai/news/grok-4-6"
+      }
+    ]
+  },
+  {
+    "canonicalModelId": "spacexai/grok-4.7",
+    "status": "verified",
+    "releasedOn": "2026-09-21",
+    "stage": "public-release",
+    "basis": "announcement",
+    "verifiedOn": "2026-09-28",
+    "sources": [
+      {
+        "title": "Introducing Grok 4.7",
+        "url": "https://x.ai/news/grok-4-7"
       }
     ]
   },
@@ -490,6 +568,20 @@
       {
         "title": "GLM-5.2: Built for Long-Horizon Tasks",
         "url": "https://z.ai/blog/glm-5.2"
+      }
+    ]
+  },
+  {
+    "canonicalModelId": "zai/glm-5.3",
+    "status": "verified",
+    "releasedOn": "2026-08-18",
+    "stage": "public-release",
+    "basis": "release-notes",
+    "verifiedOn": "2026-09-28",
+    "sources": [
+      {
+        "title": "New Released",
+        "url": "https://docs.z.ai/release-notes/new-released"
       }
     ]
   }

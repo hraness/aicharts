@@ -127,6 +127,17 @@ describe("markdown representations", () => {
 
     expect(home).toMatchObject({ found: true, contentType: MARKDOWN_CONTENT_TYPE });
     expect(home.body).toContain(`# ${homeHeading}`);
+    expect(home.body).toContain("## About AI Charts");
+    expect(home.body).toContain(site.introduction);
+    for (const href of [
+      "https://artificialanalysis.ai/leaderboards/models",
+      "https://arena.ai",
+      "https://epoch.ai/benchmarks",
+      "https://openrouter.ai/rankings",
+    ]) {
+      expect(home.body).toContain(`](${href})`);
+    }
+    expect(home.body).toContain("Checked Sep 28, 2026.");
     expect(home.body).toContain(site.origin);
     expect(home.body).toContain(
       `## Artificial Analysis Intelligence Index v${currentIntelligenceData.benchmark.version} efficiency`,
@@ -318,7 +329,8 @@ describe("agent instruction file", () => {
     );
     // The guide names the usage page with its current status.
     expect(guide).toContain("/usage");
-    expect(guide).toContain("no packaged release yet");
+    expect(guide).toContain("[GitHub Releases](https://github.com/hraness/aicharts/releases/latest)");
+    expect(guide).not.toContain("no packaged release yet");
     expect(guide).toContain("answer plus reasoning tokens");
     expect(guide).toContain("Accept: text/markdown");
     expect(guide).toContain("the benchmark owners create the measurements");

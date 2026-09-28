@@ -517,13 +517,16 @@ async function verifyModelLogoCards(browser: Browser, baseUrl: string): Promise<
       "Foil or illumination chrome remains on the gallery.",
     );
     await assertLogoCardArtIsolation(page);
-    const opus55 = page.getByRole("link", { name: /Claude Opus 5\.5/u });
+    const opus55 = page.getByRole("link", { name: /^Open Opus 5\.5 Max model page/u });
     await opus55.click();
-    await page.waitForURL("**/models/anthropic/claude-opus-5-5/index");
+    await page.waitForURL("**/models/anthropic/claude-opus-5.5/max");
     invariant(
-      await page.getByRole("heading", { name: "Claude Opus 5.5", exact: true }).isVisible(),
+      await page.getByRole("heading", { name: "Opus 5.5 Max", exact: true }).isVisible(),
       "The Opus 5.5 page did not render its own title.",
     );
+    // The retired Index-only URL now redirects to the one canonical card.
+    await page.goto(`${baseUrl}/models/anthropic/claude-opus-5-5/index`, { waitUntil: "domcontentloaded" });
+    await page.waitForURL("**/models/anthropic/claude-opus-5.5/max");
     await page.goto(`${baseUrl}/models`, { waitUntil: "domcontentloaded" });
     const mimo = page.getByRole("link", { name: /MiMo-V2\.6-Pro/u });
     await mimo.click();

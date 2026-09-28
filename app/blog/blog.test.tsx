@@ -965,7 +965,7 @@ describe("AI Charts benchmark notes", () => {
       expect(markup).toContain(`href="${BLOG_SOURCES[sourceId].url}"`);
     }
     expect(article.nextStep?.links.map(link => link.href))
-      .toEqual(["/coding", "/models/anthropic/claude-opus-5-5/index", "/data"]);
+      .toEqual(["/coding", "/models/anthropic/claude-opus-5.5/max", "/data"]);
     expect(article.relatedSlugs).toEqual(["opus-5-5-intelligence-index", "aa-index-cost-coding-agents"]);
     expect(markup).toContain(`href="${blogArticlePath("opus-5-5-intelligence-index")}"`);
     expect(markup).toContain(formatRetrievedAt(codingParsed.value.source.retrievedAt));
@@ -1259,7 +1259,7 @@ describe("AI Charts benchmark notes", () => {
       expect(markup).toContain(`href="${BLOG_SOURCES[sourceId].url}"`);
     }
     expect(article.nextStep?.links.map(link => link.href))
-      .toEqual(["/#intelligence-index", "/models/anthropic/claude-opus-5-5/index", "/coding"]);
+      .toEqual(["/#intelligence-index", "/models/anthropic/claude-opus-5.5/max", "/coding"]);
     expect(article.relatedSlugs).toEqual(["opus-5-5-coding-agent-index", "gpt-6-sol-coding-agent-index", "mimo-v2-6-pro-cost-frontier"]);
     expect(markup).toContain(formatRetrievedAt(intelligenceParsed.value.source.retrievedAt));
     expect(markup).toContain(formatRetrievedAt(codingParsed.value.source.retrievedAt));
@@ -1515,7 +1515,7 @@ describe("AI Charts benchmark notes", () => {
       expect(markup).toContain(`href="${BLOG_SOURCES[sourceId].url}"`);
     }
     expect(article.nextStep?.links.map(link => link.href))
-      .toEqual(["/coding", "/#intelligence-index", "/models/openai/gpt-6-sol/index"]);
+      .toEqual(["/coding", "/#intelligence-index", "/models/openai/gpt-6-sol/max"]);
     expect(article.relatedSlugs).toContain("grok-4-7-coding-agent-index");
     expect(markup).toContain(formatRetrievedAt(codingParsed.value.source.retrievedAt));
     expect(markup).toContain(formatRetrievedAt(intelligenceParsed.value.source.retrievedAt));
@@ -1762,7 +1762,7 @@ describe("AI Charts benchmark notes", () => {
     expect(markup.match(new RegExp(`href="${BLOG_SOURCES.xaiGrok47Announcement.url}"`, "gu")))
       .toHaveLength(1);
     expect(article.nextStep?.links.map(link => link.href))
-      .toEqual(["/coding", "/#intelligence-index", "/models/xai/grok-4-7/index"]);
+      .toEqual(["/coding", "/#intelligence-index", "/models/spacexai/grok-4.7/xhigh"]);
     expect(markup).toContain(formatRetrievedAt(codingParsed.value.source.retrievedAt));
     expect(markup).toContain(formatRetrievedAt(intelligenceParsed.value.source.retrievedAt));
     expect(markdown).toContain(intelligenceParsed.value.benchmark.version);
@@ -2675,6 +2675,20 @@ describe("AI Charts blog discovery", () => {
       expect(structured.articleSection).toBe(blogArticleSection(article));
       expect(structured).not.toHaveProperty("review");
       expect(structured).not.toHaveProperty("aggregateRating");
+      for (const variant of [structured, blogArticleJsonLd(article, null)]) {
+        const authors = [variant.author].flat() as Record<string, unknown>[];
+        const hraness = {
+          "@type": "Organization",
+          "@id": "https://hraness.com/#organization",
+          name: "Hraness",
+          url: "https://hraness.com/",
+          logo: "https://hraness.com/icon.png",
+          sameAs: ["https://github.com/hraness"],
+        };
+        // Author and publisher share one @id, so they must agree field for field.
+        expect(authors).toEqual([hraness]);
+        expect(variant.publisher).toEqual(hraness);
+      }
     }
 
     const imageLessCollection = blogCollectionJsonLd(imageLessLookup);

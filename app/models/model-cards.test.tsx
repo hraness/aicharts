@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import ModelCardPage from "@/app/models/[creatorSlug]/[modelSlug]/[profileSlug]/page";
+import ModelCardPage, { generateMetadata } from "@/app/models/[creatorSlug]/[modelSlug]/[profileSlug]/page";
 import ModelCardsPage from "@/app/models/page";
 import { modelCardsHeading, modelCardsLede } from "@/app/site";
 import { ModelCardFace } from "@/components/model-card-face";
@@ -120,7 +120,8 @@ describe("public model cards", () => {
     expect(markup.match(/class="model-logo-card"/gu)).toHaveLength(galleryCount);
     expect(markup).toContain('href="/models/xiaomi/mimo-v2-6-pro/index"');
     expect(markup).toContain("MiMo-V2.6-Pro");
-    expect(markup).toContain('href="/models/anthropic/claude-opus-5-5/index"');
+    expect(markup).toContain('href="/models/anthropic/claude-opus-5.5/max"');
+    expect(markup).not.toContain('href="/models/anthropic/claude-opus-5-5/index"');
     expect(markup).toContain("Claude Opus 5.5");
     expect(markup).not.toContain("data-foil-card-deck");
     expect(markup).not.toContain("data-illumination-finish");
@@ -383,58 +384,39 @@ describe("public model cards", () => {
     expect(markdown).toContain(`${harnessLabel}:`);
   });
 
-  test("publishes Claude Opus 5.5 as its own Index page with publisher scores", async () => {
-    const opus55 = INDEX_MODEL_PAGES.find(page => (
-      page.canonicalModelId === "anthropic/claude-opus-5-5"
+  test.each([
+    ["anthropic/claude-opus-5.5", "/models/anthropic/claude-opus-5.5/max", "Claude Code"],
+    ["openai/gpt-6-sol", "/models/openai/gpt-6-sol/max", "Codex"],
+    ["openai/gpt-6-luna", "/models/openai/gpt-6-luna/max", "Codex"],
+    ["spacexai/grok-4.7", "/models/spacexai/grok-4.7/xhigh", "Grok Build"],
+    ["spacexai/grok-4.6", "/models/spacexai/grok-4.6/xhigh", "Grok Build"],
+    ["zai/glm-5.3", "/models/zai/glm-5.3/default", "Opencode"],
+  ] as const)("publishes %s on one indexable page with its Index score and coding-agent results", async (
+    canonicalModelId,
+    path,
+    agentName,
+  ) => {
+    const card = MODEL_CARD_PRESENTATIONS.find(candidate => (
+      candidate.canonicalModelId === canonicalModelId
     ));
-    if (opus55 === undefined) throw new Error("Expected the Claude Opus 5.5 Index page.");
-    const detailPage = await ModelCardPage({
-      params: Promise.resolve({
-        creatorSlug: opus55.creatorSlug,
-        modelSlug: opus55.modelSlug,
-        profileSlug: opus55.profileSlug,
-      }),
-    });
-    const detailMarkup = renderToStaticMarkup(detailPage);
-    const markdown = markdownForPath(opus55.path).body;
-    expect(detailMarkup).toContain("<h1>Claude Opus 5.5</h1>");
-    expect(detailMarkup).toContain("Anthropic");
-    expect(detailMarkup).toContain("2026-09-22");
-    expect(detailMarkup).toContain("https://artificialanalysis.ai/models/claude-opus-5-5");
-    expect(detailMarkup).not.toContain("Claude Opus 5 Max");
-    expect(detailMarkup).not.toContain("/models/anthropic/claude-opus-5/max");
-    expect(markdown).toContain("# Claude Opus 5.5");
-    expect(markdown).toContain("`anthropic/claude-opus-5-5`");
-    expect(markdown).toContain("https://artificialanalysis.ai/models/claude-opus-5-5");
-    expect(markdownForPath("/models/anthropic/claude-opus-5-5/index").found).toBe(true);
-    expect(markdownForPath("/models/anthropic/claude-opus-5-5").found).toBe(false);
-  });
-
-  test("publishes Claude Code · Opus 5.5 on its unlisted coding-agent route", async () => {
-    const opus55 = MODEL_CARD_PRESENTATIONS.find(card => (
-      card.path === "/models/unlisted/opus-5-5.b958c16d6e9d4ca8979907a4/max"
-    ));
-    if (opus55 === undefined) throw new Error("Expected the Claude Code · Opus 5.5 coding-agent card.");
-    expect(opus55).toMatchObject({
-      canonicalModelId: "unlisted/opus-5-5.b958c16d6e9d4ca8979907a4",
-      model: "Opus 5.5",
-      profileSlug: "max",
-      providerId: "anthropic",
-    });
-    const [creatorSlug, modelSlug] = opus55.canonicalModelId.split("/");
-    const detailPage = await ModelCardPage({
-      params: Promise.resolve({
-        creatorSlug: creatorSlug ?? "unlisted",
-        modelSlug: modelSlug ?? "",
-        profileSlug: opus55.profileSlug,
-      }),
-    });
-    const detailMarkup = renderToStaticMarkup(detailPage);
-    expect(detailMarkup).toContain("<h1>Opus 5.5 Max</h1>");
-    expect(detailMarkup).toContain("Claude Code");
-    expect(detailMarkup).toContain("Anthropic");
-    expect(markdownForPath(opus55.path).found).toBe(true);
-    expect(INDEX_MODEL_PAGES.some(page => page.path === "/models/anthropic/claude-opus-5-5/index")).toBeTrue();
+    if (card === undefined) throw new Error(`Expected the ${canonicalModelId} card.`);
+    expect(card.path).toBe(path);
+    expect(card.release.status).toBe("verified");
+    const [, , creatorSlug = "", modelSlug = "", profileSlug = ""] = card.path.split("/");
+    const params = { creatorSlug, modelSlug, profileSlug };
+    const metadata = await generateMetadata({ params: Promise.resolve(params) });
+    expect(metadata.robots).toMatchObject({ follow: true, index: true });
+    const detailMarkup = renderToStaticMarkup(await ModelCardPage({
+      params: Promise.resolve(params),
+    }));
+    expect(detailMarkup).toContain("Intelligence Index");
+    expect(detailMarkup).toContain("Coding-agent observations");
+    expect(detailMarkup).toContain(agentName);
+    expect(markdownForPath(card.path).found).toBe(true);
+    expect(MODEL_CARD_PRESENTATIONS.some(candidate => (
+      candidate.canonicalModelId.startsWith("unlisted/") && candidate.model === card.model
+    ))).toBeFalse();
+    expect(INDEX_MODEL_PAGES.some(page => page.canonicalModelId === canonicalModelId)).toBeFalse();
   });
 
   test("seeds Deedy commentary under the MiMo Index page", async () => {

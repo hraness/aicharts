@@ -7,7 +7,7 @@ export default function LeaderboardLoading() {
     <main tabIndex={-1} className="usage-home leaderboard-home" id="main-content">
       <section className="usage-hero" aria-labelledby="leaderboard-loading-title">
         <div className="usage-hero__copy">
-          <h1 id="leaderboard-loading-title">Public usage leaderboard</h1>
+          <p className="usage-hero__title" id="leaderboard-loading-title">Public usage leaderboard</p>
           <p className="usage-hero__lede" role="status">Loading the latest published rankings.</p>
         </div>
       </section>

@@ -704,7 +704,7 @@ export function createGpt6SolArticle(
       links: [
         { href: "/coding", label: "Coding-agent chart" },
         { href: "/#intelligence-index", label: "Capability and cost chart" },
-        { href: "/models/openai/gpt-6-sol/index", label: "GPT-6 Sol model page" },
+        { href: "/models/openai/gpt-6-sol/max", label: "GPT-6 Sol model page" },
       ],
     },
     body: [

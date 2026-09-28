@@ -20,6 +20,8 @@ import {
 
 export const INTRODUCING_AI_CHARTS_SLUG = "introducing-ai-charts" as const;
 export const INTRODUCING_AI_CHARTS_PUBLISHED_AT = "2026-09-24" as const;
+/** Corrected the collector status after the cli-v0.1.0 release. */
+export const INTRODUCING_AI_CHARTS_UPDATED_AT = "2026-09-28" as const;
 
 /**
  * Links to other notes carry the live title of the note they open, so a
@@ -99,7 +101,7 @@ export function createIntroducingAiChartsArticle(
       "benchmark cost frontier",
     ],
     publishedAt: INTRODUCING_AI_CHARTS_PUBLISHED_AT,
-    updatedAt: INTRODUCING_AI_CHARTS_PUBLISHED_AT,
+    updatedAt: INTRODUCING_AI_CHARTS_UPDATED_AT,
     section: "About AI Charts",
     sourceIds: [
       "artificialAnalysisCodingAgents",
@@ -173,7 +175,7 @@ export function createIntroducingAiChartsArticle(
         `AI Charts does not run evaluations. The scores, costs, and token counts come from the benchmark owners and aggregators it cites, and it is not affiliated with them or with the model providers in the data. Cost figures keep the source's denominator, such as per task or per full evaluation, so two costs are comparable only when that denominator matches. The charts show dated snapshots: the Intelligence Index snapshot is checked for updates every four hours and the coding-agent snapshot daily, and the earlier v${ARTIFICIAL_ANALYSIS_INTELLIGENCE_VERSION} data is frozen. Some vendor-run results, such as CursorBench, appear as supplemental evidence for a model running inside that vendor's product, not as an independent standard.`,
       ),
       paragraph(
-        "The benchmark charts and notes are live at aicharts.io. AI Charts also includes a local tool that measures your own coding agents' token use. Its status is In development: build it from source, since there is no packaged release yet.",
+        "The benchmark charts and notes are live at aicharts.io. AI Charts also includes a local tool that measures your own coding agents' token use. Its status is In development: a Linux x86-64 build for local reports is on GitHub Releases, and on a Mac you build it from source.",
       ),
     ],
   };

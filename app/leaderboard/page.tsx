@@ -9,11 +9,18 @@ import { leaderboardPageConfiguration, readLeaderboardSnapshot } from "@/lib/usa
 import "@/styles/usage.css";
 import "@/styles/usage-leaderboard.css";
 
-export const metadata = createPublicSiteMetadata({
-  ...searchSite,
-  title: "AI usage leaderboard | AI Charts",
-  description: "An opt-in ranking of the AI tokens that accounts report from their coding agents and AI clients over 30 UTC days. Each entry shows its reporting window.",
-}, { canonicalPath: "/leaderboard" });
+/**
+ * The leaderboard stays noindex until it has enough opt-in entries to be
+ * useful to a visitor (docs/seo-strategy.md; reassess 2026-11-28).
+ */
+export const metadata = {
+  ...createPublicSiteMetadata({
+    ...searchSite,
+    title: "AI usage leaderboard | AI Charts",
+    description: "An opt-in ranking of the AI tokens that accounts report from their coding agents and AI clients over 30 UTC days. Each entry shows its reporting window.",
+  }, { canonicalPath: "/leaderboard" }),
+  robots: { index: false, follow: true },
+};
 
 export default async function LeaderboardPage() {
   const configuration = await leaderboardPageConfiguration();

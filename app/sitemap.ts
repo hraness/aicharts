@@ -107,9 +107,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     );
   }
   const navigationUpdatedAt = "2026-09-09T02:50:00Z";
-  const homeModifiedAt = [navigationUpdatedAt, parsedIntelligence.value.source.retrievedAt]
+  // The last authored copy change on /, /coding, and /usage: the About section,
+  // the configurations table, and the published collector release.
+  const pageCopyUpdatedAt = "2026-09-28T00:00:00Z";
+  const homeModifiedAt = [navigationUpdatedAt, pageCopyUpdatedAt, parsedIntelligence.value.source.retrievedAt]
     .sort((left, right) => Date.parse(right) - Date.parse(left))[0]!;
-  const codingModifiedAt = [navigationUpdatedAt, datasetModifiedAt]
+  const codingModifiedAt = [navigationUpdatedAt, pageCopyUpdatedAt, datasetModifiedAt]
+    .sort((left, right) => Date.parse(right) - Date.parse(left))[0]!;
+  const usageModifiedAt = [navigationUpdatedAt, pageCopyUpdatedAt]
     .sort((left, right) => Date.parse(right) - Date.parse(left))[0]!;
   const benchmarkPortfolioModifiedAt = [
     navigationUpdatedAt,
@@ -156,16 +161,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     {
       changeFrequency: "monthly",
       images: [siteImage],
-      lastModified: navigationUpdatedAt,
+      lastModified: usageModifiedAt,
       priority: 0.7,
       url: absolute("/usage"),
-    },
-    {
-      changeFrequency: "monthly",
-      images: [siteImage],
-      lastModified: navigationUpdatedAt,
-      priority: 0.6,
-      url: absolute("/leaderboard"),
     },
     {
       changeFrequency: "daily",

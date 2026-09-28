@@ -71,6 +71,8 @@ export function atlasDataCatalogJsonLd() {
         isBasedOn: dataset.source.url,
         measurementTechnique: entry.comparisonRule,
         publisher: { "@type": "Organization", name: "AI Charts", url: "https://aicharts.io/" },
+        // The benchmark owner named as the source on /data made the measurements.
+        creator: { "@type": "Organization", name: entry.source.name },
         distribution: {
           "@type": "DataDownload",
           contentUrl: `https://aicharts.io${atlasDatasetDownloadPath(entry.id)}`,

@@ -23,11 +23,15 @@ import type { BenchmarkAtlasDataset, BenchmarkAtlasEntry } from "@/lib/benchmark
 
 import Home from "./page";
 import {
+  homeAboutHeading,
+  homeAlternatives,
+  homeAlternativesCheckedOn,
   homeEyebrow,
   homeHeading,
   homeLede,
   homePrimaryAction,
   homeSecondaryAction,
+  site,
 } from "./site";
 
 const parsed = parseCodingAgentSnapshot(codingAgentData);
@@ -94,6 +98,30 @@ describe("homepage canonical content", () => {
     }
   });
 
+  test("names other places to compare models in a dated About section after the chart", () => {
+    const markup = renderToStaticMarkup(createElement(Home));
+    const intelligenceAt = markup.indexOf('class="intelligence-efficiency"');
+    const aboutAt = markup.indexOf('<section aria-labelledby="home-about-title" class="home-about">');
+    const aboutEndAt = markup.indexOf("</section>", aboutAt);
+    expect(aboutAt).toBeGreaterThan(intelligenceAt);
+    const about = markup.slice(aboutAt, aboutEndAt);
+    expect(about).toContain(`<h2 id="home-about-title">${homeAboutHeading}</h2>`);
+    expect(about).toContain("AI Charts is free and open source.");
+    expect(homeAlternatives.map(alternative => alternative.href)).toEqual([
+      "https://artificialanalysis.ai/leaderboards/models",
+      "https://arena.ai",
+      "https://epoch.ai/benchmarks",
+      "https://openrouter.ai/rankings",
+    ]);
+    for (const alternative of homeAlternatives) {
+      expect(about).toContain(`<a href="${alternative.href}">${alternative.name}</a>`);
+    }
+    expect(about).toContain("formerly LMArena");
+    expect(homeAlternativesCheckedOn).toBe("2026-09-28");
+    expect(about).toContain("Checked Sep 28, 2026.");
+    expect(site.introduction.length).toBeGreaterThan(0);
+  });
+
   test("keeps the Pareto chart prominent and gives each other chart workspace its own destination", async () => {
     const source = await Bun.file(new URL("./page.tsx", import.meta.url)).text();
     const markup = renderToStaticMarkup(createElement(Home));
@@ -122,7 +150,7 @@ describe("homepage canonical content", () => {
     expect(markup).toContain('data-analytics-surface="home_activity"');
     expect(markup).toContain("Recent models and notes");
     expect(markup).toContain('href="/models/xiaomi/mimo-v2-6-pro/index"');
-    expect(markup).toContain('href="/models/anthropic/claude-opus-5-5/index"');
+    expect(markup).toContain('href="/models/anthropic/claude-opus-5.5/max"');
     expect(markup).not.toContain('href="/models/anthropic/claude-opus-5/max">Claude Opus 5.5');
     expect(exploreFooterAt).toBeGreaterThan(calculatorAt);
     expect(resourceFooterAt).toBeGreaterThan(exploreFooterAt);

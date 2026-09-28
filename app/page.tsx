@@ -12,6 +12,11 @@ import { ModelReleaseRadars } from "@/components/release-radar";
 import { SiteHeader } from "@/components/site-header";
 import { parseArtificialAnalysisIntelligenceV43Snapshot } from "@/lib/artificial-analysis-intelligence-v4-3-data";
 import {
+  homeAboutHeading,
+  homeAlternatives,
+  homeAlternativesCheckedLabel,
+  homeAlternativesClosing,
+  homeAlternativesLead,
   homeEyebrow,
   homeHeading,
   homeLede,
@@ -42,6 +47,17 @@ export default function Home() {
       </header>
       <ChartNavigation current="/" />
       <HomeIntelligenceEfficiency snapshot={parsed.value} />
+      <section aria-labelledby="home-about-title" className="home-about">
+        <h2 id="home-about-title">{homeAboutHeading}</h2>
+        <p>{site.introduction}</p>
+        <p>
+          {homeAlternativesLead}
+          {homeAlternatives.map(alternative => <span key={alternative.name}>
+            {" "}<a href={alternative.href}>{alternative.name}</a>{alternative.sentence}
+          </span>)}
+          {" "}{homeAlternativesClosing} {homeAlternativesCheckedLabel}
+        </p>
+      </section>
       <HomeIndexStrip />
       <ModelReleaseRadars />
       <HomeActivityFeed />

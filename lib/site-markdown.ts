@@ -12,6 +12,11 @@ import {
 } from "@/app/blog/article-admissions";
 import { blogEditorialImage } from "@/app/blog/editorial-images";
 import {
+  homeAboutHeading,
+  homeAlternatives,
+  homeAlternativesCheckedLabel,
+  homeAlternativesClosing,
+  homeAlternativesLead,
   homeHeading,
   homeLede,
   homeTaskLinks,
@@ -19,6 +24,7 @@ import {
   modelCardsLede,
   notFoundRecoveryLinks,
   site,
+  usageReleaseUrl,
 } from "@/app/site";
 import artificialAnalysisIntelligenceData from "@/data/artificial-analysis-intelligence.json";
 import intelligenceV43Data from "@/data/artificial-analysis-intelligence-v4-3.json";
@@ -71,6 +77,10 @@ import {
   DEEP_SWE_LEADERBOARD_URL,
   formatDeepSweEvidenceScore,
 } from "./deep-swe-evidence";
+import {
+  codingConfigurationsMarkdownTable,
+  codingSourceSentenceMarkdown,
+} from "./coding-configurations-table";
 import { HOME_ACTIVITY_FEED, HOME_ACTIVITY_SOURCE_LABEL } from "./home-activity-feed";
 import {
   INDEX_MODEL_PAGES,
@@ -330,6 +340,17 @@ function homeMarkdown(snapshot: CodingAgentSnapshot): string {
     "",
     `[Source and method](${absolute("/data#current-intelligence-efficiency")}) · [Current v${intelligence.benchmark.version} JSON](${absolute("/data/artificial-analysis-intelligence-v4-3.json")}) · [Historical v4.1.1 JSON](${absolute("/data/artificial-analysis-intelligence.json")})`,
     "",
+    `## ${homeAboutHeading}`,
+    "",
+    site.introduction,
+    "",
+    [
+      homeAlternativesLead,
+      ...homeAlternatives.map(alternative => `[${alternative.name}](${alternative.href})${alternative.sentence}`),
+      homeAlternativesClosing,
+      homeAlternativesCheckedLabel,
+    ].join(" "),
+    "",
     "## Recent models and notes",
     "",
     `Compact Index listings and published analysis. Model scores come from ${HOME_ACTIVITY_SOURCE_LABEL}.`,
@@ -350,13 +371,12 @@ function homeMarkdown(snapshot: CodingAgentSnapshot): string {
 }
 
 function codingMarkdown(snapshot: CodingAgentSnapshot): string {
-  const summary = codingAgentDatasetSummary(snapshot);
   return joinMarkdown([
     "# Coding agent comparisons",
     "",
     "Compare coding-agent benchmark scores with API cost, active time, or total token use. Each point is one model running in one agent harness at one effort setting.",
     "",
-    `The default chart shows DeepSWE v1.1 accuracy against API cost. Choose another benchmark or resource axis, inspect a point, or compare a provider’s configurations. The checked Coding Agent Index v1.5 [${snapshot.source.name} coding-agents snapshot](${snapshot.source.url}) contains ${summary.recordCount} configurations across ${summary.modelCount} models and ${summary.agentCount} agent harnesses. Retrieved ${formatRetrievedAt(snapshot.source.retrievedAt)}.`,
+    `The default chart shows DeepSWE v1.1 accuracy against API cost. Choose another benchmark or resource axis, inspect a point, or compare a provider’s configurations. ${codingSourceSentenceMarkdown(snapshot)}`,
     "",
     "## Available benchmarks",
     "",
@@ -365,6 +385,12 @@ function codingMarkdown(snapshot: CodingAgentSnapshot): string {
     "This Coding Agent Index v1.5 source combines DeepSWE v1.1, Terminal-Bench 4, and SWE-Atlas-QnA. Its Terminal-Bench scores remain separate from the standalone owner-published Terminal-Bench 4 cohort in the benchmark explorer.",
     "",
     `[Terminal-Bench 4](${absolute("/benchmarks?atlas=terminal-bench-4#explore")}) · [All benchmarks](${absolute("/benchmarks")}) · [Source and method](${absolute("/data#source")}) · [Coding-agent JSON](${absolute(CODING_AGENT_DATASET_DOWNLOAD_PATH)}) · [Models](${absolute("/models")})`,
+    "",
+    `## All ${snapshot.records.length} configurations`,
+    "",
+    "Coding-agent configurations in the current snapshot, highest AA Index first. A dash marks a value the source does not report.",
+    "",
+    codingConfigurationsMarkdownTable(snapshot.records),
   ]);
 }
 
@@ -736,7 +762,7 @@ export function agentGuideMarkdown(
     `- [Coding agent comparisons](${absolute("/coding")}). Compare benchmark scores with API cost, active time, or total tokens from the separate Artificial Analysis coding-agents source.`,
     `- [AI benchmark explorer](${absolute("/benchmarks")}). Choose a task, inspect a measured cohort, or read a source guide. Terminal-Bench 4 is the current terminal-engineering standard.`,
     `- [Subscription vs API vs GPUs](${absolute("/calculator")}). Price one fully used ChatGPT Pro seat's token volume at OpenAI and DeepSeek API rates, on purchased GPUs, and on rented GPUs, with sourced assumptions.`,
-    `- [AI usage tracking](${absolute("/usage")}). Measure your own coding agents' token use, cost, and speed with the AI Charts collector. It has no packaged release yet; build it from source. Account sync runs on macOS only.`,
+    `- [AI usage tracking](${absolute("/usage")}). Measure your own coding agents' token use, cost, and speed with the AI Charts collector. It is in development. A Linux x86-64 build for local reports is on [GitHub Releases](${usageReleaseUrl}); on a Mac, build it from source. Account sync runs on macOS only.`,
     `- [Atlas catalog JSON](${absolute(ATLAS_CATALOG_DOWNLOAD_PATH)}). All benchmark IDs, coverage, versions, source dates, and per-cohort JSON distribution links.`,
     `- [Models](${absolute("/models")}). ${modelCardsLede}`,
     `- [Data](${absolute(CODING_AGENT_DATASET_PATH)}). Every benchmark’s source, version, definitions, dataset downloads, and limits.`,

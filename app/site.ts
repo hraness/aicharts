@@ -23,7 +23,7 @@ export const searchSite = {
     alt: "AI Charts: See which model wins at each price.",
     path: "/opengraph-image",
   },
-  title: "AI Charts | See which model wins at each price.",
+  title: "AI Charts: AI model benchmark scores vs cost per task",
 } as const;
 
 export const homeEyebrow = site.category;
@@ -40,6 +40,53 @@ export const homeTaskLinks = [
   { task: "video", name: "Video", description: "Create video from text or images." },
   { task: "audio", name: "Audio", description: "Transcribe and understand speech." },
 ] as const;
+/** The collector's latest GitHub release; link it instead of typing a version number. */
+export const usageReleaseUrl = "https://github.com/hraness/aicharts/releases/latest";
+
+export const homeAboutHeading = "About AI Charts";
+/** The date the comparison facts below were last checked against each product's own pages. */
+export const homeAlternativesCheckedOn = "2026-09-28";
+export const homeAlternativesLead = "Other places to compare models:";
+/** Each entry renders as a linked name followed by its sentence, in HTML, Markdown, and the README. */
+export const homeAlternatives = [
+  {
+    href: "https://artificialanalysis.ai/leaderboards/models",
+    name: "Artificial Analysis",
+    sentence: " runs the Intelligence Index and Coding Agent Index charted here, and its own leaderboards cover more than 250 models with speed and latency.",
+  },
+  {
+    href: "https://arena.ai",
+    name: "Arena",
+    sentence: " (formerly LMArena) ranks models by people's votes in blind side-by-side chats.",
+  },
+  {
+    href: "https://epoch.ai/benchmarks",
+    name: "Epoch AI",
+    sentence: " runs its own benchmarks and tracks how capabilities change over time.",
+  },
+  {
+    href: "https://openrouter.ai/rankings",
+    name: "OpenRouter",
+    sentence: " lists live API prices and which models its users send the most tokens to.",
+  },
+] as const;
+export const homeAlternativesClosing =
+  "AI Charts puts published scores against cost per task, draws the best score at each budget, and keeps each benchmark on its own scale.";
+
+const checkedOnFormatter = new Intl.DateTimeFormat("en-US", {
+  day: "numeric",
+  month: "short",
+  timeZone: "UTC",
+  year: "numeric",
+});
+
+/** Formats an ISO calendar date such as 2026-09-28 as "Sep 28, 2026". */
+export function formatCheckedOn(isoDate: string): string {
+  return checkedOnFormatter.format(new Date(`${isoDate}T00:00:00Z`));
+}
+
+export const homeAlternativesCheckedLabel = `Checked ${formatCheckedOn(homeAlternativesCheckedOn)}.`;
+
 export const modelCardsHeading = "Models";
 export const modelCardsLede =
   "Model pages from the current Artificial Analysis snapshots, with Intelligence Index scores, cost per task, and coding-agent results where they exist.";
@@ -50,7 +97,7 @@ export const modelCardsDescription =
 
 /** Social and search copy for one model page; keep title and description paired. */
 export function modelCardTitle(displayTitle: string): string {
-  return `${displayTitle} | AI Charts`;
+  return `${displayTitle}: benchmarks and cost per task | AI Charts`;
 }
 
 /** Coding-agent profile pages: every one has coding-agent observations. */
