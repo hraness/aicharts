@@ -19,7 +19,7 @@ export type CodingSourceSentence = Readonly<{
 export function codingSourceSentence(snapshot: CodingAgentSnapshot): CodingSourceSentence {
   const summary = codingAgentDatasetSummary(snapshot);
   return {
-    lead: "The checked Coding Agent Index v1.5 ",
+    lead: "The Coding Agent Index v1.5 ",
     linkLabel: `${snapshot.source.name} coding-agents snapshot`,
     tail: ` contains ${summary.recordCount} configurations across ${summary.modelCount} models and ${summary.agentCount} agent harnesses. Retrieved ${formatRetrievedAt(snapshot.source.retrievedAt)}.`,
     url: snapshot.source.url,
