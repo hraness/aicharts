@@ -25,6 +25,16 @@ const MAX_RECORDS: u64 = 10_000_000;
 /// Codex rollout replaying a shared ~12B baseline lands at tens of millions
 /// per record) without ever touching real usage.
 const MAX_TOKENS_PER_RECORD: u128 = 8_388_608;
+/// Mirrors STATS_MAX_TOKENS_PER_REQUEST_RECORD: Cursor reports one record per
+/// agent request, and one billed request can exceed 80M tokens.
+const MAX_TOKENS_PER_REQUEST_RECORD: u128 = 1_073_741_824;
+fn max_tokens_per_record(client: &str) -> u128 {
+    if client == "cursor" {
+        MAX_TOKENS_PER_REQUEST_RECORD
+    } else {
+        MAX_TOKENS_PER_RECORD
+    }
+}
 const MAX_DECIMAL: u128 = aicharts_metrics::MAX_DECIMAL;
 const HELP: &str = "AI Charts detailed stats: local, read-only\n\n  aicharts stats --home DIR (--all | --client ID ...) [--source-root DIR ...] [--since YYYY-MM-DD --until YYYY-MM-DD] [--json | --health-json]\n  aicharts stats --list-clients\n\nThe default period is the last 30 UTC days, including today. Select up to 366\ndays. --home is an explicit absolute directory. To read one configured profile,\nselect one client and supply its exclusive absolute --source-root directories.\nWithout those roots, discovery uses the selected home and stays within it.\nLocal parser support includes every client in the pinned Tokscale registry.\nSome clients require an existing local export or API cache. This command does\nnot refresh credentials or contact providers. It never uploads anything.\n\nJSON contains day/client/model aggregates, disjoint token buckets, known costs\nand coverage. Unknown identities are withheld. Unknown costs stay unknown;\nreported charges and estimates are separate. Failed scans are incomplete, never\na successful empty replacement. --health-json emits separate measured source\nhealth, including parsing work, partial tails and fixed warning codes. It keeps\nunknown counters null and does not create persistent state.\nRedirect --json output to import at /usage/details.\n";
 
@@ -219,7 +229,7 @@ pub(super) fn validate_report(report: &Report) -> Result<(), &'static str> {
         }
         let total = row_token_total(&row.tokens).ok_or(invalid)?;
         let timed = decimal(&row.timed_tokens).ok_or(invalid)?;
-        if total > u128::from(row.records) * MAX_TOKENS_PER_RECORD
+        if total > u128::from(row.records) * max_tokens_per_record(&row.client)
             || timed > total
             || (row.timed_records == 0 && timed != 0)
             || (row.token_basis == "unavailable"

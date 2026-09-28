@@ -15,6 +15,14 @@ export const STATS_MAX_DAY = 99_999_999;
  * only ever grow, so admission is the only place an impossible value can be
  * stopped. */
 export const STATS_MAX_TOKENS_PER_RECORD = 8_388_608n;
+/** Cursor's usage API reports one record per agent request, and one request can
+ * bundle hundreds of model calls over a long context: billed requests above 80M
+ * tokens, almost all cache reads, are real. 2^30 keeps an impossible-value
+ * bound for those request-granular records. */
+export const STATS_MAX_TOKENS_PER_REQUEST_RECORD = 1_073_741_824n;
+const STATS_REQUEST_GRANULAR_CLIENTS: ReadonlySet<string> = new Set(["cursor"]);
+export const statsMaxTokensPerRecord = (client: string): bigint =>
+  STATS_REQUEST_GRANULAR_CLIENTS.has(client) ? STATS_MAX_TOKENS_PER_REQUEST_RECORD : STATS_MAX_TOKENS_PER_RECORD;
 export const STATS_DAY_MS = 86_400_000;
 export const STATS_TOKEN_KEYS = ["input", "cacheRead", "cacheWrite", "output", "reasoning"] as const;
 export type StatsTokenKey = typeof STATS_TOKEN_KEYS[number];
@@ -136,7 +144,7 @@ function source(value: unknown): SourceCoverage | null {
  * per-record bound. Only new uploads are held to it; committed history and
  * replies derived from it keep parsing, so a pre-bound overcount stays readable
  * instead of turning every read of that account into a storage failure. */
-export const statsRowWithinRecordBound = (row: UsageStatsRow): boolean => statsTokenTotal(row.tokens) <= BigInt(row.records) * STATS_MAX_TOKENS_PER_RECORD;
+export const statsRowWithinRecordBound = (row: UsageStatsRow): boolean => statsTokenTotal(row.tokens) <= BigInt(row.records) * statsMaxTokensPerRecord(row.client);
 export function parseUsageStatsRow(value: unknown): UsageStatsRow | null {
   try {
     const raw = statsOwnRecord(value, rowKeys);

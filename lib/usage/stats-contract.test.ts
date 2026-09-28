@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 import fc from "fast-check";
-import { parseUsageStatsJson, parseUsageStatsReport, statsTokenTotal, type UsageStatsReport } from "./stats-contract";
+import { parseUsageStatsJson, parseUsageStatsReport, STATS_MAX_TOKENS_PER_RECORD, STATS_MAX_TOKENS_PER_REQUEST_RECORD, statsMaxTokensPerRecord,
+  statsTokenTotal, type UsageStatsReport } from "./stats-contract";
 import { parseStatsUpload } from "./stats-http-contract";
 import { STATS_CLIENTS } from "./stats-registry";
 import nativeFixture from "../../fixtures/usage/stats-v2.json";
@@ -70,6 +71,22 @@ test("implausible per-record token totals are refused at upload admission but co
   // re-reads and query replies must keep parsing it rather than refusing the account.
   const committed = parseUsageStatsReport({ ...raw, revision: 7, updatedAtMs: raw.generatedAtMs, sources: [{ ...raw.sources[0], records: 300 }], rows: [leaked] });
   expect(committed?.rows[0].tokens.input).toBe("12000000000");
+});
+test("request-granular Cursor records admit billed agent requests without widening the event bound", () => {
+  const raw = statsFixture(), row = raw.rows[0];
+  // The row's other buckets carry 65 tokens, so `total` is the row's exact token total.
+  const upload = (client: string, total: bigint) => parseStatsUpload({ schemaVersion: 2, operationId: "11".repeat(32),
+    accountId: `acct_${"22".repeat(16)}`, deviceId: "33".repeat(32), generation: "44".repeat(32), sequence: 1, expectedRevision: 0,
+    mode: "replace-window", takeover: null, report: { ...raw, sources: [{ ...raw.sources[0], client }],
+      rows: [{ ...row, client, provider: null, model: null, tokens: { ...row.tokens, input: String(total - 65n) } }] } });
+  // One observed Cursor request: 83,659,624 tokens, 82.4M of them cache reads, billed $106.05.
+  expect(upload("cursor", 83_659_624n)).not.toBeNull();
+  expect(upload("cursor", STATS_MAX_TOKENS_PER_REQUEST_RECORD)).not.toBeNull();
+  expect(upload("cursor", STATS_MAX_TOKENS_PER_REQUEST_RECORD + 1n)).toBeNull();
+  // Event-granular clients keep the cumulative-counter leak guard.
+  expect(upload("codex", 83_659_624n)).toBeNull();
+  expect(upload("codex", STATS_MAX_TOKENS_PER_RECORD)).not.toBeNull();
+  for (const { id } of STATS_CLIENTS) expect(statsMaxTokensPerRecord(id)).toBe(id === "cursor" ? STATS_MAX_TOKENS_PER_REQUEST_RECORD : STATS_MAX_TOKENS_PER_RECORD);
 });
 test("known zero costs differ from unknown and cost populations cannot overlap", () => {
   const raw = statsFixture(), row = raw.rows[0];
