@@ -13,12 +13,12 @@
       "mode": "agentic",
       "runner": "external",
       "costBasis": "cost-per-test",
-      "totalModels": 65,
+      "totalModels": 66,
       "source": {
         "url": "https://www.vals.ai/benchmarks/vals_index",
-        "retrievedAt": "2026-09-25T15:34:59.729Z",
-        "sha256": "b99902ee631d2073658f65a28eec15013cf11be39f753d97d3d492f103bbfd5f",
-        "observedAt": "2026-09-23T00:00:00.000Z",
+        "retrievedAt": "2026-09-28T18:16:23.422Z",
+        "sha256": "73c9459b6aed61ef76abeba91cc21246ffc7d44d0353c449d44bc84f7aab312b",
+        "observedAt": "2026-09-27T00:00:00.000Z",
         "revision": "vals_index v2"
       },
       "rows": [
@@ -654,7 +654,7 @@
           "harness": null,
           "score": 69.689,
           "standardError": 0.937,
-          "costUsdPerTest": 22.295559,
+          "costUsdPerTest": 32.766011,
           "latencySeconds": 4320.731,
           "components": [
             {
@@ -750,7 +750,7 @@
           "harness": null,
           "score": 59.61,
           "standardError": 1.147,
-          "costUsdPerTest": 17.609936,
+          "costUsdPerTest": 11.740516,
           "latencySeconds": 2745.876,
           "components": [
             {
@@ -787,6 +787,54 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 5
+            }
+          ]
+        },
+        {
+          "id": "anthropic-claude-sonnet-5-5",
+          "modelId": "anthropic/claude-sonnet-5-5",
+          "provider": "Anthropic",
+          "effort": "max",
+          "harness": null,
+          "score": 69.219,
+          "standardError": 0.962,
+          "costUsdPerTest": 20.803442,
+          "latencySeconds": 4207.124,
+          "components": [
+            {
+              "id": "finance_agent",
+              "label": "Finance Agent v2",
+              "score": 58.103
+            },
+            {
+              "id": "emb",
+              "label": "EMB",
+              "score": 75.713
+            },
+            {
+              "id": "terminal_bench_2_1",
+              "label": "Terminal-Bench 2.1",
+              "score": 83.146
+            },
+            {
+              "id": "vibe_code_bench",
+              "label": "Vibe Code Bench",
+              "score": 92.392
+            },
+            {
+              "id": "code_migration",
+              "label": "Code Migration",
+              "score": 70.131
+            },
+            {
+              "id": "legal_research",
+              "label": "Legal Research",
+              "score": 48.077
+            },
+            {
+              "id": "legal_agent_benchmark",
+              "label": "HLAB",
+              "score": 2.917
             }
           ]
         },
@@ -1614,7 +1662,7 @@
           "harness": null,
           "score": 60.215,
           "standardError": 1.079,
-          "costUsdPerTest": 11.917904,
+          "costUsdPerTest": 11.161883,
           "latencySeconds": 1975.967,
           "components": [
             {
@@ -1662,8 +1710,8 @@
           "harness": null,
           "score": 12.952,
           "standardError": 0.474,
-          "costUsdPerTest": 0.314645,
-          "latencySeconds": 360.983,
+          "costUsdPerTest": 0.300647,
+          "latencySeconds": 354.783,
           "components": [
             {
               "id": "finance_agent",
@@ -2382,7 +2430,7 @@
           "harness": null,
           "score": 59.881,
           "standardError": 1.087,
-          "costUsdPerTest": 0.766266,
+          "costUsdPerTest": 0.778845,
           "latencySeconds": 1396.334,
           "components": [
             {
@@ -2478,7 +2526,7 @@
           "harness": null,
           "score": 59.588,
           "standardError": 1.331,
-          "costUsdPerTest": 5.102352,
+          "costUsdPerTest": 5.178734,
           "latencySeconds": 1730.183,
           "components": [
             {
@@ -3156,12 +3204,12 @@
       "mode": "agentic",
       "runner": "external",
       "costBasis": "cost-per-test",
-      "totalModels": 68,
+      "totalModels": 70,
       "source": {
         "url": "https://www.vals.ai/benchmarks/fabv2",
-        "retrievedAt": "2026-09-25T15:34:59.729Z",
-        "sha256": "ad99dddb97a61e076cabdc113bf5d2775402cf1339446e081afc95b9b902a6e7",
-        "observedAt": "2026-09-23T00:00:00.000Z",
+        "retrievedAt": "2026-09-28T18:16:23.422Z",
+        "sha256": "e94aab3c2e30f18c1eb94a691475ded0d05ffe10aa5fcf0d18f5be1d319602dc",
+        "observedAt": "2026-09-27T00:00:00.000Z",
         "revision": "finance_agent v2"
       },
       "rows": [
@@ -3992,7 +4040,7 @@
           "harness": null,
           "score": 58.587,
           "standardError": 0.17,
-          "costUsdPerTest": 9.025984,
+          "costUsdPerTest": 9.215734,
           "latencySeconds": 1987.81,
           "components": [
             {
@@ -4118,7 +4166,7 @@
           "harness": null,
           "score": 53.909,
           "standardError": 0.518,
-          "costUsdPerTest": 1.126139,
+          "costUsdPerTest": 0.750759,
           "latencySeconds": 792.086,
           "components": [
             {
@@ -4170,6 +4218,132 @@
               "id": "financial_modeling",
               "label": "Financial Modeling",
               "score": 24.197
+            }
+          ]
+        },
+        {
+          "id": "anthropic-claude-sonnet-5-5",
+          "modelId": "anthropic/claude-sonnet-5-5",
+          "provider": "Anthropic",
+          "effort": "max",
+          "harness": null,
+          "score": 58.103,
+          "standardError": 0.673,
+          "costUsdPerTest": 6.552431,
+          "latencySeconds": 1903.336,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 47.59
+            },
+            {
+              "id": "general_qualitative_analysis",
+              "label": "General Qualitative Analysis",
+              "score": 67.06
+            },
+            {
+              "id": "general_quantitative_analysis",
+              "label": "General Quantitative Analysis",
+              "score": 79.44
+            },
+            {
+              "id": "market_analysis",
+              "label": "Market Analysis",
+              "score": 71.435
+            },
+            {
+              "id": "comparables",
+              "label": "Comparables",
+              "score": 47.089
+            },
+            {
+              "id": "precedents",
+              "label": "Precedents",
+              "score": 31.697
+            },
+            {
+              "id": "adjustments",
+              "label": "Adjustments",
+              "score": 52.746
+            },
+            {
+              "id": "earnings_analysis",
+              "label": "Earnings Analysis",
+              "score": 76.522
+            },
+            {
+              "id": "disclosure_analysis",
+              "label": "Disclosure Analysis",
+              "score": 71.432
+            },
+            {
+              "id": "financial_modeling",
+              "label": "Financial Modeling",
+              "score": 25.507
+            }
+          ]
+        },
+        {
+          "id": "cohere-command-a-plus-05-2026",
+          "modelId": "cohere/command-a-plus-05-2026",
+          "provider": "Cohere",
+          "effort": null,
+          "harness": null,
+          "score": 9.044,
+          "standardError": 0.409,
+          "costUsdPerTest": 1.63003,
+          "latencySeconds": 566.745,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 2.761
+            },
+            {
+              "id": "general_qualitative_analysis",
+              "label": "General Qualitative Analysis",
+              "score": 22.257
+            },
+            {
+              "id": "general_quantitative_analysis",
+              "label": "General Quantitative Analysis",
+              "score": 8.899
+            },
+            {
+              "id": "market_analysis",
+              "label": "Market Analysis",
+              "score": 11.963
+            },
+            {
+              "id": "comparables",
+              "label": "Comparables",
+              "score": 16.462
+            },
+            {
+              "id": "precedents",
+              "label": "Precedents",
+              "score": 2.395
+            },
+            {
+              "id": "adjustments",
+              "label": "Adjustments",
+              "score": 3.107
+            },
+            {
+              "id": "earnings_analysis",
+              "label": "Earnings Analysis",
+              "score": 7.963
+            },
+            {
+              "id": "disclosure_analysis",
+              "label": "Disclosure Analysis",
+              "score": 7.584
+            },
+            {
+              "id": "financial_modeling",
+              "label": "Financial Modeling",
+              "score": 0.763
             }
           ]
         },
@@ -5252,7 +5426,7 @@
           "harness": null,
           "score": 52.251,
           "standardError": 0.355,
-          "costUsdPerTest": 5.007566,
+          "costUsdPerTest": 2.719136,
           "latencySeconds": 932.724,
           "components": [
             {
@@ -6260,7 +6434,7 @@
           "harness": null,
           "score": 55.044,
           "standardError": 0.309,
-          "costUsdPerTest": 0.261838,
+          "costUsdPerTest": 0.279224,
           "latencySeconds": 772.153,
           "components": [
             {
@@ -6386,7 +6560,7 @@
           "harness": null,
           "score": 54.436,
           "standardError": 2.071,
-          "costUsdPerTest": 3.363981,
+          "costUsdPerTest": 3.629197,
           "latencySeconds": 1449.852,
           "components": [
             {
@@ -7463,12 +7637,12 @@
       "mode": "agentic",
       "runner": "external",
       "costBasis": "cost-per-test",
-      "totalModels": 68,
+      "totalModels": 69,
       "source": {
         "url": "https://www.vals.ai/benchmarks/legal_research",
-        "retrievedAt": "2026-09-25T15:34:59.729Z",
-        "sha256": "0dfa5f2f26ac084af46a3f6ebee877e33636224ca7e1b81f442906b3dc7f4941",
-        "observedAt": "2026-09-22T00:00:00.000Z",
+        "retrievedAt": "2026-09-28T18:16:23.422Z",
+        "sha256": "6e47acf14138c268ee570288317bd0dc2e9333bb19b8181b5bc759852a985580",
+        "observedAt": "2026-09-27T00:00:00.000Z",
         "revision": "legal_research v1"
       },
       "rows": [
@@ -8234,7 +8408,7 @@
           "harness": null,
           "score": 50.481,
           "standardError": 3.475,
-          "costUsdPerTest": 23.610262,
+          "costUsdPerTest": 25.163725,
           "latencySeconds": 6749.531,
           "components": [
             {
@@ -8350,7 +8524,7 @@
           "harness": null,
           "score": 41.827,
           "standardError": 3.428,
-          "costUsdPerTest": 4.079169,
+          "costUsdPerTest": 2.719446,
           "latencySeconds": 1545.997,
           "components": [
             {
@@ -8397,6 +8571,64 @@
               "id": "weighted_pass",
               "label": "Weighted Pass",
               "score": 84.592
+            }
+          ]
+        },
+        {
+          "id": "anthropic-claude-sonnet-5-5",
+          "modelId": "anthropic/claude-sonnet-5-5",
+          "provider": "Anthropic",
+          "effort": "max",
+          "harness": null,
+          "score": 48.077,
+          "standardError": 3.473,
+          "costUsdPerTest": 14.826571,
+          "latencySeconds": 5588.989,
+          "components": [
+            {
+              "id": "administrative_regulatory",
+              "label": "Administrative / Regulatory",
+              "score": 69.697
+            },
+            {
+              "id": "business_commercial",
+              "label": "Business & Commercial",
+              "score": 39.535
+            },
+            {
+              "id": "civil_litigation",
+              "label": "Civil Litigation",
+              "score": 48.148
+            },
+            {
+              "id": "constitutional_civil_rights",
+              "label": "Constitutional / Civil Rights",
+              "score": 42.105
+            },
+            {
+              "id": "criminal",
+              "label": "Criminal",
+              "score": 38.596
+            },
+            {
+              "id": "family",
+              "label": "Family",
+              "score": 18.182
+            },
+            {
+              "id": "health",
+              "label": "Health",
+              "score": 80
+            },
+            {
+              "id": "immigration",
+              "label": "Immigration",
+              "score": 45.455
+            },
+            {
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 84.274
             }
           ]
         },
@@ -11430,15 +11662,207 @@
       "mode": "agentic",
       "runner": "external",
       "costBasis": "cost-per-test",
-      "totalModels": 28,
+      "totalModels": 61,
       "source": {
         "url": "https://www.vals.ai/benchmarks/tax_agent_bench",
-        "retrievedAt": "2026-09-25T15:34:59.729Z",
-        "sha256": "03d4f34866d713d9dd1294fa193b1f6573e992312dd37c1eb4a1a2e25e5c4415",
-        "observedAt": "2026-09-23T00:00:00.000Z",
+        "retrievedAt": "2026-09-28T18:16:23.422Z",
+        "sha256": "4c009b6452469277cbc3829785d4208ed684b22c4db6df24749a6402b5e282f1",
+        "observedAt": "2026-09-27T00:00:00.000Z",
         "revision": "tax_agent_bench v1"
       },
       "rows": [
+        {
+          "id": "alibaba-qwen3-6-plus",
+          "modelId": "alibaba/qwen3.6-plus",
+          "provider": "Alibaba",
+          "effort": null,
+          "harness": null,
+          "score": 32.844,
+          "standardError": 2.752,
+          "costUsdPerTest": 0.298017,
+          "latencySeconds": 378.159,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 8.808
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 31.978
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 32.161
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 30.497
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 49.085
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 31.055
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 22.664
+            }
+          ]
+        },
+        {
+          "id": "alibaba-qwen3-7-max",
+          "modelId": "alibaba/qwen3.7-max",
+          "provider": "Alibaba",
+          "effort": null,
+          "harness": null,
+          "score": 47.407,
+          "standardError": 3.237,
+          "costUsdPerTest": 0.435494,
+          "latencySeconds": 209.726,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 16.062
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 42.198
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 47.518
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 49.747
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 60.565
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 46.225
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 40.447
+            }
+          ]
+        },
+        {
+          "id": "alibaba-qwen3-7-plus",
+          "modelId": "alibaba/qwen3.7-plus",
+          "provider": "Alibaba",
+          "effort": null,
+          "harness": null,
+          "score": 38.713,
+          "standardError": 2.81,
+          "costUsdPerTest": 0.093885,
+          "latencySeconds": 310.263,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 12.953
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 28.136
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 44.162
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 46.103
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 52.064
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 30.139
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 36.258
+            }
+          ]
+        },
+        {
+          "id": "alibaba-qwen3-8-27b",
+          "modelId": "alibaba/qwen3.8-27b",
+          "provider": "Alibaba",
+          "effort": "xhigh",
+          "harness": null,
+          "score": 60.038,
+          "standardError": 3.28,
+          "costUsdPerTest": 0.81533,
+          "latencySeconds": 1333.825,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 31.088
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 57.73
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 67.97
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 58.573
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 66.225
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 62.444
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 48.286
+            }
+          ]
+        },
         {
           "id": "alibaba-qwen3-8-max",
           "modelId": "alibaba/qwen3.8-max",
@@ -11536,6 +11960,54 @@
           ]
         },
         {
+          "id": "anthropic-claude-fable-5",
+          "modelId": "anthropic/claude-fable-5",
+          "provider": "Anthropic",
+          "effort": "max",
+          "harness": null,
+          "score": 69.822,
+          "standardError": 3.118,
+          "costUsdPerTest": 6.696087,
+          "latencySeconds": 866.628,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 38.342
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 74.261
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 55.936
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 70.994
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 83.382
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 64.004
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 68.433
+            }
+          ]
+        },
+        {
           "id": "anthropic-claude-fable-5-1",
           "modelId": "anthropic/claude-fable-5-1",
           "provider": "Anthropic",
@@ -11580,6 +12052,150 @@
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
               "score": 70.553
+            }
+          ]
+        },
+        {
+          "id": "anthropic-claude-haiku-4-5-20251001-thinking",
+          "modelId": "anthropic/claude-haiku-4-5-20251001-thinking",
+          "provider": "Anthropic",
+          "effort": null,
+          "harness": null,
+          "score": 28.314,
+          "standardError": 2.552,
+          "costUsdPerTest": 0.226416,
+          "latencySeconds": 155.016,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 7.254
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 22.853
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 26.976
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 25.45
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 50.407
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 25.786
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 20.775
+            }
+          ]
+        },
+        {
+          "id": "anthropic-claude-opus-4-7",
+          "modelId": "anthropic/claude-opus-4-7",
+          "provider": "Anthropic",
+          "effort": "max",
+          "harness": null,
+          "score": 63.864,
+          "standardError": 3.137,
+          "costUsdPerTest": 1.274806,
+          "latencySeconds": 279.035,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 23.834
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 61.632
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 60.99
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 66.471
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 76.982
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 60.433
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 57.642
+            }
+          ]
+        },
+        {
+          "id": "anthropic-claude-opus-4-8",
+          "modelId": "anthropic/claude-opus-4-8",
+          "provider": "Anthropic",
+          "effort": "max",
+          "harness": null,
+          "score": 64.906,
+          "standardError": 3.174,
+          "costUsdPerTest": 1.68964,
+          "latencySeconds": 479.2,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 30.052
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 65.371
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 54.706
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 76.033
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 78.629
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 55.752
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 58.743
             }
           ]
         },
@@ -11639,7 +12255,7 @@
           "harness": null,
           "score": 70.499,
           "standardError": 3.145,
-          "costUsdPerTest": 14.323645,
+          "costUsdPerTest": 15.086184,
           "latencySeconds": 4012.548,
           "components": [
             {
@@ -11680,6 +12296,54 @@
           ]
         },
         {
+          "id": "anthropic-claude-sonnet-4-6",
+          "modelId": "anthropic/claude-sonnet-4-6",
+          "provider": "Anthropic",
+          "effort": "max",
+          "harness": null,
+          "score": 64.854,
+          "standardError": 3.11,
+          "costUsdPerTest": 1.193501,
+          "latencySeconds": 707.307,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 25.907
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 56.703
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 65.916
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 66.078
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 80.451
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 65.556
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 57.949
+            }
+          ]
+        },
+        {
           "id": "anthropic-claude-sonnet-5",
           "modelId": "anthropic/claude-sonnet-5",
           "provider": "Anthropic",
@@ -11687,7 +12351,7 @@
           "harness": null,
           "score": 62.273,
           "standardError": 3.186,
-          "costUsdPerTest": 2.69216,
+          "costUsdPerTest": 1.794774,
           "latencySeconds": 1158.894,
           "components": [
             {
@@ -11724,6 +12388,54 @@
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
               "score": 57.41
+            }
+          ]
+        },
+        {
+          "id": "anthropic-claude-sonnet-5-5",
+          "modelId": "anthropic/claude-sonnet-5-5",
+          "provider": "Anthropic",
+          "effort": "max",
+          "harness": null,
+          "score": 73.395,
+          "standardError": 2.981,
+          "costUsdPerTest": 9.245466,
+          "latencySeconds": 3560.542,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 41.969
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 73.852
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 67.821
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 77.239
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 85.388
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 70.68
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 65.191
             }
           ]
         },
@@ -11776,6 +12488,102 @@
           ]
         },
         {
+          "id": "deepseek-deepseek-v4-flash-0731",
+          "modelId": "deepseek/deepseek-v4-flash-0731",
+          "provider": "DeepSeek",
+          "effort": "high",
+          "harness": null,
+          "score": 62.563,
+          "standardError": 3.136,
+          "costUsdPerTest": 0.156388,
+          "latencySeconds": 337.343,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 29.534
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 54.742
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 70.181
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 70.529
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 78.048
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 59.417
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 45.848
+            }
+          ]
+        },
+        {
+          "id": "deepseek-deepseek-v4-pro",
+          "modelId": "deepseek/deepseek-v4-pro",
+          "provider": "DeepSeek",
+          "effort": "max",
+          "harness": null,
+          "score": 58.499,
+          "standardError": 3.132,
+          "costUsdPerTest": 0.719152,
+          "latencySeconds": 1244.635,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 26.425
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 55.579
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 55.079
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 65.741
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 62.87
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 58.15
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 54.843
+            }
+          ]
+        },
+        {
           "id": "deepseek-deepseek-v4-pro-0813",
           "modelId": "deepseek/deepseek-v4-pro-0813",
           "provider": "DeepSeek",
@@ -11820,6 +12628,294 @@
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
               "score": 51.549
+            }
+          ]
+        },
+        {
+          "id": "fireworks-nemotron-lightning-3p5-30b-a3b",
+          "modelId": "fireworks/nemotron-lightning-3p5-30b-a3b",
+          "provider": "Fireworks AI",
+          "effort": null,
+          "harness": null,
+          "score": 13.002,
+          "standardError": 2.049,
+          "costUsdPerTest": 0.030533,
+          "latencySeconds": 1180.079,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 2.591
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 6.35
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 14.685
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 10.469
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 31.499
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 6.661
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 11.232
+            }
+          ]
+        },
+        {
+          "id": "google-gemini-3-1-flash-lite-preview",
+          "modelId": "google/gemini-3.1-flash-lite-preview",
+          "provider": "Google",
+          "effort": "high",
+          "harness": null,
+          "score": 20.085,
+          "standardError": 2.457,
+          "costUsdPerTest": 0.014308,
+          "latencySeconds": 18.744,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 3.109
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 21.731
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 20.684
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 12.31
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 39.5
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 14.077
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 11.494
+            }
+          ]
+        },
+        {
+          "id": "google-gemini-3-1-pro-preview",
+          "modelId": "google/gemini-3.1-pro-preview",
+          "provider": "Google",
+          "effort": "high",
+          "harness": null,
+          "score": 37.842,
+          "standardError": 3.098,
+          "costUsdPerTest": 0.301555,
+          "latencySeconds": 100.956,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 9.326
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 32.873
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 28.261
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 36.539
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 66.459
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 30.691
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 34.381
+            }
+          ]
+        },
+        {
+          "id": "google-gemini-3-5-flash",
+          "modelId": "google/gemini-3.5-flash",
+          "provider": "Google",
+          "effort": "high",
+          "harness": null,
+          "score": 53.526,
+          "standardError": 3.302,
+          "costUsdPerTest": 0.859679,
+          "latencySeconds": 233.001,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 21.762
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 58.095
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 46.785
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 61.648
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 72.498
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 45.945
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 34.209
+            }
+          ]
+        },
+        {
+          "id": "google-gemini-3-5-flash-lite",
+          "modelId": "google/gemini-3.5-flash-lite",
+          "provider": "Google",
+          "effort": "high",
+          "harness": null,
+          "score": 37.451,
+          "standardError": 3.115,
+          "costUsdPerTest": 0.081536,
+          "latencySeconds": 47.461,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 7.254
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 32.253
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 34.001
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 24.916
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 69.533
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 31.655
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 34.598
+            }
+          ]
+        },
+        {
+          "id": "google-gemini-3-6-flash",
+          "modelId": "google/gemini-3.6-flash",
+          "provider": "Google",
+          "effort": "high",
+          "harness": null,
+          "score": 49.895,
+          "standardError": 3.302,
+          "costUsdPerTest": 0.356293,
+          "latencySeconds": 105.32,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 18.135
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 49.834
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 43.581
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 48.604
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 77.948
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 42.065
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 37.362
             }
           ]
         },
@@ -11920,6 +13016,198 @@
           ]
         },
         {
+          "id": "google-gemini-3-flash-preview",
+          "modelId": "google/gemini-3-flash-preview",
+          "provider": "Google",
+          "effort": "high",
+          "harness": null,
+          "score": 37.557,
+          "standardError": 3.13,
+          "costUsdPerTest": 0.100699,
+          "latencySeconds": 100.623,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 11.917
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 38.825
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 29.323
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 31.86
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 67.123
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 27.521
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 30.14
+            }
+          ]
+        },
+        {
+          "id": "grok-grok-4-20-0309-reasoning",
+          "modelId": "grok/grok-4.20-0309-reasoning",
+          "provider": "SpaceXAI",
+          "effort": null,
+          "harness": null,
+          "score": 31.241,
+          "standardError": 2.704,
+          "costUsdPerTest": 0.119262,
+          "latencySeconds": 89.262,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 7.772
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 25.051
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 24.795
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 37.683
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 48.818
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 28.839
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 24.946
+            }
+          ]
+        },
+        {
+          "id": "grok-grok-4-3",
+          "modelId": "grok/grok-4.3",
+          "provider": "SpaceXAI",
+          "effort": "high",
+          "harness": null,
+          "score": 34.416,
+          "standardError": 2.994,
+          "costUsdPerTest": 0.116616,
+          "latencySeconds": 97.519,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 6.218
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 36.731
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 26.126
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 34.603
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 51.357
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 33.823
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 22.85
+            }
+          ]
+        },
+        {
+          "id": "grok-grok-4-5",
+          "modelId": "grok/grok-4.5",
+          "provider": "SpaceXAI",
+          "effort": "high",
+          "harness": null,
+          "score": 64.323,
+          "standardError": 3.156,
+          "costUsdPerTest": 0.473604,
+          "latencySeconds": 283.566,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 24.87
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 59.491
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 60.637
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 70.566
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 72.496
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 64.183
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 60.658
+            }
+          ]
+        },
+        {
           "id": "grok-grok-4-6",
           "modelId": "grok/grok-4.6",
           "provider": "SpaceXAI",
@@ -11975,7 +13263,7 @@
           "harness": null,
           "score": 65.596,
           "standardError": 3.238,
-          "costUsdPerTest": 3.579409,
+          "costUsdPerTest": 1.796539,
           "latencySeconds": 996.469,
           "components": [
             {
@@ -12064,6 +13352,54 @@
           ]
         },
         {
+          "id": "kimi-kimi-k2-6",
+          "modelId": "kimi/kimi-k2.6",
+          "provider": "Moonshot AI",
+          "effort": null,
+          "harness": null,
+          "score": 45.135,
+          "standardError": 3.225,
+          "costUsdPerTest": 0.565511,
+          "latencySeconds": 924.425,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 12.435
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 46.747
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 30.448
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 51.239
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 61.752
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 37.63
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 42.296
+            }
+          ]
+        },
+        {
           "id": "kimi-kimi-k3",
           "modelId": "kimi/kimi-k3",
           "provider": "Moonshot AI",
@@ -12108,6 +13444,54 @@
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
               "score": 68.8
+            }
+          ]
+        },
+        {
+          "id": "meta-muse-spark-1-2",
+          "modelId": "meta/muse_spark_1_2",
+          "provider": "Meta",
+          "effort": "xhigh",
+          "harness": null,
+          "score": 56.86,
+          "standardError": 2.318,
+          "costUsdPerTest": 0.269212,
+          "latencySeconds": 119.905,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 43.523
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 52.476
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 55.145
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 55.238
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 76.295
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 59.514
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 44.39
             }
           ]
         },
@@ -12160,6 +13544,102 @@
           ]
         },
         {
+          "id": "meta-muse-spark-1-3-max",
+          "modelId": "meta/muse_spark_1_3_max",
+          "provider": "Meta",
+          "effort": "max",
+          "harness": null,
+          "score": 72.441,
+          "standardError": 2.879,
+          "costUsdPerTest": 0.389917,
+          "latencySeconds": 248.818,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 43.523
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 70.171
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 74.684
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 69.561
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 81.055
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 71.418
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 68.738
+            }
+          ]
+        },
+        {
+          "id": "minimax-minimax-m2-7",
+          "modelId": "minimax/MiniMax-M2.7",
+          "provider": "MiniMax",
+          "effort": null,
+          "harness": null,
+          "score": 25.382,
+          "standardError": 2.59,
+          "costUsdPerTest": 0.120058,
+          "latencySeconds": 302.854,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 8.29
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 20.219
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 25.175
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 21.497
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 47.179
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 19.137
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 21.321
+            }
+          ]
+        },
+        {
           "id": "minimax-minimax-m3",
           "modelId": "minimax/MiniMax-M3",
           "provider": "MiniMax",
@@ -12204,6 +13684,150 @@
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
               "score": 52.429
+            }
+          ]
+        },
+        {
+          "id": "mistralai-mistral-medium-3-5",
+          "modelId": "mistralai/mistral-medium-3.5",
+          "provider": "Mistral AI",
+          "effort": "high",
+          "harness": null,
+          "score": 27.291,
+          "standardError": 2.824,
+          "costUsdPerTest": 1.443655,
+          "latencySeconds": 430.673,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 4.663
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 24.361
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 26.26
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 29.444
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 45.318
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 21.256
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 18.379
+            }
+          ]
+        },
+        {
+          "id": "openai-gpt-5-4-mini-2026-03-17",
+          "modelId": "openai/gpt-5.4-mini-2026-03-17",
+          "provider": "OpenAI",
+          "effort": "xhigh",
+          "harness": null,
+          "score": 36.586,
+          "standardError": 3.095,
+          "costUsdPerTest": 0.806171,
+          "latencySeconds": 1006.185,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 8.808
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 36.518
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 26.513
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 38.553
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 52.296
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 33.491
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 32.174
+            }
+          ]
+        },
+        {
+          "id": "openai-gpt-5-4-nano-2026-03-17",
+          "modelId": "openai/gpt-5.4-nano-2026-03-17",
+          "provider": "OpenAI",
+          "effort": "high",
+          "harness": null,
+          "score": 26.578,
+          "standardError": 2.518,
+          "costUsdPerTest": 0.069662,
+          "latencySeconds": 220.306,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 6.218
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 23.369
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 23.259
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 22.52
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 42.802
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 22.122
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 26.789
             }
           ]
         },
@@ -12640,6 +14264,150 @@
           ]
         },
         {
+          "id": "thinkingmachines-inkling-small",
+          "modelId": "thinkingmachines/inkling-small",
+          "provider": "Thinkingmachines",
+          "effort": "0.99",
+          "harness": null,
+          "score": 41.461,
+          "standardError": 2.871,
+          "costUsdPerTest": 0.091767,
+          "latencySeconds": 385.252,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 18.653
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 43.85
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 32.085
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 47.453
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 51.226
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 42.965
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 30.152
+            }
+          ]
+        },
+        {
+          "id": "xiaomi-mimo-v2-5",
+          "modelId": "xiaomi/mimo-v2.5",
+          "provider": "Xiaomi",
+          "effort": null,
+          "harness": null,
+          "score": 29.163,
+          "standardError": 2.713,
+          "costUsdPerTest": 0.017023,
+          "latencySeconds": 500.826,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 9.326
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 29.256
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 21.557
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 30.085
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 43.247
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 19.069
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 31.723
+            }
+          ]
+        },
+        {
+          "id": "xiaomi-mimo-v2-5-pro",
+          "modelId": "xiaomi/mimo-v2.5-pro",
+          "provider": "Xiaomi",
+          "effort": null,
+          "harness": null,
+          "score": 34.787,
+          "standardError": 2.621,
+          "costUsdPerTest": 0.040042,
+          "latencySeconds": 376.514,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 15.544
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 23.224
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 41.128
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 42.226
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 43.12
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 31.339
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 32.699
+            }
+          ]
+        },
+        {
           "id": "xiaomi-mimo-v2-6-flash",
           "modelId": "xiaomi/mimo-v2.6-flash",
           "provider": "Xiaomi",
@@ -12782,6 +14550,54 @@
               "score": 71.078
             }
           ]
+        },
+        {
+          "id": "zai-glm-5-3-flash",
+          "modelId": "zai/glm-5.3-flash",
+          "provider": "Zhipu AI",
+          "effort": "max",
+          "harness": null,
+          "score": 61.956,
+          "standardError": 3.256,
+          "costUsdPerTest": 0.138062,
+          "latencySeconds": 1297.006,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 31.606
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 57.286
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 60.234
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 61.439
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 81.017
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 61.369
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 52.416
+            }
+          ]
         }
       ]
     },
@@ -12797,12 +14613,12 @@
       "mode": "one-shot",
       "runner": "custom",
       "costBasis": "unavailable",
-      "totalModels": 98,
+      "totalModels": 102,
       "source": {
         "url": "https://www.vals.ai/benchmarks/medcode",
-        "retrievedAt": "2026-09-25T15:34:59.729Z",
-        "sha256": "ff36a029386330bc843a65c13cdb0f8e3595e38940b99d6fd4e0717bed483ebc",
-        "observedAt": "2026-09-22T00:00:00.000Z",
+        "retrievedAt": "2026-09-28T18:16:23.422Z",
+        "sha256": "d5bfd4e29f7235e41341f9bdf9348f81583be8886f5f7bc2935b6411bfaf043b",
+        "observedAt": "2026-09-26T00:00:00.000Z",
         "revision": "medcode v1"
       },
       "rows": [
@@ -13128,6 +14944,30 @@
           "standardError": 2.274,
           "costUsdPerTest": null,
           "latencySeconds": 134.934,
+          "components": []
+        },
+        {
+          "id": "anthropic-claude-sonnet-5-5",
+          "modelId": "anthropic/claude-sonnet-5-5",
+          "provider": "Anthropic",
+          "effort": "max",
+          "harness": null,
+          "score": 52.92,
+          "standardError": 2.119,
+          "costUsdPerTest": null,
+          "latencySeconds": 239.171,
+          "components": []
+        },
+        {
+          "id": "cohere-command-a-plus-05-2026",
+          "modelId": "cohere/command-a-plus-05-2026",
+          "provider": "Cohere",
+          "effort": null,
+          "harness": null,
+          "score": 19.718,
+          "standardError": 1.835,
+          "costUsdPerTest": null,
+          "latencySeconds": 103.751,
           "components": []
         },
         {
@@ -13932,6 +15772,30 @@
           "standardError": 1.907,
           "costUsdPerTest": null,
           "latencySeconds": 38.448,
+          "components": []
+        },
+        {
+          "id": "xiaomi-mimo-v2-6-flash",
+          "modelId": "xiaomi/mimo-v2.6-flash",
+          "provider": "Xiaomi",
+          "effort": null,
+          "harness": null,
+          "score": 41.057,
+          "standardError": 2.032,
+          "costUsdPerTest": null,
+          "latencySeconds": 93.373,
+          "components": []
+        },
+        {
+          "id": "xiaomi-mimo-v2-6-pro",
+          "modelId": "xiaomi/mimo-v2.6-pro",
+          "provider": "Xiaomi",
+          "effort": null,
+          "harness": null,
+          "score": 44.969,
+          "standardError": 2.097,
+          "costUsdPerTest": null,
+          "latencySeconds": 176.915,
           "components": []
         },
         {
