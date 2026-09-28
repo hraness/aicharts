@@ -667,6 +667,7 @@ export function createOpus55Article(
       "artificialAnalysisCodingAgents",
     ],
     relatedSlugs: [
+      "opus-5-5-coding-agent-index",
       "gpt-6-sol-coding-agent-index",
       "mimo-v2-6-pro-cost-frontier",
     ],

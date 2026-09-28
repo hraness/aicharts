@@ -187,6 +187,81 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     },
     sourceCheckedOn: INTRODUCING_REVIEWED_ON,
   },
+  "opus-5-5-coding-agent-index": {
+    canonicalOwner: blogArticlePath("opus-5-5-coding-agent-index"),
+    decision: "keep",
+    drafting: AI_DRAFTED,
+    evidenceOwner: EVIDENCE_OWNER,
+    evidenceType: "checked-dataset-analysis",
+    harmIfWrong:
+      "The Claude Code · Opus 5.5 AA Index could be quoted as a model ranking rather than a harness measurement, its $13.04 mean cost per task could be pooled with the $5.98 Intelligence Index cost per task or read as a price, the launch-week rank and frontier position could be repeated after new rows entered the chart, the Opus 5 to Opus 5.5 cost step could be read as contradicting Anthropic’s per-token price cut, or Anthropic’s vendor-run Terminal-Bench figure could be cited as the chart’s measurement.",
+    hostFit:
+      "AI Charts stores Claude Code · Opus 5.5 (max), Claude Code · Opus 5 (max), and every other configuration on the coding-agent chart in one checked snapshot, so it can derive the rank, cost rank, frontier steps, component gaps, and same-harness generation step from the rows the chart plots without adding a data surface, and it stores the Intelligence Index row needed to keep the two measurements apart.",
+    humanReviewedOn: null,
+    lifecycleState: "indexable",
+    nearestUrls: [
+      {
+        distinction:
+          "The Intelligence Index page places Claude Opus 5.5 (max) on the capability and cost chart, walks that frontier, and tabulates the model’s effort levels; this page places the Claude Code row on the coding-agent chart, walks the coding frontier down from it, and uses the Index row only to keep the two costs apart.",
+        url: blogArticlePath("opus-5-5-intelligence-index"),
+      },
+      {
+        distinction:
+          "The GPT-6 Sol page places a frontier row that is sixth on the chart and compares it with its Codex predecessor; this page places the chart’s leading and costliest row and asks what each step down the frontier gives up.",
+        url: blogArticlePath("gpt-6-sol-coding-agent-index"),
+      },
+      {
+        distinction:
+          "The Grok 4.7 page places Grok Build · Grok 4.7 on both charts and compares it with Grok 4.6 in the same harness; this page never places Grok and compares Opus 5.5 with Opus 5 in Claude Code.",
+        url: blogArticlePath("grok-4-7-coding-agent-index"),
+      },
+      {
+        distinction:
+          "The AA Index page derives the whole coding-agent cost frontier and the AA Index per dollar view; this page reads the frontier from one row at its top and states what each cheaper vertex gives up against that row.",
+        url: blogArticlePath("aa-index-cost-coding-agents"),
+      },
+    ],
+    nonObviousAnswer:
+      "Claude Code · Opus 5.5 (max) holds the coding-agent chart’s top score and its highest cost per task at once, the first step down the cost frontier gives up 3.8 index points for 95% of the cost, the composite lead rests on Terminal-Bench 4 and SWE-Atlas-QnA while five configurations score higher on DeepSWE v1.1, and the row costs 1.2x as much per task as Claude Code · Opus 5 despite Anthropic’s lower per-token prices because it used 1.4x the tokens.",
+    observations: [
+      "In the coding-agent snapshot retrieved 2026-09-25, Claude Code · Opus 5.5 (max) is first of 20 configurations on AA Index at 66.0 and the highest cost per task at $13.04; the frontier below it runs through Claude Code · Fable 5.1 (with fallback) (max), Devin Fusion CLI · Claude Fable 5.1 XHigh + SWE-2 Medium, Codex · GPT-6 Astra (max), Devin Fusion CLI · GPT-6 Astra XHigh + SWE-2 Medium, and Codex · GPT-6 Sol (max) before reaching the rows under one dollar.",
+      "The row leads Terminal-Bench 4 by 5.6 points over the next configuration and SWE-Atlas-QnA by 0.3 points, and is sixth of 20 on DeepSWE v1.1, where Muse Code · Muse Spark 1.3 (xhigh) leads.",
+      "Against Claude Code · Opus 5 (max) in the same harness and setting, Opus 5.5 adds 6.3 index points at 1.2x the mean cost per task, 1.4x the total tokens per task, and 1.5x the mean time per task, while Anthropic lists lower per-token prices for Opus 5.5 than for Opus 5.",
+    ],
+    originalContribution:
+      "A snapshot-derived statement of Claude Code · Opus 5.5 (max)’s AA Index rank, cost rank, and frontier position; a walk down the coding-agent cost frontier from the leading row stating the points each cheaper vertex gives up and its share of the leader’s cost; a component table naming the best other configuration on each of DeepSWE v1.1, Terminal-Bench 4, and SWE-Atlas-QnA with the signed gap; a same-harness Opus 5 to Opus 5.5 table showing the point gain bought with tokens and time at lower list prices; and an explicit separation of the coding-agent row from the Intelligence Index row.",
+    overlapDecision:
+      "Keep separately: the Intelligence Index page shares the model and the two-chart contrast but never places the Claude Code row, walks the coding frontier, splits the AA Index into components, or compares Opus 5 with Opus 5.5 in one harness; the GPT-6 Sol and Grok 4.7 pages share the component and predecessor tables as structure for other models; the AA Index page derives the whole frontier without a placed row. Fewer than a third of the headings or claims overlap any of them.",
+    primaryEvidence:
+      "The checked coding-agent snapshot supplies every AA Index, component score, cost, token, and duration value, the frontier, and the update log for the Claude Code · Opus 5.5 and Claude Code · Opus 5 rows and every configuration around them; the checked Intelligence Index snapshot supplies the Claude Opus 5.5 (max) score, cost per task, output tokens, rank, and cohort; Anthropic’s announcement supplies the release date, prices, cost claim, and vendor-run Terminal-Bench figure; Artificial Analysis’s model page supplies the list prices and cache discount behind both costs.",
+    primarySourceIds: [
+      "artificialAnalysisCodingAgents",
+      "anthropicClaudeOpus55",
+      "artificialAnalysisIntelligenceIndex",
+      "artificialAnalysisClaudeOpus55Model",
+    ],
+    readerJob:
+      "Understand what Claude Code · Opus 5.5’s leading coding-agent AA Index and $13.04 cost per task measure on the dated snapshot, what each step down the chart’s cost frontier gives up against that row, where the index points come from, how the row moved from Claude Code · Opus 5, and why its cost is not the Intelligence Index cost.",
+    reassessOn: "2026-11-02",
+    refreshTriggers: [
+      "A data refresh adds, removes, or rescores a Claude Code · Opus 5.5 row, a Claude Code · Opus 5 row, or any row that changes the AA Index rank, cost rank, frontier, or component leaders",
+      "The coding-agent snapshot gains a Claude Opus 5.5 row in a harness other than Claude Code or at a setting other than max",
+      "Artificial Analysis changes the Coding Agent Index components or the Claude Opus 5.5 model page prices",
+      "Anthropic changes Claude Opus 5.5 prices or effort levels",
+    ],
+    reviewedBy: WEEKDAY_MONITOR_REVIEWED_BY,
+    reviewerType: AI_REVIEWER,
+    reviewedOn: "2026-09-28",
+    scores: {
+      factualConfidence: 2,
+      hostFit: 2,
+      maintenanceValue: 2,
+      originalEvidence: 2,
+      readerUtility: 2,
+      voiceIntegrity: 2,
+    },
+    sourceCheckedOn: "2026-09-28",
+  },
   "opus-5-5-intelligence-index": {
     canonicalOwner: blogArticlePath("opus-5-5-intelligence-index"),
     decision: "keep",
@@ -202,7 +277,12 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     nearestUrls: [
       {
         distinction:
-          "The AA Index page derives the coding-agent cost frontier from harness rows; this page places one model on the separate Intelligence Index frontier and uses the coding-agent snapshot only to separate the Claude Code · Opus 5 row from the Opus 5.5 subject.",
+          "The coding-agent page places Claude Code · Opus 5.5 (max) on the coding-agent chart, walks that frontier down from it, and compares it with Claude Code · Opus 5; this page places Claude Opus 5.5 (max) on the Intelligence Index, walks that frontier, and tabulates the effort levels.",
+        url: blogArticlePath("opus-5-5-coding-agent-index"),
+      },
+      {
+        distinction:
+          "The AA Index page derives the coding-agent cost frontier from harness rows; this page places one model on the separate Intelligence Index frontier and uses the coding-agent snapshot only to separate the Claude Code rows from the Opus 5.5 Index subject.",
         url: blogArticlePath("aa-index-cost-coding-agents"),
       },
       {
@@ -212,7 +292,7 @@ export const BLOG_ARTICLE_ADMISSIONS = {
       },
       {
         distinction:
-          "The Grok 4.7 page places one xAI model on both charts and compares it with Grok 4.6 in the same harness; this page never places Grok and has no same-harness predecessor, because the coding-agent snapshot stores no Opus 5.5 row.",
+          "The Grok 4.7 page places one xAI model on both charts and compares it with Grok 4.6 in the same harness; this page never places Grok and leaves the same-harness Opus comparison to the coding-agent page.",
         url: blogArticlePath("grok-4-7-coding-agent-index"),
       },
       {
@@ -226,7 +306,7 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     observations: [
       "Walking the Intelligence Index cost frontier down from its highest-scoring point, the first four points are Claude Opus 5.5 at max, xhigh, high, and medium effort, and the first point from another model is GPT-6 Sol (max) at 47.5 for $1.06 per task.",
       "Across the five Claude Opus 5.5 effort levels, input-side cost stays between 60% and 63% of the cost per task while the reasoning share of output tokens rises from 33% at low to 70% at max.",
-      "The coding-agent snapshot stores no Claude Opus 5.5 row in any harness, and the Intelligence Index snapshot stores no Claude Opus 5 row, so the Opus 5 to Opus 5.5 step Anthropic describes cannot be measured on either chart from the checked data.",
+      "The Intelligence Index snapshot stores no Claude Opus 5 row, so the Opus 5 to Opus 5.5 step Anthropic describes cannot be measured on the Index from the checked data; the coding-agent snapshot measures it inside Claude Code, which the coding-agent page covers.",
     ],
     originalContribution:
       "A snapshot-derived statement of Claude Opus 5.5 (max)’s Intelligence Index rank, frontier membership, absence of one-point neighbors, and the five highest-scoring configurations after it; a walk down the cost frontier showing the first four points are the same model at lower effort and naming the first point from another model; a five-level effort ladder stating what each step buys with the reasoning share of output tokens; a split of the cost per task into cache reads, cache writes, non-cached input, reasoning, and answer tokens across the levels; and an explicit separation of the Index row from the Claude Code · Opus 5 coding-agent row.",
@@ -245,7 +325,7 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     reassessOn: "2026-10-30",
     refreshTriggers: [
       "A data refresh adds, removes, or rescores a Claude Opus 5.5 row, a Claude Opus 5 row, or any row that changes the Intelligence Index rank, frontier walk, or nearest-score table",
-      "The coding-agent snapshot gains a Claude Opus 5.5 row in any harness",
+      "The coding-agent snapshot gains or loses a Claude Opus 5.5 row in any harness",
       "Artificial Analysis changes the Intelligence Index version, its evaluations, or the Claude Opus 5.5 model page prices or summary",
       "Anthropic changes Claude Opus 5.5 prices, effort levels, or the default effort level",
     ],
