@@ -4,8 +4,7 @@
 cost and tokens per task, marking the best score at every budget. A local
 collector measures your own agents' token use.
 
-The repository also contains a local collector that measures your own coding
-agents' token use. It is in development. A Linux x86-64 build for local reports
+The collector is in development. A Linux x86-64 build for local reports
 is on [GitHub Releases](https://github.com/hraness/aicharts/releases/latest); on a
 Mac, [build it from source](docs/usage-local.md#build-and-run). Reports you open on the site stay in your browser tab.
 Account sync needs a collector enrolled on a Mac and works only while the site's
