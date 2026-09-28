@@ -24,6 +24,8 @@ Distinguish charted results, source guides, and emerging evaluations. A benchmar
 | `/blog` | Research collection | AI model benchmarks, AI agent benchmarks, benchmark analysis | Introduce the broader editorial method and state that the first collection focuses on coding agents. |
 | `/blog/[slug]` | Evidence page | Named benchmark, method, result, limitation, or model question | Stay specific to the source. Preserve the benchmark name, observation date, configuration, limits, and primary citations. |
 
+`/leaderboard` stays noindex and out of the sitemap until it has enough opt-in entries to be useful to a visitor. Reassess on 2026-11-28.
+
 Atlas filters use shareable query state on canonical `/benchmarks`; coding chart state uses `/coding`. They do not create separate indexable keyword pages. Legacy root query and hash links forward to the corresponding workspace, while new links use its canonical path. The full benchmark definitions are crawlable on `/data`. Create a dedicated chart or analysis route only when it answers a distinct reader task with enough evidence to justify its own canonical page. Do not publish several routes that answer the same intent with lightly varied copy.
 
 The compact `/data/benchmark-atlas.json` catalog lists stable benchmark IDs, coverage, exact versions, source dates, and measured distribution URLs. `/data/benchmark-atlas/{benchmarkId}` publishes one charted cohort at a time. Source-only and unknown IDs return 404. These JSON resources are internally linked data distributions, not extra article pages for the sitemap. Original source JSON routes remain available with their richer schemas; current Intelligence v4.3.2 has a separate versioned download from historical v4.1.1.
@@ -57,6 +59,10 @@ Every indexable research page must:
 Public research pages must not narrate repository structure, source-ingestion mechanics, data-field bookkeeping, editorial decisions, citation strategy, search strategy, or the order in which the analysis was produced. Connect a source to an AI Charts dataset only when that relationship helps answer the article's central question and the evidence supports it. Before publication, a fresh reader should be able to state the conclusion, the evidence behind it, and its limits after one pass.
 
 Update a page when its underlying result changes materially. Do not change a publication date to simulate freshness. Remove or consolidate a page when it no longer provides a distinct answer.
+
+A model release gets its score, cost, and frontier position on its model page. Write a standalone note only when the release raises a new reader question, and name that question in the title.
+
+Competitor facts on the home page, `/usage`, and the README were checked on 2026-09-28. Reassess them by 2027-01-28.
 
 ## Answer-engine discovery
 

@@ -5,6 +5,15 @@ import BenchmarksPage, { metadata as benchmarksMetadata } from "./benchmarks/pag
 import CalculatorPage, { metadata as calculatorMetadata } from "./calculator/page";
 import CodingPage, { metadata as codingMetadata } from "./coding/page";
 import { ATLAS_DATASETS, ATLAS_ENTRIES } from "@/lib/benchmark-atlas-catalog";
+import codingAgentData from "@/data/coding-agents.json";
+import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
+import { formatSnapshotCostUsd } from "@/lib/coding-agent-snapshot-rows";
+import {
+  codingConfigurationRows,
+  codingConfigurationsMarkdownTable,
+  codingSourceSentence,
+} from "@/lib/coding-configurations-table";
+import { markdownForPath } from "@/lib/site-markdown";
 import { CALCULATOR_INPUTS } from "@/lib/calculator-inputs-collection";
 import { LeaderboardView } from "@/components/usage/leaderboard-view";
 import type { LeaderboardEntryV1 } from "@/lib/usage/leaderboard-contract";
@@ -13,6 +22,7 @@ import type { LeaderboardEntryV1 } from "@/lib/usage/leaderboard-contract";
 // metadata is asserted here. View states are rendered directly below.
 mock.module("server-only", () => ({}));
 const { metadata: leaderboardMetadata } = await import("./leaderboard/page");
+const { default: LeaderboardLoading } = await import("./leaderboard/loading");
 
 describe("focused chart destinations", () => {
   test("the benchmark page owns the complete library and one initial chart", () => {
@@ -46,6 +56,36 @@ describe("focused chart destinations", () => {
     expect(html).not.toContain("Terminal-Bench 4.0.0 snapshot");
     expect(html.match(/<h1(?:\s|>)/gu)).toHaveLength(1);
     expect(codingMetadata.alternates?.canonical).toBe("https://aicharts.io/coding");
+  });
+  test("the coding page leads with its source and lists every configuration in a table", () => {
+    const parsedSnapshot = parseCodingAgentSnapshot(codingAgentData);
+    if (!parsedSnapshot.ok) throw parsedSnapshot.error;
+    const snapshot = parsedSnapshot.value;
+    const html = renderToStaticMarkup(createElement(CodingPage));
+    const source = codingSourceSentence(snapshot);
+    expect(html).toContain(`<p>${source.lead}<a href="${source.url}">${source.linkLabel}</a>${source.tail}</p>`);
+    expect(source.tail).toContain(`contains ${snapshot.records.length} configurations`);
+
+    const tableStart = html.indexOf('<table class="coding-configurations__table">');
+    const table = html.slice(tableStart, html.indexOf("</table>", tableStart));
+    expect(tableStart).toBeGreaterThan(html.indexOf('id="chart"'));
+    expect(html).toContain(`<h2 id="coding-configurations-title">All ${snapshot.records.length} configurations</h2>`);
+    expect(table).toContain("<caption>Coding-agent configurations in the current snapshot</caption>");
+    expect(table.match(/<tr>/gu)).toHaveLength(snapshot.records.length + 1);
+    const costs = [...table.matchAll(/<td data-column="costUsd">([^<]*)</gu)].map(match => match[1]);
+    const rows = codingConfigurationRows(snapshot.records);
+    expect(rows[0]!.benchmarks.aaIndex).toBe(Math.max(...snapshot.records.map(record => record.benchmarks.aaIndex ?? -1)));
+    rows.forEach((record, index) => {
+      if (record.economics.costUsd === null) {
+        expect(costs[index]).toBe("");
+      } else {
+        expect(costs[index]).toBe(formatSnapshotCostUsd(record.economics.costUsd));
+      }
+    });
+    expect(table).not.toMatch(/<td data-column="[^"]+">\$?0(?:\.0+)?</u);
+
+    const markdown = markdownForPath("/coding").body;
+    expect(markdown).toContain(codingConfigurationsMarkdownTable(snapshot.records));
   });
   test("the calculator page renders knobs, cost bars, and server-side provenance", () => {
     const html = renderToStaticMarkup(createElement(CalculatorPage));
@@ -116,5 +156,11 @@ describe("focused chart destinations", () => {
       expect(serialized.includes(marker)).toBe(false);
     }
     expect(leaderboardMetadata.alternates?.canonical).toBe("https://aicharts.io/leaderboard");
+    expect(leaderboardMetadata.robots).toEqual({ index: false, follow: true });
+    // The streamed loading shell must not add a second h1 to the page.
+    const loading = renderToStaticMarkup(createElement(LeaderboardLoading));
+    expect(loading).not.toMatch(/<h1(?:\s|>)/u);
+    expect(loading).toContain('aria-labelledby="leaderboard-loading-title"');
+    expect(loading).toContain('id="leaderboard-loading-title"');
   });
 });

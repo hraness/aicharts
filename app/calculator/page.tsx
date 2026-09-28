@@ -17,7 +17,7 @@ import "@/styles/calculator.css";
 
 export const metadata = createPublicSiteMetadata({
   ...searchSite,
-  title: "Subscription vs API vs GPUs | AI Charts",
+  title: "ChatGPT Pro vs API vs GPUs: cost calculator | AI Charts",
   description: "Compare the monthly cost of a fully used ChatGPT Pro seat against OpenAI API rates, DeepSeek Flash, home GPUs, and rented GPUs at the same token volume.",
 }, { canonicalPath: "/calculator" });
 

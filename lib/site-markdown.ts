@@ -77,6 +77,10 @@ import {
   DEEP_SWE_LEADERBOARD_URL,
   formatDeepSweEvidenceScore,
 } from "./deep-swe-evidence";
+import {
+  codingConfigurationsMarkdownTable,
+  codingSourceSentenceMarkdown,
+} from "./coding-configurations-table";
 import { HOME_ACTIVITY_FEED, HOME_ACTIVITY_SOURCE_LABEL } from "./home-activity-feed";
 import {
   INDEX_MODEL_PAGES,
@@ -367,13 +371,12 @@ function homeMarkdown(snapshot: CodingAgentSnapshot): string {
 }
 
 function codingMarkdown(snapshot: CodingAgentSnapshot): string {
-  const summary = codingAgentDatasetSummary(snapshot);
   return joinMarkdown([
     "# Coding agent comparisons",
     "",
     "Compare coding-agent benchmark scores with API cost, active time, or total token use. Each point is one model running in one agent harness at one effort setting.",
     "",
-    `The default chart shows DeepSWE v1.1 accuracy against API cost. Choose another benchmark or resource axis, inspect a point, or compare a provider’s configurations. The checked Coding Agent Index v1.5 [${snapshot.source.name} coding-agents snapshot](${snapshot.source.url}) contains ${summary.recordCount} configurations across ${summary.modelCount} models and ${summary.agentCount} agent harnesses. Retrieved ${formatRetrievedAt(snapshot.source.retrievedAt)}.`,
+    `The default chart shows DeepSWE v1.1 accuracy against API cost. Choose another benchmark or resource axis, inspect a point, or compare a provider’s configurations. ${codingSourceSentenceMarkdown(snapshot)}`,
     "",
     "## Available benchmarks",
     "",
@@ -382,6 +385,12 @@ function codingMarkdown(snapshot: CodingAgentSnapshot): string {
     "This Coding Agent Index v1.5 source combines DeepSWE v1.1, Terminal-Bench 4, and SWE-Atlas-QnA. Its Terminal-Bench scores remain separate from the standalone owner-published Terminal-Bench 4 cohort in the benchmark explorer.",
     "",
     `[Terminal-Bench 4](${absolute("/benchmarks?atlas=terminal-bench-4#explore")}) · [All benchmarks](${absolute("/benchmarks")}) · [Source and method](${absolute("/data#source")}) · [Coding-agent JSON](${absolute(CODING_AGENT_DATASET_DOWNLOAD_PATH)}) · [Models](${absolute("/models")})`,
+    "",
+    `## All ${snapshot.records.length} configurations`,
+    "",
+    "Coding-agent configurations in the current snapshot, highest AA Index first. A dash marks a value the source does not report.",
+    "",
+    codingConfigurationsMarkdownTable(snapshot.records),
   ]);
 }
 

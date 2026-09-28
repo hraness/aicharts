@@ -77,7 +77,7 @@
 .usage-hero { align-items: end; display: grid; gap: 2rem; grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem); padding-block-end: clamp(2.5rem, 6vw, 4.5rem); }
 .usage-hero__copy { max-inline-size: 44rem; }
 .usage-hero--single { display: block; padding-block: clamp(2rem, 5vw, 3.5rem) clamp(2.5rem, 6vw, 4rem); }
-.usage-hero h1 { font-family: var(--font-text, var(--font-sans)); font-size: clamp(2.25rem, 1.6rem + 3vw, 3.5rem); font-weight: 550; letter-spacing: -.035em; line-height: 1.05; max-inline-size: 18ch; text-wrap: balance; }
+.usage-hero :is(h1, .usage-hero__title) { font-family: var(--font-text, var(--font-sans)); font-size: clamp(2.25rem, 1.6rem + 3vw, 3.5rem); font-weight: 550; letter-spacing: -.035em; line-height: 1.05; max-inline-size: 18ch; text-wrap: balance; }
 .usage-hero__lede { color: var(--muted); font-size: clamp(1rem, 1.4vw, 1.2rem); line-height: 1.55; margin-block-start: 1.4rem; max-inline-size: 38rem; text-wrap: pretty; }
 .usage-hero__actions { align-items: center; display: flex; flex-wrap: wrap; gap: .65rem; margin-block-start: 2rem; }
 .usage-hero__note { color: var(--muted); font-size: .875rem; margin-block-start: 1rem; }

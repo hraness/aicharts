@@ -4,10 +4,12 @@ import Link from "next/link";
 import codingAgentData from "@/data/coding-agents.json";
 import { ChartNavigation, ChartPageFooter } from "@/components/chart-navigation";
 import { CodingAgentExplorer } from "@/components/coding-agent-explorer";
+import { CodingConfigurationsTable } from "@/components/coding-configurations-table";
 import { RouteLoadingState } from "@/components/route-state";
 import { SiteHeader } from "@/components/site-header";
 import { MODEL_CARD_VARIANTS } from "@/lib/model-card-collection";
 import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
+import { codingSourceSentence } from "@/lib/coding-configurations-table";
 import { searchSite, site } from "@/app/site";
 
 import "@/styles/chart-home.css";
@@ -21,15 +23,17 @@ export const metadata = createPublicSiteMetadata({
 export default function CodingPage() {
   const parsed = parseCodingAgentSnapshot(codingAgentData);
   if (!parsed.ok) throw new Error(`Checked coding-agent snapshot is invalid: ${parsed.error.message}`, { cause: parsed.error });
+  const source = codingSourceSentence(parsed.value);
   const modelCardPaths = Object.fromEntries(MODEL_CARD_VARIANTS.flatMap(variant => variant.observations.map(observation => [observation.id, variant.path] as const)));
   return <>
     <SiteHeader current="/coding" />
     <main tabIndex={-1} className="chart-home coding-home" id="main-content">
-      <header className="chart-page-intro"><h1>Coding agent comparisons</h1><p>Each point is one model running in one agent harness at one effort setting, plotted by benchmark score against cost, time, or tokens per task.</p></header>
+      <header className="chart-page-intro"><h1>Coding agent comparisons</h1><p>Each point is one model running in one agent harness at one effort setting, plotted by benchmark score against cost, time, or tokens per task.</p><p>{source.lead}<a href={source.url}>{source.linkLabel}</a>{source.tail}</p></header>
       <ChartNavigation current="/coding" />
       <Suspense fallback={<RouteLoadingState />}>
         <CodingAgentExplorer brand={{ domain: site.domain }} modelCardPaths={modelCardPaths} snapshot={parsed.value} />
       </Suspense>
+      <CodingConfigurationsTable snapshot={parsed.value} />
       <section className="coding-benchmark-links" aria-label="More coding benchmarks">
         <h2>Other ways to measure coding</h2>
         <Link href="/benchmarks?atlas=terminal-bench-4&task=coding#explore">Terminal-Bench 4 <span>General terminal work ↗</span></Link>
