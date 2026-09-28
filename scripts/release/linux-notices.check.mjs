@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { collectLinuxNotices, planLinuxNotices, linuxNativeDiagnostic, linuxSystemDiagnostic, LINUX_LINK_MAP_MAX_BYTES } from "./linux-notices.mjs";
-import { SUPPORT_SOURCE, SUPPORT_FILES } from "./support-source.mjs";
+import { GIT_SOURCES } from "./admitted-git-sources.mjs";
 
 const digest = bytes => createHash("sha256").update(bytes).digest("hex");
 const encode = value => Buffer.from(JSON.stringify(value));
@@ -122,18 +122,33 @@ test("vendored Tokscale retains its pinned MIT notice and rejects identity or no
   });
 });
 
-async function addSupport(f) {
-  const checkout = `${f.input.cargoHomeDirectory}/git/checkouts/support-foundation-fixture/ed89e58`;
-  for (const file of Object.keys(SUPPORT_FILES)) {
-    const bytes = await readFile(new URL(`../../node_modules/@hraness/support-foundation/${file}`, import.meta.url));
-    assert.equal(digest(bytes), SUPPORT_FILES[file]);
+// Each admitted Git crate is seeded into a synthetic Cargo checkout from the
+// same pinned GitHub package a normal install resolves, and the fixture asserts
+// every byte against the reviewed allowlist before the collector sees it.
+const GIT_FIXTURES = [
+  { marker: "support-foundation", npm: "@hraness/support-foundation", checkout: "support-foundation-fixture/ed89e58" },
+  { marker: "desktop-foundation", npm: "@hraness/desktop-foundation", checkout: "desktop-foundation-fixture/6040606" },
+].map(fixture => {
+  const source = Object.keys(GIT_SOURCES).find(key => key.includes(fixture.marker));
+  assert.ok(source, fixture.marker);
+  return { ...fixture, source, record: GIT_SOURCES[source] };
+});
+
+async function addGitCrate(f, fixture) {
+  const checkout = `${f.input.cargoHomeDirectory}/git/checkouts/${fixture.checkout}`;
+  for (const file of Object.keys(fixture.record.files)) {
+    const bytes = await readFile(new URL(`../../node_modules/${fixture.npm}/${file}`, import.meta.url));
+    assert.equal(digest(bytes), fixture.record.files[file]);
     await mkdir(path.dirname(`${checkout}/${file}`), { recursive: true });
     await writeFile(`${checkout}/${file}`, bytes);
   }
-  return addCustody(f, { id: `${SUPPORT_SOURCE}#hraness-support-foundation@0.4.0`,
-    name: "hraness-support-foundation", version: "0.4.0", source: SUPPORT_SOURCE,
-    manifest_path: `${checkout}/rust/Cargo.toml` });
+  return addCustody(f, { id: `${fixture.source}#${fixture.record.package}@${fixture.record.version}`,
+    name: fixture.record.package, version: fixture.record.version, source: fixture.source,
+    manifest_path: `${checkout}/${fixture.record.crate}/Cargo.toml` });
 }
+
+const addSupport = f => addGitCrate(f, GIT_FIXTURES[0]);
+const addKit = f => addGitCrate(f, GIT_FIXTURES[1]);
 
 test("pinned SQLite and Ring build outputs join exact Cargo metadata without requiring direct LOAD", () => {
   const f = fixture(); addRing(f);
@@ -512,40 +527,42 @@ test("collector refuses unmapped crate instead of admitting nonempty notice byte
   });
 });
 
-test("the single reviewed Git crate requires exact identity, compiled files and license bytes", async () => {
-  await diskFixture(async f => {
-    const pkg = await addSupport(f);
-    // The minimal fixture progresses past dependency admission to its missing
-    // Rust toolchain notices. The complete Ubuntu join below covers success.
-    assert.deepEqual(await collectLinuxNotices(f.input), { ok: false, error: "notices_rust_missing" });
-    for (const [field, value] of [["source", SUPPORT_SOURCE.replace("ed89e584", "00000000")],
-      ["name", "other-package"], ["version", "0.4.1"], ["license", "Apache-2.0"], ["license_file", "LICENSE"]]) {
-      const original = pkg[field]; pkg[field] = value; f.update();
-      assert.deepEqual(await collectLinuxNotices(f.input), { ok: false, error: "notices_unmapped_crate" });
-      pkg[field] = original; f.update();
-    }
-    const checkout = path.dirname(path.dirname(pkg.manifest_path));
-    for (const file of Object.keys(SUPPORT_FILES)) {
-      const filename = path.join(checkout, file), original = await readFile(filename);
-      await writeFile(filename, Buffer.concat([original, Buffer.from("mutation")]));
+test("each reviewed Git crate requires exact identity, compiled files and license bytes", async () => {
+  for (const git of GIT_FIXTURES) {
+    await diskFixture(async f => {
+      const pkg = await addGitCrate(f, git);
+      // The minimal fixture progresses past dependency admission to its missing
+      // Rust toolchain notices. The complete Ubuntu join below covers success.
+      assert.deepEqual(await collectLinuxNotices(f.input), { ok: false, error: "notices_rust_missing" });
+      for (const [field, value] of [["source", git.source.replace("hraness/", "other/")],
+        ["name", "other-package"], ["version", "0.0.0"], ["license", "Apache-2.0"], ["license_file", "LICENSE"]]) {
+        const original = pkg[field]; pkg[field] = value; f.update();
+        assert.deepEqual(await collectLinuxNotices(f.input), { ok: false, error: "notices_unmapped_crate" });
+        pkg[field] = original; f.update();
+      }
+      const checkout = `${f.input.cargoHomeDirectory}/git/checkouts/${git.checkout}`;
+      for (const file of Object.keys(git.record.files)) {
+        const filename = path.join(checkout, file), original = await readFile(filename);
+        await writeFile(filename, Buffer.concat([original, Buffer.from("mutation")]));
+        assert.deepEqual(await collectLinuxNotices(f.input), { ok: false, error: "notices_crate_changed" });
+        await writeFile(filename, original);
+      }
+      const message = f.messages.find(message => message.package_id === pkg.id);
+      const original = pkg.manifest_path; pkg.manifest_path = `${f.input.scratchDirectory}/${git.record.crate}/Cargo.toml`; message.manifest_path = pkg.manifest_path; f.update();
       assert.deepEqual(await collectLinuxNotices(f.input), { ok: false, error: "notices_crate_changed" });
-      await writeFile(filename, original);
-    }
-    const message = f.messages.find(message => message.package_id === pkg.id);
-    const original = pkg.manifest_path; pkg.manifest_path = `${f.input.scratchDirectory}/rust/Cargo.toml`; message.manifest_path = pkg.manifest_path; f.update();
-    assert.deepEqual(await collectLinuxNotices(f.input), { ok: false, error: "notices_crate_changed" });
-    pkg.manifest_path = original; message.manifest_path = original; f.update();
-    message.target.kind = ["custom-build"]; f.update();
-    assert.deepEqual(await collectLinuxNotices(f.input), { ok: false, error: "notices_unmapped_crate" });
-    message.target.kind = ["lib"]; f.update();
-    const buildScript = path.join(checkout, "rust/build.rs");
-    await writeFile(buildScript, "fn main() {}\n");
-    assert.deepEqual(await collectLinuxNotices(f.input), { ok: false, error: "notices_crate_changed" });
-    await rm(buildScript);
-    const license = path.join(checkout, "LICENSE");
-    await rename(license, `${license}.retained`); await symlink(`${license}.retained`, license);
-    assert.deepEqual(await collectLinuxNotices(f.input), { ok: false, error: "notices_crate_changed" });
-  });
+      pkg.manifest_path = original; message.manifest_path = original; f.update();
+      message.target.kind = ["custom-build"]; f.update();
+      assert.deepEqual(await collectLinuxNotices(f.input), { ok: false, error: "notices_unmapped_crate" });
+      message.target.kind = ["lib"]; f.update();
+      const buildScript = path.join(path.dirname(pkg.manifest_path), "build.rs");
+      await writeFile(buildScript, "fn main() {}\n");
+      assert.deepEqual(await collectLinuxNotices(f.input), { ok: false, error: "notices_crate_changed" });
+      await rm(buildScript);
+      const license = path.join(checkout, "LICENSE");
+      await rename(license, `${license}.retained`); await symlink(`${license}.retained`, license);
+      assert.deepEqual(await collectLinuxNotices(f.input), { ok: false, error: "notices_crate_changed" });
+    });
+  }
 });
 
 test("collector binds registry notice bytes and package checksum to owned mapping", async () => {
@@ -657,6 +674,7 @@ test("complete synthetic Ubuntu filesystem and dpkg join emits deterministic not
   await diskFixture(async f => {
     addCustody(f);
     await addSupport(f);
+    await addKit(f);
     const sysroot = f.input.sysrootDirectory;
     // Rust 1.97.1 installs generated HTML and REUSE texts. The legacy COPYRIGHT,
     // LICENSE-MIT and LICENSE-APACHE files exist only in its tarball overlay.
@@ -777,6 +795,7 @@ test("complete synthetic Ubuntu filesystem and dpkg join emits deterministic not
       assert.equal(first.value.sha256, digest(first.value.bytes));
       const body = first.value.bytes.toString();
       assert.match(body, /Cargo hraness-support-foundation 0\.4\.0 \(MIT\) \/ LICENSE/u);
+      assert.match(body, /Cargo hraness-cli-kit 0\.8\.1 \(MIT\) \/ LICENSE/u);
       assert.match(body, /SQLite 3\.53\.2 amalgamation/u);
       assert.doesNotMatch(body, /===== Cargo aicharts-custody /u);
       for (const name of ringLicenses) assert.ok(body.includes(`Cargo ring 0.17.14 (Apache-2.0 AND ISC) / ${name}`));

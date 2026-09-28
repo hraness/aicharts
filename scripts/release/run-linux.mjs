@@ -12,7 +12,7 @@ import { assembleLinuxRelease } from "./assemble.mjs";
 import { validateArchive } from "./archive.mjs";
 import { encodeLinuxQualificationReport, validateLinuxQualificationReport, LINUX_SMOKE_MAX_INVOCATIONS } from "./linux-qualification.mjs";
 import { LINUX_LINK_MAP_MAX_BYTES, LINUX_NOTICES_MAX_BYTES, linuxNativeDiagnostic, linuxSystemDiagnostic } from "./linux-notices.mjs";
-import { SUPPORT_SOURCE } from "./support-source.mjs";
+import { admittedGitSource } from "./admitted-git-sources.mjs";
 
 const MiB = 1024 * 1024;
 const TARGET = "x86_64-unknown-linux-gnu";
@@ -230,7 +230,7 @@ function checkSource(source) {
   need(match && (manifest.match(/^version = /gmu) ?? []).length === 1, "unsupported_source");
   need(/^version\.workspace = true$/mu.test(byPath.get("crates/aicharts-cli/Cargo.toml")?.toString("utf8") ?? ""), "unsupported_source");
   const lock = byPath.get("Cargo.lock")?.toString("utf8") ?? "";
-  need(lock.length > 0 && [...lock.matchAll(/^source = "([^"]+)"$/gmu)].every(item => item[1] === "registry+https://github.com/rust-lang/crates.io-index" || item[1] === SUPPORT_SOURCE), "unsupported_source");
+  need(lock.length > 0 && [...lock.matchAll(/^source = "([^"]+)"$/gmu)].every(item => item[1] === "registry+https://github.com/rust-lang/crates.io-index" || admittedGitSource(item[1]) !== null), "unsupported_source");
   return match[1];
 }
 function inventoryHash(files) { return sha(Buffer.from(JSON.stringify(files.map(file => ({ path: file.path, mode: file.mode, bytes: file.bytes.length, sha256: sha(file.bytes) }))))); }
