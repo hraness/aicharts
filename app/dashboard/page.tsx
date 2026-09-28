@@ -41,7 +41,7 @@ export default async function DashboardPage() {
         <LeaderboardConsentControl returnTo="/dashboard" />
       </> : <section className="usage-empty" aria-labelledby="dashboard-unavailable-title">
         <div>
-          <h2 id="dashboard-unavailable-title">Your dashboard is unavailable right now</h2>
+          <h1 id="dashboard-unavailable-title">Your dashboard is unavailable right now</h1>
           <p>Private usage reads are paused; your saved measurements are unchanged. Local reports still open in this browser without an account.</p>
           <div className="usage-hero__actions">
             <Link className="usage-button usage-button--primary" href="/usage/details">Open a local report</Link>
