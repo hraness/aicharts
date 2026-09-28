@@ -2157,3 +2157,18 @@ $106.05). Ten of the seventeen days since 2026-09-11 therefore failed
 their own 2^30 bound (`STATS_MAX_TOKENS_PER_REQUEST_RECORD`, mirrored by the
 CLI's `max_tokens_per_record`); every event-granular client keeps 2^23, so the
 forked-rollout leak guard is unchanged.
+
+**2026-09-28 (V3 parked; longer import base):** With the per-day aggregate
+complete for the primary collector (Codex backfilled from July 30, Devin CLI
+from September 5, Cursor September 11–28 after the request bound), the owner
+delegated the V3 decision. V3 is parked rather than expanded or retired: it
+stores every model call as a record, capped at 1,048,576 per account, while the
+primary collector alone holds about 1.6 million calls; Devin CLI, Cursor and
+Codex rollouts over 64 MiB have no sender; and no product surface reads it.
+Expanding it would mean a multi-million-row per-account store for no reader;
+retiring it would be a large deletion right before launch. The aggregate stays
+the system of record, the V3 command stays explicit and attended, and nothing
+schedules it. Separately, `AUDIT_BASE_SECS` moved from 120 to 600: at a load
+average near 41 a two-day Claude Code scan took 88 s as a Standard LaunchAgent,
+12 s as Interactive and 21 s from a terminal, so the old base failed whole
+background cycles on exactly the busy machines this product measures.

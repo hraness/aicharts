@@ -165,6 +165,15 @@ previous publisher's own job enabled exactly as the cutover section requires.
 
 ## Native contribution sending (opt-in)
 
+V3 contributions are parked. The per-day aggregate this cycle publishes is the
+system of record: the dashboard, lifetime totals and leaderboard read it, and it
+covers every client. V3 stores every model call as its own record, capped at
+1,048,576 per account; the primary collector Mac alone holds about 1.6 million
+calls, and Devin CLI, Cursor and Codex rollouts over 64 MiB have no V3 sender.
+No product surface reads V3. Do not schedule contribution sends, migrations or
+activations, and do not extend V3 until a product surface needs per-call data.
+The command and the flag below remain for explicit, attended use.
+
 `--contribution-sync` is off by default. With the flag, the cycle runs the
 explicit contribution sender (`aicharts contribution-sync --send`) once per
 configured native source after every configured client published cleanly and
@@ -253,7 +262,8 @@ and the absolute private configuration path, with `RunAtLoad`,
 cycle only holds that priority while it runs, which on a busy Mac is what keeps
 it short: at a load average near 41, one two-day Claude Code publish took 12
 seconds as `Interactive`, 21 seconds from a terminal and 88 seconds as
-`Standard`, against a 120-second import deadline. Avoid
+`Standard`, against what was then a 120-second import deadline; the base is
+now ten minutes, so a busy Mac slows a cycle instead of failing it. Avoid
 `ProcessType=Background`, which stretched a whole cycle past its 30-minute
 bound. Do not
 enable a new schedule until a manual live cycle and account totals have been

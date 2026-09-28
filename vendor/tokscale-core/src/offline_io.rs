@@ -17,7 +17,11 @@ pub(crate) const MAX_LINE_BYTES: usize = 64 * 1024 * 1024;
 pub const MAX_SQLITE_BYTES: u64 = 64 * 1024 * 1024 * 1024;
 pub const MAX_ROWS: usize = 2_000_000;
 const MAX_ENTRIES: usize = 262_144;
-const AUDIT_BASE_SECS: u64 = 120;
+// Collectors run in the background on machines busy with the agents they
+// measure. At a load average near 41, a two-day Claude Code scan that takes 12 s
+// in the foreground took 88 s as a Standard LaunchAgent, so a 120 s base failed
+// whole cycles; ten minutes still bounds a stalled scan.
+const AUDIT_BASE_SECS: u64 = 600;
 const AUDIT_MAX_SECS: u64 = 1800;
 const SQLITE_SCAN_MIN_SECS: u64 = 60;
 const SQLITE_SCAN_MAX_SECS: u64 = 600;
@@ -1508,7 +1512,7 @@ mod tests {
         let guard = begin(std::slice::from_ref(&root)).unwrap();
         read(&path).unwrap();
         ACTIVE.lock().unwrap().as_mut().unwrap().started =
-            std::time::Instant::now() - Duration::from_secs(121);
+            std::time::Instant::now() - Duration::from_secs(AUDIT_BASE_SECS + 1);
         assert_eq!(guard.finish().unwrap_err(), vec!["import_time_limit"]);
     }
     #[test]
@@ -1520,7 +1524,7 @@ mod tests {
         read(&path).unwrap();
         fs::remove_file(&path).unwrap();
         ACTIVE.lock().unwrap().as_mut().unwrap().started =
-            std::time::Instant::now() - Duration::from_secs(121);
+            std::time::Instant::now() - Duration::from_secs(AUDIT_BASE_SECS + 1);
         assert_eq!(
             guard.finish().unwrap_err(),
             vec!["import_source_changed", "import_time_limit"]
@@ -1613,11 +1617,11 @@ mod tests {
         let reader = sqlite(&path).unwrap();
         sqlite_completed(&path);
         drop(reader);
-        // A source whose scaled scan budget is 500 s must survive past the
-        // 120 s base limit without relaxing any other audit check.
-        ACTIVE.lock().unwrap().as_mut().unwrap().sqlite_budget_secs = 500;
+        // A source whose scaled scan budget is 900 s must survive past the
+        // base limit without relaxing any other audit check.
+        ACTIVE.lock().unwrap().as_mut().unwrap().sqlite_budget_secs = 900;
         ACTIVE.lock().unwrap().as_mut().unwrap().started =
-            std::time::Instant::now() - Duration::from_secs(200);
+            std::time::Instant::now() - Duration::from_secs(AUDIT_BASE_SECS + 100);
         guard.finish().unwrap();
     }
     #[test]
@@ -1652,7 +1656,7 @@ mod tests {
         sqlite_completed(&path);
         drop(reader);
         ACTIVE.lock().unwrap().as_mut().unwrap().started =
-            std::time::Instant::now() - Duration::from_secs(121);
+            std::time::Instant::now() - Duration::from_secs(AUDIT_BASE_SECS + 1);
         assert_eq!(guard.finish().unwrap_err(), vec!["import_time_limit"]);
     }
     #[test]
@@ -1683,11 +1687,11 @@ mod tests {
         fs::write(&path, b"{}\n").unwrap();
         let guard = begin(std::slice::from_ref(&root)).unwrap();
         read(&path).unwrap();
-        // Twenty admitted GiB of text raise the deadline well past the 120 s
-        // base without relaxing any other audit check.
+        // Twenty admitted GiB of text raise the deadline well past the base
+        // without relaxing any other audit check.
         ACTIVE.lock().unwrap().as_mut().unwrap().bytes = 20 * 1024 * 1024 * 1024;
         ACTIVE.lock().unwrap().as_mut().unwrap().started =
-            std::time::Instant::now() - Duration::from_secs(200);
+            std::time::Instant::now() - Duration::from_secs(AUDIT_BASE_SECS + 100);
         guard.finish().unwrap();
     }
     #[test]
@@ -1710,7 +1714,7 @@ mod tests {
         let guard = begin(std::slice::from_ref(&root)).unwrap();
         read(&path).unwrap();
         ACTIVE.lock().unwrap().as_mut().unwrap().started =
-            std::time::Instant::now() - Duration::from_secs(121);
+            std::time::Instant::now() - Duration::from_secs(AUDIT_BASE_SECS + 1);
         assert_eq!(guard.finish().unwrap_err(), vec!["import_time_limit"]);
     }
     #[test]
