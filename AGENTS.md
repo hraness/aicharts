@@ -104,6 +104,7 @@
 - Run `bun run check:cost-surfaces` before handoff whenever a data surface changes.
 - Every keychain dialog lands on the owner's screen. Never set `AICHARTS_CUSTODY_INTERACTION=allow` in a loop, schedule, or background script, and never inspect the login keychain with `security dump-keychain -d`. Grant a newly built binary once in one attended command, then verify it with the override unset (see `docs/usage-local.md`). A rebuilt binary at the same path needs a fresh grant: macOS binds "Always Allow" to the build's cdhash, and a denied custody read surfaces as `attempt_recovery_required`, not a custody error — check the securityd log (`CSSMERR_CSP_OPERATION_AUTH_DENIED`) before suspecting enrollment state.
 - Keep aggregate snapshot and V1 publishing open for every client and collector version whatever the contribution profile's phase: the private reads, lifetime totals and leaderboard read those stores (`docs/usage-autosubmit.md`).
+- The per-day aggregate (`stats-sync` snapshots) is the system of record for every client. V3 contributions are parked (owner-delegated decision, 2026-09-28): no schedule, loop or agent runs `contribution-sync` sends, migrations or activations, and no change extends V3 until a product surface needs per-call data.
 
 <!-- algal-skills:start -->
 - Prefer the globally installed `algal-*` skills for bounded git state, diffs, repository survey/search, test and release gates, CI polling, and web fetches instead of repeated raw tool output.
