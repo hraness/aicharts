@@ -8,12 +8,16 @@ import { parseArtificialAnalysisIntelligenceV43Snapshot } from "./artificial-ana
 import {
   CLAUDE_OPUS_5_CODING_CONFIGURATION,
   CLAUDE_OPUS_5_RELEASE_SLUG,
+  CLAUDE_OPUS_55_CODING_CONFIGURATION,
   CLAUDE_OPUS_55_CODING_MODEL,
   CLAUDE_OPUS_55_INTELLIGENCE_SLUG,
   CLAUDE_OPUS_55_RELEASE_SLUG,
+  componentContrasts,
+  frontierDescent,
   inputCostShare,
   opus5CodingAgentPlacement,
   opus5IntelligenceRows,
+  opus55CodingAgentPlacement,
   opus55CodingAgentRows,
   opusIntelligencePlacement,
   reasoningShare,
@@ -21,6 +25,7 @@ import {
   topFrontierRun,
 } from "./claude-opus-5-5-placement";
 import { parseCodingAgentSnapshot } from "./coding-agent-data";
+import { aaIndexCostFrontier } from "./coding-agent-snapshot-rows";
 import { codingAgentRecord } from "./grok-4-7-placement.test";
 import { comparableIntelligenceRecords, orderedParetoPath, paretoMembership } from "./intelligence-efficiency";
 import { comparableTaskCost } from "./mimo-v2-6-pro-frontier";
@@ -230,5 +235,135 @@ describe("Claude Opus 5 coding-agent contrast", () => {
       expect(row.model).toBe(CLAUDE_OPUS_55_CODING_MODEL.model);
       expect(row.providerId).toBe(CLAUDE_OPUS_55_CODING_MODEL.providerId);
     }
+  });
+});
+
+describe("Claude Code · Opus 5.5 coding-agent placement", () => {
+  const opus55 = codingAgentRecord({
+    ...CLAUDE_OPUS_55_CODING_CONFIGURATION,
+    aaIndex: 65.99,
+    costUsd: 13.04,
+    deepSwe: 68.44,
+    id: "opus-5-5",
+    sweAtlas: 66.4,
+    terminalBench: 63.13,
+    totalTokens: 15_551_383,
+  });
+  const opus5 = codingAgentRecord({
+    ...CLAUDE_OPUS_5_CODING_CONFIGURATION,
+    aaIndex: 59.73,
+    costUsd: 10.79,
+    deepSwe: 62.54,
+    id: "opus-5",
+    sweAtlas: 62.1,
+    terminalBench: 54.55,
+    totalTokens: 11_374_850,
+  });
+  const fable = codingAgentRecord({ aaIndex: 62.22, agent: "Claude Code", costUsd: 12.39, deepSwe: 64.31, id: "fable", model: "Fable 5.1 (with fallback)", providerId: "anthropic", sweAtlas: 64.78, terminalBench: 57.58 });
+  const astra = codingAgentRecord({ aaIndex: 61.65, costUsd: 7.47, deepSwe: 67.55, id: "gpt-6-astra", model: "GPT-6 Astra", providerId: "openai", sweAtlas: 61.83, terminalBench: 55.56 });
+  const sol = codingAgentRecord({ aaIndex: 56.66, costUsd: 2.99, deepSwe: 69.03, id: "gpt-6-sol", model: "GPT-6 Sol", providerId: "openai", sweAtlas: 57.53, terminalBench: 43.43 });
+  const muse = codingAgentRecord({ aaIndex: 54.3, agent: "Muse Code", costUsd: 3.98, deepSwe: 71.68, id: "muse", model: "Muse Spark 1.3", providerId: "meta", sweAtlas: 59.41, terminalBench: 31.82 });
+  const luna = codingAgentRecord({ aaIndex: 43.22, costUsd: 0.44, deepSwe: 66.37, id: "gpt-5-6-luna", model: "GPT-5.6 Luna", providerId: "openai", sweAtlas: 48.66, terminalBench: 14.65 });
+  const costless = codingAgentRecord({ aaIndex: 70, costUsd: null, id: "costless" });
+  const indexless = codingAgentRecord({ aaIndex: null, costUsd: 1, deepSwe: 80, id: "indexless" });
+
+  test("places the leader, ranks its cost, walks the frontier below it, and contrasts each component", () => {
+    const records = [sol, opus5, luna, fable, indexless, muse, opus55, astra];
+    const placement = opus55CodingAgentPlacement(records);
+    expect(placement).toBeDefined();
+    if (placement === undefined) return;
+    expect(placement.record.id).toBe("opus-5-5");
+    expect(placement.rank).toBe(1);
+    expect(placement.indexedCount).toBe(7);
+    expect(placement.higher).toEqual([]);
+    expect(placement.onCostFrontier).toBeTrue();
+    expect(placement.dominators).toEqual([]);
+    expect(placement.cheapestHigher).toBeUndefined();
+    expect(placement.neighbors).toEqual([]);
+    expect(placement.predecessor?.id).toBe("opus-5");
+    expect(placement.costRank).toBe(1);
+    expect(placement.costedCount).toBe(7);
+    // Muse costs more than Sol and scores less, so the frontier skips it; Opus 5 sits behind Fable.
+    expect(placement.frontierBelow.map(step => step.record.id))
+      .toEqual(["fable", "gpt-6-astra", "gpt-6-sol", "gpt-5-6-luna"]);
+    const [first] = placement.frontierBelow;
+    expect(first?.pointsBelow).toBeCloseTo(65.99 - 62.22, 9);
+    expect(first?.costMultiple).toBeCloseTo(12.39 / 13.04, 9);
+    // The closest rows below are ranked by index alone, so Opus 5 appears here but not on the frontier.
+    expect(placement.closestBelow.map(step => step.record.id))
+      .toEqual(["fable", "gpt-6-astra", "opus-5", "gpt-6-sol"]);
+    expect(placement.closestBelow[2]?.pointsBelow).toBeCloseTo(65.99 - 59.73, 9);
+    expect(placement.closestBelow[2]?.costMultiple).toBeCloseTo(10.79 / 13.04, 9);
+    expect(opus55CodingAgentPlacement(records, 1, 2)?.closestBelow.map(step => step.record.id))
+      .toEqual(["fable", "gpt-6-astra"]);
+    expect(opus55CodingAgentPlacement(records, 1, 0)?.closestBelow).toEqual([]);
+    expect(placement.componentContrasts.map(contrast => contrast.metric))
+      .toEqual(["deepSwe", "terminalBench", "sweAtlas"]);
+    const deepSwe = placement.componentContrasts.find(contrast => contrast.metric === "deepSwe");
+    expect(deepSwe?.bestOther.id).toBe("indexless");
+    expect(deepSwe?.gapPoints).toBeCloseTo(68.44 - 80, 9);
+    const terminal = placement.componentContrasts.find(contrast => contrast.metric === "terminalBench");
+    expect(terminal?.bestOther.id).toBe("fable");
+    expect(terminal?.gapPoints).toBeCloseTo(63.13 - 57.58, 9);
+    const atlas = placement.componentContrasts.find(contrast => contrast.metric === "sweAtlas");
+    expect(atlas?.bestOther.id).toBe("fable");
+    expect(atlas?.gapPoints).toBeCloseTo(66.4 - 64.78, 9);
+  });
+
+  test("requires a costed Claude Code · Opus 5.5 row and rejects a bad window", () => {
+    expect(opus55CodingAgentPlacement([opus5, fable])).toBeUndefined();
+    expect(opus55CodingAgentPlacement([{ ...opus55, economics: { ...opus55.economics, costUsd: null } }])).toBeUndefined();
+    expect(opus55CodingAgentPlacement([{ ...opus55, agent: "Cursor" }])).toBeUndefined();
+    expect(() => opus55CodingAgentPlacement([opus55], 0)).toThrow(RangeError);
+    expect(() => opus55CodingAgentPlacement([opus55], 1, -1)).toThrow(RangeError);
+    expect(() => opus55CodingAgentPlacement([opus55], 1, 2.5)).toThrow(RangeError);
+  });
+
+  test("reports a non-leading row with an empty descent above it and a lower cost rank", () => {
+    const cheaperHigher = codingAgentRecord({ aaIndex: 67, costUsd: 20, id: "twin" });
+    const placement = opus55CodingAgentPlacement([opus55, cheaperHigher, fable, costless]);
+    expect(placement?.rank).toBe(3);
+    expect(placement?.costRank).toBe(2);
+    expect(placement?.costedCount).toBe(3);
+    expect(placement?.onCostFrontier).toBeTrue();
+    expect(placement?.frontierBelow.map(step => step.record.id)).toEqual(["fable"]);
+    expect(placement?.componentContrasts.find(contrast => contrast.metric === "deepSwe")?.bestOther.id).toBe("fable");
+  });
+
+  test("leaves out components no other row carries and frontier vertices without a cost", () => {
+    const only = codingAgentRecord({ ...CLAUDE_OPUS_55_CODING_CONFIGURATION, deepSwe: null, id: "solo", sweAtlas: 70, terminalBench: 60 });
+    const other = codingAgentRecord({ aaIndex: 40, deepSwe: 50, id: "other", sweAtlas: null, terminalBench: 30 });
+    expect(componentContrasts([only, other], only).map(contrast => contrast.metric)).toEqual(["terminalBench"]);
+    expect(componentContrasts([only], only)).toEqual([]);
+    const placed = opus55CodingAgentPlacement([opus55, costless, fable]);
+    if (placed === undefined) throw new Error("Opus 5.5 row must be placed.");
+    expect(frontierDescent([opus55, costless, fable], placed.record).map(step => step.record.id)).toEqual(["fable"]);
+    expect(frontierDescent([opus55], placed.record)).toEqual([]);
+  });
+
+  test("agrees with the chart frontier and ranking on the checked snapshot", () => {
+    const parsed = parseCodingAgentSnapshot(codingAgentData);
+    if (!parsed.ok) throw parsed.error;
+    const placement = opus55CodingAgentPlacement(parsed.value.records);
+    expect(placement).toBeDefined();
+    if (placement === undefined) return;
+    expect(placement.record.agent).toBe(CLAUDE_OPUS_55_CODING_CONFIGURATION.agent);
+    expect(placement.record.model).toBe(CLAUDE_OPUS_55_CODING_CONFIGURATION.model);
+    expect(placement.record.setting).toBe("max");
+    expect(placement.rank).toBe(placement.higher.length + 1);
+    expect(placement.predecessor?.model).toBe(CLAUDE_OPUS_5_CODING_CONFIGURATION.model);
+    const frontier = aaIndexCostFrontier(parsed.value.records).map(point => point.record.id);
+    for (const step of placement.frontierBelow) {
+      expect(frontier).toContain(step.record.id);
+      expect(step.pointsBelow).toBeGreaterThan(0);
+      expect(step.costMultiple).toBeGreaterThan(0);
+    }
+    const costed = parsed.value.records.filter(record => (
+      record.benchmarks.aaIndex !== null && record.economics.costUsd !== null && record.economics.costUsd > 0
+    ));
+    expect(placement.costedCount).toBe(costed.length);
+    expect(placement.costRank).toBe(
+      costed.filter(record => (record.economics.costUsd ?? 0) > placement.record.economics.costUsd).length + 1,
+    );
   });
 });
