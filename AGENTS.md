@@ -102,7 +102,7 @@
 - Analytics and metering events come from a checked allowlist with a byte ceiling per event.
 - Content bytes live in the content store; the control plane keeps references and metadata only.
 - Run `bun run check:cost-surfaces` before handoff whenever a data surface changes.
-- Every keychain dialog lands on the owner's screen. Never set `AICHARTS_CUSTODY_INTERACTION=allow` in a loop, schedule, or background script, and never inspect the login keychain with `security dump-keychain -d`. Grant a newly built binary once in one attended command, then verify it with the override unset (see `docs/usage-local.md`).
+- Every keychain dialog lands on the owner's screen. Never set `AICHARTS_CUSTODY_INTERACTION=allow` in a loop, schedule, or background script, and never inspect the login keychain with `security dump-keychain -d`. Grant a newly built binary once in one attended command, then verify it with the override unset (see `docs/usage-local.md`). A rebuilt binary at the same path needs a fresh grant: macOS binds "Always Allow" to the build's cdhash, and a denied custody read surfaces as `attempt_recovery_required`, not a custody error — check the securityd log (`CSSMERR_CSP_OPERATION_AUTH_DENIED`) before suspecting enrollment state.
 - Keep aggregate snapshot and V1 publishing open for every client and collector version whatever the contribution profile's phase: the private reads, lifetime totals and leaderboard read those stores (`docs/usage-autosubmit.md`).
 
 <!-- algal-skills:start -->

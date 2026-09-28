@@ -6,6 +6,25 @@ rollback checks are complete.
 
 ## Recorded production evidence
 
+On September 27 (UTC), worker version
+`216b9313-cf74-447e-b95b-674f63007042` (commit `516b2b9`,
+[PR 525](https://github.com/hraness/aicharts/pull/525)) was uploaded with
+`wrangler versions upload` and promoted to 100% traffic at 20:35Z. Before
+promotion, `wrangler versions view --json` showed its bindings (all four
+namespaces, both buckets and all eleven vars with full values), compatibility
+settings, exports and handlers identical to the live
+`0b78f5d8-d43d-4b75-9da9-4ccdefac80fb`, which is the retained rollback version.
+The revision removes the three write guards that refused V1 admission and V2
+snapshots once an account's contribution profile was active; it adds no storage
+schema. After promotion a malformed snapshot request returned 400, and the
+primary collector Mac, whose account profile had been activated earlier that
+day, published signed `stats-sync` snapshots for Claude Code (revision 283),
+Devin CLI (284) and Codex (285) covering September 26–27 in about four minutes.
+Its scheduled job now runs one aggregate `autosubmit` pass at
+`ProcessType=Interactive`; under `Background` the same cycle was still importing
+after 30 minutes, and under `Standard` the Claude Code import still overran its
+deadline whenever the Mac was busy.
+
 Later on September 25 (UTC), worker version
 `bd2bac95-bde7-4dfb-9bbe-303b4e13794f` (commit `2e593f7`,
 [PR 439](https://github.com/hraness/aicharts/pull/439)) was promoted to 100%
