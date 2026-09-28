@@ -2,17 +2,22 @@ import { expect, test } from "bun:test";
 
 import type { ArtificialAnalysisIntelligenceRecord } from "./artificial-analysis-intelligence-data";
 import {
+  CLAUDE_OPUS_55_CODING_CONFIGURATION,
   CLAUDE_OPUS_55_INTELLIGENCE_SLUG,
   CLAUDE_OPUS_55_RELEASE_SLUG,
   inputCostShare,
+  opus55CodingAgentPlacement,
   opusIntelligencePlacement,
   reasoningShare,
   topFrontierRun,
 } from "./claude-opus-5-5-placement";
 import { costedRecord } from "./claude-opus-5-5-placement.test";
+import { aaIndexCostFrontier } from "./coding-agent-snapshot-rows";
+import { codingAgentRecord } from "./grok-4-7-placement.test";
 import { comparableIntelligenceRecords, orderedParetoPath, paretoMembership } from "./intelligence-efficiency";
 import { intelligenceRecord } from "./mimo-v2-6-pro-frontier.test";
 import { assertProperty, fc } from "./property-test";
+import { CODING_COMPONENT_METRICS } from "./snapshot-placement";
 
 const scoreArb = fc.double({ min: 0, max: 100, noNaN: true });
 const costArb = fc.double({ min: 0.001, max: 50, noNaN: true });
@@ -99,6 +104,130 @@ test("the frontier run is the longest same-release prefix of the frontier walked
       const current = frontierRun[position];
       if (previous === undefined || current === undefined) throw new Error("Run is short.");
       expect(previous.intelligenceIndex).toBeGreaterThan(current.intelligenceIndex);
+    }
+  }));
+});
+
+const componentArb = fc.option(fc.double({ min: 0, max: 100, noNaN: true }), { nil: null });
+const codingRowArb = fc.record({
+  aaIndex: fc.option(scoreArb, { nil: null }),
+  costUsd: fc.option(costArb, { nil: null }),
+  deepSwe: componentArb,
+  sweAtlas: componentArb,
+  terminalBench: componentArb,
+});
+const codingChartArb = fc.record({
+  opus: codingRowArb.map(shape => codingAgentRecord({
+    ...shape,
+    ...CLAUDE_OPUS_55_CODING_CONFIGURATION,
+    aaIndex: shape.aaIndex ?? 50,
+    costUsd: shape.costUsd ?? 5,
+    id: "opus-5-5",
+  })),
+  others: fc.array(codingRowArb, { maxLength: 24 })
+    .map(shapes => shapes.map((shape, position) => codingAgentRecord({ ...shape, id: `other-${position}` }))),
+});
+
+test("the frontier below the placed row is exactly the frontier’s lower-scoring vertices, and cost falls with score along it", () => {
+  assertProperty(fc.property(codingChartArb, ({ opus, others }) => {
+    const records = [...others, opus];
+    const placement = opus55CodingAgentPlacement(records);
+    if (placement === undefined) throw new Error("Opus row must carry an index and a cost.");
+    const index = placement.record.benchmarks.aaIndex;
+    const expected = aaIndexCostFrontier(records)
+      .map(point => point.record)
+      .filter(vertex => vertex.id !== opus.id && (vertex.benchmarks.aaIndex ?? Number.NaN) < index)
+      .map(vertex => vertex.id)
+      .toSorted();
+    expect(placement.frontierBelow.map(step => step.record.id).toSorted()).toEqual(expected);
+    for (let position = 0; position < placement.frontierBelow.length; position += 1) {
+      const current = placement.frontierBelow[position];
+      if (current === undefined) throw new Error("Descent is short.");
+      expect(current.pointsBelow).toBeCloseTo(index - current.record.benchmarks.aaIndex, 9);
+      expect(current.pointsBelow).toBeGreaterThan(0);
+      expect(current.costMultiple).toBeCloseTo(current.record.economics.costUsd / placement.record.economics.costUsd, 9);
+      const previous = placement.frontierBelow[position - 1];
+      if (previous === undefined) continue;
+      expect(previous.record.benchmarks.aaIndex).toBeGreaterThan(current.record.benchmarks.aaIndex);
+      expect(previous.record.economics.costUsd).toBeGreaterThan(current.record.economics.costUsd);
+      // Two values a rounding step apart can subtract or divide to the same number.
+      expect(previous.pointsBelow).toBeLessThanOrEqual(current.pointsBelow);
+      expect(previous.costMultiple).toBeGreaterThanOrEqual(current.costMultiple);
+    }
+  }));
+});
+
+test("each component contrast names the best other row and the signed gap to it", () => {
+  assertProperty(fc.property(codingChartArb, ({ opus, others }) => {
+    const records = [...others, opus];
+    const placement = opus55CodingAgentPlacement(records);
+    if (placement === undefined) throw new Error("Opus row must carry an index and a cost.");
+    const contrasted = new Set(placement.componentContrasts.map(contrast => contrast.metric));
+    for (const metric of CODING_COMPONENT_METRICS) {
+      const value = opus.benchmarks[metric];
+      const otherValues = others.map(record => record.benchmarks[metric]).filter((candidate): candidate is number => candidate !== null);
+      const contrast = placement.componentContrasts.find(candidate => candidate.metric === metric);
+      if (value === null || otherValues.length === 0) {
+        expect(contrast).toBeUndefined();
+        continue;
+      }
+      expect(contrasted.has(metric)).toBeTrue();
+      if (contrast === undefined) throw new Error("Contrast must exist.");
+      const best = Math.max(...otherValues);
+      expect(contrast.value).toBe(value);
+      expect(contrast.bestOther.benchmarks[metric]).toBe(best);
+      expect(contrast.bestOther.id).not.toBe(opus.id);
+      expect(contrast.gapPoints).toBeCloseTo(value - best, 9);
+    }
+    expect(placement.componentContrasts.length).toBe(contrasted.size);
+  }));
+});
+
+test("the closest coding rows below are the highest-scoring other costed rows at or under the placed score, capped at the count", () => {
+  assertProperty(fc.property(codingChartArb, fc.nat({ max: 8 }), ({ opus, others }, count) => {
+    const records = [...others, opus];
+    const placement = opus55CodingAgentPlacement(records, 1, count);
+    if (placement === undefined) throw new Error("Opus row must carry an index and a cost.");
+    const index = placement.record.benchmarks.aaIndex;
+    const expected = others
+      .filter(record => (
+        record.benchmarks.aaIndex !== null && record.economics.costUsd !== null && record.economics.costUsd > 0
+        && record.benchmarks.aaIndex <= index
+      ))
+      .toSorted((left, right) => (
+        (right.benchmarks.aaIndex ?? Number.NaN) - (left.benchmarks.aaIndex ?? Number.NaN) || left.id.localeCompare(right.id)
+      ))
+      .slice(0, count)
+      .map(record => record.id);
+    expect(placement.closestBelow.map(step => step.record.id)).toEqual(expected);
+    for (const step of placement.closestBelow) {
+      expect(step.pointsBelow).toBeCloseTo(index - step.record.benchmarks.aaIndex, 9);
+      expect(step.pointsBelow).toBeGreaterThanOrEqual(0);
+      expect(step.costMultiple).toBeGreaterThan(0);
+    }
+  }));
+});
+
+test("the cost rank counts the costed rows that cost strictly more, and the leader is always on the frontier", () => {
+  assertProperty(fc.property(codingChartArb, ({ opus, others }) => {
+    const records = [...others, opus];
+    const placement = opus55CodingAgentPlacement(records);
+    if (placement === undefined) throw new Error("Opus row must carry an index and a cost.");
+    const costed = records.filter(record => (
+      record.benchmarks.aaIndex !== null && record.economics.costUsd !== null && record.economics.costUsd > 0
+    ));
+    expect(placement.costedCount).toBe(costed.length);
+    expect(placement.costRank).toBe(
+      costed.filter(record => (record.economics.costUsd ?? 0) > placement.record.economics.costUsd).length + 1,
+    );
+    expect(placement.costRank).toBeGreaterThanOrEqual(1);
+    expect(placement.costRank).toBeLessThanOrEqual(placement.costedCount);
+    if (placement.rank === 1 && placement.higher.length === 0) {
+      const tiedLeaders = costed.filter(record => (
+        record.id !== opus.id && record.benchmarks.aaIndex === placement.record.benchmarks.aaIndex
+      ));
+      // A strict leader with a cost is a frontier vertex; only an exact tie can keep it off.
+      if (tiedLeaders.length === 0) expect(placement.onCostFrontier).toBeTrue();
     }
   }));
 });

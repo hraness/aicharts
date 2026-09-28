@@ -12,6 +12,7 @@ import { createHarnessTaxArticle } from "./harnesstax-coding-agent-harness-artic
 import { createIntroducingAiChartsArticle } from "./introducing-ai-charts-article";
 import { createMimoV26Article } from "./mimo-v2-6-pro-cost-frontier-article";
 import { createOpenModelsCodingAgentsArticle } from "./open-models-coding-agents-article";
+import { createOpus55CodingArticle } from "./opus-5-5-coding-agent-index-article";
 import { createOpus55Article } from "./opus-5-5-intelligence-index-article";
 import { createRealSweArticle } from "./real-swe-private-enterprise-benchmark-article";
 import { createSmallModelsHaveArrivedArticle } from "./small-models-have-arrived-article";
@@ -504,6 +505,7 @@ const mirrorCodeArticle = {
 
 export const blogArticles = [
   createIntroducingAiChartsArticle(),
+  createOpus55CodingArticle(),
   createOpus55Article(),
   createGpt6SolArticle(),
   createGrok47Article(),
