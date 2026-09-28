@@ -12,6 +12,11 @@ import {
 } from "@/app/blog/article-admissions";
 import { blogEditorialImage } from "@/app/blog/editorial-images";
 import {
+  homeAboutHeading,
+  homeAlternatives,
+  homeAlternativesCheckedLabel,
+  homeAlternativesClosing,
+  homeAlternativesLead,
   homeHeading,
   homeLede,
   homeTaskLinks,
@@ -19,6 +24,7 @@ import {
   modelCardsLede,
   notFoundRecoveryLinks,
   site,
+  usageReleaseUrl,
 } from "@/app/site";
 import artificialAnalysisIntelligenceData from "@/data/artificial-analysis-intelligence.json";
 import intelligenceV43Data from "@/data/artificial-analysis-intelligence-v4-3.json";
@@ -329,6 +335,17 @@ function homeMarkdown(snapshot: CodingAgentSnapshot): string {
     `Source: [${intelligence.source.name}](${intelligence.source.url}), retrieved ${formatRetrievedAt(intelligence.source.retrievedAt)}. The ${intelligence.benchmark.evaluationCount}-evaluation Index keeps the publisher’s scores. Output tokens include answer and reasoning, not input and cache traffic. AI Charts derives the frontier within this checked cohort. Historical v4.1.1 remains separate and is never relabeled as v${intelligence.benchmark.version}.`,
     "",
     `[Source and method](${absolute("/data#current-intelligence-efficiency")}) · [Current v${intelligence.benchmark.version} JSON](${absolute("/data/artificial-analysis-intelligence-v4-3.json")}) · [Historical v4.1.1 JSON](${absolute("/data/artificial-analysis-intelligence.json")})`,
+    "",
+    `## ${homeAboutHeading}`,
+    "",
+    site.introduction,
+    "",
+    [
+      homeAlternativesLead,
+      ...homeAlternatives.map(alternative => `[${alternative.name}](${alternative.href})${alternative.sentence}`),
+      homeAlternativesClosing,
+      homeAlternativesCheckedLabel,
+    ].join(" "),
     "",
     "## Recent models and notes",
     "",
@@ -736,7 +753,7 @@ export function agentGuideMarkdown(
     `- [Coding agent comparisons](${absolute("/coding")}). Compare benchmark scores with API cost, active time, or total tokens from the separate Artificial Analysis coding-agents source.`,
     `- [AI benchmark explorer](${absolute("/benchmarks")}). Choose a task, inspect a measured cohort, or read a source guide. Terminal-Bench 4 is the current terminal-engineering standard.`,
     `- [Subscription vs API vs GPUs](${absolute("/calculator")}). Price one fully used ChatGPT Pro seat's token volume at OpenAI and DeepSeek API rates, on purchased GPUs, and on rented GPUs, with sourced assumptions.`,
-    `- [AI usage tracking](${absolute("/usage")}). Measure your own coding agents' token use, cost, and speed with the AI Charts collector. It has no packaged release yet; build it from source. Account sync runs on macOS only.`,
+    `- [AI usage tracking](${absolute("/usage")}). Measure your own coding agents' token use, cost, and speed with the AI Charts collector. It is in development. A Linux x86-64 build for local reports is on [GitHub Releases](${usageReleaseUrl}); on a Mac, build it from source. Account sync runs on macOS only.`,
     `- [Atlas catalog JSON](${absolute(ATLAS_CATALOG_DOWNLOAD_PATH)}). All benchmark IDs, coverage, versions, source dates, and per-cohort JSON distribution links.`,
     `- [Models](${absolute("/models")}). ${modelCardsLede}`,
     `- [Data](${absolute(CODING_AGENT_DATASET_PATH)}). Every benchmark’s source, version, definitions, dataset downloads, and limits.`,

@@ -23,11 +23,15 @@ import type { BenchmarkAtlasDataset, BenchmarkAtlasEntry } from "@/lib/benchmark
 
 import Home from "./page";
 import {
+  homeAboutHeading,
+  homeAlternatives,
+  homeAlternativesCheckedOn,
   homeEyebrow,
   homeHeading,
   homeLede,
   homePrimaryAction,
   homeSecondaryAction,
+  site,
 } from "./site";
 
 const parsed = parseCodingAgentSnapshot(codingAgentData);
@@ -92,6 +96,30 @@ describe("homepage canonical content", () => {
     for (const slug of HOME_EDITORIAL_SLUGS) {
       expect(imageLessMarkup).toContain(`href="/blog/${slug}"`);
     }
+  });
+
+  test("names other places to compare models in a dated About section after the chart", () => {
+    const markup = renderToStaticMarkup(createElement(Home));
+    const intelligenceAt = markup.indexOf('class="intelligence-efficiency"');
+    const aboutAt = markup.indexOf('<section aria-labelledby="home-about-title" class="home-about">');
+    const aboutEndAt = markup.indexOf("</section>", aboutAt);
+    expect(aboutAt).toBeGreaterThan(intelligenceAt);
+    const about = markup.slice(aboutAt, aboutEndAt);
+    expect(about).toContain(`<h2 id="home-about-title">${homeAboutHeading}</h2>`);
+    expect(about).toContain("AI Charts is free and open source.");
+    expect(homeAlternatives.map(alternative => alternative.href)).toEqual([
+      "https://artificialanalysis.ai/leaderboards/models",
+      "https://arena.ai",
+      "https://epoch.ai/benchmarks",
+      "https://openrouter.ai/rankings",
+    ]);
+    for (const alternative of homeAlternatives) {
+      expect(about).toContain(`<a href="${alternative.href}">${alternative.name}</a>`);
+    }
+    expect(about).toContain("formerly LMArena");
+    expect(homeAlternativesCheckedOn).toBe("2026-09-28");
+    expect(about).toContain("Checked Sep 28, 2026.");
+    expect(site.introduction.length).toBeGreaterThan(0);
   });
 
   test("keeps the Pareto chart prominent and gives each other chart workspace its own destination", async () => {

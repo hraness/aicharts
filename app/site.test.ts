@@ -17,8 +17,13 @@ import {
 describe("AI Charts public positioning", () => {
   test("carries the canonical product messaging", () => {
     // Canonical lines come from the portfolio messaging record (hraness/jungle
-    // a9988b903): the title is the product name plus the tagline.
-    expect(searchSite.title).toBe(`${site.name} | ${site.tagline}`);
+    // a9988b903). The search title leads with the product name and names the
+    // comparison a searcher looks for; the tagline stays the visible heading.
+    expect(searchSite.title.startsWith(`${site.name}: `)).toBeTrue();
+    for (const fact of ["benchmark scores", "cost per task"]) {
+      expect(searchSite.title).toContain(fact);
+    }
+    expect(searchSite.title.length).toBeLessThanOrEqual(60);
     expect(searchSite.title).not.toContain("&");
     expect(site.tagline).toBe("See which model wins at each price.");
     expect(site.category).toBe("AI model comparison charts");

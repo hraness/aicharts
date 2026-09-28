@@ -53,7 +53,7 @@ async function checkDormant(baseUrl: string): Promise<void> {
   const page = await fetch(`${baseUrl}/usage`), html = await page.text();
   invariant(page.status === 200, "Disabled usage page must remain available.");
   for (const text of ["See how many tokens your AI agents use", "Set up tracking in three steps",
-    "no packaged release yet", "Account sync runs on macOS only.",
+    "GitHub Releases", "Account sync runs on macOS only.", "Similar tools",
     "aicharts stats --home", "No transcript uploads", 'href="/usage/details"', 'aria-current="page" href="/usage"',
     '<link rel="canonical" href="https://aicharts.io/usage"']) {
     invariant(html.includes(text), `The usage fallback must preserve local reporting, coverage and navigation: missing ${text}.`);
