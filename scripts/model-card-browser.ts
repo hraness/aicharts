@@ -391,7 +391,9 @@ async function verifyBenchmarkAtlas(browser: Browser, baseUrl: string): Promise<
           page.waitForURL(`${baseUrl}${bookmark.destination}`, { waitUntil: "domcontentloaded" }),
           page.goto(`${baseUrl}${bookmark.source}`, { waitUntil: "domcontentloaded" }),
         ]);
-        await page.locator(bookmark.target).waitFor({ state: "visible" });
+        // Cached Next.js routes may retain a hidden copy of the same anchor.
+        // Require the destination's visible target rather than matching that copy.
+        await page.locator(bookmark.target).filter({ visible: true }).waitFor({ state: "visible" });
         invariant(page.url() === `${baseUrl}${bookmark.destination}`, bookmark.message);
       } catch (cause: unknown) {
         throw new Error(bookmark.message, { cause });
