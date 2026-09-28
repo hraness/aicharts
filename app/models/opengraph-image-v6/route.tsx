@@ -1,16 +1,9 @@
-import {
-  modelCardsDescription,
-  modelCardsEyebrow,
-  modelCardsTitle,
-} from "../../site";
-import { aichartsSocialImage } from "../../social-card";
+import { createSiteSocialImageResponse } from "@hraness/web-discovery/social-image";
+
+import { aichartsSocialImageSite, modelsSocialImagePage } from "../../social-image-site";
 
 export const dynamic = "force-static";
 
 export function GET() {
-  return aichartsSocialImage({
-    description: modelCardsDescription,
-    eyebrow: modelCardsEyebrow,
-    title: modelCardsTitle,
-  });
+  return createSiteSocialImageResponse(aichartsSocialImageSite, modelsSocialImagePage);
 }

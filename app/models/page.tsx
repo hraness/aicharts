@@ -31,12 +31,13 @@ import {
   modelCardsTitle,
   searchSite,
 } from "../site";
+import { aichartsSocialImageAlt, modelsSocialImagePage } from "../social-image-site";
 
 const modelCardsSearchSite = {
   ...searchSite,
   description: modelCardsDescription,
   socialImage: {
-    alt: "AI Charts model pages with provider logos and Intelligence Index scores",
+    alt: aichartsSocialImageAlt(modelsSocialImagePage),
     path: MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH,
   },
   socialTitle: modelCardsTitle,
