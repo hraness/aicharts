@@ -10,7 +10,7 @@ import { assembleLinuxRelease } from "./assemble.mjs";
 import { validateArchive } from "./archive.mjs";
 import { validateLinuxQualificationReport } from "./linux-qualification.mjs";
 import { LINUX_LINK_MAP_MAX_BYTES, LINUX_NOTICES_MAX_BYTES } from "./linux-notices.mjs";
-import { SUPPORT_SOURCE } from "./support-source.mjs";
+import { GIT_SOURCES } from "./admitted-git-sources.mjs";
 
 // Private source-only seam. The shipped runner has no effects override. Fake
 // compiler/smoke facts exercise orchestration, never actual Linux qualification.
@@ -283,16 +283,22 @@ test("minimal compiler environment fixes baseline and excludes inherited secrets
   assert.equal(flags.some(value => value.includes("native")), false); assert.ok(selected.CFLAGS.startsWith("-march=x86-64 -mtune=generic"));
 });
 
-test("source admission adds only the full reviewed support Git revision", t => {
+test("source admission adds only the full reviewed Git revisions", t => {
   const f = fixture(t), lock = f.source.sourceFiles.find(file => file.path === "Cargo.lock");
-  for (const source of ["registry+https://github.com/rust-lang/crates.io-index", SUPPORT_SOURCE]) {
+  for (const source of ["registry+https://github.com/rust-lang/crates.io-index", ...Object.keys(GIT_SOURCES)]) {
     lock.bytes = bytes(`version = 4\n[[package]]\nsource = "${source}"\n`);
     assert.equal(internals.checkSource(f.source), "0.1.0");
   }
-  for (const source of [SUPPORT_SOURCE.replace("ed89e584", "00000000"), SUPPORT_SOURCE.replace("hraness/", "other/"),
-    "git+https://github.com/hraness/support-foundation#main", "git+https://example.invalid/private"]) {
+  const support = Object.keys(GIT_SOURCES).find(source => source.includes("support-foundation"));
+  const kit = Object.keys(GIT_SOURCES).find(source => source.includes("desktop-foundation"));
+  for (const source of [support.replace("ed89e584", "00000000"), support.replace("hraness/", "other/"),
+    kit.replace("6040606576167e4e8d0163a564463f04fa238be4", "0000000000000000000000000000000000000000"),
+    kit.replace("tag=v0.8.1", "tag=v0.8.2"), kit.replace("hraness/", "other/"),
+    kit.replace("tag=v0.8.1", "rev=6040606576167e4e8d0163a564463f04fa238be4"),
+    "git+https://github.com/hraness/support-foundation#main", "git+https://github.com/hraness/desktop-foundation#v0.8.1",
+    "git+https://example.invalid/private"]) {
     lock.bytes = bytes(`version = 4\n[[package]]\nsource = "${source}"\n`);
-    assert.throws(() => internals.checkSource(f.source), { code: "unsupported_source" });
+    assert.throws(() => internals.checkSource(f.source), { code: "unsupported_source" }, source);
   }
 });
 
