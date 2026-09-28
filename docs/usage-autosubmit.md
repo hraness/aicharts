@@ -240,9 +240,13 @@ the agent takes effect at the next login, and `aicharts service status` and
 `uninstall` manage it. A separate `io.aicharts.autosubmit` LaunchAgent whose
 `ProgramArguments` are the absolute binary path, `autosubmit`, `--config-file`
 and the absolute private configuration path, with `RunAtLoad`,
-`ProcessType=Standard` and a deliberate `StartInterval`, still works. Avoid
-`ProcessType=Background`: on a busy Mac it stretched a cycle that takes minutes
-at normal priority past its 30-minute bound. Do not
+`ProcessType=Interactive` and a deliberate `StartInterval`, still works. The
+cycle only holds that priority while it runs, which on a busy Mac is what keeps
+it short: at a load average near 41, one two-day Claude Code publish took 12
+seconds as `Interactive`, 21 seconds from a terminal and 88 seconds as
+`Standard`, against a 120-second import deadline. Avoid
+`ProcessType=Background`, which stretched a whole cycle past its 30-minute
+bound. Do not
 enable a new schedule until a manual live cycle and account totals have been
 checked. An interval is a scheduling request, not guaranteed daily delivery:
 firings while the Mac sleeps or the job is already running are missed. Verify

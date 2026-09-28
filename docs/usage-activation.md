@@ -21,8 +21,9 @@ primary collector Mac, whose account profile had been activated earlier that
 day, published signed `stats-sync` snapshots for Claude Code (revision 283),
 Devin CLI (284) and Codex (285) covering September 26–27 in about four minutes.
 Its scheduled job now runs one aggregate `autosubmit` pass at
-`ProcessType=Standard`; under `Background` the same cycle was still importing
-after 30 minutes.
+`ProcessType=Interactive`; under `Background` the same cycle was still importing
+after 30 minutes, and under `Standard` the Claude Code import still overran its
+deadline whenever the Mac was busy.
 
 Later on September 25 (UTC), worker version
 `bd2bac95-bde7-4dfb-9bbe-303b4e13794f` (commit `2e593f7`,
