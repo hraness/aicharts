@@ -68,6 +68,15 @@ One client entry owns all its configured roots; duplicate clients and overlappin
 9Router publication are refused. A profile with several accounts must preserve
 their separate acquisition bindings before combining numeric observations.
 
+The scheduled `days` window only republishes recent days. To add a device's
+older history, run one explicit `stats-sync` for that client with a wider
+`--since`; ordinary snapshots keep the larger of each stored and fresh value,
+so this never lowers a day. The account sums its devices, so first check the
+per-device ranges in `stats-totals --json`: if another enrollment on the same
+Mac already published a client's days, leave those days out, or they count
+twice. Cursor is account-wide rather than per-Mac, so exactly one device should
+publish it.
+
 ## Check and run
 
 ```sh
