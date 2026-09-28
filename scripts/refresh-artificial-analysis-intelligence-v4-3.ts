@@ -35,16 +35,23 @@ export const ARTIFICIAL_ANALYSIS_INTELLIGENCE_V43_PAGE_CONTRACT = {
 
 type ModelsPayload = Extract<ReturnType<typeof parseArtificialAnalysisModelsPayload>, { ok: true }>["value"];
 
-const publishedScoresSchema = z.object({
-  name: z.literal(ARTIFICIAL_ANALYSIS_INTELLIGENCE_NAME),
-  data: z.array(z.object({
-    label: z.string().min(1),
-    detailsUrl: z.string().regex(/^\/models\/[a-z0-9]+(?:-[a-z0-9]+)*$/u),
-    intelligenceIndex: z.number().finite().min(0).max(100),
-  })).min(10).max(100),
+const publishedScoreRowSchema = z.object({
+  label: z.string().min(1),
+  detailsUrl: z.string().regex(/^\/models\/[a-z0-9]+(?:-[a-z0-9]+)*$/u),
+  intelligenceIndex: z.number().finite().min(0).max(100),
 });
 
-/** Bind the versioned public leaderboard to the same manifest used for native resources. */
+const publishedScoresSchema = z.object({
+  name: z.literal(ARTIFICIAL_ANALYSIS_INTELLIGENCE_NAME),
+  data: z.array(publishedScoreRowSchema).min(10).max(100).optional(),
+});
+
+/**
+ * Cross-check Dataset JSON-LD leaderboard scores against the Flight payload
+ * when Artificial Analysis still embeds a `data` array. Live Dataset JSON-LD
+ * dropped that array; absence is not a source-shape failure — the page/API
+ * payload remains authoritative. A present `data` array still has to match.
+ */
 export function validateArtificialAnalysisIntelligenceV43PublishedScores(
   html: string,
   payload: ModelsPayload,
@@ -55,6 +62,7 @@ export function validateArtificialAnalysisIntelligenceV43PublishedScores(
   if (candidates.length !== 1) return err(new Error("Expected exactly one published v4.3 score dataset."));
   const published = publishedScoresSchema.safeParse(candidates[0]);
   if (!published.success) return err(new Error("Published v4.3 score rows changed shape.", { cause: published.error }));
+  if (published.data.data === undefined) return ok(undefined);
   const bySlug = new Map(payload.models.map(model => [model.slug, model]));
   const seen = new Set<string>();
   for (const row of published.data.data) {

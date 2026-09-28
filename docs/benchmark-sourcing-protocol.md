@@ -59,8 +59,11 @@ and cost frontiers use the same positive-cost cohort.
 The current importer pins the exact ten-evaluation v4.3.2 roster
 (AA-Briefcase v1.1, GDPval-AA v2.1, AutomationBench-AA, Terminal-Bench 4.0,
 SciCode, Humanity's Last Exam, GDP.pdf, CritPt, AA-Omniscience, AA-LCR v1.1)
-and cross-checks every published Dataset JSON-LD leaderboard score against its
-native payload record. It keeps native per-task output tokens and costs; it
+and treats the public model-page Flight payload as the authoritative score
+source. When Dataset JSON-LD still includes a `data` array of leaderboard
+scores, the importer cross-checks each row against that payload. When
+Artificial Analysis omits `data`, the omission is not a source-shape failure.
+It keeps native per-task output tokens and costs; it
 never divides evaluation totals by an inferred denominator. Historical v4.1.1
 data and downloads stay frozen, with their original nine-evaluation weights.
 Future index changes require a separate versioned admission, not a relabeled
@@ -247,9 +250,10 @@ as separate observations.
   last-known-good checked snapshot.
 - Timestamp-only polls do not create commits or change public freshness.
 - The lightweight Artificial Analysis model snapshot is checked every four
-  hours from the public model-page Flight payload, with its public Dataset
-  JSON-LD used as an independent source-shape cross-check. The heavier
-  coding-agent import remains daily.
+  hours from the public model-page Flight payload. Dataset JSON-LD still has
+  to name the Intelligence Index and match the pinned evaluation roster; a
+  `data` array of leaderboard scores is an optional cross-check when present,
+  not a required field. The heavier coding-agent import remains daily.
 - Refresh automation owns nine checked snapshots: the two release radars,
   Terminal-Bench, Terminal-Bench-Science, Artificial Analysis Intelligence,
   Artificial Analysis coding agents, direct DeepSWE evidence, and the reasoning

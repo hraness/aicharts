@@ -41,8 +41,13 @@ function sourcePayload() {
   return result.value;
 }
 
-function sourcePage(payload = sourcePayload(), version = "4.3.2", evaluations: readonly string[] = ARTIFICIAL_ANALYSIS_INTELLIGENCE_V43_EVALUATIONS): string {
-  const dataset = {
+function sourcePage(
+  payload = sourcePayload(),
+  version = "4.3.2",
+  evaluations: readonly string[] = ARTIFICIAL_ANALYSIS_INTELLIGENCE_V43_EVALUATIONS,
+  jsonLdData: "present" | "absent" = "present",
+): string {
+  const dataset: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "Dataset",
     citation: ARTIFICIAL_ANALYSIS_INTELLIGENCE_CITATION,
@@ -51,8 +56,14 @@ function sourcePage(payload = sourcePayload(), version = "4.3.2", evaluations: r
     isAccessibleForFree: true,
     license: ARTIFICIAL_ANALYSIS_TERMS_URL,
     name: ARTIFICIAL_ANALYSIS_INTELLIGENCE_NAME,
-    data: payload.models.slice(0, 20).map(model => ({ label: model.shortName, detailsUrl: `/models/${model.slug}`, intelligenceIndex: model.intelligenceIndex })),
   };
+  if (jsonLdData === "present") {
+    dataset.data = payload.models.slice(0, 20).map(model => ({
+      label: model.shortName,
+      detailsUrl: `/models/${model.slug}`,
+      intelligenceIndex: model.intelligenceIndex,
+    }));
+  }
   const flight = `1:${JSON.stringify(["$", "div", null, { initialModels: [], manifest: { key: manifestKey, path: manifestPath } }])}`;
   return `<a href="/methodology/intelligence-benchmarking">Methodology</a><script>self.__next_f.push(${JSON.stringify([1, flight])})</script><script type="application/ld+json">${JSON.stringify(dataset)}</script>`;
 }
@@ -120,13 +131,18 @@ describe("Artificial Analysis Intelligence v4.3 refresh", () => {
     expect(extractArtificialAnalysisIntelligencePage(html.replace("Terminal-Bench 4.0", "Terminal-Bench v2.1"), ARTIFICIAL_ANALYSIS_INTELLIGENCE_V43_PAGE_CONTRACT).ok).toBeFalse();
   });
 
-  test("binds public leaderboard scores to the exact native-resource model manifest", () => {
+  test("binds public leaderboard scores when JSON-LD includes data and accepts the payload when it omits data", () => {
     const payload = sourcePayload();
-    const html = sourcePage(payload);
-    expect(validateArtificialAnalysisIntelligenceV43PublishedScores(html, payload).ok).toBeTrue();
+    const withData = sourcePage(payload);
+    const withoutData = sourcePage(payload, "4.3.2", ARTIFICIAL_ANALYSIS_INTELLIGENCE_V43_EVALUATIONS, "absent");
+    expect(validateArtificialAnalysisIntelligenceV43PublishedScores(withData, payload).ok).toBeTrue();
+    expect(validateArtificialAnalysisIntelligenceV43PublishedScores(withoutData, payload).ok).toBeTrue();
+    expect(extractArtificialAnalysisIntelligencePage(withoutData, ARTIFICIAL_ANALYSIS_INTELLIGENCE_V43_PAGE_CONTRACT).ok).toBeTrue();
     payload.models[0]!.intelligenceIndex = 1;
-    expect(validateArtificialAnalysisIntelligenceV43PublishedScores(html, payload).ok).toBeFalse();
-    expect(validateArtificialAnalysisIntelligenceV43PublishedScores(html.replaceAll("\"data\":", "\"removedData\":"), payload).ok).toBeFalse();
+    expect(validateArtificialAnalysisIntelligenceV43PublishedScores(withData, payload).ok).toBeFalse();
+    expect(validateArtificialAnalysisIntelligenceV43PublishedScores(withoutData, payload).ok).toBeTrue();
+    expect(validateArtificialAnalysisIntelligenceV43PublishedScores(withData.replaceAll("\"data\":", "\"removedData\":"), payload).ok).toBeTrue();
+    expect(validateArtificialAnalysisIntelligenceV43PublishedScores(withData.replaceAll("\"data\":", "\"data\":[],\"ignored\":"), payload).ok).toBeFalse();
   });
 
   test("selects native resources and null costs identically while pinning the new benchmark", () => {
@@ -149,6 +165,36 @@ describe("Artificial Analysis Intelligence v4.3 refresh", () => {
     });
     expect(result.ok).toBeTrue();
     expect(writes).toEqual([previous]);
+  });
+
+  test("refreshes when Dataset JSON-LD omits the leaderboard data array", async () => {
+    const previous = derivedSnapshot();
+    const writes: ArtificialAnalysisIntelligenceV43Snapshot[] = [];
+    const htmlWithoutData = sourcePage(sourcePayload(), "4.3.2", ARTIFICIAL_ANALYSIS_INTELLIGENCE_V43_EVALUATIONS, "absent");
+    const unchanged = await refreshArtificialAnalysisIntelligenceV43({
+      fetchPage: async () => ok(htmlWithoutData),
+      fetchManifest: async () => ok(await encryptPayload(sourcePayload())),
+      now: () => new Date(Date.parse(previous.source.retrievedAt) + 60_000).toISOString(),
+      readCommittedSnapshot: async () => ok(previous),
+      writeCommittedSnapshot: async snapshot => { writes.push(snapshot); },
+    });
+    expect(unchanged.ok).toBeTrue();
+    expect(writes).toEqual([previous]);
+
+    const firstWrites: ArtificialAnalysisIntelligenceV43Snapshot[] = [];
+    const first = await refreshArtificialAnalysisIntelligenceV43({
+      fetchPage: async () => ok(htmlWithoutData),
+      fetchManifest: async () => ok(await encryptPayload(sourcePayload())),
+      now: () => current.source.retrievedAt,
+      readCommittedSnapshot: async () => ok(null),
+      writeCommittedSnapshot: async snapshot => { firstWrites.push(snapshot); },
+    });
+    expect(first.ok).toBeTrue();
+    expect(firstWrites).toHaveLength(1);
+    if (first.ok) {
+      expect(first.value.records).toEqual(current.records);
+      expect(first.value.benchmark.version).toBe("4.3.2");
+    }
   });
 
   test("does not write when source version, published scores, or retrieval time drift", async () => {
