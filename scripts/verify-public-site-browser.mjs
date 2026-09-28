@@ -54,8 +54,16 @@ try {
     try {
       const page = await context.newPage();
       const errors = [];
+      const signedOutUsage = [];
       page.on("pageerror", error => errors.push(error.message));
-      page.on("console", message => { if (message.type() === "error") errors.push(message.text()); });
+      page.on("console", message => {
+        if (message.type() !== "error") return;
+        // Signed out, the live usage dashboard's own session-bound API answers 401.
+        // Record that exact response; every other console error still fails.
+        const source = message.location().url ?? "";
+        if (production && message.text() === "Failed to load resource: the server responded with a status of 401 ()" && source.startsWith(`${origin}/api/usage/`)) signedOutUsage.push(source);
+        else errors.push(message.text());
+      });
       for (const route of routes) {
         const response = await page.goto(origin + route);
         assert.equal(response?.status(), 200, route);
@@ -76,7 +84,7 @@ try {
         const name = `${width}-${theme}-${route === "/" ? "home" : route.slice(1).replaceAll("/", "_")}`;
         const screenshot = await page.screenshot({ path: resolve(artifacts, `${name}.png`), fullPage: true, animations: "disabled" });
         const screenshotWidth = screenshot.readUInt32BE(16);
-        await writeFile(resolve(artifacts, `${name}.json`), JSON.stringify({ route, state, screenshotWidth, errors }, null, 2));
+        await writeFile(resolve(artifacts, `${name}.json`), JSON.stringify({ route, state, screenshotWidth, errors, signedOutUsage }, null, 2));
         assert.equal(screenshotWidth, width, `${route}: full-page screenshot width`);
         assert.ok(!state.overflow, `${route}: horizontal overflow at ${width}`);
         assert.ok(state.heading || config.minimalRoutes?.includes(route), `${route}: missing heading`);
