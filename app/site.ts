@@ -20,7 +20,7 @@ export const searchSite = {
   name: site.name,
   origin: site.origin,
   socialImage: {
-    alt: "AI Charts: See which model wins at each price.",
+    alt: "AI Charts: Model benchmark scores plotted against cost and tokens per task",
     path: "/opengraph-image",
   },
   title: "AI Charts: AI model benchmark scores vs cost per task",

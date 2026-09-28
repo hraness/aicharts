@@ -5,7 +5,7 @@ import ModelCardPage, { generateMetadata } from "@/app/models/[creatorSlug]/[mod
 import ModelCardsPage from "@/app/models/page";
 import { modelCardsHeading, modelCardsLede } from "@/app/site";
 import { ModelCardFace } from "@/components/model-card-face";
-import { ModelCardRasterFace, ModelCardSocialImage } from "@/components/model-card-image";
+import { ModelCardRasterFace } from "@/components/model-card-image";
 import { INDEX_MODEL_PAGES } from "@/lib/index-model-pages";
 import {
   MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH,
@@ -259,10 +259,9 @@ describe("public model cards", () => {
     if (card === undefined) return;
     const live = renderToStaticMarkup(<ModelCardFace card={card} />);
     const portrait = renderToStaticMarkup(<ModelCardRasterFace card={card} />);
-    const social = renderToStaticMarkup(<ModelCardSocialImage card={card} />);
     expect(card.release.status).toBe("verified");
     if (card.release.status !== "verified") return;
-    for (const markup of [live, portrait, social]) {
+    for (const markup of [live, portrait]) {
       expect(markup).toContain(card.displayTitle);
       expect(markup).toContain(card.harnessLabel);
       expect(markup).toContain("data:image/svg+xml");
@@ -285,9 +284,7 @@ describe("public model cards", () => {
     expect(live).not.toContain("<dl");
     expect(live).not.toContain("data-illumination-finish");
     expect(portrait).toContain("aicharts.io");
-    expect(social).toContain("aicharts.io");
     expect(portrait).not.toContain("data-holographic-finish");
-    expect(social).not.toContain("data-holographic-finish");
 
     const pendingCard = {
       ...card,
@@ -482,8 +479,8 @@ describe("public model cards", () => {
   test("includes the renderer contract in versioned card artwork URLs", () => {
     const card = MODEL_CARD_PRESENTATIONS[0];
     if (card === undefined) throw new Error("Expected at least one model card.");
-    expect(MODEL_CARD_RENDERER_VERSION).toBe("model-card-v8");
-    expect(MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH).toBe("/models/opengraph-image-v7");
+    expect(MODEL_CARD_RENDERER_VERSION).toBe("model-card-v9");
+    expect(MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH).toBe("/models/opengraph-image-v8");
     expect(MODEL_CARD_COLLECTION_SOCIAL_IMAGE_URL).toBe(
       `${MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH}?v=${MODEL_CARD_SNAPSHOT_VERSION}`,
     );

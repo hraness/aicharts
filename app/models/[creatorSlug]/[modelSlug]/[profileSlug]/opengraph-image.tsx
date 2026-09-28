@@ -1,4 +1,5 @@
 import {
+  createSiteSocialImageResponse,
   socialImageContentType,
   socialImageSize,
 } from "@hraness/web-discovery/social-image";
@@ -16,8 +17,12 @@ import {
 } from "@/lib/index-model-pages";
 import type { ModelCardRouteParams } from "@/lib/model-card-data";
 
-import { indexModelPageDescription, modelCardDescription, modelCardTitle } from "../../../../site";
-import { aichartsSocialImage } from "../../../../social-card";
+import { indexModelPageDescription } from "../../../../site";
+import {
+  aichartsSocialImageSite,
+  codingAgentProfileSocialImageDescription,
+  modelSocialImagePage,
+} from "../../../../social-image-site";
 
 export const alt = "AI Charts model page with provider, name, and Intelligence Index";
 export const contentType = socialImageContentType;
@@ -33,22 +38,22 @@ export default async function OpenGraphImage({
   const resolved = await params;
   const card = findModelCardPresentation(resolved);
   if (card !== undefined) {
-    return aichartsSocialImage({
-      description: modelCardDescription(card.displayTitle),
-      eyebrow: card.providerName,
-      title: modelCardTitle(card.displayTitle),
-    });
+    return createSiteSocialImageResponse(aichartsSocialImageSite, modelSocialImagePage({
+      description: codingAgentProfileSocialImageDescription,
+      displayTitle: card.displayTitle,
+      providerName: card.providerName,
+    }));
   }
   const indexPage = findIndexModelPage(resolved);
   if (indexPage === undefined) notFound();
-  return aichartsSocialImage({
+  return createSiteSocialImageResponse(aichartsSocialImageSite, modelSocialImagePage({
     description: indexModelPageDescription({
       cost: indexPage.costUsdPerTask === null ? null : formatIntelligenceCost(indexPage.costUsdPerTask),
       displayTitle: indexPage.displayTitle,
       score: formatIntelligenceIndex(indexPage.intelligenceIndex),
       sourceName: indexPage.sourceName,
     }),
-    eyebrow: indexPage.providerName,
-    title: modelCardTitle(indexPage.displayTitle),
-  });
+    displayTitle: indexPage.displayTitle,
+    providerName: indexPage.providerName,
+  }));
 }

@@ -12,6 +12,7 @@ import {
 import type { Metadata } from "next";
 
 import { searchSite, site } from "../site";
+import { aichartsSocialImageAlt, blogCollectionSocialImagePage } from "../social-image-site";
 import {
   BLOG_ARTICLE_AUTHOR,
   BLOG_SOURCES,
@@ -86,7 +87,7 @@ const blogSearchSite = {
   description: blogDescription,
   name: "AI Charts Blog",
   socialImage: {
-    alt: "AI Charts analysis of AI model and agent benchmarks",
+    alt: aichartsSocialImageAlt(blogCollectionSocialImagePage),
     path: BLOG_SOCIAL_IMAGE_PATH,
   },
   title: "AI model and agent benchmark analysis | AI Charts",

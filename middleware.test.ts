@@ -95,6 +95,7 @@ describe("markdown content negotiation", () => {
       ["/images/blog/terminal-bench-science.webp", "image/webp"],
       ["/opengraph-image", "image/png"],
       ["/models/opengraph-image-v7", "image/png"],
+      ["/models/opengraph-image-v8", "image/png"],
       ["/models/openai/gpt-5.6-sol/max/card.png", "image/png"],
       ["/models/openai/gpt-5.6-sol/max/opengraph-image", "image/png"],
     ] as const;

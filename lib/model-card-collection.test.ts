@@ -109,7 +109,7 @@ describe("model-card OpenRouter listings", () => {
       .digest("hex")
       .slice(0, 16);
 
-    expect(MODEL_CARD_RENDERER_VERSION).toBe("model-card-v8");
+    expect(MODEL_CARD_RENDERER_VERSION).toBe("model-card-v9");
     expect(MODEL_CARD_SNAPSHOT_VERSION).toBe(expected);
     expect(MODEL_CARD_SNAPSHOT_VERSION).not.toBe(benchmarkOnly);
   });
