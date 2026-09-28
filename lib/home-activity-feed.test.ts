@@ -20,7 +20,7 @@ describe("home activity feed", () => {
       && item.title === "MiMo-V2.6-Pro"
     ))).toBeTrue();
     expect(HOME_ACTIVITY_FEED.some(item => (
-      item.href === "/models/anthropic/claude-opus-5-5/index"
+      item.href === "/models/anthropic/claude-opus-5.5/max"
       && item.title === "Claude Opus 5.5"
     ))).toBeTrue();
     expect(HOME_ACTIVITY_FEED.some(item => (

@@ -122,7 +122,7 @@ describe("homepage canonical content", () => {
     expect(markup).toContain('data-analytics-surface="home_activity"');
     expect(markup).toContain("Recent models and notes");
     expect(markup).toContain('href="/models/xiaomi/mimo-v2-6-pro/index"');
-    expect(markup).toContain('href="/models/anthropic/claude-opus-5-5/index"');
+    expect(markup).toContain('href="/models/anthropic/claude-opus-5.5/max"');
     expect(markup).not.toContain('href="/models/anthropic/claude-opus-5/max">Claude Opus 5.5');
     expect(exploreFooterAt).toBeGreaterThan(calculatorAt);
     expect(resourceFooterAt).toBeGreaterThan(exploreFooterAt);

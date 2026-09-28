@@ -136,6 +136,22 @@
   },
   {
     "providerId": "anthropic",
+    "model": "Opus 5.5",
+    "canonicalModelId": "anthropic/claude-opus-5.5",
+    "emblemIdentity": {
+      "familyId": "opus",
+      "generation": ["5", "5"],
+      "revision": null,
+      "editionId": "base",
+      "role": "flagship"
+    },
+    "gatewayModelId": "anthropic/claude-opus-5.5",
+    "lobeIconKey": "claude",
+    "intrinsicClass": "standard",
+    "aliases": ["anthropic_claude-opus-5-5"]
+  },
+  {
+    "providerId": "anthropic",
     "model": "Sonnet 4.6",
     "canonicalModelId": "anthropic/claude-sonnet-4.6",
     "emblemIdentity": {
@@ -512,6 +528,38 @@
     "aliases": ["openai_vega-alpha"]
   },
   {
+    "providerId": "openai",
+    "model": "GPT-6 Luna",
+    "canonicalModelId": "openai/gpt-6-luna",
+    "emblemIdentity": {
+      "familyId": "gpt",
+      "generation": ["6"],
+      "revision": null,
+      "editionId": "luna",
+      "role": "speed"
+    },
+    "gatewayModelId": "openai/gpt-6-luna",
+    "lobeIconKey": "openai",
+    "intrinsicClass": "standard",
+    "aliases": ["openai_gpt-6-luna"]
+  },
+  {
+    "providerId": "openai",
+    "model": "GPT-6 Sol",
+    "canonicalModelId": "openai/gpt-6-sol",
+    "emblemIdentity": {
+      "familyId": "gpt",
+      "generation": ["6"],
+      "revision": null,
+      "editionId": "sol",
+      "role": "flagship"
+    },
+    "gatewayModelId": "openai/gpt-6-sol",
+    "lobeIconKey": "openai",
+    "intrinsicClass": "standard",
+    "aliases": ["openai_gpt-6-sol"]
+  },
+  {
     "providerId": "xai",
     "model": "Grok 4.5",
     "canonicalModelId": "spacexai/grok-4.5",
@@ -526,6 +574,38 @@
     "lobeIconKey": "xai",
     "intrinsicClass": "standard",
     "aliases": ["xai_grok-4-5"]
+  },
+  {
+    "providerId": "xai",
+    "model": "Grok 4.6",
+    "canonicalModelId": "spacexai/grok-4.6",
+    "emblemIdentity": {
+      "familyId": "grok",
+      "generation": ["4", "6"],
+      "revision": null,
+      "editionId": "base",
+      "role": "flagship"
+    },
+    "gatewayModelId": "spacexai/grok-4.6",
+    "lobeIconKey": "xai",
+    "intrinsicClass": "standard",
+    "aliases": ["xai_grok-4-6-xhigh"]
+  },
+  {
+    "providerId": "xai",
+    "model": "Grok 4.7",
+    "canonicalModelId": "spacexai/grok-4.7",
+    "emblemIdentity": {
+      "familyId": "grok",
+      "generation": ["4", "7"],
+      "revision": null,
+      "editionId": "base",
+      "role": "flagship"
+    },
+    "gatewayModelId": "spacexai/grok-4.7",
+    "lobeIconKey": "xai",
+    "intrinsicClass": "standard",
+    "aliases": ["xai_grok-bop-o86-xhigh"]
   },
   {
     "providerId": "xiaomi",
@@ -574,5 +654,21 @@
     "lobeIconKey": "zai",
     "intrinsicClass": "standard",
     "aliases": ["novita_glm-5-2_fp8"]
+  },
+  {
+    "providerId": "z_ai",
+    "model": "GLM-5.3",
+    "canonicalModelId": "zai/glm-5.3",
+    "emblemIdentity": {
+      "familyId": "glm",
+      "generation": ["5", "3"],
+      "revision": null,
+      "editionId": "base",
+      "role": "flagship"
+    },
+    "gatewayModelId": "zai/glm-5.3",
+    "lobeIconKey": "zai",
+    "intrinsicClass": "standard",
+    "aliases": ["zai_glm-5-3"]
   }
 ]

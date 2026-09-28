@@ -8,6 +8,7 @@ import {
   homePrimaryAction,
   homeSecondaryAction,
   notFoundRecoveryLinks,
+  modelCardTitle,
   notFoundSearchSite,
   searchSite,
   site,
@@ -40,6 +41,13 @@ describe("AI Charts public positioning", () => {
     expect(searchSite.description).toBe(site.description);
     expect(searchSite.origin).toBe("https://aicharts.io");
     expect(site.description.length).toBeLessThanOrEqual(160);
+  });
+
+  test("names the reader's comparison in model page titles", () => {
+    const title = modelCardTitle("Claude Opus 5.5 Max");
+    expect(title.startsWith("Claude Opus 5.5 Max")).toBeTrue();
+    expect(title).toContain("cost per task");
+    expect(title.endsWith(`| ${site.name}`)).toBeTrue();
   });
 
   test("keeps the 404 page out of homepage identity", () => {

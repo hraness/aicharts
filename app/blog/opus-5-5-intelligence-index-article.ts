@@ -677,7 +677,7 @@ export function createOpus55Article(
         "The chart redraws from each snapshot, so the rank, frontier run, and effort ladder above can move. The model page lists every Claude Opus 5.5 row the site holds.",
       links: [
         { href: "/#intelligence-index", label: "Capability and cost chart" },
-        { href: "/models/anthropic/claude-opus-5-5/index", label: "Claude Opus 5.5 model page" },
+        { href: "/models/anthropic/claude-opus-5.5/max", label: "Claude Opus 5.5 model page" },
         { href: "/coding", label: "Coding-agent chart" },
       ],
     },

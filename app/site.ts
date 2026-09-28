@@ -50,7 +50,7 @@ export const modelCardsDescription =
 
 /** Social and search copy for one model page; keep title and description paired. */
 export function modelCardTitle(displayTitle: string): string {
-  return `${displayTitle} | AI Charts`;
+  return `${displayTitle}: benchmarks and cost per task | AI Charts`;
 }
 
 /** Coding-agent profile pages: every one has coding-agent observations. */

@@ -48,29 +48,24 @@ describe("Index-only model pages", () => {
     }
   });
 
-  test("admits Claude Opus 5.5 on its own Index route instead of Opus 5 Max", () => {
+  test("folds Claude Opus 5.5 into its coding card instead of an Index-only page", () => {
     const opus55 = snapshotRelease("claude-opus-5-5");
-    const page = INDEX_MODEL_PAGES.find(candidate => (
-      candidate.canonicalModelId === "anthropic/claude-opus-5-5"
+    const opus55Card = MODEL_CARD_PRESENTATIONS.find(card => (
+      card.canonicalModelId === "anthropic/claude-opus-5.5"
     ));
-    expect(page).toMatchObject({
-      creatorSlug: "anthropic",
-      detailsUrl: "https://artificialanalysis.ai/models/claude-opus-5-5",
-      displayTitle: "Claude Opus 5.5",
-      intelligenceIndex: opus55.intelligenceIndex,
-      modelSlug: "claude-opus-5-5",
-      path: "/models/anthropic/claude-opus-5-5/index",
-      profileSlug: INDEX_MODEL_PROFILE_SLUG,
-      providerId: "anthropic",
-      providerName: "Anthropic",
-      releaseDate: "2026-09-22",
-    });
-    expect(page?.costUsdPerTask).toBe(opus55.costUsdPerTask?.total ?? null);
+    expect(opus55Card?.path).toBe("/models/anthropic/claude-opus-5.5/max");
+    expect(opus55Card === undefined
+      ? undefined
+      : intelligenceObservationForCard(opus55Card)?.release.slug).toBe("claude-opus-5-5");
+    expect(opus55.releaseDate).toBe("2026-09-22");
+    expect(INDEX_MODEL_PAGES.some(page => (
+      page.path === "/models/anthropic/claude-opus-5-5/index"
+    ))).toBeFalse();
     expect(findIndexModelPage({
       creatorSlug: "anthropic",
       modelSlug: "claude-opus-5-5",
       profileSlug: "index",
-    })?.path).toBe("/models/anthropic/claude-opus-5-5/index");
+    })).toBeUndefined();
     expect(findIndexModelPage({
       creatorSlug: "anthropic",
       modelSlug: "claude-opus-5",
@@ -81,6 +76,17 @@ describe("Index-only model pages", () => {
       card.canonicalModelId === "anthropic/claude-opus-5"
       && intelligenceObservationForCard(card)?.release.slug === "claude-opus-5-5"
     ))).toBeFalse();
+  });
+
+  test("gives no Index-only page to a model that has a catalogued coding card", () => {
+    for (const retired of [
+      "/models/anthropic/claude-opus-5-5/index",
+      "/models/openai/gpt-6-sol/index",
+      "/models/openai/gpt-6-luna/index",
+      "/models/xai/grok-4-7/index",
+    ]) {
+      expect(INDEX_MODEL_PAGES.some(page => page.path === retired)).toBeFalse();
+    }
   });
 
   test("keeps effort suffixes on the same model and rejects version digits", () => {

@@ -649,7 +649,7 @@ export function createOpus55CodingArticle(
         "The coding-agent chart redraws from each day’s snapshot, so the rank, cost rank, and frontier steps above can move. The model page lists every Claude Opus 5.5 row the site holds, and the data page serves the snapshot itself.",
       links: [
         { href: "/coding", label: "Coding-agent chart" },
-        { href: "/models/anthropic/claude-opus-5-5/index", label: "Claude Opus 5.5 model page" },
+        { href: "/models/anthropic/claude-opus-5.5/max", label: "Claude Opus 5.5 model page" },
         { href: "/data", label: "Snapshot data" },
       ],
     },

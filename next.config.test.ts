@@ -7,7 +7,11 @@ import {
   productionDeliveryProofToken,
 } from "@hraness/vercel-delivery";
 
-import nextConfig, { createNextConfig } from "./next.config";
+import { INDEX_MODEL_PAGES } from "@/lib/index-model-pages";
+import { MODEL_CARD_PRESENTATIONS } from "@/lib/model-card-collection";
+import { modelCardRouteStatus } from "@/lib/model-card-route-status";
+
+import nextConfig, { createNextConfig, MODEL_ROUTE_REDIRECTS } from "./next.config";
 
 const identity = {
   VERCEL: "1",
@@ -51,6 +55,13 @@ describe("site migration redirects", () => {
         source: "/:path*",
         statusCode: undefined,
       },
+      ...MODEL_ROUTE_REDIRECTS.map(([source, destination]) => ({
+        destination,
+        host: undefined,
+        permanent: true,
+        source,
+        statusCode: undefined,
+      })),
       {
         destination: "/blog/open-models-coding-agent-benchmarks",
         host: undefined,
@@ -59,6 +70,27 @@ describe("site migration redirects", () => {
         statusCode: undefined,
       },
     ]);
+  });
+
+  test("sends each retired model route to one published, indexable model card", () => {
+    const cardPaths = new Set(MODEL_CARD_PRESENTATIONS.map(card => card.path));
+    const indexPaths = new Set(INDEX_MODEL_PAGES.map(page => page.path));
+    const indexableCardPaths = new Set(MODEL_CARD_PRESENTATIONS
+      .filter(card => !modelCardRouteStatus(card).isProvisional)
+      .map(card => card.path));
+    const sources = MODEL_ROUTE_REDIRECTS.map(([source]) => source);
+
+    expect(new Set(sources).size).toBe(sources.length);
+    for (const [source, destination] of MODEL_ROUTE_REDIRECTS) {
+      expect(cardPaths.has(source)).toBe(false);
+      expect(indexPaths.has(source)).toBe(false);
+      expect(indexableCardPaths.has(destination)).toBe(true);
+    }
+    expect(Object.fromEntries(MODEL_ROUTE_REDIRECTS)).toMatchObject({
+      "/models/anthropic/claude-opus-5-5/index": "/models/anthropic/claude-opus-5.5/max",
+      "/models/unlisted/glm-5-3.fffd32adf07098d3cd835ee1/default": "/models/zai/glm-5.3/default",
+      "/models/xai/grok-4-7/index": "/models/spacexai/grok-4.7/xhigh",
+    });
   });
 
   test("preserves redirects while adding the generic Preview delivery contract", async () => {

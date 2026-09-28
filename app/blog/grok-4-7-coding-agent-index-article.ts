@@ -657,7 +657,7 @@ export function createGrok47Article(
       links: [
         { href: "/coding", label: "Coding-agent chart" },
         { href: "/#intelligence-index", label: "Capability and cost chart" },
-        { href: "/models/xai/grok-4-7/index", label: "Grok 4.7 model page" },
+        { href: "/models/spacexai/grok-4.7/xhigh", label: "Grok 4.7 model page" },
       ],
     },
     body: [
