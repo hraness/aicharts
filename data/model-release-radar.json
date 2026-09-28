@@ -3,7 +3,7 @@
   "source": {
     "method": "models-api",
     "name": "OpenRouter",
-    "retrievedAt": "2026-09-28T15:36:46.769Z",
+    "retrievedAt": "2026-09-28T18:16:15.629Z",
     "timestampMeaning": "source-added-at",
     "url": "https://openrouter.ai/api/v1/models?sort=newest"
   },
@@ -28,6 +28,12 @@
     "windowDays": 90
   },
   "observedListings": [
+    {
+      "id": "anthropic/claude-sonnet-5.5",
+      "model": "Claude Sonnet 5.5",
+      "providerId": "anthropic",
+      "sourceAddedAt": "2026-09-28T18:04:46.000Z"
+    },
     {
       "id": "z-ai/glm-5.3-prime",
       "model": "GLM 5.3 Prime",
@@ -342,6 +348,27 @@
     }
   ],
   "releases": [
+    {
+      "capabilities": {
+        "inputModalities": [
+          "file",
+          "image",
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "anthropic/claude-sonnet-5.5-20260928",
+      "id": "anthropic/claude-sonnet-5.5",
+      "model": "Claude Sonnet 5.5",
+      "modelUrl": "https://openrouter.ai/anthropic/claude-sonnet-5.5",
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "sourceAddedAt": "2026-09-28T18:04:46.000Z",
+      "status": "awaiting-benchmark"
+    },
     {
       "capabilities": {
         "inputModalities": [
@@ -1265,27 +1292,6 @@
       "providerId": "xai",
       "providerName": "xAI",
       "sourceAddedAt": "2026-07-08T15:05:54.000Z",
-      "status": "awaiting-benchmark"
-    },
-    {
-      "capabilities": {
-        "inputModalities": [
-          "file",
-          "image",
-          "text"
-        ],
-        "outputModalities": [
-          "text"
-        ],
-        "supportsTools": true
-      },
-      "canonicalSlug": "anthropic/claude-sonnet-5-20260630",
-      "id": "anthropic/claude-sonnet-5",
-      "model": "Claude Sonnet 5",
-      "modelUrl": "https://openrouter.ai/anthropic/claude-sonnet-5",
-      "providerId": "anthropic",
-      "providerName": "Anthropic",
-      "sourceAddedAt": "2026-06-30T18:11:23.000Z",
       "status": "awaiting-benchmark"
     }
   ]
