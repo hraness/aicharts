@@ -72,14 +72,6 @@ Check and open
   diagnostics              Error codes to paste into a support request
   commands                 List commands for agents (--json)
 
-Check and open
-  tui                      Collection status in the terminal
-  doctor                   Check setup; doctor retire sets the menu bar aside
-  open                     Open the dashboard, setup guide, support or error log
-  outputs                  List and open files in the outputs folder
-  diagnostics              Error codes to paste into a support request
-  commands                 List commands for agents (--json)
-
 Options
   -h, --help               Show help (also: aicharts help <command>)
   -V, --version            Show the version
