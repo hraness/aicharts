@@ -6,7 +6,7 @@ export default function DataLayout({
   children,
 }: Readonly<{ children: ReactNode }>) {
   return (
-    <div className="plain-site plain-publication aicharts-data">
+    <div className="plain-site plain-publication aicharts-data hraness-site-shell__content">
       <SkipLink href="#data-content">Skip to dataset details</SkipLink>
       <header className="plain-header hraness-material-chrome" data-analytics-surface="global_header">
         <div className="plain-header__inner">

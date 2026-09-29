@@ -76,6 +76,37 @@ async function reservePort(): Promise<number> {
   throw new Error("No local port was available for the model-card browser contract.");
 }
 
+async function verifyFooterShell(browser: Browser, baseUrl: string): Promise<void> {
+  for (const width of [390, 1280]) {
+    const context = await browser.newContext({ viewport: { width, height: 1600 } });
+    await stubAccountBoundary(context);
+    const page = await context.newPage();
+    try {
+      for (const route of ["/missing-footer-layout", "/blog", "/data", "/usage"]) {
+        await page.goto(`${baseUrl}${route}`);
+        await settle(page);
+        const geometry = await page.evaluate(() => {
+          const footer = document.querySelector(".hraness-site-footer");
+          const content = document.querySelector("body > main, body > .hraness-site-shell__content");
+          if (!footer || !content) throw new Error("Missing root footer or content");
+          const footerBox = footer.getBoundingClientRect();
+          const contentBox = content.getBoundingClientRect();
+          return { bottom: footerBox.bottom, contentBottom: contentBox.bottom, top: footerBox.top,
+            documentHeight: document.documentElement.scrollHeight, viewportHeight: innerHeight,
+            grow: getComputedStyle(content).flexGrow, position: getComputedStyle(footer).position };
+        });
+        invariant(geometry.grow === "1", `${route}: root content must fill available height`);
+        invariant(geometry.position !== "fixed", `${route}: footer must stay in document flow`);
+        invariant(geometry.top >= geometry.contentBottom - 1, `${route}: footer overlaps content`);
+        invariant(geometry.bottom >= geometry.viewportHeight - 1, `${route}: footer is above viewport bottom`);
+        invariant(Math.abs(geometry.bottom - geometry.documentHeight) <= 2, `${route}: blank space follows footer`);
+      }
+    } finally {
+      await context.close();
+    }
+  }
+}
+
 async function waitForServer(url: string, server: Bun.Subprocess): Promise<void> {
   for (let attempt = 0; attempt < 120; attempt += 1) {
     if (server.exitCode !== null) {
@@ -576,6 +607,7 @@ try {
   await waitForServer(`${baseUrl}/models`, server);
   const browser = await launchFirstAvailableBrowser(executablePaths);
   try {
+    await verifyFooterShell(browser, baseUrl);
     await verifyBenchmarkAtlas(browser, baseUrl);
     await verifyChartExport(browser, baseUrl);
     await verifyModelLogoCards(browser, baseUrl);

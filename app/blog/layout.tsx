@@ -6,7 +6,7 @@ export default function BlogLayout({
   children,
 }: Readonly<{ children: ReactNode }>) {
   return (
-    <div className="plain-site plain-publication aicharts-blog">
+    <div className="plain-site plain-publication aicharts-blog hraness-site-shell__content">
       <SkipLink href="#blog-content">Skip to notes</SkipLink>
       <header className="plain-header hraness-material-chrome" data-analytics-surface="global_header">
         <div className="plain-header__inner">
