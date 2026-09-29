@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { spawn } from "node:child_process";
 import { mkdir, mkdtemp, readFile, stat, writeFile } from "node:fs/promises";
+import { availableParallelism } from "node:os";
 import { dirname, isAbsolute, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
@@ -17,6 +18,29 @@ export const tlaProfiles = {
   nightly: { workers: 4, heapMiB: 2048, timeoutMs: 600_000, maxOutputBytes: 8_388_608, maxDistinctStates: 3_000_000 },
 } as const;
 export type TlaProfile = keyof typeof tlaProfiles;
+/** Cases share no TLC state (each has its own directory and `-metadir`), so the single-worker
+ * development profile runs up to four cases at once. Per-case bounds are unchanged. The wider
+ * nightly profile already uses four TLC workers per case and stays one case at a time. */
+export function tlaCaseConcurrency(profile: TlaProfile, cpus: number = availableParallelism()): number {
+  return profile === "nightly" ? 1 : Math.max(1, Math.min(4, cpus));
+}
+
+/** Run `task` over `items` with at most `limit` in flight; results keep input order. */
+export async function mapBounded<T, R>(items: readonly T[], limit: number, task: (item: T, index: number) => Promise<R>): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let next = 0, failed = false;
+  const lane = async () => {
+    while (!failed && next < items.length) {
+      const index = next++;
+      try { results[index] = await task(items[index], index); } catch (error) { failed = true; throw error; }
+    }
+  };
+  // Join every lane before reporting a failure, so no child process outlives the run.
+  const settled = await Promise.allSettled(Array.from({ length: Math.max(1, Math.min(limit, items.length)) }, lane));
+  const rejected = settled.find(outcome => outcome.status === "rejected");
+  if (rejected) throw rejected.reason;
+  return results;
+}
 const modelCaseSchema = (maxDistinctStates: number) => z.object({
   id: identifier, module: z.enum(["M1Restore", "M4Contributions", "M4Supersession", "M1RestoreRepaired", "M2Ledger",
     "M3Admission", "M4ContributionsRepaired", "M5Authority", "M6Consent", "M7Projection", "M8StagedProjection", "M9AccountWork", "M10ContributionFlight", "M11ContributionRebuild", "M12MonotonicMerge", "M12Reclamation"]),
@@ -182,15 +206,18 @@ export async function runTla(options: { java?: string; jar?: string; output?: st
   await writeFile(resolve(runRoot, "toolchain.json"), pinText, { flag: "wx", mode: 0o400 });
   const stagedJar = resolve(runRoot, "tla2tools.jar");
   await writeFile(stagedJar, jarBytes, { flag: "wx", mode: 0o400 });
-  const results = [];
+  // Validate every configuration before any TLC process starts.
   for (const modelCase of selected) {
+    const configBytes = configSnapshots.get(modelCase.config);
+    if (!moduleSnapshots.get(modelCase.module) || !configBytes) throw new Error("missing_model_snapshot");
+    const configErrors = validateTlcConfig(configBytes.toString("utf8"), modelCase);
+    if (configErrors.length !== 0) throw new Error(`unreviewed_model_configuration:${configErrors.join(",")}`);
+  }
+  const results = await mapBounded(selected, tlaCaseConcurrency(profile), async modelCase => {
     const caseDirectory = resolve(runRoot, modelCase.id);
     await mkdir(caseDirectory);
     const moduleBytes = moduleSnapshots.get(modelCase.module), configBytes = configSnapshots.get(modelCase.config);
     if (!moduleBytes || !configBytes) throw new Error("missing_model_snapshot");
-    const config = configBytes.toString("utf8");
-    const configErrors = validateTlcConfig(config, modelCase);
-    if (configErrors.length !== 0) throw new Error(`unreviewed_model_configuration:${configErrors.join(",")}`);
     // Execute exactly the captured bytes. Parallel source edits cannot change
     // what the model/config digests in this receipt describe.
     const stagedModule = resolve(caseDirectory, `${modelCase.module}.tla`), stagedConfig = resolve(caseDirectory, `${modelCase.id}.cfg`);
@@ -207,14 +234,14 @@ export async function runTla(options: { java?: string; jar?: string; output?: st
     await writeFile(resolve(caseDirectory, "tlc.log"), processResult.output);
     await writeFile(resolve(caseDirectory, "trace.json"), `${JSON.stringify({ schemaVersion: 1, case: modelCase.id, invariant: modelCase.invariant,
       provenance: "TLC 1.7.4 structured output; TLA values retained verbatim, not production adapter replay", states: evaluated.trace }, null, 2)}\n`);
-    results.push({ id: modelCase.id, kind: modelCase.kind, ok: evaluated.ok, errors: evaluated.errors,
+    console.log(JSON.stringify({ case: modelCase.id, kind: modelCase.kind, ok: evaluated.ok, counts: evaluated.counts, errors: evaluated.errors }));
+    return { id: modelCase.id, kind: modelCase.kind, ok: evaluated.ok, errors: evaluated.errors,
       invariant: modelCase.invariant, exitCode: processResult.exitCode, signal: processResult.signal,
       timedOut: processResult.timedOut, outputExceeded: processResult.outputExceeded, counts: evaluated.counts,
       traceStates: evaluated.trace.length, actions: evaluated.trace.map(state => state.action),
       moduleSha256: sha256(moduleBytes), configSha256: sha256(configBytes), outputSha256: sha256(processResult.output),
-      command: [java, ...args], artifacts: relative(root, caseDirectory) });
-    console.log(JSON.stringify({ case: modelCase.id, kind: modelCase.kind, ok: evaluated.ok, counts: evaluated.counts, errors: evaluated.errors }));
-  }
+      command: [java, ...args], artifacts: relative(root, caseDirectory) };
+  });
   if (sha256(await boundedFile(stagedJar, 32 * 1024 * 1024)) !== pin.tlc.sha256
       || sha256(await boundedFile(java, 32 * 1024 * 1024)) !== javaExecutableSha256) throw new Error("tool_artifact_changed_during_execution");
   if (sha256(await boundedFile(fileURLToPath(import.meta.url))) !== sha256(runnerBytes)) throw new Error("runner_source_changed_during_execution");

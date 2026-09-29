@@ -15,9 +15,10 @@ on:
 permissions:
   contents: read
 
+# Pull requests cancel superseded runs; every main push keeps its own run.
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   CARGO_INCREMENTAL: "0"
@@ -26,22 +27,32 @@ env:
   RUST_BACKTRACE: short
 
 jobs:
-  # Pull requests skip the jobs whose inputs did not change. Pushes to main and
-  # manual runs always execute everything, so the integrated result is complete.
+  # Pull requests skip the jobs whose inputs did not change against their base.
+  # A push to main diffs against the previous main head (github.event.before),
+  # so every main change to a filtered job's inputs still runs that job on main.
+  # Manual runs, and a push without a previous head, execute everything.
+  # scripts/check-changed.ts reads these same filters for local handoff.
   changes:
     name: Changes
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
+      contents: read
       pull-requests: read
     outputs:
-      rust: ${{ github.event_name != 'pull_request' || steps.filter.outputs.rust == 'true' }}
-      formal: ${{ github.event_name != 'pull_request' || steps.filter.outputs.formal == 'true' }}
+      rust: ${{ steps.filter.outcome != 'success' || steps.filter.outputs.rust == 'true' }}
+      formal: ${{ steps.filter.outcome != 'success' || steps.filter.outputs.formal == 'true' }}
+      worker: ${{ steps.filter.outcome != 'success' || steps.filter.outputs.worker == 'true' }}
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000'
+        with:
+          persist-credentials: false
       - id: filter
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000')
         uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
         with:
+          base: ${{ github.event_name == 'push' && github.event.before || '' }}
           filters: |
             rust:
               - "crates/**"
@@ -65,6 +76,27 @@ jobs:
               - "package.json"
               - "bun.lock"
               - ".github/workflows/ci.yml"
+            # The Worker's import closure (scripts/ci-changes.test.ts checks it)
+            # plus the inputs its adapter and conformance gates read.
+            worker:
+              - "services/**"
+              - "lib/usage/**"
+              - "lib/result*"
+              - "data/usage-*.json"
+              - "fixtures/**"
+              - "crates/**"
+              - "vendor/**"
+              - "verify/**"
+              - "scripts/assurance-*"
+              - "scripts/usage-worker-tools.ts"
+              - "package.json"
+              - "bun.lock"
+              - "tsconfig.json"
+              - "Cargo.toml"
+              - "Cargo.lock"
+              - "rust-toolchain.toml"
+              - ".nvmrc"
+              - ".github/workflows/ci.yml"
 
   checks:
     name: Checks
@@ -80,13 +112,20 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc
-      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ~/.bun/install/cache
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
           restore-keys: bun-${{ runner.os }}-
       - name: Install frozen dependencies
         run: bun install --frozen-lockfile
+      # Pull requests restore caches only; main saves them.
+      - name: Save the Bun download cache
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
       - name: Check assurance registry and native corpus
         run: bun run usage:assurance:check
       - name: Check cost surfaces
@@ -136,23 +175,57 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc
-      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ~/.bun/install/cache
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
           restore-keys: bun-${{ runner.os }}-
       - name: Install frozen dependencies
         run: bun install --frozen-lockfile
+      # One webpack cache entry per lockfile per day, saved only by main, bounds
+      # churn in the shared 10 GB cache; pull requests restore the newest entry.
+      - name: Name the Next.js build cache day
+        id: next_cache
+        run: echo "day=$(date -u +%F)" >> "$GITHUB_OUTPUT"
+      - name: Restore the Next.js build cache
+        id: next_restore
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: .next/cache
+          key: next-${{ runner.os }}-${{ hashFiles('bun.lock', 'next.config.ts') }}-${{ steps.next_cache.outputs.day }}
+          restore-keys: |
+            next-${{ runner.os }}-${{ hashFiles('bun.lock', 'next.config.ts') }}-
       - name: Build application
         run: bun run build
-      - name: Browser contracts against the production build
-        run: bun run test:browser
-      - name: Install Chromium for public-page evidence
-        run: node node_modules/playwright-core/cli.js install --with-deps chromium
-      - name: Verify public pages at phone and desktop sizes
+      - name: Record the Next.js build cache size
+        run: du -sh .next/cache || true
+      - name: Save the Next.js build cache
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.next_restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: .next/cache
+          key: next-${{ runner.os }}-${{ hashFiles('bun.lock', 'next.config.ts') }}-${{ steps.next_cache.outputs.day }}
+      # Both browser suites start their own server on a free port against the
+      # same build and use the runner's preinstalled Chrome. The public-page
+      # check runs in the background while the contracts run in the foreground;
+      # the next step waits on its exact process and fails with its exit status.
+      - name: Start public-page verification in the background
         env:
           SITE_BROWSER_ARTIFACTS: ${{ runner.temp }}/public-site-candidate
-        run: node scripts/verify-public-site-browser.mjs
+          PAGES: ${{ runner.temp }}/public-site-run
+        run: |
+          mkdir -p "$PAGES"
+          # shellcheck disable=SC2016 # $1 expands in the inner shell.
+          nohup sh -c 'node scripts/verify-public-site-browser.mjs > "$1/log" 2>&1; echo $? > "$1/status.tmp"; mv "$1/status.tmp" "$1/status"' sh "$PAGES" > /dev/null 2>&1 &
+          echo "$!" > "$PAGES/pid"
+      - name: Browser contracts against the production build
+        run: bun run test:browser
+      - name: Verify public pages at phone and desktop sizes
+        if: ${{ !cancelled() }}
+        timeout-minutes: 10
+        env:
+          PAGES: ${{ runner.temp }}/public-site-run
+        run: node scripts/await-background.mjs "$PAGES"
       - name: Verify the fixed public production site
         if: github.event_name == 'workflow_dispatch' && inputs.production
         env:
@@ -169,6 +242,34 @@ jobs:
 
   worker:
     name: Worker
+    needs: [changes]
+    if: needs.changes.outputs.worker == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.3.14
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+      - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+      - name: Install frozen dependencies
+        run: bun install --frozen-lockfile
+      - name: Check usage worker in local workerd
+        run: bun run usage:worker:check
+
+  worker-gates:
+    name: Worker gates
+    needs: [changes]
+    if: needs.changes.outputs.worker == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -181,7 +282,7 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc
-      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ~/.bun/install/cache
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
@@ -196,9 +297,10 @@ jobs:
       # build ahead of the gates provide that; the gates themselves stay
       # bounded. The conformance gate builds with the workflow's
       # CARGO_INCREMENTAL stripped from its environment, so its pre-build runs
-      # the same way to share fingerprints. The gates live in this unfiltered
-      # job because they guard the Worker implementation, which the formal
-      # job's path filter does not watch.
+      # the same way to share fingerprints. The gates guard the Worker
+      # implementation, so they share the Worker's change filter (which also
+      # watches verify/**, the conformance manifests they read); the formal
+      # job's filter does not cover them.
       - name: Install pinned Rust toolchain
         run: rustup show active-toolchain
       - name: Restore gate build directories
@@ -224,11 +326,8 @@ jobs:
       - name: Check implementation conformance schedules and mutant
         if: ${{ !cancelled() }}
         run: bun run usage:conformance:check
-      - name: Check usage worker in local workerd
-        if: ${{ !cancelled() }}
-        run: bun run usage:worker:check
       - name: Save gate build directories
-        if: always()
+        if: ${{ !cancelled() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: |
@@ -288,7 +387,7 @@ jobs:
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: 1.3.14
-      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ~/.bun/install/cache
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
@@ -340,8 +439,8 @@ jobs:
   required:
     name: Required
     if: always()
-    needs: [changes, checks, build, worker, rust, formal]
-    runs-on: ubuntu-latest
+    needs: [changes, checks, build, worker, worker-gates, rust, formal]
+    runs-on: ubuntu-slim
     timeout-minutes: 5
     steps:
       - name: Require every blocking job
@@ -350,6 +449,8 @@ jobs:
           CHECKS_RESULT: ${{ needs.checks.result }}
           BUILD_RESULT: ${{ needs.build.result }}
           WORKER_RESULT: ${{ needs.worker.result }}
+          WORKER_GATES_RESULT: ${{ needs.worker-gates.result }}
+          WORKER_CHANGED: ${{ needs.changes.outputs.worker }}
           RUST_RESULT: ${{ needs.rust.result }}
           RUST_CHANGED: ${{ needs.changes.outputs.rust }}
           FORMAL_RESULT: ${{ needs.formal.result }}
@@ -359,7 +460,8 @@ jobs:
           test "$CHANGES_RESULT" = success
           test "$CHECKS_RESULT" = success
           test "$BUILD_RESULT" = success
-          test "$WORKER_RESULT" = success
           # A filtered job passes only as a deliberate skip: its inputs did not change.
+          test "$WORKER_RESULT" = success || { test "$WORKER_RESULT" = skipped && test "$WORKER_CHANGED" = false; }
+          test "$WORKER_GATES_RESULT" = success || { test "$WORKER_GATES_RESULT" = skipped && test "$WORKER_CHANGED" = false; }
           test "$RUST_RESULT" = success || { test "$RUST_RESULT" = skipped && test "$RUST_CHANGED" = false; }
           test "$FORMAL_RESULT" = success || { test "$FORMAL_RESULT" = skipped && test "$FORMAL_CHANGED" = false; }

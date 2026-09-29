@@ -7,8 +7,9 @@ export default defineConfig({
   plugins: [cloudflareTest({ wrangler: { configPath: "./wrangler.jsonc" } })],
   test: {
     include: ["test/**/*.worker.ts"],
-    // Each file owns isolated, synthetic bindings. No remote service overrides.
-    fileParallelism: false,
+    // Each file owns isolated, synthetic bindings (per-file storage), so files run
+    // in parallel. Four workers match a hosted Linux runner. No remote service overrides.
+    maxWorkers: 4,
     testTimeout: 10_000,
   },
 });

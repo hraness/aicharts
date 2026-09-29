@@ -71,9 +71,9 @@ describe("formal tool provisioning admission", () => {
     expect([...workflow.jobs.required.needs].sort()).toEqual([...jobs].sort());
     expect(workflow.jobs.required.if).toBe("always()");
     const gate = String(workflow.jobs.required.steps[0].run);
-    for (const name of ["CHANGES", "CHECKS", "BUILD", "WORKER", "RUST", "FORMAL"]) expect(gate).toContain(`test "$${name}_RESULT" = success`);
+    for (const name of ["CHANGES", "CHECKS", "BUILD", "WORKER", "WORKER_GATES", "RUST", "FORMAL"]) expect(gate).toContain(`test "$${name}_RESULT" = success`);
     // A filtered job may only pass as a deliberate skip recorded by the change filter.
-    for (const [result, changed] of [["RUST", "RUST"], ["FORMAL", "FORMAL"]]) {
+    for (const [result, changed] of [["WORKER", "WORKER"], ["WORKER_GATES", "WORKER"], ["RUST", "RUST"], ["FORMAL", "FORMAL"]]) {
       expect(gate).toContain(`{ test "$${result}_RESULT" = skipped && test "$${changed}_CHANGED" = false; }`);
     }
     // Every command of the local complete gate (`bun run check`) still runs in CI, split across parallel jobs.
@@ -82,17 +82,22 @@ describe("formal tool provisioning admission", () => {
     const ciJobs = Object.values(workflow.jobs as Record<string, { steps?: { run?: string }[] }>);
     const ciRuns = new Set(ciJobs.flatMap(job => (job.steps ?? []).map(step => step.run)));
     for (const command of gateCommands) expect(ciRuns.has(command)).toBe(true);
-    expect(workflow.jobs.build.steps.map((step: { run?: string }) => step.run).filter(Boolean).slice(-5)).toEqual([
-      "bun run build", "bun run test:browser", "node node_modules/playwright-core/cli.js install --with-deps chromium",
-      "node scripts/verify-public-site-browser.mjs", "node scripts/verify-public-site-browser.mjs --production",
+    const buildRuns: string[] = workflow.jobs.build.steps.map((step: { run?: string }) => step.run).filter(Boolean);
+    const built = buildRuns.indexOf("bun run build");
+    expect(built).toBeGreaterThan(buildRuns.indexOf("bun install --frozen-lockfile"));
+    // Public pages run in the background beside the contracts and are awaited by exact process.
+    const background = buildRuns.findIndex(run => run.includes("node scripts/verify-public-site-browser.mjs >"));
+    expect(background).toBeGreaterThan(built);
+    expect(buildRuns.slice(background + 1)).toEqual([
+      "bun run test:browser", 'node scripts/await-background.mjs "$PAGES"', "node scripts/verify-public-site-browser.mjs --production",
     ]);
     expect(workflow.jobs.build.steps.find((step: { run?: string }) => step.run === "node scripts/verify-public-site-browser.mjs --production").if).toBe("github.event_name == 'workflow_dispatch' && inputs.production");
     expect(workflow.jobs.menubar).toBeUndefined();
     expect(workflow.jobs.required.needs).not.toContain("menubar");
-    for (const name of ["rust", "formal"]) expect(workflow.jobs[name].needs).toEqual(["changes"]);
+    for (const name of ["rust", "formal", "worker", "worker-gates"]) expect(workflow.jobs[name].needs).toEqual(["changes"]);
     expect(workflow.jobs.checks.if).toBeUndefined();
     expect(workflow.jobs.build.if).toBeUndefined();
-    expect(workflow.jobs.worker.if).toBeUndefined();
+    for (const name of ["worker", "worker-gates"]) expect(workflow.jobs[name].if).toBe("needs.changes.outputs.worker == 'true'");
     const steps = workflow.jobs.formal.steps;
     for (const step of steps) if (step.uses) expect(step.uses).toMatch(/@[0-9a-f]{40}$/u);
     expect(steps.find((step: { uses?: string }) => step.uses?.startsWith("actions/upload-artifact@")).if).toBe("always()");
