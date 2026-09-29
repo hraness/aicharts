@@ -396,13 +396,7 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
           });
           await consentPanel.getByRole("heading", { name: "Sign in to manage publishing", exact: true }).waitFor();
           await page.locator("main").getByRole("heading", { name: "Sign in to view your usage", exact: true }).waitFor();
-          // Both headings can render a tick before the form and table unmount; wait (bounded) for the removal itself.
-          const removed = { state: "detached", timeout: 5_000 } as const;
-          const cleared = await Promise.all([
-            consentPanel.getByLabel("Public handle", { exact: true }).first().waitFor(removed),
-            page.locator(".usage-daily table").first().waitFor(removed),
-          ]).then(() => true, () => false);
-          invariant(cleared && await consentPanel.getByLabel("Public handle", { exact: true }).count() === 0 && await page.locator(".usage-daily table").count() === 0,
+          invariant(await consentPanel.getByLabel("Public handle", { exact: true }).count() === 0 && await page.locator(".usage-daily table").count() === 0,
             "A cross-tab SDK sign-out must clear publishing form identity and private daily values.");
           invariant(Number(consentWrites) === 5, "Signing out must not replay a consent write.");
         } finally { await sibling.close(); }
