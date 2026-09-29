@@ -1,7 +1,7 @@
 //! Explicit snapshot-only turn observations. No discovery, state, or upload.
 use std::path::PathBuf;
 
-const HELP: &str = "AI Charts observed turns: local, read-only\n\n  aicharts turns --codex FILE [--codex FILE ...] --occurrence-key-file KEY [--json]\n\nExplicit regular files only; no directories or automatic discovery.\nReports provider-reported runtime and partial response-token/requested-call subtotals.\nSubtotal means include only turns with evidence for that metric, not all turns.\nComplete token totals, dispatched tool calls, population means, human origin, account attribution, and pricing remain unknown.\nObserved root turns are not necessarily human prompts, complete history, or task success.\nNo data is uploaded and no local ledger is opened or changed.\n";
+const HELP: &str = "aicharts observed turns: local, read-only\n\n  aicharts turns --codex FILE [--codex FILE ...] --occurrence-key-file KEY [--json]\n\nExplicit regular files only; no directories or automatic discovery.\nReports provider-reported runtime and partial response-token/requested-call subtotals.\nSubtotal means include only turns with evidence for that metric, not all turns.\nComplete token totals, dispatched tool calls, population means, human origin, account attribution, and pricing remain unknown.\nObserved root turns are not necessarily human prompts, complete history, or task success.\nNo data is uploaded and no local ledger is opened or changed.\n";
 
 struct Options {
     sources: Vec<PathBuf>,

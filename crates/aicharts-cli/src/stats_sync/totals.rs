@@ -11,7 +11,7 @@ const MAX_RECORDS: u64 = 10_000_000;
 const MAX_DAYS: u64 = 100_000_000;
 const MAX_DEVICES: usize = 128;
 const MAX_CLIENTS: usize = 64;
-const HELP: &str = "AI Charts stats totals — enrolled account lifetime read\n\n  aicharts stats-totals --state-dir DIR [--json]\n\nReads the enrolled account's committed lifetime token totals from the fixed\nAI Charts service, summed across every enrolled device and client. Uses this\ninstallation's custody-verified enrollment and its retained upload credential.\nIt never opens the ledger, scans sources, uploads, or advances enrollment.\n--json prints the exact validated wire projection.\n";
+const HELP: &str = "aicharts stats totals — enrolled account lifetime read\n\n  aicharts stats-totals --state-dir DIR [--json]\n\nReads the enrolled account's committed lifetime token totals from the fixed\naicharts service, summed across every enrolled device and client. Uses this\ninstallation's custody-verified enrollment and its retained upload credential.\nIt never opens the ledger, scans sources, uploads, or advances enrollment.\n--json prints the exact validated wire projection.\n";
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]

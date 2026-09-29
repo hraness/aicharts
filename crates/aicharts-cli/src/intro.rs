@@ -6,7 +6,7 @@ pub(crate) fn terminal_intro(
     if !is_terminal || term == Some("dumb") || columns.unwrap_or(80) < 48 {
         return "";
     }
-    "  |    /  AI Charts\n  | __/   Read local usage.\n  |/\n  +-----\n\n"
+    "  |    /  aicharts\n  | __/   Read local usage.\n  |/\n  +-----\n\n"
 }
 
 #[cfg(test)]
@@ -16,7 +16,7 @@ mod tests {
     #[test]
     fn interactive_intro_preserves_plain_terminal_modes() {
         let intro = terminal_intro(true, Some("xterm-256color"), Some(80));
-        assert!(intro.contains("AI Charts"));
+        assert!(intro.contains("aicharts"));
         assert!(intro
             .bytes()
             .all(|byte| byte == b'\n' || (0x20..=0x7e).contains(&byte)));
