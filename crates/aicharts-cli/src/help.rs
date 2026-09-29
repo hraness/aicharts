@@ -454,6 +454,10 @@ collects token counts every 15 minutes and publishes on its own schedule.
 macOS shows \"Background Items Added\" once; the agent takes effect at the
 next login and turns off in System Settings › General › Login Items.
 
+Install and uninstall are a person's decision: they ask for a one-time code
+on your terminal. From an agent or with --json and no person at the
+terminal they stop with human-required (exit 3) and change nothing.
+
 A LaunchAgent file written by hand or another tool is left alone.
 
 Options

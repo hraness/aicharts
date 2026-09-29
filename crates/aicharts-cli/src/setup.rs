@@ -225,9 +225,22 @@ pub(super) fn run(args: &[String]) -> Result<String, &'static str> {
         options.publish_config.as_deref(),
         &status_file,
     )?;
-    if audience == Audience::Human && !options.json {
-        eprint!("{}", service::pre_prompt(audience, style));
-    }
+    // The login item is `service install`'s decision, gated the same way.
+    service::gate_or_exit(
+        &["service", "install"],
+        args,
+        options.json,
+        &format!(
+            "Run the aicharts collector at login ({}).",
+            plan.path.display()
+        ),
+        &service::plan_digest(&plan),
+        || {
+            if audience == Audience::Human && !options.json {
+                eprint!("{}", service::pre_prompt(audience, style));
+            }
+        },
+    );
     let change = service::install(&plan)?;
     steps.push(("collector", change));
 

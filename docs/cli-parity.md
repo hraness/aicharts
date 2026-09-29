@@ -17,14 +17,20 @@ Each command has one of three kinds:
 - **read** only looks. It never changes anything.
 - **operate** opens a page or file, or sets aside a retired login item. An
   agent may run it.
-- **decide-legacy** changes what starts at login. It works as it always has:
-  macOS shows a notice, and System Settings › General › Login Items turns it
-  off.
+- **decide** changes what starts at login, so a person makes the call. The
+  command shows what it will change and asks for a one-time code on your
+  terminal (`/dev/tty`). Run from an agent, from a script with no terminal,
+  or with `--json` outside a person's terminal, it stops with
+  `human-required` (exit 3), changes nothing, and names the command to run
+  yourself. `aicharts setup` asks the same way before its collector step.
+  After it is set up, macOS shows a notice, and System Settings › General ›
+  Login Items turns it off.
 
-No command here asks for a one-time code. There are no desktop notifications.
+There are no desktop notifications.
 
 Error codes and exit statuses: `usage` 2, `not-found` 1, `conflict` 5,
-`unsupported-platform` 1.
+`unsupported-platform` 1, `human-required`, `gate-failed` and
+`gate-expired` 3.
 
 ## Every menu item
 
@@ -39,7 +45,7 @@ Error codes and exit statuses: `usage` 2, `not-found` 1, `conflict` 5,
 | Show the output file in Finder | `outputs.reveal.fileN` | `aicharts outputs reveal NAME` | operate |
 | Open outputs folder | `outputs.folder` | `aicharts open outputs` | operate |
 | Show all N outputs | `outputs.all` | `aicharts outputs --all` | read |
-| Open at login | `login` | `aicharts service install` and `aicharts service uninstall` | decide-legacy |
+| Open at login | `login` | `aicharts service install` and `aicharts service uninstall` | decide |
 | Updates & support | `support` | `aicharts open support` | operate |
 | Copy diagnostics | `support.diagnostics` | `aicharts diagnostics` | read |
 | Quit AI Charts | none | Nothing to quit: the collector keeps running. `aicharts service uninstall` stops it at login. | n/a |
@@ -62,8 +68,8 @@ Error codes and exit statuses: `usage` 2, `not-found` 1, `conflict` 5,
 | `outputs reveal NAME` | operate | Show one output file in Finder |
 | `diagnostics` | read | Version and error codes to paste into a support request |
 | `service status` | read | Whether the background collector is installed and running |
-| `service install` | decide-legacy | Run the collector at login |
-| `service uninstall` | decide-legacy | Stop running the collector at login |
+| `service install` | decide | Run the collector at login |
+| `service uninstall` | decide | Stop running the collector at login |
 
 ## Moving off the menu bar
 

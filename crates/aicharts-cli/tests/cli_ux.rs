@@ -292,3 +292,59 @@ fn status_reads_the_collector_files_and_answers_in_one_envelope() {
     assert_eq!(text(&printed.stdout), "https://aicharts.io/usage\n");
     std::fs::remove_dir_all(home).unwrap();
 }
+
+#[test]
+fn the_login_item_is_a_decision_no_agent_or_script_can_make() {
+    // Plan gate check: in a private HOME with no terminal, each `decide`
+    // verb exits 3 with `human-required` and writes nothing.
+    let home = std::env::temp_dir().join(format!("aicharts-cli-ux-gate-{}", std::process::id()));
+    let agents = home.join("Library/LaunchAgents");
+    std::fs::create_dir_all(&agents).unwrap();
+    let home_value = home.to_str().unwrap();
+    let state = home.join("state");
+    let key = home.join("key");
+    let claude = home.join("claude");
+    let install = [
+        "service",
+        "install",
+        "--state-dir",
+        state.to_str().unwrap(),
+        "--key-file",
+        key.to_str().unwrap(),
+        "--claude",
+        claude.to_str().unwrap(),
+    ];
+    let mut json_install = install.to_vec();
+    json_install.push("--json");
+    let plist = agents.join("io.aicharts.daemon.plist");
+
+    // `--json` from a script or agent never prompts.
+    let output = run(&json_install, &[("HOME", home_value)]);
+    assert_eq!(output.status.code(), Some(3), "{output:?}");
+    let value: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(value["ok"], false);
+    assert_eq!(value["error"]["code"], "human-required");
+    let next = &value["error"]["next"][0];
+    assert_eq!(next["audience"], "human");
+    assert!(next["command"]
+        .as_str()
+        .unwrap()
+        .starts_with("aicharts service install --state-dir"));
+    assert!(!next["command"].as_str().unwrap().contains("--json"));
+    assert!(!plist.exists());
+
+    // Agent markers stop the human form too, before any prompt or notice.
+    let output = run(&install, &[("HOME", home_value), ("CLAUDECODE", "1")]);
+    assert_eq!(output.status.code(), Some(3), "{output:?}");
+    assert!(!text(&output.stderr).contains("Background Items Added"));
+    assert!(!plist.exists());
+
+    // Uninstall of an existing agent file is refused and leaves it alone.
+    std::fs::write(&plist, "<plist/>").unwrap();
+    let output = run(&["service", "uninstall", "--json"], &[("HOME", home_value)]);
+    assert_eq!(output.status.code(), Some(3), "{output:?}");
+    let value: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(value["error"]["code"], "human-required");
+    assert_eq!(std::fs::read_to_string(&plist).unwrap(), "<plist/>");
+    std::fs::remove_dir_all(home).unwrap();
+}

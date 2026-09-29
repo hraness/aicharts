@@ -66,6 +66,12 @@ fn sha256_hex(body: &str) -> String {
     digest.iter().map(|byte| format!("{byte:02x}")).collect()
 }
 
+/// What the human gate shows for an install: the planned file's hash, so
+/// the confirmation is bound to exactly these arguments.
+pub(crate) fn plan_digest(plan: &ServicePlan) -> String {
+    sha256_hex(&plan.contents)
+}
+
 /// The ownership line: a file without it, or with a hash that does not match
 /// its body, was not written by `aicharts service`.
 fn header(body: &str) -> String {
@@ -365,6 +371,23 @@ fn plan_for(args: &[String], home: &Path) -> Result<(ServicePlan, bool), &'stati
     Ok((plan, json))
 }
 
+/// Runs the human gate for a `decide` verb and exits with its status (3)
+/// when no person confirmed. Nothing has been written at that point.
+pub(crate) fn gate_or_exit(
+    path: &[&str],
+    args: &[String],
+    json: bool,
+    title: &str,
+    digest: &str,
+    before_prompt: impl FnOnce(),
+) {
+    if let Err(code) =
+        crate::control::require_decision(path, args, json, title, digest, before_prompt)
+    {
+        std::process::exit(code);
+    }
+}
+
 /// `aicharts service status` reads any state; install and uninstall are
 /// macOS-only because launchd is the only qualified scheduler here.
 pub(super) fn run(args: &[String]) -> Result<String, &'static str> {
@@ -386,7 +409,19 @@ pub(super) fn run(args: &[String]) -> Result<String, &'static str> {
     match command {
         "install" => {
             let (service_plan, install_json) = plan_for(args, &home)?;
-            eprint!("{}", pre_prompt(audience, style));
+            // A `decide` verb: a login item is persistent configuration,
+            // so a person confirms it at their own terminal (plan D-5).
+            gate_or_exit(
+                &["service", "install"],
+                args,
+                install_json,
+                &format!(
+                    "Run the aicharts collector at login ({}).",
+                    service_plan.path.display()
+                ),
+                &plan_digest(&service_plan),
+                || eprint!("{}", pre_prompt(audience, style)),
+            );
             let change = install(&service_plan)?;
             Ok(if install_json {
                 format!(
@@ -415,6 +450,20 @@ pub(super) fn run(args: &[String]) -> Result<String, &'static str> {
                 path: plist_path(&home),
                 contents: String::new(),
             };
+            // Nothing to remove needs no decision.
+            if std::fs::symlink_metadata(&service_plan.path).is_ok() {
+                gate_or_exit(
+                    &["service", "uninstall"],
+                    args,
+                    json,
+                    &format!(
+                        "Stop running the aicharts collector at login ({}).",
+                        service_plan.path.display()
+                    ),
+                    &sha256_hex(&service_plan.path.to_string_lossy()),
+                    || {},
+                );
+            }
             match uninstall(&service_plan)? {
                 true => Ok(String::from(
                     "Removed the background collector. The agent stops at the next login; nothing was deleted.\n",
