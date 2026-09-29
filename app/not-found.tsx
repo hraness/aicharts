@@ -25,7 +25,7 @@ export default function NotFound() {
   return (
     <>
       <SiteHeader />
-      <div data-analytics-surface="error_recovery" id="main-content">
+      <div className="hraness-site-shell__content" data-analytics-surface="error_recovery" id="main-content">
         <RouteNotFoundPage
           agentIndexHref="/llms.txt"
           next={[

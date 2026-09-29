@@ -125,7 +125,7 @@ describe("benchmark dataset surface", () => {
     );
 
     expect(markup).toContain(
-      'class="plain-site plain-publication aicharts-data"',
+      'class="plain-site plain-publication aicharts-data hraness-site-shell__content"',
     );
     expect(markup).toContain('href="#data-content"');
     expect(markup).toContain('aria-label="Dataset navigation"');

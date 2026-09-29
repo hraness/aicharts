@@ -8,7 +8,7 @@ import { site } from "./site";
 export default function RouteError(props: RouteErrorPageProps) {
   useEffect(() => { console.error(props.error); }, [props.error]);
   return (
-    <div data-analytics-surface="error_recovery">
+    <div className="hraness-site-shell__content" data-analytics-surface="error_recovery">
       <RouteErrorPage {...props} siteName={site.name} />
     </div>
   );

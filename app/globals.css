@@ -1,5 +1,6 @@
 @import "@hraness/design-kit/styles.css";
 @import "@hraness/site-footer/styles.css";
+@import "../styles/vendor/hraness-site-shell/site-shell.css";
 @import "../styles/plain-site.css";
 @import "../styles/plain-publication.css";
 @import "../styles/model-cards.css";
@@ -69,7 +70,6 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
   line-height: 1.45;
-  min-height: 100svh;
   text-rendering: optimizeLegibility;
 }
 
@@ -2182,4 +2182,13 @@ body {
     min-block-size: 44px;
   }
   header a, .plain-site.plain-publication.aicharts-blog header a { display: inline-flex; align-items: center; }
+}
+
+/* Publication wrappers share the viewport with the root footer rows. */
+.hraness-site-shell > main {
+  inline-size: 100%;
+}
+
+.hraness-site-shell > .plain-publication {
+  min-block-size: 0;
 }

@@ -211,7 +211,7 @@ describe("aicharts benchmark notes", () => {
     );
 
     expect(markup).toContain(
-      'class="plain-site plain-publication aicharts-blog"',
+      'class="plain-site plain-publication aicharts-blog hraness-site-shell__content"',
     );
     expect(markup).toContain('class="ui-skip-link"');
     expect(markup).toContain('class="plain-header__inner"');
