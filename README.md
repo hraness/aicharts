@@ -112,45 +112,8 @@ either `data` or `error`. These commands read two files from `~/.aicharts` (or
 hold times, results and fixed error codes, never account IDs, paths or session
 content. `aicharts status --state-dir DIR --key-file KEY` still reads the local
 ledger. [Commands for status, outputs and support](docs/cli-parity.md) maps
-every menu bar item to its command.
-
-## Menu bar
-
-The aicharts menu bar shows whether usage collection is working: when the
-last pass ran, when your usage last synced, and any failures in plain words,
-with the collector's error log one click away. It also opens the usage
-dashboard and lists your two newest outputs. Build it explicitly, then run it:
-
-```sh
-bun run menubar:build
-bun run menubar:install
-bun run menubar
-```
-
-`menubar:install` copies the release-built binary to
-`~/Library/Application Support/AI Charts/bin/aicharts-menubar` atomically. The
-launcher never compiles on startup: it uses that installed copy when present,
-or a prebuilt checkout binary otherwise. A second copy exits with status 3 and
-says aicharts is already in your menu bar. Use `bun run menubar:uninstall` to
-remove the installed copy.
-
-To open it at login, run `aicharts menubar install` (or turn on "Open at
-login" in its menu). macOS then shows a notice that `aicharts-menubar` can open
-at login. `aicharts menubar status` says whether it is running and opens at
-login, `aicharts menubar start` opens it now, and `aicharts menubar uninstall`
-removes the login item. Nothing here runs `launchctl`; the login item takes
-effect at your next login.
-
-The menu reads two files from `~/.aicharts` (or `AICHARTS_HOME`):
-`collector-status.json`, which `aicharts daemon --status-file
-~/.aicharts/collector-status.json` writes after each pass, and `autosubmit-runtime/last-cycle.json`, which each publishing
-cycle writes. Both hold times, results and fixed error codes, never account
-IDs, paths or session content.
-
-The build uses the committed Cargo lockfile. Installation stages the replacement
-in a private temporary directory and refuses symlinked or externally writable
-managed directories. Launch also refuses symlinked or externally writable
-executables. The menu bar is not an updater or a privileged service.
+every item of the retired menu bar to its command. If the menu bar still
+opens at login, `aicharts doctor retire` sets its login item aside.
 
 ## aicharts agent skill
 

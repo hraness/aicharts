@@ -229,7 +229,7 @@ fn run_loop(
 /// Passes kept for `recentFailures`: one day at the default interval.
 const STATUS_HISTORY: usize = 96;
 
-/// The collector's own health report for the menu bar
+/// The collector's own health report for `aicharts status`
 /// (`collector-status.json`, schema version 1): pass times, results and
 /// fixed error codes only, never paths, account identifiers or content.
 #[derive(Debug, Default)]

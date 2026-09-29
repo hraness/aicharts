@@ -33,7 +33,6 @@ describe("dependency pins", () => {
   test("the checked-in manifest, lockfile, Cargo locks and workflows pass", () => {
     expect(checkPackagePins(manifest, lock)).toEqual([]);
     expect(checkCargoLock(read("Cargo.lock"), "Cargo.lock")).toEqual([]);
-    expect(checkCargoLock(read("desktop/Cargo.lock"), "desktop/Cargo.lock")).toEqual([]);
     for (const file of ["ci.yml", "cli-release.yml", "codex-auto-merge.yml", "data-refresh.yml"]) expect(checkWorkflowPins(read(`.github/workflows/${file}`), file)).toEqual([]);
   });
   test("unpinned github specs, missing or inexact lock entries, stale workspace specs and unpinned script URLs fail", () => {

@@ -27,7 +27,6 @@ const COMMANDS: &[&str] = &[
     "init",
     "inspect",
     "keygen",
-    "menubar",
     "open",
     "outbox",
     "outputs",
@@ -182,18 +181,6 @@ pub(crate) fn explain(code: &str, args: &[String]) -> Explained {
             help,
         ),
         "missing_option_value" => explained("An option is missing its value.", help),
-        "menubar_command_required" => explained(
-            "Name a menu bar command: install, uninstall, status or start.",
-            "aicharts menubar --help".to_owned(),
-        ),
-        "menubar_not_installed" => explained(
-            "The AI Charts menu bar isn't installed on this Mac.",
-            "bun run menubar:install".to_owned(),
-        ),
-        "menubar_start_failed" => explained(
-            "Couldn't run the AI Charts menu bar.",
-            "aicharts menubar --help".to_owned(),
-        ),
         "service_command_required" => explained(
             "Name a collector command: install, uninstall or status.",
             "aicharts service --help".to_owned(),

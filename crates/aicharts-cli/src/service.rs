@@ -6,7 +6,7 @@
 //! schedule. Install writes `~/Library/LaunchAgents/io.aicharts.daemon.plist`
 //! (owner-only, marked so we can tell it from a hand-written file) and never
 //! runs `launchctl`: the agent takes effect at the next login, the same
-//! contract desktop-foundation's shared helper gives the menu bar.
+//! contract desktop-foundation's shared login-item helper follows.
 //!
 //! Before writing, a person at a terminal sees the macOS pre-prompt: the
 //! "Background Items Added" notification names `aicharts`, not "AI Charts".

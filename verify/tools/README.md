@@ -54,7 +54,7 @@ bun run usage:formal:theorems
 ```
 
 CI's required Formal verification job runs these gates and uploads receipts and
-diagnostics even after failure. Check and Menubar remain independently required.
+diagnostics even after failure. Check remains independently required.
 Linux artifacts are pinned and the first Linux execution has been reviewed:
 its thirteen unreachable Kani checks matched the macOS set and are now bound to
 the Linux bundle's own rlib hashes in `verify/kani/toolchain.json`. Any further

@@ -71,9 +71,9 @@ describe("formal tool provisioning admission", () => {
     expect([...workflow.jobs.required.needs].sort()).toEqual([...jobs].sort());
     expect(workflow.jobs.required.if).toBe("always()");
     const gate = String(workflow.jobs.required.steps[0].run);
-    for (const name of ["CHANGES", "CHECKS", "BUILD", "WORKER", "RUST", "MENUBAR", "FORMAL"]) expect(gate).toContain(`test "$${name}_RESULT" = success`);
+    for (const name of ["CHANGES", "CHECKS", "BUILD", "WORKER", "RUST", "FORMAL"]) expect(gate).toContain(`test "$${name}_RESULT" = success`);
     // A filtered job may only pass as a deliberate skip recorded by the change filter.
-    for (const [result, changed] of [["RUST", "RUST"], ["MENUBAR", "DESKTOP"], ["FORMAL", "FORMAL"]]) {
+    for (const [result, changed] of [["RUST", "RUST"], ["FORMAL", "FORMAL"]]) {
       expect(gate).toContain(`{ test "$${result}_RESULT" = skipped && test "$${changed}_CHANGED" = false; }`);
     }
     // Every command of the local complete gate (`bun run check`) still runs in CI, split across parallel jobs.
@@ -87,8 +87,9 @@ describe("formal tool provisioning admission", () => {
       "node scripts/verify-public-site-browser.mjs", "node scripts/verify-public-site-browser.mjs --production",
     ]);
     expect(workflow.jobs.build.steps.find((step: { run?: string }) => step.run === "node scripts/verify-public-site-browser.mjs --production").if).toBe("github.event_name == 'workflow_dispatch' && inputs.production");
-    expect(workflow.jobs.menubar.steps.some((step: { run?: string }) => step.run?.includes("cargo build --release --locked"))).toBe(true);
-    for (const name of ["rust", "menubar", "formal"]) expect(workflow.jobs[name].needs).toEqual(["changes"]);
+    expect(workflow.jobs.menubar).toBeUndefined();
+    expect(workflow.jobs.required.needs).not.toContain("menubar");
+    for (const name of ["rust", "formal"]) expect(workflow.jobs[name].needs).toEqual(["changes"]);
     expect(workflow.jobs.checks.if).toBeUndefined();
     expect(workflow.jobs.build.if).toBeUndefined();
     expect(workflow.jobs.worker.if).toBeUndefined();

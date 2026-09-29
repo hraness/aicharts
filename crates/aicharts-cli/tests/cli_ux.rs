@@ -118,7 +118,6 @@ fn every_command_answers_its_own_help_with_exit_zero() {
         "capture",
         "contribution-sync",
         "refresh",
-        "menubar",
         "service",
         "setup",
         "tui",
