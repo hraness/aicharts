@@ -45,7 +45,7 @@ export function BlogIndex({
         data={[
           blogCollectionJsonLd(imageForSlug),
           breadcrumbJsonLd([
-            { name: "AI Charts", path: "/" },
+            { name: "aicharts", path: "/" },
             { name: "Notes", path: "/blog" },
           ]),
         ]}

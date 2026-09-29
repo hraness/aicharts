@@ -304,7 +304,7 @@ function overlapBlocks(snapshot: CodingAgentSnapshot, retrievedAt: string): Blog
       `The snapshot retrieved ${retrievedAt} stores ${spellCount(present.length)} of the ${spellCount(overlaps.length)} Real-SWE model and harness names. The table pairs each Real-SWE configuration with the snapshot row that shares its model and harness name at the highest stored effort setting. Real-SWE does not publish effort settings, so each row is a name match, not the same run. ${missingSentence}`,
     ),
     table(
-      `Real-SWE pairs beside same-name rows in the AI Charts snapshot retrieved ${retrievedAt}`,
+      `Real-SWE pairs beside same-name rows in the aicharts snapshot retrieved ${retrievedAt}`,
       ["Real-SWE pair", "Real-SWE resolution", "Snapshot row", "AA Index", "Mean cost per task"],
       overlaps.map(overlapRow),
     ),
@@ -398,7 +398,7 @@ export function createRealSweArticle(
         `“${REAL_SWE.quotes.governingQuestion}”`,
       ),
       paragraph(
-        "This note explains what that 38.8% covers, why the per-task results reorder the leaderboard, which failure the tasks expose most often, and how to read the ranking beside the AI Charts coding-agent chart, which stores several of the same model and harness names from a different evaluation.",
+        "This note explains what that 38.8% covers, why the per-task results reorder the leaderboard, which failure the tasks expose most often, and how to read the ranking beside the aicharts coding-agent chart, which stores several of the same model and harness names from a different evaluation.",
       ),
       heading("What the resolution rate covers"),
       paragraph(
@@ -564,9 +564,9 @@ export function createRealSweArticle(
         gemini.resolution,
         " result is specific to the Gemini CLI pairing. A result for the same model in Antigravity would be a different measurement, not a correction, and the same holds for any other model moved to a different harness.",
       ),
-      heading("How to read Real-SWE beside the AI Charts chart"),
+      heading("How to read Real-SWE beside the aicharts chart"),
       paragraph(
-        "The AI Charts coding-agent chart is a checked snapshot of the public ",
+        "The aicharts coding-agent chart is a checked snapshot of the public ",
         { href: BLOG_SOURCES.artificialAnalysisCodingAgents.url, text: "Artificial Analysis coding-agents page" },
         `, retrieved ${retrievedAt}. It stores each model, harness, and effort setting with an AA Index score, its component benchmarks, mean cost per task, active time, and token use. Real-SWE is not one of the site’s checked datasets, and Specific Labs publishes no resolve-rate comparison between Real-SWE and any public suite, so there is no supported conversion between the two scales.`,
       ),

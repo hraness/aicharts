@@ -168,7 +168,7 @@ describe("public model cards", () => {
       );
       expect(markup).toContain("first observed");
       expect(markup).not.toContain("source changed");
-      // The radar date is when AI Charts found the page, never an official release date.
+      // The radar date is when aicharts found the page, never an official release date.
       expect(markup).toContain("which can differ from the official");
     }
     expect(MODEL_RELEASE_RADAR_HIGHLIGHTS[0]).toBe(

@@ -13,7 +13,7 @@ import "@/styles/usage-metric-explorer.css";
 import "@/styles/usage-account.css";
 
 export const metadata: Metadata = {
-  title: "Detailed usage | AI Charts",
+  title: "Detailed usage | aicharts",
   description: "Inspect numeric AI usage by client, model, and day with exact totals and explicit coverage.",
   robots: { index: false, follow: true },
   alternates: { canonical: "https://aicharts.io/usage/details" },

@@ -233,7 +233,7 @@ fn ordinary_help_has_no_identity_side_effect() {
         let output = fixture.run(args);
         assert_eq!(output.status.code(), Some(0));
         let text = String::from_utf8(output.stdout).unwrap();
-        assert!(text.contains("AI Charts measures your coding agents' token use"));
+        assert!(text.contains("aicharts measures your coding agents' token use"));
         assert!(text.contains("aicharts help publish"));
         assert!(output.stderr.is_empty());
     }

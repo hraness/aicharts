@@ -75,7 +75,7 @@ export async function BlogArticlePage({
         data={[
           blogArticleJsonLd(article, editorialImage ?? null),
           breadcrumbJsonLd([
-            { name: "AI Charts", path: "/" },
+            { name: "aicharts", path: "/" },
             { name: "Notes", path: "/blog" },
             { name: article.title, path },
           ]),
@@ -91,7 +91,7 @@ export async function BlogArticlePage({
           aria-label="Breadcrumb"
           className="plain-publication__breadcrumbs"
           items={[
-            { href: "/", id: "aicharts", label: "AI Charts" },
+            { href: "/", id: "aicharts", label: "aicharts" },
             { href: "/blog", id: "blog", label: "Notes" },
             { id: article.slug, label: article.title },
           ]}

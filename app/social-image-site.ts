@@ -8,7 +8,7 @@ import { aichartsMarkDataUrl } from "./social-image-mark";
 import { modelCardsEyebrow, site } from "./site";
 
 /**
- * The one social-image declaration for AI Charts. Every Open Graph and
+ * The one social-image declaration for aicharts. Every Open Graph and
  * Twitter image renders from it through the shared web-discovery template;
  * routes add page copy only.
  */

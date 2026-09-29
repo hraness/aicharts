@@ -16,7 +16,7 @@ import "@/styles/chart-home.css";
 
 export const metadata = createPublicSiteMetadata({
   ...searchSite,
-  title: "Coding agent comparisons | AI Charts",
+  title: "Coding agent comparisons | aicharts",
   description: "Compare coding-agent configurations by benchmark performance, task cost, time, and token use. Inspect the setup behind each result.",
 }, { canonicalPath: "/coding" });
 

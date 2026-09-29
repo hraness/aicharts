@@ -498,9 +498,9 @@ export function createHarnessTaxArticle(
         "What the nine of 12 count is",
         "It is a highest-success tally on six Anthropic and OpenAI models over two 30-task samples. It is not a cost ranking, a statistically tested harness effect, or a result for Kimi K3, which has no provider harness in this study.",
       ),
-      heading("How to read HarnessTax beside the AI Charts chart"),
+      heading("How to read HarnessTax beside the aicharts chart"),
       paragraph(
-        "The AI Charts coding-agent chart is a checked snapshot of the public ",
+        "The aicharts coding-agent chart is a checked snapshot of the public ",
         { href: BLOG_SOURCES.artificialAnalysisCodingAgents.url, text: "Artificial Analysis coding-agents page" },
         `, retrieved ${retrievedAt}. It stores each model, harness, and effort setting with an AA Index score and mean cost per task. HarnessTax is not one of the site’s checked datasets. Its suites are SWE-bench Lite and Terminal-Bench 2.0, not the AA Index mix, so there is no supported conversion between the two scales.`,
       ),
@@ -546,7 +546,7 @@ export function createHarnessTaxArticle(
           "The nine of 12 alternative-harness tally is a highest-success count on six models. Several of those gaps are small, and the published intervals overlap.",
         ],
         [
-          "AI Charts snapshot rows that share a model or harness name come from a different suite, retrieval date, and effort setting. They must not be subtracted from or averaged with HarnessTax rates.",
+          "aicharts snapshot rows that share a model or harness name come from a different suite, retrieval date, and effort setting. They must not be subtracted from or averaged with HarnessTax rates.",
         ],
       ),
     ],

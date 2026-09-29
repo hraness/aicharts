@@ -218,7 +218,7 @@ function overviewBlocks(
   }
   return [
     table(
-      "Grok 4.7 in the two AI Charts snapshots. Each score belongs to its own chart, task set, and cost definition.",
+      "Grok 4.7 in the two aicharts snapshots. Each score belongs to its own chart, task set, and cost definition.",
       ["Chart", "Configuration", "Score", "Cost per task", "Snapshot retrieved"],
       [
         [
@@ -601,7 +601,7 @@ export function createGrok47Article(
     ? undefined
     : roundedScore(intelligence.record.intelligenceIndex);
   const title = codingScore === undefined
-    ? "Where Grok 4.7 lands on the AI Charts snapshots"
+    ? "Where Grok 4.7 lands on the aicharts snapshots"
     : `What Grok 4.7’s ${codingScore} on the coding-agent chart measures`;
   const frontierPhrase = coding === undefined || intelligence === undefined
     ? ""
@@ -613,11 +613,11 @@ export function createGrok47Article(
           ? "a cheaper configuration scores higher on the coding-agent chart"
           : "cheaper configurations score higher on both charts";
   const dek = codingScore === undefined || intelligenceScore === undefined
-    ? "Grok 4.7 appears on the AI Charts coding-agent chart and the Intelligence Index chart as two different measurements. This note states what each score measures and where the evidence stops."
+    ? "Grok 4.7 appears on the aicharts coding-agent chart and the Intelligence Index chart as two different measurements. This note states what each score measures and where the evidence stops."
     : `On the ${formatLongUtcDate(codingSnapshot.source.retrievedAt)} snapshots, Grok Build · Grok 4.7 (xhigh) scores ${codingScore} on the coding-agent AA Index and Grok 4.7 (xhigh) scores ${intelligenceScore} on the Intelligence Index. Different harnesses, task sets, and costs sit behind the two numbers, and ${frontierPhrase}.`;
   const seoDescription = codingScore === undefined || intelligenceScore === undefined
-    ? "Grok 4.7 appears on the AI Charts coding-agent chart and the Intelligence Index chart. See what each score measures and where the evidence stops."
-    : `Grok 4.7 scores ${codingScore} on the AI Charts coding-agent AA Index with Grok Build and ${intelligenceScore} on the Intelligence Index. See what each measures and where each sits on cost.`;
+    ? "Grok 4.7 appears on the aicharts coding-agent chart and the Intelligence Index chart. See what each score measures and where the evidence stops."
+    : `Grok 4.7 scores ${codingScore} on the aicharts coding-agent AA Index with Grok Build and ${intelligenceScore} on the Intelligence Index. See what each measures and where each sits on cost.`;
 
   return {
     sourceNote: BLOG_SOURCE_NOTE,
@@ -676,7 +676,7 @@ export function createGrok47Article(
         GROK_47.xai.outputPrice,
         " per million output tokens, and available the same day in ",
         GROK_47.xai.availability,
-        ", its own coding agent. Artificial Analysis published its independent measurements the same day, and AI Charts now stores Grok 4.7 in two checked snapshots: the coding-agent chart and the Intelligence Index chart.",
+        ", its own coding agent. Artificial Analysis published its independent measurements the same day, and aicharts now stores Grok 4.7 in two checked snapshots: the coding-agent chart and the Intelligence Index chart.",
       ),
       paragraph(
         "This note answers three questions from those snapshots: where each Grok 4.7 row lands, what each score and cost measures, and where the evidence stops. Every score, cost, rank, and frontier statement below is derived from the snapshot named in its caption or from Artificial Analysis’s published pages. xAI’s own benchmark table is described in its own section and is not charted.",
@@ -730,7 +730,7 @@ export function createGrok47Article(
       paragraph(
         "xAI’s launch page prints a vendor-run table for Grok 4.7 at xhigh against Grok 4.6, GPT-5.6 Sol, and Claude Fable 5.1 on ",
         GROK_47.xai.otherVendorBenchmarks,
-        ", none of which appears on an AI Charts chart, plus its own runs of ",
+        ", none of which appears on an aicharts chart, plus its own runs of ",
         SNAPSHOT_COLUMN_LABELS.deepSwe,
         " (",
         GROK_47.xai.vendorDeepSwe,
@@ -746,7 +746,7 @@ export function createGrok47Article(
           `Every score and cost in this note is an Artificial Analysis measurement of the named configuration on the retrieval date, under ${SNAPSHOT_COLUMN_LABELS.deepSwe}, ${SNAPSHOT_COLUMN_LABELS.terminalBench}, and ${SNAPSHOT_COLUMN_LABELS.sweAtlas} for the coding-agent chart and Intelligence Index version ${indexVersion} for the capability chart. Neither establishes results on other tasks, repositories, or harnesses.`,
         ],
         [
-          "Ranks, frontier positions, dominators, neighbors, and generation multiples are AI Charts derivations from the snapshots named in each caption. They change when Artificial Analysis adds, removes, or rescores a configuration, and the checked snapshots advance daily.",
+          "Ranks, frontier positions, dominators, neighbors, and generation multiples are aicharts derivations from the snapshots named in each caption. They change when Artificial Analysis adds, removes, or rescores a configuration, and the checked snapshots advance daily.",
         ],
         [
           "The coding-agent row measures Grok 4.7 inside Grok Build. The same model in another harness, including Cursor, is a different configuration that this snapshot does not store.",
@@ -755,7 +755,7 @@ export function createGrok47Article(
           "The Grok 4.6 comparison holds the harness and setting fixed, but Artificial Analysis may have run the two generations weeks apart under evolving benchmark versions and prices; the snapshot records outcomes, not run dates.",
         ],
         [
-          "xAI’s table, price statements, and capability claims belong to xAI. AI Charts did not run Grok 4.7 and did not verify the vendor figures.",
+          "xAI’s table, price statements, and capability claims belong to xAI. aicharts did not run Grok 4.7 and did not verify the vendor figures.",
         ],
       ),
     ],

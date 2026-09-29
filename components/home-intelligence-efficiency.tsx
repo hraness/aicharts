@@ -128,7 +128,7 @@ export function HomeIntelligenceEfficiency({
               The source has {snapshot.selection.sourceRecordCount} records.{" "}
               {snapshot.selection.measuredCompleteRecordCount} are current configurations with a non-estimated score,
               output-token count, and cost breakdown, and {cohort.length} of those report a task cost above zero.
-              The curve connects the configurations with the highest score at each resource budget; AI Charts
+              The curve connects the configurations with the highest score at each resource budget; aicharts
               draws it from this cohort. No benchmark families are blended.
             </p>
             <p>

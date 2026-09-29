@@ -1,6 +1,6 @@
-# AI Charts
+# aicharts
 
-[AI Charts](https://aicharts.io) plots published AI benchmark scores against
+[aicharts](https://aicharts.io) plots published AI benchmark scores against
 cost and tokens per task, marking the best score at every budget. A local
 collector measures your own agents' token use.
 
@@ -16,9 +16,9 @@ The site header links Charts (`/`), Benchmarks (`/benchmarks`), Usage (`/usage`)
 
 ## Compared with
 
-Other places to compare models: [Artificial Analysis](https://artificialanalysis.ai/leaderboards/models) runs the Intelligence Index and Coding Agent Index charted here, and its own leaderboards cover more than 250 models with speed and latency. [Arena](https://arena.ai) (formerly LMArena) ranks models by people's votes in blind side-by-side chats. [Epoch AI](https://epoch.ai/benchmarks) runs its own benchmarks and tracks how capabilities change over time. [OpenRouter](https://openrouter.ai/rankings) lists live API prices and which models its users send the most tokens to. AI Charts puts published scores against cost per task, draws the best score at each budget, and keeps each benchmark on its own scale.
+Other places to compare models: [Artificial Analysis](https://artificialanalysis.ai/leaderboards/models) runs the Intelligence Index and Coding Agent Index charted here, and its own leaderboards cover more than 250 models with speed and latency. [Arena](https://arena.ai) (formerly LMArena) ranks models by people's votes in blind side-by-side chats. [Epoch AI](https://epoch.ai/benchmarks) runs its own benchmarks and tracks how capabilities change over time. [OpenRouter](https://openrouter.ai/rankings) lists live API prices and which models its users send the most tokens to. aicharts puts published scores against cost per task, draws the best score at each budget, and keeps each benchmark on its own scale.
 
-For measuring your own usage, [ccusage](https://ccusage.com) and [Tokscale](https://tokscale.ai) also read coding agents' local logs. ccusage runs without an install and prints daily, weekly, monthly, and session reports. Tokscale adds a web dashboard and a public leaderboard, and the AI Charts collector builds on its open-source parsers. AI Charts shows which sources each total covers, and on a Mac it can sync daily totals to your dashboard.
+For measuring your own usage, [ccusage](https://ccusage.com) and [Tokscale](https://tokscale.ai) also read coding agents' local logs. ccusage runs without an install and prints daily, weekly, monthly, and session reports. Tokscale adds a web dashboard and a public leaderboard, and the aicharts collector builds on its open-source parsers. aicharts shows which sources each total covers, and on a Mac it can sync daily totals to your dashboard.
 
 Checked Sep 28, 2026.
 
@@ -44,11 +44,11 @@ The site is a static-data Next.js and TypeScript application. Its benchmark snap
 - Read sourced analysis at [`/blog`](https://aicharts.io/blog), including the current [AA Index versus cost](https://aicharts.io/blog/aa-index-cost-coding-agents) snapshot analysis, [open models on coding-agent benchmarks](https://aicharts.io/blog/open-models-coding-agent-benchmarks), [how GPT-5.6 Luna changed one daily news-page cost](https://aicharts.io/blog/small-models-have-arrived), [Terminal-Bench-Science](https://aicharts.io/blog/terminal-bench-science), and [why a high score still needs a holdout](https://aicharts.io/blog/coding-agent-score-holdouts).
 - Inspect the current snapshot, methodology, provenance, full configuration table, and machine-readable distribution at [`/data`](https://aicharts.io/data).
 
-Each checked snapshot records its source, named version, retrieval time, and available revision or content fingerprint. The [`atlas catalog JSON`](https://aicharts.io/data/benchmark-atlas.json) links one compact JSON distribution per measured cohort; [`/data`](https://aicharts.io/data) provides benchmark definitions, comparison rules, limitations, and richer source snapshots. Source-only guides have no invented observations or dataset download. AI Charts is an independent visualization and is not affiliated with the benchmark owners or model providers represented in the data.
+Each checked snapshot records its source, named version, retrieval time, and available revision or content fingerprint. The [`atlas catalog JSON`](https://aicharts.io/data/benchmark-atlas.json) links one compact JSON distribution per measured cohort; [`/data`](https://aicharts.io/data) provides benchmark definitions, comparison rules, limitations, and richer source snapshots. Source-only guides have no invented observations or dataset download. aicharts is an independent visualization and is not affiliated with the benchmark owners or model providers represented in the data.
 
 ## Local development
 
-AI Charts uses [Bun 1.3.14](https://bun.sh/) and Node.js 24.
+aicharts uses [Bun 1.3.14](https://bun.sh/) and Node.js 24.
 
 ```sh
 bun install --frozen-lockfile
@@ -63,7 +63,7 @@ Run the complete local gate before opening a pull request:
 bun run check
 ```
 
-The complete gate also requires Rust 1.97.1 with rustfmt and Clippy, pinned in `rust-toolchain.toml`. It validates generated files and the checked data contract, checks the local usage workspace and AI Charts skill helper, runs strict TypeScript and ESLint, executes example and property tests, and verifies the production build in a browser. The website's ordinary development/build commands do not invoke Rust.
+The complete gate also requires Rust 1.97.1 with rustfmt and Clippy, pinned in `rust-toolchain.toml`. It validates generated files and the checked data contract, checks the local usage workspace and aicharts skill helper, runs strict TypeScript and ESLint, executes example and property tests, and verifies the production build in a browser. The website's ordinary development/build commands do not invoke Rust.
 
 ## Local usage tools
 
@@ -91,7 +91,7 @@ live-status statement in this README and the usage guides with its evidence.
 
 ## Menu bar
 
-The AI Charts menu bar shows whether usage collection is working: when the
+The aicharts menu bar shows whether usage collection is working: when the
 last pass ran, when your usage last synced, and any failures in plain words,
 with the collector's error log one click away. It also opens the usage
 dashboard and lists your two newest outputs. Build it explicitly, then run it:
@@ -106,7 +106,7 @@ bun run menubar
 `~/Library/Application Support/AI Charts/bin/aicharts-menubar` atomically. The
 launcher never compiles on startup: it uses that installed copy when present,
 or a prebuilt checkout binary otherwise. A second copy exits with status 3 and
-says AI Charts is already in your menu bar. Use `bun run menubar:uninstall` to
+says aicharts is already in your menu bar. Use `bun run menubar:uninstall` to
 remove the installed copy.
 
 To open it at login, run `aicharts menubar install` (or turn on "Open at
@@ -127,15 +127,15 @@ in a private temporary directory and refuses symlinked or externally writable
 managed directories. Launch also refuses symlinked or externally writable
 executables. The menu bar is not an updater or a privileged service.
 
-## AI Charts agent skill
+## aicharts agent skill
 
-The portable [AI Charts skill](skills/aicharts/SKILL.md) retrieves one public benchmark cohort at a time with its version, units, configuration, source and coverage intact. Its dependency-free Node.js helper makes anonymous requests only to `aicharts.io`, bounds response sizes and pagination, and never opens local usage data. A separate local mode can explain a supplied numeric summary or use an already available reviewed `aicharts inspect` binary for an explicitly selected ledger. It never collects source logs or uploads usage.
+The portable [aicharts skill](skills/aicharts/SKILL.md) retrieves one public benchmark cohort at a time with its version, units, configuration, source and coverage intact. Its dependency-free Node.js helper makes anonymous requests only to `aicharts.io`, bounds response sizes and pagination, and never opens local usage data. A separate local mode can explain a supplied numeric summary or use an already available reviewed `aicharts inspect` binary for an explicitly selected ledger. It never collects source logs or uploads usage.
 
 The skill lives at `skills/aicharts`; load or install that directory through your agent's supported skill workflow. The source command is documented in the local usage guide; this repository does not yet distribute a signed native installer. The skill does not install a runtime, obtain keys or enable background collection.
 
 ### Optional updates and support
 
-The standalone benchmark helper and native CLI source offer free AI Charts product updates and optional paid development support after useful completed reads. These use the shared Hraness invitation preferences; they never change benchmark or numeric JSON stdout, send usage data, or open checkout automatically. Imported benchmark calls, CI, background collection, authentication, uploads and control commands stay quiet. The native change is source support, not a claim that an installed binary has been released.
+The standalone benchmark helper and native CLI source offer free aicharts product updates and optional paid development support after useful completed reads. These use the shared Hraness invitation preferences; they never change benchmark or numeric JSON stdout, send usage data, or open checkout automatically. Imported benchmark calls, CI, background collection, authentication, uploads and control commands stay quiet. The native change is source support, not a claim that an installed binary has been released.
 
 Use `node skills/aicharts/scripts/atlas.mjs support protocol --json` for the local machine-readable handoff, or `aicharts support protocol --json` with a verified build exposing that command. The Node helper includes its reviewed shared runtime and needs no dependency installation. An agent presents a due invitation once at task closeout and records it only after persistent human-visible output. Git email is an optional unverified suggestion; signup requires explicit authorization and inbox confirmation, and payment requires human checkout approval. See the [skill handoff contract](skills/aicharts/references/support.md). Set `HRANESS_SUPPORT_AUDIENCE=off` for a delegated child, `HRANESS_SUPPORT=off` to suppress incidental invitations, or use `support dismiss` to save the suite preference.
 
@@ -182,7 +182,7 @@ Review the resulting data diff before committing it. The corresponding `*:check`
 
 ## PostHog
 
-PostHog is initialized only in production on the canonical AI Charts domains. The browser configuration is cookieless and privacy constrained:
+PostHog is initialized only in production on the canonical aicharts domains. The browser configuration is cookieless and privacy constrained:
 
 - no person profiles, persistent identifiers, autocapture, session replay, surveys, heatmaps, or feature flags;
 - memory-only persistence, Do Not Track support, masked text and element attributes;
@@ -190,14 +190,14 @@ PostHog is initialized only in production on the canonical AI Charts domains. Th
 
 Product events cover chart and model-card interaction, delegated public-link clicks, and footer signup requests. They contain controlled enum-like properties, never raw URLs, query strings, hashes, link text, visitor-entered values, or model-level user data. Every event receives a grouped page classification plus a bounded public article or model-card content ID. The complete event and privacy contract lives in [`docs/analytics-instrumentation.md`](docs/analytics-instrumentation.md).
 
-The optional AI Charts mailing list is separate from product use and every
+The optional aicharts mailing list is separate from product use and every
 other Hraness audience. Its footer sends the entered email address, the
 `aicharts` audience, the form source, and a short-lived Cloudflare Turnstile
 proof to Hraness Accounts at `account.hraness.com`. Cloudflare verifies the
 anti-abuse proof. Hraness Accounts records dated consent, and Resend sends the
 confirmation and subscribed messages from `news.hraness.com`. The address is
 not subscribed until its confirmation link is used. After confirmation, each
-newsletter message includes an AI Charts-specific unsubscribe link, which does
+newsletter message includes an aicharts-specific unsubscribe link, which does
 not change subscriptions to other Hraness products.
 
 The durable positioning, search-intent map, technical invariants, event schema, baseline, and review cadence live in [`docs/seo-strategy.md`](docs/seo-strategy.md). Search Console measures impressions, queries, clicks, click-through rate, and search position. PostHog measures acquisition and qualified engagement after a visitor arrives.
@@ -240,6 +240,6 @@ The application code is available under the [MIT License](LICENSE). The reposito
 
 ## Citation
 
-GitHub can generate a citation from [`CITATION.cff`](CITATION.cff). Cite AI Charts for this software or its visualization method and cite the named benchmark owner for measurements. Cite OpenRouter only for discovery and model-identity metadata, and cite the linked provider source for an official release date. Include the source URL, version, retrieval date, metric, harness, effort, and trial policy when a claim depends on a snapshot.
+GitHub can generate a citation from [`CITATION.cff`](CITATION.cff). Cite aicharts for this software or its visualization method and cite the named benchmark owner for measurements. Cite OpenRouter only for discovery and model-identity metadata, and cite the linked provider source for an official release date. Include the source URL, version, retrieval date, metric, harness, effort, and trial policy when a claim depends on a snapshot.
 
 Contributions are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md), and report security issues through the process in [SECURITY.md](SECURITY.md).

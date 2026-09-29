@@ -200,7 +200,7 @@ function imageLessLookup(): undefined {
   return undefined;
 }
 
-describe("AI Charts benchmark notes", () => {
+describe("aicharts benchmark notes", () => {
   test("uses the shared publication shell with chart discovery", () => {
     const markup = renderToStaticMarkup(
       createElement(
@@ -1641,7 +1641,7 @@ describe("AI Charts benchmark notes", () => {
       records: codingSnapshot.records.filter(record => !isSol(record)),
     }, intelligenceSnapshot);
     const withoutCodingMarkdown = articleToMarkdown(withoutCoding);
-    expect(withoutCoding.title).toBe("GPT-6 Sol on the AI Charts snapshots");
+    expect(withoutCoding.title).toBe("GPT-6 Sol on the aicharts snapshots");
     expect(withoutCodingMarkdown).toContain("does not store a Codex · GPT-6 Sol row");
     expect(withoutCodingMarkdown).toContain("cannot split the index into its components");
     expect(withoutCodingMarkdown).toContain("cannot compare the two generations in one harness");
@@ -1861,7 +1861,7 @@ describe("AI Charts benchmark notes", () => {
       records: codingSnapshot.records.filter(record => !isGrok(record)),
     }, intelligenceSnapshot);
     const withoutCodingMarkdown = articleToMarkdown(withoutCoding);
-    expect(withoutCoding.title).toBe("Where Grok 4.7 lands on the AI Charts snapshots");
+    expect(withoutCoding.title).toBe("Where Grok 4.7 lands on the aicharts snapshots");
     expect(withoutCodingMarkdown).toContain("does not store a Grok Build · Grok 4.7 row");
     expect(withoutCodingMarkdown).toContain("cannot split the index into its components");
     expect(withoutCodingMarkdown).toContain("cannot compare the two generations in one harness");
@@ -2223,9 +2223,9 @@ describe("AI Charts benchmark notes", () => {
     const fusionRecords = fusionSnapshotRecords(parsed.value.records);
     if (fusionRecords.length === 0) {
       expect(markdown).toContain("does not include a Fusion configuration");
-      expect(markdown).not.toContain("Fusion configurations in the AI Charts snapshot");
+      expect(markdown).not.toContain("Fusion configurations in the aicharts snapshot");
     } else {
-      expect(markdown).toContain("Fusion configurations in the AI Charts snapshot");
+      expect(markdown).toContain("Fusion configurations in the aicharts snapshot");
       expect(markdown).not.toContain("does not include a Fusion configuration");
     }
   });
@@ -2265,9 +2265,9 @@ describe("AI Charts benchmark notes", () => {
     const withRows = articleToMarkdown(withFusion);
 
     expect(without).toContain("does not include a Fusion configuration");
-    expect(without).not.toContain("Fusion configurations in the AI Charts snapshot");
+    expect(without).not.toContain("Fusion configurations in the aicharts snapshot");
     expect(withRows).toContain("includes one Fusion configuration");
-    expect(withRows).toContain("Fusion configurations in the AI Charts snapshot");
+    expect(withRows).toContain("Fusion configurations in the aicharts snapshot");
     expect(withRows).toContain("Claude Fable 5.1 + SWE-2");
     expect(withRows).toContain("61.7");
     expect(withRows).toContain("$7.90");
@@ -2411,7 +2411,7 @@ describe("AI Charts benchmark notes", () => {
       );
       expect(markup).toContain(`dateTime="${article.publishedAt}"`);
       expect(markup).toContain("By Hraness");
-      expect(markup).not.toContain("By AI Charts");
+      expect(markup).not.toContain("By aicharts");
       expect(markup).toContain('class="plain-publication__provenance"');
       expect(markup).toContain(
         articleProvenanceSentence(blogArticleProvenance(article.slug)),
@@ -2475,7 +2475,7 @@ describe("AI Charts benchmark notes", () => {
   });
 });
 
-describe("AI Charts blog discovery", () => {
+describe("aicharts blog discovery", () => {
   test("keeps dynamic article images independent of monorepo files", () => {
     expect(nextConfig.outputFileTracingIncludes).toBeUndefined();
   });

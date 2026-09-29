@@ -85,12 +85,12 @@ function linkHranessParties(
 const blogSearchSite = {
   ...searchSite,
   description: blogDescription,
-  name: "AI Charts Blog",
+  name: "aicharts blog",
   socialImage: {
     alt: aichartsSocialImageAlt(blogCollectionSocialImagePage),
     path: BLOG_SOCIAL_IMAGE_PATH,
   },
-  title: "AI model and agent benchmark analysis | AI Charts",
+  title: "AI model and agent benchmark analysis | aicharts",
 } as const;
 
 const baseBlogCollectionMetadata = createPublicSiteMetadata(
@@ -183,13 +183,13 @@ export function blogArticleMetadata(
     alternates: { canonical },
     authors: [{ name: BLOG_ARTICLE_AUTHOR.name }],
     creator: BLOG_ARTICLE_AUTHOR.name,
-    publisher: "AI Charts",
+    publisher: "aicharts",
     category: section,
     openGraph: {
       type: "article",
       locale: "en_US",
       url: canonical,
-      siteName: "AI Charts",
+      siteName: "aicharts",
       title: article.title,
       description: article.seoDescription,
       publishedTime: isoDateTime(article.publishedAt),

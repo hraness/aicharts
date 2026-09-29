@@ -14,7 +14,7 @@ import {
   site,
 } from "./site";
 
-describe("AI Charts public positioning", () => {
+describe("aicharts public positioning", () => {
   test("carries the canonical product messaging", () => {
     // Canonical lines come from the portfolio messaging record (hraness/jungle
     // a9988b903). The search title leads with the product name and names the
@@ -56,7 +56,7 @@ describe("AI Charts public positioning", () => {
   });
 
   test("keeps the 404 page out of homepage identity", () => {
-    expect(notFoundSearchSite.title).toBe("Page not found | AI Charts");
+    expect(notFoundSearchSite.title).toBe("Page not found | aicharts");
     expect(notFoundSearchSite.title).not.toBe(searchSite.title);
     expect(notFoundSearchSite.description).toBe(
       "This page does not exist. Return to the chart.",

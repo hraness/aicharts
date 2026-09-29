@@ -9,7 +9,7 @@ import "@/styles/chart-home.css";
 
 export const metadata = createPublicSiteMetadata({
   ...searchSite,
-  title: "AI benchmark explorer | AI Charts",
+  title: "AI benchmark explorer | aicharts",
   description: "Explore benchmarks for coding, reasoning, research, memory, images, video, audio, and world models. Compare configurations on the same test.",
 }, { canonicalPath: "/benchmarks" });
 

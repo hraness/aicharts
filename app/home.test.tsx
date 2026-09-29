@@ -106,7 +106,7 @@ describe("homepage canonical content", () => {
     expect(aboutAt).toBeGreaterThan(intelligenceAt);
     const about = markup.slice(aboutAt, aboutEndAt);
     expect(about).toContain(`<h2 id="home-about-title">${homeAboutHeading}</h2>`);
-    expect(about).toContain("AI Charts is free and open source.");
+    expect(about).toContain("aicharts is free and open source.");
     expect(homeAlternatives.map(alternative => alternative.href)).toEqual([
       "https://artificialanalysis.ai/leaderboards/models",
       "https://arena.ai",

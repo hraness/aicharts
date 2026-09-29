@@ -41,7 +41,7 @@ describe("Hraness model-card preview", () => {
     );
     expect(body).toContain('<meta name="robots" content="noindex, nofollow, noarchive">');
     expect(body).toContain('<link rel="canonical" href="https://aicharts.io/models">');
-    expect(body).toContain("<title>AI model pages | AI Charts</title>");
+    expect(body).toContain("<title>AI model pages | aicharts</title>");
   });
 
   test("is a bounded, inert document built from the existing collection image", async () => {

@@ -22,11 +22,11 @@ export function atlasCatalogDistribution(
 ) {
   return {
     schemaVersion: 1,
-    name: "AI Charts benchmark atlas",
+    name: "aicharts benchmark atlas",
     description: ATLAS_DATA_DESCRIPTION,
     contentModifiedAt: atlasContentModifiedAt(datasets),
     comparisonPolicy: "Each dataset is a separate evaluation cohort. Scores, cost bases, harnesses, and versions are not pooled into a universal rank. Source-only entries have no charted observations.",
-    reuseNotice: "AI Charts software is MIT-licensed. Third-party measurements and methodology retain their source terms; this distribution does not grant a new license to them. Cite the source and named evaluation version.",
+    reuseNotice: "aicharts software is MIT-licensed. Third-party measurements and methodology retain their source terms; this distribution does not grant a new license to them. Cite the source and named evaluation version.",
     entries: entries.map(entry => {
       const dataset = datasets.find(candidate => candidate.benchmarkId === entry.id);
       return {
@@ -51,11 +51,11 @@ export function atlasDataCatalogJsonLd() {
     "@context": "https://schema.org",
     "@type": "DataCatalog",
     "@id": "https://aicharts.io/data#benchmark-atlas",
-    name: "AI Charts benchmark atlas",
+    name: "aicharts benchmark atlas",
     description: ATLAS_DATA_DESCRIPTION,
     url: "https://aicharts.io/data#benchmark-atlas",
     dateModified: atlasContentModifiedAt(),
-    publisher: { "@type": "Organization", name: "AI Charts", url: "https://aicharts.io/" },
+    publisher: { "@type": "Organization", name: "aicharts", url: "https://aicharts.io/" },
     dataset: ATLAS_DATASETS.map(dataset => {
       const entry = ATLAS_ENTRIES.find(candidate => candidate.id === dataset.benchmarkId)!;
       const summary = atlasDatasetSummary(dataset);
@@ -70,7 +70,7 @@ export function atlasDataCatalogJsonLd() {
         citation: dataset.source.url,
         isBasedOn: dataset.source.url,
         measurementTechnique: entry.comparisonRule,
-        publisher: { "@type": "Organization", name: "AI Charts", url: "https://aicharts.io/" },
+        publisher: { "@type": "Organization", name: "aicharts", url: "https://aicharts.io/" },
         // The benchmark owner named as the source on /data made the measurements.
         creator: { "@type": "Organization", name: entry.source.name },
         distribution: {

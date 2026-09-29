@@ -165,7 +165,7 @@ function overviewBlocks(
   }
   return [
     table(
-      "GPT-6 Sol at max effort in the two AI Charts snapshots, each scored on its own task set with its own cost definition",
+      "GPT-6 Sol at max effort in the two aicharts snapshots, each scored on its own task set with its own cost definition",
       ["Chart", "Configuration", "Score", "Cost per task", "Snapshot retrieved"],
       [
         [
@@ -600,7 +600,7 @@ function costBlocks(
 }
 
 function derivedTitle(codingScore: string | undefined, codingCost: string | undefined): string {
-  if (codingScore === undefined) return "GPT-6 Sol on the AI Charts snapshots";
+  if (codingScore === undefined) return "GPT-6 Sol on the aicharts snapshots";
   const withCost = codingCost === undefined
     ? undefined
     : `GPT-6 Sol scores ${codingScore} on the coding-agent chart at ${codingCost} a task`;
@@ -643,13 +643,13 @@ export function createGpt6SolArticle(
           ? "The Intelligence Index row sits on its chart’s cost frontier; on the coding-agent chart a cheaper configuration scores at least as high."
           : "On both charts a cheaper configuration scores at least as high.";
   const dek = coding === undefined || intelligence === undefined || codingScore === undefined || intelligenceScore === undefined
-    ? "GPT-6 Sol appears on the AI Charts coding-agent chart and the Intelligence Index chart as two different measurements. This note states what each score measures and where the evidence stops."
+    ? "GPT-6 Sol appears on the aicharts coding-agent chart and the Intelligence Index chart as two different measurements. This note states what each score measures and where the evidence stops."
     : `Codex · GPT-6 Sol (max) scores ${codingScore} on the coding-agent AA Index at ${codingCost} per task, ${spellOrdinal(coding.rank)} of ${coding.indexedCount} configurations, and GPT-6 Sol (max) scores ${intelligenceScore} on the Intelligence Index at ${intelligenceCost} per task. ${frontierPhrase}`;
   const seoDescription = codingScore === undefined || intelligenceScore === undefined
-    ? "GPT-6 Sol appears on the AI Charts coding-agent chart and the Intelligence Index chart. See what each score measures and where the evidence stops."
-    : `GPT-6 Sol scores ${codingScore} on the AI Charts coding-agent AA Index in Codex at ${codingCost} a task and ${intelligenceScore} on the Intelligence Index at ${intelligenceCost}. Each chart has its own tasks.`;
+    ? "GPT-6 Sol appears on the aicharts coding-agent chart and the Intelligence Index chart. See what each score measures and where the evidence stops."
+    : `GPT-6 Sol scores ${codingScore} on the aicharts coding-agent AA Index in Codex at ${codingCost} a task and ${intelligenceScore} on the Intelligence Index at ${intelligenceCost}. Each chart has its own tasks.`;
   const openingPlacement = coding === undefined
-    ? "Artificial Analysis measured it the same day, and AI Charts stores GPT-6 Sol in two snapshots: the coding-agent chart and the Intelligence Index chart."
+    ? "Artificial Analysis measured it the same day, and aicharts stores GPT-6 Sol in two snapshots: the coding-agent chart and the Intelligence Index chart."
     : `Artificial Analysis measured it the same day. In the coding-agent snapshot retrieved ${codingRetrievedAt}, ${configurationLabel(coding.record)} scores ${codingScore} on AA Index at a mean API cost of ${codingCost} per task, ${spellOrdinal(coding.rank)} of ${coding.indexedCount} configurations${coding.onCostFrontier ? ", and no other configuration scores at least as high at the same or lower cost, which puts the row on the chart’s cost frontier" : ""}.`;
   const openingIndex = intelligence === undefined
     ? ""
@@ -783,7 +783,7 @@ export function createGpt6SolArticle(
         GPT_6_SOL.openAi.vendorDeepSwe,
         " for GPT-6 Sol at max effort, plus vendor-run results on ",
         GPT_6_SOL.openAi.otherVendorBenchmarks,
-        ", none of which appears on an AI Charts chart. OpenAI ran those evaluations in its own environment or through its API and says the competitor figures in its tables come from public reports. The 68.8% and the 69.0 that Artificial Analysis measured in Codex come from separate runs under separate protocols.",
+        ", none of which appears on an aicharts chart. OpenAI ran those evaluations in its own environment or through its API and says the competitor figures in its tables come from public reports. The 68.8% and the 69.0 that Artificial Analysis measured in Codex come from separate runs under separate protocols.",
       ),
       heading("Limits"),
       list(
@@ -791,7 +791,7 @@ export function createGpt6SolArticle(
           `The scores and costs in the tables and placement sentences above are Artificial Analysis measurements of Codex · GPT-6 Sol (max) and GPT-6 Sol (max) on the retrieval dates, under ${SNAPSHOT_COLUMN_LABELS.deepSwe}, ${SNAPSHOT_COLUMN_LABELS.terminalBench}, and ${SNAPSHOT_COLUMN_LABELS.sweAtlas} on the coding-agent chart and Intelligence Index version ${indexVersion} on the capability chart. They say nothing about other tasks, repositories, or harnesses.`,
         ],
         [
-          "The ranks, frontier positions, neighbor tables, component ranks, effort ladder, and GPT-5.6 Sol multiples are computed from those snapshots by AI Charts. A new, removed, or rescored configuration moves them, and both snapshots update daily.",
+          "The ranks, frontier positions, neighbor tables, component ranks, effort ladder, and GPT-5.6 Sol multiples are computed from those snapshots by aicharts. A new, removed, or rescored configuration moves them, and both snapshots update daily.",
         ],
         [
           "GPT-6 Sol in Cursor, in another harness, or at a lower Codex effort setting is a configuration the coding-agent snapshot does not store, so this note says nothing about it.",
@@ -800,7 +800,7 @@ export function createGpt6SolArticle(
           "The GPT-5.6 Sol rows share the harness and setting with the GPT-6 Sol rows, but the snapshots record scores, not run dates; the two generations may have been measured weeks apart under different benchmark versions.",
         ],
         [
-          "The 68.8% DeepSWE v1.1 figure, the prices, and the availability statement are OpenAI’s. AI Charts did not run GPT-6 Sol.",
+          "The 68.8% DeepSWE v1.1 figure, the prices, and the availability statement are OpenAI’s. aicharts did not run GPT-6 Sol.",
         ],
       ),
     ],

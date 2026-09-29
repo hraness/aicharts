@@ -1,5 +1,5 @@
 /**
- * The AI Charts app mark: two rising bars in one colour. It is the same
+ * The aicharts app mark: two rising bars in one colour. It is the same
  * artwork the favicons (`app/icon.png`, `app/apple-icon.png`) were rendered
  * from, kept here as local source so share images never fetch a remote asset.
  */

@@ -27,7 +27,7 @@ const document = `<!doctype html>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow, noarchive">
   <link rel="canonical" href="${canonicalUrl}">
-  <title>AI model pages | AI Charts</title>
+  <title>AI model pages | aicharts</title>
   <style>
     * { box-sizing: border-box; }
     html {
@@ -88,7 +88,7 @@ const document = `<!doctype html>
 </head>
 <body>
   <main>
-    <img alt="AI Charts model pages arranged by provider" src="${MODEL_CARD_COLLECTION_SOCIAL_IMAGE_URL}">
+    <img alt="aicharts model pages arranged by provider" src="${MODEL_CARD_COLLECTION_SOCIAL_IMAGE_URL}">
     <header>
       <h1>AI model pages</h1>
       <p>aicharts.io/models</p>

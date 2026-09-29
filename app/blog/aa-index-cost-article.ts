@@ -110,12 +110,12 @@ export function createAaIndexCostArticle(
     relatedSlugs: ["mirrorcode-coding-agent-benchmark"],
     body: [
       paragraph(
-        "The current AI Charts coding-agent comparison is a checked snapshot of the public ",
+        "The current aicharts coding-agent comparison is a checked snapshot of the public ",
         { href: BLOG_SOURCES.artificialAnalysisCodingAgents.url, text: "Artificial Analysis coding-agents page" },
         ". This note answers one question from that snapshot: which named model, agent harness, and effort settings lead on AA Index, and which of those rows remain undominated once mean API cost per task is included.",
       ),
       paragraph(
-        `AI Charts retrieved the snapshot on ${retrievedAt}. The dataset contains ${summary.recordCount} model-agent configurations across ${summary.modelCount} models, ${summary.agentCount} agent harnesses, and ${summary.providerCount} providers. ${comparableCount} of those configurations report both an AA Index and a mean API cost. The values below are copied from that snapshot. AI Charts does not recalculate Artificial Analysis scores.`,
+        `aicharts retrieved the snapshot on ${retrievedAt}. The dataset contains ${summary.recordCount} model-agent configurations across ${summary.modelCount} models, ${summary.agentCount} agent harnesses, and ${summary.providerCount} providers. ${comparableCount} of those configurations report both an AA Index and a mean API cost. The values below are copied from that snapshot. aicharts does not recalculate Artificial Analysis scores.`,
       ),
       heading("What this snapshot measures"),
       paragraph(
@@ -171,7 +171,7 @@ export function createAaIndexCostArticle(
           : ` ${firstFrontierJump.record.model} on ${firstFrontierJump.record.agent} at the ${firstFrontierJump.record.setting} setting is the first large AA Index increase that remains inexpensive. After that, each step buys a smaller AA Index gain at a higher mean task cost, ending at ${top.model} on ${top.agent}.`,
       ),
       paragraph(
-        "That sequence is AI Charts analysis of the stored pairs. Artificial Analysis does not publish a frontier ranking. The frontier can change when the next validated snapshot adds, removes, or reprices a configuration.",
+        "That sequence is aicharts analysis of the stored pairs. Artificial Analysis does not publish a frontier ranking. The frontier can change when the next validated snapshot adds, removes, or reprices a configuration.",
       ),
       heading("AA Index per dollar is a derived view"),
       paragraph(
@@ -194,7 +194,7 @@ export function createAaIndexCostArticle(
       ),
       callout(
         "Derived, not sourced",
-        "AA Index per dollar and the frontier are AI Charts views of the checked snapshot. Cite Artificial Analysis for the underlying score and cost, and cite this page only for the derived comparison.",
+        "AA Index per dollar and the frontier are aicharts views of the checked snapshot. Cite Artificial Analysis for the underlying score and cost, and cite this page only for the derived comparison.",
       ),
       heading("When to use this snapshot"),
       paragraph(
@@ -207,7 +207,7 @@ export function createAaIndexCostArticle(
       heading("Limits of the comparison"),
       list(
         [
-          "Artificial Analysis defines and operates the evaluations. AI Charts is an independent visualization and is not affiliated with Artificial Analysis or the listed providers.",
+          "Artificial Analysis defines and operates the evaluations. aicharts is an independent visualization and is not affiliated with Artificial Analysis or the listed providers.",
         ],
         [
           "Scores and costs belong to the named model, harness, setting, task set, and evaluation version on the retrieval date. They do not establish results for every repository or production workflow.",

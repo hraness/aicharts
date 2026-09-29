@@ -217,7 +217,7 @@ function CodingModelPage({
               </div>
             </dl>
             <p>
-              Values are observed ranges across the named model, agent harness, and profile in the current source snapshot. AI Charts does not average unlike configurations.
+              Values are observed ranges across the named model, agent harness, and profile in the current source snapshot. aicharts does not average unlike configurations.
             </p>
           </section>
           {relatedCards.length > 0 && (
@@ -295,7 +295,7 @@ function IndexModelDetailPage({
               </div>
             </dl>
             <p>
-              These values come from the checked Intelligence Index snapshot. AI Charts does not invent missing coding-agent scores.
+              These values come from the checked Intelligence Index snapshot. aicharts does not invent missing coding-agent scores.
             </p>
           </section>
         </div>

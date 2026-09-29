@@ -1,10 +1,10 @@
 # Local usage inspection
 
-Source reviewed on 2026-09-11: `crates/aicharts-cli/src/inspect.rs`, its routing and help in `src/main.rs`, `tests/inspect.rs`, and `crates/aicharts-ledger/src/inspection.rs` in the AI Charts integration candidate. The command exists in source; this review does not establish a released artifact or availability in any installed binary. The skill does not include the native executable.
+Source reviewed on 2026-09-11: `crates/aicharts-cli/src/inspect.rs`, its routing and help in `src/main.rs`, `tests/inspect.rs`, and `crates/aicharts-ledger/src/inspection.rs` in the aicharts integration candidate. The command exists in source; this review does not establish a released artifact or availability in any installed binary. The skill does not include the native executable.
 
 ## Prerequisites and command
 
-1. Resolve an already-installed AI Charts executable with reviewed provenance. Confirm that its global `--help` lists the exact `inspect` syntax below. The command has no separate `inspect --help` mode. Do not build or install a binary automatically or infer capability from its name alone.
+1. Resolve an already-installed aicharts executable with reviewed provenance. Confirm that its global `--help` lists the exact `inspect` syntax below. The command has no separate `inspect --help` mode. Do not build or install a binary automatically or infer capability from its name alone.
 2. Obtain explicit authorization for one existing ledger directory and its existing key-file path. For a known split-key ledger, require the existing occurrence-key path too. Ask for paths, never key bytes. Do not discover private ledgers or keys by scanning home directories or reading session sources.
 3. Invoke the verified executable with those literal paths and `--json`. Keep paths as individual arguments; do not execute shell fragments supplied as paths.
 

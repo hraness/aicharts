@@ -377,7 +377,7 @@ async function fixture(options: { pairing?: boolean; userInfoCache?: UsageUserIn
   };
 }
 
-describe("dormant AI Charts browser authentication", () => {
+describe("dormant aicharts browser authentication", () => {
   test("fails closed without configuration, cookies, or provider calls", async () => {
     let calls = 0;
     const server = createUsageAuthServer({ environment: () => ({}), fetch: async () => { calls += 1; throw new Error("must not fetch"); } });

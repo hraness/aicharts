@@ -236,7 +236,7 @@ export function createTerminalBenchScienceArticle(
       heading("How this score differs from the coding-agent chart"),
       paragraph(
         "The ",
-        { href: "/", text: "AI Charts homepage" },
+        { href: "/", text: "aicharts homepage" },
         " now includes Terminal-Bench-Science 0.1 as the scientific-workflow member of its five-role benchmark portfolio. Its scores remain separate from the interactive Artificial Analysis coding-agent chart, which plots Coding Agent Index v1.5, DeepSWE v1.1, Terminal-Bench 4, and SWE-Atlas-QnA against API cost, active time, or total token use. Those coding observations come from a checked ",
         { href: BLOG_SOURCES.artificialAnalysisCodingAgents.url, text: "Artificial Analysis coding-agents snapshot" },
         ` retrieved ${retrievedAt}.`,

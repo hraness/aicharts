@@ -22,7 +22,7 @@ test("appearance starts Tokyo Night, System and uses the shared persisted runtim
   expect(html).toContain('aria-label="Chart appearance: Tokyo Night, System"');
 });
 
-test("AI Charts does not keep a second theme runtime", async () => {
+test("aicharts does not keep a second theme runtime", async () => {
   const [layout, controls] = await Promise.all([
     Bun.file(new URL("./layout.tsx", import.meta.url)).text(),
     Bun.file(new URL("../components/ui.tsx", import.meta.url)).text(),

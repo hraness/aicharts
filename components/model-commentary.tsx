@@ -28,7 +28,7 @@ export function ModelCommentary({
     >
       <h2 id="model-commentary-title">Notes from X</h2>
       <p className="model-commentary__lede">
-        Curated public posts about this model. These are quotations, not AI Charts measurements.
+        Curated public posts about this model. These are quotations, not aicharts measurements.
       </p>
       <ul className="model-commentary__list">
         {note.tweets.map(tweet => (

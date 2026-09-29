@@ -7,14 +7,14 @@
 //! exits 0.
 
 pub(crate) const TAGLINE: &str =
-    "AI Charts measures your coding agents' token use on this computer.";
+    "aicharts measures your coding agents' token use on this computer.";
 
 pub(crate) fn overview() -> String {
     format!(
         "{TAGLINE}
 
 Start here
-  aicharts stats --list-clients     List the agents AI Charts can read
+  aicharts stats --list-clients     List the agents aicharts can read
   aicharts stats --home ~ --all     Show the last 30 days of token use
   aicharts help publish             Publish your usage to aicharts.io
 
@@ -37,8 +37,8 @@ pub(crate) fn root() -> String {
 {TAGLINE}
 
 Start here
-  setup                    Set up AI Charts on this Mac
-  stats --list-clients     List the agents AI Charts can read
+  setup                    Set up aicharts on this Mac
+  stats --list-clients     List the agents aicharts can read
   stats --home ~ --all     Show the last 30 days of token use
   help publish             Publish your usage to aicharts.io
 
@@ -51,7 +51,7 @@ Reports (read-only; nothing is uploaded)
 
 Publish to aicharts.io (macOS)
   keygen                   Create the private key for your local ledger
-  enroll                   Connect this Mac to your AI Charts account
+  enroll                   Connect this Mac to your aicharts account
   init                     Create the local usage ledger
   prefix-enable            Let collection skip lines it already read
   sync                     Collect and publish once
@@ -78,7 +78,7 @@ Optional support: aicharts support · Turn off: HRANESS_SUPPORT=off
 
 const PUBLISH: &str = "Publish your usage to aicharts.io
 
-Publishing needs macOS and an AI Charts account. Nothing is sent until you run
+Publishing needs macOS and an aicharts account. Nothing is sent until you run
 sync or upload, and only token counts leave this Mac, never prompts or code.
 
 Steps, in order (use the same private folder and key every time):
@@ -148,7 +148,7 @@ Example
             "Usage: aicharts upload --state-dir DIR --key-file KEY [--resume]
        aicharts upload --dry-run --key-file KEY (--codex | --claude | --devin) PATH ...
 
-Send at most one waiting batch of token counts to AI Charts. This needs an
+Send at most one waiting batch of token counts to aicharts. This needs an
 enrolled Mac (aicharts enroll). The local ledger changes only after the service
 confirms the batch. If the reply is lost, the same batch is kept for --resume;
 nothing is ever resent on a guess.
@@ -157,7 +157,7 @@ nothing is ever resent on a guess.
 as hex JSON. It never contacts the service.
 
 Options
-  --state-dir DIR    Your private AI Charts folder
+  --state-dir DIR    Your private aicharts folder
   --key-file KEY     The key you created with aicharts keygen
   --resume           Resend the batch kept after an uncertain reply
   --dry-run          Preview batches from the named files only
@@ -271,7 +271,7 @@ Example
             "Usage: aicharts account --state-dir ABSOLUTE_DIR [--json]
        aicharts account --state-dir ABSOLUTE_DIR --diagnose [--json]
 
-Show the AI Charts account and device this Mac is connected to. It reads your
+Show the aicharts account and device this Mac is connected to. It reads your
 keychain and local files only: it never contacts a server or changes anything. Compare the account ID
 with the one on your usage dashboard before publishing.
 
@@ -285,7 +285,7 @@ Example
         "enroll" => {
             "Usage: aicharts enroll --state-dir DIR
 
-Connect this Mac to your AI Charts account. AI Charts saves its keys in your
+Connect this Mac to your aicharts account. aicharts saves its keys in your
 login keychain and prints a link to approve in your browser. Enrolling uploads
 nothing; it only lets you publish later.
 
@@ -331,8 +331,8 @@ Example
         "setup" => {
             "Usage: aicharts setup (--codex | --claude | --devin) PATH ... [options]
 
-Set up AI Charts on this Mac: create the private key and local ledger,
-connect your AI Charts account (one browser approval), and install the
+Set up aicharts on this Mac: create the private key and local ledger,
+connect your aicharts account (one browser approval), and install the
 background collector so usage publishes on its own. Each step skips work
 that is already done, so a re-run continues where it stopped.
 

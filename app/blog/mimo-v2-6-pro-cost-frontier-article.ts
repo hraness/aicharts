@@ -247,7 +247,7 @@ function neighborBlocks(
       `${capitalize(spellCount(neighbors.length))} other configurations in the snapshot score within one index point of MiMo-V2.6-Pro. The table lists them cheapest first, with each cost as a multiple of MiMo-V2.6-Pro’s ${formatSnapshotCostUsd(mimoCost)}.`,
     ),
     table(
-      `Configurations within one Intelligence Index point of MiMo-V2.6-Pro in the AI Charts snapshot retrieved ${retrievedAt}`,
+      `Configurations within one Intelligence Index point of MiMo-V2.6-Pro in the aicharts snapshot retrieved ${retrievedAt}`,
       ["Configuration", "Intelligence Index", "Cost per task", "Multiple of MiMo-V2.6-Pro’s cost", "Output tokens per task"],
       neighbors.map(record => [
         ...scoreCostCells(record),
@@ -272,7 +272,7 @@ function comparisonBlocks(
   const missing = MIMO_V26_NAMED_COMPARISONS.length - rows.length;
   return [
     table(
-      `Models Das and Xiaomi name, as stored in the AI Charts snapshot retrieved ${retrievedAt}. The measured multiple is the configuration’s cost per Intelligence Index task divided by MiMo-V2.6-Pro’s. Das’s multiples are restated in the same direction, so his “2x more expensive than DeepSeek V4.1 Flash” appears as 0.5x.`,
+      `Models Das and Xiaomi name, as stored in the aicharts snapshot retrieved ${retrievedAt}. The measured multiple is the configuration’s cost per Intelligence Index task divided by MiMo-V2.6-Pro’s. Das’s multiples are restated in the same direction, so his “2x more expensive than DeepSeek V4.1 Flash” appears as 0.5x.`,
       ["Configuration", "Intelligence Index", "Cost per task", "Measured multiple of MiMo-V2.6-Pro’s cost", "Das’s stated multiple of MiMo-V2.6-Pro’s price"],
       rows.map(row => [
         ...scoreCostCells(row.record),
@@ -403,7 +403,7 @@ export function createMimoV26Article(
         ".”",
       ),
       paragraph(
-        "This note checks the parts of those claims that primary sources and the AI Charts Intelligence Index snapshot can test: what the 46 measures, where the model sits on the measured cost frontier, how Das’s price multiples compare with measured cost per task, what the faster mode costs, and what the cybersecurity numbers do and do not show. Observations that only Das made are labeled as his.",
+        "This note checks the parts of those claims that primary sources and the aicharts Intelligence Index snapshot can test: what the 46 measures, where the model sits on the measured cost frontier, how Das’s price multiples compare with measured cost per task, what the faster mode costs, and what the cybersecurity numbers do and do not show. Observations that only Das made are labeled as his.",
       ),
       heading("What the 46 measures"),
       paragraph(
@@ -463,7 +463,7 @@ export function createMimoV26Article(
       ),
       heading("Where it sits on the measured cost frontier"),
       paragraph(
-        "The AI Charts capability and cost chart is a checked snapshot of the public ",
+        "The aicharts capability and cost chart is a checked snapshot of the public ",
         { href: BLOG_SOURCES.artificialAnalysisIntelligenceIndex.url, text: "Artificial Analysis models leaderboard" },
         `, restricted to current, non-estimated configurations with a complete per-task cost breakdown under index version ${indexVersion}. Cost per task is Artificial Analysis’s weighted average of what each evaluation cost at the provider’s list prices, including cached input, so it already reflects the token mix each model produced.`,
       ),
@@ -621,7 +621,7 @@ export function createMimoV26Article(
           "The frontier position, neighbor table, and cost multiples are derived from the snapshot named in each caption and will change as Artificial Analysis adds configurations or the checked snapshot advances.",
         ],
         [
-          "AI Charts did not run MiMo-V2.6-Pro, test its refusal behavior, or evaluate UltraSpeed. Speed and refusal claims remain with their sources.",
+          "aicharts did not run MiMo-V2.6-Pro, test its refusal behavior, or evaluate UltraSpeed. Speed and refusal claims remain with their sources.",
         ],
       ),
     ],

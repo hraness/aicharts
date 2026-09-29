@@ -39,7 +39,7 @@ Dated evidence is evidence for its own commit at its own time. Rerun the named c
 | optional paid development support after useful completed reads | README.md | `bun run skill:check` (support protocol tests) | source-only |
 | for the local machine-readable handoff | README.md | `bun run skill:check` | source-only |
 | Set `HRANESS_SUPPORT_AUDIENCE=off` for a delegated child | README.md | `bun run skill:check` | source-only |
-| PostHog is initialized only in production on the canonical AI Charts domains | README.md | `lib/analytics` tests in `bun run test`; `docs/analytics-instrumentation.md` | source-only |
+| PostHog is initialized only in production on the canonical aicharts domains | README.md | `lib/analytics` tests in `bun run test`; `docs/analytics-instrumentation.md` | source-only |
 | PostHog measures acquisition and qualified engagement | README.md | `docs/seo-strategy.md` measurement contract; no retained analytics receipt | unqualified |
 | The production site is deployed from `main` with Vercel | README.md | GitHub deployments 6647776777 (`fc95b51`) and 6649782774 (`1cf93bd`), 2026-09-24 | evidenced |
 | each returned HTTP 200 with `X-Hraness-Delivery-Proof: | docs/usage-activation.md | Verifier receipt 2026-09-24T22:33:45Z, `dpl_3TA2bNgxfeQzY7Cf67XF6scjyUrm` | evidenced |

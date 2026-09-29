@@ -36,7 +36,7 @@ async function lastRender(run: () => unknown): Promise<Rendered> {
   return only;
 }
 
-describe("AI Charts social-image declaration", () => {
+describe("aicharts social-image declaration", () => {
   test("declares the real app mark, light brand colours, and brand copy once", () => {
     expect(aichartsSocialImageSite.name).toBe(site.name);
     expect(aichartsSocialImageSite.domain).toBe(site.domain);

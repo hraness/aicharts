@@ -107,7 +107,7 @@ export function SessionDashboard() {
         setCompactionEvents(result.events); setSkippedCompactions(result.skippedLines);
       }
     } catch {
-      if (generation === compactionSequence.current) setCompactionError("Open a valid gobstopper events log (events.jsonl), up to 8 MiB. The previous events, if any, are still shown.");
+      if (generation === compactionSequence.current) setCompactionError("Open a valid Gobstopper events log (events.jsonl), up to 8 MiB. The previous events, if any, are still shown.");
     } finally {
       if (generation === compactionSequence.current) setCompactionLoading(false);
     }
@@ -132,14 +132,14 @@ export function SessionDashboard() {
     const generation = ++sequence.current;
     setFollowing(null); setLoading(true); setError(null);
     try { await read(file, generation, true); }
-    catch { if (sequence.current === generation) setError("Open a valid AI Charts session report, up to 8 MiB. Raw session logs are not accepted."); }
+    catch { if (sequence.current === generation) setError("Open a valid aicharts session report, up to 8 MiB. Raw session logs are not accepted."); }
     finally { if (sequence.current === generation) setLoading(false); }
   };
   const follow = async () => {
     const picker = (window as PickerWindow).showOpenFilePicker;
     if (!picker) return;
     try {
-      const [handle] = await picker.call(window, { multiple: false, types: [{ description: "AI Charts session report", accept: { "application/json": [".json"] } }] });
+      const [handle] = await picker.call(window, { multiple: false, types: [{ description: "aicharts session report", accept: { "application/json": [".json"] } }] });
       if (handle) { ++sequence.current; setFollowing(handle); setLoading(false); setError(null); }
     } catch (cause) { if (!(cause instanceof DOMException && cause.name === "AbortError")) setError("The browser could not follow this file. Use Open session report to read a snapshot."); }
   };

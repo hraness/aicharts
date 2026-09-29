@@ -23,7 +23,7 @@ function failure(request: Request, status: 400 | 403 | 405 | 503, start: boolean
   const code = status === 503 ? "USAGE_PAIRING_AUTH_UNAVAILABLE" : "USAGE_PAIRING_AUTH_REJECTED";
   // A start is a document navigation. Its fixed error page never echoes the
   // submitted intent or an upstream response and never restarts authentication.
-  const body = start ? '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><title>Collector connection unavailable | AI Charts</title><main><h1>Collector connection unavailable</h1><p>Return to your terminal to check the original pairing attempt. Nothing was approved by this page.</p><p><a href="/usage/pairing">Return to collector connection</a></p></main></html>'
+  const body = start ? '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><title>Collector connection unavailable | aicharts</title><main><h1>Collector connection unavailable</h1><p>Return to your terminal to check the original pairing attempt. Nothing was approved by this page.</p><p><a href="/usage/pairing">Return to collector connection</a></p></main></html>'
     : encodePairingPublicReply({ error: { code }, schemaVersion: 1 });
   return new Response(request.method === "HEAD" ? null : body, { status,
     headers: headers(start ? "text/html; charset=utf-8" : PAIRING_PUBLIC_MEDIA, status === 405 ? start ? "POST" : "GET, POST" : undefined) });

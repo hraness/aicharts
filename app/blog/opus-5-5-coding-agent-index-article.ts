@@ -468,7 +468,7 @@ function intelligenceBlocks(
     const indexCost = formatSnapshotCostUsd(comparableTaskCost(intelligence.record));
     blocks.push(
       table(
-        `${MODEL_NAME} at max effort in the two AI Charts snapshots, each on its own task set with its own cost definition`,
+        `${MODEL_NAME} at max effort in the two aicharts snapshots, each on its own task set with its own cost definition`,
         ["Chart", "Configuration", "Score", "Cost per task", "Snapshot retrieved"],
         [
           [
@@ -519,7 +519,7 @@ function anthropicBlocks(placement: Opus55CodingAgentPlacement | undefined): Blo
       CLAUDE_OPUS_55.anthropic.vendorTerminalBenchEffort,
       " effort, alongside ",
       CLAUDE_OPUS_55.anthropic.otherVendorBenchmarks,
-      ", none of which appears on an AI Charts chart. ",
+      ", none of which appears on an aicharts chart. ",
       measured === null
         ? "The snapshot stores no Terminal-Bench 4 score for the Claude Code row to set beside it."
         : `The ${formatSnapshotScore(measured)} that Artificial Analysis measured for ${placement === undefined ? ROW_LABEL : configurationLabel(placement.record)} comes from a different run, a different effort setting, and Artificial Analysis’s protocol inside Claude Code, so the two figures describe two evaluations of the model rather than one result reported twice.`,
@@ -544,7 +544,7 @@ function derivedTitle(placement: Opus55CodingAgentPlacement | undefined): string
 
 function derivedDek(placement: Opus55CodingAgentPlacement | undefined): string {
   if (placement === undefined) {
-    return `${MODEL_NAME} appears on the AI Charts coding-agent chart as one row inside Claude Code. This note states what that row measures and where the snapshot stops.`;
+    return `${MODEL_NAME} appears on the aicharts coding-agent chart as one row inside Claude Code. This note states what that row measures and where the snapshot stops.`;
   }
   const score = formatSnapshotScore(placement.record.benchmarks.aaIndex);
   const cost = formatSnapshotCostUsd(placement.record.economics.costUsd);
@@ -559,11 +559,11 @@ function derivedDek(placement: Opus55CodingAgentPlacement | undefined): string {
 
 function derivedDescription(placement: Opus55CodingAgentPlacement | undefined): string {
   if (placement === undefined) {
-    return `${MODEL_NAME} on the AI Charts coding-agent chart: what the Claude Code row measures, how the cost frontier is read, and where the snapshot stops.`;
+    return `${MODEL_NAME} on the aicharts coding-agent chart: what the Claude Code row measures, how the cost frontier is read, and where the snapshot stops.`;
   }
   const score = formatSnapshotScore(placement.record.benchmarks.aaIndex);
   const cost = formatSnapshotCostUsd(placement.record.economics.costUsd);
-  const first = `${ROW_LABEL} scores ${score} on the AI Charts coding-agent AA Index at ${cost} a task, ${spellOrdinal(placement.rank)} of ${placement.indexedCount} configurations.`;
+  const first = `${ROW_LABEL} scores ${score} on the aicharts coding-agent AA Index at ${cost} a task, ${spellOrdinal(placement.rank)} of ${placement.indexedCount} configurations.`;
   const second = " See what the lead costs on the frontier.";
   return first.length + second.length <= MAX_DESCRIPTION_LENGTH ? `${first}${second}` : first;
 }
@@ -589,8 +589,8 @@ export function createOpus55CodingArticle(
   const score = coding === undefined ? undefined : formatSnapshotScore(coding.record.benchmarks.aaIndex);
   const cost = coding === undefined ? undefined : formatSnapshotCostUsd(coding.record.economics.costUsd);
   const opening = coding === undefined || score === undefined || cost === undefined
-    ? `Artificial Analysis measures coding agents by running a model inside a named harness, and the AI Charts coding-agent snapshot retrieved ${codingRetrievedAt} stores no ${ROW_LABEL} row with an AA Index and a cost, so this note can describe the chart but not place the model on it.`
-    : `In the AI Charts coding-agent snapshot retrieved ${codingRetrievedAt}, ${configurationLabel(coding.record)} scores ${score} on AA Index at a mean API cost of ${cost} per task, ${spellOrdinal(coding.rank)} of the ${coding.indexedCount} configurations that carry an index${coding.costRank === 1 ? " and the highest cost per task on the chart" : ""}.`;
+    ? `Artificial Analysis measures coding agents by running a model inside a named harness, and the aicharts coding-agent snapshot retrieved ${codingRetrievedAt} stores no ${ROW_LABEL} row with an AA Index and a cost, so this note can describe the chart but not place the model on it.`
+    : `In the aicharts coding-agent snapshot retrieved ${codingRetrievedAt}, ${configurationLabel(coding.record)} scores ${score} on AA Index at a mean API cost of ${cost} per task, ${spellOrdinal(coding.rank)} of the ${coding.indexedCount} configurations that carry an index${coding.costRank === 1 ? " and the highest cost per task on the chart" : ""}.`;
   const openingLog = addedAt === undefined
     ? ""
     : ` The snapshot’s update log records the row on ${formatLongUtcDate(addedAt)}.`;
@@ -695,7 +695,7 @@ export function createOpus55CodingArticle(
           `Every score, cost, token count, and duration above is an Artificial Analysis measurement of the named configuration on the retrieval date, under ${SNAPSHOT_COLUMN_LABELS.deepSwe}, ${SNAPSHOT_COLUMN_LABELS.terminalBench}, and ${SNAPSHOT_COLUMN_LABELS.sweAtlas} for the coding-agent chart and Intelligence Index version ${indexVersion} for the capability chart. None of them establishes a result on other repositories, tasks, or harnesses.`,
         ],
         [
-          "The rank, cost rank, frontier steps, component gaps, and Opus 5 multiples are AI Charts derivations from the snapshots named in each caption. A configuration added, removed, or rescored by Artificial Analysis moves them, and the coding-agent snapshot advances daily.",
+          "The rank, cost rank, frontier steps, component gaps, and Opus 5 multiples are aicharts derivations from the snapshots named in each caption. A configuration added, removed, or rescored by Artificial Analysis moves them, and the coding-agent snapshot advances daily.",
         ],
         [
           `${MODEL_NAME} in Cursor, Devin, or any harness other than Claude Code, or at a setting other than max, is a configuration this snapshot does not store, so this note says nothing about it.`,
@@ -704,7 +704,7 @@ export function createOpus55CodingArticle(
           "The Opus 5 comparison holds the harness and setting fixed, but the snapshot records outcomes, not run dates or benchmark versions at run time; Artificial Analysis may have measured the two generations weeks apart.",
         ],
         [
-          "The prices, the cost claim against Opus 5, and the vendor-run benchmark figures belong to Anthropic. AI Charts did not run Claude Opus 5.5.",
+          "The prices, the cost claim against Opus 5, and the vendor-run benchmark figures belong to Anthropic. aicharts did not run Claude Opus 5.5.",
         ],
       ),
     ],

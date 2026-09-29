@@ -32,7 +32,7 @@ type ValsEditorial = Readonly<{
 }>;
 
 /** Identifiers are the publisher's own model ids, so this note is repeated on every board. */
-const IDENTIFIER_NOTE = "Model names are the identifiers Vals publishes, not AI Charts canonical names.";
+const IDENTIFIER_NOTE = "Model names are the identifiers Vals publishes, not aicharts canonical names.";
 
 const EDITORIAL: Readonly<Record<string, ValsEditorial>> = {
   vals_index: {
@@ -42,7 +42,7 @@ const EDITORIAL: Readonly<Record<string, ValsEditorial>> = {
     measure: "The publisher's composite of seven evaluations, weighted by each sector's share of U.S. GDP: finance 8.0, coding 5.6, and legal 1.2, over a denominator of 14.8.",
     comparisonRule: "Compare within index version 2. Versions 1 and 2 use different component benchmarks, so their scores are not a series.",
     limitations: [
-      "This is the publisher's composite, not an AI Charts ranking. The sector weights are a deliberate simplification of how AI reaches the economy.",
+      "This is the publisher's composite, not an aicharts ranking. The sector weights are a deliberate simplification of how AI reaches the economy.",
       "The Code Migration component scores a fixed 60-task subset of the published 120-task run, not the full benchmark.",
       "Five of the seven components are private evaluations that no independent party can reproduce.",
       IDENTIFIER_NOTE,

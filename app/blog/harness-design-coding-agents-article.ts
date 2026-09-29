@@ -608,14 +608,14 @@ export function createHarnessDesignArticle(
         "What the action-space comparison is",
         "It is a bundled interface change. Bash only removes the predefined tools, their interface instructions, the harness’s file-state tracking, read-before-write checks, and automatic post-edit diagnostics together. The authors say the result does not isolate tool count or action granularity from those other properties.",
       ),
-      heading("How to read this beside HarnessTax and the AI Charts chart"),
+      heading("How to read this beside HarnessTax and the aicharts chart"),
       paragraph(
         "HarnessTax, covered in the ",
         { href: "/blog/harnesstax-coding-agent-harness", text: "site’s earlier note" },
         ", moved the same frontier model across three complete products (Claude Code, Codex CLI, and Pi) and found that cost moved far more than success. This paper asks a question that design cannot answer: which mechanism inside a harness moves cost or success. Its answer comes from a single research harness and four open-weight models, so its numbers are not a ranking of any product and do not transfer to a named commercial harness without a matched test.",
       ),
       paragraph(
-        "The AI Charts coding-agent chart is a checked snapshot of the public ",
+        "The aicharts coding-agent chart is a checked snapshot of the public ",
         { href: BLOG_SOURCES.artificialAnalysisCodingAgents.url, text: "Artificial Analysis coding-agents page" },
         `, retrieved ${retrievedAt}. It stores each model with its harness and effort setting. `,
         sharedModels.length === 0
@@ -654,7 +654,7 @@ export function createHarnessDesignArticle(
           "The reconstructed tables in this note round success rates to one decimal and use the paper’s printed two-decimal costs, so tie and ratio statements carry rounding of up to a cent.",
         ],
         [
-          `AI Charts rows come from a different evaluator, harness, price basis, and Terminal-Bench version (${TERMINAL_BENCH_VERSION}, not 2.1). They must not be subtracted from or averaged with the paper’s rates.`,
+          `aicharts rows come from a different evaluator, harness, price basis, and Terminal-Bench version (${TERMINAL_BENCH_VERSION}, not 2.1). They must not be subtracted from or averaged with the paper’s rates.`,
         ],
       ),
       paragraph(
