@@ -241,7 +241,7 @@ export async function runSecurityCheck(options: SecurityOptions) {
   const staticLane = (id: string, findings: Finding[], evidence: Record<string, unknown> = {}) => lanes.push({ id, status: findings.length === 0 ? "pass" : "fail", findings, evidence });
   const manifest = JSON.parse(text("package.json") ?? "{}") as PackageManifest, lock = parseBunLock(text("bun.lock") ?? "{}");
   staticLane("dependency-pins", checkPackagePins(manifest, lock), { lockfilePackages: Object.keys(lock.packages ?? {}).length });
-  for (const path of ["Cargo.lock", "desktop/Cargo.lock"]) {
+  for (const path of ["Cargo.lock"]) {
     const lockText = text(path);
     staticLane(`cargo-lock:${path}`, lockText === undefined ? [{ rule: "cargo-lock-missing", path }] : checkCargoLock(lockText, path));
   }
@@ -251,7 +251,7 @@ export async function runSecurityCheck(options: SecurityOptions) {
   staticLane("privacy-canary", checkPrivacyCanary(files), { surfaces: canarySurfaces });
   const cargoVersion = await runProofProcess("cargo", ["audit", "--version"], root, environment, 30_000);
   const cargoAvailable = completed(cargoVersion) && cargoVersion.exitCode === 0;
-  for (const path of ["Cargo.lock", "desktop/Cargo.lock"]) {
+  for (const path of ["Cargo.lock"]) {
     if (!cargoAvailable) { lanes.push({ id: `cargo-audit:${path}`, status: "unavailable", findings: [], evidence: { reason: "cargo_audit_not_installed" } }); continue; }
     const result = await runProofProcess("cargo", ["audit", "--json", "--file", path], root, environment, 300_000, 16_777_216);
     await writeFile(resolve(run, `cargo-audit-${path.replace(/[^a-z]/giu, "-")}.log`), result.output);
@@ -263,7 +263,7 @@ export async function runSecurityCheck(options: SecurityOptions) {
   const failures = lanes.filter(lane => lane.status === "fail" || (lane.status === "unavailable" && !options.allowMissingTools)).map(lane => lane.id);
   const receipt = { schemaVersion: 1, claim: "supply-chain-secret-and-privacy-gate", recordedAt: new Date().toISOString(), git: await gitIdentity(), options,
     tools: { cargoAudit: cargoAvailable ? cargoVersion.output.trim() : null, bun: Bun.version }, lanes, failures, ok: failures.length === 0,
-    inputSha256: Object.fromEntries(["package.json", "bun.lock", "Cargo.lock", "desktop/Cargo.lock"].map(path => [path, text(path) === undefined ? null : sha256(text(path)!)])),
+    inputSha256: Object.fromEntries(["package.json", "bun.lock", "Cargo.lock"].map(path => [path, text(path) === undefined ? null : sha256(text(path)!)])),
     limitations: ["Advisory databases describe published advisories at their fetch time; a clean audit is not an absence of vulnerabilities.",
       "Secret patterns are shape-based: they catch provider-formatted credentials and long assignment-shaped values, not arbitrary secrets.",
       "The privacy canary checks named analytics and discovery surfaces for forbidden identifiers and the PostHog import boundary; runtime payloads are covered by the analytics allowlist tests.",

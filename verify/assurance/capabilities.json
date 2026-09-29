@@ -561,12 +561,6 @@
       "limit": "Exact governed audit check passed; this is not live provider or native package qualification."
     },
     {
-      "id": "macos-companion",
-      "evidence": "desktop/AGENTS.md",
-      "qualification": "separate-gate",
-      "limit": "Release build and admitted native custody acceptance required."
-    },
-    {
       "id": "linux-package",
       "evidence": "docs/usage-release-build.md",
       "qualification": "separate-gate",

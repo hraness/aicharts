@@ -16,7 +16,6 @@ mod help;
 mod inspect;
 mod intro;
 mod keychain_notice;
-mod menubar;
 #[cfg(unix)]
 mod owned_process;
 #[cfg(unix)]
@@ -463,9 +462,6 @@ fn run(args: &[String]) -> Result<String, &'static str> {
     }
     if args.first().map(String::as_str) == Some("daemon") {
         return daemon::run(args);
-    }
-    if args.first().map(String::as_str) == Some("menubar") {
-        return menubar::run(args);
     }
     if args.first().map(String::as_str) == Some("service") {
         return service::run(args);
