@@ -396,6 +396,17 @@ test("Cargo final-artifact selection binds package, fresh single build and exact
   for (const altered of [{ ...artifact, fresh: true }, { ...artifact, executable: "/tmp/other" }, { ...artifact, profile: { test: true } }, { ...artifact, package_id: "other" }]) assert.throws(() => internals.compilerArtifact(metadata, messages(altered), dirs, "0.1.0"));
 });
 
+test("Cargo metadata admits exactly METADATA_PACKAGES_MAX packages", () => {
+  assert.equal(internals.METADATA_PACKAGES_MAX, 512);
+  const dirs = { source: "/owned/source", target: "/owned/target" };
+  const cli = { name: "aicharts-cli", id: "cli", version: "0.2.0", manifest_path: dirs.source + "/crates/aicharts-cli/Cargo.toml" };
+  const artifact = { reason: "compiler-artifact", package_id: "cli", target: { name: "aicharts", kind: ["bin"] }, profile: { test: false }, executable: dirs.target + "/" + TARGET + "/release/aicharts", fresh: false };
+  const messages = bytes(JSON.stringify(artifact) + "\n" + JSON.stringify({ reason: "build-finished", success: true }) + "\n");
+  const metadata = count => bytes(JSON.stringify({ packages: [cli, ...Array.from({ length: count - 1 }, (_, index) => ({ name: `dep-${index}`, id: `dep-${index}`, version: "1.0.0", manifest_path: `/registry/dep-${index}/Cargo.toml` }))] }));
+  for (const count of [306, internals.METADATA_PACKAGES_MAX]) assert.equal(internals.compilerArtifact(metadata(count), messages, dirs, "0.2.0"), artifact.executable);
+  assert.throws(() => internals.compilerArtifact(metadata(internals.METADATA_PACKAGES_MAX + 1), messages, dirs, "0.2.0"));
+});
+
 test("synthetic orchestration crosses real source hydration, archive validation and create-new install", async t => {
   const f = fixture(t);
   assert.equal((await internals.runWith(f.input, f.host)).ok, true);

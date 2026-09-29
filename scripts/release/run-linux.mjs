@@ -15,6 +15,9 @@ import { LINUX_LINK_MAP_MAX_BYTES, LINUX_NOTICES_MAX_BYTES, linuxNativeDiagnosti
 import { admittedGitSource } from "./admitted-git-sources.mjs";
 
 const MiB = 1024 * 1024;
+// Packages in the `cargo metadata` document. Raised from 256 on 2026-09-29
+// when the shared control TUI brought the resolved tree to 306.
+export const METADATA_PACKAGES_MAX = 512;
 const TARGET = "x86_64-unknown-linux-gnu";
 const RUST = "1.97.1";
 const RUST_COMMIT = "8bab26f4f68e0e26f0bb7960be334d5b520ea452";
@@ -343,7 +346,7 @@ function resolveLibraries(text, direct, host) {
 function compilerArtifact(metadataBytes, messagesBytes, directories, version) {
   let metadata, messages;
   try { metadata = JSON.parse(metadataBytes); messages = messagesBytes.toString("utf8").trim().split("\n").map(line => JSON.parse(line)); } catch { fail("build_failed"); }
-  need(Array.isArray(metadata.packages) && metadata.packages.length <= 256 && Array.isArray(messages) && messages.length <= 4096, "build_failed");
+  need(Array.isArray(metadata.packages) && metadata.packages.length <= METADATA_PACKAGES_MAX && Array.isArray(messages) && messages.length <= 4096, "build_failed");
   const packages = metadata.packages.filter(value => value.name === "aicharts-cli");
   need(packages.length === 1 && packages[0].version === version && packages[0].manifest_path === path.join(directories.source, "crates/aicharts-cli/Cargo.toml"), "build_failed");
   const artifacts = messages.filter(value => value.reason === "compiler-artifact" && value.package_id === packages[0].id && value.target?.name === "aicharts" && value.target.kind?.includes("bin") && value.profile?.test === false && value.executable !== null);
