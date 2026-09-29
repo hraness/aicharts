@@ -589,7 +589,10 @@ test("notices policy admits exactly LINUX_NOTICES_MAX_PACKAGES mapped crates", a
   const checked = JSON.parse(await readFile(new URL("../../distribution/cli/linux-notices.json", import.meta.url), "utf8"));
   assert.ok(checked.packages.length <= LINUX_NOTICES_MAX_PACKAGES);
   await diskFixture(async (f, policy, save) => {
+    // The synthetic fixture stops at the later Rust-notice stage, so an equal
+    // result proves the full-size policy got past its cap and item parsing.
     const baseline = await collectLinuxNotices(f.input);
+    assert.deepEqual(baseline, { ok: false, error: "notices_rust_missing" });
     const filler = index => ({ name: `unused-${index}`, version: "1.0.0", checksum: "0".repeat(63) + (index % 10), license: "MIT", files: [{ path: "LICENSE", sha256: "1".repeat(64) }] });
     const mapped = policy.packages.slice();
     policy.packages = [...mapped, ...Array.from({ length: LINUX_NOTICES_MAX_PACKAGES - mapped.length }, (_, index) => filler(index))];
