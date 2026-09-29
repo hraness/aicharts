@@ -13,7 +13,7 @@ describe("executable assurance inventory", () => {
   test("all catalog families, findings, source selectors and tables are accounted for", () => {
     const result = checkAssuranceRegistry(reader);
     expect(result.errors).toEqual([]);
-    expect(result.counts).toMatchObject({ findings: 26, invariants: 16, metricFamilies: 17, clients: 55 });
+    expect(result.counts).toMatchObject({ findings: 26, invariants: 16, metricFamilies: 17, clients: 58 });
     expect(result.counts.metrics).toBeGreaterThan(100);
     const findings = JSON.parse(reader.read("verify/assurance/obligations.json")).findings as { id: string; status: string }[];
     for (const finding of findings) {

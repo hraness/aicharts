@@ -32,8 +32,8 @@ mod tests {
     fn every_primary_client_has_an_explicit_offline_lane() {
         let (_temp, root) = home();
         let ids = clients();
-        assert_eq!(ids.len(), 55);
-        assert_eq!(all_clients().len(), 54);
+        assert_eq!(ids.len(), 58);
+        assert_eq!(all_clients().len(), 57);
         assert!(!all_clients().contains(&"9router"));
         assert_eq!(profile_clients(), ids.as_slice());
         let profile = root.join("exclusive");

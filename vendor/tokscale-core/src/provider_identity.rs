@@ -324,6 +324,7 @@ fn inferred_provider_from_model_inner(
 
     if contains_family(&lower, "llama", delimit_family_names)
         || contains_versioned_family(&lower, "meta")
+        || contains_versioned_family(&lower, "muse-spark")
     {
         return Some("meta");
     }
@@ -487,6 +488,26 @@ mod tests {
         assert_eq!(inferred_provider_from_model("llama-3"), Some("meta"));
         assert_eq!(inferred_provider_from_model("qwen3-coder"), Some("qwen"));
         assert_eq!(inferred_provider_from_model("unknown-model"), None);
+    }
+
+    #[test]
+    fn muse_spark_models_map_to_meta_without_claiming_the_muse_client() {
+        for model in [
+            "muse-spark-1.2",
+            "muse-spark-1.3-contributor",
+            "meta/muse-spark-1.3",
+            "MUSE-SPARK-1.3",
+        ] {
+            assert_eq!(inferred_provider_from_model(model), Some("meta"), "{model}");
+            assert_eq!(
+                inferred_provider_from_model_delimited(model),
+                Some("meta"),
+                "{model}"
+            );
+        }
+        for model in ["muse", "muse-custom", "amuse-spark-1.3", "muse-sparkling"] {
+            assert_eq!(inferred_provider_from_model(model), None, "{model}");
+        }
     }
 
     #[test]

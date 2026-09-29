@@ -13,7 +13,7 @@
   {
    "id": "codex",
    "prefix": "sessions::codex::tests::",
-   "expectedTests": 81
+   "expectedTests": 86
   },
   {
    "id": "claude",
@@ -88,6 +88,19 @@
    "limits": [
     "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
    ]
+  },
+  {
+    "selector": "antigravity-extension",
+    "owner": "antigravity-extension",
+    "qualification": "limited",
+    "testGroups": [
+      "offline"
+    ],
+    "formatVersion": "unqualified source variants",
+    "incremental": "unqualified",
+    "limits": [
+      "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+    ]
   },
   {
    "selector": "augment",
@@ -528,6 +541,32 @@
    "limits": [
     "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
    ]
+  },
+  {
+    "selector": "micode-desktop",
+    "owner": "micode-desktop",
+    "qualification": "limited",
+    "testGroups": [
+      "offline"
+    ],
+    "formatVersion": "unqualified source variants",
+    "incremental": "unqualified",
+    "limits": [
+      "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+    ]
+  },
+  {
+    "selector": "muse",
+    "owner": "muse",
+    "qualification": "limited",
+    "testGroups": [
+      "offline"
+    ],
+    "formatVersion": "unqualified source variants",
+    "incremental": "unqualified",
+    "limits": [
+      "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+    ]
   },
   {
    "selector": "mux",

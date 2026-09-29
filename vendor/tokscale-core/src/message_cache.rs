@@ -36,6 +36,9 @@ use std::time::UNIX_EPOCH;
 // wire migration below: unrelated clients retain their cache, while OpenCode
 // keeps its parsed messages and takes one full scan to acquire the new map.
 const CACHE_FORMAT_VERSION: u32 = 7;
+// Only MiMo uses this envelope. Its positional v7 entry remains nested intact,
+// with exact per-row provenance stored beside it; unrelated shards stay v7.
+const MICODE_CACHE_FORMAT_VERSION: u32 = 8;
 const LEGACY_CACHE_FORMAT_VERSION_V4: u32 = 4;
 const LEGACY_CACHE_FORMAT_VERSION_V5: u32 = 5;
 const LEGACY_CACHE_FORMAT_VERSION_V6: u32 = 6;
@@ -1106,6 +1109,16 @@ struct SharedParserFamily {
 /// responsibility.
 const SHARED_PARSER_FAMILIES: &[SharedParserFamily] = &[
     SharedParserFamily {
+        // Antigravity CLI and IDE extension conversation databases use the
+        // same gen_metadata parser in `sessions/antigravity_cli.rs`.
+        name: "antigravity generation database",
+        base: crate::sessions::antigravity_cli::ANTIGRAVITY_DB_PARSER_BASE_VERSION,
+        members: &[
+            (ClientId::AntigravityCli, 0),
+            (ClientId::AntigravityExtension, 0),
+        ],
+    },
+    SharedParserFamily {
         // Pi, Kimchi, Omp, and Senpi delegate to the pi-format parser in
         // `sessions/pi.rs`; Prime Agent rides on it through
         // `parse_pi_format_rlm_file_with_observer` (#1195, #1288).
@@ -1184,8 +1197,16 @@ const SHARED_PARSER_FAMILIES: &[SharedParserFamily] = &[
             // submit validation does not reject valid unknown-model MiMo
             // usage offline. v2->v3: duplicate merging now upgrades the
             // retained row when a later copy carries an explicit cost,
-            // including zero.
-            (ClientId::MiMoCode, 2),
+            // including zero. v3->v4: Xiaomi MiMo AI desktop sessions share
+            // the same mimocode SQLite store and are re-stamped as
+            // `micode-desktop` when `session.version` starts with `desktop-`;
+            // warm v3 entries still label every row `micode`.
+            // Desktop and CLI parse through the same `parse_micode_sqlite`
+            // entrypoint and therefore share MiMo Code's invalidation history.
+            // v5->v6: deduplicate forked history across desktop/CLI surfaces
+            // while retaining the original call's surface attribution.
+            (ClientId::MiMoCode, 5),
+            (ClientId::MiMoDesktop, 5),
             (ClientId::Kilo, 0),
         ],
     },
@@ -1263,7 +1284,9 @@ fn parser_version(client: ClientId) -> u32 {
         // are Codex rollouts OpenClaw owns, rather than OpenClaw transcripts.
         // Their bytes are unchanged, so v5's cached empty transcript result
         // must not survive the new path classification.
-        ClientId::OpenClaw => 6,
+        // v6->v7: SQLite rows with NULL event_json hold zstd payloads. Older
+        // scans cached only the plain rows, even when the store never changed.
+        ClientId::OpenClaw => 7,
         // These clients accumulated parser-only invalidations under the old
         // global schema. Their independent counters start from those histories
         // so future changes have an obvious local version to increment.
@@ -1463,7 +1486,14 @@ fn parser_version(client: ClientId) -> u32 {
         // `data.compactionId` before the per-transcript `seq` fallback. Reparse
         // released v4 rows so unrelated summaries with otherwise identical
         // call data are no longer collapsed across files (#1187).
-        ClientId::Dsh => 5,
+        // v5->v6: current DSH assistant settlements can keep usage only in
+        // their embedded stream, and failed attempts are durable
+        // `assistant/attempt` events. Reparse old rows so those provider calls
+        // are included in usage and cost totals (#1348).
+        // v6->v7: attempt sequence numbers restart in each transcript, so
+        // fallback attempt keys now include the session id to avoid merging
+        // unrelated sessions in the shared parse lane.
+        ClientId::Dsh => 7,
         // First version of the fx (vercel-labs) usage-v2.json parser. Entries
         // are versioned from the start so later parser changes have an
         // obvious local counter to bump, like every other client here.
@@ -1498,12 +1528,14 @@ fn parser_version(client: ClientId) -> u32 {
         ClientId::Warp => 1,
         ClientId::Gjc => 1,
         ClientId::CommandCode => 1,
-        ClientId::AntigravityCli => 1,
         ClientId::Augment => 1,
         ClientId::CherryStudio => 1,
         ClientId::Mcode => 1,
         ClientId::LmStudio => 1,
         ClientId::Hindsight => 1,
+        // v2 preserves actual provider identity; v3 clears stale provider
+        // metadata when a persisted reset/sentinel snapshot removes it.
+        ClientId::Muse => 3,
         // Shared-family members are versioned by `SHARED_PARSER_FAMILIES`
         // through the roster lookup at the top of this function. Listing
         // them here keeps the match exhaustive at compile time; reaching
@@ -1520,6 +1552,9 @@ fn parser_version(client: ClientId) -> u32 {
         | ClientId::Cline
         | ClientId::OpenCode
         | ClientId::MiMoCode
+        | ClientId::AntigravityCli
+        | ClientId::AntigravityExtension
+        | ClientId::MiMoDesktop
         | ClientId::Kilo
         | ClientId::CodeBuddy
         | ClientId::WorkBuddy
@@ -1617,6 +1652,10 @@ pub(crate) struct CachedSourceEntry {
     /// other than the message list it was taken with would skip rows and
     /// under-report.
     pub opencode_incremental: Option<crate::sessions::opencode_schema::OpenCodeIncrementalState>,
+    /// MiMo-only parallel row provenance. This is NOT another v7 positional
+    /// field: the namespace-specific envelope serializes it beside that entry.
+    #[serde(skip)]
+    pub micode_metadata: Option<Vec<crate::sessions::micode::MiMoRowMetadata>>,
 }
 
 /// Exact version-4 entry layout. Keeping this wire type lets existing shards
@@ -1646,6 +1685,7 @@ impl From<LegacyCachedSourceEntryV4> for CachedSourceEntry {
             codex_incremental: entry.codex_incremental,
             prime_accounting: None,
             opencode_incremental: None,
+            micode_metadata: None,
         }
     }
 }
@@ -1677,6 +1717,7 @@ impl From<LegacyCachedSourceEntryV5> for CachedSourceEntry {
             codex_incremental: entry.codex_incremental,
             prime_accounting: entry.prime_accounting,
             opencode_incremental: None,
+            micode_metadata: None,
         }
     }
 }
@@ -1725,6 +1766,7 @@ impl From<LegacyCachedSourceEntryV6> for CachedSourceEntry {
             codex_incremental: entry.codex_incremental,
             prime_accounting: entry.prime_accounting,
             opencode_incremental: None,
+            micode_metadata: None,
         }
     }
 }
@@ -1748,7 +1790,22 @@ impl CachedSourceEntry {
             codex_incremental,
             prime_accounting: None,
             opencode_incremental: None,
+            micode_metadata: None,
         }
+    }
+
+    pub(crate) fn with_micode_metadata(
+        mut self,
+        metadata: Vec<crate::sessions::micode::MiMoRowMetadata>,
+    ) -> Self {
+        self.micode_metadata = Some(metadata);
+        self
+    }
+
+    pub(crate) fn has_valid_micode_metadata(&self) -> bool {
+        self.micode_metadata.as_ref().is_some_and(|metadata| {
+            metadata.len() == self.messages.len() && metadata.iter().all(|row| row.is_valid())
+        })
     }
 
     /// Attach the mark a later OpenCode scan resumes from.
@@ -1797,6 +1854,7 @@ impl CachedSourceEntry {
             codex_incremental: self.codex_incremental.take(),
             prime_accounting: self.prime_accounting.take(),
             opencode_incremental: self.opencode_incremental.take(),
+            micode_metadata: self.micode_metadata.take(),
         }
     }
 
@@ -2583,6 +2641,36 @@ fn read_shard_with_limit(
         return ShardReadStatus::Stale;
     }
 
+    if envelope.format_version == MICODE_CACHE_FORMAT_VERSION {
+        if identity.namespace != ClientId::MiMoCode.as_str() {
+            return ShardReadStatus::Stale;
+        }
+        type MiMoWireEntry = (
+            CachedSourceEntry,
+            Option<Vec<crate::sessions::micode::MiMoRowMetadata>>,
+        );
+        return match bincode::options()
+            .with_limit(max_shard_bytes)
+            .deserialize::<Vec<MiMoWireEntry>>(&envelope.payload)
+        {
+            Ok(entries) => ShardReadStatus::Loaded(
+                entries
+                    .into_iter()
+                    .map(|(mut entry, metadata)| {
+                        entry.micode_metadata = metadata;
+                        if !entry.has_valid_micode_metadata() {
+                            // Keep the messages available for diagnostics, but force
+                            // the MiMo loader to rebuild the entire matched pair.
+                            entry.micode_metadata = None;
+                        }
+                        entry
+                    })
+                    .collect(),
+            ),
+            Err(error) => ShardReadStatus::Invalid(error.to_string()),
+        };
+    }
+
     if envelope.format_version == LEGACY_CACHE_FORMAT_VERSION_V4 {
         return match bincode::options()
             .with_limit(max_shard_bytes)
@@ -2635,12 +2723,27 @@ fn write_shard_with_limit(
     entries: &[CachedSourceEntry],
     max_shard_bytes: u64,
 ) -> std::io::Result<()> {
-    let payload = bincode::options()
-        .with_limit(max_shard_bytes)
-        .serialize(entries)
-        .map_err(std::io::Error::other)?;
+    let is_micode = identity.namespace == ClientId::MiMoCode.as_str();
+    let payload = if is_micode {
+        let entries: Vec<_> = entries
+            .iter()
+            .map(|entry| (entry, &entry.micode_metadata))
+            .collect();
+        bincode::options()
+            .with_limit(max_shard_bytes)
+            .serialize(&entries)
+    } else {
+        bincode::options()
+            .with_limit(max_shard_bytes)
+            .serialize(entries)
+    }
+    .map_err(std::io::Error::other)?;
     let envelope = CachedShardEnvelope {
-        format_version: CACHE_FORMAT_VERSION,
+        format_version: if is_micode {
+            MICODE_CACHE_FORMAT_VERSION
+        } else {
+            CACHE_FORMAT_VERSION
+        },
         parser_namespace: identity.namespace.to_string(),
         parser_version: identity.parser_version,
         payload,
@@ -3658,9 +3761,10 @@ mod tests {
     /// sessions by the archived spelling is served warm forever. #1298 needs
     /// v6 because legacy CLI-auth Codex rollout bytes were cached as empty
     /// OpenClaw transcripts before their path classification changed.
+    /// v7 retires SQLite scans that omitted compressed transcript rows.
     #[test]
-    fn test_openclaw_parser_version_invalidates_v5_entries() {
-        assert_eq!(parser_version(ClientId::OpenClaw), 6);
+    fn test_openclaw_parser_version_invalidates_v6_entries() {
+        assert_eq!(parser_version(ClientId::OpenClaw), 7);
     }
 
     #[test]
@@ -4001,8 +4105,89 @@ mod tests {
         cache.save_if_dirty();
         let warm = SourceMessageCache::load();
         let cached = warm.get(identity, &source).unwrap();
-        assert_eq!(cached.parser_version, 6);
+        assert_eq!(cached.parser_version, 7);
         assert_eq!(cached.messages, parsed);
+    }
+
+    #[test]
+    #[serial_test::serial]
+    fn openclaw_v6_sqlite_shards_are_reparsed_with_compressed_rows() {
+        use crate::sessions::openclaw::{scan_openclaw_sqlite, test_fixtures::*};
+        let temp_home = TempDir::new().unwrap();
+        let _cache_env = sandbox_cache_env(temp_home.path());
+        let source = temp_home.path().join("openclaw-agent.sqlite");
+        let conn = create_compressed_agent_db(&source);
+        let plain = assistant_event(
+            "a1",
+            "openai",
+            "gpt-4.1",
+            r#"{"input":100,"output":20}"#,
+            1_756_548_001_000,
+        );
+        let compressed = assistant_event(
+            "a2",
+            "openai",
+            "gpt-4.1",
+            r#"{"input":300,"output":40}"#,
+            1_756_548_002_000,
+        );
+        insert_event(&conn, "sess-a", 0, &plain, 1_756_548_001_000);
+        insert_compressed_event(&conn, "sess-a", 1, &compressed, 1_756_548_002_000);
+        drop(conn);
+        let parsed = scan_openclaw_sqlite(&source);
+        assert!(parsed.complete);
+        assert_eq!(parsed.messages.len(), 2);
+
+        let identity = CacheIdentity::for_client(ClientId::OpenClaw);
+        let stale_identity = CacheIdentity {
+            parser_version: 6,
+            ..identity
+        };
+        let fingerprint = SourceFingerprint::from_sqlite_path(&source).unwrap();
+        let stale_entry = CachedSourceEntry::new(
+            stale_identity,
+            &source,
+            fingerprint.clone(),
+            parsed.messages[..1].to_vec(),
+            Vec::new(),
+            None,
+        );
+        let shard = cache_shard_path(identity, &source);
+        ensure_cache_dir(shard.parent().unwrap()).unwrap();
+        write_shard_with_limit(
+            &shard,
+            stale_identity,
+            &[stale_entry],
+            MAX_CACHE_SHARD_BYTES,
+        )
+        .unwrap();
+
+        let mut cache = SourceMessageCache::load();
+        assert!(
+            cache.get(identity, &source).is_none(),
+            "v6's nonempty undercount must be discarded"
+        );
+        assert_eq!(
+            SourceFingerprint::from_sqlite_path(&source).unwrap(),
+            fingerprint
+        );
+        let reparsed = scan_openclaw_sqlite(&source);
+        assert!(reparsed.complete);
+        assert_eq!(reparsed.messages, parsed.messages);
+        cache.insert(CachedSourceEntry::new(
+            identity,
+            &source,
+            fingerprint,
+            reparsed.messages.clone(),
+            Vec::new(),
+            None,
+        ));
+        cache.save_if_dirty();
+        let warm = SourceMessageCache::load();
+        assert_eq!(
+            warm.get(identity, &source).unwrap().messages,
+            reparsed.messages
+        );
     }
 
     #[test]
@@ -4056,11 +4241,10 @@ mod tests {
     }
 
     #[test]
-    fn test_dsh_compaction_identity_parser_version_invalidates_v4_entries() {
-        // A finished transcript is never rewritten when attribution starts
-        // preferring compactionId, so its fingerprint remains valid and only
-        // the parser version can retire the seq-keyed row released in v4.14.0.
-        assert_eq!(parser_version(ClientId::Dsh), 5);
+    fn test_dsh_attempt_identity_parser_version_invalidates_v6_entries() {
+        // DSH transcript files are append-only, so v6 cache entries keep the
+        // old cross-session attempt keys unless the source is reparsed.
+        assert_eq!(parser_version(ClientId::Dsh), 7);
     }
 
     /// Names the row that only a served cache can put in a report. No DSH
@@ -4092,6 +4276,107 @@ mod tests {
                 || message.provider_id.contains(DSH_CACHE_MARKER)
                 || message.session_id.contains(DSH_CACHE_MARKER)
         })
+    }
+
+    /// A marker row tagged with a label, so a report can be asked not merely
+    /// *whether* a cache-only row reached it but *which* seeded shard produced
+    /// it. A whole-cache load bug that serves a stale shard surfaces that
+    /// shard's label specifically -- something an unlabelled marker, shared by
+    /// every seeded shard, cannot tell apart from the current shard being
+    /// served as intended.
+    fn named_marker_row(label: &str) -> UnifiedMessage {
+        UnifiedMessage::new(
+            "dsh",
+            format!("{DSH_CACHE_MARKER}-{label}-model"),
+            format!("{DSH_CACHE_MARKER}-{label}-provider"),
+            format!("{DSH_CACHE_MARKER}-{label}-session"),
+            1,
+            crate::TokenBreakdown {
+                input: 12345,
+                output: 678,
+                cache_read: 90,
+                cache_write: 9,
+                reasoning: 0,
+            },
+            0.0,
+        )
+    }
+
+    fn report_carries_marker_labelled(messages: &[UnifiedMessage], label: &str) -> bool {
+        let needle = format!("{DSH_CACHE_MARKER}-{label}-");
+        messages.iter().any(|message| {
+            message.model_id.contains(&needle)
+                || message.provider_id.contains(&needle)
+                || message.session_id.contains(&needle)
+        })
+    }
+
+    /// Seeds one marker row per transcript into shards whose envelope carries
+    /// `seeded_version`, and asserts each shard then reads the way the version
+    /// implies: stale when it is a predecessor's, current when it is the
+    /// running one. [`seed_dsh_cache_at_version`] and the mixed-shard test both
+    /// build their caches through this; the two directions are what a *mixed*
+    /// cache pairs in a single load.
+    ///
+    /// Going through `write_shard_with_limit` instead of the cache API is the
+    /// point. `save_if_dirty` stamps every shard it writes with the running
+    /// identity, so a stale entry seeded that way would land inside a
+    /// current-identity envelope and only the per-entry checks could reject it.
+    /// A predecessor's real cache is rejected one level earlier —
+    /// `read_shard_with_limit` compares the envelope before it decodes anything
+    /// — and that earlier level is what an upgrading user actually hits.
+    fn seed_dsh_shards_at_version(
+        transcripts: &[PathBuf],
+        seeded_version: u32,
+        marker: UnifiedMessage,
+    ) {
+        let identity = CacheIdentity::for_client(ClientId::Dsh);
+        let seeded_identity = CacheIdentity {
+            namespace: identity.namespace,
+            parser_version: seeded_version,
+        };
+        let mut by_shard: HashMap<CacheShardKey, Vec<CachedSourceEntry>> = HashMap::new();
+        for path in transcripts {
+            let entry = CachedSourceEntry::new(
+                seeded_identity,
+                path,
+                SourceFingerprint::from_path(path).expect("an installed transcript fingerprints"),
+                vec![marker.clone()],
+                Vec::new(),
+                None,
+            );
+            by_shard
+                .entry(CacheKey::from_entry(&entry).shard())
+                .or_default()
+                .push(entry);
+        }
+        let shard_root = cache_shard_dir().expect("a sandboxed shard directory");
+        let expect_stale = seeded_version != identity.parser_version;
+        for (shard_key, entries) in &by_shard {
+            let path = shard_path(&shard_root, shard_key);
+            ensure_cache_dir(path.parent().unwrap()).unwrap();
+            write_shard_with_limit(&path, seeded_identity, entries, MAX_CACHE_SHARD_BYTES).unwrap();
+            // Assert the precondition rather than assume it: a helper that
+            // quietly wrote the wrong envelope would leave the scan with nothing
+            // to reject (stale) or nothing to serve (current), and the test
+            // would pass without running what it claims to cover.
+            let status = read_shard(&path, identity);
+            if expect_stale {
+                assert!(
+                    matches!(status, ShardReadStatus::Stale),
+                    "a shard seeded at parser version {seeded_version} must read as stale \
+                     under the running identity"
+                );
+            } else {
+                assert!(
+                    matches!(
+                        status,
+                        ShardReadStatus::Loaded(_) | ShardReadStatus::Migrated(_)
+                    ),
+                    "a shard seeded at the running parser version must read as current"
+                );
+            }
+        }
     }
 
     /// The checked-in DSH fixtures, under `crates/tokscale-core/tests/fixtures`.
@@ -4203,53 +4488,12 @@ mod tests {
         })
     }
 
-    /// Writes one marker entry per transcript into shards whose *envelope*
-    /// carries `parser_version`, the identity a released build wrote them under.
-    ///
-    /// Going through `write_shard_with_limit` instead of the cache API is the
-    /// whole point. `save_if_dirty` stamps every shard it writes with
-    /// `CacheIdentity::current_for_namespace`, so a stale entry seeded that way
-    /// lands on disk inside a current-identity envelope and only the per-entry
-    /// checks can reject it. A predecessor's real cache is rejected one level
-    /// earlier — `read_shard_with_limit` compares the envelope before it
-    /// decodes anything — and that earlier level is what an upgrading user
-    /// actually hits.
+    /// The predecessor-only seeding the existing gate uses: an unlabelled
+    /// marker at a retired identity. Delegates to
+    /// [`seed_dsh_shards_at_version`], which carries the rationale for writing
+    /// the shard directly.
     fn seed_dsh_cache_at_version(transcripts: &[PathBuf], parser_version: u32) {
-        let identity = CacheIdentity::for_client(ClientId::Dsh);
-        let seeded_identity = CacheIdentity {
-            namespace: identity.namespace,
-            parser_version,
-        };
-        let mut by_shard: HashMap<CacheShardKey, Vec<CachedSourceEntry>> = HashMap::new();
-        for path in transcripts {
-            let entry = CachedSourceEntry::new(
-                seeded_identity,
-                path,
-                SourceFingerprint::from_path(path).expect("an installed transcript fingerprints"),
-                vec![cache_only_marker_row()],
-                Vec::new(),
-                None,
-            );
-            by_shard
-                .entry(CacheKey::from_entry(&entry).shard())
-                .or_default()
-                .push(entry);
-        }
-        let shard_root = cache_shard_dir().expect("a sandboxed shard directory");
-        for (shard_key, entries) in &by_shard {
-            let path = shard_path(&shard_root, shard_key);
-            ensure_cache_dir(path.parent().unwrap()).unwrap();
-            write_shard_with_limit(&path, seeded_identity, entries, MAX_CACHE_SHARD_BYTES).unwrap();
-            // Assert the precondition rather than assume it. A seeding helper
-            // that quietly wrote a current-identity shard would leave the scan
-            // below with nothing to reject, and the test would pass by never
-            // running the migration it claims to cover.
-            assert!(
-                matches!(read_shard(&path, identity), ShardReadStatus::Stale),
-                "a shard seeded at parser version {parser_version} must read as stale \
-                 under the running identity"
-            );
-        }
+        seed_dsh_shards_at_version(transcripts, parser_version, cache_only_marker_row());
     }
 
     #[test]
@@ -4266,7 +4510,7 @@ mod tests {
 "#,
         );
         let current_identity = CacheIdentity::for_client(ClientId::Dsh);
-        assert_eq!(current_identity.parser_version, 5);
+        assert_eq!(current_identity.parser_version, 7);
         // Pinned at 3, the identity 4.14.0 cached under, rather than derived
         // from the running version: this is the row that release left on disk.
         let stale_identity = CacheIdentity {
@@ -4326,7 +4570,7 @@ mod tests {
         let cached = persisted
             .get(current_identity, &source)
             .expect("the scan must persist the entry it reparsed");
-        assert_eq!(cached.parser_version, 5);
+        assert_eq!(cached.parser_version, 7);
         assert_eq!(cached.messages.len(), 1);
         assert_eq!(cached.messages[0].model_id, "glm-5.3");
 
@@ -4353,7 +4597,7 @@ mod tests {
 "#,
         );
         let current_identity = CacheIdentity::for_client(ClientId::Dsh);
-        assert_eq!(current_identity.parser_version, 5);
+        assert_eq!(current_identity.parser_version, 7);
         // Pinned at 4, the identity 4.15.0 cached under; see the v3 test.
         let stale_identity = CacheIdentity {
             namespace: current_identity.namespace,
@@ -4412,7 +4656,7 @@ mod tests {
         let cached = persisted
             .get(current_identity, &source)
             .expect("the scan must persist the entry it reparsed");
-        assert_eq!(cached.parser_version, 5);
+        assert_eq!(cached.parser_version, 7);
         assert_eq!(cached.messages, scanned);
 
         let warm = scan_dsh(source_home.path());
@@ -4567,9 +4811,184 @@ mod tests {
         );
     }
 
+    /// One cache, two shards, opposite identities, loaded together.
+    ///
+    /// [`dsh_predecessor_caches_are_rejected_and_rebuilt_by_the_production_scan`]
+    /// seeds every transcript at one predecessor version per run, so the cache
+    /// under test is uniform: every shard is stale, and the totals it grades
+    /// are the sum of shards that all took the same path. A load or rewrite bug
+    /// that mishandles *one* stale shard while the rest are current has nothing
+    /// failing it there -- the current shards pad the aggregate back to
+    /// plausible. This pairs the two states in a single load and grades each
+    /// shard on its own outcome rather than on the total they add to.
+    ///
+    /// The stale side is the `dsh-seq-key` fixture seeded at parser version 4,
+    /// the identity 4.15.0 shipped: reparsing it has a known-correct answer
+    /// (its `current` figures) that differs from what a served predecessor row
+    /// would report, so a shard that is wrongly served is caught by the number,
+    /// not just by the marker. The current side is a served canary: a fixture's
+    /// own shard cannot be pinned under a random temp root, and this side only
+    /// has to prove "a valid shard is served, not reparsed", so it is a
+    /// transcript placed in a shard searched to be disjoint from the stale ones
+    /// -- which also makes the two seedings write separate shard files instead
+    /// of one clobbering the other.
+    ///
+    /// Per-shard markers carry a label, so a bug that serves the stale shard
+    /// surfaces the `stale` marker specifically while the intended service of
+    /// the current shard surfaces the `served` one; the two are told apart
+    /// rather than merged. The assertions cover both the report and the cache
+    /// left on disk: the stale shard must be absent from the report, reparsed
+    /// to the current figures, and its entry rewritten to the running identity;
+    /// the current shard must be served, its entry left under the running
+    /// identity. The last of those is the one a fresh parse cannot fake -- a
+    /// rewrite-path regression that reparses correctly but never persists would
+    /// pass every report assertion and fail only here.
+    #[test]
+    #[serial_test::serial]
+    fn dsh_mixed_stale_and_current_shards_are_each_handled_on_their_own_identity() {
+        let temp_home = TempDir::new().unwrap();
+        let _cache_env = sandbox_cache_env(temp_home.path());
+        let source_home = TempDir::new().unwrap();
+        let current_identity = CacheIdentity::for_client(ClientId::Dsh);
+
+        // The stale side: a real fixture whose reparse answer is recorded, so a
+        // served shard is caught by a wrong figure and not only by the marker.
+        let stale_transcripts = install_dsh_fixture(source_home.path(), "dsh-seq-key");
+        let expected = dsh_fixture_expectations("dsh-seq-key");
+
+        // The current side: a transcript in a shard none of the stale
+        // transcripts occupy. Shard identity is version-independent (it hashes
+        // the namespace and path, not the parser version), so a shard chosen
+        // disjoint here stays disjoint after the stale side is reparsed.
+        let stale_shards: HashSet<CacheShardKey> = stale_transcripts
+            .iter()
+            .map(|path| CacheKey::new(current_identity, path).shard())
+            .collect();
+        let served_path = (0..CACHE_SHARD_COUNT * 4)
+            .map(|index| {
+                source_home
+                    .path()
+                    .join(".dsh")
+                    .join("sessions")
+                    .join("--served--")
+                    .join(format!("canary-{index}"))
+                    .join("session.jsonl")
+            })
+            .find(|candidate| {
+                !stale_shards.contains(&CacheKey::new(current_identity, candidate).shard())
+            })
+            .expect("a served shard distinct from every stale shard");
+        std::fs::create_dir_all(served_path.parent().unwrap()).unwrap();
+        std::fs::write(
+            &served_path,
+            br#"{"type":"session","id":"canary","createdAt":1,"cwd":"/work"}
+{"type":"assistant/message","seq":1,"time":1787000000000,"data":{"turn":1,"message":{"id":"m-canary","source":{"kind":"model","provider":"canary-provider","model":"canary-model"}},"usage":{"inputTokens":1,"outputTokens":1}}}
+"#,
+        )
+        .unwrap();
+
+        seed_dsh_shards_at_version(&stale_transcripts, 4, named_marker_row("stale"));
+        seed_dsh_shards_at_version(
+            std::slice::from_ref(&served_path),
+            current_identity.parser_version,
+            named_marker_row("served"),
+        );
+
+        let report = scan_dsh(source_home.path());
+
+        // The stale shard: reparsed, so its marker never reaches the report.
+        assert!(
+            !report_carries_marker_labelled(&report, "stale"),
+            "the stale shard was served rather than reparsed"
+        );
+        // The current shard: served, so its marker does.
+        assert!(
+            report_carries_marker_labelled(&report, "served"),
+            "the current shard was reparsed rather than served"
+        );
+
+        // The reparsed stale shard reports the current figures, not the
+        // predecessor's -- the correctness the marker alone cannot show. The
+        // served marker row is the only non-fixture row, so dropping it leaves
+        // exactly what the stale side reparsed to.
+        let reparsed_only: Vec<UnifiedMessage> = report
+            .iter()
+            .filter(|message| {
+                !report_carries_marker_labelled(std::slice::from_ref(*message), "served")
+            })
+            .cloned()
+            .collect();
+        assert_eq!(
+            dsh_report_json(&reparsed_only),
+            expected["current"],
+            "the reparsed stale shard must report the current figures, not the predecessor's"
+        );
+
+        // The totals are the two shards added: the stale side's reparsed
+        // current figures plus the one served marker row. A stale shard served
+        // instead of reparsed, or a current shard reparsed instead of served,
+        // moves this sum.
+        let marker = named_marker_row("served");
+        let seq = &expected["current"]["totals"];
+        let grand = &dsh_report_json(&report)["totals"];
+        assert_eq!(
+            grand["totalInput"].as_i64().unwrap(),
+            seq["totalInput"].as_i64().unwrap() + marker.tokens.input,
+        );
+        assert_eq!(
+            grand["totalOutput"].as_i64().unwrap(),
+            seq["totalOutput"].as_i64().unwrap() + marker.tokens.output,
+        );
+        assert_eq!(
+            grand["totalCacheRead"].as_i64().unwrap(),
+            seq["totalCacheRead"].as_i64().unwrap() + marker.tokens.cache_read,
+        );
+        assert_eq!(
+            grand["totalCacheWrite"].as_i64().unwrap(),
+            seq["totalCacheWrite"].as_i64().unwrap() + marker.tokens.cache_write,
+        );
+
+        // The repair is persisted, not just reflected in this scan. Every stale
+        // transcript's entry must now carry the running identity with its
+        // marker gone -- the assertion a correct reparse that never rewrote the
+        // shard would fail while passing every report check above.
+        let persisted = SourceMessageCache::load();
+        for path in &stale_transcripts {
+            let entry = persisted
+                .get(current_identity, path)
+                .unwrap_or_else(|| panic!("{} was not re-cached", path.display()));
+            assert_eq!(
+                entry.parser_version, current_identity.parser_version,
+                "the rebuilt stale entry must carry the running identity"
+            );
+            assert!(
+                !report_carries_marker_labelled(&entry.messages, "stale"),
+                "the stale shard's cache entry still carries its marker after the scan"
+            );
+        }
+
+        // The served shard was left as it was: still the running identity,
+        // still the marker. Rewriting a shard whose identity already matched
+        // would be a needless reparse this asserts against.
+        let served_entry = persisted
+            .get(current_identity, &served_path)
+            .expect("the served transcript is missing from the cache");
+        assert_eq!(served_entry.parser_version, current_identity.parser_version);
+        assert!(
+            report_carries_marker_labelled(&served_entry.messages, "served"),
+            "the served shard's cache entry was rewritten though its identity matched"
+        );
+    }
+
     #[test]
     fn test_micode_parser_version_invalidates_rows_without_cost_provenance() {
-        assert_eq!(parser_version(ClientId::MiMoCode), 3);
+        assert_eq!(parser_version(ClientId::MiMoCode), 6);
+        assert_eq!(parser_version(ClientId::MiMoDesktop), 6);
+    }
+
+    #[test]
+    fn test_muse_parser_version_invalidates_stale_provider_metadata_after_reset() {
+        assert_eq!(parser_version(ClientId::Muse), 3);
     }
 
     #[test]
@@ -4607,6 +5026,13 @@ mod tests {
     fn test_shared_parser_family_roster_pins_exact_membership() {
         let expected: &[(&str, &[(ClientId, u32)])] = &[
             (
+                "antigravity generation database",
+                &[
+                    (ClientId::AntigravityCli, 0),
+                    (ClientId::AntigravityExtension, 0),
+                ],
+            ),
+            (
                 "pi-format",
                 &[
                     (ClientId::Pi, 2),
@@ -4628,7 +5054,8 @@ mod tests {
                 "opencode schema",
                 &[
                     (ClientId::OpenCode, 2),
-                    (ClientId::MiMoCode, 2),
+                    (ClientId::MiMoCode, 5),
+                    (ClientId::MiMoDesktop, 5),
                     (ClientId::Kilo, 0),
                 ],
             ),
@@ -5589,6 +6016,176 @@ mod tests {
         std::fs::write(file.path(), rewritten).unwrap();
 
         assert!(!codex_prefix_matches(file.path(), &incremental_cache));
+    }
+
+    fn micode_test_metadata() -> crate::sessions::micode::MiMoRowMetadata {
+        crate::sessions::micode::MiMoRowMetadata {
+            session_created_bits: Some(1_780_000_000_000.0f64.to_bits()),
+            row: crate::sessions::opencode_schema::OpenCodeRowMetadata {
+                created_bits: 1_780_000_000_000.125f64.to_bits(),
+                completed_bits: Some(1_780_000_000_050.625f64.to_bits()),
+                has_embedded_id: true,
+            },
+        }
+    }
+
+    #[test]
+    fn test_micode_metadata_keeps_exact_generic_v7_entry_bytes() {
+        let source = write_temp_file(b"{}\n");
+        let identity = CacheIdentity::for_client(ClientId::Claude);
+        let entry = test_entry(identity, source.path(), "session")
+            .with_micode_metadata(vec![micode_test_metadata()]);
+        // Bincode struct fields are positional. This tuple is the exact v7
+        // receiving layout before the serde-skipped in-memory field existed.
+        let v7 = (
+            &entry.parser_namespace,
+            entry.parser_version,
+            &entry.path,
+            &entry.fingerprint,
+            &entry.messages,
+            &entry.fallback_timestamp_indices,
+            &entry.codex_incremental,
+            &entry.prime_accounting,
+            &entry.opencode_incremental,
+        );
+        let bytes = bincode::options().serialize(&entry).unwrap();
+        assert_eq!(bytes, bincode::options().serialize(&v7).unwrap());
+        let decoded: CachedSourceEntry = bincode::options().deserialize(&bytes).unwrap();
+        assert!(decoded.micode_metadata.is_none());
+        assert_eq!(decoded.messages[0].session_id, "session");
+    }
+
+    #[test]
+    fn test_micode_envelope_roundtrip_and_take_payload_keep_exact_provenance() {
+        let source = write_temp_file(b"{}\n");
+        let identity = CacheIdentity::for_client(ClientId::MiMoCode);
+        let mut entry = test_entry(identity, source.path(), "session")
+            .with_micode_metadata(vec![micode_test_metadata()]);
+        let taken = entry.take_payload();
+        assert!(entry.messages.is_empty());
+        assert!(entry.micode_metadata.is_none());
+        assert!(taken.has_valid_micode_metadata());
+        let dir = TempDir::new().unwrap();
+        let path = dir.path().join("shard.bin");
+        write_shard_with_limit(&path, identity, &[taken], MAX_CACHE_SHARD_BYTES).unwrap();
+        let envelope: CachedShardEnvelope = bincode::options()
+            .deserialize_from(BufReader::new(File::open(&path).unwrap()))
+            .unwrap();
+        assert_eq!(envelope.format_version, MICODE_CACHE_FORMAT_VERSION);
+        match read_shard(&path, identity) {
+            ShardReadStatus::Loaded(entries) => {
+                assert!(entries[0].has_valid_micode_metadata());
+                assert_eq!(
+                    entries[0].micode_metadata.as_deref(),
+                    Some([micode_test_metadata()].as_slice())
+                );
+            }
+            _ => panic!("unexpected MiMo cache result"),
+        }
+    }
+
+    #[test]
+    #[serial_test::serial]
+    fn test_micode_drained_clean_payload_survives_dirty_sibling_shard_save() {
+        let cache_home = TempDir::new().unwrap();
+        let _env = sandbox_cache_env(cache_home.path());
+        let source_home = TempDir::new().unwrap();
+        let first = source_home.path().join("first.db");
+        std::fs::write(&first, b"first").unwrap();
+        let identity = CacheIdentity::for_client(ClientId::MiMoCode);
+        let shard = CacheKey::new(identity, &first).shard();
+        let second = (0..10000)
+            .map(|i| source_home.path().join(format!("sibling-{i}.db")))
+            .find(|path| CacheKey::new(identity, path).shard() == shard)
+            .unwrap();
+        std::fs::write(&second, b"second").unwrap();
+        let mut initial = SourceMessageCache::load();
+        for (path, id) in [(&first, "first"), (&second, "second")] {
+            initial.insert(
+                test_entry(identity, path, id).with_micode_metadata(vec![micode_test_metadata()]),
+            );
+        }
+        initial.save_if_dirty();
+        let mut next = SourceMessageCache::load();
+        let untouched = next.take(identity, &first).unwrap();
+        assert!(untouched.has_valid_micode_metadata());
+        assert!(next.entry_messages_released(identity, &first));
+        std::fs::write(&second, b"second changed").unwrap();
+        next.insert(
+            test_entry(identity, &second, "changed")
+                .with_micode_metadata(vec![micode_test_metadata()]),
+        );
+        next.save_if_dirty();
+        let reloaded = SourceMessageCache::load();
+        let first_again = reloaded.take(identity, &first).unwrap();
+        let second_again = reloaded.take(identity, &second).unwrap();
+        assert!(first_again.has_valid_micode_metadata());
+        assert!(second_again.has_valid_micode_metadata());
+        assert_eq!(first_again.messages[0].session_id, "first");
+        assert_eq!(second_again.messages[0].session_id, "changed");
+    }
+
+    #[test]
+    fn test_micode_envelope_rejects_wrong_namespace_and_invalid_metadata() {
+        let source = write_temp_file(b"{}\n");
+        let dir = TempDir::new().unwrap();
+        let path = dir.path().join("shard.bin");
+        let identity = CacheIdentity::for_client(ClientId::MiMoCode);
+        for metadata in [
+            vec![],
+            vec![crate::sessions::micode::MiMoRowMetadata {
+                session_created_bits: Some(f64::NAN.to_bits()),
+                ..micode_test_metadata()
+            }],
+        ] {
+            let entry =
+                test_entry(identity, source.path(), "session").with_micode_metadata(metadata);
+            write_shard_with_limit(&path, identity, &[entry], MAX_CACHE_SHARD_BYTES).unwrap();
+            assert!(
+                matches!(read_shard(&path,identity),ShardReadStatus::Loaded(entries) if entries[0].micode_metadata.is_none())
+            );
+        }
+        let unrelated = CacheIdentity::for_client(ClientId::Claude);
+        let entry = test_entry(unrelated, source.path(), "retained-claude");
+        write_shard_with_limit(&path, unrelated, &[entry], MAX_CACHE_SHARD_BYTES).unwrap();
+        let mut envelope: CachedShardEnvelope = bincode::options()
+            .deserialize_from(BufReader::new(File::open(&path).unwrap()))
+            .unwrap();
+        assert_eq!(envelope.format_version, CACHE_FORMAT_VERSION);
+        envelope.format_version = MICODE_CACHE_FORMAT_VERSION;
+        std::fs::write(&path, bincode::options().serialize(&envelope).unwrap()).unwrap();
+        assert!(matches!(
+            read_shard(&path, unrelated),
+            ShardReadStatus::Stale
+        ));
+        envelope.parser_namespace = identity.namespace.to_string();
+        envelope.parser_version = identity.parser_version;
+        envelope.payload = vec![0xff, 0xff];
+        std::fs::write(&path, bincode::options().serialize(&envelope).unwrap()).unwrap();
+        assert!(matches!(
+            read_shard(&path, identity),
+            ShardReadStatus::Invalid(_)
+        ));
+    }
+
+    #[test]
+    fn test_legacy_micode_v7_has_no_provenance_and_requires_one_reparse() {
+        let source = write_temp_file(b"{}\n");
+        let identity = CacheIdentity::for_client(ClientId::MiMoCode);
+        let entry = test_entry(identity, source.path(), "legacy");
+        let envelope = CachedShardEnvelope {
+            format_version: CACHE_FORMAT_VERSION,
+            parser_namespace: identity.namespace.to_string(),
+            parser_version: identity.parser_version,
+            payload: bincode::options().serialize(&vec![entry]).unwrap(),
+        };
+        let dir = TempDir::new().unwrap();
+        let path = dir.path().join("legacy.bin");
+        std::fs::write(&path, bincode::options().serialize(&envelope).unwrap()).unwrap();
+        assert!(
+            matches!(read_shard(&path,identity),ShardReadStatus::Loaded(entries)
+            if entries[0].messages.len()==1 && !entries[0].has_valid_micode_metadata())
+        );
     }
 
     #[test]

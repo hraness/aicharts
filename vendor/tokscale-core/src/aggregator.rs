@@ -682,6 +682,7 @@ mod tests {
             is_turn_start: false,
             model_attribution_conflicted: false,
             tokens_estimated: false,
+            service_tier: None,
         }
     }
 
@@ -1333,6 +1334,7 @@ mod tests {
             model_attribution_conflicted: false,
             tokens_estimated: false,
             duration_ms: None,
+            service_tier: None,
         }
     }
 

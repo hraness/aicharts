@@ -190,13 +190,13 @@
       "deletion": "crates/aicharts-cli/src/source_health.rs",
       "budget": {
         "bytesPerDocument": 131072,
-        "clientsPerDocument": 55,
+        "clientsPerDocument": 58,
         "codesPerObservation": 16,
         "payloadFilesPerStore": 2,
         "lockFilesPerStore": 1,
         "capacityRefs": {
           "source-health-bytes": 131072,
-          "source-health-clients": 55,
+          "source-health-clients": 58,
           "source-health-codes": 16
         }
       },
