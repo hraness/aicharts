@@ -39,7 +39,11 @@ import {
   searchSite,
   site,
 } from "../../../../site";
-import { aichartsSocialImageAlt, modelSocialImagePage } from "../../../../social-image-site";
+import {
+  aichartsSocialImageAlt,
+  codingAgentProfileSocialImagePage,
+  indexModelSocialImagePage,
+} from "../../../../social-image-site";
 
 export const dynamicParams = false;
 
@@ -75,9 +79,11 @@ export async function generateMetadata({
     path as `/models/${string}/${string}/${string}`,
     "opengraph-image",
   );
-  const providerName = card?.providerName ?? indexPage?.providerName;
-  if (providerName === undefined) notFound();
-  const imageAlt = aichartsSocialImageAlt(modelSocialImagePage({ description, displayTitle, providerName }));
+  const socialPage = card === undefined
+    ? indexPage === undefined ? undefined : indexModelSocialImagePage(indexPage)
+    : codingAgentProfileSocialImagePage(card);
+  if (socialPage === undefined) notFound();
+  const imageAlt = aichartsSocialImageAlt(socialPage);
   const indexingPolicy = card === undefined ? undefined : modelCardIndexingPolicy(card);
   return {
     ...base,

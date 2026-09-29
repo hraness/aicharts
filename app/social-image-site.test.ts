@@ -8,7 +8,8 @@ import {
   aichartsSocialImageAlt,
   aichartsSocialImageSite,
   blogCollectionSocialImagePage,
-  codingAgentProfileSocialImageDescription,
+  codingAgentProfileSocialImagePage,
+  indexModelSocialImagePage,
   modelsSocialImagePage,
 } from "./social-image-site";
 
@@ -88,18 +89,13 @@ describe("aicharts social-image declaration", () => {
     expect(await lastRender(() => modelProfile.default({
       params: Promise.resolve({ creatorSlug, modelSlug, profileSlug }),
     }))).toEqual({
-      page: {
-        description: codingAgentProfileSocialImageDescription,
-        eyebrow: card.providerName,
-        headline: card.displayTitle,
-      },
+      page: codingAgentProfileSocialImagePage(card),
       site: aichartsSocialImageSite,
     });
     const [indexCreator, indexModel, indexProfile] = indexPage.path.split("/").slice(2);
     const indexRender = await lastRender(() => modelProfile.default({
       params: Promise.resolve({ creatorSlug: indexCreator, modelSlug: indexModel, profileSlug: indexProfile }),
     }));
-    expect(indexRender.site).toBe(aichartsSocialImageSite);
-    expect(indexRender.page).toMatchObject({ eyebrow: indexPage.providerName, headline: indexPage.displayTitle });
+    expect(indexRender).toEqual({ page: indexModelSocialImagePage(indexPage), site: aichartsSocialImageSite });
   });
 });

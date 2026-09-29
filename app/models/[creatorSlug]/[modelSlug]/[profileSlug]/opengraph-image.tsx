@@ -9,19 +9,13 @@ import {
   findModelCardPresentation,
   modelCardRouteStaticParams,
 } from "@/lib/model-card-collection";
-import {
-  findIndexModelPage,
-  formatIntelligenceCost,
-  formatIntelligenceIndex,
-  indexModelRouteStaticParams,
-} from "@/lib/index-model-pages";
+import { findIndexModelPage, indexModelRouteStaticParams } from "@/lib/index-model-pages";
 import type { ModelCardRouteParams } from "@/lib/model-card-data";
 
-import { indexModelPageDescription } from "../../../../site";
 import {
   aichartsSocialImageSite,
-  codingAgentProfileSocialImageDescription,
-  modelSocialImagePage,
+  codingAgentProfileSocialImagePage,
+  indexModelSocialImagePage,
 } from "../../../../social-image-site";
 
 export const alt = "aicharts model page with provider, name, and Intelligence Index";
@@ -38,22 +32,9 @@ export default async function OpenGraphImage({
   const resolved = await params;
   const card = findModelCardPresentation(resolved);
   if (card !== undefined) {
-    return createSiteSocialImageResponse(aichartsSocialImageSite, modelSocialImagePage({
-      description: codingAgentProfileSocialImageDescription,
-      displayTitle: card.displayTitle,
-      providerName: card.providerName,
-    }));
+    return createSiteSocialImageResponse(aichartsSocialImageSite, codingAgentProfileSocialImagePage(card));
   }
   const indexPage = findIndexModelPage(resolved);
   if (indexPage === undefined) notFound();
-  return createSiteSocialImageResponse(aichartsSocialImageSite, modelSocialImagePage({
-    description: indexModelPageDescription({
-      cost: indexPage.costUsdPerTask === null ? null : formatIntelligenceCost(indexPage.costUsdPerTask),
-      displayTitle: indexPage.displayTitle,
-      score: formatIntelligenceIndex(indexPage.intelligenceIndex),
-      sourceName: indexPage.sourceName,
-    }),
-    displayTitle: indexPage.displayTitle,
-    providerName: indexPage.providerName,
-  }));
+  return createSiteSocialImageResponse(aichartsSocialImageSite, indexModelSocialImagePage(indexPage));
 }

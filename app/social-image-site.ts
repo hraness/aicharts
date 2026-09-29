@@ -4,6 +4,9 @@ import {
   type SocialImagePage,
 } from "@hraness/web-discovery/social-image/card";
 
+import { formatIntelligenceCost, formatIntelligenceIndex } from "@/lib/index-model-pages";
+import { MODEL_CARD_FALLBACK_CREATOR_SLUG } from "@/lib/model-card-route-status";
+
 import { aichartsMarkDataUrl } from "./social-image-mark";
 import { modelCardsEyebrow, site } from "./site";
 
@@ -48,12 +51,46 @@ export const modelsSocialImagePage = {
 export const codingAgentProfileSocialImageDescription =
   "Scores, cost, time, and tokens per task on the Artificial Analysis coding-agent chart.";
 
-/** Copy for one model page card: the model name under its provider. */
-export function modelSocialImagePage(
-  page: Readonly<{ description: string; displayTitle: string; providerName: string }>,
+/**
+ * The eyebrow over a coding-agent profile card. A catalogued model shows its
+ * provider. An uncatalogued entry only has the provider the benchmark lists,
+ * which for a combined run such as "Claude Fable 5.1 XHigh + SWE-2 Medium" is
+ * the harness vendor, not the model maker, so the card names the harness.
+ */
+export function codingAgentProfileSocialImageEyebrow(
+  card: Readonly<{ canonicalModelId: string; harnessLabel: string; providerName: string }>,
+): string {
+  return card.canonicalModelId.startsWith(`${MODEL_CARD_FALLBACK_CREATOR_SLUG}/`)
+    ? `Agent harness: ${card.harnessLabel}`
+    : card.providerName;
+}
+
+/** Card copy for a coding-agent profile page: the model under its provider. */
+export function codingAgentProfileSocialImagePage(
+  card: Readonly<{ canonicalModelId: string; displayTitle: string; harnessLabel: string; providerName: string }>,
 ): SocialImagePage {
   return {
-    description: page.description,
+    description: codingAgentProfileSocialImageDescription,
+    eyebrow: codingAgentProfileSocialImageEyebrow(card),
+    headline: card.displayTitle,
+  };
+}
+
+/**
+ * Card copy for an Index-only model page. The headline already names the
+ * model, so the subtitle leads with the score instead of repeating the
+ * page's meta description, which starts with the model name.
+ */
+export function indexModelSocialImagePage(page: Readonly<{
+  costUsdPerTask: number | null;
+  displayTitle: string;
+  intelligenceIndex: number;
+  providerName: string;
+  sourceName: string;
+}>): SocialImagePage {
+  const cost = page.costUsdPerTask === null ? "" : `, at ${formatIntelligenceCost(page.costUsdPerTask)} per task`;
+  return {
+    description: `Scores ${formatIntelligenceIndex(page.intelligenceIndex)} on the ${page.sourceName}${cost}.`,
     eyebrow: page.providerName,
     headline: page.displayTitle,
   };
