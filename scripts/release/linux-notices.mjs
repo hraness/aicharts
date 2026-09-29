@@ -23,6 +23,10 @@ export const LINUX_NOTICES_MAX_BYTES = 64 * MiB;
 // security bound. Raised from 32 MiB on 2026-09-24 after the fc95b51 map
 // measured 33,690,505 bytes; parsing stays bounded by this same constant.
 export const LINUX_LINK_MAP_MAX_BYTES = 64 * MiB;
+// Mapped registry crates in distribution/cli/linux-notices.json. Raised from
+// 256 on 2026-09-29 when the shared control TUI brought the mapping to 255.
+// Every entry is still bound to Cargo.lock by name, version and checksum.
+export const LINUX_NOTICES_MAX_PACKAGES = 512;
 const TARGET = "x86_64-unknown-linux-gnu";
 const REGISTRY = "registry+https://github.com/rust-lang/crates.io-index";
 const ERRORS = new Set(["notices_invalid_input", "notices_limit", "notices_build_incomplete", "notices_unmapped_crate", "notices_crate_changed", "notices_unknown_native", "notices_rust_missing", "notices_system_missing", "notices_source_changed"]);
@@ -323,7 +327,7 @@ export async function collectLinuxNotices(input) {
     const policy = json(policyBytes, MiB);
     if (policy.schemaVersion !== 1 || policy.registry !== REGISTRY) fail("notices_unmapped_crate");
     const mapped = new Map();
-    for (const item of array(policy.packages, 256)) {
+    for (const item of array(policy.packages, LINUX_NOTICES_MAX_PACKAGES)) {
       if (!CRATE.test(item.name) || !VERSION.test(item.version) || !HASH.test(item.checksum)) fail("notices_unmapped_crate");
       const key = `${item.name}@${item.version}`;
       if (mapped.has(key)) fail("notices_unmapped_crate");

@@ -7,7 +7,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { collectLinuxNotices, planLinuxNotices, linuxNativeDiagnostic, linuxSystemDiagnostic, LINUX_LINK_MAP_MAX_BYTES } from "./linux-notices.mjs";
+import { collectLinuxNotices, planLinuxNotices, linuxNativeDiagnostic, linuxSystemDiagnostic, LINUX_LINK_MAP_MAX_BYTES, LINUX_NOTICES_MAX_PACKAGES } from "./linux-notices.mjs";
 import { GIT_SOURCES } from "./admitted-git-sources.mjs";
 
 const digest = bytes => createHash("sha256").update(bytes).digest("hex");
@@ -581,6 +581,23 @@ test("collector binds registry notice bytes and package checksum to owned mappin
   await diskFixture(async (f) => {
     await writeFile(crateArchive(f, f.packages[1]), "altered cached archive\n");
     assert.equal((await collectLinuxNotices(f.input)).error, "notices_crate_changed");
+  });
+});
+
+test("notices policy admits exactly LINUX_NOTICES_MAX_PACKAGES mapped crates", async () => {
+  assert.equal(LINUX_NOTICES_MAX_PACKAGES, 512);
+  const checked = JSON.parse(await readFile(new URL("../../distribution/cli/linux-notices.json", import.meta.url), "utf8"));
+  assert.ok(checked.packages.length <= LINUX_NOTICES_MAX_PACKAGES);
+  await diskFixture(async (f, policy, save) => {
+    const baseline = await collectLinuxNotices(f.input);
+    const filler = index => ({ name: `unused-${index}`, version: "1.0.0", checksum: "0".repeat(63) + (index % 10), license: "MIT", files: [{ path: "LICENSE", sha256: "1".repeat(64) }] });
+    const mapped = policy.packages.slice();
+    policy.packages = [...mapped, ...Array.from({ length: LINUX_NOTICES_MAX_PACKAGES - mapped.length }, (_, index) => filler(index))];
+    await save();
+    assert.deepEqual(await collectLinuxNotices(f.input), baseline);
+    policy.packages.push(filler(LINUX_NOTICES_MAX_PACKAGES));
+    await save();
+    assert.deepEqual(await collectLinuxNotices(f.input), { ok: false, error: "notices_invalid_input" });
   });
 });
 
