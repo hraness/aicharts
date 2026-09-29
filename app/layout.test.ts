@@ -19,7 +19,7 @@ test("the root layout renders the in-flow content footer and the shared Hraness 
   expect(source).toContain('from "@/components/site-header"');
   expect(source).toContain('from "./mailing-config"');
   expect(source).toContain('ariaLabel="AI Charts"');
-  expect(source).toContain('src="/icon.png"');
+  expect(source).toContain('brandMark="/marks/aicharts.svg"');
   expect(source).toContain('brandLabel="AI Charts home"');
   expect(source).toContain("links={SITE_HEADER_LINKS}");
   expect(source).toContain("name={site.name}");
@@ -50,7 +50,8 @@ test("every route inherits one in-flow content footer and one shared footer carr
   expect(html.match(/data-slot="hraness-site-footer"/gu)).toHaveLength(1);
   expect(html).toContain('aria-label="AI Charts"');
   expect(html).toContain('aria-label="AI Charts home"');
-  expect(html).toContain('src="/icon.png"');
+  expect(html).toContain('src="/marks/aicharts.svg"');
+  expect(html).toContain('data-foil=""');
   expect(html).toContain(">AI Charts</span>");
   expect(html).toContain('aria-label="Hraness home"');
   expect(html).toContain(">by Hraness</span>");
