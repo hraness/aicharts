@@ -15,7 +15,8 @@ use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use hraness_control_kit::envelope::{self, Envelope};
-use hraness_control_kit::registry::{OpClass, Registry, Verb};
+use hraness_control_kit::gate;
+use hraness_control_kit::registry::{GateTier, OpClass, Registry, Verb};
 use hraness_control_kit::tui::{
     self,
     ratatui::{layout::Rect, text::Line, widgets::Paragraph, Frame},
@@ -125,16 +126,18 @@ pub(crate) fn registry() -> Registry {
         ),
         Verb::new(
             &["service", "install"],
-            OpClass::DecideLegacy,
+            OpClass::Decide,
             "aicharts.service-install/1",
             "Run the collector at login (macOS shows a notice)",
-        ),
+        )
+        .gated(GateTier::T1T2),
         Verb::new(
             &["service", "uninstall"],
-            OpClass::DecideLegacy,
+            OpClass::Decide,
             "aicharts.service-uninstall/1",
             "Stop running the collector at login",
-        ),
+        )
+        .gated(GateTier::T1T2),
         Verb::new(
             &["support"],
             OpClass::Read,
@@ -573,8 +576,13 @@ pub(crate) fn outputs_lines(outputs: &OutputsData, width: u16, now: SystemTime) 
 }
 
 struct StatusView;
+/// The wall clock a view reads when it draws. The interactive TUI reads
+/// the real one on every frame, so file ages keep moving while it stays
+/// open; goldens inject a fixed time.
+pub(crate) type Clock = Box<dyn Fn() -> SystemTime>;
+
 struct OutputsView {
-    now: SystemTime,
+    clock: Clock,
 }
 
 fn draw(lines: Vec<String>, frame: &mut Frame, area: Rect) {
@@ -606,26 +614,26 @@ impl View<StatusData> for OutputsView {
     }
     fn render(&self, state: &StatusData, frame: &mut Frame, area: Rect) {
         draw(
-            outputs_lines(&state.outputs, area.width, self.now),
+            outputs_lines(&state.outputs, area.width, (self.clock)()),
             frame,
             area,
         )
     }
     fn height(&self, state: &StatusData, width: u16) -> u16 {
-        outputs_lines(&state.outputs, width, self.now)
+        outputs_lines(&state.outputs, width, (self.clock)())
             .len()
             .min(200) as u16
     }
 }
 
-pub(crate) fn views(now: SystemTime) -> Vec<Box<dyn View<StatusData>>> {
-    vec![Box::new(StatusView), Box::new(OutputsView { now })]
+pub(crate) fn views(clock: Clock) -> Vec<Box<dyn View<StatusData>>> {
+    vec![Box::new(StatusView), Box::new(OutputsView { clock })]
 }
 
 /// The `tui --snapshot` text for one state. Pure, for goldens.
 #[cfg(test)]
 pub(crate) fn snapshot(data: &StatusData, width: u16, now: SystemTime) -> String {
-    views(now)
+    views(Box::new(move || now))
         .iter()
         .map(|view| {
             format!(
@@ -852,6 +860,88 @@ pub(crate) struct Retired {
     pub(crate) to: String,
     /// The command that puts it back.
     pub(crate) restore: String,
+}
+
+// ---------------------------------------------------------------------------
+// Human gate
+
+/// Why a `decide` verb stops before any prompt: `--json` from an agent or
+/// quiet audience, or agent markers (T0) in any audience. `None` means a
+/// person may be at the terminal, so the T1+T2 gate runs next.
+pub(crate) fn unattended_refusal(
+    registry: &Registry,
+    verb: &Verb,
+    json: bool,
+    audience: hraness_cli_kit::Audience,
+    agent: &gate::AgentMarkers,
+    command: &str,
+) -> Option<ErrorBody> {
+    let human = audience == hraness_cli_kit::Audience::Human;
+    if (json && !human) || agent.agent {
+        return Some(registry.human_required(verb, command));
+    }
+    None
+}
+
+/// The command a person runs to make this decision: `args` without
+/// `--json`, quoted for a shell.
+pub(crate) fn command_for_person(args: &[String]) -> String {
+    std::iter::once(PRODUCT.to_owned())
+        .chain(
+            args.iter()
+                .filter(|arg| arg.as_str() != "--json")
+                .map(|arg| shell_quote(arg)),
+        )
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+/// The human gate for the `decide` verb at `path` (plan D-5, D-6): refuses
+/// at once when no person can answer, then shows `title` and `digest` and
+/// asks for a one-time code on `/dev/tty` (T1+T2). `before_prompt` runs
+/// only when a person may answer, such as the macOS login-item notice. On
+/// refusal it prints the `human-required` (or gate) error and returns the
+/// exit status, 3; nothing has changed.
+pub(crate) fn require_decision(
+    path: &[&str],
+    args: &[String],
+    json: bool,
+    title: &str,
+    digest: &str,
+    before_prompt: impl FnOnce(),
+) -> Result<(), i32> {
+    let registry = registry();
+    let verb = registry
+        .lookup(path)
+        .filter(|verb| verb.path.len() == path.len())
+        .expect("decide verbs are registered");
+    let tier = verb.gate.expect("decide verbs carry a gate");
+    let command = command_for_person(args);
+    if let Some(error) = unattended_refusal(
+        &registry,
+        verb,
+        json,
+        hraness_cli_kit::audience::detect_current(),
+        &gate::detect_agent_here(),
+        &command,
+    ) {
+        return Err(fail(json, error));
+    }
+    before_prompt();
+    gate::require_human(title, digest, tier)
+        .map(|_| ())
+        .map_err(|error| {
+            let error = if error.next.is_empty() {
+                error.with_next(NextStep::new(
+                    &command,
+                    "Run this in your own terminal to decide.",
+                    Audience::Human,
+                ))
+            } else {
+                error
+            };
+            fail(json, error)
+        })
 }
 
 fn shell_quote(text: &str) -> String {
@@ -1277,10 +1367,9 @@ fn run_tui(args: &[String]) -> i32 {
         Ok(paths) => paths,
         Err(error) => return fail(flags.json, error),
     };
-    let now = SystemTime::now();
     let options = RunOptions {
         load: Box::new(move || load_status(&paths, SystemTime::now())),
-        views: views(now),
+        views: views(Box::new(SystemTime::now)),
         mode: tui::mode_for_stdout(flags.json, flags.snapshot),
         width: flags.width,
     };

@@ -361,11 +361,88 @@ fn registry_lists_every_dispatched_verb() {
     }
     let value = serde_json::to_value(registry.commands_json()).unwrap();
     assert_eq!(value["schema"], "hraness.commands/1");
-    // Plan decision: no verb here needs the human gate; the login item is
-    // the collector's and stays a legacy decide.
+    // Plan grammar: the login item is persistent configuration, so
+    // install and uninstall are `decide` behind T1+T2. D-14 keeps
+    // `decide-legacy` for three other products' verbs only.
     for verb in registry.verbs() {
-        assert!(verb.gate.is_none(), "{}", verb.command());
+        let command = verb.command();
+        let gated = matches!(command.as_str(), "service install" | "service uninstall");
+        assert_ne!(verb.op_class, OpClass::DecideLegacy, "{command}");
+        if gated {
+            assert_eq!(verb.op_class, OpClass::Decide, "{command}");
+            assert_eq!(verb.gate, Some(GateTier::T1T2), "{command}");
+        } else {
+            assert!(verb.gate.is_none(), "{command}");
+        }
     }
+    let listed = value["data"]["verbs"].as_array().unwrap();
+    let install = listed
+        .iter()
+        .find(|verb| verb["path"] == serde_json::json!(["service", "install"]))
+        .unwrap();
+    assert_eq!(install["opClass"], "decide");
+}
+
+// --- Human gate ----------------------------------------------------------
+
+fn markers(agent: bool) -> gate::AgentMarkers {
+    gate::AgentMarkers {
+        agent,
+        markers: if agent {
+            vec!["env:CLAUDECODE".into()]
+        } else {
+            vec![]
+        },
+    }
+}
+
+#[test]
+fn decide_verbs_refuse_agents_and_json_without_prompting() {
+    use hraness_cli_kit::Audience as Who;
+    let registry = registry();
+    let install = registry.lookup(&["service", "install"]).unwrap();
+    let command = "aicharts service install --claude /c";
+    // `--json` from an agent or a script, and any run with agent markers,
+    // stop before the prompt with `human-required` and a person's command.
+    for (json, who, agent) in [
+        (true, Who::Agent, false),
+        (true, Who::Quiet, false),
+        (false, Who::Human, true),
+        (false, Who::Agent, true),
+        (true, Who::Human, true),
+    ] {
+        let error = unattended_refusal(&registry, install, json, who, &markers(agent), command)
+            .unwrap_or_else(|| panic!("{json} {who:?} {agent}"));
+        assert_eq!(error.code, ErrorCode::HumanRequired);
+        assert_eq!(Envelope::<()>::error(error.clone()).exit_code(), 3);
+        assert_eq!(error.next[0].command, command);
+        assert_eq!(error.next[0].audience, Audience::Human);
+    }
+    // A person, or a script with no agent markers, goes on to T1+T2,
+    // which itself refuses when there is no terminal.
+    for (json, who) in [(false, Who::Human), (true, Who::Human), (false, Who::Agent)] {
+        assert!(
+            unattended_refusal(&registry, install, json, who, &markers(false), command).is_none()
+        );
+    }
+}
+
+#[test]
+fn the_person_gets_the_command_without_json() {
+    let args: Vec<String> = [
+        "service",
+        "install",
+        "--json",
+        "--claude",
+        "/Users/me/my projects",
+    ]
+    .iter()
+    .map(|arg| arg.to_string())
+    .collect();
+    assert_eq!(
+        command_for_person(&args),
+        "aicharts service install --claude '/Users/me/my projects'"
+    );
 }
 
 /// Every action the retired menu bar offered, and the verb that replaces it.
@@ -407,6 +484,38 @@ fn every_menu_action_has_a_verb_and_a_parity_row() {
             "{command}"
         );
     }
+}
+
+// --- TUI clock ------------------------------------------------------------
+
+#[test]
+fn the_outputs_view_reads_the_clock_when_it_draws() {
+    // The interactive TUI stays open: ages must follow the clock at render
+    // time, not the moment it launched.
+    use std::cell::Cell;
+    use std::rc::Rc;
+    let clock = Rc::new(Cell::new(now()));
+    let reader = Rc::clone(&clock);
+    let views = views(Box::new(move || reader.get()));
+    let outputs_view = views.iter().find(|view| view.id() == "outputs").unwrap();
+    let Envelope::Ok { data, .. } = build(&Health::default(), outputs(1), vec![]) else {
+        unreachable!()
+    };
+    let first = tui::render_to_string(outputs_view.as_ref(), &data, 80);
+    assert!(first.contains("10 min ago"), "{first}");
+    clock.set(now() + Duration::from_secs(3_600));
+    let later = tui::render_to_string(outputs_view.as_ref(), &data, 80);
+    assert!(later.contains("1 hour ago"), "{later}");
+    // A file written after launch is still only minutes old, not "just now"
+    // forever and not in the future.
+    let mut fresh = outputs(1);
+    fresh.files[0].modified = now() + Duration::from_secs(1_800);
+    let data = StatusData {
+        outputs: fresh,
+        ..data
+    };
+    let fresh_text = tui::render_to_string(outputs_view.as_ref(), &data, 80);
+    assert!(fresh_text.contains("30 min ago"), "{fresh_text}");
 }
 
 // --- Legacy login items ---------------------------------------------------
