@@ -479,7 +479,7 @@ describe("public model cards", () => {
   test("includes the renderer contract in versioned card artwork URLs", () => {
     const card = MODEL_CARD_PRESENTATIONS[0];
     if (card === undefined) throw new Error("Expected at least one model card.");
-    expect(MODEL_CARD_RENDERER_VERSION).toBe("model-card-v9");
+    expect(MODEL_CARD_RENDERER_VERSION).toBe("model-card-v10");
     expect(MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH).toBe("/models/opengraph-image-v8");
     expect(MODEL_CARD_COLLECTION_SOCIAL_IMAGE_URL).toBe(
       `${MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH}?v=${MODEL_CARD_SNAPSHOT_VERSION}`,
