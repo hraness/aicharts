@@ -1,0 +1,15 @@
+== Status ==
+aicharts · needs you
+● Collecting · Last pass 4 min ago ·
+  last sync 50 min ago
+⚠︎ 4 recent passes didn't finish · A
+  session file is too large to read
+
+Usage dashboard  aicharts open dashboard
+Error log        aicharts open error-log
+Outputs (1)      aicharts outputs
+Support          aicharts open support
+
+== Outputs ==
+Outputs · /Users/you/Library/Applicatio…
+chart 0.csv · 2 KB · 10 min ago

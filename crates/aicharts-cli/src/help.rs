@@ -21,7 +21,7 @@ Start here
 Everyday
   aicharts stats [options]          Token use by day, agent and model
   aicharts sync [options]           Collect and publish once
-  aicharts status [options]         Check your local usage ledger
+  aicharts status                   Check collection and publishing
 
 All commands: aicharts --help · Topics: aicharts help <topic>
 aicharts {}
@@ -55,7 +55,7 @@ Publish to aicharts.io (macOS)
   init                     Create the local usage ledger
   prefix-enable            Let collection skip lines it already read
   sync                     Collect and publish once
-  status                   Check the local usage ledger
+  status                   Check collection, or the ledger (--state-dir)
   account                  Show which account this Mac is connected to
 
 Automatic publishing
@@ -64,6 +64,14 @@ Automatic publishing
   autosubmit               Run one scheduled publishing cycle
   refresh                  Save usage from a provider account (Cursor, Warp)
   menubar                  Show collection status in the menu bar (macOS)
+
+Check and open
+  tui                      Collection status in the terminal
+  doctor                   Check setup; doctor retire sets the menu bar aside
+  open                     Open the dashboard, setup guide, support or error log
+  outputs                  List and open files in the outputs folder
+  diagnostics              Error codes to paste into a support request
+  commands                 List commands for agents (--json)
 
 Options
   -h, --help               Show help (also: aicharts help <command>)
@@ -232,13 +240,98 @@ Example
 "
         }
         "status" => {
-            "Usage: aicharts status --state-dir DIR --key-file KEY [--json]
+            "Usage: aicharts status [--json]
+       aicharts status --state-dir DIR --key-file KEY [--json]
 
-Show what the local ledger holds and how many batches are waiting to be sent.
-It can finish an interrupted database write, but never scans files or uploads.
+With no options, show whether collection and publishing work on this Mac: the
+last collector pass, the last sync, recent failures, the error log and the
+newest outputs. It reads the files the background collector writes and
+changes nothing.
+
+With --state-dir and --key-file, show what the local ledger holds and how many
+batches are waiting to be sent. It can finish an interrupted database write,
+but never scans files or uploads.
 
 Example
+  aicharts status
   aicharts status --state-dir ~/.aicharts/state --key-file ~/.aicharts/key
+"
+        }
+        "tui" => {
+            "Usage: aicharts tui [--snapshot | --json] [--width 20..500]
+
+Show collection status and the newest outputs in the terminal. Tab switches
+views, r reloads and q quits. When stdout is not a terminal, or with
+--snapshot, it prints every view once as plain text.
+
+Example
+  aicharts tui --snapshot --width 100
+"
+        }
+        "commands" => {
+            "Usage: aicharts commands [--json]
+
+List the commands agents can run and what each one does: read, operate, or
+decide (changes that need a person).
+
+Example
+  aicharts commands --json
+"
+        }
+        "doctor" => {
+            "Usage: aicharts doctor [--json]
+       aicharts doctor retire [--json]
+
+Check the files the collector writes, whether the background collector is
+installed, and whether the retired menu bar still opens at login.
+
+doctor retire stops the retired menu bar and renames its login item to
+NAME.retired-TIME in ~/Library/LaunchAgents, so it no longer opens at login.
+Nothing is deleted, and it prints the command that puts it back. Login items
+that start anything else are left alone.
+
+Example
+  aicharts doctor retire
+"
+        }
+        "open" => {
+            "Usage: aicharts open dashboard | setup-guide | support | error-log | outputs [--reveal] [--print] [--json]
+
+Open your usage dashboard, the setup guide or the support page in your
+browser, or the collector's error log or outputs folder.
+
+Options
+  --reveal   Show the error log or outputs folder in Finder
+  --print    Print the address instead of opening it
+
+Example
+  aicharts open dashboard
+"
+        }
+        "diagnostics" => {
+            "Usage: aicharts diagnostics [--json]
+
+Print the aicharts version and the error codes of recent collection and
+publishing to paste into a support request. It holds no paths, account IDs or
+session content.
+
+Example
+  aicharts diagnostics | pbcopy
+"
+        }
+        "outputs" => {
+            "Usage: aicharts outputs [--all] [--json]
+       aicharts outputs open NAME [--print] [--json]
+       aicharts outputs reveal NAME [--print] [--json]
+
+List the newest files in the outputs folder (AICHARTS_OUTPUTS, or
+~/Library/Application Support/AI Charts/outputs), or open one.
+
+Options
+  --all      List every file, up to 500
+
+Example
+  aicharts outputs open usage.csv
 "
         }
         "outbox" => {
@@ -320,7 +413,7 @@ Options
   --retry-attempts 0..8          Retries when the ledger is busy (default 3)
   --publish-config PATH          Also run autosubmit from this configuration
   --publish-interval-seconds N   How often to publish (default 3600, min 300)
-  --status-file PATH             Write each pass's result here for the menu bar
+  --status-file PATH             Write each pass's result here for aicharts status
                                  (use ~/.aicharts/collector-status.json)
   --json                         Machine-readable result (needs --once)
 
@@ -361,6 +454,10 @@ Manage the io.aicharts.daemon LaunchAgent that runs aicharts daemon: it
 collects token counts every 15 minutes and publishes on its own schedule.
 macOS shows \"Background Items Added\" once; the agent takes effect at the
 next login and turns off in System Settings › General › Login Items.
+
+Install and uninstall are a person's decision: they ask for a one-time code
+on your terminal. From an agent or with --json and no person at the
+terminal they stop with human-required (exit 3) and change nothing.
 
 A LaunchAgent file written by hand or another tool is left alone.
 
@@ -444,7 +541,9 @@ pub(crate) fn resolve(args: &[String]) -> Option<Help> {
     match path.first().map(String::as_str) {
         Some("publish") if path.len() == 1 => return Some(Help::Page(PUBLISH.to_owned())),
         Some("advanced") if path.len() == 1 => return Some(Help::Page(ADVANCED.to_owned())),
-        Some(command) if path.len() == 1 || matches!(command, "setup" | "service") => {
+        Some(command)
+            if path.len() == 1 || matches!(command, "setup" | "service" | "doctor" | "outputs") =>
+        {
             // `service install --help` and `setup --help` share the one page.
             if let Some(page) = command_page(command) {
                 return Some(Help::Page(page.to_owned()));

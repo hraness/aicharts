@@ -1,0 +1,14 @@
+== Status ==
+aicharts · needs you
+● Publishing · Last sync 2 hours ago
+⚠︎ 2 agents didn't publish · The AI
+  Charts service refused the upload · 2
+  hours ago
+
+Usage dashboard  aicharts open dashboard
+Error log        aicharts open error-log
+Support          aicharts open support
+
+== Outputs ==
+Outputs · /Users/you/Library/Applicatio…
+No outputs yet.

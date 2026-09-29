@@ -1,0 +1,15 @@
+== Status ==
+aicharts
+● Collecting · Last pass 4 min ago ·
+  last sync 50 min ago
+
+Usage dashboard  aicharts open dashboard
+Error log        aicharts open error-log
+Outputs (3)      aicharts outputs
+Support          aicharts open support
+
+== Outputs ==
+Outputs · /Users/you/Library/Applicatio…
+chart 2.csv · 2 KB · 10 min ago
+chart 1.csv · 2 KB · 20 min ago
+chart 0.csv · 2 KB · 30 min ago

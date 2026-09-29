@@ -126,12 +126,20 @@ test("vendored Tokscale retains its pinned MIT notice and rejects identity or no
 // same pinned GitHub package a normal install resolves, and the fixture asserts
 // every byte against the reviewed allowlist before the collector sees it.
 const GIT_FIXTURES = [
-  { marker: "support-foundation", npm: "@hraness/support-foundation", checkout: "support-foundation-fixture/ed89e58" },
-  { marker: "desktop-foundation", npm: "@hraness/desktop-foundation", checkout: "desktop-foundation-fixture/6040606" },
+  { marker: "support-foundation", npm: "@hraness/support-foundation", checkout: "support-foundation-fixture/ed89e58", package: "hraness-support-foundation" },
+  { marker: "desktop-foundation", npm: "@hraness/desktop-foundation", checkout: "desktop-foundation-fixture/6174033", package: "hraness-cli-kit" },
+  { marker: "desktop-foundation", npm: "@hraness/desktop-foundation", checkout: "desktop-foundation-fixture/6174033", package: "hraness-control-kit" },
 ].map(fixture => {
   const source = Object.keys(GIT_SOURCES).find(key => key.includes(fixture.marker));
   assert.ok(source, fixture.marker);
-  return { ...fixture, source, record: GIT_SOURCES[source] };
+  const record = GIT_SOURCES[source].find(item => item.package === fixture.package);
+  assert.ok(record, fixture.package);
+  return { ...fixture, source, record };
+});
+
+test("every admitted Git crate has a byte fixture", () => {
+  const admitted = Object.values(GIT_SOURCES).flat().map(record => record.package).sort();
+  assert.deepEqual(GIT_FIXTURES.map(fixture => fixture.package).sort(), admitted);
 });
 
 async function addGitCrate(f, fixture) {
@@ -148,7 +156,7 @@ async function addGitCrate(f, fixture) {
 }
 
 const addSupport = f => addGitCrate(f, GIT_FIXTURES[0]);
-const addKit = f => addGitCrate(f, GIT_FIXTURES[1]);
+const addKit = async f => { await addGitCrate(f, GIT_FIXTURES[1]); await addGitCrate(f, GIT_FIXTURES[2]); };
 
 test("pinned SQLite and Ring build outputs join exact Cargo metadata without requiring direct LOAD", () => {
   const f = fixture(); addRing(f);
@@ -795,7 +803,8 @@ test("complete synthetic Ubuntu filesystem and dpkg join emits deterministic not
       assert.equal(first.value.sha256, digest(first.value.bytes));
       const body = first.value.bytes.toString();
       assert.match(body, /Cargo hraness-support-foundation 0\.4\.0 \(MIT\) \/ LICENSE/u);
-      assert.match(body, /Cargo hraness-cli-kit 0\.8\.1 \(MIT\) \/ LICENSE/u);
+      assert.match(body, /Cargo hraness-cli-kit 0\.9\.0 \(MIT\) \/ LICENSE/u);
+      assert.match(body, /Cargo hraness-control-kit 0\.9\.0 \(MIT\) \/ LICENSE/u);
       assert.match(body, /SQLite 3\.53\.2 amalgamation/u);
       assert.doesNotMatch(body, /===== Cargo aicharts-custody /u);
       for (const name of ringLicenses) assert.ok(body.includes(`Cargo ring 0.17.14 (Apache-2.0 AND ISC) / ${name}`));

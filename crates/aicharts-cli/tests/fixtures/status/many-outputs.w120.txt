@@ -1,0 +1,16 @@
+== Status ==
+aicharts
+● Collecting · Last pass 4 min ago · last sync 50 min ago
+
+Usage dashboard  aicharts open dashboard
+Outputs (9)      aicharts outputs
+Support          aicharts open support
+
+== Outputs ==
+Outputs · /Users/you/Library/Application Support/AI Charts/outputs
+chart 8.csv · 2 KB · 10 min ago
+chart 7.csv · 2 KB · 20 min ago
+chart 6.csv · 2 KB · 30 min ago
+chart 5.csv · 2 KB · 40 min ago
+chart 4.csv · 2 KB · 50 min ago
+and 4 more · aicharts outputs --all

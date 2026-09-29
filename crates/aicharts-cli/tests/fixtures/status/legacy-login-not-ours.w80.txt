@@ -1,0 +1,10 @@
+== Status ==
+aicharts
+● Collecting · Last pass 4 min ago · last sync 50 min ago
+
+Usage dashboard  aicharts open dashboard
+Support          aicharts open support
+
+== Outputs ==
+Outputs · /Users/you/Library/Application Support/AI Charts/outputs
+No outputs yet.
