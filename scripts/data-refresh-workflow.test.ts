@@ -397,7 +397,7 @@ describe("scheduled model-data refresh", () => {
 
   test("publishes only the fifteen current owned snapshots through the protected-branch contract", () => {
     const publish = String(step("publish").run);
-    // About 15 minutes of validation plus two bounded publication rounds.
+    // A few minutes of data-scoped validation plus two bounded publication rounds.
     expect(refresh["timeout-minutes"]).toBe(90);
     expect(refresh.env).toMatchObject({
       PUBLISH_DISPATCH_WAIT: "18",
@@ -435,14 +435,21 @@ describe("scheduled model-data refresh", () => {
     expect(String(step("snapshot").run)).toContain('"$USAGE_REGISTRY_PATH"');
     expect(String(step("snapshot").run)).toContain('"$ATLAS_VALS_PATH"');
     expect(String(step("snapshot").run)).toContain("del(.benchmarks[].source.retrievedAt)");
+    // A data-scoped gate fails before a PR opens; the PR's Required CI stays the complete gate.
     expect(step("validation")).toMatchObject({
       "continue-on-error": true,
-      if: "steps.snapshot.outputs.changed == 'true' && steps.usage_toolchain.outcome == 'success'",
-      run: "bun run check",
+      if: "steps.snapshot.outputs.changed == 'true' && steps.usage_toolchain.outcome != 'failure'",
+      env: { USAGE_CHANGED: "${{ steps.snapshot.outputs.usage_changed }}" },
     });
+    expect(String(step("validation").run).trim().split("\n")).toEqual([
+      "bun run check:generated",
+      "bun run check:cost-surfaces",
+      "bun run test",
+      'if [[ "$USAGE_CHANGED" == "true" ]]; then bun run usage:check; fi',
+    ]);
     expect(step("usage_toolchain")).toMatchObject({
       "continue-on-error": true,
-      if: "steps.snapshot.outputs.changed == 'true'",
+      if: "steps.snapshot.outputs.changed == 'true' && steps.snapshot.outputs.usage_changed == 'true'",
       run: "rustup show active-toolchain",
     });
     expect(steps.indexOf(step("usage_toolchain"))).toBeLessThan(steps.indexOf(step("validation")));
@@ -564,6 +571,11 @@ describe("scheduled model-data refresh", () => {
     expect(historical.status).toBe(1);
     expect(historical.stdout).toContain("Refresh changed unexpected file: data/artificial-analysis-intelligence.json");
     expect(historical.output).not.toContain("changed=true");
+    expect(material.output).toContain("usage_changed=false");
+    const usage = await executeSnapshotBoundary({ "data/usage-prices.json": { before, after: updated } });
+    expect(usage.status).toBe(0);
+    expect(usage.output).toContain("usage_changed=true");
+    expect(usage.output).toContain("changed=true");
   });
 
   test("retries transient installs and owns separate health and editorial queues", () => {

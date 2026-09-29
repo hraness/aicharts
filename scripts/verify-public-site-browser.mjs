@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { once } from "node:events";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import { createServer } from "node:net";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -27,6 +27,7 @@ let output = "";
 let browser;
 const results = [];
 let failure;
+const contextPool = Math.max(1, Math.min(6, Number(process.env.SITE_BROWSER_CONTEXTS ?? 3) || 3));
 try {
   if (!production) {
     const reservation = createServer();
@@ -48,73 +49,23 @@ try {
     }
     assert.ok(ready, `Next did not become ready: ${output}`);
   }
-  browser = await chromium.launch();
-  for (const width of [360, 390, 1440]) for (const theme of ["light", "dark"]) {
-    const context = await browser.newContext({ viewport: { width, height: width === 360 ? 740 : width === 390 ? 844 : 900 }, colorScheme: theme, hasTouch: width < 600 });
-    try {
-      const page = await context.newPage();
-      const errors = [];
-      const signedOutUsage = [];
-      page.on("pageerror", error => errors.push(error.message));
-      page.on("console", message => {
-        if (message.type() !== "error") return;
-        // Signed out, the live usage dashboard's own session-bound API answers 401.
-        // Record that exact response; every other console error still fails.
-        const source = message.location().url ?? "";
-        if (production && message.text() === "Failed to load resource: the server responded with a status of 401 ()" && source.startsWith(`${origin}/api/usage/`)) signedOutUsage.push(source);
-        else errors.push(message.text());
-      });
-      for (const route of routes) {
-        const response = await page.goto(origin + route);
-        assert.equal(response?.status(), 200, route);
-        await page.locator("main").waitFor();
-        await page.evaluate(() => document.fonts.ready);
-        const state = await page.evaluate(() => {
-          const footer = document.querySelector("#hraness-site-footer");
-          return {
-            overflow: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth, document.querySelector("main")?.getBoundingClientRect().right ?? 0) > innerWidth + 1,
-            viewportWidth: innerWidth,
-            bodyWidth: document.body.scrollWidth,
-            heading: document.querySelector("h1")?.textContent?.trim(),
-            theme: document.documentElement.dataset.theme,
-            footerPositions: [footer, footer?.querySelector(".hraness-site-footer__inner")].map(element => element ? getComputedStyle(element).position : null),
-            smallHeaderTargets: innerWidth > 600 ? [] : [...document.querySelectorAll("header a, header button, header summary")].filter(element => { const box = element.getBoundingClientRect(); return box.width > 0 && box.height > 0 && (box.width < 43.5 || box.height < 43.5); }).map(element => ({ label: element.textContent?.trim() || element.getAttribute("aria-label"), width: element.getBoundingClientRect().width, height: element.getBoundingClientRect().height })),
-          };
-        });
-        const name = `${width}-${theme}-${route === "/" ? "home" : route.slice(1).replaceAll("/", "_")}`;
-        const screenshot = await page.screenshot({ path: resolve(artifacts, `${name}.png`), fullPage: true, animations: "disabled" });
-        const screenshotWidth = screenshot.readUInt32BE(16);
-        await writeFile(resolve(artifacts, `${name}.json`), JSON.stringify({ route, state, screenshotWidth, errors, signedOutUsage }, null, 2));
-        assert.equal(screenshotWidth, width, `${route}: full-page screenshot width`);
-        assert.ok(!state.overflow, `${route}: horizontal overflow at ${width}`);
-        assert.ok(state.heading || config.minimalRoutes?.includes(route), `${route}: missing heading`);
-        assert.equal(state.theme, config.forcedTheme ?? theme, `${route}: system appearance`);
-        assert.ok(state.footerPositions.every(position => position === null || position === "static" || position === "relative"), `${route}: footer not in normal flow`);
-        assert.ok(state.footerPositions[0] || config.minimalRoutes?.includes(route), `${route}: footer missing`);
-        assert.deepEqual(state.smallHeaderTargets, [], `${route}: phone targets below 44px`);
-        assert.deepEqual(errors, [], `${route}: browser errors`);
-        results.push({ route, width, theme });
-      }
-      await page.goto(origin);
-      const targetTheme = config.forcedTheme ?? (theme === "light" ? "dark" : "light");
-      if (config.appearance !== "forced") {
-        const trigger = config.appearance === "palette" ? "summary" : "button";
-        await page.locator(`[data-hraness-appearance-menu][data-ready="true"] ${trigger}`).first().click();
-        await page.getByRole(config.appearance === "palette" ? "radio" : "menuitemradio", { name: new RegExp(`^${targetTheme}$`, "iu") }).click();
-      }
-      await page.waitForFunction(expected => document.documentElement.dataset.theme === expected, targetTheme);
-      await page.reload();
-      await page.waitForFunction(expected => document.documentElement.dataset.theme === expected, targetTheme);
-      const destination = await page.locator('header a[href^="/"]').evaluateAll(links => links.map(link => link.getAttribute("href")).find(href => href !== "/" && !href.startsWith("//")));
-      assert.ok(destination, "Header has no internal navigation link");
-      await page.locator(`header a[href=${JSON.stringify(destination)}]`).first().click();
-      await page.waitForURL(url => url.pathname === new URL(destination, origin).pathname);
-      await page.waitForFunction(expected => document.documentElement.dataset.theme === expected, targetTheme);
-      assert.deepEqual(errors, [], "Browser errors after appearance and navigation");
-    } finally { await context.close(); }
-  }
+  browser = await chromium.launch({ executablePath: await browserExecutable() });
+  // Contexts are isolated and share only the server, so a small pool of them runs at once.
+  // Each combination records its own results; they are joined in the fixed combination order.
+  const combinations = [360, 390, 1440].flatMap(width => ["light", "dark"].map(theme => ({ width, theme })));
+  const perCombination = combinations.map(() => []);
+  let next = 0;
+  const lane = async () => {
+    while (!failure && next < combinations.length) {
+      const index = next++;
+      try { await verifyCombination(combinations[index], perCombination[index]); } catch (error) { failure ??= error; }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(contextPool, combinations.length) }, lane));
+  results.push(...perCombination.flat());
+  if (failure) throw failure;
 } catch (error) {
-  failure = error;
+  failure ??= error;
 } finally {
   try { await browser?.close(); }
   finally {
@@ -128,3 +79,80 @@ try {
 await writeFile(resolve(artifacts, "results.json"), JSON.stringify({ passed: !failure, failure: failure?.message ?? null, origin, production, source: process.env.GITHUB_SHA ?? null, capturedAt: new Date().toISOString(), cleanup: "browser and owned server closed", results }, null, 2) + "\n");
 if (failure) throw failure;
 console.log(`Verified ${results.length} route/viewport/theme combinations at ${origin}.`);
+
+/** Prefer an explicit or preinstalled Chrome so CI needs no browser download. */
+async function browserExecutable() {
+  const candidates = [process.env.CHROMIUM_EXECUTABLE_PATH, chromium.executablePath(), "/usr/bin/google-chrome", "/usr/bin/chromium", "/usr/bin/chromium-browser",
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", "/Applications/Chromium.app/Contents/MacOS/Chromium"];
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+    try { await access(candidate); return candidate; } catch { /* Try the next installed browser. */ }
+  }
+  return undefined;
+}
+
+async function verifyCombination({ width, theme }, results) {
+  const context = await browser.newContext({ viewport: { width, height: width === 360 ? 740 : width === 390 ? 844 : 900 }, colorScheme: theme, hasTouch: width < 600 });
+  try {
+    const page = await context.newPage();
+    const errors = [];
+    const signedOutUsage = [];
+    page.on("pageerror", error => errors.push(error.message));
+    page.on("console", message => {
+      if (message.type() !== "error") return;
+      // Signed out, the live usage dashboard's own session-bound API answers 401.
+      // Record that exact response; every other console error still fails.
+      const source = message.location().url ?? "";
+      if (production && message.text() === "Failed to load resource: the server responded with a status of 401 ()" && source.startsWith(`${origin}/api/usage/`)) signedOutUsage.push(source);
+      else errors.push(message.text());
+    });
+    for (const route of routes) {
+      if (failure) return;
+      const response = await page.goto(origin + route);
+      assert.equal(response?.status(), 200, route);
+      await page.locator("main").waitFor();
+      await page.evaluate(() => document.fonts.ready);
+      const state = await page.evaluate(() => {
+        const footer = document.querySelector("#hraness-site-footer");
+        return {
+          overflow: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth, document.querySelector("main")?.getBoundingClientRect().right ?? 0) > innerWidth + 1,
+          viewportWidth: innerWidth,
+          bodyWidth: document.body.scrollWidth,
+          heading: document.querySelector("h1")?.textContent?.trim(),
+          theme: document.documentElement.dataset.theme,
+          footerPositions: [footer, footer?.querySelector(".hraness-site-footer__inner")].map(element => element ? getComputedStyle(element).position : null),
+          smallHeaderTargets: innerWidth > 600 ? [] : [...document.querySelectorAll("header a, header button, header summary")].filter(element => { const box = element.getBoundingClientRect(); return box.width > 0 && box.height > 0 && (box.width < 43.5 || box.height < 43.5); }).map(element => ({ label: element.textContent?.trim() || element.getAttribute("aria-label"), width: element.getBoundingClientRect().width, height: element.getBoundingClientRect().height })),
+        };
+      });
+      const name = `${width}-${theme}-${route === "/" ? "home" : route.slice(1).replaceAll("/", "_")}`;
+      const screenshot = await page.screenshot({ path: resolve(artifacts, `${name}.png`), fullPage: true, animations: "disabled" });
+      const screenshotWidth = screenshot.readUInt32BE(16);
+      await writeFile(resolve(artifacts, `${name}.json`), JSON.stringify({ route, state, screenshotWidth, errors, signedOutUsage }, null, 2));
+      assert.equal(screenshotWidth, width, `${route}: full-page screenshot width`);
+      assert.ok(!state.overflow, `${route}: horizontal overflow at ${width}`);
+      assert.ok(state.heading || config.minimalRoutes?.includes(route), `${route}: missing heading`);
+      assert.equal(state.theme, config.forcedTheme ?? theme, `${route}: system appearance`);
+      assert.ok(state.footerPositions.every(position => position === null || position === "static" || position === "relative"), `${route}: footer not in normal flow`);
+      assert.ok(state.footerPositions[0] || config.minimalRoutes?.includes(route), `${route}: footer missing`);
+      assert.deepEqual(state.smallHeaderTargets, [], `${route}: phone targets below 44px`);
+      assert.deepEqual(errors, [], `${route}: browser errors`);
+      results.push({ route, width, theme });
+    }
+    await page.goto(origin);
+    const targetTheme = config.forcedTheme ?? (theme === "light" ? "dark" : "light");
+    if (config.appearance !== "forced") {
+      const trigger = config.appearance === "palette" ? "summary" : "button";
+      await page.locator(`[data-hraness-appearance-menu][data-ready="true"] ${trigger}`).first().click();
+      await page.getByRole(config.appearance === "palette" ? "radio" : "menuitemradio", { name: new RegExp(`^${targetTheme}$`, "iu") }).click();
+    }
+    await page.waitForFunction(expected => document.documentElement.dataset.theme === expected, targetTheme);
+    await page.reload();
+    await page.waitForFunction(expected => document.documentElement.dataset.theme === expected, targetTheme);
+    const destination = await page.locator('header a[href^="/"]').evaluateAll(links => links.map(link => link.getAttribute("href")).find(href => href !== "/" && !href.startsWith("//")));
+    assert.ok(destination, "Header has no internal navigation link");
+    await page.locator(`header a[href=${JSON.stringify(destination)}]`).first().click();
+    await page.waitForURL(url => url.pathname === new URL(destination, origin).pathname);
+    await page.waitForFunction(expected => document.documentElement.dataset.theme === expected, targetTheme);
+    assert.deepEqual(errors, [], "Browser errors after appearance and navigation");
+  } finally { await context.close(); }
+}

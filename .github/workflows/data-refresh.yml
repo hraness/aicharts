@@ -44,8 +44,8 @@ jobs:
   refresh:
     name: Refresh benchmark and release data
     runs-on: ubuntu-latest
-    # Validation takes about 15 minutes; publication then waits on required
-    # CI for up to two bounded rounds (see PUBLISH_* below).
+    # Data-scoped validation takes a few minutes; publication then waits on
+    # required CI for up to two bounded rounds (see PUBLISH_* below).
     timeout-minutes: 90
     env:
       ARENA_MEDIA_PATH: data/arena-media.json
@@ -271,6 +271,7 @@ jobs:
           changed_files="$(git diff --name-only)"
           if [[ -z "$changed_files" ]]; then
             echo "first_party_changed=false" >> "$GITHUB_OUTPUT"
+            echo "usage_changed=false" >> "$GITHUB_OUTPUT"
             echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "Checked benchmark and release data are unchanged."
             exit 0
@@ -336,6 +337,12 @@ jobs:
           else
             echo "first_party_changed=true" >> "$GITHUB_OUTPUT"
           fi
+          # The Rust usage crates read the usage catalog files; other data never reaches them.
+          if git diff --quiet -- "$USAGE_PRICES_PATH" "$USAGE_REGISTRY_PATH"; then
+            echo "usage_changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "usage_changed=true" >> "$GITHUB_OUTPUT"
+          fi
           if [[ -z "$changed_files" ]]; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "Source checks succeeded without publishable data changes."
@@ -343,9 +350,9 @@ jobs:
           fi
 
           echo "changed=true" >> "$GITHUB_OUTPUT"
-      - name: Install pinned Rust toolchain for changed data
+      - name: Install pinned Rust toolchain for changed usage data
         id: usage_toolchain
-        if: steps.snapshot.outputs.changed == 'true'
+        if: steps.snapshot.outputs.changed == 'true' && steps.snapshot.outputs.usage_changed == 'true'
         continue-on-error: true
         run: rustup show active-toolchain
       # Restore the Linux workspace cache that CI saves on main; never save here.
@@ -356,11 +363,22 @@ jobs:
         with:
           shared-key: linux-workspace
           save-if: false
-      - name: Validate updated application
+      # A fast, data-scoped gate that fails before a PR opens. The update PR's
+      # Required CI (typecheck, lint, build, browser, Worker and Rust gates)
+      # remains the complete admission gate, and auto-merge waits on it; this
+      # step no longer repeats that whole gate serially first.
+      - name: Validate the refreshed data
         id: validation
-        if: steps.snapshot.outputs.changed == 'true' && steps.usage_toolchain.outcome == 'success'
+        if: steps.snapshot.outputs.changed == 'true' && steps.usage_toolchain.outcome != 'failure'
         continue-on-error: true
-        run: bun run check
+        shell: bash
+        env:
+          USAGE_CHANGED: ${{ steps.snapshot.outputs.usage_changed }}
+        run: |
+          bun run check:generated
+          bun run check:cost-surfaces
+          bun run test
+          if [[ "$USAGE_CHANGED" == "true" ]]; then bun run usage:check; fi
       - name: Mint the data-refresh writer token
         id: writer
         if: steps.validation.outcome == 'success' && steps.snapshot.outputs.changed == 'true'
@@ -400,7 +418,7 @@ jobs:
             gh pr close "$stale_number" --delete-branch --comment "Superseded by the newer refresh in ${run_url}." || true
           done < <(gh pr list --state open --limit 50 --json number,headRefName --jq '.[] | select(.headRefName | startswith("automation/model-data-refresh-")) | .number')
 
-          printf -v pr_body 'Automated model-data refresh from %s.\n\nAll checked snapshots were validated with `bun run check` before this PR was created. Imports retain their admitted task, version, and scoring boundaries. Arena publishes complete overall media cohorts; Open ASR reproduces a reviewed pinned cohort. Historical Intelligence Index v4.1.1 remains unchanged. Required CI runs automatically because this PR is opened by the data-refresh app.' "$run_url"
+          printf -v pr_body 'Automated model-data refresh from %s.\n\nAll checked snapshots passed the generated-data, cost-surface and unit checks (plus the Rust usage checks when usage catalogs changed) before this PR was created; Required CI runs the complete gate. Imports retain their admitted task, version, and scoring boundaries. Arena publishes complete overall media cohorts; Open ASR reproduces a reviewed pinned cohort. Historical Intelligence Index v4.1.1 remains unchanged. Required CI runs automatically because this PR is opened by the data-refresh app.' "$run_url"
           pr_url="$(gh pr create --base main --head "$REFRESH_BRANCH" --title "chore: refresh model data" --body "$pr_body")"
           echo "pr_url=${pr_url}" >> "$GITHUB_OUTPUT"
           pr_number="${pr_url##*/}"

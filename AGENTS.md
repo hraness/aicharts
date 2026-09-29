@@ -51,7 +51,7 @@
 - Keep analytics cookieless and production-only, and follow `docs/analytics-instrumentation.md`. Route capture through the typed `lib/analytics.ts` allowlist; do not import PostHog from feature code or send raw URLs, query strings, hashes, referrer paths, free-form text, visitor identities, or persistent identifiers. Bounded public content, provider, benchmark, model, profile, and source IDs are allowed.
 - Bind the shared footer to the `aicharts` audience, require the checked public Turnstile widget key, and keep newsletter consent separate from product use and every other Hraness audience.
 - Never expose `POSTHOG_API_KEY`, commit credentials, or provider secrets in browser variables, source, logs, fixtures, or documentation.
-- Run narrow tests while iterating and `bun run check` before handoff.
+- Run narrow tests while iterating and `bun run check:changed` before handoff: it runs `bun run check` minus the Rust and Worker gates whose CI change filters report no touched input (`--dry-run` shows the plan). Run the complete `bun run check` when you cannot tell, and CI's `Required` always runs every applicable gate.
 
 <!-- hraness-public-copy:start -->
 - Public copy (websites, READMEs, docs, package and GitHub descriptions, CLI help, `llms.txt`, generated pages) follows `STYLE.md`, synced from hraness/.github. Text a model writes for publication also follows `GENERATION_STYLE.md`.

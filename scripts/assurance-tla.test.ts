@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { evaluateTlc, manifestSchema, runTla, tlaProfiles, validateTlcConfig, type ModelCase, type ProcessResult, type TraceState } from "./assurance-tla";
+import { evaluateTlc, manifestSchema, mapBounded, runTla, tlaCaseConcurrency, tlaProfiles, validateTlcConfig, type ModelCase, type ProcessResult, type TraceState } from "./assurance-tla";
 
 const models = resolve(import.meta.dir, "../verify/tla");
 const manifest = JSON.parse(readFileSync(resolve(models, "cases.json"), "utf8")) as { cases: ModelCase[] };
@@ -153,5 +153,42 @@ describe("nightly bounds profile", () => {
     await expect(runTla({ profile: "nightly", suite: "all" })).rejects.toThrow("nightly_profile_and_suite_must_match");
     await expect(runTla({ suite: "nightly" })).rejects.toThrow("nightly_profile_and_suite_must_match");
     await expect(runTla({ profile: "development", suite: "nightly" })).rejects.toThrow("nightly_profile_and_suite_must_match");
+  });
+});
+
+describe("bounded case pool", () => {
+  test("development runs at most four single-worker cases; nightly stays one at a time", () => {
+    expect(tlaCaseConcurrency("development", 1)).toBe(1);
+    expect(tlaCaseConcurrency("development", 2)).toBe(1);
+    expect(tlaCaseConcurrency("development", 4)).toBe(3);
+    expect(tlaCaseConcurrency("development", 16)).toBe(3);
+    expect(tlaCaseConcurrency("nightly", 4)).toBe(1);
+    expect(tlaCaseConcurrency("nightly", 16)).toBe(1);
+  });
+  test("results keep input order and in-flight work never exceeds the limit", async () => {
+    let inFlight = 0, peak = 0;
+    const delays = [30, 5, 20, 1, 15, 2, 10];
+    const results = await mapBounded(delays, 3, async (delay, index) => {
+      inFlight++; peak = Math.max(peak, inFlight);
+      await Bun.sleep(delay);
+      inFlight--;
+      return index;
+    });
+    expect(results).toEqual([0, 1, 2, 3, 4, 5, 6]);
+    expect(peak).toBe(3);
+  });
+  test("a failure stops new work and is reported only after in-flight work settles", async () => {
+    const started: number[] = [];
+    let settled = 0;
+    const run = mapBounded([0, 1, 2, 3, 4, 5], 2, async index => {
+      started.push(index);
+      if (index === 0) throw new Error("boom");
+      await Bun.sleep(10);
+      settled++;
+      return index;
+    });
+    await expect(run).rejects.toThrow("boom");
+    expect(settled).toBe(started.length - 1);
+    expect(started.length).toBeLessThan(6);
   });
 });
