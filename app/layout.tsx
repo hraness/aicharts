@@ -107,10 +107,8 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
           {children}
           <MarketingSiteFooter
             ariaLabel="AI Charts"
-            brand={(
-              // eslint-disable-next-line @next/next/no-img-element -- the generated app icon serves the canonical mark unchanged.
-              <img alt="" height={20} src="/icon.png" width={20} />
-            )}
+            brand={null}
+            brandMark="/marks/aicharts.svg"
             brandHref="/"
             brandLabel="AI Charts home"
             links={SITE_HEADER_LINKS}

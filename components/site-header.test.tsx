@@ -9,7 +9,7 @@ test("the shared header renders the canonical product wordmark on the shared foi
 
   expect(markup).toContain('class="hraness-marketing-header__brand"');
   expect(markup).toContain('data-foil=""');
-  expect(markup).toContain('src="/icon.png"');
+  expect(markup).toContain('src="/marks/aicharts.svg"');
   expect(markup).toContain("> AI Charts</a>");
   expect(markup).not.toContain("◉");
   expect(markup).not.toContain(">aicharts.io<");
