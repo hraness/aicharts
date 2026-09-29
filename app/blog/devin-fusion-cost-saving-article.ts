@@ -250,7 +250,7 @@ function baselineBlocks(
   }
   return [
     table(
-      `Single-model configurations from the AI Charts snapshot retrieved ${retrievedAt}`,
+      `Single-model configurations from the aicharts snapshot retrieved ${retrievedAt}`,
       ["Model", "Agent", "Setting", "AA Index", "Mean cost per task"],
       present.map(snapshotRowCells),
     ),
@@ -268,7 +268,7 @@ function fusionStatusBlocks(
   if (fusionRecords.length === 0) {
     return [
       paragraph(
-        `The snapshot retrieved ${retrievedAt} does not include a Fusion configuration. The chart therefore cannot confirm or contradict Cognition’s figures yet. AI Charts will show Fusion rows once a later checked snapshot includes them.`,
+        `The snapshot retrieved ${retrievedAt} does not include a Fusion configuration. The chart therefore cannot confirm or contradict Cognition’s figures yet. aicharts will show Fusion rows once a later checked snapshot includes them.`,
       ),
     ];
   }
@@ -280,7 +280,7 @@ function fusionStatusBlocks(
       `The snapshot retrieved ${retrievedAt} includes ${count}. The values below are copied from that snapshot and belong to its index version, not to Cognition’s chart.`,
     ),
     table(
-      `Fusion configurations in the AI Charts snapshot retrieved ${retrievedAt}`,
+      `Fusion configurations in the aicharts snapshot retrieved ${retrievedAt}`,
       ["Model", "Agent", "Setting", "AA Index", "Mean cost per task"],
       fusionRecords.map(snapshotRowCells),
     ),
@@ -334,7 +334,7 @@ export function createDevinFusionCostSavingArticle(
         `“${DEVIN_FUSION.headline}.”`,
       ),
       paragraph(
-        "That sentence carries one number and several comparisons. This note identifies which comparison produces the 39%, lists the other savings Cognition reports in the same post and its two earlier Fusion posts, and states what the AI Charts coding-agent snapshot can and cannot show about the new harness. Every percentage below is a Cognition-reported measurement unless the text says otherwise.",
+        "That sentence carries one number and several comparisons. This note identifies which comparison produces the 39%, lists the other savings Cognition reports in the same post and its two earlier Fusion posts, and states what the aicharts coding-agent snapshot can and cannot show about the new harness. Every percentage below is a Cognition-reported measurement unless the text says otherwise.",
       ),
       heading("Where the 39% comes from"),
       paragraph(
@@ -454,9 +454,9 @@ export function createDevinFusionCostSavingArticle(
         DEVIN_FUSION.fableVersusOpusLead,
         " than Opus 4.8 while scoring higher on FrontierCode, even though Fable’s per-token price is about twice as high. Both are Cognition’s measurements of its own harness, and both support its stated conclusion that cost per completed task is the number to compare, rather than price per token.",
       ),
-      heading("What the AI Charts snapshot shows"),
+      heading("What the aicharts snapshot shows"),
       paragraph(
-        "The AI Charts coding-agent chart is a checked snapshot of the public ",
+        "The aicharts coding-agent chart is a checked snapshot of the public ",
         { href: BLOG_SOURCES.artificialAnalysisCodingAgents.url, text: "Artificial Analysis coding-agents page" },
         `, retrieved ${retrievedAt}. The snapshot stores Coding Agent Index v1.5 with DeepSWE v1.1, Terminal-Bench 4, and SWE-Atlas-QnA as component benchmarks. Compare its Fusion rows only with configurations measured in this same source cohort.`,
       ),
@@ -490,7 +490,7 @@ export function createDevinFusionCostSavingArticle(
           "Mean cost per run or per task is an evaluation average. It is not a subscription price, a production invoice, or a guarantee for a specific repository.",
         ],
         [
-          "The AI Charts snapshot is checked on its own schedule and stores an earlier index composition. A Fusion row that appears on the live source page is not in the chart until a later checked snapshot includes it.",
+          "The aicharts snapshot is checked on its own schedule and stores an earlier index composition. A Fusion row that appears on the live source page is not in the chart until a later checked snapshot includes it.",
         ],
         [
           "Fusion depends on how well the lead delegates. Cognition’s own June examples include a hard TypeScript feature whose score fell from 54 to 27 when the coding was delegated, so the average saving does not describe every task.",

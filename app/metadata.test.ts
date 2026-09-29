@@ -42,9 +42,9 @@ describe("page metadata ownership", () => {
 
   test("gives focused comparison workspaces distinct indexable identities", () => {
     for (const [metadata, path, title] of [
-      [codingMetadata, "/coding", "Coding agent comparisons | AI Charts"],
-      [benchmarksMetadata, "/benchmarks", "AI benchmark explorer | AI Charts"],
-      [calculatorMetadata, "/calculator", "ChatGPT Pro vs API vs GPUs: cost calculator | AI Charts"],
+      [codingMetadata, "/coding", "Coding agent comparisons | aicharts"],
+      [benchmarksMetadata, "/benchmarks", "AI benchmark explorer | aicharts"],
+      [calculatorMetadata, "/calculator", "ChatGPT Pro vs API vs GPUs: cost calculator | aicharts"],
     ] as const) {
       expect(metadata).toMatchObject({
         title,

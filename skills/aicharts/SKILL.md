@@ -1,9 +1,9 @@
 ---
 name: aicharts
-description: Retrieve public AI Charts benchmark cohorts with source, version, units and coverage intact; inspect authorized local usage or Codex turn observations; or run explicitly requested local collection with a verified installed CLI. Use for benchmark-grounded comparisons, bounded usage summaries and local collector operation. Do not use for universal rankings, billing estimates from token totals, transcript analysis, account enrollment, uploads, migration or recovery.
+description: Retrieve public aicharts benchmark cohorts with source, version, units and coverage intact; inspect authorized local usage or Codex turn observations; or run explicitly requested local collection with a verified installed CLI. Use for benchmark-grounded comparisons, bounded usage summaries and local collector operation. Do not use for universal rankings, billing estimates from token totals, transcript analysis, account enrollment, uploads, migration or recovery.
 ---
 
-# AI Charts
+# aicharts
 
 Choose the requested mode: public benchmarks, retained-ledger inspection, Codex turn observations, or explicitly authorized local collection. Public benchmarks never need private usage or sign-in. The local modes make no network request. Analysis does not authorize collection or ledger changes.
 
@@ -45,4 +45,4 @@ Only when the user requests collection, read [references/local-operations.md](re
 
 ## Optional updates and support
 
-After the requested analysis is complete, use [references/support.md](references/support.md) once at the outer task closeout. Free AI Charts product updates and optional paid development support never gate the work. Preserve the user's refusal and shared preferences. Never install a runtime or binary for an invitation, include private usage in it, or interrupt collection, authentication, uploads, recovery or background operations.
+After the requested analysis is complete, use [references/support.md](references/support.md) once at the outer task closeout. Free aicharts product updates and optional paid development support never gate the work. Preserve the user's refusal and shared preferences. Never install a runtime or binary for an invitation, include private usage in it, or interrupt collection, authentication, uploads, recovery or background operations.

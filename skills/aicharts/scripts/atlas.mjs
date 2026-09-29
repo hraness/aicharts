@@ -220,7 +220,7 @@ export async function run(args, { fetchImpl = globalThis.fetch, now = () => new 
     dataset: { ...dataset.dataset, points: points.selected }, page: points.page };
 }
 
-const HELP = `AI Charts public benchmark helper
+const HELP = `aicharts public benchmark helper
 
   node scripts/atlas.mjs catalog [--query WORDS] [--offset N] [--limit N]
   node scripts/atlas.mjs dataset ID [--offset N] [--limit N]

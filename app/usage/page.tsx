@@ -15,12 +15,12 @@ import "@/styles/usage.css";
 
 export const metadata = createPublicSiteMetadata({
   ...searchSite,
-  title: "AI usage tracking | AI Charts",
+  title: "AI usage tracking | aicharts",
   description: "Track tokens, models, cost, and speed across your coding agents and AI clients, measured on your own machine and listed with the sources behind each total.",
 }, { canonicalPath: "/usage" });
 
 const steps = [
-  ["01", "Build the collector", "Build the aicharts CLI from the AI Charts GitHub repository with Rust. It reads token counts from your clients' local files. A few clients, such as Cursor and Warp, need a refresh step first."],
+  ["01", "Build the collector", "Build the aicharts CLI from the aicharts GitHub repository with Rust. It reads token counts from your clients' local files. A few clients, such as Cursor and Warp, need a refresh step first."],
   ["02", "Connect your account", "On a Mac, run aicharts enroll and approve the pairing in your browser. Each enrolled Mac reports to one account."],
   ["03", "Publish on a schedule", "Set up a launchd job that runs aicharts autosubmit. Each run refreshes your clients and uploads their latest totals, so your dashboard stays current without manual exports."],
 ] as const;
@@ -42,7 +42,7 @@ export default function UsagePage() {
         <div className="usage-hero__copy">
           <p className="usage-eyebrow">Usage tracking</p>
           <h1 id="usage-title">See how many tokens your AI agents use</h1>
-          <p className="usage-hero__lede">The AI Charts collector counts tokens, cost, and speed for each model across the coding agents on your machine. Prompts, transcripts, file paths, and provider credentials stay on your machine, and each total lists the sources it covers.</p>
+          <p className="usage-hero__lede">The aicharts collector counts tokens, cost, and speed for each model across the coding agents on your machine. Prompts, transcripts, file paths, and provider credentials stay on your machine, and each total lists the sources it covers.</p>
           <div className="usage-hero__actions">
             <Link className="usage-button usage-button--primary" href="/dashboard">Open your dashboard <span className="usage-button__arrow" aria-hidden="true">→</span></Link>
             <Link className="usage-button usage-button--quiet" href="#usage-setup">Set up tracking</Link>
@@ -53,7 +53,7 @@ export default function UsagePage() {
 
       <section className="usage-section usage-similar" aria-labelledby="usage-similar-title">
         <h2 id="usage-similar-title">Similar tools</h2>
-        <p><a href="https://ccusage.com">ccusage</a> and <a href="https://tokscale.ai">Tokscale</a> also read coding agents&rsquo; local logs. ccusage runs without an install and prints daily, weekly, monthly, and session reports. Tokscale adds a web dashboard and a public leaderboard, and the AI Charts collector builds on its open-source parsers. AI Charts shows which sources each total covers, and on a Mac it can sync daily totals to your dashboard. Checked {formatCheckedOn(homeAlternativesCheckedOn)}.</p>
+        <p><a href="https://ccusage.com">ccusage</a> and <a href="https://tokscale.ai">Tokscale</a> also read coding agents&rsquo; local logs. ccusage runs without an install and prints daily, weekly, monthly, and session reports. Tokscale adds a web dashboard and a public leaderboard, and the aicharts collector builds on its open-source parsers. aicharts shows which sources each total covers, and on a Mac it can sync daily totals to your dashboard. Checked {formatCheckedOn(homeAlternativesCheckedOn)}.</p>
       </section>
 
       <section className="usage-section" id="usage-setup" aria-labelledby="usage-setup-title">

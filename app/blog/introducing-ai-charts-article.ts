@@ -87,14 +87,14 @@ export function createIntroducingAiChartsArticle(
   return {
     sourceNote: BLOG_SOURCE_NOTE,
     slug: INTRODUCING_AI_CHARTS_SLUG,
-    title: "Introducing AI Charts",
+    title: "Introducing aicharts",
     dek:
-      "AI Charts plots published AI benchmark results, and each benchmark snapshot records its source, named version, and retrieval date.",
-    focusPhrase: "AI Charts benchmark charts",
+      "aicharts plots published AI benchmark results, and each benchmark snapshot records its source, named version, and retrieval date.",
+    focusPhrase: "aicharts benchmark charts",
     seoDescription:
-      "AI Charts plots published AI model and coding-agent benchmark results by score, cost, time, and tokens, with each snapshot's source, version, and date.",
+      "aicharts plots published AI model and coding-agent benchmark results by score, cost, time, and tokens, with each snapshot's source, version, and date.",
     keywords: [
-      "AI Charts",
+      "aicharts",
       "AI benchmarks",
       "coding agents",
       "model comparison",
@@ -102,7 +102,7 @@ export function createIntroducingAiChartsArticle(
     ],
     publishedAt: INTRODUCING_AI_CHARTS_PUBLISHED_AT,
     updatedAt: INTRODUCING_AI_CHARTS_UPDATED_AT,
-    section: "About AI Charts",
+    section: "About aicharts",
     sourceIds: [
       "artificialAnalysisCodingAgents",
       "artificialAnalysisIntelligenceIndex",
@@ -116,7 +116,7 @@ export function createIntroducingAiChartsArticle(
     showRelatedProducts: true,
     body: [
       paragraph(
-        "AI Charts plots published benchmark results for AI models and coding agents against cost, time, and token use. Each chart names the source of its numbers and the date they were retrieved, because a score is hard to use without knowing what produced it and when.",
+        "aicharts plots published benchmark results for AI models and coding agents against cost, time, and token use. Each chart names the source of its numbers and the date they were retrieved, because a score is hard to use without knowing what produced it and when.",
       ),
       heading("A score means little without its setup"),
       paragraph(
@@ -129,12 +129,12 @@ export function createIntroducingAiChartsArticle(
       ),
       heading("Who it is for"),
       paragraph(
-        "AI Charts is for someone choosing a model or coding agent who wants to weigh score against cost, time, or tokens. A typical question is which configurations score about as well as the leader for much less per task. The chart answers it with the cost frontier: a configuration is on the frontier only when nothing cheaper scores at least as well. The note ",
+        "aicharts is for someone choosing a model or coding agent who wants to weigh score against cost, time, or tokens. A typical question is which configurations score about as well as the leader for much less per task. The chart answers it with the cost frontier: a configuration is on the frontier only when nothing cheaper scores at least as well. The note ",
         links.aaIndexCost,
         " walks through that trade-off on one dated snapshot.",
       ),
       paragraph(
-        "If you want one overall rank across every kind of task, use something else, because AI Charts builds no composite score of its own. Where a source publishes an index, such as Artificial Analysis's, AI Charts shows that index as the source defines it. Reasoning, research, memory, image, video, and audio results stay on their own scales. AI Charts also cannot tell you how a model will do on your own codebase. The note ",
+        "If you want one overall rank across every kind of task, use something else, because aicharts builds no composite score of its own. Where a source publishes an index, such as Artificial Analysis's, aicharts shows that index as the source defines it. Reasoning, research, memory, image, video, and audio results stay on their own scales. aicharts also cannot tell you how a model will do on your own codebase. The note ",
         links.holdouts,
         " explains why a test set the model never saw is still worth building.",
       ),
@@ -150,7 +150,7 @@ export function createIntroducingAiChartsArticle(
       paragraph(
         "The ",
         { href: "/benchmarks", text: "benchmarks library" },
-        " covers reasoning, research, memory, images, video, audio, and world models. It labels each entry as a charted result, a source guide, or an emerging evaluation. A source guide describes a benchmark whose scores AI Charts has not imported, and it shows no numbers.",
+        " covers reasoning, research, memory, images, video, audio, and world models. It labels each entry as a charted result, a source guide, or an emerging evaluation. A source guide describes a benchmark whose scores aicharts has not imported, and it shows no numbers.",
       ),
       paragraph(
         "The ",
@@ -170,12 +170,12 @@ export function createIntroducingAiChartsArticle(
       paragraph(
         "The aim is a catalog in which any published benchmark result someone might use to pick a model can be read with its configuration, version, cost, and date. Benchmarks that have only a source guide today are meant to become charts once their data can be checked the same way. New notes will follow the questions readers bring to the charts, and each benchmark will keep its own scale.",
       ),
-      heading("What AI Charts does not do, and its status"),
+      heading("What aicharts does not do, and its status"),
       paragraph(
-        `AI Charts does not run evaluations. The scores, costs, and token counts come from the benchmark owners and aggregators it cites, and it is not affiliated with them or with the model providers in the data. Cost figures keep the source's denominator, such as per task or per full evaluation, so two costs are comparable only when that denominator matches. The charts show dated snapshots: the Intelligence Index snapshot is checked for updates every four hours and the coding-agent snapshot daily, and the earlier v${ARTIFICIAL_ANALYSIS_INTELLIGENCE_VERSION} data is frozen. Some vendor-run results, such as CursorBench, appear as supplemental evidence for a model running inside that vendor's product, not as an independent standard.`,
+        `aicharts does not run evaluations. The scores, costs, and token counts come from the benchmark owners and aggregators it cites, and it is not affiliated with them or with the model providers in the data. Cost figures keep the source's denominator, such as per task or per full evaluation, so two costs are comparable only when that denominator matches. The charts show dated snapshots: the Intelligence Index snapshot is checked for updates every four hours and the coding-agent snapshot daily, and the earlier v${ARTIFICIAL_ANALYSIS_INTELLIGENCE_VERSION} data is frozen. Some vendor-run results, such as CursorBench, appear as supplemental evidence for a model running inside that vendor's product, not as an independent standard.`,
       ),
       paragraph(
-        "The benchmark charts and notes are live at aicharts.io. AI Charts also includes a local tool that measures your own coding agents' token use. Its status is In development: a Linux x86-64 build for local reports is on GitHub Releases, and on a Mac you build it from source.",
+        "The benchmark charts and notes are live at aicharts.io. aicharts also includes a local tool that measures your own coding agents' token use. Its status is In development: a Linux x86-64 build for local reports is on GitHub Releases, and on a Mac you build it from source.",
       ),
     ],
   };

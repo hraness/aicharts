@@ -103,7 +103,7 @@ describe("benchmark dataset surface", () => {
   });
   test("publishes canonical, indexable page metadata", () => {
     expect(metadata).toMatchObject({
-      title: "Benchmark data and method | AI Charts",
+      title: "Benchmark data and method | aicharts",
       description: BENCHMARK_DATA_DESCRIPTION,
       alternates: { canonical: "https://aicharts.io/data" },
       robots: INDEXABLE_ROBOTS,
@@ -202,7 +202,7 @@ describe("benchmark dataset surface", () => {
     expect(markup).toContain("not the coding-agent chart");
     expect(markup).toContain("complete cost breakdown but a reported zero total");
     expect(markup).toContain("Rows with incomplete cost are excluded");
-    expect(markup).toContain("frontier classification is AI Charts analysis");
+    expect(markup).toContain("frontier classification is aicharts analysis");
     expect(markup).toContain("every four hours");
     expect(markup).toContain('id="source"');
     expect(markup).toContain('id="benchmarks"');
@@ -219,7 +219,7 @@ describe("benchmark dataset surface", () => {
     expect(markup).toContain(
       'href="' + CODING_AGENT_DATASET_DOWNLOAD_PATH + '"',
     );
-    expect(markup).toContain("AI Charts does not recalculate");
+    expect(markup).toContain("aicharts does not recalculate");
     expect(markup).toContain("real-time mirror");
 
     for (const definition of CODING_AGENT_BENCHMARK_DEFINITIONS) {
@@ -305,7 +305,7 @@ describe("benchmark dataset surface", () => {
       isBasedOn: snapshot.source.url,
       publisher: {
         "@type": "Organization",
-        name: "AI Charts",
+        name: "aicharts",
         url: "https://aicharts.io/",
       },
       url: "https://aicharts.io/data",

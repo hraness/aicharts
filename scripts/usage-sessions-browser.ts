@@ -133,7 +133,7 @@ export async function verifyUsageSessions(browser: Browser, baseUrl: string): Pr
       const reclaimed = page.locator(".usage-sessions__aggregate > div").filter({ has: page.getByText("Tokens reclaimed", { exact: true }) }).locator("dd");
       invariant(await reclaimed.textContent() === "50", "Reclaimed tokens must follow the selected sessions.");
       await events.setInputFiles({ name: "wrong.jsonl", mimeType: "application/x-ndjson", buffer: Buffer.from('{"prompt":"DO_NOT_ECHO_COMPACTION_SOURCE"}') });
-      await page.getByRole("alert").filter({ hasText: "valid gobstopper events log" }).waitFor();
+      await page.getByRole("alert").filter({ hasText: "valid Gobstopper events log" }).waitFor();
       invariant(await applied.textContent() === "1", "Rejected events must preserve the last valid log.");
       invariant(!(await page.locator("body").textContent())?.includes("DO_NOT_ECHO_COMPACTION_SOURCE"), "Rejected compaction content must never be echoed.");
       await page.getByRole("button", { name: "Explore an example", exact: true }).click();

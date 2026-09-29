@@ -570,7 +570,7 @@ function projectLatestJob(value: unknown): unknown {
   return { finishedAt: value.finished_at, name: value.name };
 }
 
-/** Narrows the live artifact to the measured facts AI Charts owns. */
+/** Narrows the live artifact to the measured facts aicharts owns. */
 export function parseDeepSweSourceSnapshot(
   value: unknown,
 ): Result<DeepSweSourceSnapshot, z.ZodError> {

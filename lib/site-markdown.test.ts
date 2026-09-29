@@ -127,7 +127,7 @@ describe("markdown representations", () => {
 
     expect(home).toMatchObject({ found: true, contentType: MARKDOWN_CONTENT_TYPE });
     expect(home.body).toContain(`# ${homeHeading}`);
-    expect(home.body).toContain("## About AI Charts");
+    expect(home.body).toContain("## About aicharts");
     expect(home.body).toContain(site.introduction);
     for (const href of [
       "https://artificialanalysis.ai/leaderboards/models",
@@ -176,7 +176,7 @@ describe("markdown representations", () => {
     expect(data.body).toContain("τ³-Banking 14%");
     expect(data.body).toContain("answer plus reasoning tokens only");
     expect(data.body).toContain("omitted from the historical matched-resource cohort");
-    expect(data.body).toContain("frontier classification is AI Charts analysis");
+    expect(data.body).toContain("frontier classification is aicharts analysis");
     expect(data.body).toContain(intelligence.source.methodologyUrl);
     expect(data.body).toContain(intelligence.source.termsUrl);
     expect(data.body).toContain(snapshot.source.url);
@@ -189,7 +189,7 @@ describe("markdown representations", () => {
     expect(cards.body).toContain(
       `${FIRST_PARTY_RELEASE_SOURCE_SUMMARY.labCount} labs across ${FIRST_PARTY_RELEASE_SOURCE_SUMMARY.sourceCount} first-party sources`,
     );
-    expect(cards.body).toContain("Each date shows when AI Charts first found the page, which can differ from the official release date.");
+    expect(cards.body).toContain("Each date shows when aicharts first found the page, which can differ from the official release date.");
     expect(cards.body).toContain("first observed");
     expect(cards.body).not.toContain("source changed");
     expect(cards.body).toContain("Claude Fable 5.1 and Claude Mythos 5.1");
@@ -315,8 +315,8 @@ describe("markdown representations", () => {
 describe("agent instruction file", () => {
   test("names when to use the existing chart, dataset, and notes", () => {
     const guide = agentGuideMarkdown(snapshot);
-    expect(guide).toContain("## When to use AI Charts");
-    expect(guide).toContain("Use AI Charts when you need a sourced comparison that keeps benchmark versions and system configurations explicit");
+    expect(guide).toContain("## When to use aicharts");
+    expect(guide).toContain("Use aicharts when you need a sourced comparison that keeps benchmark versions and system configurations explicit");
     expect(guide).toContain(site.introduction);
     expect(guide).toContain("/data/terminal-bench-4.json");
     expect(guide).toContain("/data/terminal-bench-science-0-1.json");

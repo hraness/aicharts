@@ -70,7 +70,7 @@ test("consolidates evidence links below the chart and leaves footer navigation t
   expect(source.indexOf('href="/data#source"')).toBeGreaterThan(methodIndex);
   expect(source.indexOf('href="/data/coding-agents.json"')).toBeGreaterThan(methodIndex);
   expect(source.match(/href="\/data\/coding-agents.json"/gu)).toHaveLength(1);
-  expect(source).not.toContain('aria-label="AI Charts resources"');
+  expect(source).not.toContain('aria-label="aicharts resources"');
   expect(source).not.toContain('href="/blog"');
 });
 

@@ -20,7 +20,7 @@ import "@/styles/usage-metric-explorer.css";
 import "@/styles/usage-account.css";
 
 export const metadata: Metadata = {
-  title: "Usage dashboard | AI Charts",
+  title: "Usage dashboard | aicharts",
   description: "Your private AI usage dashboard: tokens, models, costs, and source coverage across coding agents and AI clients.",
   robots: { index: false, follow: true },
   alternates: { canonical: "https://aicharts.io/dashboard" },

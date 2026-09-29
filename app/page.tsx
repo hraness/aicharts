@@ -76,10 +76,10 @@ export default function Home() {
             summary: "The layer your agent runs through: sessions, accounts, web reads, and the models behind them.",
             items: [
               {
-                name: "xcb",
+                name: "Excalibur (xcb)",
                 href: "https://xcb.sh",
                 role: "Routes coding tasks across the Claude, Codex, and Devin plans you have",
-                relationship: "xcb measures subscription usage locally and, when you turn on exports, writes session files in the AI Charts format. Automatic upload is not available.",
+                relationship: "Excalibur measures subscription usage locally and, when you turn on exports, writes session files in the aicharts format. Automatic upload is not available.",
               },
               {
                 name: "Gobstopper",
@@ -88,7 +88,7 @@ export default function Home() {
                 relationship: null,
               },
               {
-                name: "Ghostget",
+                name: "GhostGet",
                 href: "https://ghostget.com",
                 role: "Named web actions for AI agents: read pages, save media, use connected accounts",
                 relationship: null,

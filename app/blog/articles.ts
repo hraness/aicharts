@@ -95,7 +95,7 @@ export const BLOG_SOURCES = {
   },
   artificialAnalysisCodingAgents: {
     note:
-      "The public coding-agents comparison is the source of the AI Charts coding-agent snapshot. Model names, agent harnesses, settings, AA Index scores, and mean API costs are Artificial Analysis measurements.",
+      "The public coding-agents comparison is the source of the aicharts coding-agent snapshot. Model names, agent harnesses, settings, AA Index scores, and mean API costs are Artificial Analysis measurements.",
     publication: "Artificial Analysis",
     title: "Coding Agents",
     url: "https://artificialanalysis.ai/agents/coding-agents/",
@@ -255,7 +255,7 @@ export const BLOG_SOURCES = {
   },
   artificialAnalysisIntelligenceIndex: {
     note:
-      "The public models leaderboard is the source of the AI Charts Intelligence Index snapshot. Scores, per-task costs, and output tokens are Artificial Analysis measurements under Intelligence Index v4.3.2.",
+      "The public models leaderboard is the source of the aicharts Intelligence Index snapshot. Scores, per-task costs, and output tokens are Artificial Analysis measurements under Intelligence Index v4.3.2.",
     publication: "Artificial Analysis",
     title: "LLM Leaderboard",
     url: "https://artificialanalysis.ai/models",
@@ -327,7 +327,7 @@ export const BLOG_SOURCES = {
   },
   terminalBenchRepository: {
     note:
-      "The benchmark owners’ repository publishes Terminal-Bench and its versioned task releases. The version-pinned Terminal-Bench 4.0 cohort in the AI Charts benchmarks library comes from the owners, separately from Artificial Analysis’s own Terminal-Bench 4 runs.",
+      "The benchmark owners’ repository publishes Terminal-Bench and its versioned task releases. The version-pinned Terminal-Bench 4.0 cohort in the aicharts benchmarks library comes from the owners, separately from Artificial Analysis’s own Terminal-Bench 4 runs.",
     publication: "Harbor Framework",
     title: "Terminal-Bench",
     url: "https://github.com/harbor-framework/terminal-bench",
@@ -342,7 +342,7 @@ export type BlogSourceId = keyof typeof BLOG_SOURCES;
  * every note renders it from its admission record (owner decision, 2026-09-23).
  */
 export const BLOG_SOURCE_NOTE =
-  "Figures come from the cited primary sources and the AI Charts datasets. AI Charts did not rerun the reported benchmarks.";
+  "Figures come from the cited primary sources and the aicharts datasets. aicharts did not rerun the reported benchmarks.";
 
 export interface BlogArticle {
   readonly sourceNote: typeof BLOG_SOURCE_NOTE;
@@ -360,7 +360,7 @@ export interface BlogArticle {
   readonly section?: string;
   readonly seoDescription: string;
   readonly showChartCta?: boolean;
-  /** Show the portfolio's registered relations for AI Charts after the body. */
+  /** Show the portfolio's registered relations for aicharts after the body. */
   readonly showRelatedProducts?: true;
   readonly slug: BlogSlug;
   readonly sourceIds: readonly BlogSourceId[];

@@ -12,7 +12,7 @@ export default function BlogLayout({
         <div className="plain-header__inner">
           <Link className="plain-wordmark" href="/">
             {/* eslint-disable-next-line @next/next/no-img-element -- the generated app icon serves the canonical mark unchanged. */}
-            <img alt="" height={20} src="/icon.png" width={20} />{" "}AI Charts
+            <img alt="" height={20} src="/icon.png" width={20} />{" "}aicharts
           </Link>
           <div className="plain-header__actions">
             <nav aria-label="Blog navigation" className="plain-nav">

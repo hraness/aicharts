@@ -18,15 +18,15 @@ test("the root layout renders the in-flow content footer and the shared Hraness 
   expect(source).toContain('from "@/components/foil-controller"');
   expect(source).toContain('from "@/components/site-header"');
   expect(source).toContain('from "./mailing-config"');
-  expect(source).toContain('ariaLabel="AI Charts"');
+  expect(source).toContain('ariaLabel="aicharts"');
   expect(source).toContain('brandMark="/marks/aicharts.svg"');
-  expect(source).toContain('brandLabel="AI Charts home"');
+  expect(source).toContain('brandLabel="aicharts home"');
   expect(source).toContain("links={SITE_HEADER_LINKS}");
   expect(source).toContain("name={site.name}");
   expect(source).toContain("mailingList={aiChartsMailingListConfig()}");
-  expect(source).toContain('x: { href: "https://x.com/aichartsio", label: "AI Charts on X" }');
+  expect(source).toContain('x: { href: "https://x.com/aichartsio", label: "aicharts on X" }');
   expect(source).toContain(
-    'github: { href: "https://github.com/hraness/aicharts", label: "AI Charts on GitHub" }',
+    'github: { href: "https://github.com/hraness/aicharts", label: "aicharts on GitHub" }',
   );
   expect(source).not.toContain("bsky.app");
   expect(source).not.toContain("bluesky");
@@ -48,11 +48,11 @@ test("every route inherits one in-flow content footer and one shared footer carr
   expect(html.match(/data-hraness-marketing="footer"/gu)).toHaveLength(1);
   expect(html.match(/id="hraness-site-footer"/gu)).toHaveLength(1);
   expect(html.match(/data-slot="hraness-site-footer"/gu)).toHaveLength(1);
-  expect(html).toContain('aria-label="AI Charts"');
-  expect(html).toContain('aria-label="AI Charts home"');
+  expect(html).toContain('aria-label="aicharts"');
+  expect(html).toContain('aria-label="aicharts home"');
   expect(html).toContain('src="/marks/aicharts.svg"');
   expect(html).toContain('data-foil=""');
-  expect(html).toContain(">AI Charts</span>");
+  expect(html).toContain(">aicharts</span>");
   expect(html).toContain('aria-label="Hraness home"');
   expect(html).toContain(">by Hraness</span>");
   expect(html.indexOf(`id="${marker}"`)).toBeLessThan(html.indexOf('data-hraness-marketing="footer"'));
@@ -60,7 +60,7 @@ test("every route inherits one in-flow content footer and one shared footer carr
   expect(html).toContain('name="audience" type="hidden" value="aicharts"');
   expect(html).toContain('href="https://x.com/aichartsio"');
   expect(html).not.toContain("Ben Guo");
-  expect(html).not.toContain("Built by AI Charts");
+  expect(html).not.toContain("Built by aicharts");
 });
 
 test("no page or component supplies its own maker credit beside the shared attribution", async () => {

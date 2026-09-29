@@ -7,7 +7,7 @@ import { usagePairingAvailable } from "@/lib/usage/pairing-route";
 import "@/styles/usage.css";
 import "./pairing.css";
 
-export const metadata: Metadata = { title: "Connect your collector | AI Charts", robots: { index: false, follow: false }, referrer: "no-referrer" };
+export const metadata: Metadata = { title: "Connect your collector | aicharts", robots: { index: false, follow: false }, referrer: "no-referrer" };
 export default async function PairingPage() {
   await connection();
   const available = usagePairingAvailable();

@@ -83,7 +83,7 @@ export function atomFeed(
     '<?xml version="1.0" encoding="utf-8"?>',
     '<feed xmlns="http://www.w3.org/2005/Atom">',
     `<id>${escapeXml(blogUrl)}</id>`,
-    "<title>AI Charts benchmark analysis</title>",
+    "<title>aicharts benchmark analysis</title>",
     `<subtitle>${escapeXml(blogDescription)}</subtitle>`,
     `<link href="${escapeXml(blogUrl)}" rel="alternate" />`,
     `<link href="${escapeXml(feedUrl)}" rel="self" type="application/atom+xml" />`,

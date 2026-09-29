@@ -106,25 +106,25 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
           />
           {children}
           <MarketingSiteFooter
-            ariaLabel="AI Charts"
+            ariaLabel="aicharts"
             brand={null}
             brandMark="/marks/aicharts.svg"
             brandHref="/"
-            brandLabel="AI Charts home"
+            brandLabel="aicharts home"
             links={SITE_HEADER_LINKS}
             name={site.name}
           />
           <HranessSiteFooter
             support={{
               id: "aicharts",
-              name: "AI Charts",
+              name: "aicharts",
               updates: true,
               valueProposition: "Support sourced benchmark research and clear, interactive model comparisons.",
             }}
             mailingList={aiChartsMailingListConfig()}
             social={{
-              x: { href: "https://x.com/aichartsio", label: "AI Charts on X" },
-              github: { href: "https://github.com/hraness/aicharts", label: "AI Charts on GitHub" },
+              x: { href: "https://x.com/aichartsio", label: "aicharts on X" },
+              github: { href: "https://github.com/hraness/aicharts", label: "aicharts on GitHub" },
             }}
           />
           <AnalyticsBoundary />

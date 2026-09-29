@@ -1,10 +1,10 @@
 cff-version: 1.2.0
-message: "If you use AI Charts, cite this software and the primary source for the benchmark data."
-title: AI Charts
+message: "If you use aicharts, cite this software and the primary source for the benchmark data."
+title: aicharts
 type: software
 authors:
-  - name: AI Charts contributors
-abstract: "AI Charts plots published AI benchmark scores against cost and tokens per task, and a local collector measures your own agents' token use."
+  - name: aicharts contributors
+abstract: "aicharts plots published AI benchmark scores against cost and tokens per task, and a local collector measures your own agents' token use."
 date-released: 2026-07-17
 license: MIT
 repository-code: "https://github.com/hraness/aicharts"

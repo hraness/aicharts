@@ -40,7 +40,7 @@ export const CORE_ATLAS_ENTRIES = [
     summary: "Software, systems, CAD, scientific computing, and formal proof tasks executed in a terminal.",
     source: { name: "Harbor Framework", url: TERMINAL_BENCH_LEADERBOARD_URL, methodologyUrl: TERMINAL_BENCH_RELEASE_URL },
     measure: "Task success over 66 tasks and five trials per configuration, with source-reported 95% confidence intervals.",
-    comparisonRule: "AI Charts’ primary terminal benchmark. Compare exact version 4.0.0 with the named model, agent version, and effort.",
+    comparisonRule: "aicharts’ primary terminal benchmark. Compare exact version 4.0.0 with the named model, agent version, and effort.",
     limitations: [
       "An agent and model are evaluated together; this is not a model-only ranking.",
       "Different harnesses and effort settings remain separate configurations.",

@@ -1,6 +1,6 @@
 # Public benchmark contract
 
-Verified against AI Charts source and public responses on 2026-09-11. Discover each time; these snapshots can change independently of a skill release.
+Verified against aicharts source and public responses on 2026-09-11. Discover each time; these snapshots can change independently of a skill release.
 
 - Catalog: `GET https://aicharts.io/data/benchmark-atlas.json`.
 - Charted cohort: `GET https://aicharts.io/data/benchmark-atlas/{id}`. There is no `.json` suffix after the ID. Get IDs from the catalog, not guessed routes.
@@ -18,7 +18,7 @@ Dataset schema version 1 has `benchmark` (the catalog definition without distrib
 
 Retain missing and null fields. `costUsd: null` means no supplied cost, not free; a numeric zero remains source-reported zero, not evidence that an account can use the model for free. The cost label can describe a full evaluation, per-task basis, or other cohort-specific measure. Uncertainty is source-defined and is not supplied for every point. A revision can be an upstream revision or fingerprint; do not claim cryptographic source authentication from its presence.
 
-AI Charts software is MIT-licensed; third-party measurements and methodology retain their source terms. The JSON distribution does not relicense those measurements. Cite the source and named evaluation version.
+aicharts software is MIT-licensed; third-party measurements and methodology retain their source terms. The JSON distribution does not relicense those measurements. Cite the source and named evaluation version.
 
 ## Helper contract
 

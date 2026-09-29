@@ -460,7 +460,7 @@ function anthropicBlocks(placement: OpusIntelligencePlacement | undefined, evalu
       CLAUDE_OPUS_55.anthropic.vendorTerminalBenchEffort,
       " effort, plus ",
       CLAUDE_OPUS_55.anthropic.otherVendorBenchmarks,
-      ". None of those figures appears on an AI Charts chart. Anthropic states that “",
+      ". None of those figures appears on an aicharts chart. Anthropic states that “",
       CLAUDE_OPUS_55.anthropic.benchmarkSettingClaim,
       ",” and adds that “",
       CLAUDE_OPUS_55.anthropic.marginClaim,
@@ -606,14 +606,14 @@ export function createOpus55Article(
     ? ""
     : ` The ${spellCount(intelligence.frontierRun.length)} highest points on the cost frontier are all its effort levels.`;
   const dek = intelligence === undefined || score === undefined || cost === undefined
-    ? `${MODEL_NAME} appears on the AI Charts Intelligence Index chart as one row per effort level. This note states what each row measures and how it differs from the Claude Code · Opus 5 coding-agent row.`
+    ? `${MODEL_NAME} appears on the aicharts Intelligence Index chart as one row per effort level. This note states what each row measures and how it differs from the Claude Code · Opus 5 coding-agent row.`
     : `${MODEL_NAME} at ${effortLabel(intelligence.record)} effort scores ${score} on the Intelligence Index at ${cost} per task, ${spellOrdinal(intelligence.rank)} of ${intelligence.cohortSize} configuration${intelligence.cohortSize === 1 ? "" : "s"}.${frontierRunPhrase}`;
   const seoDescription = intelligence === undefined || score === undefined || cost === undefined
-    ? `${MODEL_NAME} on the AI Charts Intelligence Index chart: what each effort level’s row measures and how it differs from the Claude Code · Opus 5 row.`
+    ? `${MODEL_NAME} on the aicharts Intelligence Index chart: what each effort level’s row measures and how it differs from the Claude Code · Opus 5 row.`
     : `${MODEL_NAME} (${effortLabel(intelligence.record)}) scores ${score} on the Intelligence Index at ${cost} a task, ${spellOrdinal(intelligence.rank)} of ${intelligence.cohortSize} configuration${intelligence.cohortSize === 1 ? "" : "s"}. See its effort levels and the Opus 5 contrast.`;
 
   const openingPlacement = intelligence === undefined
-    ? `Artificial Analysis measures it on the Intelligence Index, and the AI Charts snapshot retrieved ${intelligenceRetrievedAt} stores no ${MODEL_NAME} max-effort row with a measured cost per task, so this note can describe the chart but not place the model on it.`
+    ? `Artificial Analysis measures it on the Intelligence Index, and the aicharts snapshot retrieved ${intelligenceRetrievedAt} stores no ${MODEL_NAME} max-effort row with a measured cost per task, so this note can describe the chart but not place the model on it.`
     : `In the Intelligence Index snapshot retrieved ${intelligenceRetrievedAt}, ${intelligence.record.name} scores ${score} at ${cost} per task, ${spellOrdinal(intelligence.rank)} of the ${comparableCount(intelligence.cohortSize)}, meaning the rows with a measured cost per task${intelligence.onCostFrontier ? ", and on the chart’s cost frontier" : ""}.`;
   const openingFrontier = intelligence === undefined || intelligence.frontierRun.length < 2
     ? ""
@@ -717,7 +717,7 @@ export function createOpus55Article(
           `The scores, costs, and token counts above are Artificial Analysis measurements of the ${MODEL_NAME} rows on the retrieval date under Intelligence Index version ${indexVersion}${codingScoreClause}. They say nothing about other tasks, prompts, or harnesses.`,
         ],
         [
-          "The rank, frontier walk, nearest-score table, effort ladder, and cost shares are computed from those snapshots by AI Charts. A new, removed, or rescored configuration moves them, and both snapshots update on a schedule.",
+          "The rank, frontier walk, nearest-score table, effort ladder, and cost shares are computed from those snapshots by aicharts. A new, removed, or rescored configuration moves them, and both snapshots update on a schedule.",
         ],
         [
           opus55Rows.length === 0
@@ -728,7 +728,7 @@ export function createOpus55Article(
           "The Adaptive Reasoning and Default Fallback settings in the row names are recorded by Artificial Analysis and not defined in the snapshot; the per-evaluation scores behind the composite are not stored either.",
         ],
         [
-          "The prices, the 40% cost claim against Opus 5, and the benchmark table are Anthropic’s. AI Charts did not run Claude Opus 5.5.",
+          "The prices, the 40% cost claim against Opus 5, and the benchmark table are Anthropic’s. aicharts did not run Claude Opus 5.5.",
         ],
       ),
     ],

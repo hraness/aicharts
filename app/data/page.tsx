@@ -39,8 +39,8 @@ import { searchSite } from "../site";
 const dataSearchSite = {
   ...searchSite,
   description: BENCHMARK_DATA_DESCRIPTION,
-  socialTitle: "Benchmark data and method | AI Charts",
-  title: "Benchmark data and method | AI Charts",
+  socialTitle: "Benchmark data and method | aicharts",
+  title: "Benchmark data and method | aicharts",
 } as const;
 
 export const metadata: Metadata = createPublicSiteMetadata(
@@ -158,7 +158,7 @@ export default function CodingAgentDatasetPage() {
           aria-label="Breadcrumb"
           className="plain-publication__breadcrumbs"
           items={[
-            { href: "/", id: "aicharts", label: "AI Charts" },
+            { href: "/", id: "aicharts", label: "aicharts" },
             { id: "data", label: "Data" },
           ]}
         />
@@ -257,7 +257,7 @@ export default function CodingAgentDatasetPage() {
             </p>
             <p>
               Cite the benchmark owner and source version when quoting measurements.
-              AI Charts publishes these chart projections; third-party measurements
+              aicharts publishes these chart projections; third-party measurements
               retain their source terms. The software license does not grant a new
               license to third-party data.
             </p>
@@ -305,7 +305,7 @@ export default function CodingAgentDatasetPage() {
                 {formatRetrievedAt(terminalBench.source.repositoryCommittedAt)}
               </time>
               , with {terminalBench.benchmark.taskCount} tasks and{" "}
-              {terminalBench.benchmark.trialsPerTask} trials per task. AI Charts
+              {terminalBench.benchmark.trialsPerTask} trials per task. aicharts
               retrieved this owner snapshot on{" "}
               <time dateTime={terminalBench.source.retrievedAt}>
                 {formatRetrievedAt(terminalBench.source.retrievedAt)}
@@ -348,7 +348,7 @@ export default function CodingAgentDatasetPage() {
               <time dateTime={terminalBenchScience.source.leaderboardUpdatedAt}>
                 {formatRetrievedAt(terminalBenchScience.source.leaderboardUpdatedAt)}
               </time>
-              . AI Charts retrieved it on{" "}
+              . aicharts retrieved it on{" "}
               <time dateTime={terminalBenchScience.source.retrievedAt}>
                 {formatRetrievedAt(terminalBenchScience.source.retrievedAt)}
               </time>.
@@ -438,12 +438,12 @@ export default function CodingAgentDatasetPage() {
               cohort, a frontier point is not dominated by another record with an
               equal-or-higher Intelligence score and equal-or-lower output-token or
               positive-cost value. Artificial Analysis publishes the measurements;
-              the frontier classification is AI Charts analysis.
+              the frontier classification is aicharts analysis.
             </p>
             <p>
               This v{intelligence.benchmark.version} snapshot is frozen and is no longer
               refreshed by automation. The current v{currentIntelligence.benchmark.version} dataset
-              above has a separate versioned source contract and download. AI Charts
+              above has a separate versioned source contract and download. aicharts
               retrieved this historical snapshot on{" "}
               <time dateTime={intelligence.source.retrievedAt}>
                 {formatRetrievedAt(intelligence.source.retrievedAt)}
@@ -470,7 +470,7 @@ export default function CodingAgentDatasetPage() {
               <a href={snapshot.source.url}>
                 {snapshot.source.name} coding-agents comparison
               </a>, composed of DeepSWE v1.1, Terminal-Bench 4, and SWE-Atlas-QnA.
-              AI Charts retrieved this snapshot on{" "}
+              aicharts retrieved this snapshot on{" "}
               <time dateTime={snapshot.source.retrievedAt}>
                 {formatRetrievedAt(snapshot.source.retrievedAt)}
               </time>.
@@ -569,7 +569,7 @@ export default function CodingAgentDatasetPage() {
               Provider identifiers, model effort settings, stable series keys,
               and sort order are normalized for the chart. The refresh is
               rejected when duplicate records, major row loss, stable-key loss,
-              or substantial metric-coverage regressions are detected. AI Charts
+              or substantial metric-coverage regressions are detected. aicharts
               does not recalculate the source benchmark outcomes.
             </p>
 
@@ -577,7 +577,7 @@ export default function CodingAgentDatasetPage() {
             <ul>
               <li>
                 Artificial Analysis defines and operates the upstream
-                evaluations. AI Charts is an independent visualization and is
+                evaluations. aicharts is an independent visualization and is
                 not affiliated with Artificial Analysis or the listed providers.
               </li>
               <li>

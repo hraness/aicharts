@@ -1,4 +1,4 @@
-# AI Charts credential custody
+# aicharts credential custody
 
 This library supplies immutable, typed secret records, a macOS Keychain adapter
 that suppresses interaction by default, and explicit macOS reference-manifest

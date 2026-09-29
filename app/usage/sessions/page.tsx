@@ -9,7 +9,7 @@ import "@/styles/usage-stats.css";
 import "@/styles/usage-sessions.css";
 
 export const metadata: Metadata = {
-  title: "Session usage | AI Charts",
+  title: "Session usage | aicharts",
   description: "Inspect local session usage, model mix, and measured time without uploading a transcript.",
   robots: { index: false, follow: true },
   alternates: { canonical: "https://aicharts.io/usage/sessions" },

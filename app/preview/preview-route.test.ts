@@ -22,8 +22,8 @@ const expectedContentSecurityPolicy = [
   "style-src 'unsafe-inline'",
 ].join("; ");
 
-describe("Hraness AI Charts preview", () => {
-  test("is frameable only by AI Charts itself and canonical Hraness", () => {
+describe("Hraness aicharts preview", () => {
+  test("is frameable only by aicharts itself and canonical Hraness", () => {
     const response = GET();
 
     expect(response.status).toBe(200);

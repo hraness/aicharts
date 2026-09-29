@@ -53,10 +53,10 @@ fn bare_invocation_is_a_short_overview() {
     assert_eq!(
         stdout,
         format!(
-            "AI Charts measures your coding agents' token use on this computer.
+            "aicharts measures your coding agents' token use on this computer.
 
 Start here
-  aicharts stats --list-clients     List the agents AI Charts can read
+  aicharts stats --list-clients     List the agents aicharts can read
   aicharts stats --home ~ --all     Show the last 30 days of token use
   aicharts help publish             Publish your usage to aicharts.io
 

@@ -190,7 +190,7 @@ export function createOpenModelsCodingAgentsArticle(
         ".",
       ),
       paragraph(
-        "The Artificial Analysis snapshot stored by AI Charts names a model, an agent harness, an effort setting, and a mean API cost for every row. It does not publish an open-versus-closed field. The comparison below uses an explicit provider allowlist, copies scores from the checked snapshot, and quotes only SemiAnalysis figures that appear in the essay text. The two sources can agree that open models have become more useful without agreeing that they have closed the coding-agent table.",
+        "The Artificial Analysis snapshot stored by aicharts names a model, an agent harness, an effort setting, and a mean API cost for every row. It does not publish an open-versus-closed field. The comparison below uses an explicit provider allowlist, copies scores from the checked snapshot, and quotes only SemiAnalysis figures that appear in the essay text. The two sources can agree that open models have become more useful without agreeing that they have closed the coding-agent table.",
       ),
       heading("SemiAnalysis measures era composites"),
       paragraph(
@@ -203,11 +203,11 @@ export function createOpenModelsCodingAgentsArticle(
         `The reasoning-era opening gap is ${SEMIANALYSIS_OPEN_MODELS.quotes.era2StartGapPoints} points, against ${SEMIANALYSIS_OPEN_MODELS.quotes.era1StartGapPoints} at the start of the previous era. DeepSeek R1-0528 closes that opening gap at ${SEMIANALYSIS_OPEN_MODELS.quotes.era2R10528} after ${SEMIANALYSIS_OPEN_MODELS.quotes.era2CatchupMonths} months. In the agentic era they report that Kimi K2.6 surpassed Opus 4.5 at ${SEMIANALYSIS_OPEN_MODELS.quotes.era3KimiK26} in ${SEMIANALYSIS_OPEN_MODELS.quotes.era3KimiMonths} months, and that GLM-5.2 cleared GPT-5.2 at ${SEMIANALYSIS_OPEN_MODELS.quotes.era3Glm52} in ${SEMIANALYSIS_OPEN_MODELS.quotes.era3GlmMonths} months.`,
       ),
       paragraph(
-        "Those sentences are SemiAnalysis measurements, not AI Charts calculations. The essay also limits what the composites prove. The authors still prefer Fable 5 for daily work over Kimi K3, even while saying Kimi K3 may score higher on their curated suite. They treat public benchmarks as hill-climbable: labs can train reinforcement-learning environments that mimic the evals.",
+        "Those sentences are SemiAnalysis measurements, not aicharts calculations. The essay also limits what the composites prove. The authors still prefer Fable 5 for daily work over Kimi K3, even while saying Kimi K3 may score higher on their curated suite. They treat public benchmarks as hill-climbable: labs can train reinforcement-learning environments that mimic the evals.",
       ),
       heading("What the coding-agent snapshot records"),
       paragraph(
-        `AI Charts retrieved the checked snapshot on ${retrievedAt}. The dataset contains ${summary.recordCount} model-agent configurations across ${summary.modelCount} models, ${summary.agentCount} agent harnesses, and ${summary.providerCount} providers. AA Index is the snapshot's overall 0–100 score across code changes, terminal work, and repository understanding. DeepSWE v1.1, Terminal-Bench 4, and SWE-Atlas-QnA stay separate. The `,
+        `aicharts retrieved the checked snapshot on ${retrievedAt}. The dataset contains ${summary.recordCount} model-agent configurations across ${summary.modelCount} models, ${summary.agentCount} agent harnesses, and ${summary.providerCount} providers. AA Index is the snapshot's overall 0–100 score across code changes, terminal work, and repository understanding. DeepSWE v1.1, Terminal-Bench 4, and SWE-Atlas-QnA stay separate. The `,
         { href: "/data", text: "dataset page" },
         " lists every configuration and the highest stored score for each metric.",
       ),
@@ -236,10 +236,10 @@ export function createOpenModelsCodingAgentsArticle(
       ),
       heading("Highest open-weight configurations in this snapshot"),
       paragraph(
-        `AI Charts classifies a configuration as open-weight only when its provider is ${joinNames(openNames)}. Those families are the ones SemiAnalysis treats as open in the essay (DeepSeek, Kimi, Qwen, and GLM). The snapshot does not state a license, so this allowlist is an analysis choice. ${unclassifiedNames.length === 0 ? "No provider in this snapshot is left unclassified." : `${joinNames(unclassifiedNames)} ${unclassifiedNames.length === 1 ? "is" : "are"} left unclassified because the snapshot does not state a license and the SemiAnalysis essay does not name ${unclassifiedNames.length === 1 ? "that family" : "those families"} as open.`} Cursor, xAI, Google, OpenAI, and Anthropic stay closed.`,
+        `aicharts classifies a configuration as open-weight only when its provider is ${joinNames(openNames)}. Those families are the ones SemiAnalysis treats as open in the essay (DeepSeek, Kimi, Qwen, and GLM). The snapshot does not state a license, so this allowlist is an analysis choice. ${unclassifiedNames.length === 0 ? "No provider in this snapshot is left unclassified." : `${joinNames(unclassifiedNames)} ${unclassifiedNames.length === 1 ? "is" : "are"} left unclassified because the snapshot does not state a license and the SemiAnalysis essay does not name ${unclassifiedNames.length === 1 ? "that family" : "those families"} as open.`} Cursor, xAI, Google, OpenAI, and Anthropic stay closed.`,
       ),
       paragraph(
-        `Under that rule, the highest open-weight AA Index is ${formatSnapshotScore(topOpen.aaIndex)} for ${topOpen.model} on ${topOpen.agent} at the ${topOpen.setting} setting, with a mean API cost of ${formatSnapshotCostUsd(topOpen.costUsd)} per task. That is ${aaGap} AA Index points behind ${top.model} on ${top.agent}. The gap is AI Charts subtraction of two stored scores. It is not a SemiAnalysis composite.`,
+        `Under that rule, the highest open-weight AA Index is ${formatSnapshotScore(topOpen.aaIndex)} for ${topOpen.model} on ${topOpen.agent} at the ${topOpen.setting} setting, with a mean API cost of ${formatSnapshotCostUsd(topOpen.costUsd)} per task. That is ${aaGap} AA Index points behind ${top.model} on ${top.agent}. The gap is aicharts subtraction of two stored scores. It is not a SemiAnalysis composite.`,
       ),
       table(
         `Highest open-weight AA Index configurations in the ${snapshot.source.name} snapshot retrieved ${retrievedAt}`,
@@ -290,7 +290,7 @@ export function createOpenModelsCodingAgentsArticle(
       paragraph(
         "AA Index leaders in this snapshot are expensive relative to the cheapest rows. The ",
         { href: "/blog/aa-index-cost-coding-agents", text: "AA Index versus cost note" },
-        " keeps a configuration on the frontier only when no other configuration is both cheaper and at least as strong. That derived view is AI Charts analysis of the stored pairs.",
+        " keeps a configuration on the frontier only when no other configuration is both cheaper and at least as strong. That derived view is aicharts analysis of the stored pairs.",
       ),
       paragraph(
         firstOpenFrontier === undefined
@@ -307,10 +307,10 @@ export function createOpenModelsCodingAgentsArticle(
       heading("Limits of this comparison"),
       list(
         [
-          "SemiAnalysis defines and operates its era composites. AI Charts does not rerun that suite or recover unpublished chart points from images.",
+          "SemiAnalysis defines and operates its era composites. aicharts does not rerun that suite or recover unpublished chart points from images.",
         ],
         [
-          "Artificial Analysis defines the coding-agent scores and costs. AI Charts is an independent visualization and is not affiliated with Artificial Analysis, SemiAnalysis, or the listed providers.",
+          "Artificial Analysis defines the coding-agent scores and costs. aicharts is an independent visualization and is not affiliated with Artificial Analysis, SemiAnalysis, or the listed providers.",
         ],
         [
           "The open-weight set is an explicit provider allowlist, not a field in the snapshot. A license change, a new provider, or a different definition of open would change the grouped rows.",

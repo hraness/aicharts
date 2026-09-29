@@ -201,7 +201,7 @@ export function createCodingAgentScoreHoldoutsArticle(
       ),
       heading("What the current snapshot stores"),
       paragraph(
-        `AI Charts retrieved the checked snapshot on ${retrievedAt}. The dataset contains ${summary.recordCount} model-agent configurations across ${summary.modelCount} models, ${summary.agentCount} agent harnesses, and ${summary.providerCount} providers. The `,
+        `aicharts retrieved the checked snapshot on ${retrievedAt}. The dataset contains ${summary.recordCount} model-agent configurations across ${summary.modelCount} models, ${summary.agentCount} agent harnesses, and ${summary.providerCount} providers. The `,
         { href: "/data", text: "dataset page" },
         " names each metric, lists the highest stored score for that metric, and states that those rows are observations of a named model, harness, and effort setting rather than general model ranks. This note copies that table. It does not add a rank.",
       ),
@@ -253,7 +253,7 @@ export function createCodingAgentScoreHoldoutsArticle(
       ),
       paragraph(
         { href: BLOG_SOURCES.artificialAnalysisCodingAgents.url, text: "Artificial Analysis publishes the coding-agent comparison" },
-        " that this snapshot copies. AI Charts does not recalculate those scores and does not receive a private Artificial Analysis holdout. The public page is the source. If a lab can see the task family, the harness, and the scoring rule, Luu’s FRE loop is the relevant warning, not a proof that any named row here cheated.",
+        " that this snapshot copies. aicharts does not recalculate those scores and does not receive a private Artificial Analysis holdout. The public page is the source. If a lab can see the task family, the harness, and the scoring rule, Luu’s FRE loop is the relevant warning, not a proof that any named row here cheated.",
       ),
       heading("Hidden tests already appear on this site"),
       paragraph(
@@ -273,10 +273,10 @@ export function createCodingAgentScoreHoldoutsArticle(
       heading("Limits of this reading"),
       list(
         [
-          "Dan Luu reports FRE, rebar, and a ripgrep-derived holdout. AI Charts does not rerun that experiment or recover unpublished plot points from his images.",
+          "Dan Luu reports FRE, rebar, and a ripgrep-derived holdout. aicharts does not rerun that experiment or recover unpublished plot points from his images.",
         ],
         [
-          "Artificial Analysis defines the coding-agent scores and costs. AI Charts is an independent visualization and is not affiliated with Artificial Analysis, Dan Luu, or the listed providers.",
+          "Artificial Analysis defines the coding-agent scores and costs. aicharts is an independent visualization and is not affiliated with Artificial Analysis, Dan Luu, or the listed providers.",
         ],
         [
           "Highest stored scores are observations of named configurations in this snapshot. They are not general ranks, and they do not establish results for every repository or production workflow.",

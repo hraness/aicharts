@@ -110,7 +110,7 @@ export function ModelReleaseRadars() {
           <>
             These links come from each lab&apos;s own release pages, so a model can
             appear here before aggregators such as OpenRouter list it. The date shows
-            when AI Charts first found the page, which can differ from the official
+            when aicharts first found the page, which can differ from the official
             release date. Official dates and benchmark scores come from their own
             sources.
           </>

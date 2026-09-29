@@ -24,7 +24,7 @@ import {
   modelSocialImagePage,
 } from "../../../../social-image-site";
 
-export const alt = "AI Charts model page with provider, name, and Intelligence Index";
+export const alt = "aicharts model page with provider, name, and Intelligence Index";
 export const contentType = socialImageContentType;
 export const size = socialImageSize;
 

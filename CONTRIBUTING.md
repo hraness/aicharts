@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping improve AI Charts.
+Thanks for helping improve aicharts.
 
 ## Development
 
