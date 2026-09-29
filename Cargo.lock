@@ -25,7 +25,7 @@ dependencies = [
 
 [[package]]
 name = "aicharts-cli"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "aicharts-core",
  "aicharts-custody",
@@ -68,7 +68,7 @@ dependencies = [
 
 [[package]]
 name = "aicharts-custody"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "aicharts-platform-acl",
  "core-foundation",
@@ -80,7 +80,7 @@ dependencies = [
 
 [[package]]
 name = "aicharts-fuzz"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "aicharts-core",
  "aicharts-ledger",
@@ -90,7 +90,7 @@ dependencies = [
 
 [[package]]
 name = "aicharts-import"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -101,7 +101,7 @@ dependencies = [
 
 [[package]]
 name = "aicharts-ledger"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "aicharts-core",
  "aicharts-metrics",
@@ -115,25 +115,25 @@ dependencies = [
 
 [[package]]
 name = "aicharts-metrics"
-version = "0.1.0"
+version = "0.2.0"
 
 [[package]]
 name = "aicharts-platform-acl"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "cc",
 ]
 
 [[package]]
 name = "aicharts-platform-process"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "libc",
 ]
 
 [[package]]
 name = "aicharts-protocol"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "aicharts-metrics",
  "sha2",
