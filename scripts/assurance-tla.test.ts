@@ -159,8 +159,9 @@ describe("nightly bounds profile", () => {
 describe("bounded case pool", () => {
   test("development runs at most four single-worker cases; nightly stays one at a time", () => {
     expect(tlaCaseConcurrency("development", 1)).toBe(1);
-    expect(tlaCaseConcurrency("development", 4)).toBe(4);
-    expect(tlaCaseConcurrency("development", 16)).toBe(4);
+    expect(tlaCaseConcurrency("development", 2)).toBe(1);
+    expect(tlaCaseConcurrency("development", 4)).toBe(3);
+    expect(tlaCaseConcurrency("development", 16)).toBe(3);
     expect(tlaCaseConcurrency("nightly", 4)).toBe(1);
     expect(tlaCaseConcurrency("nightly", 16)).toBe(1);
   });

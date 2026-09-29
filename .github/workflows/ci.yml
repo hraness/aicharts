@@ -92,6 +92,7 @@ jobs:
               - "package.json"
               - "bun.lock"
               - "tsconfig.json"
+              - "bunfig.toml"
               - "Cargo.toml"
               - "Cargo.lock"
               - "rust-toolchain.toml"
@@ -206,26 +207,17 @@ jobs:
           path: .next/cache
           key: next-${{ runner.os }}-${{ hashFiles('bun.lock', 'next.config.ts') }}-${{ steps.next_cache.outputs.day }}
       # Both browser suites start their own server on a free port against the
-      # same build and use the runner's preinstalled Chrome. The public-page
-      # check runs in the background while the contracts run in the foreground;
-      # the next step waits on its exact process and fails with its exit status.
-      - name: Start public-page verification in the background
-        env:
-          SITE_BROWSER_ARTIFACTS: ${{ runner.temp }}/public-site-candidate
-          PAGES: ${{ runner.temp }}/public-site-run
-        run: |
-          mkdir -p "$PAGES"
-          # shellcheck disable=SC2016 # $1 expands in the inner shell.
-          nohup sh -c 'node scripts/verify-public-site-browser.mjs > "$1/log" 2>&1; echo $? > "$1/status.tmp"; mv "$1/status.tmp" "$1/status"' sh "$PAGES" > /dev/null 2>&1 &
-          echo "$!" > "$PAGES/pid"
+      # same build and use the runner's preinstalled Chrome. They run one after
+      # the other: the cross-tab contracts are timing-sensitive and a second
+      # server plus browser contexts on the same runner made them flake.
       - name: Browser contracts against the production build
         run: bun run test:browser
       - name: Verify public pages at phone and desktop sizes
         if: ${{ !cancelled() }}
         timeout-minutes: 10
         env:
-          PAGES: ${{ runner.temp }}/public-site-run
-        run: node scripts/await-background.mjs "$PAGES"
+          SITE_BROWSER_ARTIFACTS: ${{ runner.temp }}/public-site-candidate
+        run: node scripts/verify-public-site-browser.mjs
       - name: Verify the fixed public production site
         if: github.event_name == 'workflow_dispatch' && inputs.production
         env:

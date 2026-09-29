@@ -18,11 +18,11 @@ export const tlaProfiles = {
   nightly: { workers: 4, heapMiB: 2048, timeoutMs: 600_000, maxOutputBytes: 8_388_608, maxDistinctStates: 3_000_000 },
 } as const;
 export type TlaProfile = keyof typeof tlaProfiles;
-/** Cases share no TLC state (each has its own directory and `-metadir`), so the single-worker
- * development profile runs up to four cases at once. Per-case bounds are unchanged. The wider
+/** Cases share no TLC state (each has its own directory, `-metadir` and `java.io.tmpdir`), so the single-worker
+ * development profile runs up to three cases at once, leaving one CPU for the runner. Per-case bounds are unchanged. The wider
  * nightly profile already uses four TLC workers per case and stays one case at a time. */
 export function tlaCaseConcurrency(profile: TlaProfile, cpus: number = availableParallelism()): number {
-  return profile === "nightly" ? 1 : Math.max(1, Math.min(4, cpus));
+  return profile === "nightly" ? 1 : Math.max(1, Math.min(3, cpus - 1));
 }
 
 /** Run `task` over `items` with at most `limit` in flight; results keep input order. */
@@ -223,7 +223,12 @@ export async function runTla(options: { java?: string; jar?: string; output?: st
     const stagedModule = resolve(caseDirectory, `${modelCase.module}.tla`), stagedConfig = resolve(caseDirectory, `${modelCase.id}.cfg`);
     await writeFile(stagedModule, moduleBytes, { flag: "wx", mode: 0o400 });
     await writeFile(stagedConfig, configBytes, { flag: "wx", mode: 0o400 });
-    const args = [`-Xmx${bounds.heapMiB}m`, "-XX:MaxDirectMemorySize=64m", "-XX:+UseParallelGC", `-XX:ParallelGCThreads=${bounds.workers}`, "-XX:ConcGCThreads=1",
+    // TLC extracts its standard modules (Naturals.tla, ...) into java.io.tmpdir. Concurrent
+    // cases sharing /tmp race on those files and SANY reads a half-written module, so each
+    // case gets a private temporary directory.
+    const caseTemp = resolve(caseDirectory, "tmp");
+    await mkdir(caseTemp);
+    const args = [`-Djava.io.tmpdir=${caseTemp}`, `-Xmx${bounds.heapMiB}m`, "-XX:MaxDirectMemorySize=64m", "-XX:+UseParallelGC", `-XX:ParallelGCThreads=${bounds.workers}`, "-XX:ConcGCThreads=1",
       "-jar", stagedJar, "-tool", "-workers", String(bounds.workers), "-fp", "0", "-seed", "1", "-maxSetSize", "100000",
       "-config", stagedConfig, "-metadir", resolve(caseDirectory, "states"), stagedModule];
     const processResult = await runProcess(java, args, manifest.bounds.timeoutMs, manifest.bounds.maxOutputBytes);

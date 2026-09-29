@@ -66,6 +66,31 @@ describe("CI change filters", () => {
     }
   });
 
+  // The Worker-gates conformance run captures whole directories and refuses more than 4096 files or
+  // 64 MiB. Directories the filter does not watch (lib, components/usage, data) can grow in PRs that
+  // skip Worker gates, so this always-run check keeps their captured size well inside those limits.
+  test("the Worker filter covers the conformance capture, and unwatched directories keep headroom", () => {
+    const source = readFileSync(resolve(root, "scripts/assurance-conformance.ts"), "utf8");
+    const list = (name: string) => {
+      const match = new RegExp(`const ${name} = \\[([^\\]]*)\\]`, "u").exec(source);
+      if (!match) throw new Error(`conformance_${name}_missing`);
+      return [...match[1].matchAll(/"([^"]+)"/gu)].map(item => item[1]);
+    };
+    const paths = list("paths"), directories = list("directories");
+    expect(paths.length).toBeGreaterThan(5);
+    expect(paths.filter(path => !matchesFilter(path, filters.worker))).toEqual([]);
+    const walk = (directory: string): string[] => readdirSync(resolve(root, directory), { withFileTypes: true })
+      .flatMap(entry => entry.name === "target" || entry.name === ".git" ? [] : entry.isDirectory() ? walk(`${directory}/${entry.name}`) : [`${directory}/${entry.name}`]);
+    let files = 0, bytes = 0;
+    for (const directory of directories) {
+      // A directory the filter watches as a whole re-runs the gate itself when it changes.
+      if (matchesFilter(`${directory}/any/file.ts`, filters.worker) && matchesFilter(`${directory}/file.json`, filters.worker)) continue;
+      for (const file of walk(directory)) { files++; bytes += statSync(resolve(root, file)).size; }
+    }
+    expect(files).toBeLessThan(2048);
+    expect(bytes).toBeLessThan(32 * 1024 * 1024);
+  });
+
   test("data-only and site-only changes skip the Worker, Rust and formal jobs", () => {
     expect([...changedFilters(["data/model-release-radar.json", "data/calculator-inputs.json"], filters)]).toEqual([]);
     expect([...changedFilters(["app/page.tsx", "components/chart.tsx", "lib/chart-layout.ts", ".agents/kb/note.md"], filters)]).toEqual([]);

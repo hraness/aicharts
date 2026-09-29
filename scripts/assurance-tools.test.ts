@@ -85,12 +85,11 @@ describe("formal tool provisioning admission", () => {
     const buildRuns: string[] = workflow.jobs.build.steps.map((step: { run?: string }) => step.run).filter(Boolean);
     const built = buildRuns.indexOf("bun run build");
     expect(built).toBeGreaterThan(buildRuns.indexOf("bun install --frozen-lockfile"));
-    // Public pages run in the background beside the contracts and are awaited by exact process.
-    const background = buildRuns.findIndex(run => run.includes("node scripts/verify-public-site-browser.mjs >"));
-    expect(background).toBeGreaterThan(built);
-    expect(buildRuns.slice(background + 1)).toEqual([
-      "bun run test:browser", 'node scripts/await-background.mjs "$PAGES"', "node scripts/verify-public-site-browser.mjs --production",
+    // The browser suites share one build and run one after the other (no second server during the contracts).
+    expect(buildRuns.slice(buildRuns.indexOf("bun run test:browser"))).toEqual([
+      "bun run test:browser", "node scripts/verify-public-site-browser.mjs", "node scripts/verify-public-site-browser.mjs --production",
     ]);
+    expect(buildRuns.indexOf("bun run test:browser")).toBeGreaterThan(built);
     expect(workflow.jobs.build.steps.find((step: { run?: string }) => step.run === "node scripts/verify-public-site-browser.mjs --production").if).toBe("github.event_name == 'workflow_dispatch' && inputs.production");
     expect(workflow.jobs.menubar).toBeUndefined();
     expect(workflow.jobs.required.needs).not.toContain("menubar");
