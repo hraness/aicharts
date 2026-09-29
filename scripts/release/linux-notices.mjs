@@ -7,7 +7,7 @@ import { lstat, open, realpath, readdir } from "node:fs/promises";
 import path from "node:path";
 import { execFile } from "node:child_process";
 import { promisify, types } from "node:util";
-import { admittedGitSource } from "./admitted-git-sources.mjs";
+import { admittedGitCrate, admittedGitSource } from "./admitted-git-sources.mjs";
 
 const exec = promisify(execFile);
 const MiB = 1024 * 1024;
@@ -359,9 +359,9 @@ export async function collectLinuxNotices(input) {
         if (!inside(source, pkg.manifest_path) || !/^aicharts-(?:cli|core|custody|ledger|metrics|protocol|import|platform-process)$/u.test(pkg.name) || pkg.license !== "MIT") fail("notices_unmapped_crate");
         continue; // Project LICENSE is a separate mandatory archive member.
       }
-      const admitted = admittedGitSource(pkg.source);
-      if (admitted !== null) {
-        if (pkg.name !== admitted.package || pkg.version !== admitted.version || pkg.license !== admitted.license || pkg.license_file !== null) fail("notices_unmapped_crate");
+      if (admittedGitSource(pkg.source) !== null) {
+        const admitted = admittedGitCrate(pkg.source, pkg.name);
+        if (admitted === null || pkg.name !== admitted.package || pkg.version !== admitted.version || pkg.license !== admitted.license || pkg.license_file !== null) fail("notices_unmapped_crate");
         const directory = path.dirname(pkg.manifest_path);
         // The crate directory ends in the reviewed crate path; everything above
         // it is the Cargo git checkout, which must stay inside git/checkouts.

@@ -89,6 +89,31 @@ and what still needs testing against real providers. The
 [claim inventory](docs/usage-claims.md) lists every support, platform and
 live-status statement in this README and the usage guides with its evidence.
 
+## Collection status from the terminal
+
+`aicharts status` shows whether usage collection is working: when the last
+pass ran, when your usage last synced, and any failures in plain words, with
+the next command to run. `aicharts tui` shows the same in the terminal, and
+`--snapshot` or `--json` print it without one.
+
+```sh
+aicharts status
+aicharts open dashboard      # or setup-guide, support, error-log, outputs
+aicharts outputs             # your newest outputs; outputs open NAME opens one
+aicharts diagnostics         # error codes to paste into a support request
+aicharts commands --json     # every command, for agents
+```
+
+Every command takes `--json` and prints one object with `ok`, `schema` and
+either `data` or `error`. These commands read two files from `~/.aicharts` (or
+`AICHARTS_HOME`): `collector-status.json`, which `aicharts daemon
+--status-file ~/.aicharts/collector-status.json` writes after each pass, and
+`autosubmit-runtime/last-cycle.json`, which each publishing cycle writes. Both
+hold times, results and fixed error codes, never account IDs, paths or session
+content. `aicharts status --state-dir DIR --key-file KEY` still reads the local
+ledger. [Commands for status, outputs and support](docs/cli-parity.md) maps
+every menu bar item to its command.
+
 ## Menu bar
 
 The aicharts menu bar shows whether usage collection is working: when the

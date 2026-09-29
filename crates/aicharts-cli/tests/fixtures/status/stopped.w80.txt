@@ -1,0 +1,10 @@
+== Status ==
+aicharts · needs you
+✗ Collector isn't running · Last pass 5 hours ago
+
+Usage dashboard  aicharts open dashboard
+Support          aicharts open support
+
+== Outputs ==
+Outputs · /Users/you/Library/Application Support/AI Charts/outputs
+No outputs yet.

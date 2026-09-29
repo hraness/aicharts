@@ -1,0 +1,12 @@
+== Status ==
+aicharts
+● Collecting · Last pass 4 min ago · last sync 50 min ago
+
+Usage dashboard  aicharts open dashboard
+Support          aicharts open support
+
+The retired menu bar still opens at login (app.hraness.aicharts). aicharts doctor retire sets it aside.
+
+== Outputs ==
+Outputs · /Users/you/Library/Application Support/AI Charts/outputs
+No outputs yet.

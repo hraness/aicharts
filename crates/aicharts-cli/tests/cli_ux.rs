@@ -63,7 +63,7 @@ Start here
 Everyday
   aicharts stats [options]          Token use by day, agent and model
   aicharts sync [options]           Collect and publish once
-  aicharts status [options]         Check your local usage ledger
+  aicharts status                   Check collection and publishing
 
 All commands: aicharts --help · Topics: aicharts help <topic>
 aicharts {VERSION}
@@ -121,6 +121,12 @@ fn every_command_answers_its_own_help_with_exit_zero() {
         "menubar",
         "service",
         "setup",
+        "tui",
+        "commands",
+        "doctor",
+        "open",
+        "outputs",
+        "diagnostics",
     ] {
         let long = run(&[command, "--help"], &[]);
         assert_eq!(long.status.code(), Some(0), "{command}: {long:?}");
@@ -170,7 +176,10 @@ fn version_forms_print_name_and_version() {
 
 #[test]
 fn people_get_a_sentence_and_one_next_command() {
-    let output = run(&["status"], &[("HRANESS_AUDIENCE", "human")]);
+    let output = run(
+        &["status", "--key-file", "k"],
+        &[("HRANESS_AUDIENCE", "human")],
+    );
     assert_eq!(output.status.code(), Some(2));
     assert!(output.stdout.is_empty());
     assert_eq!(
@@ -184,7 +193,7 @@ fn people_get_a_sentence_and_one_next_command() {
         "✗ Unknown command \"stauts\". Did you mean \"status\"?\n→ aicharts --help\n"
     );
     let debug = run(
-        &["status"],
+        &["status", "--key-file", "k"],
         &[("HRANESS_AUDIENCE", "human"), ("HRANESS_DEBUG", "1")],
     );
     assert!(text(&debug.stderr).ends_with("  code: state_directory_required\n"));
@@ -193,18 +202,18 @@ fn people_get_a_sentence_and_one_next_command() {
 #[test]
 fn color_follows_no_color_force_color_and_dumb_terminals() {
     let forced = run(
-        &["status"],
+        &["status", "--key-file", "k"],
         &[("HRANESS_AUDIENCE", "human"), ("FORCE_COLOR", "1")],
     );
     assert!(text(&forced.stderr).starts_with("\x1b[31m✗\x1b[0m Missing --state-dir"));
     // Not a terminal: no color even for a person, symbols stay.
     let plain = run(
-        &["status"],
+        &["status", "--key-file", "k"],
         &[("HRANESS_AUDIENCE", "human"), ("NO_COLOR", "1")],
     );
     assert!(text(&plain.stderr).starts_with("✗ Missing --state-dir"));
     let dumb = run(
-        &["status"],
+        &["status", "--key-file", "k"],
         &[("HRANESS_AUDIENCE", "human"), ("TERM", "dumb")],
     );
     assert_eq!(
@@ -216,17 +225,20 @@ fn color_follows_no_color_force_color_and_dumb_terminals() {
 #[test]
 fn scripts_and_agents_keep_the_fixed_code_line() {
     // Not a terminal and no agent marker: the quiet audience.
-    let quiet = run(&["status"], &[]);
+    let quiet = run(&["status", "--key-file", "k"], &[]);
     assert_eq!(quiet.status.code(), Some(2));
     assert_eq!(text(&quiet.stderr), "aicharts: state_directory_required\n");
-    let agent = run(&["status"], &[("CLAUDECODE", "1")]);
+    let agent = run(&["status", "--key-file", "k"], &[("CLAUDECODE", "1")]);
     assert_eq!(text(&agent.stderr), "aicharts: state_directory_required\n");
     assert!(agent.stdout.is_empty());
 }
 
 #[test]
 fn json_callers_keep_the_fixed_refusal() {
-    let output = run(&["status", "--json"], &[("HRANESS_AUDIENCE", "human")]);
+    let output = run(
+        &["status", "--key-file", "k", "--json"],
+        &[("HRANESS_AUDIENCE", "human")],
+    );
     assert_eq!(output.status.code(), Some(2));
     assert!(output.stdout.is_empty());
     assert_eq!(text(&output.stderr), "aicharts: state_directory_required\n");
@@ -247,4 +259,37 @@ fn a_closed_pipe_ends_help_quietly() {
     assert_eq!(&first, b"Usage");
     assert_eq!(output.status.code(), Some(0));
     assert!(output.stderr.is_empty(), "{}", text(&output.stderr));
+}
+
+#[test]
+fn status_reads_the_collector_files_and_answers_in_one_envelope() {
+    let home = std::env::temp_dir().join(format!("aicharts-cli-ux-status-{}", std::process::id()));
+    let outputs = home.join("outputs");
+    std::fs::create_dir_all(&outputs).unwrap();
+    let home_value = home.to_str().unwrap();
+    let outputs_value = outputs.to_str().unwrap();
+    let env = [
+        ("AICHARTS_HOME", home_value),
+        ("AICHARTS_OUTPUTS", outputs_value),
+        ("HOME", home_value),
+    ];
+    let output = run(&["status", "--json"], &env);
+    assert_eq!(output.status.code(), Some(0), "{output:?}");
+    let value: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(value["ok"], true);
+    assert_eq!(value["schema"], "aicharts.status/1");
+    assert_eq!(value["data"]["state"], "not-set-up");
+    let snapshot = run(&["tui", "--snapshot", "--width", "60"], &env);
+    assert_eq!(snapshot.status.code(), Some(0));
+    assert!(text(&snapshot.stdout).contains("Not set up on this Mac"));
+    let commands = run(&["commands", "--json"], &env);
+    let value: serde_json::Value = serde_json::from_slice(&commands.stdout).unwrap();
+    assert_eq!(value["schema"], "hraness.commands/1");
+    let bad = run(&["open", "nowhere", "--json"], &env);
+    assert_eq!(bad.status.code(), Some(2));
+    let value: serde_json::Value = serde_json::from_slice(&bad.stdout).unwrap();
+    assert_eq!(value["error"]["code"], "usage");
+    let printed = run(&["open", "dashboard", "--print"], &env);
+    assert_eq!(text(&printed.stdout), "https://aicharts.io/usage\n");
+    std::fs::remove_dir_all(home).unwrap();
 }

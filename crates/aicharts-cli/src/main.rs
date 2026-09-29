@@ -4,12 +4,14 @@ mod account;
 mod autosubmit;
 mod capture;
 mod contribution_sync;
+mod control;
 mod daemon;
 mod enroll;
 #[cfg(unix)]
 mod enrolled_ledger;
 mod enrollment;
 mod errors;
+mod health;
 mod help;
 mod inspect;
 mod intro;
@@ -538,6 +540,11 @@ fn main() {
     if keychain_notice::before_keychain(&args) == keychain_notice::Outcome::Skip {
         eprintln!("Skipped. Nothing was read from your keychain.");
         std::process::exit(1);
+    }
+    if !args.iter().any(|arg| arg == "--version") {
+        if let Some(code) = control::dispatch(&args) {
+            std::process::exit(code);
+        }
     }
     let support_options = support::options();
     if matches!(

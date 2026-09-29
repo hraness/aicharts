@@ -1,0 +1,12 @@
+== Status ==
+aicharts
+○ Not set up on this Mac · Set up
+  publishing to see your usage here
+
+Usage dashboard  aicharts open dashboard
+Setup guide      aicharts open setup-gu…
+Support          aicharts open support
+
+== Outputs ==
+Outputs · /Users/you/Library/Applicatio…
+No outputs yet.
