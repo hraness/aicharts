@@ -3,7 +3,7 @@
   "source": {
     "method": "models-api",
     "name": "OpenRouter",
-    "retrievedAt": "2026-09-28T18:16:15.629Z",
+    "retrievedAt": "2026-09-29T20:53:07.559Z",
     "timestampMeaning": "source-added-at",
     "url": "https://openrouter.ai/api/v1/models?sort=newest"
   },
@@ -28,6 +28,18 @@
     "windowDays": 90
   },
   "observedListings": [
+    {
+      "id": "openai/gpt-6.1-sol-pro",
+      "model": "GPT-6.1 Sol Pro",
+      "providerId": "openai",
+      "sourceAddedAt": "2026-09-29T17:28:06.000Z"
+    },
+    {
+      "id": "openai/gpt-6.1-sol",
+      "model": "GPT-6.1 Sol",
+      "providerId": "openai",
+      "sourceAddedAt": "2026-09-29T17:28:02.000Z"
+    },
     {
       "id": "anthropic/claude-sonnet-5.5",
       "model": "Claude Sonnet 5.5",
@@ -348,6 +360,48 @@
     }
   ],
   "releases": [
+    {
+      "capabilities": {
+        "inputModalities": [
+          "file",
+          "image",
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "openai/gpt-6.1-sol-pro-20260929",
+      "id": "openai/gpt-6.1-sol-pro",
+      "model": "GPT-6.1 Sol Pro",
+      "modelUrl": "https://openrouter.ai/openai/gpt-6.1-sol-pro",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceAddedAt": "2026-09-29T17:28:06.000Z",
+      "status": "awaiting-benchmark"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "file",
+          "image",
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "openai/gpt-6.1-sol-20260929",
+      "id": "openai/gpt-6.1-sol",
+      "model": "GPT-6.1 Sol",
+      "modelUrl": "https://openrouter.ai/openai/gpt-6.1-sol",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceAddedAt": "2026-09-29T17:28:02.000Z",
+      "status": "awaiting-benchmark"
+    },
     {
       "capabilities": {
         "inputModalities": [
