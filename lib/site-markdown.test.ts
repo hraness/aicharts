@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { articleProvenanceSentence } from "@hraness/design-kit";
 
-import { blogArticleProvenance } from "@/app/blog/article-admissions";
+import { blogArticleProvenance, indexableBlogArticles } from "@/app/blog/article-admissions";
 import { articleToMarkdown, blogArticles } from "@/app/blog/articles";
 import { blogEditorialImage } from "@/app/blog/editorial-images";
 import {
@@ -205,8 +205,8 @@ describe("markdown representations", () => {
         expect(cards.body).toContain(`${evidence.identity.resolver.name} model match`);
       }
     }
-    expect(blog.body).toContain(blogArticles[0].title);
-    for (const article of blogArticles) {
+    expect(blog.body).toContain(indexableBlogArticles[0].title);
+    for (const article of indexableBlogArticles) {
       const image = blogEditorialImage(article.slug);
       if (image === undefined) {
         expect(blog.body).not.toContain(`/images/blog/${article.slug}.webp`);

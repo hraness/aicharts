@@ -99,7 +99,10 @@ export const HOME_EDITORIAL_SLUGS = [
 export const BLOG_ARTICLE_ADMISSIONS = {
   "introducing-ai-charts": {
     canonicalOwner: blogArticlePath("introducing-ai-charts"),
-    decision: "keep",
+    // Rewritten as launch beats on 2026-09-29. The 2026-09-24 review scored
+    // the earlier text, so the post ships noindex until an independent
+    // reviewer scores this version (index only at 9 of 12 with no zero).
+    decision: "revise",
     drafting: "ai-from-source",
     evidenceOwner: EVIDENCE_OWNER,
     evidenceType: "primary-source-synthesis",
@@ -108,7 +111,7 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     hostFit:
       "AI Charts owns the charts, benchmarks library, data page, and notes this post describes, and every product claim was checked against the product’s own source, checked snapshots, and refresh schedule.",
     humanReviewedOn: null,
-    lifecycleState: "indexable",
+    lifecycleState: "quarantined",
     nearestUrls: [
       {
         distinction:
