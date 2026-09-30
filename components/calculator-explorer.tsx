@@ -17,7 +17,6 @@ import {
   type DutyCycle,
   type SolRateBasis,
 } from "@/lib/calculator-math";
-import { calculatorFaviconHref } from "@/lib/calculator-favicon";
 import { calculatorKnobsEqual, calculatorKnobsFromSearch, calculatorKnobsSearch } from "@/lib/calculator-share";
 import { openAiEffortColors, providerColor } from "@/lib/chart-colors";
 import { captureAnalyticsEvent, type CalculatorAnalyticsControl } from "@/lib/analytics";
@@ -188,22 +187,6 @@ export function CalculatorExplorer({
     return () => window.clearTimeout(timer);
   }, [knobs]);
 
-  // The tab icon shows the headline monthly figure for the current scenario.
-  useEffect(() => {
-    const links = [...document.querySelectorAll<HTMLLinkElement>("link[rel~=\"icon\"]")];
-    if (links.length === 0) return;
-    const originals = links.map(link => [link, link.href, link.type] as const);
-    for (const link of links) {
-      link.href = calculatorFaviconHref(scenario.spendUsd);
-      link.type = "image/svg+xml";
-    }
-    return () => {
-      for (const [link, href, type] of originals) {
-        link.href = href;
-        link.type = type;
-      }
-    };
-  }, [scenario.spendUsd]);
 
   const setKnob = (partial: Partial<CalculatorKnobs>) => {
     setKnobs(current => ({ ...current, ...partial }));

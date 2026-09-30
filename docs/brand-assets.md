@@ -1,11 +1,10 @@
 # Website identity
 
-The owner selected 📈 for AI Charts. Header marks use the native emoji. The supplied browser and Apple touch PNGs are checked by the hashes below.
+The current header uses the canonical chart mark in `public/marks/aicharts.svg`. Browser icons use that same silhouette in pure white on transparency. The Apple touch icon uses the same white mark on black. Each mark preserves its aspect ratio, is centered on both axes, and fills the largest square frame without added padding.
 
-`icon.png` SHA-256: `7d959d17fbcf72095bad00f6964046270b78c9bf7bd5fe68f54d1e96e3654593`.
-`apple-icon.png` SHA-256: `9881f49163edb8e1f04031c208afe4de4dc36b5cbbd0e1f7f82ecc6efeda3c41`.
+`icon.png` is 32×32, `icon1.png` is 96×96, and `apple-icon.png` is 180×180. `favicon.ico` contains 48px and 32px PNG frames. Regenerate these variants from the header mark rather than from an older favicon or the Apple background.
 
-`icon1.png` (96x96) and `favicon.ico` (48px and 32px frames) are downscaled from `apple-icon.png` with ImageMagick Lanczos resampling. No new mark was drawn.
-
-`icon1.png` SHA-256: `bea32ccb669bec1f8ef215e499df00ba2111f4288b8d1e64a177fe0a6cd5ceb9`.
-`favicon.ico` SHA-256: `604b3336d4a24e654ef21e5f2ac8bbcf982c1af5de7723120dc1d6368c32d547`.
+`icon.png` SHA-256: `42e5f5ed1524548da1b875ed05806b3da4d9c10333ffed6589e5fb88a57368d2`.
+`apple-icon.png` SHA-256: `14c0bf38882760651295265c3734085e5e949983514437dfb18f14cc437246a2`.
+`icon1.png` SHA-256: `20b782588956c5f5fd75ee8699ae9bdfe7e5622d0190f748f0ab285b56dddc0a`.
+`favicon.ico` SHA-256: `0a8cb30a43d3f4b3cf050545da7a5adb0ae8935b2aed29b44cc527b1f861d587`.
