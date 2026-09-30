@@ -1,54 +1,52 @@
 # aicharts launch film
 
-Built from the Slopcamera `launch-film` template. The product surface is the site's own launch mockups (`components/launch-mockups`), stacked on one board in `mockups.tsx`, and every number and the status come from `app/launch/facts.ts` through `{{fact}}` slots in `film.json`. Builds land in `out/` (16:9), `out/square/` (1:1) and `out/portrait/` (9:16).
-
-
-A code-built product film for a launch post. Every frame is HTML and CSS drawn from a timeline, so the film renders the same way each time and you can change a word without re-cutting anything.
+The 42-second film embedded in `/blog/introducing-ai-charts`. It is built from the Slopcamera `launch-film` template. The product surfaces are the site's own launch mockups (`components/launch-mockups`), stacked on one board in `mockups.tsx`, so the film and the post show the same illustrations. Every number and the status come from `app/launch/facts.ts` through `{{fact}}` slots in `film.json`; no number is typed by hand.
 
 The film has six acts:
 
-1. Cold open: a collage of the problem and two lines of copy.
-2. Title: the product name and its one-line promise.
-3. Product walk: your product in a browser frame, with a camera that moves between surfaces, a cursor and a drawn highlight. One step per entry in `film.json`.
-4. Proof: numbers counted up from your facts file.
-5. Limits: what the product does not do.
-6. End card: name, address and one line.
+1. Cold open: two lines on the problem.
+2. Title: the name and its one-line promise.
+3. Product walk: four steps across the score and cost chart, the coding-agent chart, the usage dashboard and the collector terminal, with a camera, a cursor and a drawn highlight.
+4. Proof: the snapshot counts, counted up from the facts module.
+5. Limits: what aicharts does not do.
+6. End card: name and address.
 
 ## Files
 
 | File | What it holds |
 | --- | --- |
-| `film.json` | Copy, aspect, frame rate, colors, fonts and product CSS. Start here. |
-| `mockups.tsx` | Placeholder product surfaces. Replace them with your site's real mockup components. |
+| `film.json` | Copy, aspect, frame rate, colors, fonts and product CSS. Numbers are `{{fact}}` slots. |
+| `mockups.tsx` | The board: the site's launch mockups, labelled as illustrations. |
 | `timeline.ts` | Act order and length. `film.js`, captions and per-beat clips all read it. |
 | `film.html` | The stage, with `{{SLOT}}` placeholders that `build.ts` fills. |
-| `film.css` | Canvas, scenes, masks, grain and the placeholder product styles. |
+| `film.css` | Canvas, scenes, masks and grain. |
 | `film.js` | The choreography. Each frame is a pure function of time. |
-| `build.ts` | Writes `out/film.html`, `out/scene.json`, `out/captions.vtt` and `out/beats.json`. |
-
-The motion helpers come from `@hraness/slopcamera/local/html-film` and are bundled into `out/film.html` at build time.
+| `build.ts` | Writes `film.html`, `scene.json`, `captions.vtt` and `beats.json` to `out/` (16:9), `out/square/` (1:1) or `out/portrait/` (9:16). |
 
 ## Make the film
 
+Run each command from this directory, one render at a time. Slopcamera waits for host-resource admission before it renders. Look at the stills before rendering.
+
 ```sh
 bun install
-bun run build                # add -- --aspect 9:16 for a vertical cut
-slopcamera html still --input out/scene.json --at 3,12.5 --output out/stills
-slopcamera html render --input out/scene.json --json > out/export.json
-slopcamera html deliver out/export.json --basename launch --poster-at 9 --social-at 9 \
-  --beats out/beats.json --per-beat-clips
+bun run still                 # out/stills; still:portrait for 9:16
+bun run render                # 16:9, out/export.json
+bun run deliver               # MP4, WebM, poster, social still, 1:1 cut and per-beat clips in out/deliver
+bun run render:portrait       # native 9:16 layout, out/portrait/export.json
+bun run deliver:portrait      # out/deliver-vertical
 ```
 
-Run each command from this directory. Look at the stills before rendering the full film.
+Copy the delivered files the site serves into `public/media/`:
+
+- `aicharts-launch.{mp4,webm}`, `aicharts-launch-poster.jpg` and `captions.vtt` as `aicharts-launch.vtt` (embedded in the post)
+- `aicharts-launch-1x1.mp4` (square cut for feeds)
+- `aicharts-launch-vertical.{mp4,webm}` (native 9:16 for Reels, Shorts and TikTok-style feeds)
+- `aicharts-launch-<act>.mp4` and `aicharts-launch-vertical-<act>.mp4` (one clip per act, to attach to the matching post in the social kit)
+
+`app/blog/introducing-ai-charts-film.test.ts` checks that every file the post references is committed and that the captions run the film's full length.
 
 ## Rules for the copy
 
-- Take every number in `film.json` from a facts file or release record. Do not type numbers by hand.
-- Keep the placeholder illustration note in `mockups.tsx` until the surfaces show your real product.
+- Take every number from `app/launch/facts.ts`. Do not type numbers into `film.json`.
+- Describe the surfaces as illustrations wherever the film is posted: they are drawn from checked data, not screenshots.
 - Use sentence case and plain words. One idea per act.
-
-## Swap in your product
-
-1. Replace `ProductMockup` and `OpenCard` in `mockups.tsx`. Keep the `data-film` names that `film.json` steps point at (`list`, `detail-body`, `row-2`, `action`), or change both together. Each step names a `focus` for the camera, a `target` for the cursor click, an optional `highlight`, and an optional `after` state that the target gets once clicked (styled with `[data-film-state="done"]` in `film.css`).
-2. If your site uses `@hraness/design-kit`, its `mockups.css` is inlined automatically. List any other product stylesheets in `film.json` under `productCss`.
-3. List your fonts in `film.json` under `fonts` as `{ "name", "family", "weight", "file" }`. Without them the film uses the Nebula Sans files that ship with SlopCamera.
