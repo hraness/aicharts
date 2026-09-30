@@ -10,7 +10,7 @@
         "@hraness/suite-accounts": "github:hraness/suite-accounts#v0.9.15",
         "@hraness/ui": "github:hraness/ui#v0.5.18",
         "@hraness/vercel-delivery": "github:hraness/vercel-delivery#v0.1.2",
-        "@hraness/web-discovery": "github:hraness/web-discovery#v0.11.0",
+        "@hraness/web-discovery": "github:hraness/web-discovery#v0.12.0",
         "@hugeicons/core-free-icons": "^4.3.0",
         "@hugeicons/react": "^1.1.10",
         "@posthog/nextjs-config": "1.11.1",
@@ -210,7 +210,7 @@
 
     "@hraness/vercel-delivery": ["@hraness/vercel-delivery@github:hraness/vercel-delivery#7a1a0da", { "peerDependencies": { "next": ">=16.2.0 <17.0.0" } }, "hraness-vercel-delivery-7a1a0da", "sha512-7E/nkfGJq21UOHz6xZFFJlxgZWmtQj57PLlRsu5WopetsFFoJAJt/p/8MP6l0kMiBWZp7aB12T7pxmn99syiRg=="],
 
-    "@hraness/web-discovery": ["@hraness/web-discovery@github:hraness/web-discovery#7b0b4d6", { "dependencies": { "@hraness/design-kit": "github:hraness/design-kit#v0.5.0" }, "peerDependencies": { "next": ">=16.2.0 <17.0.0", "react": ">=19.0.0 <20.0.0" } }, "hraness-web-discovery-7b0b4d6", "sha512-+pVhPKckv9o16dJzTGIWW0frUgQxwFQezNY9qZB3LMMC7130d+YludBpsfTrdns1RrkmXVdykhnW7wDQ3RB/5Q=="],
+    "@hraness/web-discovery": ["@hraness/web-discovery@github:hraness/web-discovery#5021f57", { "dependencies": { "@hraness/design-kit": "github:hraness/design-kit#v0.5.0" }, "peerDependencies": { "next": ">=16.2.0 <17.0.0", "react": ">=19.0.0 <20.0.0" }, "optionalPeers": ["next"] }, "hraness-web-discovery-5021f57", "sha512-O0BdAhQTIX8Ig50u+NC9qsHoWdoHLr2zMnfWccR1F3T86oGBoaz1TWPDoAs15sYGTb8gq8guJcmZMDQfA1hB5w=="],
 
     "@hugeicons/core-free-icons": ["@hugeicons/core-free-icons@4.3.5", "", {}, "sha512-Sv+NjHRPnQk+yZsGCMcGznCHdTfJR9PMMOEKcJYAQU4gy90dmlc9PwdtvYOImBZIjiheMsTLL5eMn2DmHxUiUg=="],
 

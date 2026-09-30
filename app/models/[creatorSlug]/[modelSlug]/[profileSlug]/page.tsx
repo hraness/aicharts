@@ -40,9 +40,9 @@ import {
   site,
 } from "../../../../site";
 import {
-  aichartsSocialImageAlt,
   codingAgentProfileSocialImagePage,
   indexModelSocialImagePage,
+  modelSocialImageAlt,
 } from "../../../../social-image-site";
 
 export const dynamicParams = false;
@@ -83,7 +83,7 @@ export async function generateMetadata({
     ? indexPage === undefined ? undefined : indexModelSocialImagePage(indexPage)
     : codingAgentProfileSocialImagePage(card);
   if (socialPage === undefined) notFound();
-  const imageAlt = aichartsSocialImageAlt(socialPage);
+  const imageAlt = modelSocialImageAlt(displayTitle);
   const indexingPolicy = card === undefined ? undefined : modelCardIndexingPolicy(card);
   return {
     ...base,
