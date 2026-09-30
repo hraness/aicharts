@@ -111,6 +111,15 @@ describe("page analytics context", () => {
     }
   });
 
+  test("stamps analytics_schema_version 2 on typed product events and overrides stray values", () => {
+    const properties = normalizedPageAnalyticsProperties("/", {
+      $current_url: "https://aicharts.io/",
+      analytics_schema_version: 9,
+      event_schema_version: 3,
+    });
+    expect(properties).toMatchObject({ analytics_schema_version: 2, event_schema_version: 3, site_id: "aicharts" });
+  });
+
   test("attaches stable site identity and schema properties", () => {
     expect(pageAnalyticsContext("/")).toMatchObject({
       analytics_schema_version: 2,
