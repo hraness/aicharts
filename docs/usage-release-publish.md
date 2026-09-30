@@ -2,7 +2,7 @@
 
 `.github/workflows/cli-publish.yml` turns one retained, nonpublishing Linux qualification into an immutable GitHub Release with OIDC build provenance. It is intended as the canonical distribution path for the Linux CLI profile: a reader would download the archive from the release, check its digest against `SHA256SUMS` and the manifest, and verify the attestation with `gh`. No package registry mirror exists, and none is required. The first release, [`cli-v0.1.0`](https://github.com/hraness/aicharts/releases/tag/cli-v0.1.0), was published on 2026-09-28 at 01:35:18 UTC as a full release, not a prerelease.
 
-The workflow has run once. Tag `cli-v0.1.0` at commit `a45160438c701273ebc8fde6b02741021f9d7a21` triggered publish run 36366527153, which succeeded on 2026-09-28 and created the release "aicharts CLI 0.1.0 (Linux x86-64)" with the CLI, skill and source archives, `SHA256SUMS`, the release manifest, `qualification.json` and `publication.json`. Any later tag still needs a successful qualification of its exact commit on `main`, or it fails closed.
+The latest published release is [`cli-v0.2.0`](https://github.com/hraness/aicharts/releases/tag/cli-v0.2.0), from commit `525b9f3a54e3264e4b3050522527985a13ebfad0`. [Qualification run 36605822635](https://github.com/hraness/aicharts/actions/runs/36605822635), attempt 1, built and tested it on `main`; [publish run 36606325096](https://github.com/hraness/aicharts/actions/runs/36606325096) succeeded on 2026-09-29 and published the same bytes with attestations. Any later tag still needs a successful qualification of its exact commit on `main`, or it fails closed.
 
 ## What triggers it
 
@@ -20,22 +20,14 @@ The release carries seven assets: the CLI archive, the skill archive, the source
 
 ## Verifying a published release
 
-```sh
-gh release download cli-v0.1.0 --repo hraness/aicharts --dir aicharts-cli-v0.1.0
-cd aicharts-cli-v0.1.0
-sha256sum --check --strict SHA256SUMS
-gh attestation verify aicharts-0.1.0-x86_64-unknown-linux-gnu.tar.gz --repo hraness/aicharts \
-  --signer-workflow hraness/aicharts/.github/workflows/cli-publish.yml --deny-self-hosted-runners
-```
-
-Repeat the `gh attestation verify` line for the skill archive, the source archive and `release-manifest.json`. The attestation proves that the named workflow on `hraness/aicharts` published those exact bytes; the manifest's `workflow.runId` and `qualification.json` identify the `main` run that built and smoke-tested them. Neither proves the Rust toolchain or the runner image beyond what `qualification.json` records.
+Follow [Run the Linux CLI](../distribution/cli/docs/usage-install.md) to download the pinned release into a new directory, check `SHA256SUMS`, verify all three archives and the manifest with `gh attestation verify`, and extract the CLI. The attestation proves that the named workflow on `hraness/aicharts` published those exact bytes; the manifest's `workflow.runId` and `qualification.json` identify the `main` run that built and smoke-tested them. Neither proves the Rust toolchain or the runner image beyond what `qualification.json` records.
 
 ## Validation
 
 `bun run release:publish:check` syntax-checks and tests the verifier (`scripts/release/verify-publication.check.mjs`: synthetic artifacts covering extra, missing, symlinked and oversized members; unqualified, drifted and rebound receipts; manifest, digest and checksum-file corruption; command-line receipt behavior) and parses the workflow (`scripts/release/publish-workflow.test.ts`: triggers, permissions, pinned action SHAs, the resolve/select/verify/publish/attest/verify step contract). The verifier was also run locally on 2026-09-24 against the retained artifact `linux-qualification-c6b2b3e665cc82b72ab7d64a6a147624c6d1a783-1` of run 35498763628 (commit `c6b2b3e665cc82b72ab7d64a6a147624c6d1a783`, tag `cli-v0.1.0`, run attempt 1) and produced a passing receipt binding the four checksummed assets: CLI archive 7,110,155 bytes `317b3dd95f269d9e991e608062d8dec67324e4f042e76ad9794046735a66e905`, skill archive 28,408 bytes `0fe1bf2215ea1e95defee6b7d584ec87aa913906ba9c787c4146626be9d312df`, source archive 4,145,654 bytes `adc9f6bf4c8999de82c1b7c42fd976242054944d519507e37607cc771b714718` and manifest 154,311 bytes `4f76262a8a704cfd1861f482d4be406f889ded45a291c735136430d1c5ed908d`; `sha256sum --check --strict SHA256SUMS` passed on the same directory. The pinned `actions/attest-build-provenance` commit `4d101475d8b20a2381f78447822ac1eab6504dd8` was confirmed to be the `v4.2.2` tag. That artifact expires on 2026-09-27; the receipt is local evidence for the verifier, not a publication.
 
-## Open owner items
+## Release settings and remaining work
 
-- Turn on the repository setting that makes releases immutable (GitHub "immutable releases"), so a published release's assets and tag cannot change after creation. The workflow refuses to overwrite an existing release, but only the repository setting binds the GitHub API.
+- GitHub reports `immutable: true` for `cli-v0.2.0`, checked on 2026-09-29. Its published assets and tag cannot be changed; the workflow also refuses to overwrite an existing release.
 - A macOS notarized release remains unimplemented. It needs an Apple Developer identity, a Developer ID certificate and notarization credentials held by the owner; the macOS companion is documented in `docs/usage-companion.md` and is not distributed by this path.
 - Rebuilding inside the publish workflow, if ever wanted, requires a reviewed extension of the runner's identity policy in `scripts/release/run-linux.mjs` and its tests; the current design deliberately keeps building on `main` only.
