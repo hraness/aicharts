@@ -355,8 +355,8 @@ describe("aicharts benchmark notes", () => {
     for (const article of blogArticles) {
       const admission = BLOG_ARTICLE_ADMISSIONS[article.slug];
       expect(admission.canonicalOwner).toBe(blogArticlePath(article.slug));
-      expect(admission.decision).toBe(article.slug === "introducing-ai-charts" ? "revise" : "keep");
-      expect(admission.lifecycleState).toBe(article.slug === "introducing-ai-charts" ? "quarantined" : "indexable");
+      expect(admission.decision).toBe("keep");
+      expect(admission.lifecycleState).toBe("indexable");
       expect([
         "Codex editorial review",
         "Claude Opus 5.5 (claude-opus-5-5) editorial review",
@@ -432,10 +432,8 @@ describe("aicharts benchmark notes", () => {
     expect(entries.map(entry => entry.url).join("\n"))
       .not.toContain("/blog/introducing-ai-charts");
 
-    // Every live post is indexable today except the introducing post, which
-    // was rewritten as launch beats and waits for an independent review.
-    expect(indexableBlogArticles.map(item => item.slug))
-      .toEqual(BLOG_SLUGS.filter(slug => slug !== "introducing-ai-charts"));
+    // Every live post is indexable today.
+    expect(indexableBlogArticles.map(item => item.slug)).toEqual([...BLOG_SLUGS]);
   });
 
   test("links other notes by their live titles", () => {
