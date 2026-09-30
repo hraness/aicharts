@@ -1,3 +1,4 @@
+import { productMessaging } from "./messaging";
 import { describe, expect, test } from "bun:test";
 
 import packageJson from "../package.json";
@@ -16,19 +17,20 @@ import {
 
 describe("aicharts public positioning", () => {
   test("carries the canonical product messaging", () => {
-    // Canonical lines come from the portfolio messaging record (hraness/jungle
-    // a9988b903). The search title leads with the product name and names the
-    // comparison a searcher looks for; the tagline stays the visible heading.
+    // Search and visible copy share the checked portfolio snapshot.
     expect(searchSite.title.startsWith(`${site.name}: `)).toBeTrue();
     for (const fact of ["benchmark scores", "cost per task"]) {
       expect(searchSite.title).toContain(fact);
     }
     expect(searchSite.title.length).toBeLessThanOrEqual(60);
     expect(searchSite.title).not.toContain("&");
-    expect(site.tagline).toBe("See which model wins at each price.");
-    expect(site.category).toBe("AI model comparison charts");
-    expect(homeHeading).toBe(site.tagline);
+    expect(site.tagline).toBe(productMessaging.tagline);
+    expect(site.category).toBe(productMessaging.category);
+    expect(homeHeading).toBe(productMessaging.hero.heading);
     expect(homeEyebrow).toBe(site.category);
+    expect(site.name).toBe(productMessaging.names.name);
+    expect(site.description).toBe(productMessaging.meta);
+    expect(homeLede).toBe(productMessaging.hero.summary);
     // The meta description names the two product halves: published benchmark
     // charts and the local token collector.
     expect(site.description.startsWith(`${site.name} `)).toBeTrue();

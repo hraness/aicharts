@@ -26,6 +26,8 @@ import {
   site,
 } from "./site";
 
+import { productMessaging, relatedProduct, registeredRelationship } from "./messaging";
+
 import "@/styles/chart-home.css";
 
 export const metadata = createPublicSiteMetadata(searchSite, { canonicalPath: "/" });
@@ -63,7 +65,7 @@ export default function Home() {
       <HomeActivityFeed />
       <section aria-labelledby="home-calculator-title" className="home-calculator" data-analytics-surface="home_calculator">
         <div className="home-calculator__copy">
-          <h2 id="home-calculator-title">Subscription vs API vs GPUs</h2>
+          <h2 id="home-calculator-title">{productMessaging.headings["home-calculator"]}</h2>
           <p>One maxed ChatGPT Pro seat implies a monthly token volume. The calculator prices it five ways: the subscription sticker, OpenAI and DeepSeek API rates, GPUs you buy, and GPUs you rent.</p>
         </div>
         <Link className="home-calculator__cta" href="/calculator">Open the calculator <span aria-hidden="true">↗</span></Link>
@@ -71,62 +73,24 @@ export default function Home() {
       <MarketingRelated
         groups={[
           {
-            heading: "The agent platform",
+            heading: productMessaging.headings["home-platform-group"],
             headingId: "related-tools",
             summary: "The layer your agent runs through: sessions, accounts, web reads, and the models behind them.",
-            items: [
-              {
-                name: "Excalibur (xcb)",
-                href: "https://xcb.sh",
-                role: "Routes coding tasks across the Claude, Codex, and Devin plans you have",
-                relationship: "Excalibur measures subscription usage locally and, when you turn on exports, writes session files in the aicharts format. Automatic upload is not available.",
-              },
-              {
-                name: "Gobstopper",
-                href: "https://gobstopper.sh",
-                role: "Compacts long agent sessions into smaller copies, keeping every byte",
-                relationship: null,
-              },
-              {
-                name: "GhostGet",
-                href: "https://ghostget.com",
-                role: "Named web actions for AI agents: read pages, save media, use connected accounts",
-                relationship: null,
-              },
-            ],
+            items: ["xcb", "gobstopper", "wrench"].map((id) => ({
+              ...relatedProduct(id),
+              relationship: id === "xcb" ? registeredRelationship("aicharts", id) : null,
+            })),
           },
           {
-            heading: "The personal apps",
+            heading: productMessaging.headings["home-personal-group"],
             headingId: "related-apps",
-            items: [
-              {
-                name: "PeopleBlade",
-                href: "https://peopleblade.com",
-                role: "Local personal CRM for everyone you know, built for your agent",
-                relationship: null,
-              },
-              {
-                name: "Soulscrape",
-                href: "https://soulscrape.com",
-                role: "Free agent skill that writes dated dossiers on people, sources cited",
-                relationship: null,
-              },
-              {
-                name: "Textbutler",
-                href: "https://textbutler.app",
-                role: "AI butler for the iMessage, WhatsApp, and Beeper chats you choose",
-                relationship: null,
-              },
-              {
-                name: "Wordcell",
-                href: "https://wordcell.io",
-                role: "Markdown knowledge base that gives agents the decisions behind code",
-                relationship: null,
-              },
-            ],
+            items: ["peopleblade", "soulscrape", "message-like-me", "kb"].map((id) => ({
+              ...relatedProduct(id),
+              relationship: null,
+            })),
           },
         ]}
-        heading="From the same workshop."
+        heading={productMessaging.headings["home-related"]}
         headingId="related-title"
         label="Related"
         summary="Other Hraness tools for people who work with AI agents."
