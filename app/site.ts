@@ -40,8 +40,7 @@ export const homeTaskLinks = [
   { task: "video", name: "Video", description: "Create video from text or images." },
   { task: "audio", name: "Audio", description: "Transcribe and understand speech." },
 ] as const;
-/** The collector's latest GitHub release; link it instead of typing a version number. */
-export const usageReleaseUrl = "https://github.com/hraness/aicharts/releases/latest";
+export { usageReleaseUrl } from "@/lib/usage-cli-release";
 
 export const homeAboutHeading = "About aicharts";
 /** The date the comparison facts below were last checked against each product's own pages. */

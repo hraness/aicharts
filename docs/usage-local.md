@@ -6,6 +6,14 @@ This guide covers the legacy v1 `usage`, collection, ledger, and publishing comm
 
 ## Build and run
 
+On macOS, install the CLI from the published release's source commit with Rust 1.97.1 and a C compiler:
+
+```sh
+cargo +1.97.1 install --locked --git https://github.com/hraness/aicharts --rev 525b9f3a54e3264e4b3050522527985a13ebfad0 aicharts-cli
+```
+
+Cargo puts `aicharts` in `~/.cargo/bin`; add that directory to your shell's path if your Rust installation has not already done so. This builds locally and does not install a signed or notarized macOS release. For a Linux x86-64 download, use the [release verification guide](../distribution/cli/docs/usage-install.md).
+
 Install the Rust toolchain pinned in `rust-toolchain.toml` and a C compiler for the bundled SQLite dependency. From the repository:
 
 ```sh

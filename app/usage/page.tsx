@@ -1,3 +1,5 @@
+import { PlatformInstall } from "@hraness/design-kit/react";
+import { PlatformBadges } from "@hraness/design-kit/react/server";
 import { createPublicSiteMetadata } from "@hraness/web-discovery";
 import Link from "next/link";
 
@@ -10,6 +12,7 @@ import {
   searchSite,
   usageReleaseUrl,
 } from "@/app/site";
+import { usageInstallPlatforms } from "./install";
 
 import "@/styles/usage.css";
 
@@ -20,7 +23,7 @@ export const metadata = createPublicSiteMetadata({
 }, { canonicalPath: "/usage" });
 
 const steps = [
-  ["01", "Build the collector", "Build the aicharts CLI from the aicharts GitHub repository with Rust. It reads token counts from your clients' local files. A few clients, such as Cursor and Warp, need a refresh step first."],
+  ["01", "Install the collector", "Choose your platform below. The collector reads token counts from your clients' local files. A few clients, such as Cursor and Warp, need a refresh step first."],
   ["02", "Connect your account", "On a Mac, run aicharts enroll and approve the pairing in your browser. Each enrolled Mac reports to one account."],
   ["03", "Publish on a schedule", "Set up a launchd job that runs aicharts autosubmit. Each run refreshes your clients and uploads their latest totals, so your dashboard stays current without manual exports."],
 ] as const;
@@ -48,6 +51,10 @@ export default function UsagePage() {
             <Link className="usage-button usage-button--quiet" href="#usage-setup">Set up tracking</Link>
           </div>
           <p className="usage-hero__note">In development. A Linux x86-64 build for local reports is on <a href={usageReleaseUrl}>GitHub Releases</a>; on a Mac, build from source. Account sync runs on macOS only.</p>
+          <PlatformBadges className="usage-platforms" platforms={[
+            { id: "macos", note: "from source" },
+            { id: "linux", note: "x86_64, local reports" },
+          ]} />
         </div>
       </section>
 
@@ -66,8 +73,10 @@ export default function UsagePage() {
             <span className="usage-step__number" aria-hidden="true">{Number(step)}</span><h3>{title}</h3><p>{description}</p>
           </li>)}
         </ol>
-        <CopyCommand command={'aicharts enroll --state-dir "$HOME/.aicharts/state"'} label="Collector setup command" note="then approve in browser" />
+        <PlatformInstall className="usage-install" id="collector-install" label="Collector platform" platforms={usageInstallPlatforms} />
+        <CopyCommand command={'aicharts enroll --state-dir "$HOME/.aicharts/state"'} label="Collector setup command" note="macOS, then approve in browser" />
         <div className="usage-setup__foot">
+          <Link className="usage-button usage-button--quiet usage-button--small" href="https://github.com/hraness/aicharts/blob/main/distribution/cli/docs/usage-install.md">Linux download and verification <span className="usage-button__arrow" aria-hidden="true">↗</span></Link>
           <Link className="usage-button usage-button--quiet usage-button--small" href="https://github.com/hraness/aicharts/blob/main/docs/usage-local.md#build-and-run">Build instructions <span className="usage-button__arrow" aria-hidden="true">↗</span></Link>
           <Link className="usage-button usage-button--quiet usage-button--small" href="https://github.com/hraness/aicharts/blob/main/docs/usage-autosubmit.md">Scheduled publication guide <span className="usage-button__arrow" aria-hidden="true">↗</span></Link>
         </div>
