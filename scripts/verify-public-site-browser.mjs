@@ -6,6 +6,7 @@ import { createServer } from "node:net";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright-core";
+import { ownedChromiumOptions } from "./owned-chromium.mjs";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const production = process.argv.includes("--production");
@@ -49,7 +50,9 @@ try {
     }
     assert.ok(ready, `Next did not become ready: ${output}`);
   }
-  browser = await chromium.launch({ executablePath: await browserExecutable() });
+  const owned = ownedChromiumOptions(await browserExecutable());
+  browser = await chromium.launch(owned);
+  console.log(`Owned Chromium: ${owned.executablePath} (${browser.version()})`);
   // Contexts are isolated and share only the server, so a small pool of them runs at once.
   // Each combination records its own results; they are joined in the fixed combination order.
   const combinations = [360, 390, 1440].flatMap(width => ["light", "dark"].map(theme => ({ width, theme })));
@@ -80,15 +83,14 @@ await writeFile(resolve(artifacts, "results.json"), JSON.stringify({ passed: !fa
 if (failure) throw failure;
 console.log(`Verified ${results.length} route/viewport/theme combinations at ${origin}.`);
 
-/** Prefer an explicit or preinstalled Chrome so CI needs no browser download. */
+/** Prefer an explicit test browser or the Chromium pinned by this app. */
 async function browserExecutable() {
-  const candidates = [process.env.CHROMIUM_EXECUTABLE_PATH, chromium.executablePath(), "/usr/bin/google-chrome", "/usr/bin/chromium", "/usr/bin/chromium-browser",
-    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", "/Applications/Chromium.app/Contents/MacOS/Chromium"];
+  const candidates = [process.env.CHROMIUM_EXECUTABLE_PATH, chromium.executablePath()];
   for (const candidate of candidates) {
     if (!candidate) continue;
     try { await access(candidate); return candidate; } catch { /* Try the next installed browser. */ }
   }
-  return undefined;
+  throw new Error("No pinned Chromium executable found; provision this app's Playwright browser.");
 }
 
 async function verifyCombination({ width, theme }, results) {

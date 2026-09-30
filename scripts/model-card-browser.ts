@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { ATLAS_DATASETS } from "../lib/benchmark-atlas-catalog";
 import { verifyUsageDashboard } from "./usage-browser";
 import { verifyUsageSessions } from "./usage-sessions-browser";
+import { ownedChromiumOptions } from "./owned-chromium.mjs";
 
 import {
   chromium,
@@ -37,11 +38,14 @@ async function launchFirstAvailableBrowser(paths: readonly string[]): Promise<Br
 
     availableExecutableCount += 1;
     try {
-      return await chromium.launch({
-        args: ["--no-sandbox"],
-        executablePath: path,
+      const owned = ownedChromiumOptions(path);
+      const browser = await chromium.launch({
+        ...owned,
+        args: [...owned.args, "--no-sandbox"],
         headless: true,
       });
+      console.log(`Owned Chromium: ${owned.executablePath} (${browser.version()})`);
+      return browser;
     } catch (error: unknown) {
       failures.push(`${path}: ${errorMessage(error)}`);
     }
@@ -579,11 +583,6 @@ const executablePaths = [
     ? []
     : [process.env.CHROMIUM_EXECUTABLE_PATH]),
   chromium.executablePath(),
-  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-  "/Applications/Chromium.app/Contents/MacOS/Chromium",
-  "/usr/bin/google-chrome",
-  "/usr/bin/chromium",
-  "/usr/bin/chromium-browser",
 ] as const;
 const port = await reservePort();
 const baseUrl = `http://${hostname}:${String(port)}`;

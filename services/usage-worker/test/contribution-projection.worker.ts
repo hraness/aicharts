@@ -38,9 +38,10 @@ function transaction(storage: DurableObjectStorage, admitted: () => boolean): Ad
 }
 const observation = (): AdmissionObservation => ({ generation: env.USAGE_ENROLLMENT_GENERATION, observed: now, committed: false, fence: null });
 const tick = (duration = CONTRIBUTION_PROJECTION_PUBLISH_INTERVAL_MS) => { now += duration; vi.setSystemTime(now); };
-async function advance(overrides: Partial<Env> = {}, admitted: () => boolean = () => true): Promise<ContributionProjectionAdvanceResult> {
-  return runInDurableObject(stub(), (_instance, context) => new AccountContributionProjection({ ...env, ...overrides },
-    new ContributionProjectionState(context.storage), transaction(context.storage, admitted)).advance({ schemaVersion: 3, ...scope() }, observation()));
+async function advance(overrides: Partial<Env> = {}, admitted: () => boolean = () => true, storage?: DurableObjectStorage): Promise<ContributionProjectionAdvanceResult> {
+  const run = (value: DurableObjectStorage) => new AccountContributionProjection({ ...env, ...overrides },
+    new ContributionProjectionState(value), transaction(value, admitted)).advance({ schemaVersion: 3, ...scope() }, observation());
+  return storage === undefined ? runInDurableObject(stub(), (_instance, context) => run(context.storage)) : run(storage);
 }
 function success(result: ContributionProjectionAdvanceResult): ContributionProjectionStatus {
   if (!result.ok) throw new Error(`synthetic projection refusal: ${result.error}`); return result.value;
@@ -52,8 +53,8 @@ const row = (id: number, corrected = false): UsageStatsRow => {
     durationMs: null, timedRecords: 0, timedTokens: "0", tokenBasis: "reported", breakdownCoverage: "complete" });
   if (!value) throw new Error("invalid synthetic row"); return value;
 };
-async function batch(count: number, corrected = false, removeAbove = Number.MAX_SAFE_INTEGER, deviceId = DEVICE): Promise<ContributionBatch> {
-  return canonical(state => {
+async function batch(count: number, corrected = false, removeAbove = Number.MAX_SAFE_INTEGER, deviceId = DEVICE, run: typeof canonical = canonical): Promise<ContributionBatch> {
+  return run(state => {
     const population = state.population(POPULATION)!;
     const value = parseContributionBatch({ schemaVersion: 3, profile: CONTRIBUTION_PROFILE, identityScheme: CONTRIBUTION_IDENTITY,
       grain: "observation", ...scope(), deviceId, operationId: hex(++operation), sequence: state.sequence(env.USAGE_ENROLLMENT_GENERATION, deviceId) + 1,
@@ -64,11 +65,11 @@ async function batch(count: number, corrected = false, removeAbove = Number.MAX_
     if (!value) throw new Error("invalid synthetic batch"); return value;
   });
 }
-async function publish(request: ContributionBatch) {
-  await canonical(state => state.reserve(request, authority()));
+async function publish(request: ContributionBatch, run: typeof canonical = canonical) {
+  await run(state => state.reserve(request, authority()));
   const body = await ensureContributionBody(env.STAGING, request, () => true); if (!body.ok) throw new Error(body.error);
-  const bundle = await canonical(state => state.deltaBundle(request, authority())), proof = await ensureContributionJournal(env.STAGING, bundle, () => true);
-  await canonical(state => state.commit(request, body.value, authority(), proof));
+  const bundle = await run(state => state.deltaBundle(request, authority())), proof = await ensureContributionJournal(env.STAGING, bundle, () => true);
+  await run(state => state.commit(request, body.value, authority(), proof));
 }
 async function grantEmpty(): Promise<void> {
   await canonical(state => state.grantPopulation({ schemaVersion: 3, ...scope(), deviceId: DEVICE,
@@ -82,8 +83,8 @@ async function converge(): Promise<ContributionProjectionStatus> {
   }
   throw new Error("bounded synthetic convergence exceeded");
 }
-async function applyAll(): Promise<ContributionProjectionStatus> {
-  for (let step = 0; step < 600; step++) { const result = success(await advance()); if (!result.appliedLag) return result; }
+async function applyAll(storage?: DurableObjectStorage): Promise<ContributionProjectionStatus> {
+  for (let step = 0; step < 600; step++) { const result = success(await advance({}, () => true, storage)); if (!result.appliedLag) return result; }
   throw new Error("bounded synthetic application exceeded");
 }
 async function prepareNumeric(): Promise<void> {
@@ -278,24 +279,30 @@ test("more than 64 numeric revisions apply in one cursor horizon and coalesce to
   await publish(await batch(4)); await converge();
   const prior = await cells(3), expected = new Map<string, UsageStatsRow>(Array.from({ length: 4 }, (_, index) => [hex(index + 1, 32), row(index + 1)]));
   const started = now;
-  for (let revision = 0; revision < 70; revision++) {
-    // Once a population removes an occurrence, it cannot overwrite that
-    // occurrence's head until it has rejoined the exact retained value. Keep
-    // the removed member absent while the remaining owned members move.
-    const original = await batch(revision > 35 ? 3 : 4, false, revision === 35 ? 3 : 4);
-    const request = parseContributionBatch({ ...original, mutations: original.mutations.map((mutation, index) => mutation.kind !== "put" ? mutation
-      : { ...mutation, row: { ...mutation.row, utcDay: DAY + (index + revision) % 2, client: (index + revision) % 2 ? "claude" : "codex",
-        tokens: { ...mutation.row.tokens, input: String(1000 + revision * 13 + index) } } }) });
-    if (!request) throw new Error("invalid synthetic generated correction");
-    await publish(request);
-    for (const mutation of request.mutations) {
-      if (mutation.kind === "put") expected.set(mutation.id, mutation.row);
-      else if (mutation.kind === "remove") expected.delete(mutation.id);
-      else throw new Error("unexpected synthetic mutation");
+  // Keep this synthetic burst in one real Durable Object callback. Every
+  // revision still uses production reserve, journal, commit and apply paths;
+  // crossing the test RPC bridge for each small step only adds fixture I/O.
+  await runInDurableObject(stub(), async (_instance, context) => {
+    const localCanonical: typeof canonical = async run => run(new ContributionState(context.storage));
+    for (let revision = 0; revision < 70; revision++) {
+      // Once a population removes an occurrence, it cannot overwrite that
+      // occurrence's head until it has rejoined the exact retained value. Keep
+      // the removed member absent while the remaining owned members move.
+      const original = await batch(revision > 35 ? 3 : 4, false, revision === 35 ? 3 : 4, DEVICE, localCanonical);
+      const request = parseContributionBatch({ ...original, mutations: original.mutations.map((mutation, index) => mutation.kind !== "put" ? mutation
+        : { ...mutation, row: { ...mutation.row, utcDay: DAY + (index + revision) % 2, client: (index + revision) % 2 ? "claude" : "codex",
+          tokens: { ...mutation.row.tokens, input: String(1000 + revision * 13 + index) } } }) });
+      if (!request) throw new Error("invalid synthetic generated correction");
+      await publish(request, localCanonical);
+      for (const mutation of request.mutations) {
+        if (mutation.kind === "put") expected.set(mutation.id, mutation.row);
+        else if (mutation.kind === "remove") expected.delete(mutation.id);
+        else throw new Error("unexpected synthetic mutation");
+      }
+      const status = await applyAll(context.storage);
+      expect(status).toMatchObject({ appliedRevision: 4 + revision, publishedRevision: 3, appliedLag: 0, publishedLag: revision + 1 });
     }
-    const status = await applyAll();
-    expect(status).toMatchObject({ appliedRevision: 4 + revision, publishedRevision: 3, appliedLag: 0, publishedLag: revision + 1 });
-  }
+  });
   expect(now).toBe(started); expect((await snapshot()).publications).toHaveLength(2);
   expect(await cells(3)).toEqual(prior);
   const applied = await projected(state => state.control()); expect(applied.appliedRoot).not.toBeNull();

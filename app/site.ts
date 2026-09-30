@@ -1,18 +1,18 @@
-// Canonical public identity lines come from the portfolio messaging record
-// for `aicharts` (hraness/jungle registry, commit a9988b903).
+import { productMessaging, productName, productCanonicalUrl } from "./messaging";
+
 export const site = {
-  category: "AI model comparison charts",
-  description: "aicharts plots published AI benchmark scores against cost and tokens per task, and a local collector measures your own agents' token use.",
+  category: productMessaging.category,
+  description: productMessaging.meta,
   domain: "aicharts.io",
   emoji: "◉",
-  introduction: "Picking a model means guessing at a tradeoff between quality and price, because benchmark scores and prices live in different places. aicharts plots published benchmark scores against cost and tokens per task on one chart, so the strongest option at each budget is visible instead of implied. A local collector measures your own agents' token use, so the cost question covers your work, not only the models. aicharts is free and open source.",
-  name: "aicharts",
-  origin: "https://aicharts.io",
+  introduction: productMessaging.long,
+  name: productName,
+  origin: productCanonicalUrl,
   palette: {
     chromatic: { key: "#5e2e02", support: "#fefefd" },
     tonal: { highlight: "#e1e0e0", shadow: "#291201" },
   },
-  tagline: "See which model wins at each price.",
+  tagline: productMessaging.tagline,
 } as const;
 
 export const searchSite = {
@@ -20,18 +20,17 @@ export const searchSite = {
   name: site.name,
   origin: site.origin,
   socialImage: {
-    alt: "aicharts: Model benchmark scores plotted against cost and tokens per task",
+    alt: `${productName}: ${productMessaging.short}`,
     path: "/opengraph-image",
   },
-  title: "aicharts: AI model benchmark scores vs cost per task",
+  title: productMessaging.headings["home-search-title"],
 } as const;
 
 export const homeEyebrow = site.category;
-export const homeHeading = site.tagline;
-export const homeLede =
-  "Benchmark scores plotted against cost and tokens per task, plus a local collector for your own agents' token use.";
-export const homePrimaryAction = { href: "/#intelligence-index", label: "Browse the charts" } as const;
-export const homeSecondaryAction = { href: "/usage", label: "Measure your agent" } as const;
+export const homeHeading = productMessaging.hero.heading;
+export const homeLede = productMessaging.hero.summary;
+export const homePrimaryAction = { href: "/#intelligence-index", label: productMessaging.hero.primaryAction } as const;
+export const homeSecondaryAction = { href: "/usage", label: productMessaging.hero.secondaryAction } as const;
 export const homeTaskLinks = [
   { task: "coding", name: "Coding", description: "Build, debug, and work in a terminal." },
   { task: "reasoning", name: "Reasoning", description: "Solve unfamiliar problems." },
@@ -42,7 +41,7 @@ export const homeTaskLinks = [
 ] as const;
 export { usageReleaseUrl } from "@/lib/usage-cli-release";
 
-export const homeAboutHeading = "About aicharts";
+export const homeAboutHeading = productMessaging.headings["home-about"];
 /** The date the comparison facts below were last checked against each product's own pages. */
 export const homeAlternativesCheckedOn = "2026-09-28";
 export const homeAlternativesLead = "Other places to compare models:";
