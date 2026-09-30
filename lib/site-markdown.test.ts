@@ -37,6 +37,7 @@ import {
 import { modelReleaseRadarHighlightsExcluding } from "./model-release-collection";
 import { parseTerminalBenchSnapshot } from "./terminal-bench-data";
 import { parseTerminalBenchScienceSnapshot } from "./terminal-bench-science-data";
+import { usageCliRelease } from "./usage-cli-release";
 import {
   AGENT_GUIDE_CONTENT_TYPE,
   MARKDOWN_CONTENT_TYPE,
@@ -329,7 +330,7 @@ describe("agent instruction file", () => {
     );
     // The guide names the usage page with its current status.
     expect(guide).toContain("/usage");
-    expect(guide).toContain("[GitHub Releases](https://github.com/hraness/aicharts/releases/latest)");
+    expect(guide).toContain(`[GitHub Releases](https://github.com/hraness/aicharts/releases/tag/cli-v${usageCliRelease.version})`);
     expect(guide).not.toContain("no packaged release yet");
     expect(guide).toContain("answer plus reasoning tokens");
     expect(guide).toContain("Accept: text/markdown");

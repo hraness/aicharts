@@ -206,8 +206,10 @@ jobs:
         with:
           path: .next/cache
           key: next-${{ runner.os }}-${{ hashFiles('bun.lock', 'next.config.ts') }}-${{ steps.next_cache.outputs.day }}
+      - name: Install the lockfile-pinned Chromium and Linux dependencies
+        run: node node_modules/playwright-core/cli.js install --with-deps chromium
       # Both browser suites start their own server on a free port against the
-      # same build and use the runner's preinstalled Chrome. They run one after
+      # same build and use the lockfile-pinned Chromium. They run one after
       # the other: the cross-tab contracts are timing-sensitive and a second
       # server plus browser contexts on the same runner made them flake.
       - name: Browser contracts against the production build

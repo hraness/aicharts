@@ -81,6 +81,8 @@
 .usage-hero__lede { color: var(--muted); font-size: clamp(1rem, 1.4vw, 1.2rem); line-height: 1.55; margin-block-start: 1.4rem; max-inline-size: 38rem; text-wrap: pretty; }
 .usage-hero__actions { align-items: center; display: flex; flex-wrap: wrap; gap: .65rem; margin-block-start: 2rem; }
 .usage-hero__note { color: var(--muted); font-size: .875rem; margin-block-start: 1rem; }
+.usage-platforms { margin-block-start: 1rem; }
+.usage-install { margin-block-end: 1.5rem; }
 
 [data-series="0"] { --usage-series: var(--usage-series-0); }
 [data-series="1"] { --usage-series: var(--usage-series-1); }

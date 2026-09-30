@@ -7,6 +7,7 @@ import {
 import { formatIntelligenceCost, formatIntelligenceIndex } from "@/lib/index-model-pages";
 import { MODEL_CARD_FALLBACK_CREATOR_SLUG } from "@/lib/model-card-route-status";
 
+import { productMessaging } from "./messaging";
 import { aichartsMarkDataUrl } from "./social-image-mark";
 import { modelCardsEyebrow, site } from "./site";
 
@@ -16,7 +17,7 @@ import { modelCardsEyebrow, site } from "./site";
  * routes add page copy only.
  */
 export const aichartsSocialImageSite = defineSocialImageSite({
-  description: "Model benchmark scores plotted against cost and tokens per task.",
+  description: productMessaging.short,
   domain: site.domain,
   icon: { kind: "mark", src: aichartsMarkDataUrl },
   // Names the cards set that must not break across lines.

@@ -18,9 +18,9 @@ Dated evidence is evidence for its own commit at its own time. Rerun the named c
 
 ## Platform and provider summary
 
-| Surface | State on 2026-09-25 |
+| Surface | Recorded state |
 | --- | --- |
-| Linux x86-64 CLI | Qualified by run 36109602971 for `40874b2186a399ecde237c019aa75a8b2c4a0793` on 2026-09-25 (artifact retained), after runs 36066135869 (`fc95b51`, `read-link-map`), 36104682547 (`2356eff`, unmapped `aicharts-metrics`) and 36108512661 (`f495d9f`, stale `rustls` notice entry) refused. An earlier qualification, run 35498763628 for `c6b2b3e`, dates from 2026-09-20. Tag `cli-v0.1.0` at `a451604` published release "aicharts CLI 0.1.0 (Linux x86-64)" through publish run 36366527153 on 2026-09-28. |
+| Linux x86-64 CLI | Qualified by run 36109602971 for `40874b2186a399ecde237c019aa75a8b2c4a0793` on 2026-09-25 (artifact retained), after runs 36066135869 (`fc95b51`, `read-link-map`), 36104682547 (`2356eff`, unmapped `aicharts-metrics`) and 36108512661 (`f495d9f`, stale `rustls` notice entry) refused. An earlier qualification, run 35498763628 for `c6b2b3e`, dates from 2026-09-20. Tag `cli-v0.1.0` at `a451604` published release "aicharts CLI 0.1.0 (Linux x86-64)" through publish run 36366527153 on 2026-09-28. The latest release, `cli-v0.2.0` at `525b9f3a54e3264e4b3050522527985a13ebfad0`, passed qualification run 36605822635 and publish run 36606325096 on 2026-09-29; downloaded archive and manifest checksums and workflow attestations passed on that date, and the GitHub API reports the release immutable. |
 | macOS | Source-only for the CLI and companion. One real enrollment and one accepted native upload were recorded on 2026-09-16; on 2026-09-19 the retained CLI returned `attempt_recovery_required`. No notarized or publicly distributed macOS build exists; it needs Apple credentials held by the owner. |
 | Windows | Unsupported. No build, qualification or documentation claim. |
 | Next.js site (`aicharts.io`) | Exact-deployment health verified by `bun run usage:deployment:verify` for `fc95b51` and `1cf93bd` on 2026-09-24, and for `2356eff` (PR 441), `f495d9f` (PR 444) and `40874b2` (PR 446) on 2026-09-25; usage routes remain fenced by the recorded flags. |
@@ -72,6 +72,8 @@ Dated evidence is evidence for its own commit at its own time. Rerun the named c
 | did **not** pass | docs/usage-linux-qualification.md | Run 36066135869 summary artifact, 2026-09-24 | evidenced |
 | It qualified `x86_64-unknown-linux-gnu` on Ubuntu 22.04 image `20260907.292.1` | docs/usage-linux-qualification.md | Run 35498763628 for `c6b2b3e6`, 2026-09-20; not the current tree | historical |
 | On macOS, `enroll` pairs an installation with an AI Charts account | docs/usage-local.md | Enrollment record 2026-09-16; `attempt_recovery_required` 2026-09-19 | historical |
+| On macOS, install the CLI from the published release's source commit | docs/usage-local.md | Source inspection on 2026-09-29: cli-v0.2.0 source archive at `525b9f3a54e3264e4b3050522527985a13ebfad0`, `rust-toolchain.toml`, workspace `Cargo.toml`, and `crates/aicharts-cli/Cargo.toml`; this route builds locally and supplies no signed or notarized macOS download | source-only |
+| For a Linux x86-64 download, use the [release verification guide] | docs/usage-local.md | Release cli-v0.2.0 at `525b9f3a54e3264e4b3050522527985a13ebfad0`: qualification run 36605822635 and publish run 36606325096, 2026-09-29; downloaded archives and manifest passed SHA-256 and cli-publish.yml attestation checks on 2026-09-29 | evidenced |
 | For live logs and an already | docs/usage-local.md | `cargo test --workspace --locked` | source-only |
 | qualified observed subtotals, and fixed diagnostics | docs/usage-local.md | `cargo test --workspace --locked` | source-only |
 | Inspection and export support the same 512 MiB database bound as the writer | docs/usage-local.md | `cargo test --workspace --locked` | source-only |
@@ -82,7 +84,8 @@ Dated evidence is evidence for its own commit at its own time. Rerun the named c
 | turns one retained, nonpublishing Linux qualification into an immutable GitHub Release | docs/usage-release-publish.md | Publish run 36366527153 for tag `cli-v0.1.0`, 2026-09-28 | evidenced |
 | It is intended as the canonical distribution path for the Linux CLI profile | docs/usage-release-publish.md | Release `cli-v0.1.0`, 2026-09-28 | evidenced |
 | The first release, [`cli-v0.1.0`] | docs/usage-release-publish.md | Release `cli-v0.1.0`, 2026-09-28 | evidenced |
-| triggered publish run 36366527153, which succeeded on 2026-09-28 | docs/usage-release-publish.md | Publish run 36366527153 for `a451604`, 2026-09-28 | evidenced |
+| The latest published release is [`cli-v0.2.0`] | docs/usage-release-publish.md | Qualification run 36605822635, attempt 1, and publish run 36606325096 for `525b9f3a54e3264e4b3050522527985a13ebfad0`, 2026-09-29 | evidenced |
+| GitHub reports `immutable: true` for `cli-v0.2.0` | docs/usage-release-publish.md | `gh api repos/hraness/aicharts/releases/tags/cli-v0.2.0` returned immutable true, draft false and prerelease false on 2026-09-29 | evidenced |
 | and it published `cli-v0.1.0` on 2026-09-28 | docs/usage-release-source.md | Publish run 36366527153, 2026-09-28 | evidenced |
 | selects the newest successful `workflow_dispatch` run of "Qualify Linux CLI" on `main` | docs/usage-release-publish.md | `scripts/release/publish-workflow.test.ts` | source-only |
 | requires `qualified`, `smoke.passed` and `notices.complete` to be true | docs/usage-release-publish.md | `scripts/release/verify-publication.check.mjs` | source-only |
@@ -111,7 +114,7 @@ Dated evidence is evidence for its own commit at its own time. Rerun the named c
 ## Corrections made while building the inventory
 
 - `README.md` said the identity design and activation runbook "list what is live in production today"; the runbook records dated evidence and the alias moves with every merge, so the sentence now points to the dated evidence, the verifier and this inventory.
-- `docs/usage-release-publish.md` called the publish workflow "the canonical distribution path"; no tag or release exists, so it is now "intended as" that path with the unexecuted state stated.
+- At the inventory's initial review, `docs/usage-release-publish.md` called the publish workflow "the canonical distribution path" before a tag or release existed, so that claim was narrowed to "intended as". Release `cli-v0.1.0` subsequently published on 2026-09-28 and `cli-v0.2.0` on 2026-09-29; the rows above record their dated evidence.
 - `docs/usage-linux-qualification.md` and `docs/usage-release-source.md` described the 32 MiB linker-map bound as current; run 36066135869 exceeded it and the shared bound is now 64 MiB.
 
 ## Adding or changing a claim
