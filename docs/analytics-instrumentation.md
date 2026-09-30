@@ -16,7 +16,7 @@ Every browser event passes through `normalizedPageAnalyticsProperties` before it
 - rejects client rate-limit warning events whose SDK-generated message contains a raw path;
 - adds a bounded page classification and public `content_id`.
 
-`context_schema_version` is `3`. It versions the page properties applied to all events. `event_schema_version` is `3` for the typed product events below and `1` for SDK-generated events such as `$pageview`, `$pageleave`, and Web Vitals. These fields are deliberately separate.
+`context_schema_version` is `3`. It versions the page properties applied to all events. `event_schema_version` is `3` for the typed product events below and `1` for SDK-generated events such as `$pageview`, `$pageleave`, and Web Vitals. These fields are deliberately separate. Before 2026-09-30 the browser normalizer rewrote `3` to `1`, so typed events stored before then carry `1`; query them by event name, not by `event_schema_version`.
 
 The server request-error hook uses the same exact ingest-host approval. It sends a fixed `server:aicharts` distinct ID with `$process_person_profile: false`, so it needs no cookieless browser hash and creates no person profile. It retains only a standard error type plus bounded framework route fields; original exception messages and stacks never leave the server.
 

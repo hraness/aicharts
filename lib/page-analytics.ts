@@ -359,6 +359,11 @@ export function normalizedPageAnalyticsProperties(
     if (webVitalDetailPropertyPattern.test(property)) delete normalized[property];
   }
   normalized.$host = context.canonical_domain;
-  normalized.event_schema_version = normalized.event_schema_version === 2 ? 2 : 1;
+  // Typed product events carry version 3 (lib/analytics.ts); pageview-shaped
+  // events carry 2. Anything else is an unknown or legacy payload.
+  normalized.event_schema_version =
+    normalized.event_schema_version === 2 || normalized.event_schema_version === 3
+      ? normalized.event_schema_version
+      : 1;
   return { ...normalized, ...context };
 }

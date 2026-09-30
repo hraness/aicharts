@@ -275,4 +275,12 @@ describe("page analytics property normalization", () => {
     expect(properties.$referring_domain).toBeUndefined();
     expect(properties.event_schema_version).toBe(1);
   });
+
+  test("keeps the typed product event schema version", () => {
+    const properties = normalizedPageAnalyticsProperties("/data", {
+      event_schema_version: 3,
+    });
+
+    expect(properties.event_schema_version).toBe(3);
+  });
 });
