@@ -9,7 +9,7 @@ import { MODEL_CARD_FALLBACK_CREATOR_SLUG } from "@/lib/model-card-route-status"
 
 import { productMessaging } from "./messaging";
 import { aichartsHeaderMarkSvg } from "./social-image-mark";
-import { modelCardsEyebrow, site } from "./site";
+import { homeEyebrow, homeHeading, modelCardsEyebrow, site } from "./site";
 
 /**
  * The one social-image declaration for aicharts. Every Open Graph and
@@ -32,6 +32,17 @@ export const aichartsSocialImageSite = defineSocialImageSite({
 export function aichartsSocialImageAlt(page: SocialImagePage = {}): string {
   return socialImageAlt(aichartsSocialImageSite, page);
 }
+
+/**
+ * The home card reads like the hero: its eyebrow over its H1. The hero's lede
+ * is the site tagline, which the card leaves out rather than repeat.
+ */
+export const homeSocialImagePage = {
+  description: "",
+  eyebrow: homeEyebrow,
+  headline: homeHeading,
+  layout: "product",
+} as const satisfies SocialImagePage;
 
 export const blogCollectionSocialImagePage = {
   description: "Sourced benchmark results and their limits.",

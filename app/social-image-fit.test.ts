@@ -13,15 +13,17 @@ import {
   blogCollectionSocialImagePage,
   codingAgentProfileSocialImageEyebrow,
   codingAgentProfileSocialImagePage,
+  homeSocialImagePage,
   indexModelSocialImagePage,
   modelSocialImageAlt,
   modelSocialImageHeadline,
   modelsSocialImagePage,
 } from "./social-image-site";
+import { homeEyebrow, homeHeading } from "./site";
 
 // Every card the site serves, with the copy its route hands the template.
 const cards: ReadonlyArray<readonly [string, SocialImagePage]> = [
-  ["/", {}],
+  ["/", homeSocialImagePage],
   ["/blog", blogCollectionSocialImagePage],
   ["/models", modelsSocialImagePage],
   ...MODEL_CARD_PRESENTATIONS.map(card => [card.path, codingAgentProfileSocialImagePage(card)] as const),
@@ -43,9 +45,8 @@ describe("aicharts social-image copy fits the shared card as written", () => {
     expect(fit.headline.reduced).toBe(false);
     expect(fit.description?.cut ?? "none").toBe("none");
     expect(fit.description?.reduced ?? false).toBe(false);
-    // Every page card carries an eyebrow; only the home card goes without.
-    if (path === "/") expect(fit.eyebrow).toBeUndefined();
-    else expect(fit.eyebrow).toBe(typeof page.eyebrow === "string" ? page.eyebrow : "Blog");
+    // Every card carries an eyebrow; the home card's is the hero's.
+    expect(fit.eyebrow).toBe(typeof page.eyebrow === "string" ? page.eyebrow : "Blog");
   });
 
   test("model cards read the provider over the model name without repeating it", () => {
@@ -68,10 +69,14 @@ describe("aicharts social-image copy fits the shared card as written", () => {
     }
   });
 
-  test("the home card sets the tagline on two lines, so it needs no product layout", () => {
-    const fit = socialImageFit(socialImageSiteDetails(aichartsSocialImageSite, {}));
-    expect(fit.findings.map(finding => finding.code)).not.toContain("home-headline-three-lines");
+  test("the home card shows the hero eyebrow and H1 without repeating the tagline", () => {
+    expect(homeSocialImagePage).toMatchObject({ eyebrow: homeEyebrow, headline: homeHeading, layout: "product" });
+    const fit = socialImageFit(socialImageSiteDetails(aichartsSocialImageSite, homeSocialImagePage));
+    expect(fit.layout).toBe("product");
+    expect(fit.eyebrow).toBe(homeEyebrow);
+    expect(fit.headline.lines.join(" ")).toBe(homeHeading);
     expect(fit.headline.threeLine).toBe(false);
+    expect(fit.description).toBeUndefined();
   });
 
   test("uncatalogued combined runs name the harness, not the listed provider, as the eyebrow", () => {

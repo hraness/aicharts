@@ -10,6 +10,7 @@ import {
   blogCollectionSocialImagePage,
   codingAgentProfileSocialImagePage,
   indexModelSocialImagePage,
+  homeSocialImagePage,
   modelsSocialImagePage,
 } from "./social-image-site";
 
@@ -69,7 +70,7 @@ describe("aicharts social-image declaration", () => {
     }
     expect(home.alt).toBe(aichartsSocialImageAlt());
 
-    expect(await lastRender(() => home.default())).toEqual({ page: {}, site: aichartsSocialImageSite });
+    expect(await lastRender(() => home.default())).toEqual({ page: homeSocialImagePage, site: aichartsSocialImageSite });
     expect(await lastRender(() => blog.default())).toEqual({
       page: blogCollectionSocialImagePage,
       site: aichartsSocialImageSite,
