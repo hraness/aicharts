@@ -39,7 +39,7 @@ export function aichartsSocialImageAlt(page: SocialImagePage = {}): string {
  */
 export const homeSocialImagePage = {
   description: "",
-  eyebrow: homeEyebrow,
+  eyebrow: homeEyebrow.toUpperCase(),
   headline: homeHeading,
   layout: "product",
 } as const satisfies SocialImagePage;

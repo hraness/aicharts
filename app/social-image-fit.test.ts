@@ -70,10 +70,10 @@ describe("aicharts social-image copy fits the shared card as written", () => {
   });
 
   test("the home card shows the hero eyebrow and H1 without repeating the tagline", () => {
-    expect(homeSocialImagePage).toMatchObject({ eyebrow: homeEyebrow, headline: homeHeading, layout: "product" });
+    expect(homeSocialImagePage).toMatchObject({ eyebrow: homeEyebrow.toUpperCase(), headline: homeHeading, layout: "product" });
     const fit = socialImageFit(socialImageSiteDetails(aichartsSocialImageSite, homeSocialImagePage));
     expect(fit.layout).toBe("product");
-    expect(fit.eyebrow).toBe(homeEyebrow);
+    expect(fit.eyebrow).toBe(homeEyebrow.toUpperCase());
     expect(fit.headline.lines.join(" ")).toBe(homeHeading);
     expect(fit.headline.threeLine).toBe(false);
     expect(fit.description).toBeUndefined();
