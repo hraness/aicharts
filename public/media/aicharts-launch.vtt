@@ -1,0 +1,37 @@
+WEBVTT
+
+open
+00:00:00.000 --> 00:00:04.400
+Every AI lab says its model is best. Few tell you what a task costs.
+
+title
+00:00:04.400 --> 00:00:07.600
+aicharts. See which AI model wins at each price.
+
+step-1
+00:00:07.600 --> 00:00:13.200
+Score and cost, one chart. 97 model settings by score and cost per task. The line joins the models nothing cheaper beats.
+
+step-2
+00:00:13.200 --> 00:00:18.800
+Coding agents as you run them. 20 setups: a model, the agent app and an effort. Hover one for cost, time and tokens.
+
+step-3
+00:00:18.800 --> 00:00:24.400
+Your own token use. The collector adds up your agents' tokens, cost and time per model and day.
+
+step-4
+00:00:24.400 --> 00:00:29.500
+Numbers leave, words never do. Prompts, transcripts, file paths and keys stay on your machine.
+
+proof
+00:00:29.500 --> 00:00:34.000
+97 model settings on the score and cost chart. 20 coding-agent setups. 62 benchmarks in the library. From the checked snapshots each chart plots.
+
+limits
+00:00:34.000 --> 00:00:38.000
+What it does not do. It does not rerun benchmarks. It plots the published results, and every point names its source and date.
+
+end
+00:00:38.000 --> 00:00:42.500
+aicharts. aicharts.io. Benchmark charts free and live. Usage collector in development.

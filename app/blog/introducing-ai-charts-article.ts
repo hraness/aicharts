@@ -13,6 +13,7 @@ import {
 import { launchBeats } from "@/app/launch/beats";
 import { LAUNCH_STATUS } from "@/app/launch/facts";
 import { site } from "@/app/site";
+import type { ArticleVideoRecord } from "@hraness/design-kit";
 
 import {
   BLOG_SOURCE_NOTE,
@@ -21,6 +22,26 @@ import {
   paragraph,
   type BlogArticle,
 } from "./articles";
+
+/**
+ * The launch film, rendered from video/ with Slopcamera and delivered to
+ * public/media. It feeds the page's VideoObject too.
+ */
+export const INTRODUCING_AI_CHARTS_FILM = {
+  name: "Introducing aicharts",
+  description:
+    "A 42-second film with captions and no narration. After the title card it pans an illustrated aicharts page: the score and cost chart with the line through the models nothing cheaper beats, the coding-agent chart with one setup's cost, time and tokens, and the usage dashboard beside the collector commands, ending on what stays on your machine, the snapshot counts and what aicharts does not do.",
+  sources: [
+    { src: "/media/aicharts-launch.webm", type: "video/webm" },
+    { src: "/media/aicharts-launch.mp4", type: "video/mp4" },
+  ],
+  poster: "/media/aicharts-launch-poster.jpg",
+  captions: "/media/aicharts-launch.vtt",
+  width: 1920,
+  height: 1080,
+  duration: "PT42.5S",
+  uploadDate: "2026-09-29",
+} as const satisfies ArticleVideoRecord;
 
 export const INTRODUCING_AI_CHARTS_SLUG = "introducing-ai-charts" as const;
 export const INTRODUCING_AI_CHARTS_PUBLISHED_AT = "2026-09-24" as const;
@@ -118,8 +139,13 @@ export function createIntroducingAiChartsArticle(
     showRelatedProducts: true,
     body: [
       paragraph(
-        `Status: the benchmark charts and notes are free and live at aicharts.io. The usage collector is ${LAUNCH_STATUS}.`,
+        `Status: the benchmark charts and notes are free and live at aicharts.io. The usage collector is ${LAUNCH_STATUS.toLowerCase()}.`,
       ),
+      {
+        caption: "The launch film: illustrations of aicharts's charts and usage dashboard, with captions.",
+        type: "video",
+        video: INTRODUCING_AI_CHARTS_FILM,
+      },
       { beats: launchBeats, type: "launch-beats" },
       heading("Go deeper"),
       list(
