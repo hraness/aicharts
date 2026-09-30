@@ -4,7 +4,7 @@ AI Charts uses one small, typed PostHog boundary to measure acquisition and usef
 
 ## Runtime boundary
 
-`instrumentation-client.ts` initializes PostHog only in production on `aicharts.io` or `www.aicharts.io`, and only against the exact approved US or EU regional ingest origin. The SDK is cookieless, memory-only, person-profile-free, and has autocapture and session replay disabled. Automatic pageviews, page leaves, and bounded Web Vitals remain enabled.
+`instrumentation-client.ts` initializes PostHog only in production on `aicharts.io` or `www.aicharts.io`, and only against the exact approved US or EU regional ingest origin. The SDK is cookieless, memory-only, person-profile-free, and has autocapture and session replay disabled. Production events go to the shared Hraness PostHog project 543691 (US), where `site_id=aicharts` and `$host` separate AI Charts from other Hraness sites; that project has cookieless ingestion enabled. History before the 2026-09-30 cutover was backfilled from the retired AI Charts project 543694 with event names and schema unchanged. That history includes some events from the retired `codingchart.com` domain, which is not a tracked site. Automatic pageviews, page leaves, and bounded Web Vitals remain enabled.
 
 Every browser event passes through `normalizedPageAnalyticsProperties` before it leaves the page. The normalizer:
 
@@ -16,9 +16,9 @@ Every browser event passes through `normalizedPageAnalyticsProperties` before it
 - rejects client rate-limit warning events whose SDK-generated message contains a raw path;
 - adds a bounded page classification and public `content_id`.
 
-`context_schema_version` is `3`. It versions the page properties applied to all events. `event_schema_version` is `3` for the typed product events below and `1` for SDK-generated events such as `$pageview`, `$pageleave`, and Web Vitals. These fields are deliberately separate.
+`context_schema_version` is `3`. It versions the page properties applied to all events. `event_schema_version` is `3` for the typed product events below and `1` for SDK-generated events such as `$pageview`, `$pageleave`, and Web Vitals. These fields are deliberately separate. Before 2026-09-30 the browser normalizer rewrote `3` to `1`, so typed events stored before then carry `1`; query them by event name, not by `event_schema_version`.
 
-The server request-error hook uses the same exact ingest-host approval. It retains only a standard error type plus bounded framework route fields; original exception messages and stacks never leave the server.
+The server request-error hook uses the same exact ingest-host approval. It sends a fixed `server:aicharts` distinct ID with `$process_person_profile: false`, so it needs no cookieless browser hash and creates no person profile. It retains only a standard error type plus bounded framework route fields; original exception messages and stacks never leave the server.
 
 | Public route | `canonical_path` | `content_id` |
 | --- | --- | --- |
