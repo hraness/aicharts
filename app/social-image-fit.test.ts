@@ -15,6 +15,8 @@ import {
   codingAgentProfileSocialImageEyebrow,
   codingAgentProfileSocialImagePage,
   indexModelSocialImagePage,
+  modelSocialImageAlt,
+  modelSocialImageHeadline,
   modelsSocialImagePage,
 } from "./social-image-site";
 
@@ -34,18 +36,30 @@ describe("aicharts social-image copy fits the shared card as written", () => {
     expect(INDEX_MODEL_PAGES.length).toBeGreaterThan(0);
   });
 
-  test.each(cards)("%s has no fit issues and one headline size", (_path, page) => {
+  test.each(cards)("%s has no fit issues or review findings and one headline size", (path, page) => {
     const fit = socialImageFit(socialImageSiteDetails(aichartsSocialImageSite, page));
+    expect(fit.findings).toEqual([]);
     expect(fit.issues).toEqual([]);
     expect(fit.removed).toEqual([]);
     expect(fit.headline.reduced).toBe(false);
     expect(fit.description?.cut ?? "none").toBe("none");
-    // The template drops an eyebrow only when the headline already starts with it.
-    if (page.eyebrow !== undefined && fit.eyebrow === undefined) {
-      expect(page.headline?.startsWith(page.eyebrow)).toBe(true);
-    } else {
-      expect(fit.eyebrow).toBe(page.eyebrow);
+    expect(fit.description?.reduced ?? false).toBe(false);
+    // Every page card carries an eyebrow; only the home card goes without.
+    if (path === "/") expect(fit.eyebrow).toBeUndefined();
+    else expect(fit.eyebrow).toBe(typeof page.eyebrow === "string" ? page.eyebrow : "Blog");
+  });
+
+  test("model cards read the provider over the model name without repeating it", () => {
+    const deepseek = INDEX_MODEL_PAGES.find(page => page.displayTitle.startsWith(`${page.providerName} `));
+    if (deepseek !== undefined) {
+      const card = indexModelSocialImagePage(deepseek);
+      expect(`${card.eyebrow ?? ""} ${card.headline ?? ""}`).toBe(deepseek.displayTitle);
+      expect(modelSocialImageAlt(deepseek.displayTitle)).toBe(`${deepseek.displayTitle}, from aicharts`);
     }
+    expect(modelSocialImageHeadline("DeepSeek V4 Flash 0731 Max", "DeepSeek")).toBe("V4 Flash 0731 Max");
+    expect(modelSocialImageHeadline("DeepSeek", "DeepSeek")).toBe("DeepSeek");
+    expect(modelSocialImageHeadline("Opus 5 Max", "Anthropic")).toBe("Opus 5 Max");
+    expect(modelSocialImageHeadline("GPT-6 Sol Max", "OpenAI")).toBe("GPT-6 Sol Max");
   });
 
   test("model page subtitles do not repeat the headline", () => {

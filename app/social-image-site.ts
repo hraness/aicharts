@@ -16,15 +16,20 @@ import { modelCardsEyebrow, site } from "./site";
  * routes add page copy only.
  */
 export const aichartsSocialImageSite = defineSocialImageSite({
-  description: "Model benchmark scores plotted against cost and tokens per task",
+  description: "Model benchmark scores plotted against cost and tokens per task.",
   domain: site.domain,
   icon: { kind: "mark", src: aichartsMarkDataUrl },
+  // Names the cards set that must not break across lines.
+  keepTogether: ["Artificial Analysis", "Claude Code", "Devin Fusion CLI", "Intelligence Index", "Muse Spark"],
   name: site.name,
   theme: {
     accent: "#2474d4",
     background: "#e1e2e7",
     foreground: "#1c3161",
     muted: "#414c76",
+    // Plum wash from the web-discovery v0.12.0 portfolio table: the blue
+    // accent alone made this card a look-alike of xcb's in a feed.
+    wash: "#a145a1",
   },
 });
 
@@ -33,23 +38,42 @@ export function aichartsSocialImageAlt(page: SocialImagePage = {}): string {
 }
 
 export const blogCollectionSocialImagePage = {
-  description: "Sourced methods, results, and limits from AI evaluations.",
-  eyebrow: "Benchmark analysis",
+  description: "Sourced benchmark results and their limits.",
   headline: "AI model and agent benchmark analysis",
+  // The route names the eyebrow: "Blog".
+  path: "/blog",
 } as const satisfies SocialImagePage;
 
 export const modelsSocialImagePage = {
-  description: "Intelligence Index scores, cost per task, and coding-agent results",
+  description: "Intelligence Index scores, cost per task, and coding-agent results.",
   eyebrow: modelCardsEyebrow,
   headline: "AI models",
 } as const satisfies SocialImagePage;
 
 /**
  * Card copy for a coding-agent profile page. The page's meta description
- * repeats the model name, which the card already shows as its headline.
+ * repeats the model name, which the card already shows as its headline, and
+ * a two-line headline leaves room for one line at the standard size.
  */
 export const codingAgentProfileSocialImageDescription =
-  "Scores, cost, time, and tokens per task on the Artificial Analysis coding-agent chart.";
+  "Scores, cost, time, and tokens per coding task.";
+
+/**
+ * The card headline under a provider eyebrow. A title that opens with the
+ * provider's own name ("DeepSeek V4 Flash") would hide the eyebrow, so the
+ * card reads the name top to bottom instead: "DeepSeek" over "V4 Flash".
+ */
+export function modelSocialImageHeadline(displayTitle: string, eyebrow: string): string {
+  const prefix = `${eyebrow} `;
+  return displayTitle.startsWith(prefix) && displayTitle.length > prefix.length
+    ? displayTitle.slice(prefix.length)
+    : displayTitle;
+}
+
+/** Alt text for a model page card names the whole model, as the page does. */
+export function modelSocialImageAlt(displayTitle: string): string {
+  return aichartsSocialImageAlt({ headline: displayTitle });
+}
 
 /**
  * The eyebrow over a coding-agent profile card. A catalogued model shows its
@@ -69,10 +93,11 @@ export function codingAgentProfileSocialImageEyebrow(
 export function codingAgentProfileSocialImagePage(
   card: Readonly<{ canonicalModelId: string; displayTitle: string; harnessLabel: string; providerName: string }>,
 ): SocialImagePage {
+  const eyebrow = codingAgentProfileSocialImageEyebrow(card);
   return {
     description: codingAgentProfileSocialImageDescription,
-    eyebrow: codingAgentProfileSocialImageEyebrow(card),
-    headline: card.displayTitle,
+    eyebrow,
+    headline: modelSocialImageHeadline(card.displayTitle, eyebrow),
   };
 }
 
@@ -92,6 +117,6 @@ export function indexModelSocialImagePage(page: Readonly<{
   return {
     description: `Scores ${formatIntelligenceIndex(page.intelligenceIndex)} on the ${page.sourceName}${cost}.`,
     eyebrow: page.providerName,
-    headline: page.displayTitle,
+    headline: modelSocialImageHeadline(page.displayTitle, page.providerName),
   };
 }

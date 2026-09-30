@@ -50,7 +50,9 @@ describe("aicharts social-image declaration", () => {
       background: "#e1e2e7",
       foreground: "#1c3161",
       muted: "#414c76",
+      wash: "#a145a1",
     });
+    expect(aichartsSocialImageSite.keepTogether).toContain("Artificial Analysis");
   });
 
   test("every route renders the shared template with the site declaration and page copy only", async () => {
