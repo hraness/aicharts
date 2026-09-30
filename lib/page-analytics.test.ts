@@ -113,6 +113,7 @@ describe("page analytics context", () => {
 
   test("attaches stable site identity and schema properties", () => {
     expect(pageAnalyticsContext("/")).toMatchObject({
+      analytics_schema_version: 2,
       canonical_domain: "aicharts.io",
       context_schema_version: 3,
       site_id: "aicharts",
@@ -167,6 +168,7 @@ describe("page analytics property normalization", () => {
       $session_entry_url: "https://aicharts.io/models/[creator]/[model]/[profile]",
       canonical_path: "/blog/[article]",
       content_id: "blog:terminal-bench-science",
+      analytics_schema_version: 2,
       context_schema_version: 3,
       event_schema_version: 2,
     });
