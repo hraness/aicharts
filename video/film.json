@@ -1,0 +1,72 @@
+{
+  "name": "Introducing aicharts",
+  "aspect": "16:9",
+  "fps": 30,
+  "seed": 20260929,
+  "background": "#111214",
+  "accent": "#3574f0",
+  "productCss": ["../components/launch-mockups/mockups.css", "product.css"],
+  "fonts": [
+    { "name": "sans-book", "family": "Film Sans", "weight": "400", "file": "../node_modules/@hraness/design-kit/src/fonts/nebula-sans/NebulaSans-Book.woff2" },
+    { "name": "sans-bold", "family": "Film Sans", "weight": "700", "file": "../node_modules/@hraness/design-kit/src/fonts/nebula-sans/NebulaSans-Bold.woff2" },
+    { "name": "mono", "family": "Geist Mono", "weight": "100 900", "file": "../node_modules/@hraness/design-kit/src/fonts/geist-mono/GeistMono[wght].woff2" }
+  ],
+  "copy": {
+    "name": "aicharts",
+    "promise": "See which AI model wins at each price.",
+    "url": "aicharts.io",
+    "open": [
+      "Every AI lab says its model is best.",
+      "Few tell you what a task costs."
+    ],
+    "steps": [
+      {
+        "heading": "Score and cost, one chart",
+        "body": "{{intelligenceConfigs}} model settings by score and cost per task. The line joins the models nothing cheaper beats.",
+        "focus": "chart",
+        "target": "chart-best",
+        "highlight": "chart-best",
+        "zoom": 1.2
+      },
+      {
+        "heading": "Coding agents as you run them",
+        "body": "{{codingConfigs}} setups: a model, the agent app and an effort. Hover one for cost, time and tokens.",
+        "focus": "coding",
+        "target": "coding-hover",
+        "highlight": "coding-tooltip",
+        "zoom": 1.2
+      },
+      {
+        "heading": "Your own token use",
+        "body": "The collector adds up your agents' tokens, cost and time per model and day.",
+        "focus": "usage",
+        "target": "usage-stats",
+        "highlight": "usage-stats",
+        "zoom": 1.2
+      },
+      {
+        "heading": "Numbers leave, words never do",
+        "body": "Prompts, transcripts, file paths and keys stay on your machine.",
+        "focus": "collector",
+        "target": "collector-enroll",
+        "highlight": "collector",
+        "zoom": 1.2
+      }
+    ],
+    "proof": {
+      "caption": "From the checked snapshots each chart plots.",
+      "items": [
+        { "fact": "intelligenceConfigs", "label": "model settings on the score and cost chart" },
+        { "fact": "codingConfigs", "label": "coding-agent setups" },
+        { "fact": "libraryEntries", "label": "benchmarks in the library" }
+      ]
+    },
+    "limits": {
+      "heading": "What it does not do",
+      "body": "It does not rerun benchmarks. It plots the published results, and every point names its source and date."
+    },
+    "end": {
+      "line": "Benchmark charts free and live. Usage collector {{status}}."
+    }
+  }
+}

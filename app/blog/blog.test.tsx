@@ -2459,7 +2459,8 @@ describe("aicharts benchmark notes", () => {
     });
     const imageLessMarkup = renderToStaticMarkup(imageLessArticle);
     expect(imageLessMarkup).toContain(blogArticles[0].title);
-    expect(imageLessMarkup).not.toContain("<figure");
+    // Launch-beat illustrations are figures too; only the editorial image is absent.
+    expect(imageLessMarkup).not.toContain("plain-publication__editorial-figure");
     expect(imageLessMarkup).not.toContain("/images/blog/");
   });
 

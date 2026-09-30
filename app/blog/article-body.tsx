@@ -1,4 +1,7 @@
+import { ArticleVideo, LaunchBeats } from "@hraness/design-kit/react/server";
 import type { ReactNode } from "react";
+
+import { renderLaunchMockup } from "@/components/launch-mockups";
 
 import {
   headingId,
@@ -81,6 +84,24 @@ function ArticleBlock({ block }: Readonly<{ block: BlogBlock }>) {
         </table>
       </div>
     );
+  }
+
+  if (block.type === "launch-beats") {
+    return (
+      <LaunchBeats
+        beats={block.beats}
+        renderVisual={(beat) => {
+          if (beat.visual.kind !== "mockup") {
+            throw new RangeError(`Beat ${beat.id} needs a mockup visual; this site draws no clips or diagrams.`);
+          }
+          return renderLaunchMockup(beat.visual.id, beat.visual.state);
+        }}
+      />
+    );
+  }
+
+  if (block.type === "video") {
+    return <ArticleVideo caption={block.caption} video={block.video} width="wide" />;
   }
 
   const List = block.style === "ordered" ? "ol" : "ul";

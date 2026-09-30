@@ -102,3 +102,8 @@
 @media (max-width: 480px) {
   .home-index-strip__row { grid-template-columns: minmax(0, 1fr); }
 }
+.home-usage .plain-publication__figure { margin-top: 16px; max-width: 760px; }
+.home-usage .plain-publication__figure-caption,
+.usage-preview .plain-publication__figure-caption { margin-top: 8px; font-size: 0.875rem; color: var(--muted, inherit); opacity: 0.85; }
+.home-usage .plain-publication__figure-label,
+.usage-preview .plain-publication__figure-label { font-weight: 600; }

@@ -1,0 +1,21 @@
+{
+  "name": "aicharts-launch-video",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "bun build.ts",
+    "build:square": "bun build.ts --aspect 1:1",
+    "build:portrait": "bun build.ts --aspect 9:16",
+    "draft": "bun build.ts --scale 0.5 --fps 15",
+    "still": "bun build.ts && slopcamera html still --input out/scene.json --at 3,8,12,17,21,26,31,36,41 --output out/stills",
+    "still:portrait": "bun build.ts --aspect 9:16 && slopcamera html still --input out/portrait/scene.json --at 3,8,12,17,21,26,31,36,41 --output out/portrait/stills",
+    "render": "bun build.ts && slopcamera html render --input out/scene.json --json > out/export.json",
+    "render:portrait": "bun build.ts --aspect 9:16 && slopcamera html render --input out/portrait/scene.json --json > out/portrait/export.json",
+    "deliver": "slopcamera html deliver out/export.json --basename aicharts-launch --poster-at 12 --social-at 17 --cuts 1:1 --beats out/beats.json --per-beat-clips --output out/deliver",
+    "deliver:portrait": "slopcamera html deliver out/portrait/export.json --basename aicharts-launch-vertical --poster-at 12 --social-at 17 --beats out/portrait/beats.json --per-beat-clips --output out/deliver-vertical",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@hraness/slopcamera": "3.8.1"
+  }
+}

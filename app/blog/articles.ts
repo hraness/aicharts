@@ -1,4 +1,5 @@
-import type { ArticleAuthor } from "@hraness/design-kit";
+import type { LaunchBeat } from "@hraness/design-kit/launch";
+import type { ArticleAuthor, ArticleVideoRecord } from "@hraness/design-kit";
 
 import { site } from "../site";
 import { PUBLIC_BLOG_SLUGS } from "@/lib/public-analytics-routes";
@@ -66,6 +67,17 @@ export type BlogBlock =
       columns: readonly string[];
       rows: readonly (readonly InlineContent[])[];
       type: "table";
+    }>
+  | Readonly<{
+      /** Launch beats: a headline, one standalone post, and one illustration each. */
+      beats: readonly LaunchBeat[];
+      type: "launch-beats";
+    }>
+  | Readonly<{
+      /** A captioned film served from public/media; the caption sits under it. */
+      caption: string;
+      video: ArticleVideoRecord;
+      type: "video";
     }>;
 
 export interface BlogSource {
@@ -590,6 +602,19 @@ export function articleToMarkdown(
       const marker = block.style === "ordered" ? "1." : "-";
       return block.items.map(item => `${marker} ${inlineMarkdown(item)}`).join("\n");
     }
+    if (block.type === "launch-beats") {
+      return block.beats.map(beat => [
+        `## ${beat.headline}`,
+        "",
+        beat.post,
+        "",
+        `*${beat.alt}*`,
+        ...(beat.detailHref === undefined ? [] : ["", `[More on this](${new URL(beat.detailHref, site.origin)})`]),
+      ].join("\n")).join("\n\n");
+    }
+    if (block.type === "video") {
+      return `*Video: ${block.video.name}. ${block.video.description}*`;
+    }
     const header = `| ${block.columns.join(" | ")} |`;
     const divider = `| ${block.columns.map(() => "---").join(" | ")} |`;
     const rows = block.rows.map(row => `| ${row.map(inlineMarkdown).join(" | ")} |`);
@@ -661,6 +686,10 @@ function blockText(block: BlogBlock): string {
     return inlineText(block.content);
   }
   if (block.type === "list") return block.items.map(inlineText).join(" ");
+  if (block.type === "launch-beats") {
+    return block.beats.map(beat => `${beat.headline} ${beat.post}`).join(" ");
+  }
+  if (block.type === "video") return "";
   return block.rows.flatMap(row => row.map(inlineText)).join(" ");
 }
 

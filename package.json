@@ -39,6 +39,7 @@
     "dev": "bun run build:theme && next dev --webpack",
     "build": "bun run build:theme && next build --webpack",
     "start": "next start",
+    "launch:kit": "bun scripts/write-social-kit.ts",
     "lint": "eslint .",
     "test": "bun test .",
     "test:browser": "bun run ./scripts/model-card-browser.ts",
