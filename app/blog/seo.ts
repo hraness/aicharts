@@ -1,4 +1,4 @@
-import type { ArticleLifecycle } from "@hraness/design-kit";
+import { articleVideoJsonLd, type ArticleLifecycle } from "@hraness/design-kit";
 import {
   absoluteWebUrl,
   articleJsonLd,
@@ -249,10 +249,25 @@ export function blogCollectionJsonLd(
   } as const;
 }
 
+/** The post's first film, as a schema.org VideoObject, or nothing when it has none. */
+function blogArticleVideoJsonLd(article: BlogArticle): Readonly<Record<string, unknown>> {
+  for (const block of article.body) {
+    if (block.type === "video") return { video: articleVideoJsonLd(block.video, searchSite.origin) };
+  }
+  return {};
+}
+
 export function blogArticleJsonLd(
   article: BlogArticle,
   editorialImage: BlogEditorialImage | null =
     blogEditorialImage(article.slug) ?? null,
+): Readonly<Record<string, unknown>> {
+  return { ...blogPostingJsonLd(article, editorialImage), ...blogArticleVideoJsonLd(article) };
+}
+
+function blogPostingJsonLd(
+  article: BlogArticle,
+  editorialImage: BlogEditorialImage | null,
 ): Readonly<Record<string, unknown>> {
   if (editorialImage !== null) {
     return linkHranessParties(articleJsonLd(searchSite, articleDiscovery(article, editorialImage)));

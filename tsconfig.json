@@ -28,5 +28,5 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules", "services/usage-worker", "target"]
+  "exclude": ["node_modules", "services/usage-worker", "target", "video"]
 }

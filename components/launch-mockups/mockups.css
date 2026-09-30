@@ -1,0 +1,397 @@
+/*
+ * aicharts launch mockups: the chart, library, data entry, usage dashboard
+ * and collector surfaces. They sit on the kit mockups
+ * (@hraness/design-kit/mockups.css), which draw the window and terminal.
+ * Every selector is under .acm, colours use light-dark() so they follow the
+ * kit theme, and the file needs no site tokens, so the film bundle can inline
+ * it as is. Load it after the kit stylesheet.
+ */
+
+.acm {
+  --acm-s0: light-dark(#2f6fed, #6d9bff);
+  --acm-s1: light-dark(#d9480f, #ff8a4c);
+  --acm-s2: light-dark(#2b8a3e, #51cf66);
+  --acm-s3: light-dark(#9c36b5, #da77f2);
+  --acm-s4: light-dark(#c2255c, #f783ac);
+  --acm-s5: light-dark(#8a9099, #6f757e);
+  --acm-frontier: light-dark(#15171a, #eceef1);
+  --hkm-page-height: auto;
+}
+
+.acm [data-acm-series="0"] { --acm-c: var(--acm-s0); }
+.acm [data-acm-series="1"] { --acm-c: var(--acm-s1); }
+.acm [data-acm-series="2"] { --acm-c: var(--acm-s2); }
+.acm [data-acm-series="3"] { --acm-c: var(--acm-s3); }
+.acm [data-acm-series="4"] { --acm-c: var(--acm-s4); }
+.acm [data-acm-series="5"] { --acm-c: var(--acm-s5); }
+
+/* Page head and toggles */
+
+.acm .acm-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  padding: 14px 18px 6px;
+}
+
+.acm .acm-brand {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--hkm-accent);
+}
+
+.acm .acm-title {
+  flex: 1 1 auto;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.acm .acm-toggle {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 8px;
+  background: var(--hkm-field);
+  font-size: 12px;
+}
+
+.acm .acm-toggle span {
+  padding: 3px 10px;
+  border-radius: 6px;
+  color: var(--hkm-muted);
+}
+
+.acm .acm-toggle span[data-acm-active] {
+  background: var(--hkm-card);
+  color: var(--hkm-fg);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
+}
+
+/* Scatter */
+
+.acm .acm-stage {
+  position: relative;
+  padding: 0 12px;
+}
+
+.acm .acm-scatter {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+}
+
+.acm .acm-grid {
+  stroke: var(--hkm-line);
+  stroke-width: 1;
+}
+
+.acm .acm-tick {
+  fill: var(--hkm-muted);
+  font: 500 11px var(--hkm-font);
+}
+
+.acm .acm-axis {
+  fill: var(--hkm-muted);
+  font: 500 11px var(--hkm-font);
+}
+
+.acm .acm-point {
+  fill: var(--acm-c, var(--acm-s5));
+  fill-opacity: 0.55;
+  stroke: var(--hkm-bg);
+  stroke-width: 1;
+}
+
+.acm .acm-point[data-acm-on-line] {
+  fill-opacity: 1;
+}
+
+.acm .acm-point-ring {
+  fill: none;
+  stroke: var(--acm-frontier);
+  stroke-width: 2;
+}
+
+.acm .acm-frontier {
+  fill: none;
+  stroke: var(--acm-frontier);
+  stroke-width: 2;
+  stroke-dasharray: 5 4;
+  stroke-linejoin: round;
+}
+
+.acm .acm-callout {
+  position: absolute;
+  inset-block-start: 10px;
+  inset-inline-start: 70px;
+  margin: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--acm-frontier);
+  color: var(--hkm-bg);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.acm .acm-tooltip {
+  position: absolute;
+  inset-block-start: 14px;
+  inset-inline-start: 70px;
+  min-inline-size: 220px;
+  padding: 10px 12px;
+  border: 1px solid var(--hkm-line);
+  border-radius: 10px;
+  background: var(--hkm-card);
+  box-shadow: 0 8px 24px -8px rgb(0 0 0 / 0.25);
+  font-size: 12px;
+}
+
+.acm .acm-tooltip strong {
+  display: block;
+  margin-block-end: 6px;
+  font-size: 13px;
+}
+
+.acm .acm-tooltip dl,
+.acm .acm-entry dl {
+  display: grid;
+  gap: 3px;
+  margin: 0;
+}
+
+.acm .acm-tooltip dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.acm .acm-tooltip dt,
+.acm .acm-entry dt {
+  color: var(--hkm-muted);
+}
+
+.acm .acm-tooltip dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.acm .acm-legend,
+.acm ul.acm-legend {
+  display: flex !important;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 0;
+  padding: 6px 18px 14px;
+  list-style: none;
+  color: var(--hkm-muted);
+  font-size: 12px;
+}
+
+.acm .acm-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.acm .acm-legend i {
+  inline-size: 9px;
+  block-size: 9px;
+  border-radius: 50%;
+  background: var(--acm-c, var(--acm-s5));
+}
+
+/* Library */
+
+.acm .acm-library {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 14px;
+  padding: 16px 18px;
+}
+
+.acm .acm-library__topics {
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+}
+
+.acm .acm-library__topics li {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 8px;
+  border-radius: 6px;
+  color: var(--hkm-muted);
+}
+
+.acm .acm-library__topics li[data-acm-active] {
+  background: var(--hkm-field);
+  color: var(--hkm-fg);
+  font-weight: 600;
+}
+
+.acm .acm-library__cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.acm .acm-card {
+  display: grid;
+  align-content: start;
+  gap: 5px;
+  padding: 12px;
+  border: 1px solid var(--hkm-line);
+  border-radius: 10px;
+  background: var(--hkm-card);
+  font-size: 12px;
+}
+
+.acm .acm-card strong {
+  font-size: 14px;
+}
+
+.acm .acm-card p {
+  margin: 0;
+  color: var(--hkm-fg);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+
+.acm .acm-card small {
+  color: var(--hkm-muted);
+}
+
+.acm .acm-badge {
+  justify-self: start;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--hkm-field);
+  color: var(--hkm-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.acm [data-acm-coverage="charted"] .acm-badge,
+.acm .acm-badge[data-acm-coverage="charted"] {
+  background: color-mix(in srgb, var(--acm-s2) 16%, transparent);
+  color: var(--acm-s2);
+}
+
+.acm [data-acm-coverage="watchlist"] .acm-badge {
+  background: color-mix(in srgb, var(--acm-s1) 16%, transparent);
+  color: var(--acm-s1);
+}
+
+/* Data entry */
+
+.acm .acm-entry {
+  padding: 16px 18px 18px;
+  font-size: 13px;
+}
+
+.acm .acm-entry__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-block-end: 12px;
+}
+
+.acm .acm-entry__head strong {
+  flex: 1;
+  font-size: 16px;
+}
+
+.acm .acm-entry__download {
+  padding: 3px 10px;
+  border: 1px solid var(--hkm-line);
+  border-radius: 6px;
+  color: var(--hkm-muted);
+  font-size: 12px;
+}
+
+.acm .acm-entry dl {
+  gap: 0;
+}
+
+.acm .acm-entry dl div {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 12px;
+  padding: 7px 0;
+  border-block-start: 1px solid var(--hkm-line);
+}
+
+.acm .acm-entry dd {
+  margin: 0;
+}
+
+/* Usage */
+
+.acm .acm-usage {
+  padding: 16px 18px 0;
+}
+
+.acm .acm-usage__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.acm .acm-usage__stats div {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--hkm-line);
+  border-radius: 10px;
+}
+
+.acm .acm-usage__stats span {
+  color: var(--hkm-muted);
+  font-size: 12px;
+}
+
+.acm .acm-usage__stats strong {
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+}
+
+.acm .acm-usage__bars {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  margin-block-start: 10px;
+}
+
+.acm .acm-usage__bars rect {
+  fill: var(--acm-c, var(--acm-s5));
+}
+
+.acm .acm-usage .acm-legend {
+  padding-inline: 0;
+}
+
+@container hkm (max-width: 520px) {
+  .acm .acm-library {
+    grid-template-columns: 1fr;
+  }
+
+  .acm .acm-library__topics {
+    display: none;
+  }
+
+  .acm .acm-library__cards {
+    grid-template-columns: 1fr;
+  }
+
+  .acm .acm-tooltip {
+    position: static;
+    margin: 0 6px 8px;
+  }
+}

@@ -80,6 +80,7 @@ import {
 } from "./articles";
 import {
   BLOG_ARTICLE_ADMISSIONS,
+  blogArticleLifecycle,
   blogArticleProvenance,
   indexableArticles,
   indexableBlogArticles,
@@ -422,7 +423,7 @@ describe("aicharts benchmark notes", () => {
     );
     expect(metadata.robots).toEqual(NOINDEX_ROBOTS);
     expect(
-      blogArticleMetadata(article, blogEditorialImage(article.slug)).robots,
+      blogArticleMetadata(article, blogEditorialImage(article.slug), "indexable").robots,
     ).toEqual(INDEXABLE_ROBOTS);
 
     const feed = atomFeed(blogEditorialImage, listed);
@@ -2383,10 +2384,10 @@ describe("aicharts benchmark notes", () => {
     expect(indexMarkup).toContain("Method");
     // Only the first card may preload its image. An injected image-free
     // index preloads nothing rather than promoting a below-fold image.
-    const leadImage = blogEditorialImage(blogArticles[0].slug);
+    const leadImage = blogEditorialImage(indexableBlogArticles[0].slug);
     expect(indexMarkup.match(/rel="preload"/gu) ?? [])
       .toHaveLength(leadImage === undefined ? 0 : 1);
-    for (const article of blogArticles) {
+    for (const article of indexableBlogArticles) {
       expect(indexMarkup).toContain(`href="${blogArticlePath(article.slug)}"`);
       const editorialImage = blogEditorialImage(article.slug);
       if (editorialImage === undefined) {
@@ -2459,7 +2460,8 @@ describe("aicharts benchmark notes", () => {
     });
     const imageLessMarkup = renderToStaticMarkup(imageLessArticle);
     expect(imageLessMarkup).toContain(blogArticles[0].title);
-    expect(imageLessMarkup).not.toContain("<figure");
+    // Launch-beat illustrations are figures too; only the editorial image is absent.
+    expect(imageLessMarkup).not.toContain("plain-publication__editorial-figure");
     expect(imageLessMarkup).not.toContain("/images/blog/");
   });
 
@@ -2524,7 +2526,7 @@ describe("aicharts blog discovery", () => {
           images: [{ url: image }],
         });
       }
-      expect(metadata.robots).toEqual(INDEXABLE_ROBOTS);
+      expect(metadata.robots).toEqual(blogArticleLifecycle(article.slug) === "indexable" ? INDEXABLE_ROBOTS : NOINDEX_ROBOTS);
     }
 
     const imageLess = blogArticleMetadata(blogArticles[0], null);
@@ -2607,8 +2609,8 @@ describe("aicharts blog discovery", () => {
     expect(response.headers.get("content-type"))
       .toBe("application/atom+xml; charset=utf-8");
     expect(xml).toContain('<feed xmlns="http://www.w3.org/2005/Atom">');
-    expect(xml.match(/<entry>/gu)).toHaveLength(blogArticles.length);
-    for (const article of blogArticles) {
+    expect(xml.match(/<entry>/gu)).toHaveLength(indexableBlogArticles.length);
+    for (const article of indexableBlogArticles) {
       const image = blogEditorialImage(article.slug);
       if (image !== undefined) {
         expect(xml).toContain(
@@ -2619,7 +2621,7 @@ describe("aicharts blog discovery", () => {
       }
     }
     const imageLessFeed = atomFeed(imageLessLookup);
-    expect(imageLessFeed.match(/<entry>/gu)).toHaveLength(blogArticles.length);
+    expect(imageLessFeed.match(/<entry>/gu)).toHaveLength(indexableBlogArticles.length);
     expect(imageLessFeed).not.toContain('rel="enclosure"');
     expect(imageLessFeed).not.toContain("&lt;figure&gt;");
     expect(blogCollectionMetadata.alternates).toMatchObject({
@@ -2639,7 +2641,7 @@ describe("aicharts blog discovery", () => {
       primaryImageOfPage:
         "https://aicharts.io/blog/opengraph-image",
     });
-    expect(collection.mainEntity.numberOfItems).toBe(blogArticles.length);
+    expect(collection.mainEntity.numberOfItems).toBe(indexableBlogArticles.length);
 
     for (const article of blogArticles) {
       const structured = blogArticleJsonLd(article);
@@ -2734,7 +2736,7 @@ describe("aicharts blog discovery", () => {
       "https://aicharts.io/",
       "https://aicharts.io/data",
       "https://aicharts.io/blog",
-      ...blogArticles.map(article =>
+      ...indexableBlogArticles.map(article =>
         `https://aicharts.io${blogArticlePath(article.slug)}`),
     ];
     expect(new Set(urls).size).toBe(urls.length);
@@ -2744,7 +2746,7 @@ describe("aicharts blog discovery", () => {
     expect(collection?.images).toEqual([
       `https://aicharts.io${BLOG_SOCIAL_IMAGE_PATH}`,
     ]);
-    for (const article of blogArticles) {
+    for (const article of indexableBlogArticles) {
       const entry = entries.find(candidate =>
         candidate.url.endsWith(blogArticlePath(article.slug)));
       expect(entry?.lastModified).toBe(article.updatedAt);

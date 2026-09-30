@@ -1,9 +1,10 @@
 import { PlatformInstall } from "@hraness/design-kit/react";
-import { PlatformBadges } from "@hraness/design-kit/react/server";
+import { ArticleFigure, PlatformBadges } from "@hraness/design-kit/react/server";
 import { createPublicSiteMetadata } from "@hraness/web-discovery";
 import Link from "next/link";
 
 import { ChartPageFooter } from "@/components/chart-navigation";
+import { UsageMockup } from "@/components/launch-mockups";
 import { SiteHeader } from "@/components/site-header";
 import { CopyCommand } from "@/components/usage/copy-command";
 import {
@@ -87,6 +88,9 @@ export default function UsagePage() {
           <div><span className="usage-eyebrow">Dashboard</span><h2 id="usage-metrics-title">What the dashboard shows</h2></div>
           <p>Every figure comes from the records your clients keep locally, reported per client, model, and UTC day.</p>
         </div>
+        <ArticleFigure caption="The dashboard for a signed-in account, with made-up numbers." className="usage-preview" kind="illustration" width="wide">
+          <UsageMockup />
+        </ArticleFigure>
         <ul className="usage-metric-grid">
           {metrics.map(([window, title, description], index) => <li className="usage-card usage-metric-card" key={title} data-series={index % 5}>
             <span className="usage-metric-card__label"><i aria-hidden="true" />{window}</span><h3>{title}</h3><p>{description}</p>

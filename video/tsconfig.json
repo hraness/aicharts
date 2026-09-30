@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "Preserve",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "skipLibCheck": true,
+    "types": [
+      "bun"
+    ],
+    "paths": {
+      "@/*": [
+        "../*"
+      ]
+    },
+    "resolveJsonModule": true,
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "es2024"
+    ]
+  },
+  "include": [
+    "*.ts",
+    "*.tsx"
+  ]
+}

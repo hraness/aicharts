@@ -1,4 +1,5 @@
 @import "@hraness/design-kit/styles.css";
+@import "@hraness/design-kit/mockups.css";
 @import "@hraness/site-footer/styles.css";
 @import "../styles/vendor/hraness-site-shell/site-shell.css";
 @import "../styles/plain-site.css";
@@ -6,6 +7,7 @@
 @import "../styles/model-cards.css";
 @import "../styles/benchmark-atlas.css";
 @import "../styles/usage.css";
+@import "../components/launch-mockups/mockups.css";
 @import "../styles/material.css";
 
 /* Keep application resets in the shared base layer. Unlayered resets outrank

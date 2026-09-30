@@ -88,7 +88,7 @@ const WEEKDAY_MONITOR_REVIEWED_BY = "weekday-monitor AI editorial review" as con
 /** Notes written before the drafting field existed were drafted by AI agents from their cited sources. */
 const AI_DRAFTED = "ai" as const;
 const AI_REVIEWER = "ai" as const;
-const INTRODUCING_REVIEWED_ON = "2026-09-24" as const;
+const INTRODUCING_REVIEWED_ON = "2026-09-29" as const;
 
 export const HOME_EDITORIAL_SLUGS = [
   "small-models-have-arrived",
@@ -99,6 +99,9 @@ export const HOME_EDITORIAL_SLUGS = [
 export const BLOG_ARTICLE_ADMISSIONS = {
   "introducing-ai-charts": {
     canonicalOwner: blogArticlePath("introducing-ai-charts"),
+    // Rewritten as launch beats on 2026-09-29 and rescored that day by an
+    // AI reviewer independent of the drafting run: every number traced to
+    // app/launch/facts.ts and its pinned tests, status to the cli-v0.2.0 release.
     decision: "keep",
     drafting: "ai-from-source",
     evidenceOwner: EVIDENCE_OWNER,
@@ -175,6 +178,11 @@ export const BLOG_ARTICLE_ADMISSIONS = {
         checkedOn: INTRODUCING_REVIEWED_ON,
         title: "AI Charts data-refresh workflow",
         url: "https://github.com/hraness/aicharts/blob/644dc2d/.github/workflows/data-refresh.yml",
+      },
+      {
+        checkedOn: INTRODUCING_REVIEWED_ON,
+        title: "AI Charts CLI 0.2.0 (Linux x86-64) release",
+        url: "https://github.com/hraness/aicharts/releases/tag/cli-v0.2.0",
       },
     ],
     scores: {

@@ -1,0 +1,17 @@
+/* The board the film's camera moves across: the site's mockups, stacked. */
+.film-board {
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+  padding: 48px;
+  background: #f4f5f8;
+}
+
+.film-panel {
+  width: 100%;
+}
+
+.film-board .hkm-terminal,
+.film-board [class*="hkm-terminal"] {
+  font-family: "Geist Mono", ui-monospace, monospace;
+}
