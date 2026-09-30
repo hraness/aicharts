@@ -111,8 +111,18 @@ describe("page analytics context", () => {
     }
   });
 
+  test("stamps analytics_schema_version 2 on typed product events and overrides stray values", () => {
+    const properties = normalizedPageAnalyticsProperties("/", {
+      $current_url: "https://aicharts.io/",
+      analytics_schema_version: 9,
+      event_schema_version: 3,
+    });
+    expect(properties).toMatchObject({ analytics_schema_version: 2, event_schema_version: 3, site_id: "aicharts" });
+  });
+
   test("attaches stable site identity and schema properties", () => {
     expect(pageAnalyticsContext("/")).toMatchObject({
+      analytics_schema_version: 2,
       canonical_domain: "aicharts.io",
       context_schema_version: 3,
       site_id: "aicharts",
@@ -167,6 +177,7 @@ describe("page analytics property normalization", () => {
       $session_entry_url: "https://aicharts.io/models/[creator]/[model]/[profile]",
       canonical_path: "/blog/[article]",
       content_id: "blog:terminal-bench-science",
+      analytics_schema_version: 2,
       context_schema_version: 3,
       event_schema_version: 2,
     });

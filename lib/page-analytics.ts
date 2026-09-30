@@ -38,6 +38,8 @@ export type AnalyticsContentId =
   | "other";
 
 export interface PageAnalyticsContext {
+  /** Hraness shared-project dimension version, read by the jungle visitor refresh. */
+  readonly analytics_schema_version: 2;
   readonly canonical_domain: "aicharts.io";
   readonly canonical_path: AnalyticsCanonicalPath;
   readonly content_group: "ai_comparison" | "benchmark_research" | "site";
@@ -79,6 +81,7 @@ export function pageAnalyticsContext(value: unknown): PageAnalyticsContext {
   const pathname = pathnameFrom(value);
   const segments = pathSegments(pathname);
   const shared = {
+    analytics_schema_version: 2,
     canonical_domain: "aicharts.io",
     context_schema_version: 3,
     site_id: "aicharts",
