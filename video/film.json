@@ -25,32 +25,28 @@
         "body": "{{intelligenceConfigs}} model settings by score and cost per task. The line joins the models nothing cheaper beats.",
         "focus": "chart",
         "target": "chart-best",
-        "highlight": "chart-best",
-        "zoom": 1.2
+        "highlight": "chart-best"
       },
       {
         "heading": "Coding agents as you run them",
         "body": "{{codingConfigs}} setups: a model, the agent app and an effort. Hover one for cost, time and tokens.",
         "focus": "coding",
         "target": "coding-hover",
-        "highlight": "coding-tooltip",
-        "zoom": 1.2
+        "highlight": "coding-tooltip"
       },
       {
         "heading": "Your own token use",
         "body": "The collector adds up your agents' tokens, cost and time per model and day.",
         "focus": "usage",
         "target": "usage-stats",
-        "highlight": "usage-stats",
-        "zoom": 1.2
+        "highlight": "usage-stats"
       },
       {
         "heading": "Numbers leave, words never do",
         "body": "Prompts, transcripts, file paths and keys stay on your machine.",
         "focus": "collector",
         "target": "collector-enroll",
-        "highlight": "collector",
-        "zoom": 1.2
+        "highlight": "collector"
       }
     ],
     "proof": {

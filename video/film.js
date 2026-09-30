@@ -116,6 +116,40 @@ function layout() {
 }
 const L = layout();
 
+/**
+ * Puts the progress dots under the tallest step's copy instead of at a fixed height,
+ * so a three-line heading never pushes body text under them. Wide frames centre the
+ * copy and dots; tall frames move the window down if the copy needs the room.
+ * Runs once, on the first walk frame, when the copy can be measured.
+ */
+let walkLayoutFitted = false;
+function fitWalkLayout() {
+  if (walkLayoutFitted) return;
+  walkLayoutFitted = true;
+  const wrap = $("walk-copy");
+  wrap.style.width = `${L.copy.w}px`;
+  let tallest = 0;
+  for (const step of steps) {
+    const { display, visibility } = step.block.style;
+    step.block.style.display = "";
+    step.block.style.visibility = "hidden";
+    tallest = Math.max(tallest, step.block.offsetHeight);
+    step.block.style.display = display;
+    step.block.style.visibility = visibility;
+  }
+  const gap = 36 * cfg.unit;
+  const dotsHeight = 6 * cfg.unit;
+  if (W / H > 1.3) {
+    L.copy.y = Math.max(H * 0.08, (H - (tallest + gap + dotsHeight)) / 2);
+    L.dots.y = L.copy.y + tallest + gap;
+    return;
+  }
+  L.dots.y = L.copy.y + tallest + gap;
+  const winTop = Math.max(L.win.y, L.dots.y + dotsHeight + gap);
+  L.win.h -= winTop - L.win.y;
+  L.win.y = winTop;
+}
+
 function place(el, box) {
   el.style.left = `${box.x}px`;
   el.style.top = `${box.y}px`;
@@ -226,7 +260,8 @@ function stepCamera(step, baseZoom, content, rects) {
     viewport: { w: L.win.w, h: L.win.h },
     content,
     focus: rects.get(step.focus),
-    zoom: Math.max(baseZoom, Math.min(baseZoom * (step.zoom ?? 1.45), 1.4)),
+    // Fit the surface width so no label or command is cut at the sides; steps pan vertically.
+    zoom: Math.max(baseZoom, Math.min(baseZoom * (step.zoom ?? 1), 1.4)),
     anchor: 0.45,
   });
 }
@@ -239,6 +274,7 @@ function walk(t) {
   show(s, on);
   if (!on) return;
 
+  fitWalkLayout();
   place($("walk-copy"), L.copy);
   place($("walk-dots"), L.dots);
   place($("win"), L.win);
