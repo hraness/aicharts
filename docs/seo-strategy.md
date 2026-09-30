@@ -146,7 +146,7 @@ PostHog provides directional product analytics after arrival:
 
 Google documents why [Search Console and analytics measure different systems](https://developers.google.com/search/docs/monitor-debug/google-analytics-search-console). Query and ranking conclusions must therefore come from Search Console, not referrer data alone.
 
-The pinned [AI Charts: Search & Content dashboard](https://us.posthog.com/project/543694/dashboard/1995999) contains weekly acquisition channels, organic search engines, landing pages, and qualified interactions over a rolling 90 days. Search Console remains authoritative for queries, rankings, impressions, and search clicks; PostHog can undercount browsers that block its analytics client or ingest requests.
+The AI Charts: Search & Content dashboard in the shared [Hraness PostHog project](https://us.posthog.com/project/543691/dashboards), filtered to `site_id=aicharts`, contains weekly acquisition channels, organic search engines, landing pages, and qualified interactions over a rolling 90 days. Search Console remains authoritative for queries, rankings, impressions, and search clicks; PostHog can undercount browsers that block its analytics client or ingest requests.
 
 ### Controlled page properties
 
