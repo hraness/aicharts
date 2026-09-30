@@ -38,20 +38,22 @@ async function lastRender(run: () => unknown): Promise<Rendered> {
 }
 
 describe("aicharts social-image declaration", () => {
-  test("declares the real app mark, light brand colours, and brand copy once", () => {
+  test("declares the header's foil mark, name, and Design Kit palette once", async () => {
     expect(aichartsSocialImageSite.name).toBe(site.name);
+    expect(aichartsSocialImageSite.brand).toBe(site.name);
     expect(aichartsSocialImageSite.domain).toBe(site.domain);
-    const icon = aichartsSocialImageSite.icon;
-    expect(icon?.kind).toBe("mark");
-    expect(icon?.src).toStartWith("data:image/svg+xml,");
-    expect(decodeURIComponent(icon?.src ?? "")).toContain('viewBox="0 0 497 580"');
-    expect(aichartsSocialImageSite.theme).toEqual({
-      accent: "#2474d4",
-      background: "#e1e2e7",
-      foreground: "#1c3161",
-      muted: "#414c76",
-      wash: "#a145a1",
-    });
+    // The header paints public/marks/aicharts.svg in foil; the card draws the same glyph.
+    const header = await Bun.file(new URL("../components/site-header.tsx", import.meta.url)).text();
+    expect(header).toContain('<FoilMark size={20} src="/marks/aicharts.svg" /> {site.name}');
+    const publicMark = await Bun.file(new URL("../public/marks/aicharts.svg", import.meta.url)).text();
+    expect(aichartsSocialImageSite.brandMark).toBe(publicMark.trim());
+    // The card's palette is the one <html> declares.
+    const layout = await Bun.file(new URL("./layout.tsx", import.meta.url)).text();
+    expect(layout).toContain(`data-palette="${aichartsSocialImageSite.palette ?? ""}"`);
+    expect(aichartsSocialImageSite.palette).toBe("tokyo-night");
+    // v0.12 tile, accent, and wash are gone: no marketing header draws them.
+    expect(aichartsSocialImageSite.icon).toBeUndefined();
+    expect(aichartsSocialImageSite.theme).toBeUndefined();
     expect(aichartsSocialImageSite.keepTogether).toContain("Artificial Analysis");
   });
 

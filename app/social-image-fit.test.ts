@@ -1,7 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
   socialImageFit,
-  socialImageIconShape,
   socialImageSiteDetails,
   type SocialImagePage,
 } from "@hraness/web-discovery/social-image/card";
@@ -69,10 +68,10 @@ describe("aicharts social-image copy fits the shared card as written", () => {
     }
   });
 
-  test("the app mark is drawn as a glyph in the tile's safe area", () => {
-    const icon = aichartsSocialImageSite.icon;
-    if (icon === undefined) throw new Error("Expected the aicharts mark.");
-    expect(socialImageIconShape(icon)).toBe("open");
+  test("the home card sets the tagline on two lines, so it needs no product layout", () => {
+    const fit = socialImageFit(socialImageSiteDetails(aichartsSocialImageSite, {}));
+    expect(fit.findings.map(finding => finding.code)).not.toContain("home-headline-three-lines");
+    expect(fit.headline.threeLine).toBe(false);
   });
 
   test("uncatalogued combined runs name the harness, not the listed provider, as the eyebrow", () => {

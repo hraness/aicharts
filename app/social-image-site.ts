@@ -8,7 +8,7 @@ import { formatIntelligenceCost, formatIntelligenceIndex } from "@/lib/index-mod
 import { MODEL_CARD_FALLBACK_CREATOR_SLUG } from "@/lib/model-card-route-status";
 
 import { productMessaging } from "./messaging";
-import { aichartsMarkDataUrl } from "./social-image-mark";
+import { aichartsHeaderMarkSvg } from "./social-image-mark";
 import { modelCardsEyebrow, site } from "./site";
 
 /**
@@ -17,21 +17,16 @@ import { modelCardsEyebrow, site } from "./site";
  * routes add page copy only.
  */
 export const aichartsSocialImageSite = defineSocialImageSite({
+  // The header's foil mark and product name, on the site's Design Kit palette.
+  brand: site.name,
+  brandMark: aichartsHeaderMarkSvg,
   description: productMessaging.short,
   domain: site.domain,
-  icon: { kind: "mark", src: aichartsMarkDataUrl },
   // Names the cards set that must not break across lines.
   keepTogether: ["Artificial Analysis", "Claude Code", "Devin Fusion CLI", "Intelligence Index", "Muse Spark"],
   name: site.name,
-  theme: {
-    accent: "#2474d4",
-    background: "#e1e2e7",
-    foreground: "#1c3161",
-    muted: "#414c76",
-    // Plum wash from the web-discovery v0.12.0 portfolio table: the blue
-    // accent alone made this card a look-alike of xcb's in a feed.
-    wash: "#a145a1",
-  },
+  // The `data-palette` on <html> in app/layout.tsx.
+  palette: "tokyo-night",
 });
 
 export function aichartsSocialImageAlt(page: SocialImagePage = {}): string {
