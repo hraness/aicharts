@@ -84,7 +84,13 @@ describe("launch beats and social kit", () => {
     expect(Object.keys(socialKit).sort()).toEqual(
       ["bluesky", "linkedin", "productHunt", "showHnFacts", "sources", "threads", "x"].sort(),
     );
-    expect(socialKit.x).toHaveLength(launchBeats.length);
+    // The limits beat stays in the post; every other beat is one social post.
+    expect(socialKit.x).toHaveLength(launchBeats.filter((beat) => beat.part !== "limits").length);
+    const limits = launchBeats.find((beat) => beat.part === "limits");
+    expect(limits).toBeDefined();
+    for (const post of [...socialKit.x, ...socialKit.bluesky, ...socialKit.threads, socialKit.linkedin]) {
+      expect(post).not.toContain(limits?.post ?? "");
+    }
     expect(socialKit.x.at(-1)).toContain(LAUNCH_POST_URL);
     expect(JSON.stringify(socialKit)).not.toMatch(/mastodon/iu);
   });

@@ -84,6 +84,8 @@ const authoredBeats: readonly LaunchBeat[] = [
     part: "who",
     headline: "For picking a model on cost, not for one overall rank",
     post: "aicharts is for choosing a model or coding agent by weighing score against cost, time or tokens. If you want one overall ranking of every model, look elsewhere: aicharts builds no score of its own, and it cannot test your codebase.",
+    socialPost:
+      "aicharts is for choosing a model or coding agent by weighing score against cost, time or tokens. Switch the chart to time or tokens per task and the fast or concise picks stand out.",
     visual: { kind: "mockup", id: "chart", state: { view: "tokens" } },
     alt: "The models chart switched to output tokens per task, in an illustration, so wordier models sit further right.",
     detailHref: "/blog/aa-index-cost-coding-agents",
@@ -93,6 +95,8 @@ const authoredBeats: readonly LaunchBeat[] = [
     part: "vision",
     headline: "Every published result, with its setup and date",
     post: "The goal is a catalog where any benchmark result you might use to pick a model shows its setup, version, cost and date. Tests that have only a source guide today are meant to become charts once their data can be checked.",
+    socialPost:
+      "The goal is a catalog where any benchmark result you might use to pick a model shows its setup, version, cost and date, all in one place.",
     visual: { kind: "mockup", id: "data", state: {} },
     alt: "One data page entry, in an illustration: the question, what it measures, source, version, valid comparisons, limits.",
     detailHref: "/data",
@@ -111,6 +115,8 @@ const authoredBeats: readonly LaunchBeat[] = [
     part: "status",
     headline: "The charts are free and live; the collector is early",
     post: "The charts and notes are free at aicharts.io. Usage collector status: {status}. Version {cliVersion} for Linux is on GitHub Releases; on a Mac you build it from source.",
+    socialPost:
+      "The charts and notes are free at aicharts.io. Usage collector status: {status}. Version {cliVersion} for Linux is on GitHub Releases.",
     visual: { kind: "mockup", id: "status", state: {} },
     alt: "The collector's terminal status view, in an illustration: collecting, last pass and last sync, and its outputs.",
     facts: ["status", "cliVersion"],
@@ -118,7 +124,10 @@ const authoredBeats: readonly LaunchBeat[] = [
   },
 ];
 
-export const launchBeats: readonly LaunchBeat[] = resolveLaunchBeats(authoredBeats, launchFacts);
+export const launchBeats: readonly LaunchBeat[] = resolveLaunchBeats(
+  authoredBeats,
+  launchFacts,
+);
 
 export const LAUNCH_POST_PATH = "/blog/introducing-ai-charts" as const;
 export const LAUNCH_POST_URL = `${site.origin}${LAUNCH_POST_PATH}`;

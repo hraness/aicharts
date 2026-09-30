@@ -6,192 +6,174 @@ Posts go out from the @hraness account. The benchmark charts are free and live; 
 
 ## X thread
 
-Post 1 of 10, 196 characters
+Post 1 of 9, 196 characters
 
 ```text
 aicharts puts published AI benchmark scores and the cost of a task on one chart, so you can see which model gives the most for your budget. Every point names its source and the day it was checked.
 ```
 
-Post 2 of 10, 212 characters
+Post 2 of 9, 212 characters
 
 ```text
 The homepage chart plots 97 model settings by Artificial Analysis Intelligence Index v4.3.2 score against cost per task. The line joins the models nothing cheaper beats, so the best pick at each price stands out.
 ```
 
-Post 3 of 10, 183 characters
+Post 3 of 9, 183 characters
 
 ```text
 The coding chart compares 20 coding-agent setups. Each point is a model, the agent app running it, and an effort setting. Hover one to see its scores, cost per task, time, and tokens.
 ```
 
-Post 4 of 10, 201 characters
+Post 4 of 9, 201 characters
 
 ```text
 The benchmarks library covers 62 tests across reasoning, research, memory, images, video and audio. Each one is labelled as a chart, a guide to the source, or an early test, and it keeps its own scale.
 ```
 
-Post 5 of 10, 204 characters
+Post 5 of 9, 204 characters
 
 ```text
 The aicharts collector reads the usage files your coding agents already keep, from 55 supported sources, and adds up tokens, cost and speed per model and day. Prompts and transcripts stay on your machine.
 ```
 
-Post 6 of 10, 226 characters
+Post 6 of 9, 226 characters
 
 ```text
 A local report is a file you open in your browser tab. On a Mac you can also sync daily totals to your dashboard: token counts, cost and time per agent and model. Prompts, transcripts, file paths and keys stay on your machine.
 ```
 
-Post 7 of 10, 231 characters
+Post 7 of 9, 181 characters
 
 ```text
-aicharts is for choosing a model or coding agent by weighing score against cost, time or tokens. If you want one overall ranking of every model, look elsewhere: aicharts builds no score of its own, and it cannot test your codebase.
+aicharts is for choosing a model or coding agent by weighing score against cost, time or tokens. Switch the chart to time or tokens per task and the fast or concise picks stand out.
 ```
 
-Post 8 of 10, 220 characters
+Post 8 of 9, 137 characters
 
 ```text
-The goal is a catalog where any benchmark result you might use to pick a model shows its setup, version, cost and date. Tests that have only a source guide today are meant to become charts once their data can be checked.
+The goal is a catalog where any benchmark result you might use to pick a model shows its setup, version, cost and date, all in one place.
 ```
 
-Post 9 of 10, 214 characters
+Post 9 of 9, 180 characters
 
 ```text
-Scores, costs and token counts come from the benchmark owners and trackers aicharts cites; it runs no tests itself. Costs keep the source's unit, per task or per full run, so compare two only when the unit matches.
-```
-
-Post 10 of 10, 215 characters
-
-```text
-The charts and notes are free at aicharts.io. Usage collector status: In development. Version 0.2.0 for Linux is on GitHub Releases; on a Mac you build it from source.
+The charts and notes are free at aicharts.io. Usage collector status: In development. Version 0.2.0 for Linux is on GitHub Releases.
 
 https://aicharts.io/blog/introducing-ai-charts
 ```
 
 ## Bluesky thread
 
-Post 1 of 10, 196 characters
+Post 1 of 9, 196 characters
 
 ```text
 aicharts puts published AI benchmark scores and the cost of a task on one chart, so you can see which model gives the most for your budget. Every point names its source and the day it was checked.
 ```
 
-Post 2 of 10, 212 characters
+Post 2 of 9, 212 characters
 
 ```text
 The homepage chart plots 97 model settings by Artificial Analysis Intelligence Index v4.3.2 score against cost per task. The line joins the models nothing cheaper beats, so the best pick at each price stands out.
 ```
 
-Post 3 of 10, 183 characters
+Post 3 of 9, 183 characters
 
 ```text
 The coding chart compares 20 coding-agent setups. Each point is a model, the agent app running it, and an effort setting. Hover one to see its scores, cost per task, time, and tokens.
 ```
 
-Post 4 of 10, 201 characters
+Post 4 of 9, 201 characters
 
 ```text
 The benchmarks library covers 62 tests across reasoning, research, memory, images, video and audio. Each one is labelled as a chart, a guide to the source, or an early test, and it keeps its own scale.
 ```
 
-Post 5 of 10, 204 characters
+Post 5 of 9, 204 characters
 
 ```text
 The aicharts collector reads the usage files your coding agents already keep, from 55 supported sources, and adds up tokens, cost and speed per model and day. Prompts and transcripts stay on your machine.
 ```
 
-Post 6 of 10, 226 characters
+Post 6 of 9, 226 characters
 
 ```text
 A local report is a file you open in your browser tab. On a Mac you can also sync daily totals to your dashboard: token counts, cost and time per agent and model. Prompts, transcripts, file paths and keys stay on your machine.
 ```
 
-Post 7 of 10, 231 characters
+Post 7 of 9, 181 characters
 
 ```text
-aicharts is for choosing a model or coding agent by weighing score against cost, time or tokens. If you want one overall ranking of every model, look elsewhere: aicharts builds no score of its own, and it cannot test your codebase.
+aicharts is for choosing a model or coding agent by weighing score against cost, time or tokens. Switch the chart to time or tokens per task and the fast or concise picks stand out.
 ```
 
-Post 8 of 10, 220 characters
+Post 8 of 9, 137 characters
 
 ```text
-The goal is a catalog where any benchmark result you might use to pick a model shows its setup, version, cost and date. Tests that have only a source guide today are meant to become charts once their data can be checked.
+The goal is a catalog where any benchmark result you might use to pick a model shows its setup, version, cost and date, all in one place.
 ```
 
-Post 9 of 10, 214 characters
+Post 9 of 9, 180 characters
 
 ```text
-Scores, costs and token counts come from the benchmark owners and trackers aicharts cites; it runs no tests itself. Costs keep the source's unit, per task or per full run, so compare two only when the unit matches.
-```
-
-Post 10 of 10, 215 characters
-
-```text
-The charts and notes are free at aicharts.io. Usage collector status: In development. Version 0.2.0 for Linux is on GitHub Releases; on a Mac you build it from source.
+The charts and notes are free at aicharts.io. Usage collector status: In development. Version 0.2.0 for Linux is on GitHub Releases.
 
 https://aicharts.io/blog/introducing-ai-charts
 ```
 
 ## Threads thread
 
-Post 1 of 10, 196 characters
+Post 1 of 9, 196 characters
 
 ```text
 aicharts puts published AI benchmark scores and the cost of a task on one chart, so you can see which model gives the most for your budget. Every point names its source and the day it was checked.
 ```
 
-Post 2 of 10, 212 characters
+Post 2 of 9, 212 characters
 
 ```text
 The homepage chart plots 97 model settings by Artificial Analysis Intelligence Index v4.3.2 score against cost per task. The line joins the models nothing cheaper beats, so the best pick at each price stands out.
 ```
 
-Post 3 of 10, 183 characters
+Post 3 of 9, 183 characters
 
 ```text
 The coding chart compares 20 coding-agent setups. Each point is a model, the agent app running it, and an effort setting. Hover one to see its scores, cost per task, time, and tokens.
 ```
 
-Post 4 of 10, 201 characters
+Post 4 of 9, 201 characters
 
 ```text
 The benchmarks library covers 62 tests across reasoning, research, memory, images, video and audio. Each one is labelled as a chart, a guide to the source, or an early test, and it keeps its own scale.
 ```
 
-Post 5 of 10, 204 characters
+Post 5 of 9, 204 characters
 
 ```text
 The aicharts collector reads the usage files your coding agents already keep, from 55 supported sources, and adds up tokens, cost and speed per model and day. Prompts and transcripts stay on your machine.
 ```
 
-Post 6 of 10, 226 characters
+Post 6 of 9, 226 characters
 
 ```text
 A local report is a file you open in your browser tab. On a Mac you can also sync daily totals to your dashboard: token counts, cost and time per agent and model. Prompts, transcripts, file paths and keys stay on your machine.
 ```
 
-Post 7 of 10, 231 characters
+Post 7 of 9, 181 characters
 
 ```text
-aicharts is for choosing a model or coding agent by weighing score against cost, time or tokens. If you want one overall ranking of every model, look elsewhere: aicharts builds no score of its own, and it cannot test your codebase.
+aicharts is for choosing a model or coding agent by weighing score against cost, time or tokens. Switch the chart to time or tokens per task and the fast or concise picks stand out.
 ```
 
-Post 8 of 10, 220 characters
+Post 8 of 9, 137 characters
 
 ```text
-The goal is a catalog where any benchmark result you might use to pick a model shows its setup, version, cost and date. Tests that have only a source guide today are meant to become charts once their data can be checked.
+The goal is a catalog where any benchmark result you might use to pick a model shows its setup, version, cost and date, all in one place.
 ```
 
-Post 9 of 10, 214 characters
+Post 9 of 9, 180 characters
 
 ```text
-Scores, costs and token counts come from the benchmark owners and trackers aicharts cites; it runs no tests itself. Costs keep the source's unit, per task or per full run, so compare two only when the unit matches.
-```
-
-Post 10 of 10, 215 characters
-
-```text
-The charts and notes are free at aicharts.io. Usage collector status: In development. Version 0.2.0 for Linux is on GitHub Releases; on a Mac you build it from source.
+The charts and notes are free at aicharts.io. Usage collector status: In development. Version 0.2.0 for Linux is on GitHub Releases.
 
 https://aicharts.io/blog/introducing-ai-charts
 ```
@@ -211,13 +193,11 @@ The aicharts collector reads the usage files your coding agents already keep, fr
 
 A local report is a file you open in your browser tab. On a Mac you can also sync daily totals to your dashboard: token counts, cost and time per agent and model. Prompts, transcripts, file paths and keys stay on your machine.
 
-aicharts is for choosing a model or coding agent by weighing score against cost, time or tokens. If you want one overall ranking of every model, look elsewhere: aicharts builds no score of its own, and it cannot test your codebase.
+aicharts is for choosing a model or coding agent by weighing score against cost, time or tokens. Switch the chart to time or tokens per task and the fast or concise picks stand out.
 
-The goal is a catalog where any benchmark result you might use to pick a model shows its setup, version, cost and date. Tests that have only a source guide today are meant to become charts once their data can be checked.
+The goal is a catalog where any benchmark result you might use to pick a model shows its setup, version, cost and date, all in one place.
 
-Scores, costs and token counts come from the benchmark owners and trackers aicharts cites; it runs no tests itself. Costs keep the source's unit, per task or per full run, so compare two only when the unit matches.
-
-The charts and notes are free at aicharts.io. Usage collector status: In development. Version 0.2.0 for Linux is on GitHub Releases; on a Mac you build it from source.
+The charts and notes are free at aicharts.io. Usage collector status: In development. Version 0.2.0 for Linux is on GitHub Releases.
 
 https://aicharts.io/blog/introducing-ai-charts
 ```
@@ -243,9 +223,8 @@ Topics: Artificial Intelligence, Developer Tools, Data Visualization
 - The benchmarks library covers 62 tests across reasoning, research, memory, images, video and audio. Each one is labelled as a chart, a guide to the source, or an early test, and it keeps its own scale.
 - The aicharts collector reads the usage files your coding agents already keep, from 55 supported sources, and adds up tokens, cost and speed per model and day. Prompts and transcripts stay on your machine.
 - A local report is a file you open in your browser tab. On a Mac you can also sync daily totals to your dashboard: token counts, cost and time per agent and model. Prompts, transcripts, file paths and keys stay on your machine.
-- aicharts is for choosing a model or coding agent by weighing score against cost, time or tokens. If you want one overall ranking of every model, look elsewhere: aicharts builds no score of its own, and it cannot test your codebase.
-- Scores, costs and token counts come from the benchmark owners and trackers aicharts cites; it runs no tests itself. Costs keep the source's unit, per task or per full run, so compare two only when the unit matches.
-- The charts and notes are free at aicharts.io. Usage collector status: In development. Version 0.2.0 for Linux is on GitHub Releases; on a Mac you build it from source.
+- aicharts is for choosing a model or coding agent by weighing score against cost, time or tokens. Switch the chart to time or tokens per task and the fast or concise picks stand out.
+- The charts and notes are free at aicharts.io. Usage collector status: In development. Version 0.2.0 for Linux is on GitHub Releases.
 - In development. https://aicharts.io/blog/introducing-ai-charts
 
 ## Beats
