@@ -8,7 +8,7 @@ import terminalBenchData from "@/data/terminal-bench.json";
 import terminalBenchScienceData from "@/data/terminal-bench-science.json";
 import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
 import { codingAgentSnapshotRows } from "@/lib/coding-agent-snapshot-rows";
-import { BENCHMARK_DATA_DESCRIPTION } from "@/lib/benchmark-portfolio";
+import { BENCHMARK_DATA_DESCRIPTION, BENCHMARK_DATA_META_DESCRIPTION } from "@/lib/benchmark-portfolio";
 import { ATLAS_DATASETS, ATLAS_ENTRIES } from "@/lib/benchmark-atlas-catalog";
 import { ATLAS_CATALOG_DOWNLOAD_PATH, atlasDataCatalogJsonLd, atlasDatasetDownloadPath } from "@/lib/benchmark-atlas-distribution";
 import {
@@ -38,7 +38,7 @@ import { searchSite } from "../site";
 
 const dataSearchSite = {
   ...searchSite,
-  description: BENCHMARK_DATA_DESCRIPTION,
+  description: BENCHMARK_DATA_META_DESCRIPTION,
   socialTitle: "Benchmark data and method | aicharts",
   title: "Benchmark data and method | aicharts",
 } as const;

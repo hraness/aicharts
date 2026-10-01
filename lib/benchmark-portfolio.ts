@@ -13,6 +13,9 @@ export interface BenchmarkPortfolioItem {
 export const BENCHMARK_DATA_DESCRIPTION =
   "Versioned AI benchmark charts and source guides across coding, reasoning, research, memory, images, video, audio, and world models. Each measured cohort retains its source, configuration, score unit, and comparison limits.";
 
+export const BENCHMARK_DATA_META_DESCRIPTION =
+  "Download AI benchmark results and explore source guides, versions, measured configurations, score units, and limits for comparing models and agents.";
+
 export const CORE_BENCHMARK_PORTFOLIO = [
   {
     id: "terminal-bench",

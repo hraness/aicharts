@@ -18,7 +18,7 @@ import {
   codingAgentDatasetSummary,
   currentCodingAgentBenchmarkLeaders,
 } from "@/lib/coding-agent-dataset";
-import { BENCHMARK_DATA_DESCRIPTION } from "@/lib/benchmark-portfolio";
+import { BENCHMARK_DATA_DESCRIPTION, BENCHMARK_DATA_META_DESCRIPTION } from "@/lib/benchmark-portfolio";
 import { ATLAS_DATASETS, ATLAS_ENTRIES } from "@/lib/benchmark-atlas-catalog";
 import { atlasDataCatalogJsonLd, atlasDatasetDownloadPath } from "@/lib/benchmark-atlas-distribution";
 import {
@@ -104,7 +104,7 @@ describe("benchmark dataset surface", () => {
   test("publishes canonical, indexable page metadata", () => {
     expect(metadata).toMatchObject({
       title: "Benchmark data and method | aicharts",
-      description: BENCHMARK_DATA_DESCRIPTION,
+      description: BENCHMARK_DATA_META_DESCRIPTION,
       alternates: { canonical: "https://aicharts.io/data" },
       robots: INDEXABLE_ROBOTS,
       openGraph: {
