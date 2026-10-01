@@ -7,6 +7,8 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright-core";
 import { ownedChromiumOptions } from "./owned-chromium.mjs";
+import { waitForPublicPage } from "./public-page-readiness.mjs";
+import { verifyPublicPageReadiness } from "./public-page-readiness.fixture.mjs";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const production = process.argv.includes("--production");
@@ -53,6 +55,7 @@ try {
   const owned = ownedChromiumOptions(await browserExecutable());
   browser = await chromium.launch(owned);
   console.log(`Owned Chromium: ${owned.executablePath} (${browser.version()})`);
+  await verifyPublicPageReadiness(browser);
   // Contexts are isolated and share only the server, so a small pool of them runs at once.
   // Each combination records its own results; they are joined in the fixed combination order.
   const combinations = [360, 390, 1440].flatMap(width => ["light", "dark"].map(theme => ({ width, theme })));
@@ -112,7 +115,7 @@ async function verifyCombination({ width, theme }, results) {
       if (failure) return;
       const response = await page.goto(origin + route);
       assert.equal(response?.status(), 200, route);
-      await page.locator("main").waitFor();
+      await waitForPublicPage(page, { minimal: config.minimalRoutes?.includes(route) ?? false });
       await page.evaluate(() => document.fonts.ready);
       const state = await page.evaluate(() => {
         const footer = document.querySelector("#hraness-site-footer");
