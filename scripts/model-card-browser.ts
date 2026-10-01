@@ -4,6 +4,7 @@ import { ATLAS_DATASETS } from "../lib/benchmark-atlas-catalog";
 import { verifyUsageDashboard } from "./usage-browser";
 import { verifyUsageSessions } from "./usage-sessions-browser";
 import { ownedChromiumOptions } from "./owned-chromium.mjs";
+import { verifySettledConsentFlow } from "./verify-settled-consent.mjs";
 
 import {
   chromium,
@@ -105,6 +106,10 @@ async function verifyFooterShell(browser: Browser, baseUrl: string): Promise<voi
         invariant(geometry.bottom >= geometry.viewportHeight - 1, `${route}: footer is above viewport bottom`);
         invariant(Math.abs(geometry.bottom - geometry.documentHeight) <= 2, `${route}: blank space follows footer`);
       }
+      await page.setViewportSize({ width, height: width < 600 ? 844 : 900 });
+      await page.goto(baseUrl);
+      await settle(page);
+      console.log(JSON.stringify({ check: "settled-consent", width, result: await verifySettledConsentFlow(page) }));
     } finally {
       await context.close();
     }
@@ -125,6 +130,61 @@ async function waitForServer(url: string, server: Bun.Subprocess): Promise<void>
     await Bun.sleep(250);
   }
   throw new Error("The production server did not become ready within 30 seconds.");
+}
+
+async function verifyForcedPublicationLinks(browser: Browser, baseUrl: string): Promise<void> {
+  for (const colorScheme of ["light", "dark"] as const) {
+    const context = await browser.newContext({ colorScheme, forcedColors: "active" });
+    await stubAccountBoundary(context);
+    const page = await context.newPage();
+    try {
+      await page.goto(`${baseUrl}/blog/introducing-ai-charts`, { waitUntil: "domcontentloaded" });
+      await settle(page);
+      for (const selector of [
+        ".plain-publication__article-body a[href]",
+        ".plain-publication__sources a[href]",
+        ".plain-publication__related .plain-publication__section-heading a[href]",
+      ]) {
+        const link = page.locator(selector).first();
+        await link.waitFor({ state: "visible" });
+        for (const state of ["rest", "hover", "focus"] as const) {
+          if (state === "hover") await link.hover();
+          if (state === "focus") {
+            await page.mouse.move(0, 0);
+            await page.keyboard.press("Tab");
+            await link.focus();
+            invariant(await link.evaluate(element => element.matches(":focus-visible")),
+              `${colorScheme}/${selector}: keyboard focus must be visible`);
+          }
+          const paint = await link.evaluate(element => {
+            const style = getComputedStyle(element);
+            const probe = document.createElement("span");
+            probe.style.setProperty("color", "LinkText", "important");
+            probe.style.setProperty("forced-color-adjust", "none", "important");
+            document.body.append(probe);
+            const systemLinkColor = getComputedStyle(probe).color;
+            probe.remove();
+            return {
+              color: style.color,
+              forcedColorAdjust: style.forcedColorAdjust,
+              systemLinkColor,
+              decorationColor: style.textDecorationColor,
+              decorationLine: style.textDecorationLine,
+              decorationStyle: style.textDecorationStyle,
+            };
+          });
+          const label = `${colorScheme}/${selector}/${state}`;
+          invariant(paint.decorationLine.includes("underline"), `${label}: link underline is missing`);
+          invariant(paint.decorationStyle === "dotted", `${label}: link underline must remain dotted`);
+          invariant(paint.decorationColor === paint.systemLinkColor,
+            `${label}: underline must use the system link color; ${JSON.stringify(paint)}`);
+          invariant(paint.forcedColorAdjust === "auto", `${label}: system text-color adjustment must remain enabled`);
+        }
+      }
+    } finally {
+      await context.close();
+    }
+  }
 }
 
 function attachDiagnostics(page: Page, label: string): string[] {
@@ -607,6 +667,7 @@ try {
   const browser = await launchFirstAvailableBrowser(executablePaths);
   try {
     await verifyFooterShell(browser, baseUrl);
+    await verifyForcedPublicationLinks(browser, baseUrl);
     await verifyBenchmarkAtlas(browser, baseUrl);
     await verifyChartExport(browser, baseUrl);
     await verifyModelLogoCards(browser, baseUrl);
