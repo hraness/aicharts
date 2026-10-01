@@ -40,3 +40,43 @@ test("provider properties preserve cookieless inputs and reject private nested v
   expect(JSON.stringify(properties)).not.toContain("private-secret");
   expect(JSON.stringify(properties)).not.toContain("alice@example.com");
 });
+
+const encodedPrivacyCanaries = [
+  "+@a.aa",
+  "person.contract%40example.com",
+  "personé%40example.com",
+  "person%40%E4%BE%8B%E5%AD%90.%E4%B8%AD%E5%9B%BD",
+  "Bearer%20canary_secret_123",
+  "api_key%3Dcanary_secret_123",
+  "https%3A%2F%2Fcanary_user%3Acanary_password%40example.com/path",
+] as const;
+
+test("encoded private 404 paths and exception text stay outside product events", () => {
+  for (const canary of encodedPrivacyCanaries) {
+    const event = pageNotFoundEvent(`/missing/${canary}?q=private-query`, "https://google.com/search?q=private-query");
+    expect(event?.properties.requested_path).toBe("/[other]");
+    const error = sanitizeAnalyticsError(new Error(canary));
+    expect(error.message).toBe("Client operation failed");
+    expect(error.stack).toBeUndefined();
+    const properties = normalizedPageAnalyticsProperties(`/missing/${canary}`, {
+      $current_url: `https://aicharts.io/missing/${canary}`,
+      $pathname: `/missing/${canary}`,
+      requested_path: `/missing/${canary}`,
+    });
+    expect(properties.$current_url).toBe("https://aicharts.io/[other]");
+    expect(properties.requested_path).toBe("/[other]");
+    expect(JSON.stringify({ event, properties, message: error.message })).not.toContain(canary);
+  }
+});
+
+test("provider boundary scrubs encoded credentials and emails in nested exception values", () => {
+  for (const canary of encodedPrivacyCanaries) {
+    const properties = normalizedPageAnalyticsProperties("https://aicharts.io/coding", {
+      $exception_list: [{ type: "Error", value: canary }],
+    });
+    const serialized = JSON.stringify(properties);
+    expect(serialized).not.toContain(canary);
+    expect(serialized).not.toContain("canary_secret_123");
+    expect(serialized).not.toContain("canary_password");
+  }
+});
