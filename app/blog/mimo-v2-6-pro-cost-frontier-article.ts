@@ -191,8 +191,8 @@ function frontierBlocks(
     paragraph(
       `In the snapshot retrieved ${retrievedAt}, MiMo-V2.6-Pro scores ${formatSnapshotScore(record.intelligenceIndex)} at ${formatSnapshotCostUsd(cost)} per Intelligence Index task and used ${formatTokens(record.outputTokensPerTask.total)} output tokens per task. `,
       onCostFrontier
-        ? "It is on the cost frontier: no configuration in the comparable cohort scores higher at the same or lower cost per task."
-        : "It is not on the cost frontier in this snapshot: at least one configuration scores higher at the same or lower cost per task.",
+        ? "It is on the cost frontier: no other configuration scores at least as high at no greater cost, with a strict improvement on at least one measure."
+        : "It is not on the cost frontier: another configuration scores at least as high at no greater cost, with a strict improvement on at least one measure.",
     ),
   ];
   if (onCostFrontier && (above !== undefined || below !== undefined)) {
@@ -293,6 +293,7 @@ export function createMimoV26Article(
 ): BlogArticle {
   const retrievedAt = formatRetrievedAt(snapshot.source.retrievedAt);
   const updatedAt = latestCalendarDate(
+    "2026-10-01",
     MIMO_V26_ARTICLE_PUBLISHED_AT,
     utcCalendarDate(snapshot.source.retrievedAt),
   );
@@ -324,12 +325,16 @@ export function createMimoV26Article(
   return {
     sourceNote: BLOG_SOURCE_NOTE,
     slug: MIMO_V26_ARTICLE_SLUG,
-    title: "What MiMo-V2.6-Pro’s 46 at $0.13 per task measures",
-    dek:
-      "On the September 22, 2026 Intelligence Index snapshot, Xiaomi’s open-weights flagship scores within a point of GPT-5.6 Sol and Grok 4.7 at less than a tenth of their cost per task. Its cybersecurity lead is on one kind of task, measured by Xiaomi.",
+    title: position === undefined
+      ? "MiMo-V2.6-Pro’s score and cost on the Intelligence Index"
+      : `MiMo-V2.6-Pro pairs a ${formatSnapshotScore(position.record.intelligenceIndex)} score with ${formatSnapshotCostUsd(taskCost(position.record))} per task`,
+    dek: position === undefined
+      ? `The Intelligence Index snapshot retrieved ${retrievedAt} has no comparable MiMo-V2.6-Pro row. Xiaomi’s reported results remain separate from the chart.`
+      : `Artificial Analysis records an Intelligence Index score of ${formatSnapshotScore(position.record.intelligenceIndex)} at ${formatSnapshotCostUsd(taskCost(position.record))} per task for MiMo-V2.6-Pro in the snapshot retrieved ${retrievedAt}.`,
     focusPhrase: "MiMo-V2.6-Pro Intelligence Index cost",
-    seoDescription:
-      "Xiaomi’s MiMo-V2.6-Pro scores 46 on the Intelligence Index at $0.13 per task. See where it sits on the measured cost frontier and what its cyber scores show.",
+    seoDescription: position === undefined
+      ? "Compare Xiaomi’s MiMo-V2.6-Pro claims with the configurations recorded in the Intelligence Index snapshot."
+      : `Xiaomi’s MiMo-V2.6-Pro scores ${formatSnapshotScore(position.record.intelligenceIndex)} on the Intelligence Index at ${formatSnapshotCostUsd(taskCost(position.record))} per task. Compare its chart position with Xiaomi’s cybersecurity results.`,
     keywords: [
       "MiMo-V2.6-Pro",
       "Xiaomi MiMo",
@@ -402,14 +407,11 @@ export function createMimoV26Article(
         MIMO_V26.das.verdict,
         ".”",
       ),
-      paragraph(
-        "This note checks the parts of those claims that primary sources and the aicharts Intelligence Index snapshot can test: what the 46 measures, where the model sits on the measured cost frontier, how Das’s price multiples compare with measured cost per task, what the faster mode costs, and what the cybersecurity numbers do and do not show. Observations that only Das made are labeled as his.",
-      ),
       heading("What the 46 measures"),
       paragraph(
         "The ",
         { href: BLOG_SOURCES.artificialAnalysisIntelligenceIndex.url, text: "Artificial Analysis Intelligence Index" },
-        ` is a composite of ${spellCount(snapshot.benchmark.evaluationCount)} independently run evaluations, weighted ${snapshot.benchmark.categoryWeightsPercent.agents}% agents, ${snapshot.benchmark.categoryWeightsPercent.coding}% coding, ${snapshot.benchmark.categoryWeightsPercent.scientific}% scientific reasoning, and ${snapshot.benchmark.categoryWeightsPercent.general}% general capability. The current version is ${indexVersion}, and its components are ${snapshot.benchmark.evaluations.join(", ")}. Xiaomi’s 46 is Artificial Analysis’s measurement, not a self-reported score.`,
+        ` is a composite of ${spellCount(snapshot.benchmark.evaluationCount)} independently run evaluations, weighted ${snapshot.benchmark.categoryWeightsPercent.agents}% agents, ${snapshot.benchmark.categoryWeightsPercent.coding}% coding, ${snapshot.benchmark.categoryWeightsPercent.scientific}% scientific reasoning, and ${snapshot.benchmark.categoryWeightsPercent.general}% general capability. The snapshot uses version ${indexVersion}, and its components are ${snapshot.benchmark.evaluations.join(", ")}. Xiaomi’s 46 is Artificial Analysis’s measurement, not a self-reported score.`,
       ),
       paragraph(
         "The ",
@@ -489,7 +491,7 @@ export function createMimoV26Article(
         " per million output tokens, which match the Artificial Analysis page and the first-party endpoint listed on OpenRouter.",
       ),
       paragraph(
-        "The snapshot offers a different ratio for the same models: measured cost per Intelligence Index task, which folds in each model’s verbosity and cache use on one shared task set. Where the two agree, his assumed workload resembles the index’s task mix; where they diverge, the workload differs, not the prices.",
+        "The snapshot offers a different ratio for the same models: measured cost per Intelligence Index task, which folds in each model’s verbosity and cache use on one shared task set. Agreement between the ratios does not establish that the workloads match. Differences can reflect token mix, cache use, the chosen configuration, or the prices used in each calculation.",
       ),
       ...comparisonBlocks(comparisons, retrievedAt),
       paragraph(

@@ -1,0 +1,463 @@
+{
+  "schemaVersion": 1,
+  "verdict": "no_blockers_in_reviewed_editorial_changes",
+  "reviewedOn": "2026-10-01",
+  "reviewer": "Codex independent AI editorial review",
+  "reviewerType": "ai",
+  "humanReviewedOn": null,
+  "branch": "docs/source-editorial-20261001",
+  "base": "73ff2745b5e112ea00f9fcbba24b55231490b424",
+  "author": "Codex editorial implementation agent",
+  "scope": {
+    "changedFileDiffsRead": 17,
+    "fullBodiesRead": 16,
+    "description": "All initial changed-file diffs, complete 16-article Markdown bodies, and final review-repair deltas read. Complete bodies include titles, deks, source notes, tables, limits, links and related links. Renderer/provenance mechanisms read; no source, admissions, image, or publication edits by reviewer.",
+    "corpusIndex": "corpus-index.json",
+    "sourceCaptureNote": "Original captured-source hashes identify the reviewed retrievals. External articles are not republished here; public URLs, reviewed ranges, and scope limits are retained.",
+    "corpusIndexSha256": "efc37ccce6427fa29dd58dde4e5b6857298387c0e3874faa023b373aaf6581d8"
+  },
+  "resolvedReviewFindings": [
+    "Grok fallback retained exclusive token-volume cause; all generation paths now state token mix/cache dependence.",
+    "AA later frontier explanation omitted ties; weak inequalities plus one strict improvement now agree.",
+    "Devin historical cost paragraph inferred unnamed sidekick/configuration cause; now only reports distinct published observations.",
+    "Holdout body contained internal editorial narration and overstated falsification; now reports failure to reproduce public-suite improvement.",
+    "Opus Intelligence overbroad AA attribution and Opus 5.5-only limit contradicted vendor and previous-generation sections; scopes corrected.",
+    "Open-models body misstated component/composite relation, referenced absent Fable 5 rows, and repeated incomplete frontier rule; all corrected.",
+    "MiMo dek hardcoded obsolete snapshot/date/comparator; title/dek/SEO now derive from supplied row with absence fallback.",
+    "Grok positive frontier and MiMo both frontier branches omitted equality cases; now use consistent dominance condition."
+  ],
+  "checks": [
+    "Dan Luu full captured primary text supports separate holdout reasoning and reported experiment sequence; visible component disagreements alone do not establish hidden optimization holdout.",
+    "Harness paper defines three comparison families: managed tiers versus same-window T0, planning on/off at T4/128k, full tools/bash at T4/128k. Revised significance captions match the captured methods and tables.",
+    "Harness paper explicitly bundles tools, interface instructions, file-state tracking and diagnostics; revised copy matches. Locally served models are priced using OpenRouter list rates.",
+    "Reported HarnessTax 97.8 minus 96.7 equals 1.1 percentage points; similar observed values do not establish statistical equivalence. Original dated source numbers not freshly fetched.",
+    "Quoted Opus base rates 5 to 4 and 25 to 20 each fall 20 percent; source claim of 40 percent running cost remains separately attributed. No causal inference from total tokens alone.",
+    "Pareto condition matches lib/option-space.ts computeParetoSet: other cost <= candidate cost, other score >= candidate score, at least one strict. Display frontier selects one representative of exact coordinate ties.",
+    "Stored datasets independently inspected: coding source September 25 and Intelligence source September 23; coding records have Fable 5.1 variants, not Fable 5.",
+    "Real-SWE captured public article supports private reproduction limit/sample request and shows newer results; retained historical September 14 tables are explicitly dated."
+  ],
+  "primarySourceReads": [
+    {
+      "url": "https://danluu.com/benchpocalypse/",
+      "artifactSha256": "21e05e254386a508264f71cd89fe154c88ea7b61ec25d50bb3f1c9c53c499279",
+      "textSha256": "f0e5e56825e1241b842877f11968bda8db7040e839aa3d7455f3269bd95f0dfb",
+      "independentlyReadOn": "2026-10-01",
+      "retrievedBy": "author; independent reviewer read the retained primary-source capture, no duplicate network fetch",
+      "scope": "Complete captured stripped page, including appendix and footnotes; HTTP 200, no truncation.",
+      "characterRanges": null
+    },
+    {
+      "url": "https://withspecific.com/benchmarks/real-swe",
+      "artifactSha256": "2f9c59cf9f48b89a9de4833589d7b5be628c662ec9a4939cb2fb5b93e93b0334",
+      "textSha256": "3c0da0f753eef83fc7f9d0d04ae3b2d68bb8f7220c7abb6788c66540e5b49920",
+      "independentlyReadOn": "2026-10-01",
+      "retrievedBy": "author; independent reviewer read the retained primary-source capture, no duplicate network fetch",
+      "scope": "Complete captured human-visible article through footer; HTTP 200; 512000-byte raw cap truncated trailing hydration scripts. Confirmed sample access, private tasks/verifiers, high reasoning disclosure, and changed live leaderboard. Historical September 14 table values not re-endorsed.",
+      "characterRanges": null
+    },
+    {
+      "url": "https://arxiv.org/html/2609.20804v1",
+      "artifactSha256": "9b053cd7356a4c2e1ffa96de71ca82407a25a7c2b2d65db92bf0ca7e025384cd",
+      "textSha256": "374bb478f332f4a0bb869fd9f26c737c08c1530abcf2b9aed9e6d50e39676f23",
+      "independentlyReadOn": "2026-10-01",
+      "retrievedBy": "author; independent reviewer read the retained primary-source capture, no duplicate network fetch",
+      "scope": "Targeted captured methods, serving/pricing, result-table baselines, and limitations only; HTTP 200, raw cap truncated. Not a whole-paper fresh audit.",
+      "characterRanges": [
+        [
+          14500,
+          16100
+        ],
+        [
+          21600,
+          23000
+        ],
+        [
+          23000,
+          23900
+        ],
+        [
+          23900,
+          31900
+        ],
+        [
+          56700,
+          59000
+        ]
+      ]
+    }
+  ],
+  "articleReviews": [
+    {
+      "slug": "introducing-ai-charts",
+      "markdownPath": "articles/introducing-ai-charts.md",
+      "sha256": "5c487bdebfd89a795830ff6925f2d5f3218b3313a9688cb8504bf5cd4f717bd6",
+      "characters": 7461,
+      "bodyRead": "complete initial revised body plus final delta",
+      "scores": {
+        "factualConfidence": 1,
+        "hostFit": 2,
+        "maintenanceValue": 1,
+        "originalEvidence": 2,
+        "readerUtility": 2,
+        "voiceIntegrity": 1
+      },
+      "scoreTotal": 9,
+      "sourceCheckScope": "See scoped source reads and exclusions; no blanket historical re-verification."
+    },
+    {
+      "slug": "opus-5-5-coding-agent-index",
+      "markdownPath": "articles/opus-5-5-coding-agent-index.md",
+      "sha256": "97e09d75eeb254b51939732f055c79df59c438e2ece18a9dfc162cdad858ede0",
+      "characters": 14711,
+      "bodyRead": "complete initial revised body plus final delta",
+      "scores": {
+        "factualConfidence": 1,
+        "hostFit": 2,
+        "maintenanceValue": 2,
+        "originalEvidence": 2,
+        "readerUtility": 2,
+        "voiceIntegrity": 1
+      },
+      "scoreTotal": 10,
+      "sourceCheckScope": "See scoped source reads and exclusions; no blanket historical re-verification."
+    },
+    {
+      "slug": "opus-5-5-intelligence-index",
+      "markdownPath": "articles/opus-5-5-intelligence-index.md",
+      "sha256": "52f76ea4b49dad742eef33015e7132404e57179f30d6af72e223fbe5cc0e03e1",
+      "characters": 15204,
+      "bodyRead": "complete initial revised body plus final delta",
+      "scores": {
+        "factualConfidence": 1,
+        "hostFit": 2,
+        "maintenanceValue": 2,
+        "originalEvidence": 2,
+        "readerUtility": 2,
+        "voiceIntegrity": 1
+      },
+      "scoreTotal": 10,
+      "sourceCheckScope": "See scoped source reads and exclusions; no blanket historical re-verification."
+    },
+    {
+      "slug": "gpt-6-sol-coding-agent-index",
+      "markdownPath": "articles/gpt-6-sol-coding-agent-index.md",
+      "sha256": "c66a434f5c63a03d71ede4438a888e22570240d0892293018d1c5a333e96c7dd",
+      "characters": 16111,
+      "bodyRead": "complete initial revised body plus final delta",
+      "scores": {
+        "factualConfidence": 1,
+        "hostFit": 2,
+        "maintenanceValue": 2,
+        "originalEvidence": 2,
+        "readerUtility": 2,
+        "voiceIntegrity": 1
+      },
+      "scoreTotal": 10,
+      "sourceCheckScope": "See scoped source reads and exclusions; no blanket historical re-verification."
+    },
+    {
+      "slug": "grok-4-7-coding-agent-index",
+      "markdownPath": "articles/grok-4-7-coding-agent-index.md",
+      "sha256": "b2e7341ab09338f118cb55f36cc66743778f11d0dd0568f7b42b139848be9dfa",
+      "characters": 14868,
+      "bodyRead": "complete initial revised body plus final delta",
+      "scores": {
+        "factualConfidence": 1,
+        "hostFit": 2,
+        "maintenanceValue": 2,
+        "originalEvidence": 2,
+        "readerUtility": 2,
+        "voiceIntegrity": 1
+      },
+      "scoreTotal": 10,
+      "sourceCheckScope": "See scoped source reads and exclusions; no blanket historical re-verification."
+    },
+    {
+      "slug": "mimo-v2-6-pro-cost-frontier",
+      "markdownPath": "articles/mimo-v2-6-pro-cost-frontier.md",
+      "sha256": "9665b8cf3281fa5b8d7063e500b14504f9ec240073775d05fc12f50bd3f805a8",
+      "characters": 18459,
+      "bodyRead": "complete initial revised body plus final delta",
+      "scores": {
+        "factualConfidence": 1,
+        "hostFit": 2,
+        "maintenanceValue": 2,
+        "originalEvidence": 2,
+        "readerUtility": 2,
+        "voiceIntegrity": 1
+      },
+      "scoreTotal": 10,
+      "sourceCheckScope": "See scoped source reads and exclusions; no blanket historical re-verification."
+    },
+    {
+      "slug": "harness-design-coding-agents",
+      "markdownPath": "articles/harness-design-coding-agents.md",
+      "sha256": "67531f3d12544b5d02fb4c32b0cc3e3b4671a5521347f030d1ac3df022385b77",
+      "characters": 17281,
+      "bodyRead": "complete initial revised body plus final delta",
+      "scores": {
+        "factualConfidence": 1,
+        "hostFit": 2,
+        "maintenanceValue": 2,
+        "originalEvidence": 2,
+        "readerUtility": 2,
+        "voiceIntegrity": 1
+      },
+      "scoreTotal": 10,
+      "sourceCheckScope": "See scoped source reads and exclusions; no blanket historical re-verification."
+    },
+    {
+      "slug": "harnesstax-coding-agent-harness",
+      "markdownPath": "articles/harnesstax-coding-agent-harness.md",
+      "sha256": "2625b07c37198bf43e8941f0b2797f29d93a568ae3dd83e48f4689c74efa87f0",
+      "characters": 12298,
+      "bodyRead": "complete initial revised body plus final delta",
+      "scores": {
+        "factualConfidence": 1,
+        "hostFit": 2,
+        "maintenanceValue": 2,
+        "originalEvidence": 2,
+        "readerUtility": 2,
+        "voiceIntegrity": 1
+      },
+      "scoreTotal": 10,
+      "sourceCheckScope": "See scoped source reads and exclusions; no blanket historical re-verification."
+    },
+    {
+      "slug": "real-swe-private-enterprise-benchmark",
+      "markdownPath": "articles/real-swe-private-enterprise-benchmark.md",
+      "sha256": "c64ae49bef2435ce30d8676ba9ecfeb6c8b6b5302758087c5287a1763f719785",
+      "characters": 18190,
+      "bodyRead": "complete initial revised body plus final delta",
+      "scores": {
+        "factualConfidence": 1,
+        "hostFit": 2,
+        "maintenanceValue": 2,
+        "originalEvidence": 2,
+        "readerUtility": 2,
+        "voiceIntegrity": 1
+      },
+      "scoreTotal": 10,
+      "sourceCheckScope": "See scoped source reads and exclusions; no blanket historical re-verification."
+    },
+    {
+      "slug": "devin-fusion-cost-saving",
+      "markdownPath": "articles/devin-fusion-cost-saving.md",
+      "sha256": "c25dcaed921e883a846965603c4441443c6f86a7e3fc0cba9eaf6d4801494170",
+      "characters": 12171,
+      "bodyRead": "complete initial revised body plus final delta",
+      "scores": {
+        "factualConfidence": 1,
+        "hostFit": 2,
+        "maintenanceValue": 2,
+        "originalEvidence": 2,
+        "readerUtility": 2,
+        "voiceIntegrity": 1
+      },
+      "scoreTotal": 10,
+      "sourceCheckScope": "See scoped source reads and exclusions; no blanket historical re-verification."
+    },
+    {
+      "slug": "terminal-bench-science",
+      "markdownPath": "articles/terminal-bench-science.md",
+      "sha256": "e8950cd9418340e6878eb6ec245da8cfd6d53723a58a6da6077b051475aac91d",
+      "characters": 6748,
+      "bodyRead": "complete initial revised body plus final delta",
+      "scores": {
+        "factualConfidence": 1,
+        "hostFit": 2,
+        "maintenanceValue": 2,
+        "originalEvidence": 1,
+        "readerUtility": 2,
+        "voiceIntegrity": 1
+      },
+      "scoreTotal": 9,
+      "sourceCheckScope": "See scoped source reads and exclusions; no blanket historical re-verification."
+    },
+    {
+      "slug": "small-models-have-arrived",
+      "markdownPath": "articles/small-models-have-arrived.md",
+      "sha256": "180ac6bb054a964d91f6e7a74e28ca6098c587ff70cb8dda20f980634ff546fc",
+      "characters": 8968,
+      "bodyRead": "complete initial revised body plus final delta",
+      "scores": {
+        "factualConfidence": 1,
+        "hostFit": 2,
+        "maintenanceValue": 2,
+        "originalEvidence": 1,
+        "readerUtility": 2,
+        "voiceIntegrity": 2
+      },
+      "scoreTotal": 10,
+      "sourceCheckScope": "See scoped source reads and exclusions; no blanket historical re-verification."
+    },
+    {
+      "slug": "coding-agent-score-holdouts",
+      "markdownPath": "articles/coding-agent-score-holdouts.md",
+      "sha256": "5e903e93864d1c1d83a3080a81acdd59fe7816b6bf0d0944c62b2a3a19b998c9",
+      "characters": 10656,
+      "bodyRead": "complete initial revised body plus final delta",
+      "scores": {
+        "factualConfidence": 2,
+        "hostFit": 2,
+        "maintenanceValue": 2,
+        "originalEvidence": 1,
+        "readerUtility": 2,
+        "voiceIntegrity": 1
+      },
+      "scoreTotal": 10,
+      "sourceCheckScope": "See scoped source reads and exclusions; no blanket historical re-verification."
+    },
+    {
+      "slug": "open-models-coding-agent-benchmarks",
+      "markdownPath": "articles/open-models-coding-agent-benchmarks.md",
+      "sha256": "fd14277d5c3d8015fd406a0bfa232b727ab65fe29392a1e95fc616afe79729f8",
+      "characters": 10219,
+      "bodyRead": "complete initial revised body plus final delta",
+      "scores": {
+        "factualConfidence": 1,
+        "hostFit": 2,
+        "maintenanceValue": 2,
+        "originalEvidence": 2,
+        "readerUtility": 2,
+        "voiceIntegrity": 1
+      },
+      "scoreTotal": 10,
+      "sourceCheckScope": "See scoped source reads and exclusions; no blanket historical re-verification."
+    },
+    {
+      "slug": "aa-index-cost-coding-agents",
+      "markdownPath": "articles/aa-index-cost-coding-agents.md",
+      "sha256": "93313911e53dde23770bafb2a87bf7ce3ebb4ca615830cf112df87fcb3401f0e",
+      "characters": 7849,
+      "bodyRead": "complete initial revised body plus final delta",
+      "scores": {
+        "factualConfidence": 1,
+        "hostFit": 2,
+        "maintenanceValue": 2,
+        "originalEvidence": 2,
+        "readerUtility": 2,
+        "voiceIntegrity": 1
+      },
+      "scoreTotal": 10,
+      "sourceCheckScope": "See scoped source reads and exclusions; no blanket historical re-verification."
+    },
+    {
+      "slug": "mirrorcode-coding-agent-benchmark",
+      "markdownPath": "articles/mirrorcode-coding-agent-benchmark.md",
+      "sha256": "091d92af256fe280535193bc1ad8e4c730b13c3c3dc676f4d7c8e5b851be77b1",
+      "characters": 7102,
+      "bodyRead": "complete initial revised body plus final delta",
+      "scores": {
+        "factualConfidence": 1,
+        "hostFit": 2,
+        "maintenanceValue": 2,
+        "originalEvidence": 1,
+        "readerUtility": 2,
+        "voiceIntegrity": 2
+      },
+      "scoreTotal": 10,
+      "sourceCheckScope": "See scoped source reads and exclusions; no blanket historical re-verification."
+    }
+  ],
+  "scoreInterpretation": "Conservative scores describe this existing-corpus corrective review, not a claim of complete source re-admission. Factual confidence is 1 where historical primary-source claims were not freshly reverified. Voice integrity is generally 1 because repetition and long limit lists remain in legacy bodies. All totals are >=9 and no dimension is zero.",
+  "limitations": [
+    "Untouched historical quotations, benchmark figures, prices and source metadata were read for coherence but not freshly endorsed, except the explicitly read Dan Luu source.",
+    "Targeted harness source read does not freshly verify every trajectory statistic, quotation, or reconstruction in that article.",
+    "No fresh product-release qualification for introduction, no fresh sources for Terminal-Bench-Science/small-models, and no complete repository/docs audit.",
+    "Markdown corpus was supplied by author and rendered without image/provenance arguments; hashes cover those complete article projections, not final HTML or metadata rendering.",
+    "No tests, build, browser, or publication run by reviewer; relied on author focused validation. The integration owner completes review history, revision dates, and final automated and visual checks.",
+    "Preserve historical sourceCheckedOn unless the specific claim/source was rechecked. reviewedOn may record this independent AI pass; human review stays null."
+  ],
+  "validation": {
+    "authorInitialFocused": {
+      "tests": 83,
+      "assertions": 45034,
+      "result": "pass"
+    },
+    "authorFinalFocused": {
+      "command": "host-run shared + system-one-skills check -- bun test app/blog",
+      "tests": 42,
+      "assertions": 4783,
+      "failures": 0,
+      "result": "pass"
+    },
+    "diffCheck": "author reported pass"
+  },
+  "reviewedFiles": [
+    {
+      "path": "app/blog/aa-index-cost-article.ts",
+      "sha256": "600290e4544a23c2e502e60ad6f8eab742932705c14e7e423f95f728536505ce"
+    },
+    {
+      "path": "app/blog/articles.ts",
+      "sha256": "3e897cb6ccb95a62d06ab1be510e7297719fb2940b87811d45cec9b6535c661f"
+    },
+    {
+      "path": "app/blog/blog-article-page.tsx",
+      "sha256": "20958cb63ef679579e0795cdbcd7472eb940736cad7280f4845c5e3c8e7fd577"
+    },
+    {
+      "path": "app/blog/blog-index.tsx",
+      "sha256": "9a3d689f7c69dbd8f0798813c09a7a76a38d20b208629855b81a0cbec3462bee"
+    },
+    {
+      "path": "app/blog/blog.test.tsx",
+      "sha256": "f30bf5d1c3e2db9097f3825cb3583eb3225cb94e754d725a2753afd3726cb9aa"
+    },
+    {
+      "path": "app/blog/coding-agent-score-holdouts-article.ts",
+      "sha256": "b341d34c81ed1e6997338ddefaaa1c734a05c2592b50471c0bbe3d55a0577ce6"
+    },
+    {
+      "path": "app/blog/devin-fusion-cost-saving-article.ts",
+      "sha256": "36c15a5b14f807122149793df481e44d42b0c57a23bc71bff57726f25dc6657c"
+    },
+    {
+      "path": "app/blog/gpt-6-sol-coding-agent-index-article.ts",
+      "sha256": "85a4327b14fc0a5dfa6f8f9dece0ae17d51da33581fff5b1efe236c45a3b0801"
+    },
+    {
+      "path": "app/blog/grok-4-7-coding-agent-index-article.ts",
+      "sha256": "29dea9e5966cc4ad910bd95b7e9efe48336ee2c0ef16712092e4bbf57c91ef95"
+    },
+    {
+      "path": "app/blog/harness-design-coding-agents-article.ts",
+      "sha256": "dcc47564dd68d34d809c08ba37f009f7e892d4be9a5b50acc2ed169ddf1d222d"
+    },
+    {
+      "path": "app/blog/harnesstax-coding-agent-harness-article.ts",
+      "sha256": "5db5f597250cf7e85a0c42955ee7817e548bead5d586ff137e89cd1f4af668fd"
+    },
+    {
+      "path": "app/blog/introducing-ai-charts-article.ts",
+      "sha256": "880ae97de8983ca5c4c0433720b792bf5d7d096d8475e7ad5642b96e506b5dc5"
+    },
+    {
+      "path": "app/blog/mimo-v2-6-pro-cost-frontier-article.ts",
+      "sha256": "0e9a2e6b69c5cfe69d982affa3e7b85ff36b9a73a5fd2163608ef2f0e367ce8a"
+    },
+    {
+      "path": "app/blog/open-models-coding-agents-article.ts",
+      "sha256": "270e3557783bdc65a0c61852af187c62dbbe1cc55db1e478f38bfe4052e77307"
+    },
+    {
+      "path": "app/blog/opus-5-5-coding-agent-index-article.ts",
+      "sha256": "1e58dfee45400aaeaa6a1a1994ff737e1b4a0becaf796c2b66832de0390f6d1c"
+    },
+    {
+      "path": "app/blog/opus-5-5-intelligence-index-article.ts",
+      "sha256": "a6d6e4924689ea73d8cc94a3b4d4f26e86a31ac74448443f22e0dbc227982aff"
+    },
+    {
+      "path": "app/blog/real-swe-private-enterprise-benchmark-article.ts",
+      "sha256": "5c8e44ab0468a8064b13b245c2f18c8e49a69a2a64bf3501d1ac58002fc20c07"
+    }
+  ],
+  "integrationBase": "d489962f6383e23e7efeaee788c7cc675d6ef855",
+  "previousAdmissions": {
+    "path": "admissions-before.ts.txt",
+    "base": "d489962f6383e23e7efeaee788c7cc675d6ef855",
+    "sha256": "778a74e051258194f00a565cd52fee394551cef4cd22b1be39ed5ad460c9e9a5"
+  }
+}

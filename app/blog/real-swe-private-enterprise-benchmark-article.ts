@@ -301,7 +301,7 @@ function overlapBlocks(snapshot: CodingAgentSnapshot, retrievedAt: string): Blog
     : `${capitalize(spellCount(missing.length))} ${missing.length === 1 ? "pair has" : "pairs have"} no same-name row in the snapshot: ${missingNames.join(", ")}.`;
   return [
     paragraph(
-      `The snapshot retrieved ${retrievedAt} stores ${spellCount(present.length)} of the ${spellCount(overlaps.length)} Real-SWE model and harness names. The table pairs each Real-SWE configuration with the snapshot row that shares its model and harness name at the highest stored effort setting. Real-SWE does not publish effort settings, so each row is a name match, not the same run. ${missingSentence}`,
+      `The snapshot retrieved ${retrievedAt} stores ${spellCount(present.length)} of the ${spellCount(overlaps.length)} Real-SWE model and harness names. The table pairs each Real-SWE configuration with the snapshot row that shares its model and harness name at the highest stored effort setting. A shared name does not establish matching settings or a matched run. ${missingSentence}`,
     ),
     table(
       `Real-SWE pairs beside same-name rows in the aicharts snapshot retrieved ${retrievedAt}`,
@@ -319,6 +319,7 @@ export function createRealSweArticle(
 ): BlogArticle {
   const retrievedAt = formatRetrievedAt(snapshot.source.retrievedAt);
   const updatedAt = latestCalendarDate(
+    "2026-10-01",
     REAL_SWE_ARTICLE_PUBLISHED_AT,
     utcCalendarDate(snapshot.source.retrievedAt),
     utcCalendarDate(codingAgentDatasetModifiedAt(snapshot)),
@@ -344,7 +345,7 @@ export function createRealSweArticle(
   return {
     sourceNote: BLOG_SOURCE_NOTE,
     slug: REAL_SWE_ARTICLE_SLUG,
-    title: "What Real-SWE’s 38.8% on private enterprise code measures",
+    title: "Real-SWE’s task results reorder its aggregate rankings",
     dek:
       "Specific Labs licensed private production codebases and scored eight model-and-harness pairs over 640 rollouts. The leading 38.8% is an aggregate that per-task results reorder.",
     focusPhrase: "Real-SWE benchmark",
@@ -396,9 +397,6 @@ export function createRealSweArticle(
         sol.resolution,
         ". The question Specific Labs puts on the page is: ",
         `“${REAL_SWE.quotes.governingQuestion}”`,
-      ),
-      paragraph(
-        "This note explains what that 38.8% covers, why the per-task results reorder the leaderboard, which failure the tasks expose most often, and how to read the ranking beside the aicharts coding-agent chart, which stores several of the same model and harness names from a different evaluation.",
       ),
       heading("What the resolution rate covers"),
       paragraph(
@@ -576,14 +574,14 @@ export function createRealSweArticle(
         `“${REAL_SWE.quotes.outOfDistribution}” Specific Labs argues that the code and its solutions are not available on the public internet and states that 99% of tokens in real-world enterprises are hidden from frontier models. The page asserts this from provenance; it reports no contamination measurement against the evaluated models.`,
       ),
       paragraph(
-        "The same design removes the usual external check. Tasks and verifiers stay private, the published sample is available on request, and nobody outside Specific Labs can rerun the evaluation and post a differing result. In the ",
+        "Readers cannot reproduce the full evaluation from public materials. The tasks and verifiers are private, and access to the published sample is available on request. In the ",
         { href: BLOG_SOURCES.hackerNewsRealSwe.url, text: "Hacker News discussion" },
         ` submitted on ${REAL_SWE.hackerNewsSubmittedOn}, commenters objected that a benchmark whose code cannot be inspected asks readers to take the result on trust, others replied that transparency is the price of a benchmark that is harder to game, and one commenter who runs a benchmark in another domain argued that contamination should be measured every time. Those are practitioner reactions, not measurements, but they name the trade a reader accepts when using a private-task leaderboard.`,
       ),
       heading("Limits"),
       list(
         [
-          `Every rate, cost, token count, and failure share belongs to the ${REAL_SWE.rollouts.taskCount}-task published sample, the named model and harness pairs, and the eight-run protocol on the page captured ${REAL_SWE.capturedOn}. The full benchmark is larger and unpublished, and the page can change.`,
+          `Every rate, cost, token count, and failure share belongs to the ${REAL_SWE.rollouts.taskCount}-task published sample, the named model and harness pairs, and the eight-run protocol on the page captured ${REAL_SWE.capturedOn}. These tables preserve that dated sample; the source leaderboard has since changed.`,
         ],
         [
           "Resolution is pass@1 averaged over eight runs. It does not report how close a failed rollout came, and the 95% intervals drawn on the leaderboard chart are not printed as numbers.",
@@ -598,10 +596,10 @@ export function createRealSweArticle(
           "Estimated cost per rollout is an evaluation estimate with incomplete usage for two pairs. It is not a subscription price or a production invoice.",
         ],
         [
-          "The snapshot rows in this note share model and harness names with Real-SWE pairs. They come from public task sets, from effort settings that Real-SWE does not publish, and from a different retrieval date, and they must not be compared numerically with Real-SWE resolution.",
+          "The snapshot rows in this note share model and harness names with Real-SWE pairs. They come from public task sets and separate runs, and they must not be compared numerically with Real-SWE resolution.",
         ],
         [
-          "Private tasks cannot be independently rerun. The out-of-distribution claim rests on provenance and licensing terms that Specific Labs does not disclose.",
+          "Public materials do not support an independent rerun of the full evaluation. Private provenance alone does not measure contamination in the evaluated models.",
         ],
       ),
     ],

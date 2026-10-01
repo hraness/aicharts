@@ -106,6 +106,7 @@ export function createCodingAgentScoreHoldoutsArticle(
   const terminalLeader = requireLeader(leaders, "terminalBench");
   const sweAtlasLeader = requireLeader(leaders, "sweAtlas");
   const updatedAt = latestCalendarDate(
+    "2026-10-01",
     HOLDOUT_ARTICLE_PUBLISHED_AT,
     "2026-09-10",
     utcCalendarDate(snapshot.source.retrievedAt),
@@ -190,7 +191,7 @@ export function createCodingAgentScoreHoldoutsArticle(
         ],
       ),
       paragraph(
-        "The holdout was also imperfect. Luu says it was an arbitrary subset of the ripgrep setup, chosen by an agent, because a full pull did not finish before he published. He treats the numbers as higher-risk than a cleaned paper result. That limit belongs next to the finding, not after it. A noisy holdout still falsified the public-suite story. A missing holdout would have left the story standing.",
+        "The holdout was also imperfect. Luu says it was an arbitrary subset of the ripgrep setup, chosen by an agent, because a full pull did not finish before he published. He treats the numbers as higher-risk than a cleaned paper result. The holdout did not reproduce the public-suite improvement.",
       ),
       heading("Coding-agent tables have the same shape"),
       paragraph(
@@ -203,7 +204,7 @@ export function createCodingAgentScoreHoldoutsArticle(
       paragraph(
         `aicharts retrieved the checked snapshot on ${retrievedAt}. The dataset contains ${summary.recordCount} model-agent configurations across ${summary.modelCount} models, ${summary.agentCount} agent harnesses, and ${summary.providerCount} providers. The `,
         { href: "/data", text: "dataset page" },
-        " names each metric, lists the highest stored score for that metric, and states that those rows are observations of a named model, harness, and effort setting rather than general model ranks. This note copies that table. It does not add a rank.",
+        " names each metric, lists the highest stored score for that metric, and states that those rows are observations of a named model, harness, and effort setting rather than general model ranks.",
       ),
       table(
         `Highest stored score by benchmark in the ${snapshot.source.name} snapshot retrieved ${retrievedAt}`,
@@ -249,7 +250,7 @@ export function createCodingAgentScoreHoldoutsArticle(
         ],
       ),
       paragraph(
-        "That split is already a weak holdout inside the snapshot. A configuration can store the highest AA Index and still store less than another configuration on DeepSWE v1.1 or Terminal-Bench 4. The inverse is also in the table. Citing one high cell as “the coding-agent result” hides the other three cells. It also hides the larger gap Luu is after: tasks that never entered the published suite.",
+        "The component scores expose different strengths within the published task sets. A configuration with the highest AA Index can score below another on DeepSWE v1.1 or Terminal-Bench 4. These metrics are parts of the same composite, and the snapshot does not establish that any was hidden from an optimizer. A holdout requires separate tasks the optimization process could not inspect.",
       ),
       paragraph(
         { href: BLOG_SOURCES.artificialAnalysisCodingAgents.url, text: "Artificial Analysis publishes the coding-agent comparison" },
@@ -268,7 +269,7 @@ export function createCodingAgentScoreHoldoutsArticle(
         "Use a stored AA Index, DeepSWE v1.1, Terminal-Bench 4, or SWE-Atlas-QnA value as evidence about that named configuration on that named suite. Use a holdout, a second suite, or production work when the question is whether the same system generalizes.",
       ),
       paragraph(
-        "The useful sentence is narrower than a leaderboard headline. A high coding-agent score means the named model, harness, and setting did well on the visible suite at the retrieval date. It does not mean the same system would keep that margin on tasks the suite never published. Luu’s holdout is the cheapest way to keep that distinction attached to the number.",
+        "The useful sentence is narrower than a leaderboard headline. A high coding-agent score means the named model, harness, and setting did well on the visible suite at the retrieval date. It does not mean the same system would keep that margin on tasks the suite never published. Luu’s separate workload exposed a gap that the optimized suite had missed.",
       ),
       heading("Limits of this reading"),
       list(

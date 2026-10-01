@@ -195,9 +195,9 @@ function frontierBlocks(
   const cost = formatSnapshotCostUsd(record.economics.costUsd);
   const blocks: BlogBlock[] = [
     paragraph(
-      "The chart’s cost frontier is the set of configurations that no other configuration beats on both axes: nothing scores at least as high for the same or less money. ",
+      "The chart’s cost frontier contains configurations for which no other row costs no more and scores at least as high, with a strict improvement in either measure. ",
       onCostFrontier
-        ? `${configurationLabel(record)} is on it${placement.rank === 1 ? ", and as the highest-scoring row it is the frontier’s top vertex by definition: any row with the top score and a cost is on the frontier whatever it costs" : ""}. `
+        ? `${configurationLabel(record)} is on it${placement.rank === 1 ? ", at the frontier’s highest score. When configurations tie for that score, a cheaper tied row dominates a more expensive one" : ""}. `
         : `${configurationLabel(record)} is not on it: ${pluralConfigurations(dominators.length)} cost${dominators.length === 1 ? "s" : ""} the same or less per task and score${dominators.length === 1 ? "s" : ""} at least as high. `,
       "The question the frontier answers is what a reader gives up by stepping down from the top score to a cheaper row that nothing dominates.",
     ),
@@ -428,7 +428,7 @@ function generationBlocks(
       CLAUDE_OPUS_55.anthropic.headlineClaim,
       ".” ",
       costMultiple !== null && costMultiple > 1 && tokenMultiple !== null && tokenMultiple > 1
-        ? `The Claude Code row moved the other way: a task cost ${formatCostMultiple(costMultiple)} as much because the run used ${formatCostMultiple(tokenMultiple)} the tokens, and the volume increase outran the lower price per token. Anthropic’s figure describes the price of a token, and the harness figure describes the tokens one task consumed; both can be true at once.`
+        ? `In this Claude Code comparison, mean task cost rose to ${formatCostMultiple(costMultiple)} as much and total tokens to ${formatCostMultiple(tokenMultiple)} as many. Task cost depends on token volume, the input/output mix, and caching as well as listed rates. Anthropic’s 40% figure is its running-cost claim; the quoted input and output prices alone fell by 20%. The separate workloads do not isolate why the measured task costs differ.`
         : costMultiple !== null && costMultiple <= 1
           ? "The Claude Code row moved the same way: a task cost no more than it did with Opus 5 at the lower price per token."
           : "The snapshot records outcomes rather than prices, so the two statements cannot be reconciled from it.",
@@ -575,6 +575,7 @@ export function createOpus55CodingArticle(
   const codingRetrievedAt = formatRetrievedAt(codingSnapshot.source.retrievedAt);
   const intelligenceRetrievedAt = formatRetrievedAt(intelligenceSnapshot.source.retrievedAt);
   const updatedAt = latestCalendarDate(
+    "2026-10-01",
     OPUS_55_CODING_ARTICLE_PUBLISHED_AT,
     utcCalendarDate(codingSnapshot.source.retrievedAt),
     utcCalendarDate(intelligenceSnapshot.source.retrievedAt),
@@ -692,7 +693,7 @@ export function createOpus55CodingArticle(
       heading("Limits"),
       list(
         [
-          `Every score, cost, token count, and duration above is an Artificial Analysis measurement of the named configuration on the retrieval date, under ${SNAPSHOT_COLUMN_LABELS.deepSwe}, ${SNAPSHOT_COLUMN_LABELS.terminalBench}, and ${SNAPSHOT_COLUMN_LABELS.sweAtlas} for the coding-agent chart and Intelligence Index version ${indexVersion} for the capability chart. None of them establishes a result on other repositories, tasks, or harnesses.`,
+          `The chart scores, task costs, token counts, and durations are Artificial Analysis measurements of the named configuration on the retrieval date, under ${SNAPSHOT_COLUMN_LABELS.deepSwe}, ${SNAPSHOT_COLUMN_LABELS.terminalBench}, and ${SNAPSHOT_COLUMN_LABELS.sweAtlas} for the coding-agent chart and Intelligence Index version ${indexVersion} for the capability chart. None of them establishes a result on other repositories, tasks, or harnesses.`,
         ],
         [
           "The rank, cost rank, frontier steps, component gaps, and Opus 5 multiples are aicharts derivations from the snapshots named in each caption. A configuration added, removed, or rescored by Artificial Analysis moves them, and the coding-agent snapshot advances daily.",
