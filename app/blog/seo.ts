@@ -220,10 +220,10 @@ export function blogCollectionJsonLd(
     name: "AI model and agent benchmark analysis",
     description: blogDescription,
     inLanguage: "en-US",
-    primaryImageOfPage: absoluteWebUrl(
-      searchSite.origin,
-      BLOG_SOCIAL_IMAGE_PATH,
-    ),
+    primaryImageOfPage: {
+      "@type": "ImageObject",
+      url: absoluteWebUrl(searchSite.origin, BLOG_SOCIAL_IMAGE_PATH),
+    },
     isPartOf: {
       "@id": `${absoluteWebUrl(searchSite.origin, "/")}#website`,
     },

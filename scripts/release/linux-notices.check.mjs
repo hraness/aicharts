@@ -691,7 +691,9 @@ test("source mapping is unique, pinned and covers SQLite and Unicode notices", a
 test("complete synthetic Ubuntu filesystem and dpkg join emits deterministic notices", async () => {
   if (!process.execArgv.includes("--experimental-test-module-mocks")) {
     const result = await promisify(execFile)(process.execPath, ["--experimental-test-module-mocks", "--test", "--test-name-pattern=^complete synthetic Ubuntu filesystem", fileURLToPath(import.meta.url)], {
-      timeout: 20_000, maxBuffer: 1024 * 1024, env: { PATH: "/usr/bin:/bin", NODE_ENV: "test" },
+      // The child repeats full filesystem attribution for the adversarial cases.
+      // Keep a finite deadline with room for slower shared development hosts.
+      timeout: 60_000, maxBuffer: 1024 * 1024, env: { PATH: "/usr/bin:/bin", NODE_ENV: "test" },
     });
     assert.match(result.stdout, /pass 1/u);
     assert.doesNotMatch(result.stdout, /not ok/u);

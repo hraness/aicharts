@@ -2625,8 +2625,10 @@ describe("aicharts blog discovery", () => {
       "@type": "CollectionPage",
       name: "AI model and agent benchmark analysis",
       url: "https://aicharts.io/blog",
-      primaryImageOfPage:
-        "https://aicharts.io/blog/opengraph-image",
+      primaryImageOfPage: {
+        "@type": "ImageObject",
+        url: "https://aicharts.io/blog/opengraph-image",
+      },
     });
     expect(collection.mainEntity.numberOfItems).toBe(indexableBlogArticles.length);
 

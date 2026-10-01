@@ -110,7 +110,7 @@ export function indexModelPageDescription(page: Readonly<{
   sourceName: string;
   cost: string | null;
 }>): string {
-  return `${page.displayTitle} scores ${page.score} on the ${page.sourceName}${page.cost === null ? "" : `, at ${page.cost} per task`}.`;
+  return `${page.displayTitle} scores ${page.score} on the ${page.sourceName}${page.cost === null ? "" : `, at ${page.cost} per task`}. See source links and the observation date.`;
 }
 
 export const notFoundSearchSite = {

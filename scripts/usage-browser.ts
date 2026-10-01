@@ -186,7 +186,7 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
       const blockedOrigins = new Set<string>();
       page.on("pageerror", () => failures.push("browser runtime error"));
       const accountId = `acct_${"a".repeat(32)}`;
-      let mode: Mode = "ready", hold = false, requests = 0;
+      let mode: Mode = "ready", hold = false, requests = 0, accountSignedOut = false;
       // The page's status reads and the consent route's decisions share one server state.
       let consent: LeaderboardConsentViewV1 = { schemaVersion: 1, consent: false, consentedAtMs: null, publicHandle: null };
       const held: Route[] = [];
@@ -216,12 +216,14 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
         }
         if (url.pathname === "/api/usage/account") {
           invariant(route.request().method() === "GET" && url.search === "", "Account identity must use its fixed read-only route.");
-          await route.fulfill({ status: 200, contentType: PRIVATE_DAYS_PUBLIC_MEDIA, body: JSON.stringify({ schemaVersion: 1, state: "ready", account: { accountId } }) }); return;
+          await route.fulfill({ status: accountSignedOut ? 401 : 200, contentType: PRIVATE_DAYS_PUBLIC_MEDIA,
+            body: JSON.stringify(accountSignedOut ? { schemaVersion: 1, error: { code: "authentication_required" } }
+              : { schemaVersion: 1, state: "ready", account: { accountId } }) }); return;
         }
         if (url.pathname === "/api/usage/dashboard") {
           // One page read: identity, lifetime totals, publishing status and the stats window.
           const query = usageDashboardFixtureQuery(route);
-          await fulfillUsageDashboard(route, query, { accountId, part: part => part === "account" ? accountReady(accountId)
+          await fulfillUsageDashboard(route, query, accountSignedOut ? "authentication_required" : { accountId, part: part => part === "account" ? accountReady(accountId)
             : part === "totals" ? totalsUnavailable
             : part === "consent" ? { status: 200, body: JSON.stringify({ schemaVersion: 1, state: "ready", value: consent }) }
             : { status: 200, body: '{"schemaVersion":2,"ok":false,"error":"not_started"}' } });
@@ -229,7 +231,9 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
         }
         if (url.pathname === "/api/usage/stats") {
           invariant(route.request().method() === "GET" && parseStatsPublicSearch(url.search), "The stats fallback must use the numeric GET contract.");
-          await route.fulfill({ status: 200, headers: { "content-type": STATS_PUBLIC_MEDIA, "cache-control": "private, no-store", [USAGE_ACCOUNT_HEADER]: accountId }, body: '{"schemaVersion":2,"ok":false,"error":"not_started"}' });
+          await route.fulfill({ status: accountSignedOut ? 401 : 200,
+            headers: { "content-type": STATS_PUBLIC_MEDIA, "cache-control": "private, no-store", ...(accountSignedOut ? {} : { [USAGE_ACCOUNT_HEADER]: accountId }) },
+            body: JSON.stringify({ schemaVersion: 2, ok: false, error: accountSignedOut ? "authentication_required" : "not_started" }) });
           return;
         }
         if (url.pathname !== "/api/usage/days") { await route.continue(); return; }
@@ -239,7 +243,7 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
         const range = parsePrivateDaysPublicSearch(url.search);
         invariant(range !== null, "Browser date range must be canonical.");
         if (hold) { held.push(route); heldArrived?.(); return; }
-        const reply = fixture(mode, range), bytes = encodePrivateDaysPublicResponse(reply, range);
+        const reply = fixture(accountSignedOut ? "authentication_required" : mode, range), bytes = encodePrivateDaysPublicResponse(reply, range);
         invariant(bytes !== null, "Synthetic browser measurements must pass the public codec.");
         await route.fulfill({ status: privateDaysPublicStatus(reply), headers: { "content-type": PRIVATE_DAYS_PUBLIC_MEDIA, "cache-control": "private, no-store", ...("state" in reply ? { [USAGE_ACCOUNT_HEADER]: accountId } : {}) }, body: Buffer.from(bytes) });
       });
@@ -339,8 +343,14 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
         invariant(await page.locator(".usage-daily table tbody").count() === 2, "Superseded responses must not replace the selected range.");
         let consentWrites = 0, interruptConsent = true, refuseConsent = false;
         await page.route("**/api/usage/consent", async route => {
+          if (route.request().method() === "POST") consentWrites++;
+          if (accountSignedOut) {
+            const bytes = encodeUsageConsentPublicReply({ schemaVersion: 1, error: { code: "authentication_required" } });
+            invariant(bytes !== null, "Signed-out consent must pass the public codec.");
+            await route.fulfill({ status: 401, headers: { "content-type": USAGE_CONSENT_PUBLIC_MEDIA, "cache-control": "private, no-store" }, body: Buffer.from(bytes) });
+            return;
+          }
           if (route.request().method() === "POST") {
-            consentWrites++;
             if (refuseConsent) {
               const bytes = encodeUsageConsentPublicReply({ schemaVersion: 1, error: { code: "publishing_full" } });
               invariant(bytes !== null, "Capacity refusal must pass the public codec.");
@@ -390,14 +400,20 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
         const sibling = await context.newPage();
         try {
           await sibling.goto(`${baseUrl}/usage/sessions`, { waitUntil: "networkidle" });
+          // A real SDK sign-out revokes the server session before notifying sibling tabs.
+          accountSignedOut = true;
           await sibling.evaluate(() => {
             const channel = new BroadcastChannel("jungle-suite-accounts:oidc-session:v1");
             channel.postMessage({ kind: "signed_out", version: "suite-oidc-session-event-v1" }); channel.close();
           });
           await consentPanel.getByRole("heading", { name: "Sign in to manage publishing", exact: true }).waitFor();
           await page.locator("main").getByRole("heading", { name: "Sign in to view your usage", exact: true }).waitFor();
-          invariant(await consentPanel.getByLabel("Public handle", { exact: true }).count() === 0 && await page.locator(".usage-daily table").count() === 0,
-            "A cross-tab SDK sign-out must clear publishing form identity and private daily values.");
+          // The separate stats panel can show that heading before its daily fallback is removed.
+          await page.locator(".usage-daily table").waitFor({ state: "detached", timeout: 5_000 });
+          const remainingHandles = await consentPanel.getByLabel("Public handle", { exact: true }).count();
+          const remainingDailyTables = await page.locator(".usage-daily table").count();
+          invariant(remainingHandles === 0 && remainingDailyTables === 0,
+            `A cross-tab SDK sign-out must clear publishing form identity and private daily values (${name}: handles=${remainingHandles}, tables=${remainingDailyTables}).`);
           invariant(Number(consentWrites) === 5, "Signing out must not replay a consent write.");
         } finally { await sibling.close(); }
         await verifyRankedLeaderboard(page, baseUrl, name, captureDirectory);
