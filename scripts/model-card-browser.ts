@@ -4,6 +4,7 @@ import { ATLAS_DATASETS } from "../lib/benchmark-atlas-catalog";
 import { verifyUsageDashboard } from "./usage-browser";
 import { verifyUsageSessions } from "./usage-sessions-browser";
 import { ownedChromiumOptions } from "./owned-chromium.mjs";
+import { verifySettledConsentFlow } from "./verify-settled-consent.mjs";
 
 import {
   chromium,
@@ -105,6 +106,10 @@ async function verifyFooterShell(browser: Browser, baseUrl: string): Promise<voi
         invariant(geometry.bottom >= geometry.viewportHeight - 1, `${route}: footer is above viewport bottom`);
         invariant(Math.abs(geometry.bottom - geometry.documentHeight) <= 2, `${route}: blank space follows footer`);
       }
+      await page.setViewportSize({ width, height: width < 600 ? 844 : 900 });
+      await page.goto(baseUrl);
+      await settle(page);
+      console.log(JSON.stringify({ check: "settled-consent", width, result: await verifySettledConsentFlow(page) }));
     } finally {
       await context.close();
     }
@@ -138,7 +143,7 @@ async function verifyForcedPublicationLinks(browser: Browser, baseUrl: string): 
       for (const selector of [
         ".plain-publication__article-body a[href]",
         ".plain-publication__sources a[href]",
-        ".plain-publication__byline a[href]",
+        ".plain-publication__related .plain-publication__section-heading a[href]",
       ]) {
         const link = page.locator(selector).first();
         await link.waitFor({ state: "visible" });
@@ -153,8 +158,16 @@ async function verifyForcedPublicationLinks(browser: Browser, baseUrl: string): 
           }
           const paint = await link.evaluate(element => {
             const style = getComputedStyle(element);
+            const probe = document.createElement("span");
+            probe.style.setProperty("color", "LinkText", "important");
+            probe.style.setProperty("forced-color-adjust", "none", "important");
+            document.body.append(probe);
+            const systemLinkColor = getComputedStyle(probe).color;
+            probe.remove();
             return {
               color: style.color,
+              forcedColorAdjust: style.forcedColorAdjust,
+              systemLinkColor,
               decorationColor: style.textDecorationColor,
               decorationLine: style.textDecorationLine,
               decorationStyle: style.textDecorationStyle,
@@ -163,7 +176,9 @@ async function verifyForcedPublicationLinks(browser: Browser, baseUrl: string): 
           const label = `${colorScheme}/${selector}/${state}`;
           invariant(paint.decorationLine.includes("underline"), `${label}: link underline is missing`);
           invariant(paint.decorationStyle === "dotted", `${label}: link underline must remain dotted`);
-          invariant(paint.decorationColor === paint.color, `${label}: underline must use the system link color`);
+          invariant(paint.decorationColor === paint.systemLinkColor,
+            `${label}: underline must use the system link color; ${JSON.stringify(paint)}`);
+          invariant(paint.forcedColorAdjust === "auto", `${label}: system text-color adjustment must remain enabled`);
         }
       }
     } finally {

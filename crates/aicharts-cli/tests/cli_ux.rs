@@ -16,6 +16,7 @@ const AGENT_MARKERS: &[&str] = &[
     "NO_COLOR",
     "FORCE_COLOR",
     "HRANESS_ASCII",
+    "TERM",
 ];
 
 fn command(args: &[&str], env: &[(&str, &str)]) -> Command {

@@ -121,9 +121,9 @@
     "sync:icons": "bun run ./scripts/sync-icons.ts"
   },
   "dependencies": {
-    "@hraness/design-kit": "github:hraness/design-kit#v0.35.0",
+    "@hraness/design-kit": "github:hraness/design-kit#v0.36.3",
     "@hraness/posthog": "https://github.com/hraness/posthog/releases/download/v0.3.11/hraness-posthog-0.3.11.tgz",
-    "@hraness/site-footer": "https://github.com/hraness/site-footer/releases/download/v0.20.5/hraness-site-footer-0.20.5.tgz",
+    "@hraness/site-footer": "https://github.com/hraness/site-footer/releases/download/v0.20.7/hraness-site-footer-0.20.7.tgz",
     "@hraness/suite-accounts": "github:hraness/suite-accounts#v0.9.15",
     "@hraness/ui": "github:hraness/ui#v0.5.18",
     "@hraness/vercel-delivery": "github:hraness/vercel-delivery#v0.1.2",
