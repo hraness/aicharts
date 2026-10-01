@@ -6,7 +6,7 @@
       "name": "aicharts",
       "dependencies": {
         "@hraness/design-kit": "github:hraness/design-kit#v0.35.0",
-        "@hraness/posthog": "https://github.com/hraness/posthog/releases/download/v0.3.9/hraness-posthog-0.3.9.tgz",
+        "@hraness/posthog": "https://github.com/hraness/posthog/releases/download/v0.3.11/hraness-posthog-0.3.11.tgz",
         "@hraness/site-footer": "https://github.com/hraness/site-footer/releases/download/v0.20.5/hraness-site-footer-0.20.5.tgz",
         "@hraness/suite-accounts": "github:hraness/suite-accounts#v0.9.15",
         "@hraness/ui": "github:hraness/ui#v0.5.18",
@@ -199,7 +199,7 @@
 
     "@hraness/desktop-foundation": ["@hraness/desktop-foundation@github:hraness/desktop-foundation#6174033", { "bin": { "companion": "./dist/src/cli.js" } }, "hraness-desktop-foundation-6174033", "sha512-ZZJZ7MeNZLx8LUnZrgC9HvlgzecxCLtLw7M8STVr1yv2n0czc1huMLLbm83rCDufo0O96PBMIkDeD4zge6DcTQ=="],
 
-    "@hraness/posthog": ["@hraness/posthog@https://github.com/hraness/posthog/releases/download/v0.3.9/hraness-posthog-0.3.9.tgz", { "dependencies": { "@posthog/nextjs-config": "1.10.0", "posthog-js": "1.422.5", "posthog-node": "5.51.4" }, "peerDependencies": { "next": ">=16.2.0 <17.0.0", "react": ">=19.2.0 <20.0.0" }, "optionalPeers": ["next", "react"] }, "sha512-faPyaByfdEEY5lSL32XXrGEtJ1PCiuRi0xE+7l7AR4FlPDFVjpd6jfl0/0KL8qtl/BkE6JvCpzWwd/W6V8Wkug=="],
+    "@hraness/posthog": ["@hraness/posthog@https://github.com/hraness/posthog/releases/download/v0.3.11/hraness-posthog-0.3.11.tgz", { "dependencies": { "@posthog/nextjs-config": "1.10.0", "posthog-js": "1.422.5", "posthog-node": "5.51.4" }, "peerDependencies": { "next": ">=16.2.0 <17.0.0", "react": ">=19.2.0 <20.0.0" }, "optionalPeers": ["next", "react"] }, "sha512-XIHWP+tivJOUAw7KVbdPYO3UteM4O0IYf/mD4ZJZugPPJ5ZEHP033Xh/qbAIDv2lSVI245UE4CLpzkznDT/pVg=="],
 
     "@hraness/result": ["@hraness/result@github:hraness/result#17b311c", {}, "hraness-result-17b311c", "sha512-OzIzJ598pWxKqpuYO+Omki/LYlhZ+bg04u7N0DuhW9FoAruP3ocRs4eyCyWxEEa4gtpEG9AEaTlheYnDlXh2mQ=="],
 

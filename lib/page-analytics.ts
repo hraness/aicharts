@@ -202,6 +202,7 @@ const pageUrlProperties = [
   "$session_entry_url",
 ] as const;
 const pagePathProperties = [
+  "requested_path",
   "$initial_pathname",
   "$pathname",
   "$prev_pageview_pathname",
