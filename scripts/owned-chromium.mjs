@@ -5,7 +5,7 @@ import { dirname, isAbsolute, resolve } from "node:path";
 
 const require = createRequire(import.meta.url);
 const playwrightRoot = dirname(require.resolve("playwright-core/package.json"));
-assert.equal(require(resolve(playwrightRoot, "package.json")).version, "1.62.1", "Review browser defaults when upgrading the pinned Playwright version");
+assert.equal(require(resolve(playwrightRoot, "package.json")).version, "1.63.0", "Review browser defaults when upgrading the pinned Playwright version");
 // This pinned release bundles its server modules. Read the constant array as
 // JSON after removing comments; never execute or patch the bundled source.
 const bundle = readFileSync(resolve(playwrightRoot, "lib/coreBundle.js"), "utf8");

@@ -10,7 +10,7 @@ test("owned browser options preserve Playwright features in one muted launch swi
   const switches = options.args.filter((argument: string) => argument.startsWith("--disable-features="));
   expect(switches).toHaveLength(1);
   const features = switches[0]!.slice("--disable-features=".length).split(",");
-  for (const feature of ["PaintHolding", "MacAppCodeSignClone", "MediaRouter", "ThirdPartyStoragePartitioning"]) {
+  for (const feature of ["PaintHolding", "MacAppCodeSignClone", "MediaRouter", "ThirdPartyStoragePartitioning", "BlockOriginHeaderModificationOnRedirect"]) {
     expect(features).toContain(feature);
   }
   expect(new Set(features).size).toBe(features.length);
