@@ -530,7 +530,7 @@ function codingContrastBlocks(
   if (intelligence !== undefined && opus5 !== undefined) {
     blocks.push(
       table(
-        "The Intelligence Index row and the coding-agent row that readers most often set side by side, each scored on its own task set with its own cost definition",
+        "The Intelligence Index row and a previous-generation coding-agent row, each scored on its own task set with its own cost definition",
         ["Chart", "Configuration", "Model generation", "Score", "Cost per task", "Snapshot retrieved"],
         [
           [
@@ -584,6 +584,7 @@ export function createOpus55Article(
   const intelligenceRetrievedAt = formatRetrievedAt(intelligenceSnapshot.source.retrievedAt);
   const codingRetrievedAt = formatRetrievedAt(codingSnapshot.source.retrievedAt);
   const updatedAt = latestCalendarDate(
+    "2026-10-01",
     OPUS_55_ARTICLE_PUBLISHED_AT,
     utcCalendarDate(intelligenceSnapshot.source.retrievedAt),
     utcCalendarDate(codingSnapshot.source.retrievedAt),
@@ -714,7 +715,7 @@ export function createOpus55Article(
       heading("Limits"),
       list(
         [
-          `The scores, costs, and token counts above are Artificial Analysis measurements of the ${MODEL_NAME} rows on the retrieval date under Intelligence Index version ${indexVersion}${codingScoreClause}. They say nothing about other tasks, prompts, or harnesses.`,
+          `The chart scores, costs, and token counts are Artificial Analysis measurements of the ${MODEL_NAME} rows on the retrieval date under Intelligence Index version ${indexVersion}${codingScoreClause}. They say nothing about other tasks, prompts, or harnesses.`,
         ],
         [
           "The rank, frontier walk, nearest-score table, effort ladder, and cost shares are computed from those snapshots by aicharts. A new, removed, or rescored configuration moves them, and both snapshots update on a schedule.",
@@ -722,7 +723,7 @@ export function createOpus55Article(
         [
           opus55Rows.length === 0
             ? `${MODEL_NAME} inside Claude Code, Cursor, or another harness is a configuration the coding-agent snapshot does not store, so this note says nothing about it.`
-            : `The coding-agent scores above are the ${joinNames(opus55Rows.map(row => configurationLabel(row)))} ${opus55Rows.length === 1 ? "row" : "rows"} in the snapshot. They say nothing about ${MODEL_NAME} inside a harness the snapshot does not store.`,
+            : `The ${MODEL_NAME} coding-agent scores above are the ${joinNames(opus55Rows.map(row => configurationLabel(row)))} ${opus55Rows.length === 1 ? "row" : "rows"} in the snapshot. They say nothing about ${MODEL_NAME} inside a harness the snapshot does not store.`,
         ],
         [
           "The Adaptive Reasoning and Default Fallback settings in the row names are recorded by Artificial Analysis and not defined in the snapshot; the per-evaluation scores behind the composite are not stored either.",

@@ -1,0 +1,101 @@
+{
+  "base": "73ff2745b5e112ea00f9fcbba24b55231490b424",
+  "records": [
+    {
+      "slug": "introducing-ai-charts",
+      "path": "articles/introducing-ai-charts.md",
+      "characters": 7461,
+      "sha256": "5c487bdebfd89a795830ff6925f2d5f3218b3313a9688cb8504bf5cd4f717bd6"
+    },
+    {
+      "slug": "opus-5-5-coding-agent-index",
+      "path": "articles/opus-5-5-coding-agent-index.md",
+      "characters": 14711,
+      "sha256": "97e09d75eeb254b51939732f055c79df59c438e2ece18a9dfc162cdad858ede0"
+    },
+    {
+      "slug": "opus-5-5-intelligence-index",
+      "path": "articles/opus-5-5-intelligence-index.md",
+      "characters": 15204,
+      "sha256": "52f76ea4b49dad742eef33015e7132404e57179f30d6af72e223fbe5cc0e03e1"
+    },
+    {
+      "slug": "gpt-6-sol-coding-agent-index",
+      "path": "articles/gpt-6-sol-coding-agent-index.md",
+      "characters": 16111,
+      "sha256": "c66a434f5c63a03d71ede4438a888e22570240d0892293018d1c5a333e96c7dd"
+    },
+    {
+      "slug": "grok-4-7-coding-agent-index",
+      "path": "articles/grok-4-7-coding-agent-index.md",
+      "characters": 14868,
+      "sha256": "b2e7341ab09338f118cb55f36cc66743778f11d0dd0568f7b42b139848be9dfa"
+    },
+    {
+      "slug": "mimo-v2-6-pro-cost-frontier",
+      "path": "articles/mimo-v2-6-pro-cost-frontier.md",
+      "characters": 18459,
+      "sha256": "9665b8cf3281fa5b8d7063e500b14504f9ec240073775d05fc12f50bd3f805a8"
+    },
+    {
+      "slug": "harness-design-coding-agents",
+      "path": "articles/harness-design-coding-agents.md",
+      "characters": 17281,
+      "sha256": "67531f3d12544b5d02fb4c32b0cc3e3b4671a5521347f030d1ac3df022385b77"
+    },
+    {
+      "slug": "harnesstax-coding-agent-harness",
+      "path": "articles/harnesstax-coding-agent-harness.md",
+      "characters": 12298,
+      "sha256": "2625b07c37198bf43e8941f0b2797f29d93a568ae3dd83e48f4689c74efa87f0"
+    },
+    {
+      "slug": "real-swe-private-enterprise-benchmark",
+      "path": "articles/real-swe-private-enterprise-benchmark.md",
+      "characters": 18190,
+      "sha256": "c64ae49bef2435ce30d8676ba9ecfeb6c8b6b5302758087c5287a1763f719785"
+    },
+    {
+      "slug": "devin-fusion-cost-saving",
+      "path": "articles/devin-fusion-cost-saving.md",
+      "characters": 12171,
+      "sha256": "c25dcaed921e883a846965603c4441443c6f86a7e3fc0cba9eaf6d4801494170"
+    },
+    {
+      "slug": "terminal-bench-science",
+      "path": "articles/terminal-bench-science.md",
+      "characters": 6748,
+      "sha256": "e8950cd9418340e6878eb6ec245da8cfd6d53723a58a6da6077b051475aac91d"
+    },
+    {
+      "slug": "small-models-have-arrived",
+      "path": "articles/small-models-have-arrived.md",
+      "characters": 8968,
+      "sha256": "180ac6bb054a964d91f6e7a74e28ca6098c587ff70cb8dda20f980634ff546fc"
+    },
+    {
+      "slug": "coding-agent-score-holdouts",
+      "path": "articles/coding-agent-score-holdouts.md",
+      "characters": 10656,
+      "sha256": "5e903e93864d1c1d83a3080a81acdd59fe7816b6bf0d0944c62b2a3a19b998c9"
+    },
+    {
+      "slug": "open-models-coding-agent-benchmarks",
+      "path": "articles/open-models-coding-agent-benchmarks.md",
+      "characters": 10219,
+      "sha256": "fd14277d5c3d8015fd406a0bfa232b727ab65fe29392a1e95fc616afe79729f8"
+    },
+    {
+      "slug": "aa-index-cost-coding-agents",
+      "path": "articles/aa-index-cost-coding-agents.md",
+      "characters": 7849,
+      "sha256": "93313911e53dde23770bafb2a87bf7ce3ebb4ca615830cf112df87fcb3401f0e"
+    },
+    {
+      "slug": "mirrorcode-coding-agent-benchmark",
+      "path": "articles/mirrorcode-coding-agent-benchmark.md",
+      "characters": 7102,
+      "sha256": "091d92af256fe280535193bc1ad8e4c730b13c3c3dc676f4d7c8e5b851be77b1"
+    }
+  ]
+}

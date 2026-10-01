@@ -179,7 +179,7 @@ export const BLOG_SOURCES = {
   },
   specificLabsRealSwe: {
     note:
-      "The September 2026 benchmark page owns the eight-pair leaderboard, the pass@1 definition, the ten-task sample table, the failure taxonomy counts, the instruction and files-edited medians, the cost and token estimates, and the evaluation setup.",
+      "The September 2026 benchmark page reports the eight-pair leaderboard, the pass@1 definition, the ten-task sample table, the failure taxonomy counts, the instruction and files-edited medians, the cost and token estimates, and the evaluation setup.",
     publication: "Specific Labs",
     title: "Introducing Real-SWE",
     url: "https://withspecific.com/benchmarks/real-swe",
@@ -203,7 +203,7 @@ export const BLOG_SOURCES = {
   },
   harnessTax: {
     note:
-      "The page captured September 16, 2026 UTC owns the 21-pair evaluation, the three findings, the printed SWE-bench Lite and Terminal-Bench 2.0 tables, and the named method bounds.",
+      "The page captured September 16, 2026 UTC reports the 21-pair evaluation, the three findings, the printed SWE-bench Lite and Terminal-Bench 2.0 tables, and the named method bounds.",
     publication: "UC Berkeley and Arena",
     title: "HarnessTax: How Much Does the Harness Matter for Coding Agents?",
     url: "https://harnesstax.github.io/",
@@ -211,7 +211,7 @@ export const BLOG_SOURCES = {
   },
   fanHarnessDesign: {
     note:
-      "The September 17, 2026 arXiv paper owns the fixed-loop harness, the five context-management tiers, the 176-setting design, the printed SWE-Bench Verified and Terminal-Bench 2.1 tables, the trajectory analysis, and the stated limitations.",
+      "The September 17, 2026 arXiv paper reports the fixed-loop harness, the five context-management tiers, the 176-setting design, the printed SWE-Bench Verified and Terminal-Bench 2.1 tables, the trajectory analysis, and the stated limitations.",
     publication: "arXiv",
     title: "An Empirical Study of Harness Design for Coding Agents",
     url: "https://arxiv.org/abs/2609.20804",
@@ -227,7 +227,7 @@ export const BLOG_SOURCES = {
   },
   xiaomiMimoV26Release: {
     note:
-      "The release note updated September 22, 2026 owns the Intelligence Index claim and its named comparators, the unchanged API pricing statement, the UltraSpeed speed claim, the training step, trajectory, and cost figures, the DeepSWE gains, and the open-source inventory.",
+      "The release note updated September 22, 2026 reports the Intelligence Index claim and its named comparators, the unchanged API pricing statement, the UltraSpeed speed claim, the training step, trajectory, and cost figures, the DeepSWE gains, and the open-source inventory.",
     publication: "Xiaomi MiMo",
     title: "MiMo-V2.6: Scaling Up Reinforcement Learning for Self-Improvement",
     url: "https://mimo.mi.com/docs/en-US/news/latest/v2-6",
@@ -235,7 +235,7 @@ export const BLOG_SOURCES = {
   },
   xiaomiMimoV26ModelCard: {
     note:
-      "The model card owns the MIT license, the 1.02T total and 42B active parameter counts, the 1M-token context length, the modality list, and the evaluation table comparing MiMo-V2.6 Pro and Flash with MiMo-V2.5 Pro, Claude Opus 5, GPT-5.6 Sol, and Claude Fable 5.",
+      "The model card reports the MIT license, the 1.02T total and 42B active parameter counts, the 1M-token context length, the modality list, and the evaluation table comparing MiMo-V2.6 Pro and Flash with MiMo-V2.5 Pro, Claude Opus 5, GPT-5.6 Sol, and Claude Fable 5.",
     publication: "Hugging Face",
     title: "XiaomiMiMo/MiMo-V2.6-Pro-RL",
     url: "https://huggingface.co/XiaomiMiMo/MiMo-V2.6-Pro-RL",
@@ -243,7 +243,7 @@ export const BLOG_SOURCES = {
   },
   xiaomiMimoV26TechnicalReport: {
     note:
-      "The technical report owns the RL scaling method, the per-step sample and token counts, the vulnerability-reproduction training task and its corrected CyberGym oracle, the multi-harness training result on held-out harnesses, and the evaluation setup behind the printed table.",
+      "The technical report reports the RL scaling method, the per-step sample and token counts, the vulnerability-reproduction training task and its corrected CyberGym oracle, the multi-harness training result on held-out harnesses, and the evaluation setup behind the printed table.",
     publication: "LLM-Core Xiaomi",
     title: "MiMo-V2.6: Scaling Reinforcement Learning Towards Self-Improvement",
     url: "https://huggingface.co/XiaomiMiMo/MiMo-V2.6-Pro-RL/blob/main/MiMo_V2_6_technical_report.pdf",
@@ -251,7 +251,7 @@ export const BLOG_SOURCES = {
   },
   artificialAnalysisMimoV26Pro: {
     note:
-      "The model page captured September 22, 2026 UTC owns the 46 index score, the open-weights label and class rank, the $0.435 and $0.87 per million token prices with a 99% cache discount, the 110.8 tokens per second output speed, the $0.13 cost per index task, and the index run cost.",
+      "The model page captured September 22, 2026 UTC reports the 46 index score, the open-weights label and class rank, the $0.435 and $0.87 per million token prices with a 99% cache discount, the 110.8 tokens per second output speed, the $0.13 cost per index task, and the index run cost.",
     publication: "Artificial Analysis",
     title: "MiMo-V2.6-Pro: Intelligence, Performance & Price Analysis",
     url: "https://artificialanalysis.ai/models/mimo-v2-6-pro",
@@ -259,7 +259,7 @@ export const BLOG_SOURCES = {
   },
   openRouterMimoV26ProUltraSpeed: {
     note:
-      "The listing captured September 22, 2026 UTC owns the UltraSpeed prices of $4.35 per million input tokens, $8.70 per million output tokens, and $0.036 per million cached input tokens on Xiaomi’s endpoint, and describes the edition as built from the same checkpoint as MiMo-V2.6-Pro.",
+      "The listing captured September 22, 2026 UTC reports the UltraSpeed prices of $4.35 per million input tokens, $8.70 per million output tokens, and $0.036 per million cached input tokens on Xiaomi’s endpoint, and describes the edition as built from the same checkpoint as MiMo-V2.6-Pro.",
     publication: "OpenRouter",
     title: "Xiaomi: MiMo-V2.6-Pro-UltraSpeed",
     url: "https://openrouter.ai/xiaomi/mimo-v2.6-pro-ultraspeed",
@@ -275,7 +275,7 @@ export const BLOG_SOURCES = {
   },
   artificialAnalysisGrok47: {
     note:
-      "The September 21, 2026 launch note owns the 47 to 56 Coding Agent Index step for Grok Build, the native-harness rank claim, the three component gains, the 81k output tokens per Intelligence Index task, the +2 point Intelligence Index gain, and the statement that Grok Build results are separate from the standardized Intelligence Index harness.",
+      "The September 21, 2026 launch note reports the 47 to 56 Coding Agent Index step for Grok Build, the native-harness rank claim, the three component gains, the 81k output tokens per Intelligence Index task, the +2 point Intelligence Index gain, and the statement that Grok Build results are separate from the standardized Intelligence Index harness.",
     publication: "Artificial Analysis",
     title: "Benchmarking Grok 4.7",
     url: "https://artificialanalysis.ai/articles/benchmarking-grok-4-7",
@@ -283,7 +283,7 @@ export const BLOG_SOURCES = {
   },
   artificialAnalysisGrok47Model: {
     note:
-      "The model page captured September 23, 2026 UTC owns the 46 index score, the proprietary label, the September 21, 2026 release date, the $2.00 and $6.00 per million token prices with a 75% cache discount, the $3.74 cost per index task, the 39.3 tokens per second output speed, the 240M output tokens across the index, and the 500k token context window.",
+      "The model page captured September 23, 2026 UTC reports the 46 index score, the proprietary label, the September 21, 2026 release date, the $2.00 and $6.00 per million token prices with a 75% cache discount, the $3.74 cost per index task, the 39.3 tokens per second output speed, the 240M output tokens across the index, and the 500k token context window.",
     publication: "Artificial Analysis",
     title: "Grok 4.7 (xhigh): Intelligence, Performance & Price Analysis",
     url: "https://artificialanalysis.ai/models/grok-4-7",
@@ -291,7 +291,7 @@ export const BLOG_SOURCES = {
   },
   xaiGrok47Announcement: {
     note:
-      "The September 21, 2026 launch page owns xAI’s description of the model, the $2 and $6 per million token prices, the same-price-as-Grok-4.6 statement, the Cursor and Grok Build availability, and a vendor-run benchmark table that this site does not chart.",
+      "The September 21, 2026 launch page reports xAI’s description of the model, the $2 and $6 per million token prices, the same-price-as-Grok-4.6 statement, the Cursor and Grok Build availability, and a vendor-run benchmark table that this site does not chart.",
     publication: "SpaceXAI",
     title: "Introducing Grok 4.7",
     url: "https://x.ai/news/grok-4-7",
@@ -422,7 +422,7 @@ const mirrorCodeArticle = {
     "METR",
   ],
   publishedAt: "2026-08-04",
-  updatedAt: "2026-09-10",
+  updatedAt: "2026-10-01",
   sourceIds: ["mirrorCode", "mirrorCodePaper"],
   relatedSlugs: [],
   body: [
@@ -452,12 +452,12 @@ const mirrorCodeArticle = {
     ),
     heading("Project-scale budgets are part of the result"),
     paragraph(
-      "Epoch AI gives agents substantially more time and inference than most software-engineering benchmarks. One of the largest runs reported on the source page cost about $2,600 and continued for 19 days without human intervention. That example belongs to the broader benchmark work, not the current seven-day leaderboard configuration.",
+      "Epoch AI gives agents substantially more time and inference than most software-engineering benchmarks. One of the largest runs reported on the source page cost about $2,600 and continued for 19 days without human intervention. That example belongs to the broader benchmark work, not the dated seven-day leaderboard configuration.",
     ),
     paragraph(
       "These budgets make difficult project-scale attempts possible, but they also bound what the result means. MirrorCode shows what an agent can complete when allowed to work for a long time with a large token allowance. It does not show that the same result is economical for routine use or reachable in a normal interactive session.",
     ),
-    heading("Current MirrorCode leaderboard results"),
+    heading("MirrorCode leaderboard on August 5, 2026"),
     paragraph(
       "The Epoch AI page captured on August 5, 2026 UTC reports the maintained configuration named ",
       { emphasis: "strong", text: "MirrorCode (ML, +Private, 2L)" },
@@ -477,7 +477,7 @@ const mirrorCodeArticle = {
       "Configuration matters",
       "These values belong to the dated ML, +Private, 2L leaderboard. They are not directly comparable with the ",
       { href: BLOG_SOURCES.mirrorCodePaper.url, text: "MirrorCode paper" },
-      ", which evaluated all 25 targets, used six implementation languages for Small and Medium tasks, and generally used a one-billion-token budget outside the Large tasks. The paper also did not impose the current seven-day limit.",
+      ", which evaluated all 25 targets, used six implementation languages for Small and Medium tasks, and generally used a one-billion-token budget outside the Large tasks. The paper also did not impose the dated leaderboard’s seven-day limit.",
     ),
     paragraph(
       "A model name and percentage are incomplete without the target subset, language mapping, private tasks, attempt count, token budget, and time limit. The maintained leaderboard can also change after this article's observation date.",
@@ -508,9 +508,6 @@ const mirrorCodeArticle = {
     ),
     paragraph(
       "The benchmark does not establish that an agent can maintain an evolving production system, collaborate with a team, resolve ambiguous product requirements, or leave code that remains maintainable. Its question is narrower: can the agent reproduce a complete program's externally tested behavior?",
-    ),
-    paragraph(
-      "Read MirrorCode as a measure of project-scale completion. It does not answer whether the same agent can maintain an evolving production codebase.",
     ),
   ],
 } as const satisfies BlogArticle;
@@ -587,9 +584,6 @@ export function articleToMarkdown(
   editorialImage?: BlogArticleMarkdownImage,
   provenance?: string,
 ): string {
-  const published = article.publishedAt === article.updatedAt
-    ? article.publishedAt
-    : `${article.publishedAt}, updated ${article.updatedAt}`;
   const blocks = article.body.map((block) => {
     if (block.type === "heading") {
       return `${"#".repeat(block.level)} ${block.text}`;
@@ -657,7 +651,7 @@ export function articleToMarkdown(
     "",
     article.dek,
     "",
-    `By ${BLOG_ARTICLE_AUTHOR.name}. Published ${published}.`,
+    `By ${BLOG_ARTICLE_AUTHOR.name}.`,
     "",
     ...(provenance === undefined ? [] : [provenance, ""]),
     article.sourceNote,
@@ -671,8 +665,6 @@ export function articleToMarkdown(
     ...blocks.flatMap(block => [block, ""]),
     ...nextStep,
     ...(sources.length === 0 ? [] : ["## Sources", "", ...sources, ""]),
-    "Reported results apply to the named source, workload, configuration, and observation date. They do not establish performance on every task or product.",
-    "",
     "## Related analysis",
     "",
     ...relatedLinks,

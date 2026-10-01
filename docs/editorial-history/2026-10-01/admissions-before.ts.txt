@@ -45,7 +45,7 @@ export type BlogArticleAdmission = Readonly<{
   /** How the note was drafted; the visible provenance note states it. */
   drafting: ArticleDraftingKind;
   /** The recorded reviewer. An AI reviewer is named as AI and never called human. */
-  reviewedBy: typeof REVIEWED_BY;
+  reviewedBy: typeof REVIEWED_BY | typeof CLAUDE_REVIEWED_BY | typeof WEEKDAY_MONITOR_REVIEWED_BY;
   reviewerType: "ai";
   /**
    * The answer a reader could not get from the obvious first result. Older
@@ -78,12 +78,13 @@ export type BlogArticleAdmission = Readonly<{
   sourceCheckedOn: `${number}-${number}-${number}`;
 }>;
 
-// Independent full-body copy review; historical source-check dates remain unchanged.
-// Scope, scores, and prior records: docs/editorial-history/2026-10-01/.
-const REVIEWED_ON = "2026-10-01" as const;
-const REASSESS_ON = "2026-11-05" as const;
+const REVIEWED_ON = "2026-09-02" as const;
+const REASSESS_ON = "2026-10-13" as const;
 const EVIDENCE_OWNER = "AI Charts editorial" as const;
-const REVIEWED_BY = "Codex independent AI editorial review" as const;
+const REVIEWED_BY = "Codex editorial review" as const;
+const CLAUDE_REVIEWED_BY = "Claude Opus 5.5 (claude-opus-5-5) editorial review" as const;
+/** The scheduled AI monitor that scored the admission and named the reader task before drafting. */
+const WEEKDAY_MONITOR_REVIEWED_BY = "weekday-monitor AI editorial review" as const;
 /** Notes written before the drafting field existed were drafted by AI agents from their cited sources. */
 const AI_DRAFTED = "ai" as const;
 const AI_REVIEWER = "ai" as const;
@@ -143,7 +144,7 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     ],
     readerJob:
       "Decide whether AI Charts can answer a model or coding-agent choice, and which of its charts, library, data page, or notes to open for it.",
-    reassessOn: REASSESS_ON,
+    reassessOn: "2026-11-05",
     refreshTriggers: [
       "Artificial Analysis Intelligence Index version change on the homepage chart or unfreezing of the v4.1.1 dataset",
       "Artificial Analysis Coding Agent Index version or component change on the coding chart",
@@ -154,8 +155,8 @@ export const BLOG_ARTICLE_ADMISSIONS = {
       "The local token-use collector gets a packaged release or its status changes in the portfolio facts",
       "An AI Charts rename or portfolio one-liner change in the design kit",
     ],
-    reviewedBy: REVIEWED_BY,
-    reviewedOn: REVIEWED_ON,
+    reviewedBy: CLAUDE_REVIEWED_BY,
+    reviewedOn: INTRODUCING_REVIEWED_ON,
     reviewerType: AI_REVIEWER,
     reviewSources: [
       {
@@ -185,12 +186,12 @@ export const BLOG_ARTICLE_ADMISSIONS = {
       },
     ],
     scores: {
-      factualConfidence: 1,
+      factualConfidence: 2,
       hostFit: 2,
       maintenanceValue: 1,
-      originalEvidence: 2,
+      originalEvidence: 1,
       readerUtility: 2,
-      voiceIntegrity: 1,
+      voiceIntegrity: 2,
     },
     sourceCheckedOn: INTRODUCING_REVIEWED_ON,
   },
@@ -229,7 +230,7 @@ export const BLOG_ARTICLE_ADMISSIONS = {
       },
     ],
     nonObviousAnswer:
-      "Claude Code · Opus 5.5 (max) holds the coding-agent chart’s top score and its highest cost per task at once, the first step down the cost frontier gives up 3.8 index points for 95% of the cost, the composite lead rests on Terminal-Bench 4 and SWE-Atlas-QnA while five configurations score higher on DeepSWE v1.1, and the row records 1.2x the cost and 1.4x the total tokens per task alongside lower listed per-token prices. Token totals do not establish the cause of the cost difference; input, output, and cache mix also affect the bill.",
+      "Claude Code · Opus 5.5 (max) holds the coding-agent chart’s top score and its highest cost per task at once, the first step down the cost frontier gives up 3.8 index points for 95% of the cost, the composite lead rests on Terminal-Bench 4 and SWE-Atlas-QnA while five configurations score higher on DeepSWE v1.1, and the row costs 1.2x as much per task as Claude Code · Opus 5 despite Anthropic’s lower per-token prices because it used 1.4x the tokens.",
     observations: [
       "In the coding-agent snapshot retrieved 2026-09-25, Claude Code · Opus 5.5 (max) is first of 20 configurations on AA Index at 66.0 and the highest cost per task at $13.04; the frontier below it runs through Claude Code · Fable 5.1 (with fallback) (max), Devin Fusion CLI · Claude Fable 5.1 XHigh + SWE-2 Medium, Codex · GPT-6 Astra (max), Devin Fusion CLI · GPT-6 Astra XHigh + SWE-2 Medium, and Codex · GPT-6 Sol (max) before reaching the rows under one dollar.",
       "The row leads Terminal-Bench 4 by 5.6 points over the next configuration and SWE-Atlas-QnA by 0.3 points, and is sixth of 20 on DeepSWE v1.1, where Muse Code · Muse Spark 1.3 (xhigh) leads.",
@@ -249,23 +250,23 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     ],
     readerJob:
       "Understand what Claude Code · Opus 5.5’s leading coding-agent AA Index and $13.04 cost per task measure on the dated snapshot, what each step down the chart’s cost frontier gives up against that row, where the index points come from, how the row moved from Claude Code · Opus 5, and why its cost is not the Intelligence Index cost.",
-    reassessOn: REASSESS_ON,
+    reassessOn: "2026-11-02",
     refreshTriggers: [
       "A data refresh adds, removes, or rescores a Claude Code · Opus 5.5 row, a Claude Code · Opus 5 row, or any row that changes the AA Index rank, cost rank, frontier, or component leaders",
       "The coding-agent snapshot gains a Claude Opus 5.5 row in a harness other than Claude Code or at a setting other than max",
       "Artificial Analysis changes the Coding Agent Index components or the Claude Opus 5.5 model page prices",
       "Anthropic changes Claude Opus 5.5 prices or effort levels",
     ],
-    reviewedBy: REVIEWED_BY,
+    reviewedBy: WEEKDAY_MONITOR_REVIEWED_BY,
     reviewerType: AI_REVIEWER,
-    reviewedOn: REVIEWED_ON,
+    reviewedOn: "2026-09-28",
     scores: {
-      factualConfidence: 1,
+      factualConfidence: 2,
       hostFit: 2,
       maintenanceValue: 2,
       originalEvidence: 2,
       readerUtility: 2,
-      voiceIntegrity: 1,
+      voiceIntegrity: 2,
     },
     sourceCheckedOn: "2026-09-28",
   },
@@ -329,23 +330,23 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     ],
     readerJob:
       "Understand what Claude Opus 5.5’s leading Intelligence Index configuration measures, its score, cost per task, effort ladder, and nearest configurations, and how that Index placement differs from the separate Claude Code · Opus 5 coding-agent row.",
-    reassessOn: REASSESS_ON,
+    reassessOn: "2026-10-30",
     refreshTriggers: [
       "A data refresh adds, removes, or rescores a Claude Opus 5.5 row, a Claude Opus 5 row, or any row that changes the Intelligence Index rank, frontier walk, or nearest-score table",
       "The coding-agent snapshot gains or loses a Claude Opus 5.5 row in any harness",
       "Artificial Analysis changes the Intelligence Index version, its evaluations, or the Claude Opus 5.5 model page prices or summary",
       "Anthropic changes Claude Opus 5.5 prices, effort levels, or the default effort level",
     ],
-    reviewedBy: REVIEWED_BY,
+    reviewedBy: WEEKDAY_MONITOR_REVIEWED_BY,
     reviewerType: AI_REVIEWER,
-    reviewedOn: REVIEWED_ON,
+    reviewedOn: "2026-09-25",
     scores: {
-      factualConfidence: 1,
+      factualConfidence: 2,
       hostFit: 2,
       maintenanceValue: 2,
       originalEvidence: 2,
       readerUtility: 2,
-      voiceIntegrity: 1,
+      voiceIntegrity: 2,
     },
     sourceCheckedOn: "2026-09-25",
   },
@@ -397,18 +398,18 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     ],
     readerJob:
       "Understand what Codex · GPT-6 Sol’s AA Index on the coding-agent chart measures, where the row lands against cheaper and higher-scoring configurations, how it moved from GPT-5.6 Sol in the same harness, how the Intelligence Index GPT-6 Sol (max) row and its lower effort levels differ from it, and why the two costs per task are not one unit.",
-    reassessOn: REASSESS_ON,
+    reassessOn: "2026-10-29",
     drafting: AI_DRAFTED,
     reviewedBy: REVIEWED_BY,
     reviewerType: AI_REVIEWER,
-    reviewedOn: REVIEWED_ON,
+    reviewedOn: "2026-09-24",
     scores: {
-      factualConfidence: 1,
+      factualConfidence: 2,
       hostFit: 2,
       maintenanceValue: 2,
       originalEvidence: 2,
       readerUtility: 2,
-      voiceIntegrity: 1,
+      voiceIntegrity: 2,
     },
     sourceCheckedOn: "2026-09-24",
   },
@@ -460,18 +461,18 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     ],
     readerJob:
       "Understand where Grok 4.7 lands on the AI Charts coding-agent chart and Intelligence Index chart, what its AA Index, component scores, Intelligence Index, and two costs per task measure, how it compares with Grok 4.6 in the same harness, and where independent evidence stops and vendor claims begin.",
-    reassessOn: REASSESS_ON,
+    reassessOn: "2026-10-28",
     drafting: AI_DRAFTED,
     reviewedBy: REVIEWED_BY,
     reviewerType: AI_REVIEWER,
-    reviewedOn: REVIEWED_ON,
+    reviewedOn: "2026-09-23",
     scores: {
-      factualConfidence: 1,
+      factualConfidence: 2,
       hostFit: 2,
       maintenanceValue: 2,
       originalEvidence: 2,
       readerUtility: 2,
-      voiceIntegrity: 1,
+      voiceIntegrity: 2,
     },
     sourceCheckedOn: "2026-09-23",
   },
@@ -520,18 +521,18 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     ],
     readerJob:
       "Understand what MiMo-V2.6-Pro’s 46 on the Intelligence Index and $0.13 per task measure, where the model sits on the measured cost frontier, how far Das’s price and cybersecurity claims are supported by primary sources, and what remains a vendor or single-user observation.",
-    reassessOn: REASSESS_ON,
+    reassessOn: "2026-10-27",
     drafting: AI_DRAFTED,
     reviewedBy: REVIEWED_BY,
     reviewerType: AI_REVIEWER,
-    reviewedOn: REVIEWED_ON,
+    reviewedOn: "2026-09-22",
     scores: {
-      factualConfidence: 1,
+      factualConfidence: 2,
       hostFit: 2,
-      maintenanceValue: 2,
+      maintenanceValue: 1,
       originalEvidence: 2,
       readerUtility: 2,
-      voiceIntegrity: 1,
+      voiceIntegrity: 2,
     },
     sourceCheckedOn: "2026-09-22",
   },
@@ -572,18 +573,18 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     primarySourceIds: ["fanHarnessDesign", "artificialAnalysisCodingAgents"],
     readerJob:
       "Understand which harness components (planning, action space, and context management) move coding-agent success and cost under a fixed loop, under what model and budget conditions, and how to read those results beside the AI Charts chart without merging benchmark versions.",
-    reassessOn: REASSESS_ON,
+    reassessOn: "2026-10-26",
     drafting: AI_DRAFTED,
     reviewedBy: REVIEWED_BY,
     reviewerType: AI_REVIEWER,
-    reviewedOn: REVIEWED_ON,
+    reviewedOn: "2026-09-21",
     scores: {
-      factualConfidence: 1,
+      factualConfidence: 2,
       hostFit: 2,
-      maintenanceValue: 2,
+      maintenanceValue: 1,
       originalEvidence: 2,
       readerUtility: 2,
-      voiceIntegrity: 1,
+      voiceIntegrity: 2,
     },
     sourceCheckedOn: "2026-09-21",
   },
@@ -624,18 +625,18 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     primarySourceIds: ["harnessTax", "artificialAnalysisCodingAgents"],
     readerJob:
       "Understand what HarnessTax’s same-model cost gap measures when a coding model changes harness, and read that study beside the AI Charts chart without merging the two scales.",
-    reassessOn: REASSESS_ON,
+    reassessOn: "2026-10-22",
     drafting: AI_DRAFTED,
     reviewedBy: REVIEWED_BY,
     reviewerType: AI_REVIEWER,
-    reviewedOn: REVIEWED_ON,
+    reviewedOn: "2026-09-17",
     scores: {
-      factualConfidence: 1,
+      factualConfidence: 2,
       hostFit: 2,
-      maintenanceValue: 2,
+      maintenanceValue: 1,
       originalEvidence: 2,
       readerUtility: 2,
-      voiceIntegrity: 1,
+      voiceIntegrity: 2,
     },
     sourceCheckedOn: "2026-09-17",
   },
@@ -686,18 +687,18 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     ],
     readerJob:
       "Understand what Real-SWE's 38.8% top resolve rate measures for model and harness pairs on private enterprise code, and read that ranking beside the AI Charts coding-agent snapshot without merging the two scales.",
-    reassessOn: REASSESS_ON,
+    reassessOn: "2026-10-19",
     drafting: AI_DRAFTED,
     reviewedBy: REVIEWED_BY,
     reviewerType: AI_REVIEWER,
-    reviewedOn: REVIEWED_ON,
+    reviewedOn: "2026-09-14",
     scores: {
-      factualConfidence: 1,
+      factualConfidence: 2,
       hostFit: 2,
-      maintenanceValue: 2,
+      maintenanceValue: 1,
       originalEvidence: 2,
       readerUtility: 2,
-      voiceIntegrity: 1,
+      voiceIntegrity: 2,
     },
     sourceCheckedOn: "2026-09-14",
   },
@@ -738,18 +739,18 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     ],
     readerJob:
       "Understand which comparison produces Devin Fusion's 39% saving, what score that comparison gave up, and how to read the other Fusion percentages Cognition has published.",
-    reassessOn: REASSESS_ON,
+    reassessOn: "2026-10-16",
     drafting: AI_DRAFTED,
     reviewedBy: REVIEWED_BY,
     reviewerType: AI_REVIEWER,
-    reviewedOn: REVIEWED_ON,
+    reviewedOn: "2026-09-11",
     scores: {
-      factualConfidence: 1,
+      factualConfidence: 2,
       hostFit: 2,
-      maintenanceValue: 2,
-      originalEvidence: 2,
+      maintenanceValue: 1,
+      originalEvidence: 1,
       readerUtility: 2,
-      voiceIntegrity: 1,
+      voiceIntegrity: 2,
     },
     sourceCheckedOn: "2026-09-11",
   },
@@ -794,12 +795,12 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     reviewerType: AI_REVIEWER,
     reviewedOn: REVIEWED_ON,
     scores: {
-      factualConfidence: 1,
+      factualConfidence: 2,
       hostFit: 2,
-      maintenanceValue: 2,
+      maintenanceValue: 1,
       originalEvidence: 1,
       readerUtility: 2,
-      voiceIntegrity: 1,
+      voiceIntegrity: 2,
     },
     sourceCheckedOn: "2026-08-31",
   },
@@ -845,9 +846,9 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     reviewerType: AI_REVIEWER,
     reviewedOn: REVIEWED_ON,
     scores: {
-      factualConfidence: 1,
-      hostFit: 2,
-      maintenanceValue: 2,
+      factualConfidence: 2,
+      hostFit: 1,
+      maintenanceValue: 1,
       originalEvidence: 1,
       readerUtility: 2,
       voiceIntegrity: 2,
@@ -898,10 +899,10 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     scores: {
       factualConfidence: 2,
       hostFit: 2,
-      maintenanceValue: 2,
-      originalEvidence: 1,
+      maintenanceValue: 1,
+      originalEvidence: 2,
       readerUtility: 2,
-      voiceIntegrity: 1,
+      voiceIntegrity: 2,
     },
     sourceCheckedOn: "2026-08-26",
   },
@@ -946,12 +947,12 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     reviewerType: AI_REVIEWER,
     reviewedOn: REVIEWED_ON,
     scores: {
-      factualConfidence: 1,
+      factualConfidence: 2,
       hostFit: 2,
-      maintenanceValue: 2,
+      maintenanceValue: 1,
       originalEvidence: 2,
       readerUtility: 2,
-      voiceIntegrity: 1,
+      voiceIntegrity: 2,
     },
     sourceCheckedOn: "2026-08-26",
   },
@@ -993,12 +994,12 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     reviewerType: AI_REVIEWER,
     reviewedOn: REVIEWED_ON,
     scores: {
-      factualConfidence: 1,
+      factualConfidence: 2,
       hostFit: 2,
       maintenanceValue: 2,
       originalEvidence: 2,
       readerUtility: 2,
-      voiceIntegrity: 1,
+      voiceIntegrity: 2,
     },
     sourceCheckedOn: "2026-08-22",
   },
@@ -1041,9 +1042,9 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     reviewerType: AI_REVIEWER,
     reviewedOn: REVIEWED_ON,
     scores: {
-      factualConfidence: 1,
+      factualConfidence: 2,
       hostFit: 2,
-      maintenanceValue: 2,
+      maintenanceValue: 1,
       originalEvidence: 1,
       readerUtility: 2,
       voiceIntegrity: 2,

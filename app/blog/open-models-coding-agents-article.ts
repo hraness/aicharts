@@ -150,6 +150,7 @@ export function createOpenModelsCodingAgentsArticle(
   }
 
   const updatedAt = latestCalendarDate(
+    "2026-10-01",
     OPEN_MODELS_ARTICLE_PUBLISHED_AT,
     "2026-09-10",
     utcCalendarDate(snapshot.source.retrievedAt),
@@ -207,12 +208,12 @@ export function createOpenModelsCodingAgentsArticle(
       ),
       heading("What the coding-agent snapshot records"),
       paragraph(
-        `aicharts retrieved the checked snapshot on ${retrievedAt}. The dataset contains ${summary.recordCount} model-agent configurations across ${summary.modelCount} models, ${summary.agentCount} agent harnesses, and ${summary.providerCount} providers. AA Index is the snapshot's overall 0–100 score across code changes, terminal work, and repository understanding. DeepSWE v1.1, Terminal-Bench 4, and SWE-Atlas-QnA stay separate. The `,
+        `aicharts retrieved the checked snapshot on ${retrievedAt}. The dataset contains ${summary.recordCount} model-agent configurations across ${summary.modelCount} models, ${summary.agentCount} agent harnesses, and ${summary.providerCount} providers. AA Index is the snapshot's overall 0–100 score across code changes, terminal work, and repository understanding. DeepSWE v1.1, Terminal-Bench 4, and SWE-Atlas-QnA also have separate columns. The `,
         { href: "/data", text: "dataset page" },
         " lists every configuration and the highest stored score for each metric.",
       ),
       paragraph(
-        "This is a closer relative of SemiAnalysis's agentic era than of their earlier exams, but it is not the same composite. The snapshot omits BrowseComp-Plus and τ³-banking, adds SWE-Atlas-QnA, and reports DeepSWE as its own column instead of folding it into an unpublished average. Every row also carries a harness and setting. A model name without those fields is an incomplete citation here.",
+        "This is a closer relative of SemiAnalysis's agentic era than of their earlier exams, but it is not the same composite. The snapshot omits BrowseComp-Plus and τ³-banking, adds SWE-Atlas-QnA, and reports the three component scores alongside their AA Index composite. Every row also carries a harness and setting. A model name without those fields is an incomplete citation here.",
       ),
       heading("Closed configurations still lead on AA Index"),
       paragraph(
@@ -282,7 +283,7 @@ export function createOpenModelsCodingAgentsArticle(
             ),
           ]),
       paragraph(
-        "SemiAnalysis also writes that Kimi K3 may outscore Fable 5 on their composite while they still prefer Fable for daily work. This snapshot does not contain a SemiAnalysis composite for either name, so no Kimi K3-versus-Fable 5 number is quoted from that suite. On AA Index, the stored Fable 5 and Kimi K3 rows can be read on the ",
+        "SemiAnalysis also writes that Kimi K3 may outscore Fable 5 on their composite while they still prefer Fable for daily work. This snapshot does not contain a SemiAnalysis composite for either name, so no Kimi K3-versus-Fable 5 number is quoted from that suite. The available AA Index configurations can be read on the ",
         { href: "/data", text: "full configuration table" },
         ".",
       ),
@@ -290,7 +291,7 @@ export function createOpenModelsCodingAgentsArticle(
       paragraph(
         "AA Index leaders in this snapshot are expensive relative to the cheapest rows. The ",
         { href: "/blog/aa-index-cost-coding-agents", text: "AA Index versus cost note" },
-        " keeps a configuration on the frontier only when no other configuration is both cheaper and at least as strong. That derived view is aicharts analysis of the stored pairs.",
+        " keeps a configuration on the frontier when no other row scores at least as high at no greater cost, with a strict improvement on at least one measure. That derived view is aicharts analysis of the stored pairs.",
       ),
       paragraph(
         firstOpenFrontier === undefined

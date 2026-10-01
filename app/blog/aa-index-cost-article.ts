@@ -72,7 +72,6 @@ export function createAaIndexCostArticle(
   const frontier = aaIndexCostFrontier(snapshot.records);
   const efficiency = take(aaIndexCostEfficiencyRows(snapshot.records), AA_INDEX_EFFICIENCY_LIMIT);
   const top = leaders[0];
-  const firstFrontierJump = frontier.find(point => point.yValue >= 50);
   if (top === undefined || top.aaIndex === null) {
     throw new Error("Checked snapshot has no AA Index values for the cost analysis article.");
   }
@@ -81,6 +80,7 @@ export function createAaIndexCostArticle(
     record.benchmarks.aaIndex !== null && record.economics.costUsd !== null
   )).length;
   const updatedAt = latestCalendarDate(
+    "2026-10-01",
     AA_INDEX_COST_ARTICLE_PUBLISHED_AT,
     "2026-09-10",
     utcCalendarDate(snapshot.source.retrievedAt),
@@ -92,7 +92,7 @@ export function createAaIndexCostArticle(
     slug: AA_INDEX_COST_ARTICLE_SLUG,
     title: "Highest AA Index and lowest cost pick different coding agents",
     dek:
-      "The checked snapshot keeps a configuration on the frontier only when nothing cheaper scores at least as well on AA Index.",
+      "The cost frontier shows which configurations offer a higher AA Index only at a higher mean task cost.",
     focusPhrase: "coding agent AA Index vs cost",
     seoDescription:
       "In the checked Artificial Analysis snapshot, the highest AA Index and the lowest mean task cost belong to different coding-agent configurations.",
@@ -151,7 +151,7 @@ export function createAaIndexCostArticle(
       ),
       heading("Cost and AA Index on the frontier"),
       paragraph(
-        "A higher AA Index usually comes with a higher mean task cost in this snapshot, but not every expensive configuration is on the useful edge. The cost/performance frontier keeps a configuration only when no other configuration is both cheaper and at least as strong on AA Index.",
+        "A configuration is on the cost frontier when no other configuration costs no more and scores at least as high, with a strict improvement in either cost or score. Configurations with identical cost and score share a frontier position.",
       ),
       table(
         `AA Index versus cost frontier in the ${snapshot.source.name} snapshot retrieved ${retrievedAt}`,
@@ -165,10 +165,7 @@ export function createAaIndexCostArticle(
         ]),
       ),
       paragraph(
-        `The frontier in this snapshot has ${frontier.length} configurations. The cheapest points are low-cost, lower-score runs.`,
-        firstFrontierJump === undefined
-          ? " After that, later points buy higher AA Index at higher mean task cost."
-          : ` ${firstFrontierJump.record.model} on ${firstFrontierJump.record.agent} at the ${firstFrontierJump.record.setting} setting is the first large AA Index increase that remains inexpensive. After that, each step buys a smaller AA Index gain at a higher mean task cost, ending at ${top.model} on ${top.agent}.`,
+        `The frontier in this snapshot has ${frontier.length} configurations. Moving between distinct frontier points trades a higher mean task cost for a higher AA Index; the size of the score increase varies.`,
       ),
       paragraph(
         "That sequence is aicharts analysis of the stored pairs. Artificial Analysis does not publish a frontier ranking. The frontier can change when the next validated snapshot adds, removes, or reprices a configuration.",
@@ -190,7 +187,7 @@ export function createAaIndexCostArticle(
         ]),
       ),
       paragraph(
-        "Use the ratio only to find inexpensive configurations that still have a recorded AA Index. Use the frontier when the question is which configurations are not strictly worse on both cost and score.",
+        "Use the ratio only to find inexpensive configurations that still have a recorded AA Index. A configuration is on the frontier when no other row scores at least as high at no greater cost, with a strict improvement on at least one measure.",
       ),
       callout(
         "Derived, not sourced",

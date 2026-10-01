@@ -147,7 +147,7 @@ export const HARNESS_TAX = {
     successEffectTb: "±5%",
     fableSwePiTurns: "15.4",
     fableSweClaudeCodeTurns: "15.3",
-    fableSweSuccessLift: "1.1%",
+    fableSweSuccessLift: "1.1",
     initialContextMultiple: "over 10×",
     sonnetSweCodexSuccess: "68.9%",
     sonnetSweClaudeCodeSuccess: "66.7%",
@@ -318,6 +318,7 @@ export function createHarnessTaxArticle(
 ): BlogArticle {
   const retrievedAt = formatRetrievedAt(snapshot.source.retrievedAt);
   const updatedAt = latestCalendarDate(
+    "2026-10-01",
     HARNESS_TAX_ARTICLE_PUBLISHED_AT,
     utcCalendarDate(snapshot.source.retrievedAt),
     utcCalendarDate(codingAgentDatasetModifiedAt(snapshot)),
@@ -332,7 +333,7 @@ export function createHarnessTaxArticle(
   return {
     sourceNote: BLOG_SOURCE_NOTE,
     slug: HARNESS_TAX_ARTICLE_SLUG,
-    title: "What HarnessTax’s same-model cost gap measures",
+    title: "HarnessTax finds cost gaps at similar success rates",
     dek:
       "UC Berkeley and Arena researchers ran 21 model and harness pairs on two public suites. Success stayed close across harnesses; cost did not.",
     focusPhrase: "HarnessTax coding agent harness",
@@ -376,11 +377,6 @@ export function createHarnessTaxArticle(
       paragraph(
         "A harness is the software that gives a model tools, manages context, and runs the task. The authors compare 21 model and harness pairs: seven models in Claude Code, Codex CLI, and Pi, on 30 randomly sampled tasks from SWE-bench Lite and 30 from Terminal-Bench 2.0. Codex CLI appears as Codex in the result tables. Each pair gets three attempts per task.",
       ),
-      paragraph(
-        "This note reconstructs the published pair tables, checks the claim that an alternative harness posts the highest success rate in ",
-        HARNESS_TAX.reported.alternativeWins,
-        " Anthropic and OpenAI comparisons, and states what those results do not cover.",
-      ),
       heading("What the 21 pairs cover"),
       paragraph(
         "The authors start from each harness’s native configuration, select its high-effort setting, and cap each attempt at ",
@@ -392,7 +388,7 @@ export function createHarnessTaxArticle(
       heading("Cost moves more than success"),
       paragraph(
         HARNESS_TAX.quotes.upToFiveTimes,
-        " Claude Fable 5 is the clearest same-quality example on SWE-bench Lite: it solves ",
+        " Claude Fable 5 has similar observed success across the three harnesses on SWE-bench Lite: it solves ",
         HARNESS_TAX.reported.fableSweClaudeCodeSuccess,
         " of attempts in Claude Code, ",
         HARNESS_TAX.reported.fableSweCodexSuccess,
@@ -452,9 +448,9 @@ export function createHarnessTaxArticle(
         HARNESS_TAX.reported.fableSwePiTurns,
         " turns per attempt in Pi and ",
         HARNESS_TAX.reported.fableSweClaudeCodeTurns,
-        " in Claude Code, yet Claude Code costs about twice as much for a ",
+        " in Claude Code, yet Claude Code costs about twice as much while success rises by ",
         HARNESS_TAX.reported.fableSweSuccessLift,
-        " increase in success. The authors treat that as higher spending per recorded turn, and they note that turn definitions differ by harness.",
+        " percentage points. The authors treat that as higher spending per recorded turn, and they note that turn definitions differ by harness.",
       ),
       paragraph(
         "A harness tax can start on the first model call. Across all seven models on SWE-bench Lite, Claude Code’s mean initial context is ",

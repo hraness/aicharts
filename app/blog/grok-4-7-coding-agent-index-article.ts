@@ -263,7 +263,7 @@ function codingPlacementBlocks(
   ];
   if (onCostFrontier) {
     blocks.push(paragraph(
-      "It is on the chart’s cost frontier: no configuration in the snapshot costs less per task and scores at least as high on AA Index.",
+      "It is on the chart’s cost frontier: no other configuration scores at least as high at no greater cost, with a strict improvement on at least one measure.",
     ));
   } else if (dominators.length >= 2) {
     blocks.push(
@@ -476,9 +476,7 @@ function generationBlocks(
       " and ",
       GROK_47.artificialAnalysis.outputPrice,
       " per million token prices for both generations. ",
-      costMultiple !== null && costMultiple > 1
-        ? "The higher cost per task in the snapshot is therefore token volume, not price: the harness run with Grok 4.7 processed more tokens per task than the run with Grok 4.6."
-        : "Any cost difference between the two rows in the snapshot is therefore token volume, not price.",
+      "Task cost depends on token use and the mix of input, output, and cached tokens.",
     ),
   ];
 }
@@ -587,6 +585,7 @@ export function createGrok47Article(
   const codingRetrievedAt = formatRetrievedAt(codingSnapshot.source.retrievedAt);
   const intelligenceRetrievedAt = formatRetrievedAt(intelligenceSnapshot.source.retrievedAt);
   const updatedAt = latestCalendarDate(
+    "2026-10-01",
     GROK_47_ARTICLE_PUBLISHED_AT,
     utcCalendarDate(codingSnapshot.source.retrievedAt),
     utcCalendarDate(intelligenceSnapshot.source.retrievedAt),
@@ -602,7 +601,7 @@ export function createGrok47Article(
     : roundedScore(intelligence.record.intelligenceIndex);
   const title = codingScore === undefined
     ? "Where Grok 4.7 lands on the aicharts snapshots"
-    : `What Grok 4.7’s ${codingScore} on the coding-agent chart measures`;
+    : `Grok 4.7 reaches ${codingScore} on AA Index inside Grok Build`;
   const frontierPhrase = coding === undefined || intelligence === undefined
     ? ""
     : coding.onCostFrontier && intelligence.onCostFrontier
@@ -614,7 +613,7 @@ export function createGrok47Article(
           : "cheaper configurations score higher on both charts";
   const dek = codingScore === undefined || intelligenceScore === undefined
     ? "Grok 4.7 appears on the aicharts coding-agent chart and the Intelligence Index chart as two different measurements. This note states what each score measures and where the evidence stops."
-    : `On the ${formatLongUtcDate(codingSnapshot.source.retrievedAt)} snapshots, Grok Build · Grok 4.7 (xhigh) scores ${codingScore} on the coding-agent AA Index and Grok 4.7 (xhigh) scores ${intelligenceScore} on the Intelligence Index. Different harnesses, task sets, and costs sit behind the two numbers, and ${frontierPhrase}.`;
+    : `In the snapshots shown below, Grok Build · Grok 4.7 (xhigh) scores ${codingScore} on the coding-agent AA Index and Grok 4.7 (xhigh) scores ${intelligenceScore} on the Intelligence Index. Different harnesses, task sets, and costs sit behind the two numbers, and ${frontierPhrase}.`;
   const seoDescription = codingScore === undefined || intelligenceScore === undefined
     ? "Grok 4.7 appears on the aicharts coding-agent chart and the Intelligence Index chart. See what each score measures and where the evidence stops."
     : `Grok 4.7 scores ${codingScore} on the aicharts coding-agent AA Index with Grok Build and ${intelligenceScore} on the Intelligence Index. See what each measures and where each sits on cost.`;
@@ -678,9 +677,6 @@ export function createGrok47Article(
         GROK_47.xai.availability,
         ", its own coding agent. Artificial Analysis published its independent measurements the same day, and aicharts now stores Grok 4.7 in two checked snapshots: the coding-agent chart and the Intelligence Index chart.",
       ),
-      paragraph(
-        "This note answers three questions from those snapshots: where each Grok 4.7 row lands, what each score and cost measures, and where the evidence stops. Every score, cost, rank, and frontier statement below is derived from the snapshot named in its caption or from Artificial Analysis’s published pages. xAI’s own benchmark table is described in its own section and is not charted.",
-      ),
       heading("Two charts, two measurements"),
       paragraph(
         "The ",
@@ -743,7 +739,7 @@ export function createGrok47Article(
       heading("Limits"),
       list(
         [
-          `Every score and cost in this note is an Artificial Analysis measurement of the named configuration on the retrieval date, under ${SNAPSHOT_COLUMN_LABELS.deepSwe}, ${SNAPSHOT_COLUMN_LABELS.terminalBench}, and ${SNAPSHOT_COLUMN_LABELS.sweAtlas} for the coding-agent chart and Intelligence Index version ${indexVersion} for the capability chart. Neither establishes results on other tasks, repositories, or harnesses.`,
+          `The chart scores and task costs are Artificial Analysis measurements of the named configuration on the retrieval date, under ${SNAPSHOT_COLUMN_LABELS.deepSwe}, ${SNAPSHOT_COLUMN_LABELS.terminalBench}, and ${SNAPSHOT_COLUMN_LABELS.sweAtlas} for the coding-agent chart and Intelligence Index version ${indexVersion} for the capability chart. Neither establishes results on other tasks, repositories, or harnesses.`,
         ],
         [
           "Ranks, frontier positions, dominators, neighbors, and generation multiples are aicharts derivations from the snapshots named in each caption. They change when Artificial Analysis adds, removes, or rescores a configuration, and the checked snapshots advance daily.",
