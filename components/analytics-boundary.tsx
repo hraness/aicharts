@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import {
   analyticsSurface,
   captureAnalyticsEvent,
+  captureAnalyticsException,
   classifyAnalyticsLink,
   newsletterSignupRequestEvent,
 } from "@/lib/analytics";
@@ -50,9 +51,15 @@ function handleDocumentSubmit(event: SubmitEvent): void {
 /** One delegated listener keeps server-rendered links static while covering every public anchor. */
 export function AnalyticsBoundary() {
   useEffect(() => {
+    const onError = (event: ErrorEvent) => captureAnalyticsException(event.error, "window_error");
+    const onRejection = (event: PromiseRejectionEvent) => captureAnalyticsException(event.reason, "unhandled_rejection");
+    window.addEventListener("error", onError);
+    window.addEventListener("unhandledrejection", onRejection);
     document.addEventListener("click", handleDocumentClick, true);
     document.addEventListener("submit", handleDocumentSubmit, true);
     return () => {
+      window.removeEventListener("error", onError);
+      window.removeEventListener("unhandledrejection", onRejection);
       document.removeEventListener("click", handleDocumentClick, true);
       document.removeEventListener("submit", handleDocumentSubmit, true);
     };

@@ -3,6 +3,14 @@
 import posthog from "posthog-js";
 import { getBrowserConsent } from "@hraness/posthog/consent";
 
+import {
+  analyticsErrorFingerprint,
+  createBrowserExceptionBudget,
+  normalizedRequestedPath,
+  referrerHost,
+  sanitizeAnalyticsError,
+} from "./analytics-privacy";
+
 import { isBenchmarkAtlasId, isChartedBenchmarkAtlasId, type ChartedBenchmarkAtlasId } from "./benchmark-atlas-ids";
 
 import type { XMetric, YMetric } from "./chart-math";
@@ -36,10 +44,22 @@ export const ANALYTICS_SURFACES = [
   "model_release_radar",
   "model_card",
   "error_recovery",
+  "not_found",
 ] as const;
 
 export type AnalyticsSurface = typeof ANALYTICS_SURFACES[number];
-export type AnalyticsLinkKind = "anchor" | "download" | "internal" | "outbound";
+/** `link_kind` on `site link clicked`: a same-site navigation, section jump, or file. */
+export type AnalyticsLinkKind = "anchor" | "download" | "internal";
+/** `link_kind` on `outbound link opened`, from the portfolio vocabulary. */
+export type OutboundLinkKind = "github" | "portfolio" | "social" | "other";
+/** Portfolio `placement` vocabulary shared by every Hraness site. */
+export type AnalyticsPlacement = "footer" | "inline" | "nav" | "not_found";
+/** Where an uncaught browser error was observed. */
+export type ClientErrorOrigin =
+  | "global_error_boundary"
+  | "route_error_boundary"
+  | "unhandled_rejection"
+  | "window_error";
 export type AnalyticsDestinationKind =
   | "article"
   | "ask_ai"
@@ -169,9 +189,21 @@ export interface AnalyticsEventMap {
     share_outcome: "cancelled" | "completed" | "downloaded" | "initiated";
   }>;
   readonly "model cards filtered": ModelCardsFilteredProperties;
-  readonly "newsletter signup request submitted": Readonly<{
+  readonly "email signup submitted": Readonly<{
     audience: "aicharts";
-    surface: "global_footer";
+    placement: "footer";
+  }>;
+  readonly "outbound link opened": Readonly<{
+    destination_id: AnalyticsDestinationId;
+    destination_kind: AnalyticsDestinationKind;
+    link_kind: OutboundLinkKind;
+    placement: AnalyticsPlacement;
+    surface: AnalyticsSurface;
+    target_host: string;
+  }>;
+  readonly "page not found": Readonly<{
+    referrer_host: string;
+    requested_path: string;
   }>;
   readonly "site link clicked": Readonly<{
     destination_id: AnalyticsDestinationId;
@@ -180,6 +212,37 @@ export interface AnalyticsEventMap {
     surface: AnalyticsSurface;
   }>;
 }
+
+/**
+ * Every custom event name the browser may send. `before_send` drops any
+ * other non-built-in event. Old names are listed in
+ * docs/analytics-instrumentation.md ("Event renames").
+ */
+export const CUSTOM_ANALYTICS_EVENTS = [
+  "benchmark explored",
+  "calculator adjusted",
+  "chart metric selected",
+  "chart selection pinned",
+  "chart shared",
+  "content chart opened",
+  "email signup submitted",
+  "model card shared",
+  "model cards filtered",
+  "outbound link opened",
+  "page not found",
+  "site link clicked",
+] as const satisfies readonly (keyof AnalyticsEventMap)[];
+
+/** Built-in PostHog events the site keeps. */
+export const BUILT_IN_ANALYTICS_EVENTS = [
+  "$pageview",
+  "$pageleave",
+  "$web_vitals",
+  "$exception",
+] as const;
+
+/** Typed product event payload version; 4 is the portfolio vocabulary (analytics_schema_version 2). */
+export const EVENT_SCHEMA_VERSION = 4;
 
 export type AnalyticsEventName = keyof AnalyticsEventMap;
 export type AnalyticsEventFor<Name extends AnalyticsEventName> = Readonly<{
@@ -231,7 +294,27 @@ const modelCardShareOutcomes = new Set<string>([
   "downloaded",
   "initiated",
 ]);
-const linkKinds = new Set<string>(["anchor", "download", "internal", "outbound"]);
+const linkKinds = new Set<string>(["anchor", "download", "internal"]);
+const outboundLinkKinds = new Set<string>(["github", "portfolio", "social", "other"]);
+const placements = new Set<string>(["footer", "inline", "nav", "not_found"]);
+const targetHostPattern = /^(?=.{1,253}$)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/u;
+const requestedPathPattern = /^\/[^\s?#]{0,255}$/u;
+const referrerHostPattern = /^(?:\$direct|[a-z0-9.-]{1,253})$/u;
+
+/** Map a site surface to the portfolio `placement` vocabulary. */
+export function analyticsPlacement(surface: AnalyticsSurface): AnalyticsPlacement {
+  if (surface === "global_header") return "nav";
+  if (surface === "global_footer") return "footer";
+  if (surface === "not_found") return "not_found";
+  return "inline";
+}
+
+function outboundLinkKind(kind: AnalyticsDestinationKind): OutboundLinkKind {
+  if (kind === "repository") return "github";
+  if (kind === "hraness") return "portfolio";
+  if (kind === "social") return "social";
+  return "other";
+}
 const canonicalHosts = new Set(["aicharts.io", "www.aicharts.io"]);
 const sourceIdentifierPattern = /^source:[a-z0-9](?:[a-z0-9._-]{0,78}[a-z0-9])?$/u;
 
@@ -366,7 +449,10 @@ export interface AnalyticsLinkInput {
   readonly surface?: unknown;
 }
 
-type AnalyticsLinkClassification = AnalyticsEventMap["site link clicked"];
+type AnalyticsLinkClassification = Readonly<{
+  destination_id: AnalyticsDestinationId;
+  destination_kind: AnalyticsDestinationKind;
+}>;
 
 function internalDestination(pathname: string): Pick<
   AnalyticsLinkClassification,
@@ -456,7 +542,7 @@ function outboundDestination(
 /** Classify one anchor without retaining its text, raw URL, query, or fragment. */
 export function classifyAnalyticsLink(
   input: AnalyticsLinkInput,
-): AnalyticsEventFor<"site link clicked"> | null {
+): AnalyticsEventFor<"outbound link opened"> | AnalyticsEventFor<"site link clicked"> | null {
   if (input.href.trim().length === 0) return null;
   let current: URL;
   let destination: URL;
@@ -477,12 +563,32 @@ export function classifyAnalyticsLink(
   ) return null;
 
   const surface = analyticsSurface(input.surface, current.pathname);
+  const placement = analyticsPlacement(surface);
   const sameCanonicalSite = canonicalHosts.has(destination.hostname.toLowerCase());
   const sameDocumentSection = sameCanonicalSite
     && destination.pathname === current.pathname
     && destination.hash.length > 0;
-  let classification: AnalyticsLinkClassification;
+  const override = isDestinationOverride(input.destinationKind, input.destinationId)
+    ? { destination_id: input.destinationId as AnalyticsDestinationId, destination_kind: input.destinationKind }
+    : null;
 
+  if (!sameCanonicalSite) {
+    const resolved = override ?? outboundDestination(destination.hostname, input.askAiProvider);
+    const targetHost = destination.hostname.toLowerCase().replace(/^www\./u, "");
+    if (!targetHostPattern.test(targetHost)) return null;
+    return {
+      name: "outbound link opened",
+      properties: {
+        ...resolved,
+        link_kind: outboundLinkKind(resolved.destination_kind),
+        placement,
+        surface,
+        target_host: targetHost,
+      },
+    };
+  }
+
+  let classification: AnalyticsEventMap["site link clicked"];
   if (sameDocumentSection) {
     classification = {
       destination_id: "section",
@@ -490,7 +596,7 @@ export function classifyAnalyticsLink(
       link_kind: "anchor",
       surface,
     };
-  } else if (sameCanonicalSite) {
+  } else {
     const resolved = internalDestination(destination.pathname);
     const attachment = resolved.destination_kind === "asset"
       || resolved.destination_kind === "dataset";
@@ -499,34 +605,35 @@ export function classifyAnalyticsLink(
       link_kind: input.download || attachment ? "download" : "internal",
       surface,
     };
-  } else {
-    const resolved = outboundDestination(destination.hostname, input.askAiProvider);
-    classification = {
-      ...resolved,
-      link_kind: input.download ? "download" : "outbound",
-      surface,
-    };
   }
-
-  if (isDestinationOverride(input.destinationKind, input.destinationId)) {
-    classification = {
-      ...classification,
-      destination_id: input.destinationId as AnalyticsDestinationId,
-      destination_kind: input.destinationKind,
-    };
-  }
+  if (override !== null) classification = { ...classification, ...override };
   return { name: "site link clicked", properties: classification };
 }
 
+/** The shared footer form was submitted (not a claim that the request was accepted). */
 export function newsletterSignupRequestEvent(
   audience: unknown,
-): AnalyticsEventFor<"newsletter signup request submitted"> | null {
+): AnalyticsEventFor<"email signup submitted"> | null {
   return audience === "aicharts"
     ? {
-        name: "newsletter signup request submitted",
-        properties: { audience, surface: "global_footer" },
+        name: "email signup submitted",
+        properties: { audience, placement: "footer" },
       }
     : null;
+}
+
+/** One `page not found` for a rendered 404: normalized path and referrer host only. */
+export function pageNotFoundEvent(
+  requestedPath: unknown,
+  referrer: unknown,
+): AnalyticsEventFor<"page not found"> {
+  return {
+    name: "page not found",
+    properties: {
+      referrer_host: referrerHost(referrer),
+      requested_path: normalizedRequestedPath(requestedPath),
+    },
+  };
 }
 
 function validCount(value: unknown): value is number {
@@ -652,10 +759,42 @@ function controlledEventProperties(event: AnalyticsEvent): Record<string, unknow
         result_count: properties.result_count,
       };
     }
-    case "newsletter signup request submitted": {
+    case "email signup submitted": {
       const properties = event.properties;
-      return properties.audience === "aicharts" && properties.surface === "global_footer"
-        ? { audience: properties.audience, surface: properties.surface }
+      return properties.audience === "aicharts" && properties.placement === "footer"
+        ? { audience: properties.audience, placement: properties.placement }
+        : null;
+    }
+    case "outbound link opened": {
+      const properties = event.properties;
+      if (
+        !isAnalyticsSurface(properties.surface)
+        || !isDestinationKind(properties.destination_kind)
+        || !isDestinationId(properties.destination_id)
+        || !outboundLinkKinds.has(properties.link_kind)
+        || !placements.has(properties.placement)
+        || typeof properties.target_host !== "string"
+        || !targetHostPattern.test(properties.target_host)
+      ) return null;
+      return {
+        destination_id: properties.destination_id,
+        destination_kind: properties.destination_kind,
+        link_kind: properties.link_kind,
+        placement: properties.placement,
+        surface: properties.surface,
+        target_host: properties.target_host,
+      };
+    }
+    case "page not found": {
+      const properties = event.properties;
+      return typeof properties.requested_path === "string"
+        && requestedPathPattern.test(properties.requested_path)
+        && typeof properties.referrer_host === "string"
+        && referrerHostPattern.test(properties.referrer_host)
+        ? {
+            referrer_host: properties.referrer_host,
+            requested_path: normalizedRequestedPath(properties.requested_path),
+          }
         : null;
     }
     case "site link clicked": {
@@ -689,7 +828,7 @@ export function analyticsEventPayload(event: AnalyticsEvent): Readonly<{
     name: event.name,
     properties: {
       ...properties,
-      event_schema_version: 3,
+      event_schema_version: EVENT_SCHEMA_VERSION,
       site_id: "aicharts",
       $process_person_profile: false,
     },
@@ -710,9 +849,50 @@ export function captureAnalyticsEvent(event: AnalyticsEvent): void {
   if (!analyticsEnabled()) return;
   const payload = analyticsEventPayload(event);
   if (payload === null) return;
-  posthog.capture(payload.name, payload.properties, event.name === "site link clicked"
-    ? { send_instantly: true, transport: "sendBeacon" }
-    : undefined);
+  posthog.capture(
+    payload.name,
+    payload.properties,
+    event.name === "site link clicked" || event.name === "outbound link opened"
+      ? { send_instantly: true, transport: "sendBeacon" }
+      : undefined,
+  );
+}
+
+const exceptionBudget = createBrowserExceptionBudget();
+
+/** Properties the budgeted reporter attaches to `$exception`, or null when over budget. */
+export function exceptionEventProperties(
+  error: Error,
+  origin: ClientErrorOrigin,
+  budget = exceptionBudget,
+  now = Date.now(),
+): Record<string, unknown> | null {
+  const fingerprint = analyticsErrorFingerprint(error);
+  if (!budget.allow(fingerprint, now)) return null;
+  return {
+    error_fingerprint: fingerprint,
+    error_origin: origin,
+    error_surface: "client",
+    event_schema_version: EVENT_SCHEMA_VERSION,
+    site_id: "aicharts",
+    $process_person_profile: false,
+  };
+}
+
+/**
+ * Report an uncaught browser error: scrubbed message and stack, 20 per minute
+ * and 2 per fingerprint. PostHog's own exception autocapture stays off.
+ */
+export function captureAnalyticsException(value: unknown, origin: ClientErrorOrigin): void {
+  if (!analyticsEnabled()) return;
+  try {
+    const error = sanitizeAnalyticsError(value);
+    const properties = exceptionEventProperties(error, origin);
+    if (properties === null) return;
+    posthog.captureException(error, properties);
+  } catch {
+    // Observability must never interfere with error handling.
+  }
 }
 
 export function captureChartEvent(event: ChartAnalyticsEvent): void {

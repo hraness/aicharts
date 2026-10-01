@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+import { captureAnalyticsException } from "@/lib/analytics";
 import { getDesignPaletteTheme } from "@hraness/design-kit";
 import {
   DesignPaletteProvider,
@@ -13,6 +15,7 @@ import "./globals.css";
 const initialPalette = getDesignPaletteTheme("tokyo-night", "light");
 
 export default function GlobalError(props: RouteErrorPageProps) {
+  useEffect(() => { captureAnalyticsException(props.error, "global_error_boundary"); }, [props.error]);
   return (
     <html
       className={initialPalette.className}

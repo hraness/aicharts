@@ -16,7 +16,7 @@ Every browser event passes through `normalizedPageAnalyticsProperties` before it
 - rejects client rate-limit warning events whose SDK-generated message contains a raw path;
 - adds a bounded page classification and public `content_id`.
 
-`analytics_schema_version` is `2` on every browser event; it is the Hraness shared-project dimension version the jungle visitor refresh filters on. `context_schema_version` is `3`. It versions the page properties applied to all events. `event_schema_version` is `3` for the typed product events below and `1` for SDK-generated events such as `$pageview`, `$pageleave`, and Web Vitals. These fields are deliberately separate. Before 2026-09-30 the browser normalizer rewrote `3` to `1`, so typed events stored before then carry `1`; query them by event name, not by `event_schema_version`.
+`analytics_schema_version` is `2` on every browser event; it is the Hraness shared-project dimension version the jungle visitor refresh filters on. `context_schema_version` is `3`. It versions the page properties applied to all events. `event_schema_version` is `4` for the typed product events below and `1` for SDK-generated events such as `$pageview`, `$pageleave`, and Web Vitals. These fields are deliberately separate. Before 2026-09-30 the browser normalizer rewrote `3` to `1`, so typed events stored before then carry `1`; query them by event name, not by `event_schema_version`.
 
 The server request-error hook uses the same exact ingest-host approval. It sends a fixed `server:aicharts` distinct ID with `$process_person_profile: false`, so it needs no cookieless browser hash and creates no person profile. It retains only a standard error type plus bounded framework route fields; original exception messages and stacks never leave the server.
 
@@ -42,8 +42,10 @@ All custom events are members of `AnalyticsEventMap`. `analyticsEventPayload` re
 
 | Event | Controlled properties | Meaning |
 | --- | --- | --- |
+| `outbound link opened` | `target_host`, `link_kind`, `placement`, `surface`, `destination_kind`, `destination_id` | A link to another host was activated. |
+| `page not found` | grouped `requested_path`, `referrer_host` | The missing-page boundary rendered. |
 | `site link clicked` | `surface`, `link_kind`, `destination_kind`, `destination_id` | A public anchor was activated. |
-| `newsletter signup request submitted` | `audience=aicharts`, `surface=global_footer` | The shared footer form emitted a submit request. |
+| `email signup submitted` | `audience=aicharts`, `placement=footer` | The shared footer form emitted a submit request. |
 | `content chart opened` | `source_kind`, `destination_chart` | A reader chose the current comparison from editorial content. |
 | `chart metric selected` | `chart_id`, `axis`, `metric` | A visitor changed one dimension of a named chart. |
 | `chart selection pinned` | `chart_id`, `provider_id`, `selection_kind` | A visitor pinned a provider or model comparison in a named chart. |
@@ -66,7 +68,7 @@ Atlas actions are `benchmark`, `view`, `provider`, `expand`, `inspect`, `profile
 - controlled `data-analytics-destination-kind` and `data-analytics-destination-id` overrides;
 - the existing controlled Ask-AI provider identifier.
 
-The raw href, query, hash, and link text are never placed in an event. Link kinds are `anchor`, `download`, `internal`, and `outbound`. Destination kinds distinguish articles, model cards, site pages and resources, datasets, assets, sections, sources, repositories, social services, Ask-AI services, and Hraness. Unknown outbound hosts collapse to `destination_kind=source` and `destination_id=external:other`.
+The raw href, query, hash, and link text are never placed in an event. Internal link kinds are `anchor`, `download`, and `internal`. External links use `outbound link opened` with `github`, `social`, `portfolio`, or `other` link kinds. Destination kinds distinguish articles, model cards, site pages and resources, datasets, assets, sections, sources, repositories, social services, Ask-AI services, and Hraness. Unknown outbound hosts collapse to `destination_kind=source` and `destination_id=external:other`.
 
 Use the narrowest existing surface. Current surfaces are `site`, `global_header`, `global_footer`, `home_calculator`, `home_activity`, `home_index_strip`, `home_orientation`, `home_portfolio`, `benchmark_chart`, `benchmark_atlas`, `home_editorial`, `blog_header`, `blog_index`, `blog_article`, `blog_related`, `data_document`, `models_header`, `models_gallery`, `model_release_radar`, `model_card`, and `error_recovery`.
 
@@ -88,7 +90,7 @@ Invalid or mismatched override pairs are ignored. Do not add a custom click hand
 
 ## Newsletter state
 
-The delegated footer event is intentionally named `newsletter signup request submitted`. It fires when the browser submits the shared Hraness footer form; it does not claim that Cloudflare accepted the proof, Hraness Accounts accepted the request, an email was sent, or the reader confirmed the subscription.
+The delegated footer event is intentionally named `email signup submitted`. It fires when the browser submits the shared Hraness footer form; it does not claim that Cloudflare accepted the proof, Hraness Accounts accepted the request, an email was sent, or the reader confirmed the subscription.
 
 An accepted-request event must come from an explicit success callback in the shared footer or Accounts provider contract. A confirmed-subscription event must come from Hraness Accounts, where confirmation is authoritative. Do not infer either state by reading status text, observing DOM mutations, intercepting `fetch`, or scraping form data. The analytics boundary never reads the email field or Turnstile response.
 
@@ -108,3 +110,11 @@ Run the focused contract checks with:
 bun test lib/analytics.test.ts lib/page-analytics.test.ts lib/analytics-imports.test.ts components/analytics-boundary.test.tsx instrumentation-client.test.ts app/layout.test.ts
 bun run typecheck
 ```
+
+## Portfolio observability recovery
+
+Typed product events now carry event schema 4 while retaining analytics schema 2 and all legacy dashboard history. External links use `outbound link opened`, bounded `target_host`, `link_kind` and `placement`; same-site links retain `site link clicked`. Footer signup records `email signup submitted` only for the existing form intent, never confirmation. The payload contains no address or free-form DOM text.
+
+The not-found boundary emits `page not found`. Because unknown paths are not approved public content, `requested_path` is the controlled `/[other]` group rather than the visitor's raw URL; only the referrer hostname survives. Browser and React error boundaries report `$exception` with a fixed message and approved error type, no original message or stack. A per-page budget allows twenty errors per minute and two of the same sanitized type per minute. Server exception policy is unchanged.
+
+The immutable shared provider sanitizer removes nested private keys and search-keyword attribution before the existing route normalizer. Referrers remain origin-only, all campaign attribution is discarded, dynamic public routes remain checked against the published allowlist, and unknown routes remain grouped. Cookieless provider inputs remain available for session measurement. Production transport still depends on the existing consent authority.
