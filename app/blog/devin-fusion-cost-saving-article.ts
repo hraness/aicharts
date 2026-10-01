@@ -255,7 +255,7 @@ function baselineBlocks(
       present.map(snapshotRowCells),
     ),
     paragraph(
-      `Cognition’s headline chart reports ${DEVIN_FUSION.headlinePoints[2].indexScore} for Fable 5.1 (max) on Claude Code and ${DEVIN_FUSION.headlinePoints[0].indexScore} for Astra (max) on Codex. Where the snapshot values differ from those, the difference comes from the index version, its component benchmarks, and the retrieval date, not from a change in the model. Compare a Fusion configuration only with rows measured under the same index version.`,
+      `Cognition’s headline chart reports ${DEVIN_FUSION.headlinePoints[2].indexScore} for Fable 5.1 (max) on Claude Code and ${DEVIN_FUSION.headlinePoints[0].indexScore} for Astra (max) on Codex. The snapshot and Cognition’s chart are separate observations. Differences in index versions, configurations, or evaluation dates can affect their scores; a shared model name does not identify the cause. Compare Fusion with a baseline measured under the same protocol.`,
     ),
   ];
 }
@@ -292,6 +292,7 @@ export function createDevinFusionCostSavingArticle(
 ): BlogArticle {
   const retrievedAt = formatRetrievedAt(snapshot.source.retrievedAt);
   const updatedAt = latestCalendarDate(
+    "2026-10-01",
     DEVIN_FUSION_ARTICLE_PUBLISHED_AT,
     utcCalendarDate(snapshot.source.retrievedAt),
     utcCalendarDate(codingAgentDatasetModifiedAt(snapshot)),
@@ -434,7 +435,7 @@ export function createDevinFusionCostSavingArticle(
         DEVIN_FUSION.earlier.septemberFusionCost,
         " on the same benchmark, a ",
         DEVIN_FUSION.earlier.septemberSaving,
-        " saving. The two Fusion costs differ because the configurations differ, and only the September figure names both models.",
+        " saving. The two published costs differ; only the September figure names both models.",
       ),
       heading("A more expensive sidekick did not cost more"),
       paragraph(
@@ -490,7 +491,7 @@ export function createDevinFusionCostSavingArticle(
           "Mean cost per run or per task is an evaluation average. It is not a subscription price, a production invoice, or a guarantee for a specific repository.",
         ],
         [
-          "The aicharts snapshot is checked on its own schedule and stores an earlier index composition. A Fusion row that appears on the live source page is not in the chart until a later checked snapshot includes it.",
+          "The chart uses the snapshot and index version named above. Results added to the live source page appear only after a snapshot includes them.",
         ],
         [
           "Fusion depends on how well the lead delegates. Cognition’s own June examples include a hard TypeScript feature whose score fell from 54 to 27 when the coding was delegated, so the average saving does not describe every task.",

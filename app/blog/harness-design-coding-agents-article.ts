@@ -459,6 +459,7 @@ export function createHarnessDesignArticle(
 ): BlogArticle {
   const retrievedAt = formatRetrievedAt(snapshot.source.retrievedAt);
   const updatedAt = latestCalendarDate(
+    "2026-10-01",
     HARNESS_DESIGN_ARTICLE_PUBLISHED_AT,
     utcCalendarDate(snapshot.source.retrievedAt),
     utcCalendarDate(codingAgentDatasetModifiedAt(snapshot)),
@@ -480,12 +481,12 @@ export function createHarnessDesignArticle(
   const bash550bTb = componentEffect("Terminal-Bench 2.1", "Nemotron-3 550B", "bash only");
   const bashMistralTb = componentEffect("Terminal-Bench 2.1", "Mistral-Medium-3.5-128B", "bash only");
   const significanceNote =
-    "† marks a cell the paper reports as significantly different from the T4 baseline under a two-sided exact McNemar test with Benjamini–Hochberg q < 0.05.";
+    "† preserves the paper’s significance marker: T4 compares with T0 at the same window size; the ablated settings compare with T4. Each comparison uses a two-sided exact McNemar test with Benjamini–Hochberg q < 0.05 within its comparison family.";
 
   return {
     sourceNote: BLOG_SOURCE_NOTE,
     slug: HARNESS_DESIGN_ARTICLE_SLUG,
-    title: "What Fan et al.’s harness-component ablations measure",
+    title: "Context management helps most when the window is tight",
     dek:
       "Nine researchers held one coding-agent loop fixed and toggled planning, tools, and context management across 176 settings. Each component helped only under named conditions.",
     focusPhrase: "coding agent harness design ablation",
@@ -529,17 +530,12 @@ export function createHarnessDesignArticle(
       paragraph(
         "A harness is the software around a model that gives it tools, keeps track of the task, and decides what history the model sees. Most harness comparisons swap one complete product for another, so a score difference cannot be traced to a single mechanism. The authors instead build one harness whose execution loop stays fixed and vary three components inside it: planning (a persistent task plan the model updates through a tool), the action space (a set of predefined file, search, and shell tools versus a bare bash tool), and context management (how a growing history is compacted to fit a token window).",
       ),
-      paragraph(
-        `This note reconstructs the paper’s two printed result tables, checks the reported value of context management at each window budget, and states where the ${HARNESS_DESIGN.settingCount} settings stop. It also explains how to read the paper beside the site’s `,
-        { href: "/blog/harnesstax-coding-agent-harness", text: "HarnessTax note" },
-        ", which answers a different harness question.",
-      ),
       heading(`What the ${HARNESS_DESIGN.settingCount} settings cover`),
       paragraph(
         `The study uses four open-weight models: Nemotron-3 at 30B, 120B, and 550B parameters as a within-family capability axis, and Mistral-Medium-3.5-128B from a second family. The authors serve every model locally in BF16 with temperature 0 and a ${HARNESS_DESIGN.outputTokenCapPerTurn}-token output cap per turn. Cost is priced from OpenRouter rates accessed ${HARNESS_DESIGN.pricesAccessed}, per million input and output tokens: ${HARNESS_DESIGN.prices["Nemotron-3 30B"]} for Nemotron-3 30B, ${HARNESS_DESIGN.prices["Nemotron-3 120B"]} for 120B, ${HARNESS_DESIGN.prices["Nemotron-3 550B"]} for 550B, and ${HARNESS_DESIGN.prices["Mistral-Medium-3.5-128B"]} for Mistral-Medium-3.5-128B. The authors describe the models as probes of capability and interaction style, not as optimization targets.`,
       ),
       paragraph(
-        `Two benchmarks supply the tasks. SWE-Bench Verified has ${HARNESS_DESIGN.sweTaskCount} human-verified GitHub issues from Python repositories; the agent must produce a patch that passes the issue’s tests. Terminal-Bench 2.1 has ${HARNESS_DESIGN.tbTaskCount} end-to-end tasks in a command-line environment. Each setting reports the share of tasks resolved and the mean cost per task. Every task runs once per setting with a ${HARNESS_DESIGN.stepCap}-step cap. Safety gates, post-edit diagnostics, and stuck detection stay fixed across all settings.`,
+        `Two benchmarks supply the tasks. SWE-Bench Verified has ${HARNESS_DESIGN.sweTaskCount} human-verified GitHub issues from Python repositories; the agent must produce a patch that passes the issue’s tests. Terminal-Bench 2.1 has ${HARNESS_DESIGN.tbTaskCount} end-to-end tasks in a command-line environment. Each setting reports the share of tasks resolved and the mean cost per task. Every task runs once per setting with a ${HARNESS_DESIGN.stepCap}-step cap. The execution loop and stopping rules stay fixed. The action-space ablation also changes file tracking and automatic diagnostics along with the available tools.`,
       ),
       paragraph(
         "Context management has five tiers. T0 does nothing and ends the run when the window overflows. T1 elides stale tool observations, replacing their bodies with short stubs. T2 adds recall: elided observations go to an external store and a recall_event tool can read them back. T3 summarizes older history with a separate call to the same model and no elision. T4 stages all three: it elides bulky observations once history passes a soft threshold at 60% of the window, and summarizes the oldest middle events once history passes a hard threshold at 85%. The system prompt, the task description, and at least the last two turns always stay verbatim.",
@@ -645,7 +641,7 @@ export function createHarnessDesignArticle(
           `Each setting runs once per task, and Terminal-Bench 2.1 has ${HARNESS_DESIGN.tbTaskCount} tasks. Many Terminal-Bench 2.1 contrasts do not reach significance; the authors rest those conclusions on consistent direction across models and budgets rather than on individually significant cells.`,
         ],
         [
-          "The models are three Nemotron-3 sizes and Mistral-Medium-3.5-128B, served locally at OpenRouter list prices. SWE-Bench Verified is Python only. The authors say the crossover points should be validated before transfer to other model families, harness implementations, or task types.",
+          "The models are three Nemotron-3 sizes and Mistral-Medium-3.5-128B, served locally, with token use priced at OpenRouter list rates. SWE-Bench Verified is Python only. The authors say the crossover points should be validated before transfer to other model families, harness implementations, or task types.",
         ],
         [
           "Cost is the mean token cost per task at the listed prices, not latency, a subscription invoice, or a cache-adjusted bill.",

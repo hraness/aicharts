@@ -32,17 +32,6 @@ import {
   breadcrumbJsonLd,
 } from "./seo";
 
-const dateFormatter = new Intl.DateTimeFormat("en-US", {
-  day: "numeric",
-  month: "long",
-  timeZone: "UTC",
-  year: "numeric",
-});
-
-function formatDate(date: string): string {
-  return dateFormatter.format(new Date(`${date}T00:00:00.000Z`));
-}
-
 export async function BlogArticlePage({
   imageForSlug = blogEditorialImage,
   params,
@@ -100,20 +89,6 @@ export async function BlogArticlePage({
         <p className="plain-publication__article-dek">{article.dek}</p>
         <p className="plain-publication__article-meta">
           <ArticleByline author={BLOG_ARTICLE_AUTHOR} />
-          <span aria-hidden="true"> · </span>
-          <span>Published </span>
-          <time dateTime={article.publishedAt}>
-            {formatDate(article.publishedAt)}
-          </time>
-          {article.updatedAt === article.publishedAt ? null : (
-            <>
-              <span aria-hidden="true"> · </span>
-              <span>Updated </span>
-              <time dateTime={article.updatedAt}>
-                {formatDate(article.updatedAt)}
-              </time>
-            </>
-          )}
           <span aria-hidden="true"> · </span>
           <span>{articleReadingMinutes(article)} min read</span>
         </p>
@@ -204,10 +179,7 @@ export async function BlogArticlePage({
           ) : null}
 
           <p className="plain-publication__disclosure">
-            {article.sourceNote} {" "}
-            Reported results apply to the named source, workload,
-            configuration, and observation date. They do not establish
-            performance on every task or product.
+            {article.sourceNote}
           </p>
         </div>
       </div>

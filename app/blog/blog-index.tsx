@@ -19,17 +19,6 @@ import {
   breadcrumbJsonLd,
 } from "./seo";
 
-const dateFormatter = new Intl.DateTimeFormat("en-US", {
-  day: "numeric",
-  month: "short",
-  timeZone: "UTC",
-  year: "numeric",
-});
-
-function formatDate(date: string): string {
-  return dateFormatter.format(new Date(`${date}T00:00:00.000Z`));
-}
-
 export function BlogIndex({
   imageForSlug = blogEditorialImage,
 }: {
@@ -72,7 +61,6 @@ export function BlogIndex({
         >
           <div className="plain-publication__section-heading">
             <h2 id="benchmark-articles">Articles</h2>
-            <p>{blogArticles.length} sourced analysis articles</p>
           </div>
           <div className="plain-publication__article-list">
             {blogArticles.map((article, index) => {
@@ -99,10 +87,6 @@ export function BlogIndex({
                 </h3>
                 <p>{article.dek}</p>
                 <p className="plain-publication__entry-meta">
-                  <time dateTime={article.publishedAt}>
-                    {formatDate(article.publishedAt)}
-                  </time>
-                  <span aria-hidden="true"> · </span>
                   <span>{articleReadingMinutes(article)} min read</span>
                 </p>
                 </article>

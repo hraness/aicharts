@@ -464,7 +464,7 @@ function generationBlocks(
       GPT_6_SOL.openAi.priceCutClaim,
       ".” ",
       tokenMultiple !== null && Math.abs(tokenMultiple - 1) <= 0.1
-        ? "Total tokens per task stayed within a tenth of the earlier row, so the price cut accounts for the lower cost per task in the snapshot."
+        ? "Total tokens per task stayed within a tenth of the earlier row while the listed input and output rates halved. The cost change also depends on the input/output mix and cache use."
         : "The snapshot records both a price change and a change in tokens per task, so the cost step mixes the two.",
       " Artificial Analysis’s launch note reports the same step: “",
       GPT_6_SOL.artificialAnalysis.codingIndexGain,
@@ -615,6 +615,7 @@ export function createGpt6SolArticle(
   const codingRetrievedAt = formatRetrievedAt(codingSnapshot.source.retrievedAt);
   const intelligenceRetrievedAt = formatRetrievedAt(intelligenceSnapshot.source.retrievedAt);
   const updatedAt = latestCalendarDate(
+    "2026-10-01",
     GPT_6_SOL_ARTICLE_PUBLISHED_AT,
     utcCalendarDate(codingSnapshot.source.retrievedAt),
     utcCalendarDate(intelligenceSnapshot.source.retrievedAt),

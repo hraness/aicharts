@@ -63,7 +63,7 @@ export const INTRODUCING_AI_CHARTS_NOTE_LINKS = {
   },
   harnessTax: {
     href: "/blog/harnesstax-coding-agent-harness",
-    text: "What HarnessTax’s same-model cost gap measures",
+    text: "HarnessTax finds cost gaps at similar success rates",
   },
   terminalBenchScience: {
     href: "/blog/terminal-bench-science",
