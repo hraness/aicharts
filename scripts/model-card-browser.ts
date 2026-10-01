@@ -127,6 +127,51 @@ async function waitForServer(url: string, server: Bun.Subprocess): Promise<void>
   throw new Error("The production server did not become ready within 30 seconds.");
 }
 
+async function verifyForcedPublicationLinks(browser: Browser, baseUrl: string): Promise<void> {
+  for (const colorScheme of ["light", "dark"] as const) {
+    const context = await browser.newContext({ colorScheme, forcedColors: "active" });
+    await stubAccountBoundary(context);
+    const page = await context.newPage();
+    try {
+      await page.goto(`${baseUrl}/blog/introducing-ai-charts`, { waitUntil: "domcontentloaded" });
+      await settle(page);
+      for (const selector of [
+        ".plain-publication__article-body a[href]",
+        ".plain-publication__sources a[href]",
+        ".plain-publication__byline a[href]",
+      ]) {
+        const link = page.locator(selector).first();
+        await link.waitFor({ state: "visible" });
+        for (const state of ["rest", "hover", "focus"] as const) {
+          if (state === "hover") await link.hover();
+          if (state === "focus") {
+            await page.mouse.move(0, 0);
+            await page.keyboard.press("Tab");
+            await link.focus();
+            invariant(await link.evaluate(element => element.matches(":focus-visible")),
+              `${colorScheme}/${selector}: keyboard focus must be visible`);
+          }
+          const paint = await link.evaluate(element => {
+            const style = getComputedStyle(element);
+            return {
+              color: style.color,
+              decorationColor: style.textDecorationColor,
+              decorationLine: style.textDecorationLine,
+              decorationStyle: style.textDecorationStyle,
+            };
+          });
+          const label = `${colorScheme}/${selector}/${state}`;
+          invariant(paint.decorationLine.includes("underline"), `${label}: link underline is missing`);
+          invariant(paint.decorationStyle === "dotted", `${label}: link underline must remain dotted`);
+          invariant(paint.decorationColor === paint.color, `${label}: underline must use the system link color`);
+        }
+      }
+    } finally {
+      await context.close();
+    }
+  }
+}
+
 function attachDiagnostics(page: Page, label: string): string[] {
   const failures: string[] = [];
   page.on("console", (message) => {
@@ -607,6 +652,7 @@ try {
   const browser = await launchFirstAvailableBrowser(executablePaths);
   try {
     await verifyFooterShell(browser, baseUrl);
+    await verifyForcedPublicationLinks(browser, baseUrl);
     await verifyBenchmarkAtlas(browser, baseUrl);
     await verifyChartExport(browser, baseUrl);
     await verifyModelLogoCards(browser, baseUrl);
