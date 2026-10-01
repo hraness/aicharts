@@ -8,7 +8,7 @@ export const SITE_HEADER_LINKS = [
   { href: "/", label: "Charts" },
   { href: "/benchmarks", label: "Benchmarks" },
   { href: "/usage", label: "Usage" },
-  { href: "/dashboard", label: "Dashboard" },
+  { href: "/dashboard", label: "Account" },
   { href: "/leaderboard", label: "Leaderboard" },
   { href: "/blog", label: "Notes" },
 ] as const;

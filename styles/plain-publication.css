@@ -28,13 +28,13 @@
 :where(.plain-site.plain-publication a:not(.ui-skip-link)) {
   color: var(--plain-link);
   overflow-wrap: anywhere;
-  text-decoration: none;
+  text-decoration-line: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 0.15em;
 }
 
 :where(.plain-site.plain-publication a:not(.ui-skip-link):is(:hover, :focus-visible)) {
-  text-decoration: underline;
+  text-decoration-line: underline;
   text-decoration-thickness: 2px;
 }
 
@@ -217,7 +217,7 @@
 }
 
 .plain-site.plain-publication .plain-publication__entry h3 a {
-  text-decoration: none;
+  text-decoration-line: underline;
 }
 
 @media (pointer: coarse) {

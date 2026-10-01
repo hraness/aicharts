@@ -1,6 +1,7 @@
 "use client";
 
 import posthog from "posthog-js";
+import { getBrowserConsent } from "@hraness/posthog/consent";
 
 import { isBenchmarkAtlasId, isChartedBenchmarkAtlasId, type ChartedBenchmarkAtlasId } from "./benchmark-atlas-ids";
 
@@ -700,7 +701,8 @@ function analyticsEnabled(): boolean {
   const token = process.env.NEXT_PUBLIC_POSTHOG_KEY;
   return Boolean(
     token?.startsWith("phc_")
-    && canonicalHosts.has(window.location.hostname.toLowerCase()),
+    && canonicalHosts.has(window.location.hostname.toLowerCase())
+    && getBrowserConsent()?.allowed() === true,
   );
 }
 

@@ -1,5 +1,6 @@
+import { portfolioRelatedGroups } from "@hraness/design-kit/portfolio";
 import { createPublicSiteMetadata } from "@hraness/web-discovery";
-import { ArticleFigure, MarketingRelated } from "@hraness/design-kit/react/server";
+import { ArticleFigure, MarketingAccount, MarketingAccountActions, MarketingRelated } from "@hraness/design-kit/react/server";
 import Link from "next/link";
 import artificialAnalysisIntelligenceData from "@/data/artificial-analysis-intelligence-v4-3.json";
 import { ChartNavigation, HomeExploreFooter } from "@/components/chart-navigation";
@@ -18,7 +19,6 @@ import {
   homeAlternativesCheckedLabel,
   homeAlternativesClosing,
   homeAlternativesLead,
-  homeEyebrow,
   homeHeading,
   homeLede,
   homePrimaryAction,
@@ -27,7 +27,7 @@ import {
   site,
 } from "./site";
 
-import { productMessaging, relatedProduct, registeredRelationship } from "./messaging";
+import { productMessaging } from "./messaging";
 
 import "@/styles/chart-home.css";
 
@@ -40,7 +40,6 @@ export default function Home() {
     <SiteHeader current="/" />
     <main tabIndex={-1} className="chart-home hraness-marketing-main" id="main-content">
       <header className="chart-page-intro chart-home-hero">
-        <p className="chart-page-intro__eyebrow">{homeEyebrow}</p>
         <h1 id="home-title">{homeHeading}</h1>
         <p className="chart-home-hero__lede">{homeLede}</p>
         <p className="chart-page-intro__actions">
@@ -78,30 +77,16 @@ export default function Home() {
         </div>
         <Link className="home-calculator__cta" href="/calculator">Open the calculator <span aria-hidden="true">↗</span></Link>
       </section>
+      <MarketingAccount summary="Keep your agent usage in a private dashboard. Public charts and local reports work without an account.">
+        <MarketingAccountActions
+          primary={{ href: "/api/suite-auth/start?return_to=%2Fdashboard", label: "Create account" }}
+          signIn={{ href: "/api/suite-auth/start?return_to=%2Fdashboard" }}
+        />
+      </MarketingAccount>
       <MarketingRelated
-        groups={[
-          {
-            heading: productMessaging.headings["home-platform-group"],
-            headingId: "related-tools",
-            summary: "The layer your agent runs through: sessions, accounts, web reads, and the models behind them.",
-            items: ["xcb", "gobstopper", "wrench"].map((id) => ({
-              ...relatedProduct(id),
-              relationship: id === "xcb" ? registeredRelationship("aicharts", id) : null,
-            })),
-          },
-          {
-            heading: productMessaging.headings["home-personal-group"],
-            headingId: "related-apps",
-            items: ["peopleblade", "soulscrape", "message-like-me", "kb"].map((id) => ({
-              ...relatedProduct(id),
-              relationship: null,
-            })),
-          },
-        ]}
-        heading={productMessaging.headings["home-related"]}
+        groups={portfolioRelatedGroups(["xcb", "gobstopper", "wrench", "peopleblade", "soulscrape", "message-like-me", "kb"])}
+        heading="Other tools from our studio"
         headingId="related-title"
-        label="Related"
-        summary="Other Hraness tools for people who work with AI agents."
       />
       <HomeExploreFooter />
       <LegacyChartNavigation />

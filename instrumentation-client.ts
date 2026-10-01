@@ -1,3 +1,4 @@
+import { getBrowserConsent, installConsentTransport } from "@hraness/posthog/consent";
 import posthog from "posthog-js";
 import type { PostHogConfig } from "posthog-js";
 
@@ -13,7 +14,7 @@ const privacyConfig = {
   api_host: endpoint?.apiHost ?? "https://us.i.posthog.com",
   ui_host: endpoint?.uiHost ?? "https://us.posthog.com",
   before_send(event) {
-    if (event === null) return null;
+    if (event === null || getBrowserConsent()?.allowed() !== true) return null;
     if (event.event === "$$client_ingestion_warning") return null;
     const eventLocation = event.properties?.$current_url
       ?? window.location.pathname;
@@ -50,6 +51,7 @@ const privacyConfig = {
   persistence: "memory",
   cookieless_mode: "always",
   respect_dnt: true,
+  request_batching: false,
   cross_subdomain_cookie: false,
   disableDeviceModel: true,
   disable_capture_url_hashes: true,
@@ -66,5 +68,11 @@ if (
   && endpoint !== null
   && token?.startsWith("phc_")
 ) {
-  posthog.init(token, privacyConfig);
+  const consent = getBrowserConsent();
+  let initialized = false;
+  consent?.subscribe(() => {
+    if (!consent.allowed() || initialized || !installConsentTransport(posthog, consent)) return;
+    initialized = true;
+    posthog.init(token, privacyConfig);
+  });
 }
