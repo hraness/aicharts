@@ -1,6 +1,7 @@
 import { RouteNotFoundPage } from "@hraness/design-kit/react";
 import { createPrivateSiteMetadata } from "@hraness/web-discovery";
 
+import { NotFoundAnalytics } from "@/components/not-found-analytics";
 import { SiteHeader } from "@/components/site-header";
 import { homePrimaryAction, notFoundSearchSite, site } from "./site";
 import sitemap from "./sitemap";
@@ -25,6 +26,7 @@ export default function NotFound() {
   return (
     <>
       <SiteHeader />
+      <NotFoundAnalytics />
       <div className="hraness-site-shell__content" data-analytics-surface="error_recovery" id="main-content">
         <RouteNotFoundPage
           agentIndexHref="/llms.txt"

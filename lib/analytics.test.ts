@@ -184,7 +184,9 @@ describe("delegated link classification", () => {
       })?.properties).toEqual({
         destination_id: destinationId,
         destination_kind: destinationKind,
-        link_kind: "outbound",
+        link_kind: destinationKind === "repository" ? "github" : destinationKind === "social" ? "social" : destinationKind === "hraness" ? "portfolio" : "other",
+        placement: "inline",
+        target_host: new URL(href).hostname,
         surface: "model_card",
       });
     }
@@ -256,7 +258,7 @@ describe("typed event payloads", () => {
     } as unknown as AnalyticsEvent);
     expect(payload).toEqual({
       name: "benchmark explored",
-      properties: { benchmark_id: "wise-verified", action: "profiles", view: "ranking", event_schema_version: 3, site_id: "aicharts", $process_person_profile: false },
+      properties: { benchmark_id: "wise-verified", action: "profiles", view: "ranking", event_schema_version: 4, site_id: "aicharts", $process_person_profile: false },
     });
     expect(JSON.stringify(payload)).not.toContain("private");
   });
@@ -282,7 +284,7 @@ describe("typed event payloads", () => {
     } as unknown as AnalyticsEvent);
     expect(payload).toEqual({
       name: "calculator adjusted",
-      properties: { control: "subsidy_multiple", event_schema_version: 3, site_id: "aicharts", $process_person_profile: false },
+      properties: { control: "subsidy_multiple", event_schema_version: 4, site_id: "aicharts", $process_person_profile: false },
     });
     expect(JSON.stringify(payload)).not.toContain("private");
     for (const control of ["knob", "subsidy_multiple2", "", null, 42, {}]) {
@@ -292,8 +294,8 @@ describe("typed event payloads", () => {
 
   test("names newsletter intent truthfully and accepts only the product audience", () => {
     expect(newsletterSignupRequestEvent("aicharts")).toEqual({
-      name: "newsletter signup request submitted",
-      properties: { audience: "aicharts", surface: "global_footer" },
+      name: "email signup submitted",
+      properties: { audience: "aicharts", placement: "footer" },
     });
     expect(newsletterSignupRequestEvent("another-product")).toBeNull();
     expect(newsletterSignupRequestEvent("private@example.com")).toBeNull();
@@ -315,7 +317,7 @@ describe("typed event payloads", () => {
       name: "model card shared",
       properties: {
         $process_person_profile: false,
-        event_schema_version: 3,
+        event_schema_version: 4,
         model_id: "openai/gpt-5.6-sol",
         profile_id: "max",
         share_method: "copy_link",

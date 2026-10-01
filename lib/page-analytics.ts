@@ -1,3 +1,5 @@
+import { sanitizeProviderProperties } from "@hraness/posthog/event";
+import type { PostHogSiteDefinition } from "@hraness/posthog";
 import {
   isPublicBlogSlug,
   isPublicModelCardPath,
@@ -312,20 +314,20 @@ export function normalizedPageAnalyticsProperties(
   properties: Readonly<AnalyticsProperties> | undefined,
 ): AnalyticsProperties {
   const context = pageAnalyticsContext(pathname);
-  const normalized: AnalyticsProperties = { ...(properties ?? {}) };
+  const normalized = sanitizeProviderProperties(analyticsPrivacySite, properties ?? {}, pathname);
 
   for (const property of pageUrlProperties) {
     if (property === "$current_url" || property in normalized) {
       normalized[property] = property === "$current_url"
         ? `${CANONICAL_ORIGIN}${context.canonical_path}`
-        : canonicalAnalyticsUrl(normalized[property]);
+        : canonicalAnalyticsUrl(properties?.[property]);
     }
   }
   for (const property of pagePathProperties) {
     if (property === "$pathname" || property in normalized) {
       normalized[property] = property === "$pathname"
         ? context.canonical_path
-        : canonicalAnalyticsPath(normalized[property]);
+        : canonicalAnalyticsPath(properties?.[property]);
     }
   }
   for (const property of referrerProperties) {
@@ -362,11 +364,17 @@ export function normalizedPageAnalyticsProperties(
     if (webVitalDetailPropertyPattern.test(property)) delete normalized[property];
   }
   normalized.$host = context.canonical_domain;
-  // Typed product events carry version 3 (lib/analytics.ts); pageview-shaped
+  // Typed product events carry version 4 (legacy 3) (lib/analytics.ts); pageview-shaped
   // events carry 2. Anything else is an unknown or legacy payload.
   normalized.event_schema_version =
-    normalized.event_schema_version === 2 || normalized.event_schema_version === 3
+    normalized.event_schema_version === 2 || normalized.event_schema_version === 3 || normalized.event_schema_version === 4
       ? normalized.event_schema_version
       : 1;
   return { ...normalized, ...context };
 }
+
+const analyticsPrivacySite: PostHogSiteDefinition = {
+  id: "aicharts", canonicalDomain: "aicharts.io", allowedHosts: ["aicharts.io", "www.aicharts.io"],
+  schemaVersion: 2, routes: [], customEvents: [], attributionMode: "referrer_only",
+  unknownCanonicalPath: "/[other]",
+};

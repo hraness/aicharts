@@ -109,6 +109,12 @@ describe("privacy canary", () => {
   const surfaces = (): TrackedFile[] => ["lib/analytics.ts", "lib/page-analytics.ts", "instrumentation-client.ts", "instrumentation.ts", "app/robots.ts", "app/sitemap.ts", "app/llms.txt/route.ts", "lib/analytics-imports.test.ts"]
     .map(path => ({ path, text: read(path) }));
   test("the checked-in surfaces and import boundary pass", () => { expect(checkPrivacyCanary(surfaces())).toEqual([]); });
+  test("the exact registered signup literal does not hide private fields on the same line", () => {
+    const base = surfaces().map(file => file.path === "lib/analytics.ts"
+      ? { ...file, text: file.text + '\nconst action = "email signup submitted"; const email = "private";\n' }
+      : file);
+    expect(rules(checkPrivacyCanary(base))).toEqual(["privacy-canary-private-identifier"]);
+  });
   test("a stray import, direct capture, referrer read or private identifier fails", () => {
     // Built by concatenation so the repository scan never sees a boundary violation in this file.
     const stray = [...surfaces(), { path: "components/x.tsx", text: `import posthog from "posthog-${"js"}";\nposthog.${"capture"}("x");\n` }];

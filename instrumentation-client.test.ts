@@ -8,7 +8,7 @@ test("browser instrumentation normalizes every event before production capture",
 
   expect(source).toContain("before_send(event)");
   expect(source).toContain("normalizedPageAnalyticsProperties(");
-  expect(source).toContain('event.event === "$$client_ingestion_warning"');
+  expect(source).toContain('!allowedEvents.has(event.event)');
   expect(source).toContain("event.properties?.$current_url");
   expect(source).toContain("approvedPostHogEndpoint(");
   expect(source).toContain('capture_pageview: "history_change"');
