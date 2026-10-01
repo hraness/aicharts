@@ -83,7 +83,7 @@ export type BlogArticleAdmission = Readonly<{
 const REVIEWED_ON = "2026-10-01" as const;
 const REASSESS_ON = "2026-11-05" as const;
 const EVIDENCE_OWNER = "AI Charts editorial" as const;
-const REVIEWED_BY = "Codex independent AI editorial review" as const;
+const REVIEWED_BY = "Codex" as const;
 /** Notes written before the drafting field existed were drafted by AI agents from their cited sources. */
 const AI_DRAFTED = "ai" as const;
 const AI_REVIEWER = "ai" as const;

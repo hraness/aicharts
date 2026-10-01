@@ -35,7 +35,10 @@ export function EditorialFigure({
         width={image.width}
       />
       <figcaption>
-        {image.caption} <span>{image.credit}</span>
+        {image.caption}{" "}
+        <span>
+          <a href="https://slopcamera.com">Made with SlopCamera</a>
+        </span>
       </figcaption>
     </figure>
   );
