@@ -480,6 +480,10 @@ body {
 }
 
 .home-editorial__text-card h3 {
+  text-decoration: underline dotted;
+  text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
   font-size: clamp(0.92rem, 1.45vw, 1.12rem);
   line-height: 1.2;
   margin-top: clamp(12px, 2vw, 24px);
@@ -503,9 +507,7 @@ body {
 
 .home-editorial__text-card:hover h3,
 .home-editorial__text-card:focus-visible h3 {
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.16em;
+  text-decoration-color: currentColor;
 }
 
 @media (max-width: 42rem) {
