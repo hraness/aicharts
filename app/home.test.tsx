@@ -26,7 +26,6 @@ import {
   homeAboutHeading,
   homeAlternatives,
   homeAlternativesCheckedOn,
-  homeEyebrow,
   homeHeading,
   homeLede,
   homePrimaryAction,
@@ -178,7 +177,7 @@ describe("homepage canonical content", () => {
     expect(source).not.toContain("HomeBenchmarkPortfolio");
     expect(existsSync(new URL("./loading.tsx", import.meta.url))).toBeFalse();
     expect(markup).toContain(`<h1 id="home-title">${homeHeading}</h1>`);
-    expect(markup).toContain(homeEyebrow);
+    expect(markup).not.toContain('class="chart-home-hero__eyebrow"');
     // Server markup escapes the apostrophe in the canonical hero summary.
     expect(markup).toContain(homeLede.replaceAll("'", "&#x27;"));
     expect(markup).toContain(`href="${homePrimaryAction.href}"`);

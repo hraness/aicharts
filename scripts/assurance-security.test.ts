@@ -28,6 +28,28 @@ describe("options and environment", () => {
 });
 
 describe("dependency pins", () => {
+  test("reviewed release URLs bind owner, package, asset version and lockfile integrity", () => {
+    for (const [name, repository] of [["@hraness/posthog", "posthog"], ["@hraness/site-footer", "site-footer"]]) {
+      const canonical = `https://github.com/hraness/${repository}/releases/download/v1.2.3/hraness-${repository}-1.2.3.tgz`;
+      const fixture = (source: string, packageName = name) => ({
+        manifest: { dependencies: { [packageName]: source } },
+        lock: { lockfileVersion: 1, workspaces: { "": { dependencies: { [packageName]: source } } },
+          packages: { [packageName]: [`${packageName}@${source}`, {}, "sha512-synthetic"] } },
+      });
+      const valid = fixture(canonical);
+      expect(checkPackagePins(valid.manifest, valid.lock)).toEqual([]);
+      for (const source of [canonical.replace("/hraness/", "/other/"), canonical.replace("/v1.2.3/", "/latest/"),
+        canonical.replace("-1.2.3.tgz", "-1.2.4.tgz"), canonical.replace(`hraness-${repository}-`, "hraness-other-"),
+        canonical + "?download=1", canonical + "#fragment", canonical.replace("https:", "http:")]) {
+        const invalid = fixture(source);
+        expect(rules(checkPackagePins(invalid.manifest, invalid.lock))).toEqual(["dependency-protocol-unreviewed", "lockfile-source-unreviewed"]);
+      }
+      const unreviewed = fixture(canonical, "@hraness/other");
+      expect(rules(checkPackagePins(unreviewed.manifest, unreviewed.lock))).toEqual(["dependency-protocol-unreviewed", "lockfile-source-unreviewed"]);
+      valid.lock.packages[name].pop();
+      expect(rules(checkPackagePins(valid.manifest, valid.lock))).toEqual(["lockfile-integrity-missing"]);
+    }
+  });
   const manifest = JSON.parse(read("package.json")) as Parameters<typeof checkPackagePins>[0];
   const lock = parseBunLock(read("bun.lock"));
   test("the checked-in manifest, lockfile, Cargo locks and workflows pass", () => {

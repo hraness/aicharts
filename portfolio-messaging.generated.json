@@ -5,7 +5,7 @@
   "portfolio": {
     "contract": "hraness.portfolio-public/v1",
     "url": "https://hraness.com/portfolio.json",
-    "digest": "sha256:3e82dac495694ca14dbdea88c58d6781f23725a4005231eb0b5eb4e68d4e4907"
+    "digest": "sha256:ba365e481a8b15c4a19503b1628e1b7ae9399e47055dde02bae124183a3e1447"
   },
   "messaging": {
     "formatVersion": 1,
@@ -25,7 +25,7 @@
     "long": "Picking a model means guessing at a tradeoff between quality and price, because benchmark scores and prices live in different places. aicharts plots published benchmark scores against cost and tokens per task on one chart, so the strongest option at each budget is visible instead of implied. A local collector measures your own agents' token use, so the cost question covers your work, not only the models. aicharts is free and open source.",
     "hero": {
       "heading": "See which model wins at each price.",
-      "summary": "Benchmark scores plotted against cost and tokens per task, plus a local collector for your own agents' token use.",
+      "summary": "Compare model benchmark scores, prices, and the tokens each task takes.",
       "primaryAction": "Browse the charts",
       "secondaryAction": "Measure your agent"
     },
@@ -33,7 +33,7 @@
       "home-calculator": "Subscription vs API vs GPUs",
       "home-platform-group": "The agent platform",
       "home-personal-group": "The personal apps",
-      "home-related": "From the same workshop.",
+      "home-related": "Other tools from our studio",
       "home-about": "About aicharts",
       "home-search-title": "aicharts: AI model benchmark scores vs cost per task"
     },

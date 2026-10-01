@@ -272,7 +272,7 @@ test("the local resource links are quiet at rest", () => {
   expect(stylesheet).not.toContain(".hraness-ra-mark");
   expect(firstRule(".chart-resource-nav__links a")).toContain("text-decoration: none");
   expect(firstRule(".chart-resource-nav__links a:hover,\n.chart-resource-nav__links a:focus-visible")).toContain(
-    "text-decoration: underline",
+    "text-decoration-line: underline",
   );
 });
 

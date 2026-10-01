@@ -30,6 +30,19 @@ const fullSha = /^[0-9a-f]{40}$/u, shortSha = /^[0-9a-f]{7,40}$/u, exactVersion 
 type BunLock = { lockfileVersion: number; workspaces: Record<string, Record<string, unknown>>; packages: Record<string, unknown[]> };
 type PackageManifest = { dependencies?: Record<string, string>; devDependencies?: Record<string, string>; optionalDependencies?: Record<string, string>; scripts?: Record<string, string> };
 
+// Canonical immutable release artifacts are admitted only for these reviewed studio packages.
+// Match repository, asset identity and version; lockfile integrity is still mandatory below.
+const reviewedReleaseRepositories: Readonly<Record<string, string>> = {
+  "@hraness/posthog": "posthog",
+  "@hraness/site-footer": "site-footer",
+};
+function reviewedReleaseTarball(name: string, source: string): boolean {
+  const repository = reviewedReleaseRepositories[name];
+  const match = /^https:\/\/github\.com\/hraness\/([a-z0-9-]+)\/releases\/download\/v(\d+\.\d+\.\d+)\/hraness-([a-z0-9-]+)-(\d+\.\d+\.\d+)\.tgz$/u.exec(source);
+  return repository !== undefined && match !== null && match[1] === repository
+    && match[3] === repository && match[2] === match[4];
+}
+
 /** Every direct `github:` dependency names a release tag or full commit, every direct dependency
  * has one exact lockfile entry with integrity, and every lockfile entry is exact and hashed. */
 export function checkPackagePins(manifest: PackageManifest, lock: BunLock): Finding[] {
@@ -41,7 +54,7 @@ export function checkPackagePins(manifest: PackageManifest, lock: BunLock): Find
     if (spec.startsWith("github:")) {
       const reference = spec.slice(spec.indexOf("#") + 1);
       if (!spec.includes("#") || !(fullSha.test(reference) || /^v\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/u.test(reference))) findings.push({ rule: "github-dependency-unpinned", path: "package.json", detail: name });
-    } else if (spec.includes(":")) findings.push({ rule: "dependency-protocol-unreviewed", path: "package.json", detail: name });
+    } else if (spec.includes(":") && !reviewedReleaseTarball(name, spec)) findings.push({ rule: "dependency-protocol-unreviewed", path: "package.json", detail: name });
     const entry = lock.packages[name];
     if (!entry) { findings.push({ rule: "lockfile-entry-missing", path: "bun.lock", detail: name }); continue; }
     for (const section of ["dependencies", "devDependencies", "optionalDependencies"] as const) {
@@ -57,6 +70,8 @@ export function checkPackagePins(manifest: PackageManifest, lock: BunLock): Find
     if (source.startsWith("github:")) {
       const reference = source.slice(source.indexOf("#") + 1);
       if (!source.includes("#") || !shortSha.test(reference)) findings.push({ rule: "lockfile-github-unpinned", path: "bun.lock", detail: name });
+    } else if (reviewedReleaseTarball(resolved.slice(0, at), source)) {
+      // A reviewed release URL remains bound to its installed package identity and hash.
     } else if (source.includes(":") || source === "") findings.push({ rule: "lockfile-source-unreviewed", path: "bun.lock", detail: name });
     else if (!exactVersion.test(source)) findings.push({ rule: "lockfile-version-inexact", path: "bun.lock", detail: name });
     if (typeof integrity !== "string" || !integrity.startsWith("sha512-")) findings.push({ rule: "lockfile-integrity-missing", path: "bun.lock", detail: name });
