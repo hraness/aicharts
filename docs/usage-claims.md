@@ -88,6 +88,7 @@ Dated evidence is evidence for its own commit at its own time. Rerun the named c
 | GitHub reports `immutable: true` for `cli-v0.2.0` | docs/usage-release-publish.md | `gh api repos/hraness/aicharts/releases/tags/cli-v0.2.0` returned immutable true, draft false and prerelease false on 2026-09-29 | evidenced |
 | and it published `cli-v0.1.0` on 2026-09-28 | docs/usage-release-source.md | Publish run 36366527153, 2026-09-28 | evidenced |
 | selects the newest successful `workflow_dispatch` run of "Qualify Linux CLI" on `main` | docs/usage-release-publish.md | `scripts/release/publish-workflow.test.ts` | source-only |
+| starts the Qualify Linux CLI run for that commit, waits for it to succeed, and then has the `hraness-release-tagger` GitHub App create the annotated `cli-v<version>` tag | docs/usage-release-publish.md | Source: `.github/workflows/auto-tag.yml` (actionlint); no automatic release run yet | source-only |
 | requires `qualified`, `smoke.passed` and `notices.complete` to be true | docs/usage-release-publish.md | `scripts/release/verify-publication.check.mjs` | source-only |
 | produced a passing receipt binding the four checksummed assets | docs/usage-release-publish.md | Local verifier run 2026-09-24 against artifact `linux-qualification-c6b2b3e665cc82b72ab7d64a6a147624c6d1a783-1` | evidenced |
 | supports an existing normal SHA-1 checkout | docs/usage-release-source.md | `bun run release:source:check` | source-only |
