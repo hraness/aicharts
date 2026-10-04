@@ -42,7 +42,7 @@ describe("nonpublishing macOS qualification workflow", () => {
     expect(withSecrets.map(step => step.name)).toEqual(["Sign and notarize without executing the binary"]);
     expect(Object.keys(withSecrets[0].env ?? {})).toEqual(SECRETS);
     expect(withSecrets[0].run).toContain('python3 -I scripts/release/sign-macos.py sign "${RUNNER_TEMP}/aicharts-unsigned-input/');
-    expect(source.match(/secrets\.[A-Z0-9_]+/gu)?.sort()).toEqual(SECRETS.map(name => `secrets.${name}`).sort());
+    expect([...(source.match(/secrets\.[A-Z0-9_]+/gu) ?? [])].sort()).toEqual(SECRETS.map(name => `secrets.${name}`).sort());
   });
 
   test("binds the same-run unsigned artifact, cleans up credentials and runs the binary only after cleanup", () => {

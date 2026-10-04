@@ -155,6 +155,8 @@ jobs:
         run: bun run release:linux:runner:check
       - name: Check release publication path
         run: bun run release:publish:check
+      - name: Check macOS signing, notices and qualification workflow
+        run: bun run release:macos:check
       - name: Typecheck
         run: bun run typecheck
       - name: Lint
