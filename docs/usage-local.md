@@ -6,7 +6,9 @@ This guide covers the legacy v1 `usage`, collection, ledger, and publishing comm
 
 ## Build and run
 
-On a Mac with Apple silicon, download the published release with the GitHub CLI. The command checks the archive's checksum and the publishing workflow's attestation before extracting it; the binary is signed with Developer ID and notarized by Apple:
+The quickest install, on a Mac with Apple silicon or on Linux x86_64, is `curl -fsSL https://aicharts.io/install.sh | sh`. It checks the archive against the SHA-256 digest pinned in [the script](../scripts/install.sh) and, on a Mac, Apple's Developer ID signature, then installs `~/.local/bin/aicharts`.
+
+To check the release yourself, on a Mac with Apple silicon, download the published release with the GitHub CLI. The command checks the archive's checksum and the publishing workflow's attestation before extracting it; the binary is signed with Developer ID and notarized by Apple:
 
 ```sh
 mkdir aicharts-cli-v0.3.1 && (cd aicharts-cli-v0.3.1 && gh release download cli-v0.3.1 --repo hraness/aicharts --pattern 'aicharts-0.3.1-aarch64-apple-darwin.tar.gz*' && shasum -a 256 -c aicharts-0.3.1-aarch64-apple-darwin.tar.gz.sha256 && gh attestation verify aicharts-0.3.1-aarch64-apple-darwin.tar.gz --repo hraness/aicharts --signer-workflow hraness/aicharts/.github/workflows/cli-publish.yml --deny-self-hosted-runners && tar -xzf aicharts-0.3.1-aarch64-apple-darwin.tar.gz) && export PATH="$PWD/aicharts-cli-v0.3.1/aicharts-0.3.1-aarch64-apple-darwin/bin:$PATH"

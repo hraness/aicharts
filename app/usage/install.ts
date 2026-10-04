@@ -11,6 +11,9 @@ import {
 
 const downloadDirectory = `aicharts-${usageReleaseTag}`;
 
+/** aicharts.io/install.sh: scripts/install.sh, pinned to this release's digests. */
+export const usageInstallScriptCommand = "curl -fsSL https://aicharts.io/install.sh | sh";
+
 export const usageMacSourceCommand = `cargo +${usageCliRelease.rustToolchain} install --locked --git https://github.com/hraness/aicharts --rev ${usageCliRelease.sourceCommit} aicharts-cli`;
 
 // The Mac archive has its own checksum file beside the Linux SHA256SUMS; the
@@ -40,15 +43,15 @@ export const usageLinuxInstallCommand = [
 export const usageInstallPlatforms = [
   {
     id: "macos",
-    command: usageMacInstallCommand,
+    command: usageInstallScriptCommand,
     shell: "Terminal",
-    note: "Apple silicon. Signed with Developer ID and notarized by Apple. Requires GitHub CLI. Adds aicharts to this terminal's PATH for local reports.",
+    note: "Apple silicon. Checks the pinned SHA-256 and Apple's Developer ID signature, installs ~/.local/bin/aicharts, and turns on local history. Nothing is uploaded.",
   },
   {
     id: "linux",
-    command: usageLinuxInstallCommand,
+    command: usageInstallScriptCommand,
     shell: "Terminal",
-    note: "x86_64, glibc 2.35+. Requires GitHub CLI. Adds aicharts to this terminal's PATH for local reports.",
+    note: "x86_64, glibc 2.35+. Checks the pinned SHA-256, installs ~/.local/bin/aicharts, and turns on local history. Nothing is uploaded.",
   },
   {
     id: "windows",
