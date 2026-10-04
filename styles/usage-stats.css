@@ -188,6 +188,7 @@
 .usage-stats__notice { background: var(--usage-card); border: 1px solid var(--usage-card-border); border-inline-start: 3px solid var(--hraness-site-accent); border-radius: var(--usage-radius-sm); font-size: .9rem; margin-block: 1rem; padding: 1.1rem 1.25rem; }
 .usage-stats__notice[role="alert"] { border-inline-start-color: var(--warning); }
 .usage-stats__notice :is(form, div) { align-items: center; display: flex; flex-wrap: wrap; gap: .5rem; }
+.usage-stats__notice .usage-account-actions { gap: .75rem 1.5rem; }
 .usage-stats__notice h2, .usage-stats__notice h3 { font-size: 1.1rem; }
 .usage-stats__notice p { color: var(--muted); margin-block: .5rem; max-inline-size: 65ch; }
 .usage-stats__empty { background: var(--usage-card); border: 1px solid var(--usage-card-border); border-radius: var(--usage-radius); margin-block-start: 1rem; padding: clamp(1.5rem, 4vw, 2.5rem); }
