@@ -5,7 +5,7 @@
   "portfolio": {
     "contract": "hraness.portfolio-public/v1",
     "url": "https://hraness.com/portfolio.json",
-    "digest": "sha256:ba365e481a8b15c4a19503b1628e1b7ae9399e47055dde02bae124183a3e1447"
+    "digest": "sha256:58c4deb5e80e8aa781e484ec645169eaee17ce302e284d480facb35efc6cc049"
   },
   "messaging": {
     "formatVersion": 1,
@@ -271,10 +271,7 @@
       "messaging": {
         "names": {
           "name": "TextButler",
-          "command": "textbutler",
-          "formerly": [
-            "Message Like Me"
-          ]
+          "command": "textbutler"
         },
         "short": "AI butler for the iMessage, WhatsApp, and Beeper chats you choose",
         "tagline": "An AI butler in your messaging apps."
@@ -327,7 +324,7 @@
           ]
         },
         "short": "Free agent skill that writes dated dossiers on people, sources cited",
-        "tagline": "See how someone thinks, and where every claim comes from."
+        "tagline": "Learn everything about anyone based on their internet presence"
       }
     },
     {
@@ -664,6 +661,26 @@
         },
         "short": "Free publication about how companies put AI agents to work",
         "tagline": "How companies put AI agents to work."
+      }
+    },
+    {
+      "id": "textmock",
+      "name": "Textmock",
+      "description": "fictional text message screenshots and animations, made in your browser",
+      "canonicalUrl": "https://textmock.com",
+      "surface": {
+        "actionLabel": "open the studio",
+        "interfaces": [
+          "web app"
+        ],
+        "proof": "fictional iMessage, WhatsApp, Telegram, and Instagram conversations exported as PNG, GIF, or silent MP4 from the browser"
+      },
+      "messaging": {
+        "names": {
+          "name": "Textmock"
+        },
+        "short": "Fictional text message screenshots and animations, made in your browser",
+        "tagline": "Create text message screenshots and animations in your browser."
       }
     },
     {
@@ -1022,7 +1039,7 @@
       "kind": "contract",
       "label": "shared bundle format",
       "direction": "shared",
-      "detail": "Both tools implement the versioned message-like-me.local-message-bundle interchange without importing each other's private state."
+      "detail": "Both tools read and write the same versioned TextButler local message bundle format without importing each other's private state."
     },
     {
       "source": "gobstopper",
@@ -1037,6 +1054,14 @@
       "kind": "runtime",
       "label": "uses",
       "direction": "forward"
+    },
+    {
+      "source": "gobstopper",
+      "target": "aicharts",
+      "kind": "runtime",
+      "label": "installs",
+      "direction": "forward",
+      "detail": "The Gobstopper installer adds aicharts and turns on its local usage history, which stays on your computer and never uploads."
     },
     {
       "source": "gobstopper",
@@ -1063,10 +1088,10 @@
     {
       "source": "xcb",
       "target": "aicharts",
-      "kind": "contract",
-      "label": "exports sessions for",
+      "kind": "runtime",
+      "label": "installs",
       "direction": "forward",
-      "detail": "Excalibur (xcb) measures subscription usage locally and, when you turn on exports, writes session files in the aicharts format. Automatic upload is not available."
+      "detail": "The Excalibur (xcb) installer adds aicharts and turns on its local usage history, which stays on your computer. With exports on, xcb also writes session files in the aicharts format; automatic upload is not available."
     },
     {
       "source": "soulscrape",
@@ -1212,6 +1237,21 @@
     {
       "source": "kb",
       "target": "design-kit",
+      "kind": "runtime",
+      "label": "uses",
+      "direction": "forward"
+    },
+    {
+      "source": "textmock",
+      "target": "textmockups",
+      "kind": "runtime",
+      "label": "renders chats with",
+      "direction": "forward",
+      "detail": "Textmock describes each conversation as a JSON scene and draws it with the open-source textmockups React components, the same renderer the package publishes for other sites."
+    },
+    {
+      "source": "textmock",
+      "target": "posthog-sdk",
       "kind": "runtime",
       "label": "uses",
       "direction": "forward"
@@ -1472,6 +1512,110 @@
       "label": "records drawing runs with",
       "direction": "forward",
       "detail": "The icon.place drawing lab runs each experiment as an ALGAL program in the browser and records the proposal, candidates, and selection as receipts it can replay; the live site does not use ALGAL yet."
+    },
+    {
+      "source": "peopleblade",
+      "target": "cli-update",
+      "kind": "runtime",
+      "label": "updates installed CLI",
+      "direction": "forward",
+      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
+    },
+    {
+      "source": "kb",
+      "target": "cli-update",
+      "kind": "runtime",
+      "label": "updates installed CLI",
+      "direction": "forward",
+      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
+    },
+    {
+      "source": "slopcamera",
+      "target": "cli-update",
+      "kind": "runtime",
+      "label": "updates installed CLI",
+      "direction": "forward",
+      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
+    },
+    {
+      "source": "sys1",
+      "target": "cli-update",
+      "kind": "runtime",
+      "label": "updates installed CLI",
+      "direction": "forward",
+      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
+    },
+    {
+      "source": "lifedaysleft",
+      "target": "cli-update",
+      "kind": "runtime",
+      "label": "updates installed CLI",
+      "direction": "forward",
+      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
+    },
+    {
+      "source": "sponge",
+      "target": "cli-update",
+      "kind": "runtime",
+      "label": "updates installed CLI",
+      "direction": "forward",
+      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
+    },
+    {
+      "source": "algal",
+      "target": "cli-update",
+      "kind": "runtime",
+      "label": "updates installed CLI",
+      "direction": "forward",
+      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
+    },
+    {
+      "source": "xcb",
+      "target": "cli-update",
+      "kind": "runtime",
+      "label": "updates installed CLI",
+      "direction": "forward",
+      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
+    },
+    {
+      "source": "valhalla",
+      "target": "cli-update",
+      "kind": "runtime",
+      "label": "updates installed CLI",
+      "direction": "forward",
+      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
+    },
+    {
+      "source": "gobstopper",
+      "target": "cli-update",
+      "kind": "runtime",
+      "label": "updates installed CLI",
+      "direction": "forward",
+      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
+    },
+    {
+      "source": "soundfish",
+      "target": "cli-update",
+      "kind": "runtime",
+      "label": "updates installed CLI",
+      "direction": "forward",
+      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
+    },
+    {
+      "source": "wrench",
+      "target": "cli-update",
+      "kind": "runtime",
+      "label": "updates installed CLI",
+      "direction": "forward",
+      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
+    },
+    {
+      "source": "oh-computer",
+      "target": "cli-update",
+      "kind": "runtime",
+      "label": "updates installed CLI",
+      "direction": "forward",
+      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
     }
   ]
 }
