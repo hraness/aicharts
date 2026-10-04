@@ -32,12 +32,15 @@ describe("immutable Linux CLI publication workflow", () => {
 
   test("pins every action, checks out the resolved commit without credentials and attests the checksummed assets", () => {
     const actions = steps.filter(step => step.uses);
-    expect(actions).toHaveLength(4);
+    expect(actions).toHaveLength(5);
     for (const action of actions) expect(action.uses).toMatch(/^[a-z0-9-]+\/[a-z0-9-]+@[0-9a-f]{40}$/u);
     expect(actions[0].uses).toMatch(/^actions\/checkout@/u);
     expect(actions[0].with).toEqual({ ref: "${{ env.RELEASE_COMMIT }}", "persist-credentials": false, "fetch-depth": 1 });
-    const attest = actions.find(action => action.uses?.startsWith("actions/attest-build-provenance@"));
-    expect(attest?.with).toEqual({ "subject-checksums": "${{ env.PUBLISH_STAGING }}/artifact/assets/SHA256SUMS" });
+    const attests = actions.filter(action => action.uses?.startsWith("actions/attest-build-provenance@"));
+    expect(attests.map(attest => attest.with)).toEqual([
+      { "subject-checksums": "${{ env.PUBLISH_STAGING }}/artifact/assets/SHA256SUMS" },
+      { "subject-path": "${{ env.PUBLISH_STAGING }}/macos/aicharts-${{ env.RELEASE_VERSION }}-aarch64-apple-darwin.tar.gz" },
+    ]);
   });
 
   test("republishes only a retained qualification of the exact tagged main commit and refuses an existing release", () => {
@@ -51,17 +54,28 @@ describe("immutable Linux CLI publication workflow", () => {
     expect(verify).toContain('--name "linux-qualification-${RELEASE_COMMIT}-${QUALIFICATION_RUN_ATTEMPT}"');
     expect(verify).toContain("node scripts/release/verify-publication.mjs");
     expect(verify).toContain("sha256sum --check --strict SHA256SUMS");
+    const macosSelect = named("Select the newest successful macOS qualification run of the exact commit").run ?? "";
+    expect(macosSelect).toContain('--workflow cli-macos.yml --branch main --commit "$RELEASE_COMMIT" --status success --event workflow_dispatch');
+    expect(macosSelect).toContain("publish_macos_qualification_missing");
+    const macos = named("Download and re-verify the signed macOS archive").run ?? "";
+    expect(macos).toContain('--name "macos-qualification-${RELEASE_COMMIT}-${MACOS_RUN_ATTEMPT}"');
+    expect(macos).toContain("publish_macos_inventory");
+    expect(macos).toContain('sha256sum --check --strict "${archive}.sha256"');
+    expect(macos).toContain('.state == "verified" and .status == "Accepted" and .version == $version');
+    expect(macos).toContain('.identifier == "dev.hraness.aicharts" and .teamId == "8AAP53VTW3"');
   });
 
-  test("publishes the exact five assets plus receipts, then verifies the download and the attestations", () => {
+  test("publishes the Linux assets, the signed macOS archive and the receipts, then verifies the download and the attestations", () => {
     const publish = named("Publish the immutable GitHub Release").run ?? "";
     expect(publish).toContain('gh release create "$RELEASE_TAG" --verify-tag --latest=false');
-    for (const asset of ["x86_64-unknown-linux-gnu.tar.gz", "aicharts-skill-${RELEASE_VERSION}.tar.gz", "aicharts-source-${RELEASE_VERSION}.tar.gz", "release-manifest.json", "SHA256SUMS", "qualification.json", "publication.json"]) {
+    for (const asset of ["x86_64-unknown-linux-gnu.tar.gz", "aicharts-skill-${RELEASE_VERSION}.tar.gz", "aicharts-source-${RELEASE_VERSION}.tar.gz", "release-manifest.json", "SHA256SUMS", "qualification.json", "publication.json", "aarch64-apple-darwin.tar.gz\"", "aarch64-apple-darwin.tar.gz.sha256", "aicharts-apple-notarization.json"]) {
       expect(publish).toContain(asset);
     }
     const verify = named("Download the published assets and verify digests and attestations").run ?? "";
     expect(verify).toContain('gh release download "$RELEASE_TAG"');
     expect(verify).toContain("sha256sum --check --strict SHA256SUMS");
+    expect(verify).toContain('sha256sum --check --strict "${macos}.sha256"');
+    expect(verify).toContain('release-manifest.json "$macos"; do');
     expect(verify).toContain('gh attestation verify "${verify}/${name}" --repo "$GITHUB_REPOSITORY"');
     expect(verify).toContain('--signer-workflow "${GITHUB_REPOSITORY}/.github/workflows/cli-publish.yml" --deny-self-hosted-runners');
     const receipt = steps.at(-1);

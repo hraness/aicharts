@@ -10,9 +10,13 @@ name: Publish Linux CLI
 # retained assets against the manifest, checksums and qualification receipt,
 # publishes them as a GitHub Release with OIDC build provenance, and then
 # downloads the published assets and verifies their digests and attestations.
-# There is no human approval gate. A tag whose commit has no successful
-# qualification run within the retention window fails closed; re-dispatch the
-# qualification on main and rerun this workflow for the same tag.
+# The same commit's "Qualify macOS CLI" run supplies the Developer ID signed
+# and notarized macOS arm64 archive, which is republished unchanged beside the
+# Linux assets with its own checksum file and attestation; this workflow holds
+# no Apple credentials. There is no human approval gate. A tag whose commit
+# lacks either successful qualification run within the retention window fails
+# closed; re-dispatch the qualification on main and rerun this workflow for
+# the same tag.
 
 on:
   push:
@@ -91,6 +95,19 @@ jobs:
             echo "QUALIFICATION_RUN_ID=${selected}"
             echo "QUALIFICATION_RUN_ATTEMPT=${attempt}"
           } >> "$GITHUB_ENV"
+      - name: Select the newest successful macOS qualification run of the exact commit
+        run: |
+          set -euo pipefail
+          selected="$(gh run list --workflow cli-macos.yml --branch main --commit "$RELEASE_COMMIT" --status success --event workflow_dispatch \
+            --json databaseId,headSha,conclusion,createdAt --limit 20 \
+            --jq '[.[] | select(.headSha == env.RELEASE_COMMIT and .conclusion == "success")] | sort_by(.createdAt) | last | select(. != null) | .databaseId')"
+          [[ "$selected" =~ ^[1-9][0-9]{0,19}$ ]] || { echo "publish_macos_qualification_missing"; exit 1; }
+          attempt="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${selected}" --jq '.run_attempt')"
+          [[ "$attempt" =~ ^[1-9][0-9]{0,5}$ ]] || { echo "publish_macos_qualification_attempt_invalid"; exit 1; }
+          {
+            echo "MACOS_RUN_ID=${selected}"
+            echo "MACOS_RUN_ATTEMPT=${attempt}"
+          } >> "$GITHUB_ENV"
       - name: Download and re-verify the retained qualification assets
         run: |
           set -euo pipefail
@@ -101,48 +118,69 @@ jobs:
             --artifact "${staging}/artifact" --tag "$RELEASE_TAG" --commit "$RELEASE_COMMIT" \
             --run-id "$QUALIFICATION_RUN_ID" --run-attempt "$QUALIFICATION_RUN_ATTEMPT" --receipt "${staging}/publication.json"
           (cd "${staging}/artifact/assets" && sha256sum --check --strict SHA256SUMS)
+      - name: Download and re-verify the signed macOS archive
+        run: |
+          set -euo pipefail
+          macos="${PUBLISH_STAGING}/macos"
+          archive="aicharts-${RELEASE_VERSION}-aarch64-apple-darwin.tar.gz"
+          gh run download "$MACOS_RUN_ID" --name "macos-qualification-${RELEASE_COMMIT}-${MACOS_RUN_ATTEMPT}" --dir "$macos"
+          [[ "$(cd "$macos" && ls -A | LC_ALL=C sort | tr '\n' ' ')" == "${archive} ${archive}.sha256 aicharts-apple-notarization.json " ]] || { echo "publish_macos_inventory"; exit 1; }
+          (cd "$macos" && sha256sum --check --strict "${archive}.sha256")
+          jq -e --arg version "$RELEASE_VERSION" '.state == "verified" and .status == "Accepted" and .version == $version
+            and .identifier == "dev.hraness.aicharts" and .teamId == "8AAP53VTW3"' "${macos}/aicharts-apple-notarization.json" > /dev/null \
+            || { echo "publish_macos_notarization"; exit 1; }
       - name: Publish the immutable GitHub Release
         run: |
           set -euo pipefail
           assets="${PUBLISH_STAGING}/artifact/assets"
           notes="${PUBLISH_STAGING}/notes.md"
           {
-            echo "Linux x86-64 CLI, agent skill and exact source archive for commit \`${RELEASE_COMMIT}\`."
+            echo "Linux x86-64 and macOS arm64 CLI, agent skill and exact source archive for commit \`${RELEASE_COMMIT}\`. The macOS binary is signed with a Developer ID certificate and notarized by Apple."
             echo
-            echo "Built and smoke-tested by nonpublishing qualification run ${QUALIFICATION_RUN_ID} (attempt ${QUALIFICATION_RUN_ATTEMPT}) on \`main\`; republished unchanged by run ${GITHUB_RUN_ID}."
+            echo "Built and smoke-tested by nonpublishing qualification runs ${QUALIFICATION_RUN_ID} (Linux, attempt ${QUALIFICATION_RUN_ATTEMPT}) and ${MACOS_RUN_ID} (macOS, attempt ${MACOS_RUN_ATTEMPT}) on \`main\`; republished unchanged by run ${GITHUB_RUN_ID}."
             echo
             echo '```text'
             cat "${assets}/SHA256SUMS"
+            cat "${PUBLISH_STAGING}/macos/aicharts-${RELEASE_VERSION}-aarch64-apple-darwin.tar.gz.sha256"
             echo '```'
             echo
             echo "Verify provenance with \`gh attestation verify <asset> --repo ${GITHUB_REPOSITORY}\`. This release enables no authentication, enrollment, uploads, background collection, native custody or updates; see docs/usage-release-publish.md."
           } > "$notes"
           gh release create "$RELEASE_TAG" --verify-tag --latest=false \
-            --title "aicharts CLI ${RELEASE_VERSION} (Linux x86-64)" --notes-file "$notes" \
+            --title "aicharts CLI ${RELEASE_VERSION}" --notes-file "$notes" \
             "${assets}/aicharts-${RELEASE_VERSION}-x86_64-unknown-linux-gnu.tar.gz" \
             "${assets}/aicharts-skill-${RELEASE_VERSION}.tar.gz" \
             "${assets}/aicharts-source-${RELEASE_VERSION}.tar.gz" \
             "${assets}/release-manifest.json" \
             "${assets}/SHA256SUMS" \
             "${PUBLISH_STAGING}/artifact/qualification.json" \
-            "${PUBLISH_STAGING}/publication.json"
+            "${PUBLISH_STAGING}/publication.json" \
+            "${PUBLISH_STAGING}/macos/aicharts-${RELEASE_VERSION}-aarch64-apple-darwin.tar.gz" \
+            "${PUBLISH_STAGING}/macos/aicharts-${RELEASE_VERSION}-aarch64-apple-darwin.tar.gz.sha256" \
+            "${PUBLISH_STAGING}/macos/aicharts-apple-notarization.json"
       - name: Attest build provenance for every checksummed asset
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-checksums: ${{ env.PUBLISH_STAGING }}/artifact/assets/SHA256SUMS
+      - name: Attest build provenance for the signed macOS archive
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: ${{ env.PUBLISH_STAGING }}/macos/aicharts-${{ env.RELEASE_VERSION }}-aarch64-apple-darwin.tar.gz
       - name: Download the published assets and verify digests and attestations
         run: |
           set -euo pipefail
           verify="$(mktemp -d)"
           gh release download "$RELEASE_TAG" --dir "$verify"
-          (cd "$verify" && sha256sum --check --strict SHA256SUMS)
-          for name in "aicharts-${RELEASE_VERSION}-x86_64-unknown-linux-gnu.tar.gz" "aicharts-skill-${RELEASE_VERSION}.tar.gz" "aicharts-source-${RELEASE_VERSION}.tar.gz" release-manifest.json SHA256SUMS qualification.json publication.json; do
+          macos="aicharts-${RELEASE_VERSION}-aarch64-apple-darwin.tar.gz"
+          (cd "$verify" && sha256sum --check --strict SHA256SUMS && sha256sum --check --strict "${macos}.sha256")
+          for name in "aicharts-${RELEASE_VERSION}-x86_64-unknown-linux-gnu.tar.gz" "aicharts-skill-${RELEASE_VERSION}.tar.gz" "aicharts-source-${RELEASE_VERSION}.tar.gz" release-manifest.json SHA256SUMS qualification.json publication.json "$macos" "${macos}.sha256" aicharts-apple-notarization.json; do
             source="${PUBLISH_STAGING}/artifact/assets/${name}"
             [[ -f "$source" ]] || source="${PUBLISH_STAGING}/artifact/${name}"
+            [[ -f "$source" ]] || source="${PUBLISH_STAGING}/macos/${name}"
             [[ -f "$source" ]] || source="${PUBLISH_STAGING}/${name}"
             cmp -- "$source" "${verify}/${name}" || { echo "publish_asset_drift:${name}"; exit 1; }
           done
-          for name in "aicharts-${RELEASE_VERSION}-x86_64-unknown-linux-gnu.tar.gz" "aicharts-skill-${RELEASE_VERSION}.tar.gz" "aicharts-source-${RELEASE_VERSION}.tar.gz" release-manifest.json; do
+          for name in "aicharts-${RELEASE_VERSION}-x86_64-unknown-linux-gnu.tar.gz" "aicharts-skill-${RELEASE_VERSION}.tar.gz" "aicharts-source-${RELEASE_VERSION}.tar.gz" release-manifest.json "$macos"; do
             gh attestation verify "${verify}/${name}" --repo "$GITHUB_REPOSITORY" \
               --signer-workflow "${GITHUB_REPOSITORY}/.github/workflows/cli-publish.yml" --deny-self-hosted-runners
           done

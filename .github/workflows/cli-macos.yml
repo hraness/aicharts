@@ -1,0 +1,160 @@
+name: Qualify macOS CLI
+
+# Nonpublishing macOS arm64 qualification of the exact main commit
+# (docs/usage-release-publish.md). The build job compiles, smokes and packages
+# an unsigned archive without credentials. Only the signing job receives the
+# Apple credentials of the main-only aicharts-apple-release environment, which
+# has no reviewers or wait timers: it signs and notarizes those bytes without
+# executing them, removes the credentials, and only then runs the signed
+# binary. "Publish Linux CLI" republishes the retained signed archive
+# unchanged and attests it; nothing is published here.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cli-macos-qualification-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build and smoke the unsigned macOS binary without Apple credentials
+    if: github.repository == 'hraness/aicharts' && github.ref == 'refs/heads/main'
+    runs-on: macos-15
+    timeout-minutes: 45
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      artifact_id: ${{ steps.unsigned.outputs.artifact-id }}
+      artifact_digest: ${{ steps.unsigned.outputs.artifact-digest }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          fetch-depth: 1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+      - name: Install the fixed Rust toolchain and source notices
+        run: |
+          rustup toolchain install 1.97.1 --profile minimal
+          rustup component add rust-src --toolchain 1.97.1
+      - name: Read the workspace version
+        id: version
+        run: |
+          set -euo pipefail
+          version="$(node -e 'const m=require("node:fs").readFileSync("Cargo.toml","utf8").match(/^version = "((?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*))"$/mu); if(!m) process.exit(1); process.stdout.write(m[1]);')"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+      - name: Build, smoke and package the unsigned binary
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          scratch="${RUNNER_TEMP}/aicharts-macos-build"
+          mkdir -m 700 "$scratch" "${scratch}/notices" unsigned-artifacts
+          cargo +1.97.1 build --release --locked -p aicharts-cli --message-format json-render-diagnostics > "${scratch}/messages.jsonl"
+          cargo +1.97.1 metadata --locked --offline --format-version 1 > "${scratch}/metadata.json"
+          binary="${GITHUB_WORKSPACE}/target/release/aicharts"
+          node scripts/release/macos-smoke.mjs --binary "$binary" --version "$VERSION"
+          node scripts/release/macos-notices.mjs --source "$GITHUB_WORKSPACE" --messages "${scratch}/messages.jsonl" --metadata "${scratch}/metadata.json" \
+            --cargo-home "${CARGO_HOME:-$HOME/.cargo}" --sysroot "$(rustc +1.97.1 --print sysroot)" --output "${scratch}/notices/THIRD_PARTY_LICENSES.txt"
+          cp LICENSE NOTICE.md "${scratch}/notices/"
+          python3 -I scripts/release/sign-macos.py package-unsigned "$binary" "${scratch}/notices" "$VERSION" "${GITHUB_WORKSPACE}/unsigned-artifacts"
+      - name: Retain the exact unsigned input for the signing job
+        id: unsigned
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: macos-unsigned-${{ github.sha }}-${{ github.run_attempt }}
+          path: |
+            unsigned-artifacts/*.unsigned.tar.gz
+            unsigned-artifacts/*.unsigned.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 7
+
+  sign:
+    name: Sign and notarize the exact macOS bytes
+    needs: build
+    if: github.repository == 'hraness/aicharts' && github.ref == 'refs/heads/main'
+    # Apple credentials exist only in this environment, which admits main.
+    environment: aicharts-apple-release
+    permissions:
+      actions: read
+      contents: read
+    runs-on: macos-15
+    timeout-minutes: 30
+    env:
+      VERSION: ${{ needs.build.outputs.version }}
+    steps:
+      - name: Check out the dependency-free signing code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          fetch-depth: 1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+      - name: Download and bind the exact same-run unsigned artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: ${{ needs.build.outputs.artifact_id }}
+          ARTIFACT_DIGEST: ${{ needs.build.outputs.artifact_digest }}
+        run: |
+          set -euo pipefail
+          digest="${ARTIFACT_DIGEST#sha256:}"
+          [[ "$ARTIFACT_ID" =~ ^[1-9][0-9]*$ && "$digest" =~ ^[0-9a-f]{64}$ ]] || { echo "::error::Unsigned input lacks an immutable artifact identity"; exit 1; }
+          gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}" > "${RUNNER_TEMP}/aicharts-unsigned-metadata.json"
+          jq -e --arg id "$ARTIFACT_ID" --arg digest "sha256:${digest}" --arg run "$GITHUB_RUN_ID" --arg sha "$GITHUB_SHA" '
+            (.id | tostring) == $id and .digest == $digest and .expired == false and
+            (.workflow_run.id | tostring) == $run and .workflow_run.head_sha == $sha and
+            .name == ("macos-unsigned-" + $sha + "-" + env.GITHUB_RUN_ATTEMPT) and
+            .size_in_bytes > 0 and .size_in_bytes <= 134217728
+          ' "${RUNNER_TEMP}/aicharts-unsigned-metadata.json" > /dev/null
+          gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}/zip" > "${RUNNER_TEMP}/aicharts-unsigned.zip"
+          python3 -I scripts/release/sign-macos.py extract-artifact "${RUNNER_TEMP}/aicharts-unsigned.zip" "$digest" "$VERSION" "${RUNNER_TEMP}/aicharts-unsigned-input"
+      - name: Sign and notarize without executing the binary
+        env:
+          APPLE_DEVELOPER_ID_P12_BASE64: ${{ secrets.APPLE_DEVELOPER_ID_P12_BASE64 }}
+          APPLE_DEVELOPER_ID_P12_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_P12_PASSWORD }}
+          APPLE_NOTARY_KEY_P8_BASE64: ${{ secrets.APPLE_NOTARY_KEY_P8_BASE64 }}
+          APPLE_NOTARY_KEY_ID: ${{ secrets.APPLE_NOTARY_KEY_ID }}
+          APPLE_NOTARY_ISSUER_ID: ${{ secrets.APPLE_NOTARY_ISSUER_ID }}
+        run: python3 -I scripts/release/sign-macos.py sign "${RUNNER_TEMP}/aicharts-unsigned-input/aicharts-${VERSION}-aarch64-apple-darwin.unsigned.tar.gz" "$VERSION" "${GITHUB_WORKSPACE}/signed-artifacts" "${RUNNER_TEMP}/aicharts-apple-signing"
+      - name: Remove temporary signing credentials even on failure or cancellation
+        if: always()
+        run: python3 -I scripts/release/sign-macos.py cleanup "${RUNNER_TEMP}/aicharts-apple-signing"
+      - name: Verify and run the signed binary after credential removal
+        run: |
+          set -euo pipefail
+          root="aicharts-${VERSION}-aarch64-apple-darwin"
+          (cd signed-artifacts && shasum -a 256 -c "${root}.tar.gz.sha256")
+          check="${RUNNER_TEMP}/aicharts-signed-check"
+          mkdir -m 700 "$check"
+          tar -xzf "signed-artifacts/${root}.tar.gz" -C "$check"
+          codesign --verify --strict --check-notarization \
+            -R='identifier "dev.hraness.aicharts" and anchor apple generic and certificate leaf[subject.OU] = "8AAP53VTW3"' "${check}/${root}/bin/aicharts"
+          node scripts/release/macos-smoke.mjs --binary "${check}/${root}/bin/aicharts" --version "$VERSION"
+          jq -e --arg version "$VERSION" '.state == "verified" and .status == "Accepted" and .version == $version
+            and .identifier == "dev.hraness.aicharts" and .teamId == "8AAP53VTW3"' "${RUNNER_TEMP}/aicharts-apple-notarization.json" > /dev/null
+          cp "${RUNNER_TEMP}/aicharts-apple-notarization.json" signed-artifacts/
+      - name: Retain the exact signed qualification artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: macos-qualification-${{ github.sha }}-${{ github.run_attempt }}
+          path: |
+            signed-artifacts/aicharts-*-aarch64-apple-darwin.tar.gz
+            signed-artifacts/aicharts-*-aarch64-apple-darwin.tar.gz.sha256
+            signed-artifacts/aicharts-apple-notarization.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Retain the non-secret notarization diagnostic
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: macos-notarization-diagnostic-${{ github.sha }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/aicharts-apple-notarization.json
+          if-no-files-found: ignore
+          retention-days: 7

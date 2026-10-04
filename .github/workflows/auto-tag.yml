@@ -28,7 +28,7 @@ jobs:
       actions: write
       contents: read
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -72,17 +72,20 @@ jobs:
             exit 0
           fi
           started="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          gh workflow run cli-release.yml -R "$REPO" --ref main
-          run=""
-          for _ in $(seq 1 30); do
-            sleep 10
-            run="$(gh run list -R "$REPO" --workflow cli-release.yml --branch main --event workflow_dispatch --commit "$SHA" \
-              --json databaseId,createdAt -q "[.[] | select(.createdAt >= \"$started\")] | sort_by(.createdAt) | last | .databaseId // empty")"
-            [[ -n "$run" ]] && break
+          # Linux and macOS qualify in parallel; publication needs both.
+          for workflow in cli-release.yml cli-macos.yml; do gh workflow run "$workflow" -R "$REPO" --ref main; done
+          for workflow in cli-release.yml cli-macos.yml; do
+            run=""
+            for _ in $(seq 1 30); do
+              sleep 10
+              run="$(gh run list -R "$REPO" --workflow "$workflow" --branch main --event workflow_dispatch --commit "$SHA" \
+                --json databaseId,createdAt -q "[.[] | select(.createdAt >= \"$started\")] | sort_by(.createdAt) | last | .databaseId // empty")"
+              [[ -n "$run" ]] && break
+            done
+            [[ -n "$run" ]] || { echo "::error::$workflow run did not start"; exit 1; }
+            gh run watch "$run" -R "$REPO" --exit-status --interval 30 >/dev/null
+            echo "Qualified $SHA in $workflow run $run"
           done
-          [[ -n "$run" ]] || { echo "::error::Qualify Linux CLI run did not start"; exit 1; }
-          gh run watch "$run" -R "$REPO" --exit-status --interval 30 >/dev/null
-          echo "Qualified $SHA in run $run"
           echo "QUALIFIED=true" >> "$GITHUB_ENV"
       - name: Mint tagger token
         if: env.QUALIFIED == 'true'
