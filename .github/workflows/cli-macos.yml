@@ -65,7 +65,7 @@ jobs:
           python3 -I scripts/release/sign-macos.py package-unsigned "$binary" "${scratch}/notices" "$VERSION" "${GITHUB_WORKSPACE}/unsigned-artifacts"
       - name: Retain the exact unsigned input for the signing job
         id: unsigned
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: macos-unsigned-${{ github.sha }}-${{ github.run_attempt }}
           path: |
@@ -141,7 +141,7 @@ jobs:
             and .identifier == "dev.hraness.aicharts" and .teamId == "8AAP53VTW3"' "${RUNNER_TEMP}/aicharts-apple-notarization.json" > /dev/null
           cp "${RUNNER_TEMP}/aicharts-apple-notarization.json" signed-artifacts/
       - name: Retain the exact signed qualification artifacts
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: macos-qualification-${{ github.sha }}-${{ github.run_attempt }}
           path: |
@@ -152,7 +152,7 @@ jobs:
           retention-days: 7
       - name: Retain the non-secret notarization diagnostic
         if: failure()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: macos-notarization-diagnostic-${{ github.sha }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/aicharts-apple-notarization.json
