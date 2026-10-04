@@ -24,13 +24,16 @@ const COMMANDS: &[&str] = &[
     "doctor",
     "enroll",
     "help",
+    "history",
     "init",
     "inspect",
     "keygen",
+    "mcp",
     "open",
     "outbox",
     "outputs",
     "prefix-enable",
+    "publish",
     "refresh",
     "reindex-plan",
     "reindex-prepare",
@@ -184,6 +187,50 @@ pub(crate) fn explain(code: &str, args: &[String]) -> Explained {
         "service_command_required" => explained(
             "Name a collector command: install, uninstall or status.",
             "aicharts service --help".to_owned(),
+        ),
+        "history_command_required" => explained(
+            "Name a history command: enable, disable, status, report or collect.",
+            "aicharts history --help".to_owned(),
+        ),
+        "publish_command_required" => explained(
+            "Publishing is optional; set it up with publish enable and your session folders.",
+            "aicharts help publish".to_owned(),
+        ),
+        "history_store_invalid" => explained(
+            "Your usage history file is damaged, so aicharts left it untouched.",
+            "aicharts history status".to_owned(),
+        ),
+        "history_store_full" => explained(
+            "Your usage history reached its size limit. Nothing was dropped.",
+            "aicharts history status".to_owned(),
+        ),
+        "history_busy" => explained(
+            "Another history collection is running. Try again in a minute.",
+            "aicharts history status".to_owned(),
+        ),
+        "history_unwritable" | "history_unreadable" => explained(
+            "Couldn't use the usage history folder in ~/.aicharts/history.",
+            "aicharts history status".to_owned(),
+        ),
+        "history_not_ours" => explained(
+            "A scheduler entry named for aicharts history exists that aicharts did not write, so it is left alone.",
+            "aicharts history status".to_owned(),
+        ),
+        "history_scheduler_unavailable" => explained(
+            "Scheduled collection isn't available on this system. Collect when you want an update.",
+            "aicharts history collect".to_owned(),
+        ),
+        "history_program_path_unsupported" => explained(
+            "The scheduler can't run aicharts from its current folder. Install it in a folder without spaces or symbols.",
+            "aicharts history --help".to_owned(),
+        ),
+        "history_requires_unix" => explained(
+            "Usage history needs macOS or Linux.",
+            "aicharts stats --help".to_owned(),
+        ),
+        "history_window_too_large" => explained(
+            "That period holds too many rows. Choose fewer days or agents.",
+            "aicharts history report --help".to_owned(),
         ),
         "service_requires_macos" => explained(
             "The background collector installs only on macOS.",

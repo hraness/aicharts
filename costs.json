@@ -203,6 +203,21 @@
       "note": "Only explicit mutating collection writes private numeric health. Independent last attempt, complete last good and exact-flight publication evidence; paths and opaque profile/flight bindings are withheld from exports. Current/staged payload and stable lock; no physical allocation claim.",
       "assurancePolicy": "canonical-account-history"
     },
+    "local:usage-history": {
+      "kind": "authoritative",
+      "retention": "persistent",
+      "owner": "crates/aicharts-cli/src/history.rs",
+      "deletion": "docs/usage-history.md",
+      "budget": {
+        "rowsPerRecord": 131072,
+        "bytesPerRecord": 67108864,
+        "clientsPerRecord": 64,
+        "statusBytes": 16384,
+        "payloadFilesPerStore": 2,
+        "lockFilesPerStore": 1
+      },
+      "note": "On-device daily token totals per client, provider, model and basis in the client-stats-v2 row shape; never uploaded, and the MCP server only reads it. Merges never lower a retained row, so it can be the only copy of days whose source files were deleted. Growth past the row or byte bound refuses instead of evicting; atomic replace plus a separate last-collection status file and an advisory lock. Disabling collection never removes it; the owner deletes the folder."
+    },
     "worker:usage_admission_audit": {
       "kind": "authoritative",
       "owner": "services/usage-worker/src/admission-schema.ts",

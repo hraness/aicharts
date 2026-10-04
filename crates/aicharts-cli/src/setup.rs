@@ -1,6 +1,9 @@
-//! `aicharts setup`: the guided first-run path for publishing.
+//! `aicharts setup`: the guided first-run path.
 //!
-//! Steps, each idempotent so a re-run continues where a previous attempt
+//! With no options, setup keeps usage history on this computer only
+//! (`aicharts history enable`): nothing is enrolled or uploaded. With session
+//! folders, or as `aicharts publish enable`, it sets up publishing. Those
+//! steps, each idempotent so a re-run continues where a previous attempt
 //! stopped:
 //!
 //! 1. Private key (`keygen`) at `--key-file` (default `~/.aicharts/key`)
@@ -155,12 +158,37 @@ fn run_command(args: Vec<String>) -> Result<String, &'static str> {
     crate::run(&args)
 }
 
+/// Publishing is never the default: only options that name what to publish
+/// select it. A bare `setup` (optionally `--json`) keeps local history.
+fn local_only(args: &[String]) -> Option<bool> {
+    match &args[1..] {
+        [] => Some(false),
+        [flag] if flag == "--json" => Some(true),
+        _ => None,
+    }
+}
+
 /// Runs setup. Steps that touch macOS-only authority (enrollment, the
 /// LaunchAgent) return the platform's fixed refusal on other systems.
 pub(super) fn run(args: &[String]) -> Result<String, &'static str> {
     if let Some(crate::help::Help::Page(page)) = crate::help::resolve(args) {
         return Ok(page);
     }
+    if let Some(json) = local_only(args) {
+        return crate::history::setup_local(json);
+    }
+    publish(args)
+}
+
+/// `aicharts publish enable OPTIONS`: the publishing setup, which needs
+/// explicit session folders.
+pub(super) fn run_publish(options: &[String]) -> Result<String, &'static str> {
+    let mut args = vec!["setup".to_owned()];
+    args.extend_from_slice(options);
+    publish(&args)
+}
+
+fn publish(args: &[String]) -> Result<String, &'static str> {
     let home = std::env::var_os("HOME")
         .map(PathBuf::from)
         .filter(|home| home.is_absolute())
@@ -308,6 +336,17 @@ mod tests {
             PathBuf::from("/home/me/.aicharts/checkpoint.key")
         );
         assert_eq!(options.sources.len(), 1);
+    }
+
+    #[test]
+    fn only_named_session_folders_select_publishing() {
+        assert_eq!(local_only(&args(&["setup"])), Some(false));
+        assert_eq!(local_only(&args(&["setup", "--json"])), Some(true));
+        assert_eq!(local_only(&args(&["setup", "--claude", "/c"])), None);
+        assert_eq!(local_only(&args(&["setup", "--state-dir", "/s"])), None);
+        // `publish enable` with nothing to publish refuses instead of
+        // falling back to anything else.
+        assert_eq!(run_publish(&[]).unwrap_err(), "explicit_source_required");
     }
 
     #[test]
