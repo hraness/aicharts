@@ -2,7 +2,7 @@
 
 `.github/workflows/cli-publish.yml` turns one retained, nonpublishing Linux qualification into an immutable GitHub Release with OIDC build provenance. It is intended as the canonical distribution path for the Linux CLI profile: a reader would download the archive from the release, check its digest against `SHA256SUMS` and the manifest, and verify the attestation with `gh`. No package registry mirror exists, and none is required. The first release, [`cli-v0.1.0`](https://github.com/hraness/aicharts/releases/tag/cli-v0.1.0), was published on 2026-09-28 at 01:35:18 UTC as a full release, not a prerelease.
 
-The latest published release is [`cli-v0.2.0`](https://github.com/hraness/aicharts/releases/tag/cli-v0.2.0), from commit `525b9f3a54e3264e4b3050522527985a13ebfad0`. [Qualification run 36605822635](https://github.com/hraness/aicharts/actions/runs/36605822635), attempt 1, built and tested it on `main`; [publish run 36606325096](https://github.com/hraness/aicharts/actions/runs/36606325096) succeeded on 2026-09-29 and published the same bytes with attestations. Any later tag still needs a successful qualification of its exact commit on `main`, or it fails closed.
+The latest published release is [`cli-v0.3.0`](https://github.com/hraness/aicharts/releases/tag/cli-v0.3.0), from commit `9c6a5071f88c528401b61b869d454afed5358b01`. [Qualification run 37221385303](https://github.com/hraness/aicharts/actions/runs/37221385303), attempt 1, built and tested it on `main`; [publish run 37221599811](https://github.com/hraness/aicharts/actions/runs/37221599811) succeeded on 2026-10-04 and published the same bytes with attestations. The previous release, [`cli-v0.2.0`](https://github.com/hraness/aicharts/releases/tag/cli-v0.2.0), came from `525b9f3a54e3264e4b3050522527985a13ebfad0` on 2026-09-29. Any later tag still needs a successful qualification of its exact commit on `main`, or it fails closed.
 
 ## What triggers it
 
@@ -30,6 +30,6 @@ Follow [Run the Linux CLI](../distribution/cli/docs/usage-install.md) to downloa
 
 ## Release settings and remaining work
 
-- GitHub reports `immutable: true` for `cli-v0.2.0`, checked on 2026-09-29. Its published assets and tag cannot be changed; the workflow also refuses to overwrite an existing release.
+- GitHub reports `immutable: true` for `cli-v0.3.0`, checked on 2026-10-04. Its published assets and tag cannot be changed; the workflow also refuses to overwrite an existing release.
 - A macOS notarized release remains unimplemented. It needs an Apple Developer identity, a Developer ID certificate and notarization credentials held by the owner; the macOS companion is documented in `docs/usage-companion.md` and is not distributed by this path.
 - Rebuilding inside the publish workflow, if ever wanted, requires a reviewed extension of the runner's identity policy in `scripts/release/run-linux.mjs` and its tests; the current design deliberately keeps building on `main` only.
