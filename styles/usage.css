@@ -59,6 +59,11 @@
 .usage-button--primary:hover { background: var(--hraness-site-accent); border-color: var(--hraness-site-accent); box-shadow: 0 6px 18px -8px var(--hraness-site-accent); color: var(--hraness-site-accent-ink); }
 .usage-button--quiet { background: var(--usage-card); border-color: var(--usage-card-border); color: var(--foreground); }
 .usage-button--quiet:hover { background: var(--usage-tint); border-color: color-mix(in srgb, var(--hraness-site-accent) 45%, var(--grid)); }
+.usage-account-actions { align-items: center; display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; }
+.usage-account-actions__sign-in { align-items: center; background: none; border: 0; color: var(--foreground); cursor: pointer; display: inline-flex; font: inherit; font-weight: 450; min-block-size: 2.75rem; padding: 0; text-decoration: underline dotted color-mix(in srgb, currentColor 45%, transparent); text-decoration-thickness: 1px; text-underline-offset: .22em; }
+.usage-account-actions__sign-in:hover, .usage-account-actions__sign-in:focus-visible { text-decoration-color: currentColor; }
+.usage-account-actions__sign-in:focus-visible { outline: 2px solid var(--hraness-site-accent); outline-offset: 3px; }
+@media (forced-colors: active) { .usage-account-actions__sign-in { color: LinkText; text-decoration-color: LinkText; } }
 .usage-button--small { font-size: .875rem; gap: .4rem; min-block-size: 2.25rem; padding-inline: .85rem; }
 .usage-button__arrow { transition: transform 140ms ease; }
 .usage-button:hover .usage-button__arrow { transform: translateX(2px); }

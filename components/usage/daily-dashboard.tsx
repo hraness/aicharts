@@ -229,9 +229,10 @@ export function DailyUsageDashboard({ todayUtcDay, returnTo = "/dashboard" }: Re
           <p>{authenticationRequired ? "Use your Hraness account to see your private measurements. Public sharing is a separate choice."
             : notEnrolled ? "Accepted measurements will appear here after you enroll a device. Your local collector can still be used independently."
               : "Your measurements have not been changed. Try again when the connection is available."}</p>
-          {authenticationRequired ? <form method="get" action="/api/suite-auth/start">
+          {authenticationRequired ? <form method="get" action="/api/suite-auth/start" className="usage-account-actions">
             <input type="hidden" name="return_to" value={returnTo} />
-            <button className="usage-button usage-button--primary" type="submit">Sign in with Hraness</button>
+            <button className="usage-button usage-button--primary" type="submit">Create account</button>
+            <button className="usage-account-actions__sign-in" type="submit">Sign in</button>
           </form>
             : notEnrolled ? <Link className="usage-inline-link" href="https://github.com/hraness/aicharts/blob/main/docs/usage-local.md">Local collector guide</Link>
               : <button className="usage-button usage-button--primary" type="button" onClick={() => void load(range)}>Try again</button>}

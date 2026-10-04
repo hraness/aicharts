@@ -115,7 +115,7 @@ export function UsageAccountPanel({ state, accountId, copyState, copy, retry, si
       {state === "loading" && <p role="status">Verifying your browser account with Hraness.</p>}
       {state === "unavailable" && <><p role="status">Your account could not be verified. Try again before comparing it with your collector.</p><button className="usage-account__action" type="button" onClick={retry}>Retry account check</button></>}
       {state === "authentication_required" && <><p>Sign in to see which account receives your private usage. Local reports work without signing in.</p>
-        <form action="/api/suite-auth/start" method="get"><input type="hidden" name="return_to" value={returnTo} /><button className="usage-button usage-button--quiet" type="submit">Sign in with Hraness</button></form></>}
+        <form action="/api/suite-auth/start" method="get"><input type="hidden" name="return_to" value={returnTo} /><button className="usage-button usage-button--quiet" type="submit">Sign in</button></form></>}
       {state === "sign_out_failed" && <p role="alert">Sign-out could not be confirmed. Retry sign-out before switching accounts.</p>}
       {state !== "loading" && <div className="usage-account__actions">
         <button className="usage-account__action" type="button" disabled={busy} onClick={() => signOut(false)}>{busy ? "Signing out…" : state === "sign_out_failed" ? "Retry sign-out" : "Sign out"}</button>

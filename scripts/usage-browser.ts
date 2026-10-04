@@ -307,8 +307,9 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
         await refresh("authentication_required");
         // A settled refusal clears every private view: the daily report unmounts
         // and the account dashboard itself asks for sign-in.
-        const signIn = page.locator(".usage-stats__notice").getByRole("button", { name: "Sign in with Hraness" });
+        const signIn = page.locator(".usage-stats__notice").getByRole("button", { name: "Sign in", exact: true });
         await signIn.waitFor();
+        invariant(await page.locator(".usage-stats__notice").getByRole("button", { name: "Create account", exact: true }).count() === 1, "The sign-in notice must also offer account creation.");
         invariant(await page.locator(".usage-daily").count() === 0, "An authentication refusal must clear the private daily report.");
         invariant(await page.locator('.usage-stats__notice form[action="/api/suite-auth/start"][method="get"] input[name="return_to"]').inputValue() === "/dashboard", "Document sign-in must return to this private page.");
         // Only a new document restores private reads after a settled refusal.
