@@ -1,10 +1,10 @@
-/** Published CLI release, checked against its assets and attestations on 2026-09-29.
- * Qualification: https://github.com/hraness/aicharts/actions/runs/36605822635
- * Publication: https://github.com/hraness/aicharts/actions/runs/36606325096
+/** Published CLI release, checked against its assets and attestations on 2026-10-04.
+ * Qualification: https://github.com/hraness/aicharts/actions/runs/37221385303
+ * Publication: https://github.com/hraness/aicharts/actions/runs/37221599811
  */
 export const usageCliRelease = {
-  version: "0.2.0",
-  sourceCommit: "525b9f3a54e3264e4b3050522527985a13ebfad0",
+  version: "0.3.0",
+  sourceCommit: "9c6a5071f88c528401b61b869d454afed5358b01",
   rustToolchain: "1.97.1",
   linuxTarget: "x86_64-unknown-linux-gnu",
 } as const;
