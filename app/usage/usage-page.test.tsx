@@ -3,7 +3,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import UsagePage from "./page";
-import { usageInstallPlatforms, usageLinuxInstallCommand, usageMacInstallCommand } from "./install";
+import { usageInstallPlatforms, usageLinuxInstallCommand, usageMacInstallCommand, usageMacSourceCommand } from "./install";
 import { usageCliRelease, usageReleaseTag, usageReleaseUrl } from "@/lib/usage-cli-release";
 
 describe("usage page", () => {
@@ -23,9 +23,13 @@ describe("usage page", () => {
     expect(markup).toContain('data-hraness-platform-badges=""');
     expect(usageInstallPlatforms[2]).toMatchObject({ unavailable: true });
     expect(usageInstallPlatforms[2]).not.toHaveProperty("command");
-    expect(usageInstallPlatforms[0]).toMatchObject({ unavailable: true, command: usageMacInstallCommand });
-    expect(usageMacInstallCommand).toContain(`--rev ${usageCliRelease.sourceCommit}`);
-    expect(usageMacInstallCommand).toContain(`cargo +${usageCliRelease.rustToolchain} install --locked`);
+    expect(usageInstallPlatforms[0]).toMatchObject({ command: usageMacInstallCommand });
+    expect(usageInstallPlatforms[0]).not.toHaveProperty("unavailable");
+    expect(usageMacInstallCommand).toContain(`gh release download ${usageReleaseTag} --repo hraness/aicharts --pattern 'aicharts-${usageCliRelease.version}-aarch64-apple-darwin.tar.gz*'`);
+    expect(usageMacInstallCommand).toContain(`shasum -a 256 -c aicharts-${usageCliRelease.version}-aarch64-apple-darwin.tar.gz.sha256`);
+    expect(usageMacInstallCommand).toContain("--signer-workflow hraness/aicharts/.github/workflows/cli-publish.yml --deny-self-hosted-runners");
+    expect(usageMacSourceCommand).toContain(`--rev ${usageCliRelease.sourceCommit}`);
+    expect(usageMacSourceCommand).toContain(`cargo +${usageCliRelease.rustToolchain} install --locked`);
     expect(usageLinuxInstallCommand).toContain(`gh release download ${usageReleaseTag}`);
   });
 
@@ -37,6 +41,7 @@ describe("usage page", () => {
     expect(linuxGuide).toContain("--signer-workflow hraness/aicharts/.github/workflows/cli-publish.yml");
     expect(linuxGuide).toContain("--deny-self-hosted-runners");
     expect(localGuide).toContain(usageMacInstallCommand);
+    expect(localGuide).toContain(usageMacSourceCommand);
   });
 
   test("names similar local-log tools with a checked date", () => {
