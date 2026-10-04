@@ -43,7 +43,7 @@ Before return, the reader rechecks its observed directory and Git metadata, incl
 | Resource | Bound |
 | --- | --- |
 | Regular files / entries including root and directories | 2,048 / 8,192 |
-| Aggregate per-path source bytes | 64 MiB |
+| Aggregate per-path source bytes | 128 MiB |
 | Commit / commit headers | 1 MiB / 64 KiB |
 | Individual tree / aggregate unique trees | 1 MiB / 4 MiB |
 | Recursive listing | 3 MiB |

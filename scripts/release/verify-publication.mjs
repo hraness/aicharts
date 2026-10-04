@@ -17,7 +17,7 @@ import { validateLinuxQualificationReport } from "./linux-qualification.mjs";
 const MiB = 1024 * 1024;
 const REPOSITORY = "hraness/aicharts";
 const WORKFLOW = ".github/workflows/cli-release.yml";
-const CAPS = Object.freeze({ cli: 64 * MiB, skill: MiB, source: 32 * MiB, manifest: MiB, checksums: 4096, qualification: 65_536, receipt: 65_536 });
+const CAPS = Object.freeze({ cli: 64 * MiB, skill: MiB, source: 64 * MiB, manifest: MiB, checksums: 4096, qualification: 65_536, receipt: 65_536 });
 const COMMIT = /^[0-9a-f]{40}$/u;
 const TAG = /^cli-v((?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*))$/u;
 const RUN_ID = /^[1-9][0-9]{0,19}$/u;

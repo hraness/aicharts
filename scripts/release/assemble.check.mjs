@@ -54,8 +54,8 @@ const fileInventory = (files) => files.map((file) => ({
   path: file.path, mode: file.mode, bytes: file.bytes.byteLength, sha256: sha(file.bytes),
 })).sort((a, b) => order(a.path, b.path));
 const caps = (kind) => ({
-  maxCompressedBytes: { cli: 64 * 1024 * 1024, skill: 1024 * 1024, source: 32 * 1024 * 1024 }[kind],
-  maxExpandedBytes: { cli: 128 * 1024 * 1024, skill: 4 * 1024 * 1024, source: 64 * 1024 * 1024 }[kind],
+  maxCompressedBytes: { cli: 64 * 1024 * 1024, skill: 1024 * 1024, source: 64 * 1024 * 1024 }[kind],
+  maxExpandedBytes: { cli: 128 * 1024 * 1024, skill: 4 * 1024 * 1024, source: 128 * 1024 * 1024 }[kind],
   maxFileBytes: { cli: 128 * 1024 * 1024, skill: 4 * 1024 * 1024, source: 64 * 1024 * 1024 }[kind],
   maxFiles: kind === "source" ? 2048 : 16, maxEntries: 8192, maxExpansionRatio: 4096,
 });
@@ -642,7 +642,7 @@ test("derived source directory headers share the fixed 8192-entry budget", () =>
 
 test("aggregate source and skill body ceilings preflight reused modest views", () => {
   const source = fixture(); const megabyte = Buffer.alloc(1024 * 1024, 0x5a);
-  for (let index = 0; index < 65; index++) source.sourceFiles.push({ path: `bodies/f${index}`, mode: 0o644, bytes: megabyte });
+  for (let index = 0; index < 129; index++) source.sourceFiles.push({ path: `bodies/f${index}`, mode: 0o644, bytes: megabyte });
   rejected(assembleLinuxRelease(source), "limit_exceeded");
   const skill = fixture(); const modest = Buffer.alloc(800_000, 0x5a);
   for (const file of skill.sourceFiles) if (file.path.startsWith("skills/aicharts/")) file.bytes = modest;

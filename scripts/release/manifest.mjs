@@ -18,7 +18,7 @@ const DISABLED = Object.freeze(["authentication", "enrollment", "upload", "backg
 const LIMITS = Object.freeze({
   cli: Object.freeze({ compressed: 64 * 1024 * 1024, expanded: 128 * 1024 * 1024, files: 16 }),
   skill: Object.freeze({ compressed: 1024 * 1024, expanded: 4 * 1024 * 1024, files: 16 }),
-  source: Object.freeze({ compressed: 32 * 1024 * 1024, expanded: 64 * 1024 * 1024, files: 2048 }),
+  source: Object.freeze({ compressed: 64 * 1024 * 1024, expanded: 128 * 1024 * 1024, files: 2048 }),
 });
 const ERRORS = new Map(["invalid_expectations", "invalid_manifest", "invalid_checksums", "limit_exceeded"].map((error) => [error, Object.freeze({ ok: false, error })]));
 const ERROR_VALUES = new Set(ERRORS.values());

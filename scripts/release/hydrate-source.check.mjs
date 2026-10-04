@@ -144,7 +144,7 @@ test("source path and collision policy refuses the complete graph before writing
 });
 
 test("the exact source/count/entry bounds are admitted and one beyond refuses", () => {
-  assert.deepEqual(LIMITS, { files: 2048, entries: 8192, source: 67108864, path: 256, destination: 4096, chunk: 65536 });
+  assert.deepEqual(LIMITS, { files: 2048, entries: 8192, source: 134217728, path: 256, destination: 4096, chunk: 65536 });
   const input = { destinationDirectory: "/synthetic/private/source", sourceFiles: [] };
   const count = Array.from({ length: 2048 }, (_, i) => item("f" + i, ""));
   assert.equal(prepare({ ...input, sourceFiles: count }).files.length, 2048);
