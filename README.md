@@ -13,7 +13,9 @@ account service is enabled.
 The collector can also keep a daily history of your token use on your computer,
 and your agents can read it through a read-only MCP server to answer questions
 or draw charts. Nothing leaves your computer unless you set up publishing. See
-[usage history and agent queries](docs/usage-history.md).
+[usage history and agent queries](docs/usage-history.md). The
+[xcb](https://xcb.sh) and [Gobstopper](https://gobstopper.sh) installers add
+aicharts and turn this history on.
 
 The homepage leads with an interactive Pareto frontier: compare model capability against output tokens or cost, then inspect the configuration behind each point. The original coding-agent charts have a focused home at [`/coding`](https://aicharts.io/coding). The separate [`/benchmarks`](https://aicharts.io/benchmarks) library covers coding, reasoning, research, memory, images, video, audio, and world models. Charted results, source guides, and emerging evaluations are labeled separately, and older research cohorts are labeled with their dates.
 

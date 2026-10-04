@@ -104,6 +104,7 @@ export default function UsagePage() {
             <span className="usage-eyebrow">No account needed</span>
             <h2 id="usage-local-title">Start with a local report</h2>
             <p>The collector writes a report file with token counts, known costs, and source coverage. The detailed reports page reads that file in your browser tab and does not upload it.</p>
+            <p>Installing <a href="https://xcb.sh">xcb</a> or <a href="https://gobstopper.sh">Gobstopper</a> adds aicharts and turns on its daily history on your computer, so <code>aicharts history report</code> and <code>aicharts mcp</code> work right away. Nothing is uploaded.</p>
           </div>
           <div>
             <CopyCommand command={'aicharts stats --home "$HOME" --all --json > usage-report.json'} label="Local-only report command" note="local only" />
