@@ -55,7 +55,7 @@ describe("dependency pins", () => {
   test("the checked-in manifest, lockfile, Cargo locks and workflows pass", () => {
     expect(checkPackagePins(manifest, lock)).toEqual([]);
     expect(checkCargoLock(read("Cargo.lock"), "Cargo.lock")).toEqual([]);
-    for (const file of ["ci.yml", "cli-release.yml", "codex-auto-merge.yml", "data-refresh.yml"]) expect(checkWorkflowPins(read(`.github/workflows/${file}`), file)).toEqual([]);
+    for (const file of ["ci.yml", "cli-release.yml", "cli-macos.yml", "cli-publish.yml", "auto-tag.yml", "codex-auto-merge.yml", "data-refresh.yml"]) expect(checkWorkflowPins(read(`.github/workflows/${file}`), file)).toEqual([]);
   });
   test("unpinned github specs, missing or inexact lock entries, stale workspace specs and unpinned script URLs fail", () => {
     const branch = structuredClone(manifest); branch.dependencies!["@hraness/ui"] = "github:hraness/ui#main";
