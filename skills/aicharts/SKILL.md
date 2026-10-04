@@ -9,7 +9,7 @@ Choose the requested mode: public benchmarks, local usage history, retained-ledg
 
 ## Local usage history
 
-For questions about the user's own token use ("how much did I use this week", "chart my usage by agent"), read [references/local-history.md](references/local-history.md). Answer from the `aicharts mcp` tools when the host has them, or from `aicharts history report --json` or `--csv`. Both are read-only and keep the data on this computer. Report the period in UTC, the agents read and their coverage; keep reported and estimated costs separate, and treat null as unknown. Draw charts as local files. Do not enable, collect, publish or upload unless the user asks for that action.
+For questions about the user's own token use ("how much did I use this week", "chart my usage by agent"), read [the local usage history section](references/local-usage.md#local-usage-history). Answer from the `aicharts mcp` tools when the host has them, or from `aicharts history report --json` or `--csv`. Both are read-only and keep the data on this computer. Report the period in UTC, the agents read and their coverage; keep reported and estimated costs separate, and treat null as unknown. Draw charts as local files. Do not enable, collect, publish or upload unless the user asks for that action.
 
 ## Public benchmarks
 
