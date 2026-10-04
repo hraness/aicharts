@@ -6,7 +6,7 @@ import { constants, lstatSync, mkdirSync, openSync, fstatSync, fchmodSync,
 import { posix } from "node:path";
 import { types } from "node:util";
 
-const LIMITS = Object.freeze({ files: 2048, entries: 8192, source: 64 * 1024 * 1024,
+const LIMITS = Object.freeze({ files: 2048, entries: 8192, source: 128 * 1024 * 1024,
   path: 256, destination: 4096, chunk: 64 * 1024 });
 const ERRORS = new Map(["invalid_input", "unsupported_destination", "invalid_source",
   "limit_exceeded", "destination_exists", "source_changed", "write_failed"]

@@ -10,7 +10,7 @@ const MiB = 1024 * 1024;
 const CAPS = Object.freeze({
   cli: Object.freeze({ maxCompressedBytes: 64 * MiB, maxExpandedBytes: 128 * MiB, maxFileBytes: 128 * MiB, maxFiles: 16, maxEntries: 8192, maxExpansionRatio: 4096 }),
   skill: Object.freeze({ maxCompressedBytes: MiB, maxExpandedBytes: 4 * MiB, maxFileBytes: 4 * MiB, maxFiles: 16, maxEntries: 8192, maxExpansionRatio: 4096 }),
-  source: Object.freeze({ maxCompressedBytes: 32 * MiB, maxExpandedBytes: 64 * MiB, maxFileBytes: 64 * MiB, maxFiles: 2048, maxEntries: 8192, maxExpansionRatio: 4096 }),
+  source: Object.freeze({ maxCompressedBytes: 64 * MiB, maxExpandedBytes: 128 * MiB, maxFileBytes: 64 * MiB, maxFiles: 2048, maxEntries: 8192, maxExpansionRatio: 4096 }),
 });
 const CLI = Object.freeze([
   ["LICENSE", "LICENSE"], ["NOTICE.md", "distribution/NOTICE.md"],

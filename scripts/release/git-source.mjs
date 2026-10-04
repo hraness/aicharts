@@ -8,7 +8,7 @@ import { performance } from "node:perf_hooks";
 import { types } from "node:util";
 
 const MiB = 1024 * 1024;
-const LIMITS = Object.freeze({ files: 2048, entries: 8192, source: 64 * MiB,
+const LIMITS = Object.freeze({ files: 2048, entries: 8192, source: 128 * MiB,
   commit: MiB, headers: 64 * 1024, tree: MiB, trees: 4 * MiB, listing: 3 * MiB,
   config: 64 * 1024, configLines: 256, packs: 1024, childMs: 15_000, totalMs: 50_000 });
 const ERRORS = new Map(["invalid_input", "unsupported_repository", "repository_changed",

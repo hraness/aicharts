@@ -63,7 +63,7 @@ Exactly three assets are emitted, sorted by name. Each is `{ name, kind, target,
 | --- | --- | ---: | ---: | ---: |
 | `aicharts-V-x86_64-unknown-linux-gnu.tar.gz` | Name without `.tar.gz` | 64 MiB | 128 MiB | 16 |
 | `aicharts-skill-V.tar.gz` | `aicharts` | 1 MiB | 4 MiB | 16 |
-| `aicharts-source-V.tar.gz` | Name without `.tar.gz` | 32 MiB | 64 MiB | 2,048 |
+| `aicharts-source-V.tar.gz` | Name without `.tar.gz` | 64 MiB | 128 MiB | 2,048 |
 
 The CLI inventory has exactly seven files: `bin/aicharts`, `BUILD.json`, `LICENSE`, `NOTICE.md`, `THIRD_PARTY_LICENSES.txt`, `docs/usage-install.md`, and `docs/usage-local.md`. Only the executable is `0o755`; the rest are `0o644`.
 

@@ -323,7 +323,7 @@ test("bounded pack enumeration admits 1024 entries and refuses entry 1025 before
 });
 
 test("all six children use exact commands, generated OID inputs, fixed environment and checked output plans", (t) => {
-  assert.deepEqual(LIMITS, { files: 2048, entries: 8192, source: 64 * 1024 * 1024,
+  assert.deepEqual(LIMITS, { files: 2048, entries: 8192, source: 128 * 1024 * 1024,
     commit: 1024 * 1024, headers: 64 * 1024, tree: 1024 * 1024, trees: 4 * 1024 * 1024,
     listing: 3 * 1024 * 1024, config: 64 * 1024, configLines: 256, packs: 1024, childMs: 15_000, totalMs: 50_000 });
   assert.deepEqual(ENV, { PATH: "/usr/bin:/bin", LC_ALL: "C", LANG: "C", TZ: "UTC",

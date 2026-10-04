@@ -55,7 +55,7 @@ Each archive is validated against an inventory derived from the pre-archive snap
 | --- | --- | --- |
 | CLI | 64 MiB | 128 MiB |
 | Skill | 1 MiB | 4 MiB |
-| Source | 32 MiB | 64 MiB |
+| Source | 64 MiB | 128 MiB |
 
 Source count is at most 2,048 regular files. Each archive permits at most 8,192 entries, including directories, and an expansion ratio at most 4,096. BUILD is at most 16 KiB, the manifest 1 MiB, and checksums 4 KiB. Archive timestamps use the checked commit time. These are payload limits, not a peak-memory guarantee. Metadata reflection remains proportional to supplied property count; this is not a hostile-runtime sandbox.
 

@@ -401,7 +401,7 @@ test("source paths, modes, collisions and independently supplied complete invent
 });
 
 test("fixed per-kind compressed, expanded, ratio and BUILD inventory caps are enforced", () => {
-  for (const [key, cap] of [["cli", 64 * 1024 * 1024], ["skill", 1024 * 1024], ["sourceArchive", 32 * 1024 * 1024]]) {
+  for (const [key, cap] of [["cli", 64 * 1024 * 1024], ["skill", 1024 * 1024], ["sourceArchive", 64 * 1024 * 1024]]) {
     const e = fixture(); e[key].bytes = cap; good(encodeManifest(e));
     for (const bytes of [cap + 1, 19, -0, -1, 1.5, Infinity, "800"]) {
       const f = fixture(); f[key].bytes = bytes; reject(encodeManifest(f), "limit_exceeded");
@@ -411,9 +411,9 @@ test("fixed per-kind compressed, expanded, ratio and BUILD inventory caps are en
     const e = fixture(); e[kind].files.find((f) => f.path === "BUILD.json").bytes = 16384; good(encodeManifest(e));
     e[kind].files.find((f) => f.path === "BUILD.json").bytes++; reject(encodeManifest(e), "limit_exceeded");
   }
-  const exact = fixture(); exact.sourceFiles = [{ ...file("f"), bytes: 64 * 1024 * 1024 - 2048 }]; exact.sourceArchive.bytes = 16384;
+  const exact = fixture(); exact.sourceFiles = [{ ...file("f"), bytes: 128 * 1024 * 1024 - 2048 }]; exact.sourceArchive.bytes = 32768;
   const value = good(parseManifest(good(encodeManifest(exact)), exact));
-  assert.equal(value.assets[2].expandedBytes, 64 * 1024 * 1024);
+  assert.equal(value.assets[2].expandedBytes, 128 * 1024 * 1024);
   exact.sourceFiles[0].bytes++; reject(encodeManifest(exact), "limit_exceeded");
   exact.sourceFiles[0].bytes--; exact.sourceArchive.bytes--; reject(encodeManifest(exact), "limit_exceeded");
   const unsafe = fixture(); unsafe.sourceFiles[0].bytes = Number.MAX_SAFE_INTEGER; reject(encodeManifest(unsafe), "limit_exceeded");
@@ -491,7 +491,7 @@ test("computed expanded sizes and inventories agree with actual accepted archive
   const configurations = [
     { kind: "cli", root: `aicharts-${expected.version}-x86_64-unknown-linux-gnu`, limit: 128 * 1024 * 1024, compressed: 64 * 1024 * 1024 },
     { kind: "skill", root: "aicharts", limit: 4 * 1024 * 1024, compressed: 1024 * 1024 },
-    { kind: "source", root: `aicharts-source-${expected.version}`, limit: 64 * 1024 * 1024, compressed: 32 * 1024 * 1024 },
+    { kind: "source", root: `aicharts-source-${expected.version}`, limit: 128 * 1024 * 1024, compressed: 64 * 1024 * 1024 },
   ];
   const built = [];
   for (const config of configurations) {
