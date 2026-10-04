@@ -34,6 +34,7 @@ Dated evidence is evidence for its own commit at its own time. Rerun the named c
 
 | Claim | Location | Evidence | Status |
 | --- | --- | --- | --- |
+| Linux x86-64 and Apple silicon Mac builds for | README.md | Release cli-v0.3.1 at `fc8efdbe34e5358a5027822a013fa7b3c3b720bf` (publish run 37233748701, 2026-10-04): both archives passed SHA-256 and cli-publish.yml attestation checks after download; the Mac binary passed `codesign --verify --strict --check-notarization` for `dev.hraness.aicharts` / `8AAP53VTW3` and ran on Apple silicon the same day | evidenced |
 | works only while the site's account service is enabled | README.md | Activation runbook: production flag names inspected 2026-09-19 and 2026-09-24; enrollment recorded 2026-09-16, `attempt_recovery_required` on 2026-09-19 | historical |
 | record dated production evidence, the exact-deployment health check | README.md | `target/assurance/deployment/receipt.json` for `fc95b51` at 2026-09-24T22:33:45Z | evidenced |
 | optional paid development support after useful completed reads | README.md | `bun run skill:check` (support protocol tests) | source-only |
@@ -72,8 +73,8 @@ Dated evidence is evidence for its own commit at its own time. Rerun the named c
 | did **not** pass | docs/usage-linux-qualification.md | Run 36066135869 summary artifact, 2026-09-24 | evidenced |
 | It qualified `x86_64-unknown-linux-gnu` on Ubuntu 22.04 image `20260907.292.1` | docs/usage-linux-qualification.md | Run 35498763628 for `c6b2b3e6`, 2026-09-20; not the current tree | historical |
 | On macOS, `enroll` pairs an installation with an AI Charts account | docs/usage-local.md | Enrollment record 2026-09-16; `attempt_recovery_required` 2026-09-19 | historical |
-| On macOS, install the CLI from the published release's source commit | docs/usage-local.md | Source inspection on 2026-10-04: cli-v0.3.0 source archive at `9c6a5071f88c528401b61b869d454afed5358b01`, `rust-toolchain.toml`, workspace `Cargo.toml`, and `crates/aicharts-cli/Cargo.toml`; this route builds locally and supplies no signed or notarized macOS download | source-only |
-| For a Linux x86-64 download, use the [release verification guide] | docs/usage-local.md | Release cli-v0.3.0 at `9c6a5071f88c528401b61b869d454afed5358b01`: qualification run 37221385303 and publish run 37221599811, 2026-10-04; downloaded archives and manifest passed SHA-256 and cli-publish.yml attestation checks on 2026-10-04 | evidenced |
+| On an Intel Mac, or to build it yourself, install the CLI from the release's source commit | docs/usage-local.md | Source inspection on 2026-10-04: cli-v0.3.1 source archive at `fc8efdbe34e5358a5027822a013fa7b3c3b720bf`, `rust-toolchain.toml`, workspace `Cargo.toml`, and `crates/aicharts-cli/Cargo.toml`; this route builds locally and is not signed or notarized | source-only |
+| For a Linux x86-64 download, use the [release verification guide] | docs/usage-local.md | Release cli-v0.3.1 at `fc8efdbe34e5358a5027822a013fa7b3c3b720bf`: Linux qualification run 37233364946, macOS qualification run 37233366601 and publish run 37233748701, 2026-10-04; downloaded archives and manifest passed SHA-256 and cli-publish.yml attestation checks on 2026-10-04 | evidenced |
 | For live logs and an already | docs/usage-local.md | `cargo test --workspace --locked` | source-only |
 | qualified observed subtotals, and fixed diagnostics | docs/usage-local.md | `cargo test --workspace --locked` | source-only |
 | Inspection and export support the same 512 MiB database bound as the writer | docs/usage-local.md | `cargo test --workspace --locked` | source-only |
@@ -84,8 +85,9 @@ Dated evidence is evidence for its own commit at its own time. Rerun the named c
 | turns one retained, nonpublishing Linux qualification into an immutable GitHub Release | docs/usage-release-publish.md | Publish run 36366527153 for tag `cli-v0.1.0`, 2026-09-28 | evidenced |
 | It is intended as the canonical distribution path for the Linux CLI profile | docs/usage-release-publish.md | Release `cli-v0.1.0`, 2026-09-28 | evidenced |
 | The first release, [`cli-v0.1.0`] | docs/usage-release-publish.md | Release `cli-v0.1.0`, 2026-09-28 | evidenced |
-| The latest published release is [`cli-v0.3.0`] | docs/usage-release-publish.md | Qualification run 37221385303, attempt 1, and publish run 37221599811 for `9c6a5071f88c528401b61b869d454afed5358b01`, 2026-10-04 | evidenced |
-| GitHub reports `immutable: true` for `cli-v0.3.0` | docs/usage-release-publish.md | `gh api repos/hraness/aicharts/releases/tags/cli-v0.3.0` returned immutable true, draft false and prerelease false on 2026-10-04 | evidenced |
+| The latest published release is [`cli-v0.3.1`] | docs/usage-release-publish.md | Linux qualification run 37233364946 and macOS qualification run 37233366601, each attempt 1, and publish run 37233748701 for `fc8efdbe34e5358a5027822a013fa7b3c3b720bf`, 2026-10-04 | evidenced |
+| built and tested it on `main` | docs/usage-release-publish.md | Runs 37233364946 (Linux) and 37233366601 (macOS: build, smoke, Developer ID signing, Apple notarization `Accepted`, signed-binary smoke) on `main` for `fc8efdbe34e5358a5027822a013fa7b3c3b720bf`, 2026-10-04 | evidenced |
+| GitHub reports `immutable: true` for `cli-v0.3.1` | docs/usage-release-publish.md | `gh api repos/hraness/aicharts/releases/tags/cli-v0.3.1` returned immutable true, draft false and prerelease false on 2026-10-04 | evidenced |
 | and it published `cli-v0.1.0` on 2026-09-28 | docs/usage-release-source.md | Publish run 36366527153, 2026-09-28 | evidenced |
 | selects the newest successful `workflow_dispatch` run of "Qualify Linux CLI" on `main` | docs/usage-release-publish.md | `scripts/release/publish-workflow.test.ts` | source-only |
 | starts the Qualify Linux CLI and Qualify macOS CLI runs for that commit, waits for both to succeed, and then has the `hraness-release-tagger` GitHub App create the annotated `cli-v<version>` tag | docs/usage-release-publish.md | Source: `.github/workflows/auto-tag.yml`; the Linux-only form tagged `cli-v0.3.0` through run 37221371679 on 2026-10-04; no run with the macOS qualification yet | source-only |

@@ -4,9 +4,9 @@
 cost and tokens per task, marking the best score at every budget. A local
 collector measures your own agents' token use.
 
-The collector is in development. A Linux x86-64 build for local reports
-is on [GitHub Releases](https://github.com/hraness/aicharts/releases/latest); on a
-Mac, [build it from source](docs/usage-local.md#build-and-run). Reports you open on the site stay in your browser tab.
+The collector is in development. Linux x86-64 and Apple silicon Mac builds for
+local reports are on [GitHub Releases](https://github.com/hraness/aicharts/releases/latest);
+the Mac build is signed and notarized. On an Intel Mac, [build it from source](docs/usage-local.md#build-and-run). Reports you open on the site stay in your browser tab.
 Account sync needs a collector enrolled on a Mac and works only while the site's
 account service is enabled.
 
