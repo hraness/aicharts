@@ -276,7 +276,7 @@ pub(super) fn now_ms() -> Result<u64, &'static str> {
         .filter(|time| *time <= 8_640_000_000_000_000)
         .ok_or("stats_clock_invalid")
 }
-fn date_day(value: &str) -> Result<u64, &'static str> {
+pub(super) fn date_day(value: &str) -> Result<u64, &'static str> {
     if value.len() != 10 || !value.is_ascii() {
         return Err("stats_date_invalid");
     }
@@ -422,7 +422,7 @@ fn cost_microusd(value: f64) -> Result<u128, &'static str> {
 }
 /// The five disjoint v2 buckets of one row, added in full width. Each bucket is
 /// bounded by the 24-digit profile, so a refusal here is a corrupted report.
-fn row_token_total(tokens: &Tokens) -> Option<u128> {
+pub(super) fn row_token_total(tokens: &Tokens) -> Option<u128> {
     let mut values = [0u128; 5];
     for (target, value) in values.iter_mut().zip([
         &tokens.input,

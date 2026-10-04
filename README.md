@@ -10,6 +10,11 @@ Mac, [build it from source](docs/usage-local.md#build-and-run). Reports you open
 Account sync needs a collector enrolled on a Mac and works only while the site's
 account service is enabled.
 
+The collector can also keep a daily history of your token use on your computer,
+and your agents can read it through a read-only MCP server to answer questions
+or draw charts. Nothing leaves your computer unless you set up publishing. See
+[usage history and agent queries](docs/usage-history.md).
+
 The homepage leads with an interactive Pareto frontier: compare model capability against output tokens or cost, then inspect the configuration behind each point. The original coding-agent charts have a focused home at [`/coding`](https://aicharts.io/coding). The separate [`/benchmarks`](https://aicharts.io/benchmarks) library covers coding, reasoning, research, memory, images, video, audio, and world models. Charted results, source guides, and emerging evaluations are labeled separately, and older research cohorts are labeled with their dates.
 
 The site header links Charts (`/`), Benchmarks (`/benchmarks`), Usage (`/usage`), Dashboard (`/dashboard`), Leaderboard (`/leaderboard`), and Notes (`/blog`). Coding comparisons, model pages, and source data are linked where relevant. Legacy root chart and atlas links resolve to the matching workspace; new shares use that workspace’s URL. Each canonical page also has a Markdown representation through `Accept: text/markdown`.
@@ -76,6 +81,8 @@ already includes that channel. Run `aicharts stats --list-clients` for the list.
 See [detailed usage reports](docs/usage-details.md) for commands, acquisition
 requirements, and what parser support does and does not cover. The [scheduled publisher guide](docs/usage-autosubmit.md) covers
 native refresh profiles, dry runs, failure recovery and a reversible macOS cutover.
+
+`aicharts history enable` (or `aicharts setup` with no options) keeps a daily record of the same report rows on this computer. Four times a day, a launchd agent on a Mac or a systemd user timer on Linux reads the sources `stats` reads, and a day in the record never goes down when an agent deletes its old session files. `aicharts history report` reads only that record and prints text, the `stats --json` format or CSV. `aicharts mcp` gives agents five read-only tools over the same data. Publishing stays a separate step: `aicharts help publish`. See [usage history and agent queries](docs/usage-history.md).
 
 The Rust workspace contains a local-only Codex/Claude Code usage reader, a closed numeric wire format, a private numeric SQLite ledger and matching TypeScript validation/rollups. Explicit collection can retain measurements across restarts with atomic source checkpoints and a pending-queue preview. The separate `inspect` command reads retained numeric totals without source scanning, writes or SQLite recovery. The `inspect` command does not enable sign-in, uploads, a public leaderboard or background collection. See [the local usage guide](docs/usage-local.md) for explicit source selection, private namespace keys and current measurement/recovery limitations.
 

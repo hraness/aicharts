@@ -144,6 +144,42 @@ pub(crate) fn registry() -> Registry {
             "aicharts.support/1",
             "Updates and optional support",
         ),
+        Verb::new(
+            &["history", "status"],
+            OpClass::Read,
+            crate::history::STATUS_SCHEMA,
+            "Whether local usage history is on, what it keeps and when it last collected",
+        ),
+        Verb::new(
+            &["history", "report"],
+            OpClass::Read,
+            "aicharts.client-stats/2",
+            "Daily token use from the local record (--json, --csv); scans no files",
+        ),
+        Verb::new(
+            &["history", "collect"],
+            OpClass::Operate,
+            "aicharts.history-collect/1",
+            "Read local session files into the record now; never uploads",
+        ),
+        Verb::new(
+            &["history", "enable"],
+            OpClass::Operate,
+            "aicharts.history-enable/1",
+            "Collect usage history on this computer four times a day; never uploads",
+        ),
+        Verb::new(
+            &["history", "disable"],
+            OpClass::Operate,
+            "aicharts.history-disable/1",
+            "Stop scheduled collection; the record stays",
+        ),
+        Verb::new(
+            &["mcp"],
+            OpClass::Read,
+            "aicharts.mcp/1",
+            "Read-only usage tools for agents over MCP (stdio)",
+        ),
     ];
     let mut registry = Registry::new(PRODUCT);
     for verb in verbs {
@@ -393,7 +429,7 @@ pub(crate) fn next_steps(data: &StatusData) -> Vec<NextStep> {
     match data.state {
         "not-set-up" => next.push(NextStep::new(
             "aicharts setup",
-            "Set up collection and publishing on this Mac",
+            "Keep your usage history on this computer; publishing is optional",
             Audience::Human,
         )),
         "stopped" => next.push(NextStep::new(

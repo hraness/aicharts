@@ -56,14 +56,14 @@ fn bare_invocation_is_a_short_overview() {
             "aicharts measures your coding agents' token use on this computer.
 
 Start here
-  aicharts stats --list-clients     List the agents aicharts can read
-  aicharts stats --home ~ --all     Show the last 30 days of token use
-  aicharts help publish             Publish your usage to aicharts.io
+  aicharts setup                    Keep daily token totals on this computer
+  aicharts history report           Show your token use from that record
+  aicharts mcp                      Let your agents query your usage
 
 Everyday
   aicharts stats [options]          Token use by day, agent and model
-  aicharts sync [options]           Collect and publish once
-  aicharts status                   Check collection and publishing
+  aicharts history status           Check that collection is working
+  aicharts help publish             Publish to aicharts.io (optional)
 
 All commands: aicharts --help · Topics: aicharts help <topic>
 aicharts {VERSION}
@@ -126,6 +126,9 @@ fn every_command_answers_its_own_help_with_exit_zero() {
         "open",
         "outputs",
         "diagnostics",
+        "history",
+        "mcp",
+        "publish",
     ] {
         let long = run(&[command, "--help"], &[]);
         assert_eq!(long.status.code(), Some(0), "{command}: {long:?}");

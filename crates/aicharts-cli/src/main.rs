@@ -13,9 +13,11 @@ mod enrollment;
 mod errors;
 mod health;
 mod help;
+mod history;
 mod inspect;
 mod intro;
 mod keychain_notice;
+mod mcp;
 #[cfg(unix)]
 mod owned_process;
 #[cfg(unix)]
@@ -419,6 +421,15 @@ fn run(args: &[String]) -> Result<String, &'static str> {
     if args.first().map(String::as_str) == Some("stats") {
         return stats::run(args);
     }
+    if args.first().map(String::as_str) == Some("history") {
+        return history::run(args);
+    }
+    if args.first().map(String::as_str) == Some("publish") {
+        return match args.get(1).map(String::as_str) {
+            Some("enable") => setup::run_publish(&args[2..]),
+            _ => Err("publish_command_required"),
+        };
+    }
     if args.first().map(String::as_str) == Some("stats-health") {
         return stats::run_retained_health(args);
     }
@@ -579,6 +590,11 @@ fn main() {
         && !args.iter().any(|arg| arg == "--version")
     {
         std::process::exit(sync::execute(&args));
+    }
+    // The MCP server owns stdin and stdout for the whole session.
+    if args.first().map(String::as_str) == Some("mcp") && !args.iter().any(|arg| arg == "--version")
+    {
+        std::process::exit(mcp::run(&args));
     }
     match run(&args) {
         Ok(output) => {

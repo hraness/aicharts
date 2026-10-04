@@ -1,11 +1,15 @@
 ---
 name: aicharts
-description: Retrieve public aicharts benchmark cohorts with source, version, units and coverage intact; inspect authorized local usage or Codex turn observations; or run explicitly requested local collection with a verified installed CLI. Use for benchmark-grounded comparisons, bounded usage summaries and local collector operation. Do not use for universal rankings, billing estimates from token totals, transcript analysis, account enrollment, uploads, migration or recovery.
+description: Retrieve public aicharts benchmark cohorts with source, version, units and coverage intact; answer questions about and chart the user's own token use from the local aicharts usage history; inspect authorized local usage or Codex turn observations; or run explicitly requested local collection with a verified installed CLI. Use for benchmark-grounded comparisons, local usage summaries and charts, and local collector operation. Do not use for universal rankings, billing estimates from token totals, transcript analysis, account enrollment, uploads, migration or recovery.
 ---
 
 # aicharts
 
-Choose the requested mode: public benchmarks, retained-ledger inspection, Codex turn observations, or explicitly authorized local collection. Public benchmarks never need private usage or sign-in. The local modes make no network request. Analysis does not authorize collection or ledger changes.
+Choose the requested mode: public benchmarks, local usage history, retained-ledger inspection, Codex turn observations, or explicitly authorized local collection. Public benchmarks never need private usage or sign-in. The local modes make no network request. Analysis does not authorize collection or ledger changes.
+
+## Local usage history
+
+For questions about the user's own token use ("how much did I use this week", "chart my usage by agent"), read [the local usage history section](references/local-usage.md#local-usage-history). Answer from the `aicharts mcp` tools when the host has them, or from `aicharts history report --json` or `--csv`. Both are read-only and keep the data on this computer. Report the period in UTC, the agents read and their coverage; keep reported and estimated costs separate, and treat null as unknown. Draw charts as local files. Do not enable, collect, publish or upload unless the user asks for that action.
 
 ## Public benchmarks
 

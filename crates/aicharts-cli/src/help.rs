@@ -14,14 +14,14 @@ pub(crate) fn overview() -> String {
         "{TAGLINE}
 
 Start here
-  aicharts stats --list-clients     List the agents aicharts can read
-  aicharts stats --home ~ --all     Show the last 30 days of token use
-  aicharts help publish             Publish your usage to aicharts.io
+  aicharts setup                    Keep daily token totals on this computer
+  aicharts history report           Show your token use from that record
+  aicharts mcp                      Let your agents query your usage
 
 Everyday
   aicharts stats [options]          Token use by day, agent and model
-  aicharts sync [options]           Collect and publish once
-  aicharts status                   Check collection and publishing
+  aicharts history status           Check that collection is working
+  aicharts help publish             Publish to aicharts.io (optional)
 
 All commands: aicharts --help · Topics: aicharts help <topic>
 aicharts {}
@@ -37,19 +37,22 @@ pub(crate) fn root() -> String {
 {TAGLINE}
 
 Start here
-  setup                    Set up aicharts on this Mac
+  setup                    Keep daily token totals on this computer
+  history report           Show your token use from that record
   stats --list-clients     List the agents aicharts can read
-  stats --home ~ --all     Show the last 30 days of token use
-  help publish             Publish your usage to aicharts.io
+  help publish             Publish your usage to aicharts.io (optional)
 
 Reports (read-only; nothing is uploaded)
   stats                    Token use by day, agent and model
+  history                  Keep, report and export your usage history
+  mcp                      Let your agents query your usage (MCP, stdio)
   stats-health             Check which session files a report could read
   turns                    Runtime and partial token counts per turn
   sessions                 Token counts per session
   usage                    Token totals from session files you name
 
 Publish to aicharts.io (macOS)
+  publish enable           Connect this Mac and publish on a schedule
   keygen                   Create the private key for your local ledger
   enroll                   Connect this Mac to your aicharts account
   init                     Create the local usage ledger
@@ -85,10 +88,14 @@ Optional support: aicharts support · Turn off: HRANESS_SUPPORT=off
 
 const PUBLISH: &str = "Publish your usage to aicharts.io
 
-Publishing needs macOS and an aicharts account. Nothing is sent until you run
-sync or upload, and only token counts leave this Mac, never prompts or code.
+Publishing is optional. It needs macOS and an aicharts account. Nothing is sent
+until you set it up, and only token counts leave this Mac, never prompts or code.
+Your local history (aicharts history) works without it.
 
-Steps, in order (use the same private folder and key every time):
+Guided, with one browser approval:
+  aicharts publish enable --claude ~/.claude/projects --codex ~/.codex/sessions
+
+Or step by step (use the same private folder and key every time):
   1. mkdir -m 700 ~/.aicharts
   2. aicharts keygen --output ~/.aicharts/key
   3. aicharts enroll --state-dir ~/.aicharts/state
@@ -420,16 +427,23 @@ Example
   aicharts daemon --once --state-dir ~/.aicharts/state --key-file ~/.aicharts/key --claude ~/.claude/projects
 "
         }
+        "history" => crate::history::help(),
+        "mcp" => crate::mcp::help(),
+        "publish" => PUBLISH,
         "setup" => {
-            "Usage: aicharts setup (--codex | --claude | --devin) PATH ... [options]
+            "Usage: aicharts setup [--json]
+       aicharts setup (--codex | --claude | --devin) PATH ... [options]
 
-Set up aicharts on this Mac: create the private key and local ledger,
-connect your aicharts account (one browser approval), and install the
-background collector so usage publishes on its own. Each step skips work
-that is already done, so a re-run continues where it stopped.
+With no options, keep your usage history on this computer: aicharts reads
+your agents' session files four times a day and keeps daily token totals,
+the same as aicharts history enable. Nothing is uploaded.
 
-Nothing is uploaded during setup. The collector publishes on its own
-schedule after your next login.
+With session folders, set up publishing instead, the same as aicharts
+publish enable: create the private key and local ledger, connect your
+aicharts account (one browser approval), and install the background
+collector so usage publishes on its own. Each step skips work that is
+already done, so a re-run continues where it stopped. Nothing is uploaded
+during setup; the collector publishes after your next login.
 
 Options
   --state-dir DIR        Ledger folder (default ~/.aicharts/state)
@@ -441,7 +455,8 @@ Options
   --json                 Print machine-readable output
 
 Example
-  aicharts setup --claude ~/.claude/projects --codex ~/.codex/sessions
+  aicharts setup
+  aicharts publish enable --claude ~/.claude/projects --codex ~/.codex/sessions
 "
         }
         "service" => {
@@ -524,7 +539,11 @@ pub(crate) fn resolve(args: &[String]) -> Option<Help> {
         Some("publish") if path.len() == 1 => return Some(Help::Page(PUBLISH.to_owned())),
         Some("advanced") if path.len() == 1 => return Some(Help::Page(ADVANCED.to_owned())),
         Some(command)
-            if path.len() == 1 || matches!(command, "setup" | "service" | "doctor" | "outputs") =>
+            if path.len() == 1
+                || matches!(
+                    command,
+                    "setup" | "service" | "doctor" | "outputs" | "history" | "publish"
+                ) =>
         {
             // `service install --help` and `setup --help` share the one page.
             if let Some(page) = command_page(command) {
