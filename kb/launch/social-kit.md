@@ -57,7 +57,7 @@ The goal is a catalog where any benchmark result you might use to pick a model s
 Post 9 of 9, 180 characters
 
 ```text
-The charts and notes are free at aicharts.io. Usage collector status: In development. Version 0.2.0 for Linux is on GitHub Releases.
+The charts and notes are free at aicharts.io. Usage collector status: In development. Version 0.3.0 for Linux is on GitHub Releases.
 
 https://aicharts.io/blog/introducing-ai-charts
 ```
@@ -115,7 +115,7 @@ The goal is a catalog where any benchmark result you might use to pick a model s
 Post 9 of 9, 180 characters
 
 ```text
-The charts and notes are free at aicharts.io. Usage collector status: In development. Version 0.2.0 for Linux is on GitHub Releases.
+The charts and notes are free at aicharts.io. Usage collector status: In development. Version 0.3.0 for Linux is on GitHub Releases.
 
 https://aicharts.io/blog/introducing-ai-charts
 ```
@@ -173,7 +173,7 @@ The goal is a catalog where any benchmark result you might use to pick a model s
 Post 9 of 9, 180 characters
 
 ```text
-The charts and notes are free at aicharts.io. Usage collector status: In development. Version 0.2.0 for Linux is on GitHub Releases.
+The charts and notes are free at aicharts.io. Usage collector status: In development. Version 0.3.0 for Linux is on GitHub Releases.
 
 https://aicharts.io/blog/introducing-ai-charts
 ```
@@ -197,7 +197,7 @@ aicharts is for choosing a model or coding agent by weighing score against cost,
 
 The goal is a catalog where any benchmark result you might use to pick a model shows its setup, version, cost and date, all in one place.
 
-The charts and notes are free at aicharts.io. Usage collector status: In development. Version 0.2.0 for Linux is on GitHub Releases.
+The charts and notes are free at aicharts.io. Usage collector status: In development. Version 0.3.0 for Linux is on GitHub Releases.
 
 https://aicharts.io/blog/introducing-ai-charts
 ```
@@ -224,7 +224,7 @@ Topics: Artificial Intelligence, Developer Tools, Data Visualization
 - The aicharts collector reads the usage files your coding agents already keep, from 55 supported sources, and adds up tokens, cost and speed per model and day. Prompts and transcripts stay on your machine.
 - A local report is a file you open in your browser tab. On a Mac you can also sync daily totals to your dashboard: token counts, cost and time per agent and model. Prompts, transcripts, file paths and keys stay on your machine.
 - aicharts is for choosing a model or coding agent by weighing score against cost, time or tokens. Switch the chart to time or tokens per task and the fast or concise picks stand out.
-- The charts and notes are free at aicharts.io. Usage collector status: In development. Version 0.2.0 for Linux is on GitHub Releases.
+- The charts and notes are free at aicharts.io. Usage collector status: In development. Version 0.3.0 for Linux is on GitHub Releases.
 - In development. https://aicharts.io/blog/introducing-ai-charts
 
 ## Beats
@@ -247,5 +247,5 @@ Topics: Artificial Intelligence, Developer Tools, Data Visualization
 - codingConfigs: 20. data/coding-agents.json records.length, the model, harness, and effort configurations on the /coding chart
 - libraryEntries: 62. lib/benchmark-atlas-catalog.ts ATLAS_ENTRIES.length, the entries in the /benchmarks library
 - usageSources: 55. README.md and app/usage/page.tsx: the sources in the pinned Tokscale parser registry
-- cliVersion: 0.2.0. Cargo.toml [workspace.package] version, released as cli-v0.2.0 on GitHub Releases
+- cliVersion: 0.3.0. Cargo.toml [workspace.package] version, released through the cli-v0.3.0 tag on GitHub Releases
 - status: In development. app/usage/page.tsx hero note, the collector's STYLE.md status label
