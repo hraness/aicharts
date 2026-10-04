@@ -1,0 +1,36 @@
+{
+  "copies": [
+    [
+      "aicharts-launch-1080p.mp4",
+      "../../public/media/aicharts-launch.mp4"
+    ],
+    [
+      "aicharts-launch-1080p.webm",
+      "../../public/media/aicharts-launch.webm"
+    ],
+    [
+      "aicharts-launch-1x1.mp4",
+      "../../public/media/aicharts-launch-1x1.mp4"
+    ],
+    [
+      "aicharts-launch-9x16.mp4",
+      "../../public/media/aicharts-launch-vertical.mp4"
+    ],
+    [
+      "aicharts-launch-poster.jpg",
+      "../../public/media/aicharts-launch-poster.jpg"
+    ],
+    [
+      "aicharts-launch-social.jpg",
+      "../../public/media/aicharts-launch-social.jpg"
+    ],
+    [
+      "aicharts-launch.en.vtt",
+      "../../public/media/aicharts-launch.vtt"
+    ],
+    [
+      "aicharts-launch-9x16.webm",
+      "../../public/media/aicharts-launch-vertical.webm"
+    ]
+  ]
+}

@@ -24,13 +24,14 @@ import {
 } from "./articles";
 
 /**
- * The launch film, rendered from video/ with Slopcamera and delivered to
- * public/media. It feeds the page's VideoObject too.
+ * The launch film, built in video/story (story.config.ts) with the story-film
+ * engine and delivered to public/media. Its charts are captured from
+ * aicharts.io (video/story/shots.sh). It feeds the page's VideoObject too.
  */
 export const INTRODUCING_AI_CHARTS_FILM = {
   name: "Introducing aicharts",
   description:
-    "A 42-second film with captions and no narration. After the title card it pans an illustrated aicharts page: the score and cost chart with the line through the models nothing cheaper beats, the coding-agent chart with one setup's cost, time and tokens, and the usage dashboard beside the collector commands, ending on what stays on your machine, the snapshot counts and what aicharts does not do.",
+    "A 29-second film with captions and no narration. Benchmark scores and prices sit on different pages; aicharts puts score and cost per task on one chart, shown with the live model and coding-agent charts, the counts behind them, and where each point comes from.",
   sources: [
     { src: "/media/aicharts-launch.webm", type: "video/webm" },
     { src: "/media/aicharts-launch.mp4", type: "video/mp4" },
@@ -39,7 +40,7 @@ export const INTRODUCING_AI_CHARTS_FILM = {
   captions: "/media/aicharts-launch.vtt",
   width: 1920,
   height: 1080,
-  duration: "PT42.5S",
+  duration: "PT29.3S",
   uploadDate: "2026-09-29",
 } as const satisfies ArticleVideoRecord;
 

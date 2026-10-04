@@ -32,8 +32,9 @@ describe("introducing aicharts film", () => {
       .split("\n")
       .filter(line => line.includes("-->"));
     expect(cues.length).toBeGreaterThan(0);
-    expect(cues.at(-1)).toEndWith("00:00:42.500");
-    expect(INTRODUCING_AI_CHARTS_FILM.duration).toBe("PT42.5S");
+    const seconds = Number(/^PT([\d.]+)S$/u.exec(INTRODUCING_AI_CHARTS_FILM.duration)?.[1]);
+    const stamp = new Date(seconds * 1000).toISOString().slice(11, 23);
+    expect(cues.at(-1)).toEndWith(stamp);
   });
 
   test("the post embeds the film and names it in its structured data", () => {
