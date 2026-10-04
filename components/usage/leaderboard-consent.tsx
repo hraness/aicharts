@@ -196,7 +196,7 @@ export function LeaderboardConsentPanel({ state, handle, confirmed, setHandle, s
           <h3>Sign in to manage publishing</h3>
           <p>Publishing consent is recorded on your account. Sign in to choose a public handle or withdraw.</p>
           <form method="get" action="/api/suite-auth/start"><input type="hidden" name="return_to" value={returnTo} />
-            <button className="usage-button usage-button--primary" type="submit">Sign in with Hraness</button></form>
+            <button className="usage-button usage-button--primary" type="submit">Sign in</button></form>
         </div>
       : state.kind === "not_enrolled" ? <div className="usage-daily__notice">
           <h3>Connect a collector first</h3>
