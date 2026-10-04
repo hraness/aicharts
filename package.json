@@ -161,6 +161,7 @@
     "@hraness/support-foundation": "github:hraness/support-foundation#ed89e584c2c420e3e0547bbe8f32baf8e3a2ae4d"
   },
   "overrides": {
+    "fast-glob": "npm:tinyglobby@0.2.17",
     "undici": "7.29.1"
   }
 }
