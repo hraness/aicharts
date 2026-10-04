@@ -56,7 +56,9 @@ jobs:
           scratch="${RUNNER_TEMP}/aicharts-macos-build"
           mkdir -m 700 "$scratch" "${scratch}/notices" unsigned-artifacts
           cargo +1.97.1 build --release --locked -p aicharts-cli --message-format json-render-diagnostics > "${scratch}/messages.jsonl"
-          cargo +1.97.1 metadata --locked --offline --format-version 1 > "${scratch}/metadata.json"
+          # Only this platform's packages: the build fetched them, while other
+          # platforms' crates (android, windows) were never downloaded.
+          cargo +1.97.1 metadata --locked --offline --format-version 1 --filter-platform aarch64-apple-darwin > "${scratch}/metadata.json"
           binary="${GITHUB_WORKSPACE}/target/release/aicharts"
           node scripts/release/macos-smoke.mjs --binary "$binary" --version "$VERSION"
           node scripts/release/macos-notices.mjs --source "$GITHUB_WORKSPACE" --messages "${scratch}/messages.jsonl" --metadata "${scratch}/metadata.json" \
