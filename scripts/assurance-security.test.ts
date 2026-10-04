@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { resolve } from "node:path";
 import { checkCargoLock, checkPackagePins, checkPrivacyCanary, checkWorkflowPins, parseBunAudit, parseBunLock, parseCargoAudit,
   parseSecurityOptions, scanSecrets, securityEnvironment, type TrackedFile } from "./assurance-security";
@@ -56,6 +57,18 @@ describe("dependency pins", () => {
     expect(checkPackagePins(manifest, lock)).toEqual([]);
     expect(checkCargoLock(read("Cargo.lock"), "Cargo.lock")).toEqual([]);
     for (const file of ["ci.yml", "cli-release.yml", "cli-macos.yml", "cli-publish.yml", "auto-tag.yml", "codex-auto-merge.yml", "data-refresh.yml"]) expect(checkWorkflowPins(read(`.github/workflows/${file}`), file)).toEqual([]);
+  });
+  test("the Next.js lint plugin's fast-glob resolves to the locked tinyglobby, keeping braces (GHSA-vfj7-8cjw-p6xm, no patched release) out of the lockfile", () => {
+    expect((JSON.parse(read("package.json")) as { overrides?: Record<string, string> }).overrides?.["fast-glob"]).toBe("npm:tinyglobby@0.2.17");
+    expect(lock.packages["fast-glob"]?.[0]).toBe("tinyglobby@0.2.17");
+    expect(lock.packages["tinyglobby"]?.[0]).toBe("tinyglobby@0.2.17");
+    for (const name of ["braces", "micromatch"]) expect(lock.packages[name]).toBeUndefined();
+    const load = createRequire(import.meta.url);
+    const plugin = resolve(root, "node_modules/@next/eslint-plugin-next/dist/utils");
+    const { globSync } = load(load.resolve("fast-glob", { paths: [plugin] })) as { globSync: (pattern: string, options: { cwd: string; onlyDirectories: boolean }) => string[] };
+    expect(globSync("components/*", { cwd: root, onlyDirectories: true })).toContain("components/usage/");
+    const { getRootDirs } = load(resolve(plugin, "get-root-dirs.js")) as { getRootDirs: (context: { cwd: string; settings: Record<string, unknown> }) => string[] };
+    expect(getRootDirs({ cwd: root, settings: {} })).toEqual([root]);
   });
   test("unpinned github specs, missing or inexact lock entries, stale workspace specs and unpinned script URLs fail", () => {
     const branch = structuredClone(manifest); branch.dependencies!["@hraness/ui"] = "github:hraness/ui#main";
