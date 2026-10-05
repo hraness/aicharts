@@ -18,8 +18,8 @@ import { ATLAS_ENTRIES } from "@/lib/benchmark-atlas-catalog";
  */
 export const LAUNCH_STATUS = "In development" satisfies LaunchStatus;
 
-/** The workspace version in Cargo.toml, released through the cli-v0.3.1 tag. */
-export const LAUNCH_CLI_VERSION = "0.3.1";
+/** The workspace version in Cargo.toml, released through the cli-v0.4.0 tag. */
+export const LAUNCH_CLI_VERSION = "0.4.0";
 
 /** README.md: "the 55 sources in the pinned Tokscale parser registry", repeated on /usage. */
 export const LAUNCH_USAGE_SOURCES = 55;
@@ -49,7 +49,7 @@ export const launchFacts = {
   },
   cliVersion: {
     value: LAUNCH_CLI_VERSION,
-    source: "Cargo.toml [workspace.package] version, released through the cli-v0.3.1 tag on GitHub Releases",
+    source: "Cargo.toml [workspace.package] version, released through the cli-v0.4.0 tag on GitHub Releases",
   },
   status: {
     value: LAUNCH_STATUS,
