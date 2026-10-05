@@ -5,225 +5,33 @@
       "slug": "vals_index",
       "benchmarkId": "vals-index",
       "name": "Vals Index",
-      "description": "A single measure of AI's potential economic impact — agentic model performance across finance, coding, and legal tasks, weighted by each sector's share of U.S. GDP.",
+      "description": "A single measure of AI's potential economic impact — agentic model performance across finance, coding, legal, and tax tasks, weighted by each sector's share of U.S. GDP.",
       "family": "vals_index",
-      "version": "2",
+      "version": "2.1",
       "industry": "index",
       "datasetType": "private",
       "mode": "agentic",
       "runner": "external",
       "costBasis": "cost-per-test",
-      "totalModels": 66,
+      "totalModels": 43,
       "source": {
         "url": "https://www.vals.ai/benchmarks/vals_index",
-        "retrievedAt": "2026-09-28T18:16:23.422Z",
-        "sha256": "73c9459b6aed61ef76abeba91cc21246ffc7d44d0353c449d44bc84f7aab312b",
-        "observedAt": "2026-09-27T00:00:00.000Z",
-        "revision": "vals_index v2"
+        "retrievedAt": "2026-10-05T14:14:03.855Z",
+        "sha256": "8e58c3a8770f42d8f53d0e3d920b81dfe0ce6f4773568c7a5a5458ea296e00a4",
+        "observedAt": "2026-10-02T00:00:00.000Z",
+        "revision": "vals_index v2.1"
       },
       "rows": [
-        {
-          "id": "alibaba-qwen3-6-plus",
-          "modelId": "alibaba/qwen3.6-plus",
-          "provider": "Alibaba",
-          "effort": null,
-          "harness": null,
-          "score": 31.979,
-          "standardError": 0.976,
-          "costUsdPerTest": 2.618074,
-          "latencySeconds": 1260.202,
-          "components": [
-            {
-              "id": "finance_agent",
-              "label": "Finance Agent v2",
-              "score": 40.846
-            },
-            {
-              "id": "emb",
-              "label": "EMB",
-              "score": 32.867
-            },
-            {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 53.184
-            },
-            {
-              "id": "vibe_code_bench",
-              "label": "Vibe Code Bench",
-              "score": 25.565
-            },
-            {
-              "id": "code_migration",
-              "label": "Code Migration",
-              "score": 11.649
-            },
-            {
-              "id": "legal_research",
-              "label": "Legal Research",
-              "score": 14.904
-            },
-            {
-              "id": "legal_agent_benchmark",
-              "label": "HLAB",
-              "score": 1.25
-            }
-          ]
-        },
-        {
-          "id": "alibaba-qwen3-7-max",
-          "modelId": "alibaba/qwen3.7-max",
-          "provider": "Alibaba",
-          "effort": null,
-          "harness": null,
-          "score": 44.769,
-          "standardError": 1.078,
-          "costUsdPerTest": 2.850897,
-          "latencySeconds": 1781.791,
-          "components": [
-            {
-              "id": "finance_agent",
-              "label": "Finance Agent v2",
-              "score": 47.776
-            },
-            {
-              "id": "emb",
-              "label": "EMB",
-              "score": 57.041
-            },
-            {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 61.049
-            },
-            {
-              "id": "vibe_code_bench",
-              "label": "Vibe Code Bench",
-              "score": 47.671
-            },
-            {
-              "id": "code_migration",
-              "label": "Code Migration",
-              "score": 12.904
-            },
-            {
-              "id": "legal_research",
-              "label": "Legal Research",
-              "score": 25.481
-            },
-            {
-              "id": "legal_agent_benchmark",
-              "label": "HLAB",
-              "score": 1.667
-            }
-          ]
-        },
-        {
-          "id": "alibaba-qwen3-7-plus",
-          "modelId": "alibaba/qwen3.7-plus",
-          "provider": "Alibaba",
-          "effort": null,
-          "harness": null,
-          "score": 38.645,
-          "standardError": 1.171,
-          "costUsdPerTest": 0.439693,
-          "latencySeconds": 1307.967,
-          "components": [
-            {
-              "id": "finance_agent",
-              "label": "Finance Agent v2",
-              "score": 38.22
-            },
-            {
-              "id": "emb",
-              "label": "EMB",
-              "score": 49.345
-            },
-            {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 52.809
-            },
-            {
-              "id": "vibe_code_bench",
-              "label": "Vibe Code Bench",
-              "score": 46.391
-            },
-            {
-              "id": "code_migration",
-              "label": "Code Migration",
-              "score": 14.304
-            },
-            {
-              "id": "legal_research",
-              "label": "Legal Research",
-              "score": 16.346
-            },
-            {
-              "id": "legal_agent_benchmark",
-              "label": "HLAB",
-              "score": 0
-            }
-          ]
-        },
-        {
-          "id": "alibaba-qwen3-8-27b",
-          "modelId": "alibaba/qwen3.8-27b",
-          "provider": "Alibaba",
-          "effort": "xhigh",
-          "harness": null,
-          "score": 48.485,
-          "standardError": 1.454,
-          "costUsdPerTest": 8.479089,
-          "latencySeconds": 3634.583,
-          "components": [
-            {
-              "id": "finance_agent",
-              "label": "Finance Agent v2",
-              "score": 48.553
-            },
-            {
-              "id": "emb",
-              "label": "EMB",
-              "score": 59.661
-            },
-            {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 58.427
-            },
-            {
-              "id": "vibe_code_bench",
-              "label": "Vibe Code Bench",
-              "score": 64.85
-            },
-            {
-              "id": "code_migration",
-              "label": "Code Migration",
-              "score": 14.049
-            },
-            {
-              "id": "legal_research",
-              "label": "Legal Research",
-              "score": 36.058
-            },
-            {
-              "id": "legal_agent_benchmark",
-              "label": "HLAB",
-              "score": 11.25
-            }
-          ]
-        },
         {
           "id": "alibaba-qwen3-8-max",
           "modelId": "alibaba/qwen3.8-max",
           "provider": "Alibaba",
           "effort": null,
           "harness": null,
-          "score": 51.844,
-          "standardError": 1.288,
-          "costUsdPerTest": 3.996716,
-          "latencySeconds": 5445.777,
+          "score": 48.27,
+          "standardError": 1.337,
+          "costUsdPerTest": 4.964352,
+          "latencySeconds": 6070.722,
           "components": [
             {
               "id": "finance_agent",
@@ -236,9 +44,9 @@
               "score": 60.066
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 67.416
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 34.343
             },
             {
               "id": "vibe_code_bench",
@@ -259,102 +67,11 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 10.417
-            }
-          ]
-        },
-        {
-          "id": "ant-ling-3-0-flash-2607",
-          "modelId": "ant/ling-3.0-flash-2607",
-          "provider": "Ant",
-          "effort": null,
-          "harness": null,
-          "score": 21.699,
-          "standardError": 0.783,
-          "costUsdPerTest": 0.104406,
-          "latencySeconds": 2982.634,
-          "components": [
-            {
-              "id": "finance_agent",
-              "label": "Finance Agent v2",
-              "score": 30.314
             },
             {
-              "id": "emb",
-              "label": "EMB",
-              "score": 25.006
-            },
-            {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 50.187
-            },
-            {
-              "id": "vibe_code_bench",
-              "label": "Vibe Code Bench",
-              "score": 2.914
-            },
-            {
-              "id": "code_migration",
-              "label": "Code Migration",
-              "score": 0
-            },
-            {
-              "id": "legal_research",
-              "label": "Legal Research",
-              "score": 0
-            },
-            {
-              "id": "legal_agent_benchmark",
-              "label": "HLAB",
-              "score": 1.25
-            }
-          ]
-        },
-        {
-          "id": "ant-ling-3-0-flash-af-rc3",
-          "modelId": "ant/ling-3.0-flash-af-rc3",
-          "provider": "Ant",
-          "effort": null,
-          "harness": null,
-          "score": 32.553,
-          "standardError": 0.966,
-          "costUsdPerTest": 0.109173,
-          "latencySeconds": 1072.857,
-          "components": [
-            {
-              "id": "finance_agent",
-              "label": "Finance Agent v2",
-              "score": 54.927
-            },
-            {
-              "id": "emb",
-              "label": "EMB",
-              "score": 36.832
-            },
-            {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 50.187
-            },
-            {
-              "id": "vibe_code_bench",
-              "label": "Vibe Code Bench",
-              "score": 3.4
-            },
-            {
-              "id": "code_migration",
-              "label": "Code Migration",
-              "score": 2.94
-            },
-            {
-              "id": "legal_research",
-              "label": "Legal Research",
-              "score": 15.385
-            },
-            {
-              "id": "legal_agent_benchmark",
-              "label": "HLAB",
-              "score": 0
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 65.96
             }
           ]
         },
@@ -364,10 +81,10 @@
           "provider": "Anthropic",
           "effort": "max",
           "harness": null,
-          "score": 66.036,
-          "standardError": 1.028,
-          "costUsdPerTest": 28.725071,
-          "latencySeconds": 2271.1,
+          "score": 61.388,
+          "standardError": 0.999,
+          "costUsdPerTest": 29.58529,
+          "latencySeconds": 2544.13,
           "components": [
             {
               "id": "finance_agent",
@@ -380,9 +97,9 @@
               "score": 73.666
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 80.524
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 41.414
             },
             {
               "id": "vibe_code_bench",
@@ -403,6 +120,11 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 11.25
+            },
+            {
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 69.822
             }
           ]
         },
@@ -412,10 +134,10 @@
           "provider": "Anthropic",
           "effort": "max",
           "harness": null,
-          "score": 68.825,
-          "standardError": 1.077,
-          "costUsdPerTest": 28.916238,
-          "latencySeconds": 4576.315,
+          "score": 65.827,
+          "standardError": 1.115,
+          "costUsdPerTest": 28.711785,
+          "latencySeconds": 4608.953,
           "components": [
             {
               "id": "finance_agent",
@@ -428,9 +150,9 @@
               "score": 76.67
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 85.019
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 58.081
             },
             {
               "id": "vibe_code_bench",
@@ -451,102 +173,11 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 6.667
-            }
-          ]
-        },
-        {
-          "id": "anthropic-claude-haiku-4-5-20251001-thinking",
-          "modelId": "anthropic/claude-haiku-4-5-20251001-thinking",
-          "provider": "Anthropic",
-          "effort": null,
-          "harness": null,
-          "score": 22.898,
-          "standardError": 0.839,
-          "costUsdPerTest": 0.697729,
-          "latencySeconds": 500.129,
-          "components": [
-            {
-              "id": "finance_agent",
-              "label": "Finance Agent v2",
-              "score": 31.01
             },
             {
-              "id": "emb",
-              "label": "EMB",
-              "score": 22.664
-            },
-            {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 43.82
-            },
-            {
-              "id": "vibe_code_bench",
-              "label": "Vibe Code Bench",
-              "score": 11.393
-            },
-            {
-              "id": "code_migration",
-              "label": "Code Migration",
-              "score": 7.649
-            },
-            {
-              "id": "legal_research",
-              "label": "Legal Research",
-              "score": 10.577
-            },
-            {
-              "id": "legal_agent_benchmark",
-              "label": "HLAB",
-              "score": 0.833
-            }
-          ]
-        },
-        {
-          "id": "anthropic-claude-opus-4-7",
-          "modelId": "anthropic/claude-opus-4-7",
-          "provider": "Anthropic",
-          "effort": "high",
-          "harness": null,
-          "score": 56.114,
-          "standardError": 1.214,
-          "costUsdPerTest": 12.760253,
-          "latencySeconds": 1705.956,
-          "components": [
-            {
-              "id": "finance_agent",
-              "label": "Finance Agent v2",
-              "score": 51.509
-            },
-            {
-              "id": "emb",
-              "label": "EMB",
-              "score": 63.728
-            },
-            {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 68.539
-            },
-            {
-              "id": "vibe_code_bench",
-              "label": "Vibe Code Bench",
-              "score": 71.003
-            },
-            {
-              "id": "code_migration",
-              "label": "Code Migration",
-              "score": 43.919
-            },
-            {
-              "id": "legal_research",
-              "label": "Legal Research",
-              "score": 38.462
-            },
-            {
-              "id": "legal_agent_benchmark",
-              "label": "HLAB",
-              "score": 6.667
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 77.642
             }
           ]
         },
@@ -556,10 +187,10 @@
           "provider": "Anthropic",
           "effort": "max",
           "harness": null,
-          "score": 60.908,
-          "standardError": 1.027,
-          "costUsdPerTest": 12.66685,
-          "latencySeconds": 2182.138,
+          "score": 55.1,
+          "standardError": 1.009,
+          "costUsdPerTest": 13.136067,
+          "latencySeconds": 2388.429,
           "components": [
             {
               "id": "finance_agent",
@@ -572,9 +203,9 @@
               "score": 69.373
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 71.91
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 23.232
             },
             {
               "id": "vibe_code_bench",
@@ -595,6 +226,11 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 9.583
+            },
+            {
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 64.906
             }
           ]
         },
@@ -604,10 +240,10 @@
           "provider": "Anthropic",
           "effort": "max",
           "harness": null,
-          "score": 67.213,
-          "standardError": 0.978,
-          "costUsdPerTest": 18.810212,
-          "latencySeconds": 3348.565,
+          "score": 63.674,
+          "standardError": 0.957,
+          "costUsdPerTest": 19.314752,
+          "latencySeconds": 3461.381,
           "components": [
             {
               "id": "finance_agent",
@@ -620,9 +256,9 @@
               "score": 73.556
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 84.644
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 53.535
             },
             {
               "id": "vibe_code_bench",
@@ -643,6 +279,11 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 6.667
+            },
+            {
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 75.06
             }
           ]
         },
@@ -652,10 +293,10 @@
           "provider": "Anthropic",
           "effort": "max",
           "harness": null,
-          "score": 69.689,
-          "standardError": 0.937,
-          "costUsdPerTest": 32.766011,
-          "latencySeconds": 4320.731,
+          "score": 66.972,
+          "standardError": 0.888,
+          "costUsdPerTest": 32.143857,
+          "latencySeconds": 4710.68,
           "components": [
             {
               "id": "finance_agent",
@@ -668,9 +309,9 @@
               "score": 75.938
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 87.64
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 65.152
             },
             {
               "id": "vibe_code_bench",
@@ -691,54 +332,11 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 3.75
-            }
-          ]
-        },
-        {
-          "id": "anthropic-claude-sonnet-4-6",
-          "modelId": "anthropic/claude-sonnet-4-6",
-          "provider": "Anthropic",
-          "effort": "max",
-          "harness": null,
-          "score": 50.593,
-          "standardError": 1.235,
-          "costUsdPerTest": 8.404689,
-          "latencySeconds": 2085.722,
-          "components": [
-            {
-              "id": "finance_agent",
-              "label": "Finance Agent v2",
-              "score": 51.035
             },
             {
-              "id": "emb",
-              "label": "EMB",
-              "score": 60.154
-            },
-            {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 57.303
-            },
-            {
-              "id": "vibe_code_bench",
-              "label": "Vibe Code Bench",
-              "score": 51.476
-            },
-            {
-              "id": "code_migration",
-              "label": "Code Migration",
-              "score": 40.12
-            },
-            {
-              "id": "legal_research",
-              "label": "Legal Research",
-              "score": 38.462
-            },
-            {
-              "id": "legal_agent_benchmark",
-              "label": "HLAB",
-              "score": 5
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 70.499
             }
           ]
         },
@@ -748,10 +346,10 @@
           "provider": "Anthropic",
           "effort": "max",
           "harness": null,
-          "score": 59.61,
-          "standardError": 1.147,
-          "costUsdPerTest": 11.740516,
-          "latencySeconds": 2745.876,
+          "score": 51.775,
+          "standardError": 1.092,
+          "costUsdPerTest": 13.721168,
+          "latencySeconds": 3255.617,
           "components": [
             {
               "id": "finance_agent",
@@ -764,9 +362,9 @@
               "score": 66.316
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 74.532
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 9.596
             },
             {
               "id": "vibe_code_bench",
@@ -787,6 +385,11 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 5
+            },
+            {
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 62.273
             }
           ]
         },
@@ -796,10 +399,10 @@
           "provider": "Anthropic",
           "effort": "max",
           "harness": null,
-          "score": 69.219,
-          "standardError": 0.962,
-          "costUsdPerTest": 20.803442,
-          "latencySeconds": 4207.124,
+          "score": 67.037,
+          "standardError": 0.92,
+          "costUsdPerTest": 21.344634,
+          "latencySeconds": 4684.189,
           "components": [
             {
               "id": "finance_agent",
@@ -812,9 +415,9 @@
               "score": 75.713
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 83.146
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 64.141
             },
             {
               "id": "vibe_code_bench",
@@ -835,6 +438,11 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 2.917
+            },
+            {
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 73.395
             }
           ]
         },
@@ -844,10 +452,10 @@
           "provider": "DeepSeek",
           "effort": "high",
           "harness": null,
-          "score": 57.86,
-          "standardError": 1.16,
-          "costUsdPerTest": 0.303291,
-          "latencySeconds": 1534.071,
+          "score": 51.32,
+          "standardError": 1.13,
+          "costUsdPerTest": 0.332286,
+          "latencySeconds": 1673.174,
           "components": [
             {
               "id": "finance_agent",
@@ -860,9 +468,9 @@
               "score": 57.208
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 74.532
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 19.697
             },
             {
               "id": "vibe_code_bench",
@@ -883,6 +491,11 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 6.667
+            },
+            {
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 62.458
             }
           ]
         },
@@ -892,10 +505,10 @@
           "provider": "DeepSeek",
           "effort": "high",
           "harness": null,
-          "score": 53.568,
-          "standardError": 1.21,
-          "costUsdPerTest": 0.839765,
-          "latencySeconds": 2094.581,
+          "score": 47.963,
+          "standardError": 1.24,
+          "costUsdPerTest": 0.847519,
+          "latencySeconds": 2585.577,
           "components": [
             {
               "id": "finance_agent",
@@ -908,9 +521,9 @@
               "score": 56.977
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 67.041
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 18.687
             },
             {
               "id": "vibe_code_bench",
@@ -931,6 +544,11 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 8.333
+            },
+            {
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 62.563
             }
           ]
         },
@@ -940,10 +558,10 @@
           "provider": "DeepSeek",
           "effort": "max",
           "harness": null,
-          "score": 42.888,
-          "standardError": 1.194,
-          "costUsdPerTest": 0.940927,
-          "latencySeconds": 1427.349,
+          "score": 38.63,
+          "standardError": 1.157,
+          "costUsdPerTest": 1.30566,
+          "latencySeconds": 1928.909,
           "components": [
             {
               "id": "finance_agent",
@@ -956,9 +574,9 @@
               "score": 51.623
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 50.187
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 11.111
             },
             {
               "id": "vibe_code_bench",
@@ -979,6 +597,11 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 3.75
+            },
+            {
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 58.499
             }
           ]
         },
@@ -988,10 +611,10 @@
           "provider": "DeepSeek",
           "effort": "max",
           "harness": null,
-          "score": 52.368,
-          "standardError": 1.136,
-          "costUsdPerTest": 3.282301,
-          "latencySeconds": 3498.495,
+          "score": 47.628,
+          "standardError": 1.116,
+          "costUsdPerTest": 3.352436,
+          "latencySeconds": 3845.24,
           "components": [
             {
               "id": "finance_agent",
@@ -1004,9 +627,9 @@
               "score": 52.803
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 54.682
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 14.141
             },
             {
               "id": "vibe_code_bench",
@@ -1027,102 +650,64 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 7.5
+            },
+            {
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 58.663
             }
           ]
         },
         {
-          "id": "fireworks-nemotron-lightning-3p5-30b-a3b",
-          "modelId": "fireworks/nemotron-lightning-3p5-30b-a3b",
+          "id": "fireworks-ember-1",
+          "modelId": "fireworks/ember-1",
           "provider": "Fireworks AI",
           "effort": null,
           "harness": null,
-          "score": 11.494,
-          "standardError": 0.61,
-          "costUsdPerTest": 0.09345,
-          "latencySeconds": 1345.167,
+          "score": 50.811,
+          "standardError": 1.277,
+          "costUsdPerTest": 9.577707,
+          "latencySeconds": 4261.402,
           "components": [
             {
               "id": "finance_agent",
               "label": "Finance Agent v2",
-              "score": 18.5
+              "score": 51.853
             },
             {
               "id": "emb",
               "label": "EMB",
-              "score": 16.987
+              "score": 63.368
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 10.861
-            },
-            {
-              "id": "vibe_code_bench",
-              "label": "Vibe Code Bench",
-              "score": 0
-            },
-            {
-              "id": "code_migration",
-              "label": "Code Migration",
-              "score": 3.298
-            },
-            {
-              "id": "legal_research",
-              "label": "Legal Research",
-              "score": 2.885
-            },
-            {
-              "id": "legal_agent_benchmark",
-              "label": "HLAB",
-              "score": 0
-            }
-          ]
-        },
-        {
-          "id": "google-gemini-3-1-flash-lite-preview",
-          "modelId": "google/gemini-3.1-flash-lite-preview",
-          "provider": "Google",
-          "effort": "high",
-          "harness": null,
-          "score": 15.457,
-          "standardError": 0.417,
-          "costUsdPerTest": 0.136314,
-          "latencySeconds": 162.534,
-          "components": [
-            {
-              "id": "finance_agent",
-              "label": "Finance Agent v2",
-              "score": 29.988
-            },
-            {
-              "id": "emb",
-              "label": "EMB",
-              "score": 8.629
-            },
-            {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 34.082
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 19.697
             },
             {
               "id": "vibe_code_bench",
               "label": "Vibe Code Bench",
-              "score": 0
+              "score": 83.869
             },
             {
               "id": "code_migration",
               "label": "Code Migration",
-              "score": 4.639
+              "score": 30.46
             },
             {
               "id": "legal_research",
               "label": "Legal Research",
-              "score": 3.365
+              "score": 44.712
             },
             {
               "id": "legal_agent_benchmark",
               "label": "HLAB",
-              "score": 0
+              "score": 9.167
+            },
+            {
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 68.044
             }
           ]
         },
@@ -1132,10 +717,10 @@
           "provider": "Google",
           "effort": "high",
           "harness": null,
-          "score": 41.903,
-          "standardError": 1.173,
-          "costUsdPerTest": 1.944534,
-          "latencySeconds": 560.152,
+          "score": 33.442,
+          "standardError": 1.133,
+          "costUsdPerTest": 2.180322,
+          "latencySeconds": 591.994,
           "components": [
             {
               "id": "finance_agent",
@@ -1148,9 +733,9 @@
               "score": 52.616
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 70.787
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 2.525
             },
             {
               "id": "vibe_code_bench",
@@ -1171,6 +756,11 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 0
+            },
+            {
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 37.842
             }
           ]
         },
@@ -1180,10 +770,10 @@
           "provider": "Google",
           "effort": "high",
           "harness": null,
-          "score": 53.079,
-          "standardError": 1.122,
-          "costUsdPerTest": 2.914646,
-          "latencySeconds": 661.463,
+          "score": 44.786,
+          "standardError": 1.098,
+          "costUsdPerTest": 3.297245,
+          "latencySeconds": 1097.105,
           "components": [
             {
               "id": "finance_agent",
@@ -1196,9 +786,9 @@
               "score": 63.548
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 74.157
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 6.061
             },
             {
               "id": "vibe_code_bench",
@@ -1219,102 +809,11 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 2.5
-            }
-          ]
-        },
-        {
-          "id": "google-gemini-3-5-flash-lite",
-          "modelId": "google/gemini-3.5-flash-lite",
-          "provider": "Google",
-          "effort": "high",
-          "harness": null,
-          "score": 36.711,
-          "standardError": 1.065,
-          "costUsdPerTest": 0.543466,
-          "latencySeconds": 461.093,
-          "components": [
-            {
-              "id": "finance_agent",
-              "label": "Finance Agent v2",
-              "score": 47.442
             },
             {
-              "id": "emb",
-              "label": "EMB",
-              "score": 43.231
-            },
-            {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 50.187
-            },
-            {
-              "id": "vibe_code_bench",
-              "label": "Vibe Code Bench",
-              "score": 37.161
-            },
-            {
-              "id": "code_migration",
-              "label": "Code Migration",
-              "score": 4.936
-            },
-            {
-              "id": "legal_research",
-              "label": "Legal Research",
-              "score": 13.942
-            },
-            {
-              "id": "legal_agent_benchmark",
-              "label": "HLAB",
-              "score": 0
-            }
-          ]
-        },
-        {
-          "id": "google-gemini-3-6-flash",
-          "modelId": "google/gemini-3.6-flash",
-          "provider": "Google",
-          "effort": "high",
-          "harness": null,
-          "score": 55.354,
-          "standardError": 1.092,
-          "costUsdPerTest": 3.02952,
-          "latencySeconds": 1328.048,
-          "components": [
-            {
-              "id": "finance_agent",
-              "label": "Finance Agent v2",
-              "score": 56.296
-            },
-            {
-              "id": "emb",
-              "label": "EMB",
-              "score": 65.411
-            },
-            {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 73.783
-            },
-            {
-              "id": "vibe_code_bench",
-              "label": "Vibe Code Bench",
-              "score": 64.005
-            },
-            {
-              "id": "code_migration",
-              "label": "Code Migration",
-              "score": 31.18
-            },
-            {
-              "id": "legal_research",
-              "label": "Legal Research",
-              "score": 25
-            },
-            {
-              "id": "legal_agent_benchmark",
-              "label": "HLAB",
-              "score": 3.333
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 53.526
             }
           ]
         },
@@ -1324,10 +823,10 @@
           "provider": "Google",
           "effort": "high",
           "harness": null,
-          "score": 59.307,
-          "standardError": 1.065,
-          "costUsdPerTest": 4.169542,
-          "latencySeconds": 2592.928,
+          "score": 51.273,
+          "standardError": 1.097,
+          "costUsdPerTest": 4.708904,
+          "latencySeconds": 2847.081,
           "components": [
             {
               "id": "finance_agent",
@@ -1340,9 +839,9 @@
               "score": 71.326
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 77.528
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 12.121
             },
             {
               "id": "vibe_code_bench",
@@ -1363,6 +862,11 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 8.75
+            },
+            {
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 57.665
             }
           ]
         },
@@ -1372,10 +876,10 @@
           "provider": "Google",
           "effort": "high",
           "harness": null,
-          "score": 62.252,
-          "standardError": 1.009,
-          "costUsdPerTest": 5.391952,
-          "latencySeconds": 2692.685,
+          "score": 54.825,
+          "standardError": 1.028,
+          "costUsdPerTest": 5.728779,
+          "latencySeconds": 3117.159,
           "components": [
             {
               "id": "finance_agent",
@@ -1388,9 +892,9 @@
               "score": 72.196
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 81.273
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 19.192
             },
             {
               "id": "vibe_code_bench",
@@ -1411,150 +915,64 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 10
+            },
+            {
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 66.771
             }
           ]
         },
         {
-          "id": "google-gemini-3-flash-preview",
-          "modelId": "google/gemini-3-flash-preview",
+          "id": "google-gemini-4-argon",
+          "modelId": "google/gemini-4-argon",
           "provider": "Google",
           "effort": "high",
           "harness": null,
-          "score": 29.444,
-          "standardError": 0.983,
-          "costUsdPerTest": 0.409423,
-          "latencySeconds": 348.217,
+          "score": 68.896,
+          "standardError": 0.974,
+          "costUsdPerTest": 15.681703,
+          "latencySeconds": 2792.769,
           "components": [
             {
               "id": "finance_agent",
               "label": "Finance Agent v2",
-              "score": 42.551
+              "score": 65.401
             },
             {
               "id": "emb",
               "label": "EMB",
-              "score": 26.017
+              "score": 75.244
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 53.933
-            },
-            {
-              "id": "vibe_code_bench",
-              "label": "Vibe Code Bench",
-              "score": 20.204
-            },
-            {
-              "id": "code_migration",
-              "label": "Code Migration",
-              "score": 6.508
-            },
-            {
-              "id": "legal_research",
-              "label": "Legal Research",
-              "score": 18.269
-            },
-            {
-              "id": "legal_agent_benchmark",
-              "label": "HLAB",
-              "score": 0
-            }
-          ]
-        },
-        {
-          "id": "grok-grok-4-20-0309-reasoning",
-          "modelId": "grok/grok-4.20-0309-reasoning",
-          "provider": "SpaceXAI",
-          "effort": null,
-          "harness": null,
-          "score": 17.552,
-          "standardError": 0.526,
-          "costUsdPerTest": 0.569009,
-          "latencySeconds": 349.748,
-          "components": [
-            {
-              "id": "finance_agent",
-              "label": "Finance Agent v2",
-              "score": 28.492
-            },
-            {
-              "id": "emb",
-              "label": "EMB",
-              "score": 11.739
-            },
-            {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 44.195
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 57.576
             },
             {
               "id": "vibe_code_bench",
               "label": "Vibe Code Bench",
-              "score": 4.063
+              "score": 91.906
             },
             {
               "id": "code_migration",
               "label": "Code Migration",
-              "score": 0.213
+              "score": 69.503
             },
             {
               "id": "legal_research",
               "label": "Legal Research",
-              "score": 13.942
+              "score": 54.808
             },
             {
               "id": "legal_agent_benchmark",
               "label": "HLAB",
-              "score": 0
-            }
-          ]
-        },
-        {
-          "id": "grok-grok-4-3",
-          "modelId": "grok/grok-4.3",
-          "provider": "SpaceXAI",
-          "effort": "high",
-          "harness": null,
-          "score": 24.294,
-          "standardError": 0.813,
-          "costUsdPerTest": 0.676033,
-          "latencySeconds": 338.369,
-          "components": [
-            {
-              "id": "finance_agent",
-              "label": "Finance Agent v2",
-              "score": 37.728
+              "score": 19.583
             },
             {
-              "id": "emb",
-              "label": "EMB",
-              "score": 18.394
-            },
-            {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 41.948
-            },
-            {
-              "id": "vibe_code_bench",
-              "label": "Vibe Code Bench",
-              "score": 19.403
-            },
-            {
-              "id": "code_migration",
-              "label": "Code Migration",
-              "score": 5.923
-            },
-            {
-              "id": "legal_research",
-              "label": "Legal Research",
-              "score": 15.385
-            },
-            {
-              "id": "legal_agent_benchmark",
-              "label": "HLAB",
-              "score": 0.417
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 76.231
             }
           ]
         },
@@ -1564,10 +982,10 @@
           "provider": "SpaceXAI",
           "effort": "high",
           "harness": null,
-          "score": 51.528,
-          "standardError": 1.317,
-          "costUsdPerTest": 1.955641,
-          "latencySeconds": 837.691,
+          "score": 44.723,
+          "standardError": 1.171,
+          "costUsdPerTest": 2.458898,
+          "latencySeconds": 944.196,
           "components": [
             {
               "id": "finance_agent",
@@ -1580,9 +998,9 @@
               "score": 52.911
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 67.79
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 8.586
             },
             {
               "id": "vibe_code_bench",
@@ -1603,6 +1021,11 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 12.917
+            },
+            {
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 64.323
             }
           ]
         },
@@ -1612,10 +1035,10 @@
           "provider": "SpaceXAI",
           "effort": "high",
           "harness": null,
-          "score": 59.167,
-          "standardError": 1.205,
-          "costUsdPerTest": 4.335319,
-          "latencySeconds": 2283.847,
+          "score": 52.092,
+          "standardError": 1.153,
+          "costUsdPerTest": 4.49288,
+          "latencySeconds": 2221.071,
           "components": [
             {
               "id": "finance_agent",
@@ -1628,9 +1051,9 @@
               "score": 62.727
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 78.277
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 17.172
             },
             {
               "id": "vibe_code_bench",
@@ -1651,6 +1074,11 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 15.833
+            },
+            {
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 70.788
             }
           ]
         },
@@ -1660,10 +1088,10 @@
           "provider": "SpaceXAI",
           "effort": "xhigh",
           "harness": null,
-          "score": 60.215,
-          "standardError": 1.079,
-          "costUsdPerTest": 11.161883,
-          "latencySeconds": 1975.967,
+          "score": 54.947,
+          "standardError": 1.072,
+          "costUsdPerTest": 12.118089,
+          "latencySeconds": 2131.404,
           "components": [
             {
               "id": "finance_agent",
@@ -1676,9 +1104,9 @@
               "score": 66.991
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 73.408
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 28.788
             },
             {
               "id": "vibe_code_bench",
@@ -1699,6 +1127,11 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 12.5
+            },
+            {
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 65.596
             }
           ]
         },
@@ -1708,25 +1141,25 @@
           "provider": "Inception",
           "effort": "high",
           "harness": null,
-          "score": 12.952,
-          "standardError": 0.474,
-          "costUsdPerTest": 0.300647,
-          "latencySeconds": 354.783,
+          "score": 8.855,
+          "standardError": 0.446,
+          "costUsdPerTest": 0.285616,
+          "latencySeconds": 340.966,
           "components": [
             {
               "id": "finance_agent",
               "label": "Finance Agent v2",
-              "score": 18.556
+              "score": 18.894
             },
             {
               "id": "emb",
               "label": "EMB",
-              "score": 8.823
+              "score": 8.789
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 34.082
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 0
             },
             {
               "id": "vibe_code_bench",
@@ -1747,102 +1180,11 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 0
-            }
-          ]
-        },
-        {
-          "id": "kimi-kimi-k2-5-thinking",
-          "modelId": "kimi/kimi-k2.5-thinking",
-          "provider": "Moonshot AI",
-          "effort": null,
-          "harness": null,
-          "score": 26.301,
-          "standardError": 0.948,
-          "costUsdPerTest": 0.511754,
-          "latencySeconds": 2130.649,
-          "components": [
-            {
-              "id": "finance_agent",
-              "label": "Finance Agent v2",
-              "score": 35.792
             },
             {
-              "id": "emb",
-              "label": "EMB",
-              "score": 28.469
-            },
-            {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 41.948
-            },
-            {
-              "id": "vibe_code_bench",
-              "label": "Vibe Code Bench",
-              "score": 17.536
-            },
-            {
-              "id": "code_migration",
-              "label": "Code Migration",
-              "score": 6.247
-            },
-            {
-              "id": "legal_research",
-              "label": "Legal Research",
-              "score": 15.865
-            },
-            {
-              "id": "legal_agent_benchmark",
-              "label": "HLAB",
-              "score": 0
-            }
-          ]
-        },
-        {
-          "id": "kimi-kimi-k2-6",
-          "modelId": "kimi/kimi-k2.6",
-          "provider": "Moonshot AI",
-          "effort": null,
-          "harness": null,
-          "score": 43.465,
-          "standardError": 1.174,
-          "costUsdPerTest": 1.849897,
-          "latencySeconds": 2392.268,
-          "components": [
-            {
-              "id": "finance_agent",
-              "label": "Finance Agent v2",
-              "score": 44.899
-            },
-            {
-              "id": "emb",
-              "label": "EMB",
-              "score": 57.855
-            },
-            {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 53.558
-            },
-            {
-              "id": "vibe_code_bench",
-              "label": "Vibe Code Bench",
-              "score": 37.891
-            },
-            {
-              "id": "code_migration",
-              "label": "Code Migration",
-              "score": 27.346
-            },
-            {
-              "id": "legal_research",
-              "label": "Legal Research",
-              "score": 15.865
-            },
-            {
-              "id": "legal_agent_benchmark",
-              "label": "HLAB",
-              "score": 1.667
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 12.41
             }
           ]
         },
@@ -1850,32 +1192,32 @@
           "id": "kimi-kimi-k3",
           "modelId": "kimi/kimi-k3",
           "provider": "Moonshot AI",
-          "effort": null,
+          "effort": "max",
           "harness": null,
-          "score": 57.813,
-          "standardError": 1.058,
-          "costUsdPerTest": 6.467826,
-          "latencySeconds": 4173.697,
+          "score": 50.297,
+          "standardError": 0.992,
+          "costUsdPerTest": 6.382152,
+          "latencySeconds": 4103.017,
           "components": [
             {
               "id": "finance_agent",
               "label": "Finance Agent v2",
-              "score": 54.36
+              "score": 53.114
             },
             {
               "id": "emb",
               "label": "EMB",
-              "score": 66.399
+              "score": 66.677
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 80.899
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 17.172
             },
             {
               "id": "vibe_code_bench",
               "label": "Vibe Code Bench",
-              "score": 84.963
+              "score": 84.968
             },
             {
               "id": "code_migration",
@@ -1885,60 +1227,17 @@
             {
               "id": "legal_research",
               "label": "Legal Research",
-              "score": 44.231
+              "score": 46.154
             },
             {
               "id": "legal_agent_benchmark",
               "label": "HLAB",
-              "score": 10.833
-            }
-          ]
-        },
-        {
-          "id": "meta-muse-spark-1-1",
-          "modelId": "meta/muse_spark_1_1",
-          "provider": "Meta",
-          "effort": "xhigh",
-          "harness": null,
-          "score": 54.754,
-          "standardError": 1.148,
-          "costUsdPerTest": 1.250502,
-          "latencySeconds": 827.803,
-          "components": [
-            {
-              "id": "finance_agent",
-              "label": "Finance Agent v2",
-              "score": 57.207
+              "score": 12.917
             },
             {
-              "id": "emb",
-              "label": "EMB",
-              "score": 56.361
-            },
-            {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 69.288
-            },
-            {
-              "id": "vibe_code_bench",
-              "label": "Vibe Code Bench",
-              "score": 72.158
-            },
-            {
-              "id": "code_migration",
-              "label": "Code Migration",
-              "score": 30.679
-            },
-            {
-              "id": "legal_research",
-              "label": "Legal Research",
-              "score": 37.981
-            },
-            {
-              "id": "legal_agent_benchmark",
-              "label": "HLAB",
-              "score": 20
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 68.672
             }
           ]
         },
@@ -1948,10 +1247,10 @@
           "provider": "Meta",
           "effort": "xhigh",
           "harness": null,
-          "score": 57.053,
-          "standardError": 1.117,
-          "costUsdPerTest": 1.661592,
-          "latencySeconds": 1009.228,
+          "score": 49.287,
+          "standardError": 1.096,
+          "costUsdPerTest": 1.942052,
+          "latencySeconds": 1376.299,
           "components": [
             {
               "id": "finance_agent",
@@ -1964,9 +1263,9 @@
               "score": 56.978
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 69.663
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 6.061
             },
             {
               "id": "vibe_code_bench",
@@ -1987,6 +1286,11 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 25.417
+            },
+            {
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 56.86
             }
           ]
         },
@@ -1996,10 +1300,10 @@
           "provider": "Meta",
           "effort": "xhigh",
           "harness": null,
-          "score": 60.31,
-          "standardError": 1.076,
-          "costUsdPerTest": 2.899528,
-          "latencySeconds": 1276.983,
+          "score": 53.197,
+          "standardError": 1.066,
+          "costUsdPerTest": 3.37642,
+          "latencySeconds": 1962.38,
           "components": [
             {
               "id": "finance_agent",
@@ -2012,9 +1316,9 @@
               "score": 62.712
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 72.285
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 10.606
             },
             {
               "id": "vibe_code_bench",
@@ -2034,7 +1338,12 @@
             {
               "id": "legal_agent_benchmark",
               "label": "HLAB",
-              "score": 22.083
+              "score": 22.917
+            },
+            {
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 71.934
             }
           ]
         },
@@ -2044,10 +1353,10 @@
           "provider": "Meta",
           "effort": "max",
           "harness": null,
-          "score": 64.526,
-          "standardError": 1.23,
-          "costUsdPerTest": 3.404111,
-          "latencySeconds": 1230.411,
+          "score": 58.162,
+          "standardError": 1.188,
+          "costUsdPerTest": 3.787017,
+          "latencySeconds": 1413.286,
           "components": [
             {
               "id": "finance_agent",
@@ -2060,9 +1369,9 @@
               "score": 67.426
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 79.026
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 24.747
             },
             {
               "id": "vibe_code_bench",
@@ -2083,54 +1392,11 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 23.75
-            }
-          ]
-        },
-        {
-          "id": "minimax-minimax-m2-7",
-          "modelId": "minimax/MiniMax-M2.7",
-          "provider": "MiniMax",
-          "effort": null,
-          "harness": null,
-          "score": 24.556,
-          "standardError": 0.932,
-          "costUsdPerTest": 0.87768,
-          "latencySeconds": 904.14,
-          "components": [
-            {
-              "id": "finance_agent",
-              "label": "Finance Agent v2",
-              "score": 27.887
             },
             {
-              "id": "emb",
-              "label": "EMB",
-              "score": 28.451
-            },
-            {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 48.689
-            },
-            {
-              "id": "vibe_code_bench",
-              "label": "Vibe Code Bench",
-              "score": 11.926
-            },
-            {
-              "id": "code_migration",
-              "label": "Code Migration",
-              "score": 9.953
-            },
-            {
-              "id": "legal_research",
-              "label": "Legal Research",
-              "score": 10.577
-            },
-            {
-              "id": "legal_agent_benchmark",
-              "label": "HLAB",
-              "score": 0
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 72.441
             }
           ]
         },
@@ -2140,10 +1406,10 @@
           "provider": "MiniMax",
           "effort": null,
           "harness": null,
-          "score": 42.719,
-          "standardError": 1.198,
-          "costUsdPerTest": 2.495943,
-          "latencySeconds": 2114.745,
+          "score": 36.535,
+          "standardError": 1.167,
+          "costUsdPerTest": 3.082399,
+          "latencySeconds": 2334.662,
           "components": [
             {
               "id": "finance_agent",
@@ -2156,9 +1422,9 @@
               "score": 47.759
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 53.558
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 1.01
             },
             {
               "id": "vibe_code_bench",
@@ -2179,102 +1445,11 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 4.167
-            }
-          ]
-        },
-        {
-          "id": "mistralai-mistral-medium-3-5",
-          "modelId": "mistralai/mistral-medium-3.5",
-          "provider": "Mistral AI",
-          "effort": "high",
-          "harness": null,
-          "score": 17.947,
-          "standardError": 0.687,
-          "costUsdPerTest": 8.010266,
-          "latencySeconds": 3446.487,
-          "components": [
-            {
-              "id": "finance_agent",
-              "label": "Finance Agent v2",
-              "score": 32.103
             },
             {
-              "id": "emb",
-              "label": "EMB",
-              "score": 11.185
-            },
-            {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 38.951
-            },
-            {
-              "id": "vibe_code_bench",
-              "label": "Vibe Code Bench",
-              "score": 2.888
-            },
-            {
-              "id": "code_migration",
-              "label": "Code Migration",
-              "score": 4.625
-            },
-            {
-              "id": "legal_research",
-              "label": "Legal Research",
-              "score": 9.135
-            },
-            {
-              "id": "legal_agent_benchmark",
-              "label": "HLAB",
-              "score": 0.417
-            }
-          ]
-        },
-        {
-          "id": "nvidia-nemotron-3-ultra-550b-a55b",
-          "modelId": "nvidia/nemotron-3-ultra-550b-a55b",
-          "provider": "Nvidia",
-          "effort": null,
-          "harness": null,
-          "score": 27.395,
-          "standardError": 0.949,
-          "costUsdPerTest": null,
-          "latencySeconds": 1948.359,
-          "components": [
-            {
-              "id": "finance_agent",
-              "label": "Finance Agent v2",
-              "score": 37.667
-            },
-            {
-              "id": "emb",
-              "label": "EMB",
-              "score": 31.735
-            },
-            {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 50.936
-            },
-            {
-              "id": "vibe_code_bench",
-              "label": "Vibe Code Bench",
-              "score": 7.636
-            },
-            {
-              "id": "code_migration",
-              "label": "Code Migration",
-              "score": 4.835
-            },
-            {
-              "id": "legal_research",
-              "label": "Legal Research",
-              "score": 15.385
-            },
-            {
-              "id": "legal_agent_benchmark",
-              "label": "HLAB",
-              "score": 0.417
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 49.691
             }
           ]
         },
@@ -2284,10 +1459,10 @@
           "provider": "OpenAI",
           "effort": "xhigh",
           "harness": null,
-          "score": 39.632,
-          "standardError": 1.435,
-          "costUsdPerTest": 1.380101,
-          "latencySeconds": 1742.074,
+          "score": 33.169,
+          "standardError": 1.282,
+          "costUsdPerTest": 1.45173,
+          "latencySeconds": 1788.543,
           "components": [
             {
               "id": "finance_agent",
@@ -2300,9 +1475,9 @@
               "score": 45.426
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 54.682
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 2.525
             },
             {
               "id": "vibe_code_bench",
@@ -2323,102 +1498,11 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 0
-            }
-          ]
-        },
-        {
-          "id": "openai-gpt-5-4-nano-2026-03-17",
-          "modelId": "openai/gpt-5.4-nano-2026-03-17",
-          "provider": "OpenAI",
-          "effort": "high",
-          "harness": null,
-          "score": 32.997,
-          "standardError": 1.276,
-          "costUsdPerTest": 0.398254,
-          "latencySeconds": 1229.587,
-          "components": [
-            {
-              "id": "finance_agent",
-              "label": "Finance Agent v2",
-              "score": 38.217
             },
             {
-              "id": "emb",
-              "label": "EMB",
-              "score": 44.751
-            },
-            {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 41.573
-            },
-            {
-              "id": "vibe_code_bench",
-              "label": "Vibe Code Bench",
-              "score": 26.097
-            },
-            {
-              "id": "code_migration",
-              "label": "Code Migration",
-              "score": 14.15
-            },
-            {
-              "id": "legal_research",
-              "label": "Legal Research",
-              "score": 6.25
-            },
-            {
-              "id": "legal_agent_benchmark",
-              "label": "HLAB",
-              "score": 0
-            }
-          ]
-        },
-        {
-          "id": "openai-gpt-5-5",
-          "modelId": "openai/gpt-5.5",
-          "provider": "OpenAI",
-          "effort": "xhigh",
-          "harness": null,
-          "score": 57.411,
-          "standardError": 1.151,
-          "costUsdPerTest": 6.142389,
-          "latencySeconds": 1251.251,
-          "components": [
-            {
-              "id": "finance_agent",
-              "label": "Finance Agent v2",
-              "score": 51.76
-            },
-            {
-              "id": "emb",
-              "label": "EMB",
-              "score": 64.543
-            },
-            {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 76.404
-            },
-            {
-              "id": "vibe_code_bench",
-              "label": "Vibe Code Bench",
-              "score": 69.847
-            },
-            {
-              "id": "code_migration",
-              "label": "Code Migration",
-              "score": 45.528
-            },
-            {
-              "id": "legal_research",
-              "label": "Legal Research",
-              "score": 40.385
-            },
-            {
-              "id": "legal_agent_benchmark",
-              "label": "HLAB",
-              "score": 3.75
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 36.586
             }
           ]
         },
@@ -2428,10 +1512,10 @@
           "provider": "OpenAI",
           "effort": "max",
           "harness": null,
-          "score": 59.881,
-          "standardError": 1.087,
-          "costUsdPerTest": 0.778845,
-          "latencySeconds": 1396.334,
+          "score": 51.687,
+          "standardError": 1.057,
+          "costUsdPerTest": 0.824394,
+          "latencySeconds": 1767.439,
           "components": [
             {
               "id": "finance_agent",
@@ -2444,9 +1528,9 @@
               "score": 67.116
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 79.026
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 11.616
             },
             {
               "id": "vibe_code_bench",
@@ -2467,6 +1551,11 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 1.25
+            },
+            {
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 60.815
             }
           ]
         },
@@ -2476,10 +1565,10 @@
           "provider": "OpenAI",
           "effort": "max",
           "harness": null,
-          "score": 63.709,
-          "standardError": 1.06,
-          "costUsdPerTest": 14.205832,
-          "latencySeconds": 1943.907,
+          "score": 58.005,
+          "standardError": 1.017,
+          "costUsdPerTest": 14.239384,
+          "latencySeconds": 2242.722,
           "components": [
             {
               "id": "finance_agent",
@@ -2492,9 +1581,9 @@
               "score": 72.339
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 85.768
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 37.879
             },
             {
               "id": "vibe_code_bench",
@@ -2515,6 +1604,11 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 2.5
+            },
+            {
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 67.955
             }
           ]
         },
@@ -2524,10 +1618,10 @@
           "provider": "OpenAI",
           "effort": "max",
           "harness": null,
-          "score": 59.588,
-          "standardError": 1.331,
-          "costUsdPerTest": 5.178734,
-          "latencySeconds": 1730.183,
+          "score": 53.085,
+          "standardError": 1.293,
+          "costUsdPerTest": 5.776241,
+          "latencySeconds": 2138.854,
           "components": [
             {
               "id": "finance_agent",
@@ -2540,9 +1634,9 @@
               "score": 66.205
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 77.528
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 22.727
             },
             {
               "id": "vibe_code_bench",
@@ -2563,6 +1657,64 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 0.833
+            },
+            {
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 65.199
+            }
+          ]
+        },
+        {
+          "id": "openai-gpt-6-1-sol",
+          "modelId": "openai/gpt-6.1-sol",
+          "provider": "OpenAI",
+          "effort": "max",
+          "harness": null,
+          "score": 61.154,
+          "standardError": 1.011,
+          "costUsdPerTest": 3.236975,
+          "latencySeconds": 2590.007,
+          "components": [
+            {
+              "id": "finance_agent",
+              "label": "Finance Agent v2",
+              "score": 52.033
+            },
+            {
+              "id": "emb",
+              "label": "EMB",
+              "score": 70.773
+            },
+            {
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 55.051
+            },
+            {
+              "id": "vibe_code_bench",
+              "label": "Vibe Code Bench",
+              "score": 88.931
+            },
+            {
+              "id": "code_migration",
+              "label": "Code Migration",
+              "score": 63.309
+            },
+            {
+              "id": "legal_research",
+              "label": "Legal Research",
+              "score": 38.462
+            },
+            {
+              "id": "legal_agent_benchmark",
+              "label": "HLAB",
+              "score": 5.417
+            },
+            {
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 62.31
             }
           ]
         },
@@ -2572,10 +1724,10 @@
           "provider": "OpenAI",
           "effort": "max",
           "harness": null,
-          "score": 66.608,
-          "standardError": 1.093,
-          "costUsdPerTest": 19.088776,
-          "latencySeconds": 1510.529,
+          "score": 63.125,
+          "standardError": 1.19,
+          "costUsdPerTest": 18.457813,
+          "latencySeconds": 1667.741,
           "components": [
             {
               "id": "finance_agent",
@@ -2588,9 +1740,9 @@
               "score": 71.7
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 87.266
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 59.596
             },
             {
               "id": "vibe_code_bench",
@@ -2611,6 +1763,11 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 5.417
+            },
+            {
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 63.335
             }
           ]
         },
@@ -2620,10 +1777,10 @@
           "provider": "OpenAI",
           "effort": "max",
           "harness": null,
-          "score": 58.45,
-          "standardError": 1.107,
-          "costUsdPerTest": 0.418873,
-          "latencySeconds": 1590.457,
+          "score": 51.216,
+          "standardError": 1.072,
+          "costUsdPerTest": 0.431072,
+          "latencySeconds": 1833.676,
           "components": [
             {
               "id": "finance_agent",
@@ -2636,9 +1793,9 @@
               "score": 68.515
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 73.034
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 13.636
             },
             {
               "id": "vibe_code_bench",
@@ -2659,6 +1816,11 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 2.917
+            },
+            {
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 58.864
             }
           ]
         },
@@ -2668,10 +1830,10 @@
           "provider": "OpenAI",
           "effort": "max",
           "harness": null,
-          "score": 62.569,
-          "standardError": 0.954,
-          "costUsdPerTest": 7.564103,
-          "latencySeconds": 1593.734,
+          "score": 57.536,
+          "standardError": 1.012,
+          "costUsdPerTest": 7.580816,
+          "latencySeconds": 1750.678,
           "components": [
             {
               "id": "finance_agent",
@@ -2684,9 +1846,9 @@
               "score": 71.53
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 83.146
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 44.444
             },
             {
               "id": "vibe_code_bench",
@@ -2707,6 +1869,64 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 1.667
+            },
+            {
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 53.045
+            }
+          ]
+        },
+        {
+          "id": "stepfun-step-5-preview",
+          "modelId": "stepfun/step-5-preview",
+          "provider": "Stepfun",
+          "effort": null,
+          "harness": null,
+          "score": 49.354,
+          "standardError": 1.222,
+          "costUsdPerTest": 2.625676,
+          "latencySeconds": 4217.914,
+          "components": [
+            {
+              "id": "finance_agent",
+              "label": "Finance Agent v2",
+              "score": 50.671
+            },
+            {
+              "id": "emb",
+              "label": "EMB",
+              "score": 57.116
+            },
+            {
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 31.818
+            },
+            {
+              "id": "vibe_code_bench",
+              "label": "Vibe Code Bench",
+              "score": 70.399
+            },
+            {
+              "id": "code_migration",
+              "label": "Code Migration",
+              "score": 39.459
+            },
+            {
+              "id": "legal_research",
+              "label": "Legal Research",
+              "score": 40.385
+            },
+            {
+              "id": "legal_agent_benchmark",
+              "label": "HLAB",
+              "score": 9.167
+            },
+            {
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 59.539
             }
           ]
         },
@@ -2716,10 +1936,10 @@
           "provider": "Tencent",
           "effort": null,
           "harness": null,
-          "score": 55.402,
-          "standardError": 1.248,
-          "costUsdPerTest": 1.280885,
-          "latencySeconds": 2871.238,
+          "score": 49.942,
+          "standardError": 1.149,
+          "costUsdPerTest": 1.438575,
+          "latencySeconds": 3656.531,
           "components": [
             {
               "id": "finance_agent",
@@ -2732,9 +1952,9 @@
               "score": 58.076
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 55.056
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 8.081
             },
             {
               "id": "vibe_code_bench",
@@ -2755,6 +1975,11 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 9.167
+            },
+            {
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 63.712
             }
           ]
         },
@@ -2764,10 +1989,10 @@
           "provider": "Thinkingmachines",
           "effort": "0.99",
           "harness": null,
-          "score": 34.102,
-          "standardError": 1.132,
-          "costUsdPerTest": 1.354489,
-          "latencySeconds": 1176.629,
+          "score": 28.668,
+          "standardError": 1.1,
+          "costUsdPerTest": 1.464372,
+          "latencySeconds": 1205.921,
           "components": [
             {
               "id": "finance_agent",
@@ -2780,9 +2005,9 @@
               "score": 38.362
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 47.566
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 0.505
             },
             {
               "id": "vibe_code_bench",
@@ -2803,6 +2028,11 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 2.083
+            },
+            {
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 43.516
             }
           ]
         },
@@ -2812,10 +2042,10 @@
           "provider": "Thinkingmachines",
           "effort": "0.99",
           "harness": null,
-          "score": 31.862,
-          "standardError": 1.103,
-          "costUsdPerTest": 0.281249,
-          "latencySeconds": 1372.678,
+          "score": 25.459,
+          "standardError": 1.032,
+          "costUsdPerTest": 0.281793,
+          "latencySeconds": 1261.928,
           "components": [
             {
               "id": "finance_agent",
@@ -2828,9 +2058,9 @@
               "score": 31.762
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 55.056
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 0
             },
             {
               "id": "vibe_code_bench",
@@ -2851,54 +2081,11 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 1.667
-            }
-          ]
-        },
-        {
-          "id": "xiaomi-mimo-v2-5",
-          "modelId": "xiaomi/mimo-v2.5",
-          "provider": "Xiaomi",
-          "effort": null,
-          "harness": null,
-          "score": 39.91,
-          "standardError": 1.312,
-          "costUsdPerTest": 0.061288,
-          "latencySeconds": 1092.973,
-          "components": [
-            {
-              "id": "finance_agent",
-              "label": "Finance Agent v2",
-              "score": 36.728
             },
             {
-              "id": "emb",
-              "label": "EMB",
-              "score": 55.092
-            },
-            {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 60.674
-            },
-            {
-              "id": "vibe_code_bench",
-              "label": "Vibe Code Bench",
-              "score": 42.174
-            },
-            {
-              "id": "code_migration",
-              "label": "Code Migration",
-              "score": 13.354
-            },
-            {
-              "id": "legal_research",
-              "label": "Legal Research",
-              "score": 9.135
-            },
-            {
-              "id": "legal_agent_benchmark",
-              "label": "HLAB",
-              "score": 1.667
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 41.461
             }
           ]
         },
@@ -2908,10 +2095,10 @@
           "provider": "Xiaomi",
           "effort": null,
           "harness": null,
-          "score": 40.974,
-          "standardError": 1.377,
-          "costUsdPerTest": 0.152141,
-          "latencySeconds": 1350.372,
+          "score": 33.842,
+          "standardError": 1.171,
+          "costUsdPerTest": 0.161806,
+          "latencySeconds": 2073.113,
           "components": [
             {
               "id": "finance_agent",
@@ -2924,9 +2111,9 @@
               "score": 55.228
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 57.303
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 0.505
             },
             {
               "id": "vibe_code_bench",
@@ -2947,6 +2134,11 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 2.083
+            },
+            {
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 34.787
             }
           ]
         },
@@ -2956,10 +2148,10 @@
           "provider": "Xiaomi",
           "effort": null,
           "harness": null,
-          "score": 59.584,
-          "standardError": 1.133,
-          "costUsdPerTest": 0.19671,
-          "latencySeconds": 2701.771,
+          "score": 53.231,
+          "standardError": 1.097,
+          "costUsdPerTest": 0.202364,
+          "latencySeconds": 3481.728,
           "components": [
             {
               "id": "finance_agent",
@@ -2972,9 +2164,9 @@
               "score": 65.459
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 76.404
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 24.242
             },
             {
               "id": "vibe_code_bench",
@@ -2995,6 +2187,11 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 11.25
+            },
+            {
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 59.904
             }
           ]
         },
@@ -3004,10 +2201,10 @@
           "provider": "Xiaomi",
           "effort": null,
           "harness": null,
-          "score": 59.47,
-          "standardError": 1.177,
-          "costUsdPerTest": 0.38918,
-          "latencySeconds": 3139.768,
+          "score": 55.199,
+          "standardError": 1.182,
+          "costUsdPerTest": 0.410427,
+          "latencySeconds": 4038.374,
           "components": [
             {
               "id": "finance_agent",
@@ -3020,9 +2217,9 @@
               "score": 62.858
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 67.79
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 31.313
             },
             {
               "id": "vibe_code_bench",
@@ -3043,54 +2240,11 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 10.833
-            }
-          ]
-        },
-        {
-          "id": "zai-glm-5-2",
-          "modelId": "zai/glm-5.2",
-          "provider": "Zhipu AI",
-          "effort": null,
-          "harness": null,
-          "score": 53.122,
-          "standardError": 1.184,
-          "costUsdPerTest": 4.290631,
-          "latencySeconds": 2527.312,
-          "components": [
-            {
-              "id": "finance_agent",
-              "label": "Finance Agent v2",
-              "score": 49.699
             },
             {
-              "id": "emb",
-              "label": "EMB",
-              "score": 61.532
-            },
-            {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 67.79
-            },
-            {
-              "id": "vibe_code_bench",
-              "label": "Vibe Code Bench",
-              "score": 63.961
-            },
-            {
-              "id": "code_migration",
-              "label": "Code Migration",
-              "score": 38.759
-            },
-            {
-              "id": "legal_research",
-              "label": "Legal Research",
-              "score": 31.25
-            },
-            {
-              "id": "legal_agent_benchmark",
-              "label": "HLAB",
-              "score": 7.083
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 64.939
             }
           ]
         },
@@ -3100,10 +2254,10 @@
           "provider": "Fireworks AI",
           "effort": "max",
           "harness": null,
-          "score": 56.97,
-          "standardError": 1.349,
-          "costUsdPerTest": 6.73155,
-          "latencySeconds": 3988.986,
+          "score": 53.514,
+          "standardError": 1.305,
+          "costUsdPerTest": 7.248682,
+          "latencySeconds": 4392.772,
           "components": [
             {
               "id": "finance_agent",
@@ -3116,9 +2270,9 @@
               "score": 56.344
             },
             {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 71.536
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 38.889
             },
             {
               "id": "vibe_code_bench",
@@ -3139,54 +2293,11 @@
               "id": "legal_agent_benchmark",
               "label": "HLAB",
               "score": 8.333
-            }
-          ]
-        },
-        {
-          "id": "zai-glm-5-3-flash",
-          "modelId": "zai/glm-5.3-flash",
-          "provider": "Fireworks AI",
-          "effort": "max",
-          "harness": null,
-          "score": 47.216,
-          "standardError": 1.445,
-          "costUsdPerTest": 0.992509,
-          "latencySeconds": 4266.783,
-          "components": [
-            {
-              "id": "finance_agent",
-              "label": "Finance Agent v2",
-              "score": 57.85
             },
             {
-              "id": "emb",
-              "label": "EMB",
-              "score": 55.932
-            },
-            {
-              "id": "terminal_bench_2_1",
-              "label": "Terminal-Bench 2.1",
-              "score": 62.921
-            },
-            {
-              "id": "vibe_code_bench",
-              "label": "Vibe Code Bench",
-              "score": 30.759
-            },
-            {
-              "id": "code_migration",
-              "label": "Code Migration",
-              "score": 20.185
-            },
-            {
-              "id": "legal_research",
-              "label": "Legal Research",
-              "score": 45.192
-            },
-            {
-              "id": "legal_agent_benchmark",
-              "label": "HLAB",
-              "score": 6.667
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 73.089
             }
           ]
         }
@@ -3204,12 +2315,12 @@
       "mode": "agentic",
       "runner": "external",
       "costBasis": "cost-per-test",
-      "totalModels": 70,
+      "totalModels": 74,
       "source": {
         "url": "https://www.vals.ai/benchmarks/fabv2",
-        "retrievedAt": "2026-09-28T18:16:23.422Z",
-        "sha256": "e94aab3c2e30f18c1eb94a691475ded0d05ffe10aa5fcf0d18f5be1d319602dc",
-        "observedAt": "2026-09-27T00:00:00.000Z",
+        "retrievedAt": "2026-10-05T14:14:03.855Z",
+        "sha256": "5f865eeef45db4cb5b1293d3883fad2d267e5be5b2e08b5bba98455d1be7da2e",
+        "observedAt": "2026-10-01T00:00:00.000Z",
         "revision": "finance_agent v2"
       },
       "rows": [
@@ -4600,6 +3711,69 @@
           ]
         },
         {
+          "id": "fireworks-ember-1",
+          "modelId": "fireworks/ember-1",
+          "provider": "Fireworks AI",
+          "effort": null,
+          "harness": null,
+          "score": 51.853,
+          "standardError": 2.124,
+          "costUsdPerTest": 1.95445,
+          "latencySeconds": 798.612,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 39.26
+            },
+            {
+              "id": "general_qualitative_analysis",
+              "label": "General Qualitative Analysis",
+              "score": 61.744
+            },
+            {
+              "id": "general_quantitative_analysis",
+              "label": "General Quantitative Analysis",
+              "score": 75.087
+            },
+            {
+              "id": "market_analysis",
+              "label": "Market Analysis",
+              "score": 56.549
+            },
+            {
+              "id": "comparables",
+              "label": "Comparables",
+              "score": 41.672
+            },
+            {
+              "id": "precedents",
+              "label": "Precedents",
+              "score": 29.193
+            },
+            {
+              "id": "adjustments",
+              "label": "Adjustments",
+              "score": 51.258
+            },
+            {
+              "id": "earnings_analysis",
+              "label": "Earnings Analysis",
+              "score": 66.947
+            },
+            {
+              "id": "disclosure_analysis",
+              "label": "Disclosure Analysis",
+              "score": 61.067
+            },
+            {
+              "id": "financial_modeling",
+              "label": "Financial Modeling",
+              "score": 23.163
+            }
+          ]
+        },
+        {
           "id": "fireworks-nemotron-lightning-3p5-30b-a3b",
           "modelId": "fireworks/nemotron-lightning-3p5-30b-a3b",
           "provider": "Fireworks AI",
@@ -5167,6 +4341,69 @@
           ]
         },
         {
+          "id": "google-gemini-4-argon",
+          "modelId": "google/gemini-4-argon",
+          "provider": "Google",
+          "effort": "high",
+          "harness": null,
+          "score": 65.401,
+          "standardError": 0.321,
+          "costUsdPerTest": 4.378161,
+          "latencySeconds": 980.524,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 55.789
+            },
+            {
+              "id": "general_qualitative_analysis",
+              "label": "General Qualitative Analysis",
+              "score": 76.963
+            },
+            {
+              "id": "general_quantitative_analysis",
+              "label": "General Quantitative Analysis",
+              "score": 81.515
+            },
+            {
+              "id": "market_analysis",
+              "label": "Market Analysis",
+              "score": 79.705
+            },
+            {
+              "id": "comparables",
+              "label": "Comparables",
+              "score": 50.956
+            },
+            {
+              "id": "precedents",
+              "label": "Precedents",
+              "score": 49.834
+            },
+            {
+              "id": "adjustments",
+              "label": "Adjustments",
+              "score": 60.527
+            },
+            {
+              "id": "earnings_analysis",
+              "label": "Earnings Analysis",
+              "score": 84.807
+            },
+            {
+              "id": "disclosure_analysis",
+              "label": "Disclosure Analysis",
+              "score": 74.496
+            },
+            {
+              "id": "financial_modeling",
+              "label": "Financial Modeling",
+              "score": 29.803
+            }
+          ]
+        },
+        {
           "id": "grok-grok-4-20-0309-reasoning",
           "modelId": "grok/grok-4.20-0309-reasoning",
           "provider": "SpaceXAI",
@@ -5487,45 +4724,45 @@
           "provider": "Inception",
           "effort": "high",
           "harness": null,
-          "score": 18.556,
-          "standardError": 0.255,
+          "score": 18.894,
+          "standardError": 0.216,
           "costUsdPerTest": 0.106441,
-          "latencySeconds": 95.056,
+          "latencySeconds": 92.482,
           "components": [
             {
               "id": "all_pass",
               "label": "All-Pass",
-              "score": 9.112
+              "score": 9.369
             },
             {
               "id": "general_qualitative_analysis",
               "label": "General Qualitative Analysis",
-              "score": 29.194
+              "score": 29.476
             },
             {
               "id": "general_quantitative_analysis",
               "label": "General Quantitative Analysis",
-              "score": 29.455
+              "score": 31.353
             },
             {
               "id": "market_analysis",
               "label": "Market Analysis",
-              "score": 27.118
+              "score": 26.624
             },
             {
               "id": "comparables",
               "label": "Comparables",
-              "score": 24.917
+              "score": 25.496
             },
             {
               "id": "precedents",
               "label": "Precedents",
-              "score": 7.52
+              "score": 7.448
             },
             {
               "id": "adjustments",
               "label": "Adjustments",
-              "score": 12.678
+              "score": 12.415
             },
             {
               "id": "earnings_analysis",
@@ -5535,7 +4772,7 @@
             {
               "id": "disclosure_analysis",
               "label": "Disclosure Analysis",
-              "score": 17.951
+              "score": 19.063
             },
             {
               "id": "financial_modeling",
@@ -5674,62 +4911,62 @@
           "id": "kimi-kimi-k3",
           "modelId": "kimi/kimi-k3",
           "provider": "Moonshot AI",
-          "effort": null,
+          "effort": "max",
           "harness": null,
-          "score": 54.36,
-          "standardError": 0.531,
-          "costUsdPerTest": 1.066994,
-          "latencySeconds": 876.783,
+          "score": 53.114,
+          "standardError": 0.374,
+          "costUsdPerTest": 1.913224,
+          "latencySeconds": 285.753,
           "components": [
             {
               "id": "all_pass",
               "label": "All-Pass",
-              "score": 41.69
+              "score": 41.837
             },
             {
               "id": "general_qualitative_analysis",
               "label": "General Qualitative Analysis",
-              "score": 65.619
+              "score": 66.408
             },
             {
               "id": "general_quantitative_analysis",
               "label": "General Quantitative Analysis",
-              "score": 74.449
+              "score": 74.807
             },
             {
               "id": "market_analysis",
               "label": "Market Analysis",
-              "score": 66.58
+              "score": 62.099
             },
             {
               "id": "comparables",
               "label": "Comparables",
-              "score": 46.691
+              "score": 47.778
             },
             {
               "id": "precedents",
               "label": "Precedents",
-              "score": 23.07
+              "score": 23.634
             },
             {
               "id": "adjustments",
               "label": "Adjustments",
-              "score": 51.461
+              "score": 45.274
             },
             {
               "id": "earnings_analysis",
               "label": "Earnings Analysis",
-              "score": 73.084
+              "score": 69.418
             },
             {
               "id": "disclosure_analysis",
               "label": "Disclosure Analysis",
-              "score": 65.281
+              "score": 65.052
             },
             {
               "id": "financial_modeling",
               "label": "Financial Modeling",
-              "score": 23.008
+              "score": 23.556
             }
           ]
         },
@@ -6616,6 +5853,69 @@
           ]
         },
         {
+          "id": "openai-gpt-6-1-sol",
+          "modelId": "openai/gpt-6.1-sol",
+          "provider": "OpenAI",
+          "effort": "max",
+          "harness": null,
+          "score": 52.033,
+          "standardError": 0.308,
+          "costUsdPerTest": 1.619399,
+          "latencySeconds": 925.46,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 39.906
+            },
+            {
+              "id": "general_qualitative_analysis",
+              "label": "General Qualitative Analysis",
+              "score": 63.205
+            },
+            {
+              "id": "general_quantitative_analysis",
+              "label": "General Quantitative Analysis",
+              "score": 74.527
+            },
+            {
+              "id": "market_analysis",
+              "label": "Market Analysis",
+              "score": 64.467
+            },
+            {
+              "id": "comparables",
+              "label": "Comparables",
+              "score": 42.619
+            },
+            {
+              "id": "precedents",
+              "label": "Precedents",
+              "score": 25.785
+            },
+            {
+              "id": "adjustments",
+              "label": "Adjustments",
+              "score": 44.717
+            },
+            {
+              "id": "earnings_analysis",
+              "label": "Earnings Analysis",
+              "score": 71.474
+            },
+            {
+              "id": "disclosure_analysis",
+              "label": "Disclosure Analysis",
+              "score": 58.406
+            },
+            {
+              "id": "financial_modeling",
+              "label": "Financial Modeling",
+              "score": 23.093
+            }
+          ]
+        },
+        {
           "id": "openai-gpt-6-astra",
           "modelId": "openai/gpt-6-astra",
           "provider": "OpenAI",
@@ -6927,6 +6227,69 @@
               "id": "financial_modeling",
               "label": "Financial Modeling",
               "score": 2.591
+            }
+          ]
+        },
+        {
+          "id": "stepfun-step-5-preview",
+          "modelId": "stepfun/step-5-preview",
+          "provider": "Stepfun",
+          "effort": null,
+          "harness": null,
+          "score": 50.671,
+          "standardError": 0.324,
+          "costUsdPerTest": 0.619283,
+          "latencySeconds": 747.585,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 38.809
+            },
+            {
+              "id": "general_qualitative_analysis",
+              "label": "General Qualitative Analysis",
+              "score": 63.818
+            },
+            {
+              "id": "general_quantitative_analysis",
+              "label": "General Quantitative Analysis",
+              "score": 71.413
+            },
+            {
+              "id": "market_analysis",
+              "label": "Market Analysis",
+              "score": 55.815
+            },
+            {
+              "id": "comparables",
+              "label": "Comparables",
+              "score": 46.414
+            },
+            {
+              "id": "precedents",
+              "label": "Precedents",
+              "score": 21.142
+            },
+            {
+              "id": "adjustments",
+              "label": "Adjustments",
+              "score": 47.752
+            },
+            {
+              "id": "earnings_analysis",
+              "label": "Earnings Analysis",
+              "score": 71.702
+            },
+            {
+              "id": "disclosure_analysis",
+              "label": "Disclosure Analysis",
+              "score": 61.264
+            },
+            {
+              "id": "financial_modeling",
+              "label": "Financial Modeling",
+              "score": 16.714
             }
           ]
         },
@@ -7637,12 +7000,12 @@
       "mode": "agentic",
       "runner": "external",
       "costBasis": "cost-per-test",
-      "totalModels": 69,
+      "totalModels": 73,
       "source": {
         "url": "https://www.vals.ai/benchmarks/legal_research",
-        "retrievedAt": "2026-09-28T18:16:23.422Z",
-        "sha256": "6e47acf14138c268ee570288317bd0dc2e9333bb19b8181b5bc759852a985580",
-        "observedAt": "2026-09-27T00:00:00.000Z",
+        "retrievedAt": "2026-10-05T14:14:03.855Z",
+        "sha256": "7cee19c04b6f56b1b758b0d27d8462ba6ad8af39b8db7f5fff0b22c827ac90fd",
+        "observedAt": "2026-10-01T00:00:00.000Z",
         "revision": "legal_research v1"
       },
       "rows": [
@@ -8636,7 +7999,7 @@
           "id": "deepseek-deepseek-v4-1-flash",
           "modelId": "deepseek/deepseek-v4.1-flash",
           "provider": "DeepSeek",
-          "effort": "high",
+          "effort": "max",
           "harness": null,
           "score": 41.346,
           "standardError": 3.423,
@@ -8865,6 +8228,64 @@
           ]
         },
         {
+          "id": "fireworks-ember-1",
+          "modelId": "fireworks/ember-1",
+          "provider": "Fireworks AI",
+          "effort": null,
+          "harness": null,
+          "score": 44.712,
+          "standardError": 3.456,
+          "costUsdPerTest": 3.674091,
+          "latencySeconds": 2313.552,
+          "components": [
+            {
+              "id": "administrative_regulatory",
+              "label": "Administrative / Regulatory",
+              "score": 63.636
+            },
+            {
+              "id": "business_commercial",
+              "label": "Business & Commercial",
+              "score": 37.209
+            },
+            {
+              "id": "civil_litigation",
+              "label": "Civil Litigation",
+              "score": 40.741
+            },
+            {
+              "id": "constitutional_civil_rights",
+              "label": "Constitutional / Civil Rights",
+              "score": 42.105
+            },
+            {
+              "id": "criminal",
+              "label": "Criminal",
+              "score": 31.579
+            },
+            {
+              "id": "family",
+              "label": "Family",
+              "score": 27.273
+            },
+            {
+              "id": "health",
+              "label": "Health",
+              "score": 80
+            },
+            {
+              "id": "immigration",
+              "label": "Immigration",
+              "score": 27.273
+            },
+            {
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 86.027
+            }
+          ]
+        },
+        {
           "id": "fireworks-nemotron-lightning-3p5-30b-a3b",
           "modelId": "fireworks/nemotron-lightning-3p5-30b-a3b",
           "provider": "Fireworks AI",
@@ -8926,7 +8347,7 @@
           "id": "google-gemini-3-1-flash-lite-preview",
           "modelId": "google/gemini-3.1-flash-lite-preview",
           "provider": "Google",
-          "effort": null,
+          "effort": "high",
           "harness": null,
           "score": 3.365,
           "standardError": 1.253,
@@ -9387,6 +8808,64 @@
           ]
         },
         {
+          "id": "google-gemini-4-argon",
+          "modelId": "google/gemini-4-argon",
+          "provider": "Google",
+          "effort": "high",
+          "harness": null,
+          "score": 54.808,
+          "standardError": 3.459,
+          "costUsdPerTest": 6.44908,
+          "latencySeconds": 1881.045,
+          "components": [
+            {
+              "id": "administrative_regulatory",
+              "label": "Administrative / Regulatory",
+              "score": 68.182
+            },
+            {
+              "id": "business_commercial",
+              "label": "Business & Commercial",
+              "score": 46.512
+            },
+            {
+              "id": "civil_litigation",
+              "label": "Civil Litigation",
+              "score": 51.852
+            },
+            {
+              "id": "constitutional_civil_rights",
+              "label": "Constitutional / Civil Rights",
+              "score": 47.368
+            },
+            {
+              "id": "criminal",
+              "label": "Criminal",
+              "score": 56.14
+            },
+            {
+              "id": "family",
+              "label": "Family",
+              "score": 36.364
+            },
+            {
+              "id": "health",
+              "label": "Health",
+              "score": 76.667
+            },
+            {
+              "id": "immigration",
+              "label": "Immigration",
+              "score": 54.545
+            },
+            {
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 90.991
+            }
+          ]
+        },
+        {
           "id": "grok-grok-4-20-0309-reasoning",
           "modelId": "grok/grok-4.20-0309-reasoning",
           "provider": "SpaceXAI",
@@ -9685,7 +9164,7 @@
           "score": 4.327,
           "standardError": 1.414,
           "costUsdPerTest": 0.058112,
-          "latencySeconds": 45.996,
+          "latencySeconds": 47.609,
           "components": [
             {
               "id": "administrative_regulatory",
@@ -9730,7 +9209,7 @@
             {
               "id": "weighted_pass",
               "label": "Weighted Pass",
-              "score": 58.899
+              "score": 58.67
             }
           ]
         },
@@ -9854,32 +9333,32 @@
           "id": "kimi-kimi-k3",
           "modelId": "kimi/kimi-k3",
           "provider": "Moonshot AI",
-          "effort": null,
+          "effort": "max",
           "harness": null,
-          "score": 44.231,
-          "standardError": 3.452,
-          "costUsdPerTest": 3.222748,
-          "latencySeconds": 2146.326,
+          "score": 46.154,
+          "standardError": 3.465,
+          "costUsdPerTest": 3.469601,
+          "latencySeconds": 760.122,
           "components": [
             {
               "id": "administrative_regulatory",
               "label": "Administrative / Regulatory",
-              "score": 54.545
+              "score": 63.636
             },
             {
               "id": "business_commercial",
               "label": "Business & Commercial",
-              "score": 46.512
+              "score": 39.535
             },
             {
               "id": "civil_litigation",
               "label": "Civil Litigation",
-              "score": 25.926
+              "score": 44.444
             },
             {
               "id": "constitutional_civil_rights",
               "label": "Constitutional / Civil Rights",
-              "score": 44.737
+              "score": 36.842
             },
             {
               "id": "criminal",
@@ -9889,12 +9368,12 @@
             {
               "id": "family",
               "label": "Family",
-              "score": 27.273
+              "score": 22.727
             },
             {
               "id": "health",
               "label": "Health",
-              "score": 63.333
+              "score": 76.667
             },
             {
               "id": "immigration",
@@ -9904,7 +9383,7 @@
             {
               "id": "weighted_pass",
               "label": "Weighted Pass",
-              "score": 86.984
+              "score": 84.643
             }
           ]
         },
@@ -10721,6 +10200,64 @@
           ]
         },
         {
+          "id": "openai-gpt-6-1-sol",
+          "modelId": "openai/gpt-6.1-sol",
+          "provider": "OpenAI",
+          "effort": "max",
+          "harness": null,
+          "score": 38.462,
+          "standardError": 3.381,
+          "costUsdPerTest": 3.384561,
+          "latencySeconds": 2060.48,
+          "components": [
+            {
+              "id": "administrative_regulatory",
+              "label": "Administrative / Regulatory",
+              "score": 53.03
+            },
+            {
+              "id": "business_commercial",
+              "label": "Business & Commercial",
+              "score": 39.535
+            },
+            {
+              "id": "civil_litigation",
+              "label": "Civil Litigation",
+              "score": 29.63
+            },
+            {
+              "id": "constitutional_civil_rights",
+              "label": "Constitutional / Civil Rights",
+              "score": 31.579
+            },
+            {
+              "id": "criminal",
+              "label": "Criminal",
+              "score": 35.088
+            },
+            {
+              "id": "family",
+              "label": "Family",
+              "score": 18.182
+            },
+            {
+              "id": "health",
+              "label": "Health",
+              "score": 76.667
+            },
+            {
+              "id": "immigration",
+              "label": "Immigration",
+              "score": 18.182
+            },
+            {
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 84.312
+            }
+          ]
+        },
+        {
           "id": "openai-gpt-6-astra",
           "modelId": "openai/gpt-6-astra",
           "provider": "OpenAI",
@@ -11007,6 +10544,64 @@
               "id": "weighted_pass",
               "label": "Weighted Pass",
               "score": 56.27
+            }
+          ]
+        },
+        {
+          "id": "stepfun-step-5-preview",
+          "modelId": "stepfun/step-5-preview",
+          "provider": "Stepfun",
+          "effort": null,
+          "harness": null,
+          "score": 40.385,
+          "standardError": 3.41,
+          "costUsdPerTest": 0.838645,
+          "latencySeconds": 2168.413,
+          "components": [
+            {
+              "id": "administrative_regulatory",
+              "label": "Administrative / Regulatory",
+              "score": 48.485
+            },
+            {
+              "id": "business_commercial",
+              "label": "Business & Commercial",
+              "score": 39.535
+            },
+            {
+              "id": "civil_litigation",
+              "label": "Civil Litigation",
+              "score": 48.148
+            },
+            {
+              "id": "constitutional_civil_rights",
+              "label": "Constitutional / Civil Rights",
+              "score": 34.211
+            },
+            {
+              "id": "criminal",
+              "label": "Criminal",
+              "score": 38.596
+            },
+            {
+              "id": "family",
+              "label": "Family",
+              "score": 9.091
+            },
+            {
+              "id": "health",
+              "label": "Health",
+              "score": 53.333
+            },
+            {
+              "id": "immigration",
+              "label": "Immigration",
+              "score": 36.364
+            },
+            {
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 84.759
             }
           ]
         },
@@ -11662,12 +11257,12 @@
       "mode": "agentic",
       "runner": "external",
       "costBasis": "cost-per-test",
-      "totalModels": 61,
+      "totalModels": 65,
       "source": {
         "url": "https://www.vals.ai/benchmarks/tax_agent_bench",
-        "retrievedAt": "2026-09-28T18:16:23.422Z",
-        "sha256": "4c009b6452469277cbc3829785d4208ed684b22c4db6df24749a6402b5e282f1",
-        "observedAt": "2026-09-27T00:00:00.000Z",
+        "retrievedAt": "2026-10-05T14:14:03.855Z",
+        "sha256": "db5281119d5993c2e2c002edd325ce208eb39ac57dfb0d73fd1afd34153bc96f",
+        "observedAt": "2026-09-30T00:00:00.000Z",
         "revision": "tax_agent_bench v1"
       },
       "rows": [
@@ -12632,6 +12227,54 @@
           ]
         },
         {
+          "id": "fireworks-ember-1",
+          "modelId": "fireworks/ember-1",
+          "provider": "Fireworks AI",
+          "effort": null,
+          "harness": null,
+          "score": 68.044,
+          "standardError": 3.128,
+          "costUsdPerTest": 2.972904,
+          "latencySeconds": 1845.939,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 31.088
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 71.843
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 51.16
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 80.827
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 77.664
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 65.892
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 59.234
+            }
+          ]
+        },
+        {
           "id": "fireworks-nemotron-lightning-3p5-30b-a3b",
           "modelId": "fireworks/nemotron-lightning-3p5-30b-a3b",
           "provider": "Fireworks AI",
@@ -13064,6 +12707,54 @@
           ]
         },
         {
+          "id": "google-gemini-4-argon",
+          "modelId": "google/gemini-4-argon",
+          "provider": "Google",
+          "effort": "high",
+          "harness": null,
+          "score": 76.231,
+          "standardError": 2.874,
+          "costUsdPerTest": 3.473645,
+          "latencySeconds": 985.634,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 44.56
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 76.678
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 77.359
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 84.637
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 87.616
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 67.296
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 63.603
+            }
+          ]
+        },
+        {
           "id": "grok-grok-4-20-0309-reasoning",
           "modelId": "grok/grok-4.20-0309-reasoning",
           "provider": "SpaceXAI",
@@ -13309,15 +13000,15 @@
           "provider": "Inception",
           "effort": "high",
           "harness": null,
-          "score": 12.773,
-          "standardError": 1.828,
+          "score": 12.41,
+          "standardError": 1.805,
           "costUsdPerTest": 0.023633,
           "latencySeconds": 29.67,
           "components": [
             {
               "id": "all_pass",
               "label": "All-Pass",
-              "score": 3.627
+              "score": 3.109
             },
             {
               "id": "fact_pattern_analysis",
@@ -13347,7 +13038,7 @@
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 5.886
+              "score": 3.553
             }
           ]
         },
@@ -13407,7 +13098,7 @@
           "harness": null,
           "score": 68.672,
           "standardError": 3.083,
-          "costUsdPerTest": 2.787196,
+          "costUsdPerTest": 2.790127,
           "latencySeconds": 2415.159,
           "components": [
             {
@@ -14024,6 +13715,54 @@
           ]
         },
         {
+          "id": "openai-gpt-6-1-sol",
+          "modelId": "openai/gpt-6.1-sol",
+          "provider": "OpenAI",
+          "effort": "max",
+          "harness": null,
+          "score": 62.31,
+          "standardError": 3.2,
+          "costUsdPerTest": 1.323601,
+          "latencySeconds": 1213.878,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 21.762
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 61.713
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 49.179
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 63.366
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 77.344
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 57.72
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 64.799
+            }
+          ]
+        },
+        {
           "id": "openai-gpt-6-astra",
           "modelId": "openai/gpt-6-astra",
           "provider": "OpenAI",
@@ -14164,6 +13903,54 @@
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
               "score": 50.662
+            }
+          ]
+        },
+        {
+          "id": "stepfun-step-5-preview",
+          "modelId": "stepfun/step-5-preview",
+          "provider": "Stepfun",
+          "effort": null,
+          "harness": null,
+          "score": 59.539,
+          "standardError": 3.09,
+          "costUsdPerTest": 0.55338,
+          "latencySeconds": 1288.515,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 29.016
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 56.368
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 60.8
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 58.681
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 72.083
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 58.822
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 51.856
             }
           ]
         },
@@ -14506,7 +14293,7 @@
         {
           "id": "zai-glm-5-3",
           "modelId": "zai/glm-5.3",
-          "provider": "Fireworks AI",
+          "provider": "Zhipu AI",
           "effort": "max",
           "harness": null,
           "score": 73.089,
@@ -14613,12 +14400,12 @@
       "mode": "one-shot",
       "runner": "custom",
       "costBasis": "unavailable",
-      "totalModels": 102,
+      "totalModels": 104,
       "source": {
         "url": "https://www.vals.ai/benchmarks/medcode",
-        "retrievedAt": "2026-09-28T18:16:23.422Z",
-        "sha256": "d5bfd4e29f7235e41341f9bdf9348f81583be8886f5f7bc2935b6411bfaf043b",
-        "observedAt": "2026-09-26T00:00:00.000Z",
+        "retrievedAt": "2026-10-05T14:14:03.855Z",
+        "sha256": "7a10326d8efc4030bc0762020cf43a1d7a1750b299b573b625920a7b1bec326b",
+        "observedAt": "2026-10-01T00:00:00.000Z",
         "revision": "medcode v1"
       },
       "rows": [
@@ -15235,6 +15022,18 @@
           "components": []
         },
         {
+          "id": "google-gemini-4-argon",
+          "modelId": "google/gemini-4-argon",
+          "provider": "Google",
+          "effort": "high",
+          "harness": null,
+          "score": 58.801,
+          "standardError": 2.1,
+          "costUsdPerTest": null,
+          "latencySeconds": 79.527,
+          "components": []
+        },
+        {
           "id": "grok-grok-4-0709",
           "modelId": "grok/grok-4-0709",
           "provider": "SpaceXAI",
@@ -15394,12 +15193,12 @@
           "id": "kimi-kimi-k3",
           "modelId": "kimi/kimi-k3",
           "provider": "Moonshot AI",
-          "effort": null,
+          "effort": "max",
           "harness": null,
-          "score": 48.884,
-          "standardError": 2.193,
+          "score": 49.357,
+          "standardError": 2.202,
           "costUsdPerTest": null,
-          "latencySeconds": 116.178,
+          "latencySeconds": 36.994,
           "components": []
         },
         {
@@ -15616,6 +15415,18 @@
           "standardError": 1.948,
           "costUsdPerTest": null,
           "latencySeconds": 29.741,
+          "components": []
+        },
+        {
+          "id": "openai-gpt-6-1-sol",
+          "modelId": "openai/gpt-6.1-sol",
+          "provider": "OpenAI",
+          "effort": "max",
+          "harness": null,
+          "score": 48.839,
+          "standardError": 2.12,
+          "costUsdPerTest": null,
+          "latencySeconds": 115.342,
           "components": []
         },
         {

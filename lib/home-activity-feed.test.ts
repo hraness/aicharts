@@ -16,8 +16,8 @@ describe("home activity feed", () => {
     expect(HOME_ACTIVITY_FEED.filter(item => item.kind === "note").length)
       .toBeLessThanOrEqual(HOME_ACTIVITY_NOTE_LIMIT);
     expect(HOME_ACTIVITY_FEED.some(item => (
-      item.href === "/models/xiaomi/mimo-v2-6-pro/index"
-      && item.title === "MiMo-V2.6-Pro"
+      item.href === "/models/inclusionai/ling-3-1-flash/index"
+      && item.title === "Ling 3.1 Flash"
     ))).toBeTrue();
     expect(HOME_ACTIVITY_FEED.some(item => (
       item.href === "/models/anthropic/claude-opus-5.5/max"

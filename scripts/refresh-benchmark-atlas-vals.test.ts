@@ -6,6 +6,7 @@ import { VALS_ATLAS_DATASETS, VALS_ATLAS_ENTRIES, VALS_EVIDENCE_LABEL } from "..
 import {
   VALS_ADMITTED_BENCHMARKS,
   valsBenchmarkUrl,
+  valsRefreshPredecessorSchema,
   valsSnapshotSchema,
 } from "../lib/benchmark-atlas-vals-data";
 import {
@@ -227,6 +228,17 @@ describe("checked Vals snapshot", () => {
     expect(valsSnapshotSchema.safeParse(checked).success).toBe(true);
     expect(checked.benchmarks.map(benchmark => benchmark.slug).sort())
       .toEqual(VALS_ADMITTED_BENCHMARKS.map(entry => entry.slug).sort());
+  });
+
+  test("a predecessor snapshot may keep the last published version while the current pin moves", () => {
+    const predecessor = {
+      ...checked,
+      benchmarks: checked.benchmarks.map(benchmark => (
+        benchmark.slug === "vals_index" ? { ...benchmark, version: "legacy-pin" } : benchmark
+      )),
+    };
+    expect(valsSnapshotSchema.safeParse(predecessor).success).toBe(false);
+    expect(valsRefreshPredecessorSchema.safeParse(predecessor).success).toBe(true);
   });
 
   test("every admitted board is a private Vals evaluation, never a re-run of a public benchmark", () => {

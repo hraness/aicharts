@@ -7,6 +7,7 @@ import {
   VALS_DATASET_TYPE,
   VALS_SOURCE_ORIGIN,
   valsBenchmarkUrl,
+  valsRefreshPredecessorSchema,
   valsSnapshotSchema,
   type ValsAdmittedBenchmark,
   type ValsBenchmarkSnapshot,
@@ -324,7 +325,7 @@ export async function main(args: readonly string[]): Promise<void> {
   const next = valsSnapshotSchema.parse({ schemaVersion: 1, benchmarks });
 
   if (await Bun.file(OUTPUT).exists()) {
-    const previous = valsSnapshotSchema.parse(await Bun.file(OUTPUT).json());
+    const previous = valsRefreshPredecessorSchema.parse(await Bun.file(OUTPUT).json());
     assertValsRefreshGuards(previous, next);
     // A successful unchanged read is not a new observation and must not churn the snapshot.
     const rowsOf = (snapshot: ValsSnapshot) => JSON.stringify(snapshot.benchmarks.map(benchmark => [benchmark.slug, benchmark.rows]));

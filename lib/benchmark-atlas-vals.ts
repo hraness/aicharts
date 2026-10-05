@@ -38,13 +38,13 @@ const EDITORIAL: Readonly<Record<string, ValsEditorial>> = {
   vals_index: {
     category: "general",
     question: "Which model does the most economically valuable work?",
-    summary: "A GDP-weighted average of agentic performance across finance, coding, and legal tasks.",
-    measure: "The publisher's composite of seven evaluations, weighted by each sector's share of U.S. GDP: finance 8.0, coding 5.6, and legal 1.2, over a denominator of 14.8.",
-    comparisonRule: "Compare within index version 2. Versions 1 and 2 use different component benchmarks, so their scores are not a series.",
+    summary: "A GDP-weighted average of agentic performance across finance, coding, legal, and tax tasks.",
+    measure: "The publisher's composite of agentic evaluations across finance, coding, legal, and tax, weighted by each sector's share of U.S. GDP.",
+    comparisonRule: "Compare within index version 2.1. Versions 1, 2, and 2.1 use different component benchmarks, so their scores are not a series.",
     limitations: [
       "This is the publisher's composite, not an aicharts ranking. The sector weights are a deliberate simplification of how AI reaches the economy.",
       "The Code Migration component scores a fixed 60-task subset of the published 120-task run, not the full benchmark.",
-      "Five of the seven components are private evaluations that no independent party can reproduce.",
+      "Several components are private evaluations that no independent party can reproduce.",
       IDENTIFIER_NOTE,
     ],
     tags: ["composite", "economic impact", "agentic", "finance", "legal", "coding", "GDP"],

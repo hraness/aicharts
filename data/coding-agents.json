@@ -3,7 +3,7 @@
   "source": {
     "name": "Artificial Analysis",
     "url": "https://artificialanalysis.ai/agents/coding-agents/",
-    "retrievedAt": "2026-09-25T14:39:44.751Z",
+    "retrievedAt": "2026-10-05T14:10:36.287Z",
     "method": "next-flight",
     "benchmarkDatasets": {
       "deepSwe": "deep-swe-v1.1",
@@ -12,6 +12,57 @@
     }
   },
   "updates": [
+    {
+      "id": "[\"model-added\",\"2026-10-05T14:10:36.287Z\",\"[\\\"Claude Code\\\",\\\"anthropic\\\",\\\"Sonnet 5.5\\\"]\"]",
+      "detectedAt": "2026-10-05T14:10:36.287Z",
+      "agent": "Claude Code",
+      "model": "Sonnet 5.5",
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "setting": "max",
+      "benchmarks": {
+        "aaIndex": 68.35783373750832,
+        "deepSwe": 71.97640117994099,
+        "terminalBench": 66.1616161616162,
+        "sweAtlas": 66.9354838709677
+      },
+      "kind": "model-added",
+      "variantCount": 5
+    },
+    {
+      "id": "[\"model-added\",\"2026-10-05T14:10:36.287Z\",\"[\\\"Antigravity CLI\\\",\\\"google\\\",\\\"Gemini 4 Argon\\\"]\"]",
+      "detectedAt": "2026-10-05T14:10:36.287Z",
+      "agent": "Antigravity CLI",
+      "model": "Gemini 4 Argon",
+      "providerId": "google",
+      "providerName": "Google",
+      "setting": "default",
+      "benchmarks": {
+        "aaIndex": 63.7577603035782,
+        "deepSwe": 78.7610619469027,
+        "terminalBench": 56.0606060606061,
+        "sweAtlas": 56.4516129032258
+      },
+      "kind": "model-added",
+      "variantCount": 1
+    },
+    {
+      "id": "[\"model-added\",\"2026-10-05T14:10:36.287Z\",\"[\\\"Codex\\\",\\\"openai\\\",\\\"GPT-6.1 Sol\\\"]\"]",
+      "detectedAt": "2026-10-05T14:10:36.287Z",
+      "agent": "Codex",
+      "model": "GPT-6.1 Sol",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "setting": "xhigh",
+      "benchmarks": {
+        "aaIndex": 62.90776736822983,
+        "deepSwe": 73.1563421828909,
+        "terminalBench": 54.5454545454545,
+        "sweAtlas": 61.021505376344095
+      },
+      "kind": "model-added",
+      "variantCount": 5
+    },
     {
       "id": "[\"model-added\",\"2026-09-25T14:39:44.751Z\",\"[\\\"Claude Code\\\",\\\"anthropic\\\",\\\"Opus 5.5\\\"]\"]",
       "detectedAt": "2026-09-25T14:39:44.751Z",
@@ -421,6 +472,32 @@
   ],
   "records": [
     {
+      "id": "ef63fafa9b4a635522183c879ae8435b",
+      "agent": "Antigravity CLI",
+      "model": "Gemini 4 Argon",
+      "modelLabel": "Gemini 4 Argon",
+      "providerId": "google",
+      "providerName": "Google",
+      "seriesId": "Antigravity CLI:google_barium-bb_ai-studio",
+      "seriesLabel": "Antigravity CLI · Gemini 4 Argon",
+      "setting": "default",
+      "settingRank": 0,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 63.7577603035782,
+        "deepSwe": 78.7610619469027,
+        "terminalBench": 56.0606060606061,
+        "sweAtlas": 56.4516129032258
+      },
+      "economics": {
+        "costUsd": 5.84390538944481,
+        "durationSeconds": 2070.1686032008843
+      },
+      "usage": {
+        "totalTokens": 13733793.781456953
+      }
+    },
+    {
       "id": "d1003684d8f29b95a3b14d2a7722221a",
       "agent": "Antigravity SDK",
       "model": "Gemini 3.8 Flash",
@@ -548,6 +625,136 @@
       },
       "usage": {
         "totalTokens": 8706893.798112892
+      }
+    },
+    {
+      "id": "e9f9d3ae5b03aa060114dd4b3275d67d",
+      "agent": "Claude Code",
+      "model": "Sonnet 5.5",
+      "modelLabel": "Sonnet 5.5 (low)",
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "seriesId": "Claude Code:private-anthropic_claude-beignet-eap-low",
+      "seriesLabel": "Claude Code · Sonnet 5.5",
+      "setting": "low",
+      "settingRank": 2,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 42.0593075103495,
+        "deepSwe": 61.946902654867294,
+        "terminalBench": 25.2525252525253,
+        "sweAtlas": 38.978494623655905
+      },
+      "economics": {
+        "costUsd": 0.48311011474147336,
+        "durationSeconds": 380.85617931793183
+      },
+      "usage": {
+        "totalTokens": 977284.7700770069
+      }
+    },
+    {
+      "id": "4d6aa9e9c8df931d54dba5956d94973c",
+      "agent": "Claude Code",
+      "model": "Sonnet 5.5",
+      "modelLabel": "Sonnet 5.5 (medium)",
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "seriesId": "Claude Code:private-anthropic_claude-beignet-eap-medium",
+      "seriesLabel": "Claude Code · Sonnet 5.5",
+      "setting": "medium",
+      "settingRank": 3,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 45.88397535157457,
+        "deepSwe": 65.48672566371681,
+        "terminalBench": 27.2727272727273,
+        "sweAtlas": 44.892473118279604
+      },
+      "economics": {
+        "costUsd": 0.6187507753025301,
+        "durationSeconds": 510.7721826182621
+      },
+      "usage": {
+        "totalTokens": 1253351.4928492843
+      }
+    },
+    {
+      "id": "33e80f383dc644527161435b076798ad",
+      "agent": "Claude Code",
+      "model": "Sonnet 5.5",
+      "modelLabel": "Sonnet 5.5 (high)",
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "seriesId": "Claude Code:private-anthropic_claude-beignet-eap-high",
+      "seriesLabel": "Claude Code · Sonnet 5.5",
+      "setting": "high",
+      "settingRank": 4,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 55.01249049636148,
+        "deepSwe": 66.6666666666667,
+        "terminalBench": 41.9191919191919,
+        "sweAtlas": 56.4516129032258
+      },
+      "economics": {
+        "costUsd": 1.235497127172719,
+        "durationSeconds": 735.1809878987912
+      },
+      "usage": {
+        "totalTokens": 2652380.565456549
+      }
+    },
+    {
+      "id": "666605c66ad569c503ce53c01682e285",
+      "agent": "Claude Code",
+      "model": "Sonnet 5.5",
+      "modelLabel": "Sonnet 5.5 (xhigh)",
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "seriesId": "Claude Code:private-anthropic_claude-beignet-eap-xhigh",
+      "seriesLabel": "Claude Code · Sonnet 5.5",
+      "setting": "xhigh",
+      "settingRank": 5,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 62.8713868151493,
+        "deepSwe": 68.4365781710914,
+        "terminalBench": 58.0808080808081,
+        "sweAtlas": 62.0967741935484
+      },
+      "economics": {
+        "costUsd": 3.3333865348734886,
+        "durationSeconds": 1619.0134708470846
+      },
+      "usage": {
+        "totalTokens": 7087678.3960396005
+      }
+    },
+    {
+      "id": "a2c87c062f3cef73d8525e7578f14742",
+      "agent": "Claude Code",
+      "model": "Sonnet 5.5",
+      "modelLabel": "Sonnet 5.5 (max)",
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "seriesId": "Claude Code:private-anthropic_claude-beignet-eap-max",
+      "seriesLabel": "Claude Code · Sonnet 5.5",
+      "setting": "max",
+      "settingRank": 6,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 68.35783373750832,
+        "deepSwe": 71.97640117994099,
+        "terminalBench": 66.1616161616162,
+        "sweAtlas": 66.9354838709677
+      },
+      "economics": {
+        "costUsd": 14.190800796369649,
+        "durationSeconds": 5244.965372937293
+      },
+      "usage": {
+        "totalTokens": 27742337.233773403
       }
     },
     {
@@ -730,6 +937,136 @@
       },
       "usage": {
         "totalTokens": 9840777.763476355
+      }
+    },
+    {
+      "id": "fa589dad83ffcdd6cce72a467e552063",
+      "agent": "Codex",
+      "model": "GPT-6.1 Sol",
+      "modelLabel": "GPT-6.1 Sol (low)",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "seriesId": "Codex:openai_quasar-alpha",
+      "seriesLabel": "Codex · GPT-6.1 Sol",
+      "setting": "low",
+      "settingRank": 2,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 57.21634943016617,
+        "deepSwe": 67.55162241887909,
+        "terminalBench": 48.989898989899,
+        "sweAtlas": 55.1075268817204
+      },
+      "economics": {
+        "costUsd": 0.49880364510270725,
+        "durationSeconds": 517.8138943894386
+      },
+      "usage": {
+        "totalTokens": 1713818.9181950986
+      }
+    },
+    {
+      "id": "93acd59f31f8e5478686d650aa650f79",
+      "agent": "Codex",
+      "model": "GPT-6.1 Sol",
+      "modelLabel": "GPT-6.1 Sol (medium)",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "seriesId": "Codex:openai_quasar-alpha",
+      "seriesLabel": "Codex · GPT-6.1 Sol",
+      "setting": "medium",
+      "settingRank": 3,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 61.41474695571183,
+        "deepSwe": 71.97640117994099,
+        "terminalBench": 51.5151515151515,
+        "sweAtlas": 60.752688172043
+      },
+      "economics": {
+        "costUsd": 0.7046746644898908,
+        "durationSeconds": 651.3228668866898
+      },
+      "usage": {
+        "totalTokens": 2298278.745423723
+      }
+    },
+    {
+      "id": "4aee8aa2d4a0bad6068644f40edae235",
+      "agent": "Codex",
+      "model": "GPT-6.1 Sol",
+      "modelLabel": "GPT-6.1 Sol (high)",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "seriesId": "Codex:openai_quasar-alpha",
+      "seriesLabel": "Codex · GPT-6.1 Sol",
+      "setting": "high",
+      "settingRank": 4,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 60.14923716179784,
+        "deepSwe": 70.5014749262537,
+        "terminalBench": 50,
+        "sweAtlas": 59.9462365591398
+      },
+      "economics": {
+        "costUsd": 0.8892413135295484,
+        "durationSeconds": 799.7652123212325
+      },
+      "usage": {
+        "totalTokens": 2819911.9903514963
+      }
+    },
+    {
+      "id": "ed8c1d0b0a2fe4560bbfa0a9f47e8941",
+      "agent": "Codex",
+      "model": "GPT-6.1 Sol",
+      "modelLabel": "GPT-6.1 Sol (xhigh)",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "seriesId": "Codex:openai_quasar-alpha",
+      "seriesLabel": "Codex · GPT-6.1 Sol",
+      "setting": "xhigh",
+      "settingRank": 5,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 62.90776736822983,
+        "deepSwe": 73.1563421828909,
+        "terminalBench": 54.5454545454545,
+        "sweAtlas": 61.021505376344095
+      },
+      "economics": {
+        "costUsd": 1.0397081014409635,
+        "durationSeconds": 931.3823091309132
+      },
+      "usage": {
+        "totalTokens": 3212528.1094519314
+      }
+    },
+    {
+      "id": "ea296ce785422d3b97cfff4427f2e0d2",
+      "agent": "Codex",
+      "model": "GPT-6.1 Sol",
+      "modelLabel": "GPT-6.1 Sol (max)",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "seriesId": "Codex:openai_quasar-alpha",
+      "seriesLabel": "Codex · GPT-6.1 Sol",
+      "setting": "max",
+      "settingRank": 6,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 60.14750704302517,
+        "deepSwe": 69.6165191740413,
+        "terminalBench": 53.030303030303,
+        "sweAtlas": 57.7956989247312
+      },
+      "economics": {
+        "costUsd": 1.554119528390054,
+        "durationSeconds": 1463.0464224422437
+      },
+      "usage": {
+        "totalTokens": 3999501.6107955067
       }
     },
     {
