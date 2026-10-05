@@ -36,7 +36,7 @@ Error codes and exit statuses: `usage` 2, `not-found` 1, `conflict` 5,
 
 | Menu item | Id | Command | Kind |
 | --- | --- | --- | --- |
-| Collection status rows and the attention dot | `status` | `aicharts status` (or `aicharts tui`) | read |
+| Collection status rows and the attention dot | `status` | `aicharts status` | read |
 | Open usage dashboard | `dashboard` | `aicharts open dashboard` | operate |
 | Setup guide (first run) | `setup.guide` | `aicharts open setup-guide` | operate |
 | Show error log | `errors.open` | `aicharts open error-log` | operate |
@@ -58,7 +58,6 @@ Error codes and exit statuses: `usage` 2, `not-found` 1, `conflict` 5,
 | --- | --- | --- |
 | `status` | read | Collector and publishing health: last pass, last sync, failures, error log, newest outputs |
 | `status --state-dir DIR --key-file KEY` | read | The local ledger, as before |
-| `tui` | read | The same health in the terminal; `--snapshot` or `--json` print it without one |
 | `commands` | read | Every command with its kind |
 | `doctor` | read | Collector files, the background collector and retired login items |
 | `doctor retire` | operate | Set aside the retired menu bar's login item |

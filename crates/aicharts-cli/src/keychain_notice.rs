@@ -4,12 +4,12 @@
 //! `AICHARTS_CUSTODY_INTERACTION=allow` lets macOS show its dialog, so that is
 //! the one place a person needs to hear what is coming. The copy is the shared
 //! `keychain` pre-prompt template rendered by `hraness-cli-kit`
-//! (hraness/desktop-foundation 0.8.1; permissions kit, Appendix B).
+//! (hraness/desktop-foundation 2.0.0; permissions kit).
 
 use std::io::{BufRead, IsTerminal, Write};
 
 use hraness_cli_kit::audience::{self, Audience};
-use hraness_cli_kit::permissions::{self, PermissionKind, PermissionNeed, ProductRef, Surface};
+use hraness_cli_kit::permissions::{self, PermissionKind, PermissionNeed, ProductRef};
 use hraness_cli_kit::{Style, Symbol};
 
 const CONSENT_VARIABLE: &str = "AICHARTS_CUSTODY_INTERACTION";
@@ -41,7 +41,7 @@ fn keychain_need() -> PermissionNeed {
 
 pub(crate) fn render(style: Style, confirm: bool) -> String {
     // The requester is explicit, so the environment lookup is never used.
-    let notice = permissions::render_pre_prompt(&keychain_need(), Surface::Cli, &|_| None);
+    let notice = permissions::render_pre_prompt(&keychain_need(), &|_| None);
     let mut text = format!("{} {}\n", style.symbol(Symbol::Notice), notice.title);
     for line in &notice.lines {
         text.push_str("   ");

@@ -1,4 +1,4 @@
-//! The agent-navigable surface: `status`, `tui`, `commands`, `doctor`,
+//! The agent-navigable surface: `status`, `commands`, `doctor`,
 //! `doctor retire`, `open` and `outputs`, on desktop-foundation's control
 //! kit. Every former menu bar item is one verb here (docs/cli-parity.md).
 //!
@@ -17,11 +17,6 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use hraness_control_kit::envelope::{self, Envelope};
 use hraness_control_kit::gate;
 use hraness_control_kit::registry::{GateTier, OpClass, Registry, Verb};
-use hraness_control_kit::tui::{
-    self,
-    ratatui::{layout::Rect, text::Line, widgets::Paragraph, Frame},
-    RunOptions, View,
-};
 use hraness_control_kit::{Audience, ErrorBody, ErrorCode, NextStep};
 use serde::Serialize;
 
@@ -63,12 +58,6 @@ pub(crate) fn registry() -> Registry {
             OpClass::Read,
             STATUS_SCHEMA,
             "Collector and publishing health; with --state-dir, the local ledger",
-        ),
-        Verb::new(
-            &["tui"],
-            OpClass::Read,
-            STATUS_SCHEMA,
-            "The same health in a terminal view (--snapshot, --json)",
         ),
         Verb::new(
             &["commands"],
@@ -193,7 +182,7 @@ pub(crate) fn registry() -> Registry {
 // ---------------------------------------------------------------------------
 // Status data
 
-/// Everything `status`, `tui` and `status --json` show.
+/// Everything `status` and `status --json` show.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct StatusData {
@@ -611,75 +600,15 @@ pub(crate) fn outputs_lines(outputs: &OutputsData, width: u16, now: SystemTime) 
     lines
 }
 
-struct StatusView;
-/// The wall clock a view reads when it draws. The interactive TUI reads
-/// the real one on every frame, so file ages keep moving while it stays
-/// open; goldens inject a fixed time.
-pub(crate) type Clock = Box<dyn Fn() -> SystemTime>;
-
-struct OutputsView {
-    clock: Clock,
-}
-
-fn draw(lines: Vec<String>, frame: &mut Frame, area: Rect) {
-    let text: Vec<Line> = lines.into_iter().map(Line::from).collect();
-    frame.render_widget(Paragraph::new(text), area);
-}
-
-impl View<StatusData> for StatusView {
-    fn id(&self) -> &str {
-        "status"
-    }
-    fn title(&self) -> &str {
-        "Status"
-    }
-    fn render(&self, state: &StatusData, frame: &mut Frame, area: Rect) {
-        draw(status_lines(state, area.width), frame, area)
-    }
-    fn height(&self, state: &StatusData, width: u16) -> u16 {
-        status_lines(state, width).len().min(200) as u16
-    }
-}
-
-impl View<StatusData> for OutputsView {
-    fn id(&self) -> &str {
-        "outputs"
-    }
-    fn title(&self) -> &str {
-        "Outputs"
-    }
-    fn render(&self, state: &StatusData, frame: &mut Frame, area: Rect) {
-        draw(
-            outputs_lines(&state.outputs, area.width, (self.clock)()),
-            frame,
-            area,
-        )
-    }
-    fn height(&self, state: &StatusData, width: u16) -> u16 {
-        outputs_lines(&state.outputs, width, (self.clock)())
-            .len()
-            .min(200) as u16
-    }
-}
-
-pub(crate) fn views(clock: Clock) -> Vec<Box<dyn View<StatusData>>> {
-    vec![Box::new(StatusView), Box::new(OutputsView { clock })]
-}
-
-/// The `tui --snapshot` text for one state. Pure, for goldens.
+/// The status text for one state, combining the Status and Outputs sections.
+/// Pure, for goldens.
 #[cfg(test)]
 pub(crate) fn snapshot(data: &StatusData, width: u16, now: SystemTime) -> String {
-    views(Box::new(move || now))
-        .iter()
-        .map(|view| {
-            format!(
-                "== {} ==\n{}",
-                view.title(),
-                tui::render_to_string(view.as_ref(), data, width)
-            )
-        })
-        .collect::<Vec<_>>()
-        .join("\n")
+    format!(
+        "== Status ==\n{}\n\n== Outputs ==\n{}\n",
+        status_lines(data, width).join("\n"),
+        outputs_lines(&data.outputs, width, now).join("\n")
+    )
 }
 
 // ---------------------------------------------------------------------------
@@ -1234,11 +1163,9 @@ fn paths() -> Result<Paths, ErrorBody> {
 #[derive(Debug, Default)]
 struct Flags {
     json: bool,
-    snapshot: bool,
     print: bool,
     reveal: bool,
     all: bool,
-    width: Option<u16>,
     positional: Vec<String>,
 }
 
@@ -1252,20 +1179,12 @@ fn usage(message: impl Into<String>, command: &str) -> ErrorBody {
 
 fn parse(args: &[String], command: &str, allow: &[&str]) -> Result<Flags, ErrorBody> {
     let mut flags = Flags::default();
-    let mut iter = args.iter();
-    while let Some(arg) = iter.next() {
+    for arg in args {
         match arg.as_str() {
             "--json" if allow.contains(&"--json") => flags.json = true,
-            "--snapshot" if allow.contains(&"--snapshot") => flags.snapshot = true,
             "--print" if allow.contains(&"--print") => flags.print = true,
             "--reveal" if allow.contains(&"--reveal") => flags.reveal = true,
             "--all" if allow.contains(&"--all") => flags.all = true,
-            "--width" if allow.contains(&"--width") => {
-                match iter.next().and_then(|value| value.parse::<u16>().ok()) {
-                    Some(width) if (20..=500).contains(&width) => flags.width = Some(width),
-                    _ => return Err(usage("--width takes a number from 20 to 500.", command)),
-                }
-            }
             flag if flag.starts_with('-') => {
                 return Err(usage(format!("Unknown option {flag}."), command));
             }
@@ -1345,7 +1264,6 @@ pub(crate) fn dispatch(args: &[String]) -> Option<i32> {
     let second = args.get(1).map(String::as_str);
     Some(match (first, second) {
         ("status", _) if !is_ledger_status(&args[1..]) => status(&args[1..]),
-        ("tui", _) => run_tui(&args[1..]),
         ("commands", _) => commands(&args[1..]),
         ("doctor", Some("retire")) => doctor_retire(&args[2..]),
         ("doctor", _) => doctor(&args[1..]),
@@ -1391,27 +1309,6 @@ fn status(args: &[String]) -> i32 {
         text.push('\n');
         text
     })
-}
-
-fn run_tui(args: &[String]) -> i32 {
-    let json = wants_json(args);
-    let flags = match no_arguments(args, "tui", &["--json", "--snapshot", "--width"]) {
-        Ok(flags) => flags,
-        Err(error) => return fail(json, error),
-    };
-    let paths = match paths() {
-        Ok(paths) => paths,
-        Err(error) => return fail(flags.json, error),
-    };
-    let options = RunOptions {
-        load: Box::new(move || load_status(&paths, SystemTime::now())),
-        views: views(Box::new(SystemTime::now)),
-        mode: tui::mode_for_stdout(flags.json, flags.snapshot),
-        width: flags.width,
-    };
-    let stdout = std::io::stdout();
-    let mut out = stdout.lock();
-    i32::from(tui::run(options, &mut out))
 }
 
 fn commands(args: &[String]) -> i32 {

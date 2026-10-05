@@ -157,7 +157,7 @@
     "vitest": "4.1.11",
     "wrangler": "4.131.0",
     "yaml": "2.9.1",
-    "@hraness/desktop-foundation": "github:hraness/desktop-foundation#6174033a51cd0fa4f5259c8c2492b9a28b942602",
+    "@hraness/desktop-foundation": "github:hraness/desktop-foundation#798be31fca87bbe9195e351cdf358c4d14eb42d4",
     "@hraness/support-foundation": "github:hraness/support-foundation#ed89e584c2c420e3e0547bbe8f32baf8e3a2ae4d"
   },
   "overrides": {
