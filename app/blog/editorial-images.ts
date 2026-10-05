@@ -236,6 +236,15 @@ export const BLOG_EDITORIAL_IMAGES = {
     "20261005T151701783Z-image-923150cd-471/receipt.json",
     "gateway_3d7b73727a3b4bac99e37aaf85f6c9b4.json",
   ),
+  "gpt-6-1-sol-coding-agent-index": image(
+    "gpt-6-1-sol-coding-agent-index",
+    "Five ivory discs rest on a short charcoal rail; the fourth is the largest, and the fifth is smaller than the third.",
+    "Codex · GPT-6.1 Sol’s highest AA Index is not its max setting, and not every Codex setting sits on the coding-agent cost frontier.",
+    "74a8592f8cf99041fd07c029c93d62ac6c35121e4ad7ee35ffa7a3129637730e",
+    "a2fd98058c1d40329393507cea3c91e7f28746111a5e679121ba1e83193d7607",
+    "20261005T151733086Z-image-91b46b61-53d/receipt.json",
+    "gateway_7e57d5c4adea49d6a6a0afd0c170b2b8.json",
+  ),
 } as const satisfies EditorialImageRecord;
 
 export function blogEditorialImage<Slug extends BlogSlug>(

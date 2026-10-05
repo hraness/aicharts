@@ -15,6 +15,7 @@ import {
   type BlogSlug,
   type BlogSourceId,
 } from "./articles";
+import { GPT_6_1_SOL_ARTICLE_ADMISSION_DRAFT } from "./gpt-6-1-sol-coding-agent-index-admission";
 
 type AdmissionScore = 0 | 1 | 2;
 
@@ -194,6 +195,9 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     },
     sourceCheckedOn: INTRODUCING_REVIEWED_ON,
   },
+  "gpt-6-1-sol-coding-agent-index": GPT_6_1_SOL_ARTICLE_ADMISSION_DRAFT,
+
+
   "opus-5-5-coding-agent-index": {
     canonicalOwner: blogArticlePath("opus-5-5-coding-agent-index"),
     decision: "keep",
@@ -207,6 +211,11 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     humanReviewedOn: null,
     lifecycleState: "indexable",
     nearestUrls: [
+      {
+        distinction:
+          "The GPT-6.1 Sol page places a cheaper Codex configuration and shows that max is not its highest Codex setting; this page places the chart’s leading Claude Code row and asks what each step down the frontier gives up.",
+        url: blogArticlePath("gpt-6-1-sol-coding-agent-index"),
+      },
       {
         distinction:
           "The Intelligence Index page places Claude Opus 5.5 (max) on the capability and cost chart, walks that frontier, and tabulates the model’s effort levels; this page places the Claude Code row on the coding-agent chart, walks the coding frontier down from it, and uses the Index row only to keep the two costs apart.",
@@ -440,6 +449,11 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     nearestUrls: [
       {
         distinction:
+          "The GPT-6.1 Sol page places Codex · GPT-6.1 Sol on the live coding-agent chart, shows that max is not the highest Codex setting, and uses the live Index only as a two-unit cost callout; this page stays pinned to cited September snapshots of Codex · GPT-6 Sol (max) and an Index roster that no longer lists that model.",
+        url: blogArticlePath("gpt-6-1-sol-coding-agent-index"),
+      },
+      {
+        distinction:
           "The Grok 4.7 page places Grok Build · Grok 4.7 and names GPT-6 Sol only as a cheaper row that scores higher; this page makes GPT-6 Sol the subject, adds its Codex predecessor, its Intelligence Index effort ladder, and OpenAI’s price change, and never places Grok.",
         url: blogArticlePath("grok-4-7-coding-agent-index"),
       },
@@ -501,6 +515,11 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     humanReviewedOn: null,
     lifecycleState: "indexable",
     nearestUrls: [
+      {
+        distinction:
+          "The GPT-6.1 Sol page places Codex · GPT-6.1 Sol and compares it with GPT-6 Sol in Codex; this page places Grok Build · Grok 4.7 on both charts and compares it with Grok 4.6 in the same harness.",
+        url: blogArticlePath("gpt-6-1-sol-coding-agent-index"),
+      },
       {
         distinction:
           "The MiMo page places one open-weights model on the Intelligence Index cost frontier and tests an investor’s price and cybersecurity claims; this page places one proprietary model on both AI Charts charts and explains why its two scores and two costs are not one measurement.",

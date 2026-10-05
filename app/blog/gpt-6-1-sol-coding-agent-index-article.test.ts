@@ -156,15 +156,16 @@ describe("GPT-6.1 Sol coding-agent note", () => {
     expect(expensive.title).not.toContain("$123,456.78");
   });
 
-  test("admission scores meet the keep gate and stay off the public slug list", () => {
+  test("admission scores meet the keep gate and the note is publicly registered", () => {
     const scores = Object.values(GPT_6_1_SOL_ARTICLE_ADMISSION_DRAFT.scores);
     expect(scores.every(score => score > 0)).toBeTrue();
     expect(scores.reduce((sum, score) => sum + score, 0)).toBeGreaterThanOrEqual(9);
     expect(GPT_6_1_SOL_ARTICLE_ADMISSION_DRAFT.canonicalOwner).toBe(`/blog/${GPT_6_1_SOL_ARTICLE_SLUG}`);
     expect(GPT_6_1_SOL_ARTICLE_ADMISSION_DRAFT.reviewerType).toBe("ai");
     expect(GPT_6_1_SOL_ARTICLE_ADMISSION_DRAFT.humanReviewedOn).toBeNull();
-    expect(PUBLIC_BLOG_SLUGS as readonly string[]).not.toContain(GPT_6_1_SOL_ARTICLE_SLUG);
-    expect(Object.keys(BLOG_ARTICLE_ADMISSIONS)).not.toContain(GPT_6_1_SOL_ARTICLE_SLUG);
+    expect(PUBLIC_BLOG_SLUGS as readonly string[]).toContain(GPT_6_1_SOL_ARTICLE_SLUG);
+    expect(Object.keys(BLOG_ARTICLE_ADMISSIONS)).toContain(GPT_6_1_SOL_ARTICLE_SLUG);
+    expect(BLOG_ARTICLE_ADMISSIONS[GPT_6_1_SOL_ARTICLE_SLUG]).toEqual(GPT_6_1_SOL_ARTICLE_ADMISSION_DRAFT);
   });
 });
 

@@ -98,9 +98,7 @@ const MAX_TITLE_LENGTH = 64;
 const MAX_DEK_LENGTH = 200;
 const MAX_DESCRIPTION_LENGTH = 160;
 
-export type Gpt61SolArticle = Omit<BlogArticle, "slug"> & Readonly<{
-  slug: typeof GPT_6_1_SOL_ARTICLE_SLUG;
-}>;
+export type Gpt61SolArticle = BlogArticle;
 
 function checkedCodingSnapshot(): CodingAgentSnapshot {
   const parsed = parseCodingAgentSnapshot(codingAgentData);

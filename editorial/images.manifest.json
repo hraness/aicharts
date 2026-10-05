@@ -360,6 +360,26 @@
       },
       "validation": "decode-passed",
       "review": "accepted"
+    },
+    {
+      "slug": "gpt-6-1-sol-coding-agent-index",
+      "promptSha256": "a2fd98058c1d40329393507cea3c91e7f28746111a5e679121ba1e83193d7607",
+      "master": {
+        "path": "/images/blog/gpt-6-1-sol-coding-agent-index.webp",
+        "width": 1536,
+        "height": 864,
+        "bytes": 68426,
+        "sha256": "74a8592f8cf99041fd07c029c93d62ac6c35121e4ad7ee35ffa7a3129637730e"
+      },
+      "receiptPath": "artifacts/slopcamera/generated/gateway/20261005T151733086Z-image-91b46b61-53d/receipt.json",
+      "jobPath": "artifacts/slopcamera/generated/gateway-jobs/gateway_7e57d5c4adea49d6a6a0afd0c170b2b8.json",
+      "generator": {
+        "package": "@hraness/slopcamera",
+        "version": "3.2.5",
+        "sourceCommit": "66b4322030f4de24f4d5b6d0c2515c109259f901"
+      },
+      "validation": "decode-passed",
+      "review": "accepted"
     }
   ]
 }

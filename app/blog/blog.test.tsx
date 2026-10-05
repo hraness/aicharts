@@ -135,6 +135,9 @@ import {
   createGpt6SolArticle,
 } from "./gpt-6-sol-coding-agent-index-article";
 import {
+  GPT_6_1_SOL_ARTICLE_PUBLISHED_AT,
+} from "./gpt-6-1-sol-coding-agent-index-article";
+import {
   OPUS_55_CODING_ARTICLE_PUBLISHED_AT,
   createOpus55CodingArticle,
   formatCostPercent,
@@ -276,6 +279,10 @@ describe("aicharts benchmark notes", () => {
         expect(article.publishedAt).toBe(INTRODUCING_AI_CHARTS_PUBLISHED_AT);
         expect(article.updatedAt >= article.publishedAt).toBeTrue();
         expect(provenance).toStartWith("Drafted with AI from the source code and reviewed by ");
+      } else if (article.slug === "gpt-6-1-sol-coding-agent-index") {
+        expect(article.publishedAt).toBe(GPT_6_1_SOL_ARTICLE_PUBLISHED_AT);
+        expect(article.updatedAt >= article.publishedAt).toBeTrue();
+        expect(articleToMarkdown(article)).toContain("captured October 5, 2026 UTC");
       } else if (article.slug === "opus-5-5-coding-agent-index") {
         expect(article.publishedAt).toBe(OPUS_55_CODING_ARTICLE_PUBLISHED_AT);
         expect(article.updatedAt >= article.publishedAt).toBeTrue();
@@ -972,7 +979,7 @@ describe("aicharts benchmark notes", () => {
     }
     expect(article.nextStep?.links.map(link => link.href))
       .toEqual(["/coding", "/models/anthropic/claude-opus-5.5/max", "/data"]);
-    expect(article.relatedSlugs).toEqual(["opus-5-5-intelligence-index", "sonnet-5-5-coding-agent-index", "aa-index-cost-coding-agents"]);
+    expect(article.relatedSlugs).toEqual(["opus-5-5-intelligence-index", "sonnet-5-5-coding-agent-index", "gpt-6-1-sol-coding-agent-index", "aa-index-cost-coding-agents"]);
     expect(markup).toContain(`href="${blogArticlePath("opus-5-5-intelligence-index")}"`);
     expect(markup).toContain(formatRetrievedAt(codingParsed.value.source.retrievedAt));
     expect(markup).toContain(formatRetrievedAt(intelligenceParsed.value.source.retrievedAt));
@@ -1887,6 +1894,7 @@ describe("aicharts benchmark notes", () => {
     expect(article.nextStep?.links.map(link => link.href))
       .toEqual(["/coding", "/#intelligence-index", "/models/openai/gpt-6-sol/max"]);
     expect(article.relatedSlugs).toContain("grok-4-7-coding-agent-index");
+    expect(article.relatedSlugs).toContain("gpt-6-1-sol-coding-agent-index");
     expect(markup).toContain(formatRetrievedAt(codingParsed.value.source.retrievedAt));
     expect(markup).toContain(formatRetrievedAt(intelligenceParsed.value.source.retrievedAt));
     expect(markdown).toContain(intelligenceParsed.value.benchmark.version);

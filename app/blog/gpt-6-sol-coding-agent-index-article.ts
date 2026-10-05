@@ -700,6 +700,7 @@ export function createGpt6SolArticle(
       "openAiGpt6SolLuna",
     ],
     relatedSlugs: [
+      "gpt-6-1-sol-coding-agent-index",
       "grok-4-7-coding-agent-index",
       "aa-index-cost-coding-agents",
     ],

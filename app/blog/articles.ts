@@ -6,6 +6,7 @@ import { PUBLIC_BLOG_SLUGS } from "@/lib/public-analytics-routes";
 import { createAaIndexCostArticle } from "./aa-index-cost-article";
 import { createCodingAgentScoreHoldoutsArticle } from "./coding-agent-score-holdouts-article";
 import { createDevinFusionCostSavingArticle } from "./devin-fusion-cost-saving-article";
+import { createGpt61SolArticle } from "./gpt-6-1-sol-coding-agent-index-article";
 import { createGpt6SolArticle } from "./gpt-6-sol-coding-agent-index-article";
 import { createGrok47Article } from "./grok-4-7-coding-agent-index-article";
 import { createHarnessDesignArticle } from "./harness-design-coding-agents-article";
@@ -539,6 +540,7 @@ const mirrorCodeArticle = {
 
 export const blogArticles = [
   createIntroducingAiChartsArticle(),
+  createGpt61SolArticle(),
   createOpus55CodingArticle(),
   createSonnet55CodingArticle(),
   createOpus55Article(),

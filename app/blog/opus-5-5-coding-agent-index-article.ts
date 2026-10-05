@@ -643,6 +643,7 @@ export function createOpus55CodingArticle(
     relatedSlugs: [
       "opus-5-5-intelligence-index",
       "sonnet-5-5-coding-agent-index",
+      "gpt-6-1-sol-coding-agent-index",
       "aa-index-cost-coding-agents",
     ],
     nextStep: {
