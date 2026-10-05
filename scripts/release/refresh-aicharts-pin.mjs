@@ -216,7 +216,8 @@ const rewriteDoc = (path, release, old, runs) =>
     text
       .replaceAll(`cli-v${old.version}`, `cli-v${release.version}`)
       .replaceAll(`aicharts-${old.version}`, `aicharts-${release.version}`)
-      .replaceAll(`--rev ${old.commit}`, `--rev ${release.commit}`)
+      .replaceAll(`aicharts_version=${old.version}`, `aicharts_version=${release.version}`)
+      .replaceAll(old.commit, release.commit)
       .replaceAll(`actions/runs/${old.linux}`, `actions/runs/${runs.linux}`)
       .replaceAll(`actions/runs/${old.macos}`, `actions/runs/${runs.macos}`)
       .replaceAll(`actions/runs/${old.publish}`, `actions/runs/${runs.publish}`)
