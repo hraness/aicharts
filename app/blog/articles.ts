@@ -15,6 +15,7 @@ import { createMimoV26Article } from "./mimo-v2-6-pro-cost-frontier-article";
 import { createOpenModelsCodingAgentsArticle } from "./open-models-coding-agents-article";
 import { createOpus55CodingArticle } from "./opus-5-5-coding-agent-index-article";
 import { createOpus55Article } from "./opus-5-5-intelligence-index-article";
+import { createSonnet55CodingArticle } from "./sonnet-5-5-coding-agent-index-article";
 import { createRealSweArticle } from "./real-swe-private-enterprise-benchmark-article";
 import { createSmallModelsHaveArrivedArticle } from "./small-models-have-arrived-article";
 import { createTerminalBenchScienceArticle } from "./terminal-bench-science-article";
@@ -515,6 +516,7 @@ const mirrorCodeArticle = {
 export const blogArticles = [
   createIntroducingAiChartsArticle(),
   createOpus55CodingArticle(),
+  createSonnet55CodingArticle(),
   createOpus55Article(),
   createGpt6SolArticle(),
   createGrok47Article(),
