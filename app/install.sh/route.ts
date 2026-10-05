@@ -1,10 +1,6 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { installScript } from "@/lib/install-script";
 
 export const dynamic = "force-static";
-
-/** scripts/install.sh, read once at build so the site serves the reviewed bytes. */
-export const installScript = readFileSync(join(process.cwd(), "scripts/install.sh"), "utf8");
 
 export function GET(): Response {
   return new Response(installScript, {

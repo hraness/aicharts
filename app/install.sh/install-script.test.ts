@@ -5,9 +5,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 
+import { installScript } from "@/lib/install-script";
 import { usageCliRelease } from "@/lib/usage-cli-release";
 
-import { GET, installScript } from "./route";
+import { GET } from "./route";
 
 const source = join(process.cwd(), "scripts/install.sh");
 const version = usageCliRelease.version;
