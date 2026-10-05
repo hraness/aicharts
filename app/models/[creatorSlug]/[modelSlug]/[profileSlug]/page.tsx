@@ -124,6 +124,7 @@ function CodingModelPage({
     <main tabIndex={-1}
       className="model-card-detail"
       data-analytics-surface="model_card"
+      data-hraness-landscape="page"
       id="model-cards-content"
     >
       <Link className="model-card-detail__back" href="/models">← All models</Link>
@@ -253,6 +254,7 @@ function IndexModelDetailPage({
     <main tabIndex={-1}
       className="model-card-detail"
       data-analytics-surface="model_card"
+      data-hraness-landscape="page"
       id="model-cards-content"
     >
       <Link className="model-card-detail__back" href="/models">← All models</Link>

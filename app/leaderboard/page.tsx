@@ -27,7 +27,7 @@ export default async function LeaderboardPage() {
   const snapshot = configuration.available ? await readLeaderboardSnapshot() : null;
   return <>
     <SiteHeader current="/leaderboard" />
-    <main tabIndex={-1} className="usage-home leaderboard-home" id="main-content">
+    <main data-hraness-landscape="page" tabIndex={-1} className="usage-home leaderboard-home" id="main-content">
       <LeaderboardView available={configuration.available} snapshot={snapshot} />
       <ChartPageFooter />
     </main>

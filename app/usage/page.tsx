@@ -41,7 +41,7 @@ const metrics = [
 export default function UsagePage() {
   return <>
     <SiteHeader current="/usage" />
-    <main tabIndex={-1} className="usage-home" id="main-content">
+    <main data-hraness-landscape="page" tabIndex={-1} className="usage-home" id="main-content">
       <section className="usage-hero usage-hero--single" aria-labelledby="usage-title">
         <div className="usage-hero__copy">
           <p className="usage-eyebrow">Usage tracking</p>

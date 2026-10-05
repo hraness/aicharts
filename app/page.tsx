@@ -38,7 +38,7 @@ export default function Home() {
   if (!parsed.ok) throw new Error(`Checked Intelligence snapshot is invalid: ${parsed.error.message}`, { cause: parsed.error });
   return <>
     <SiteHeader current="/" />
-    <main tabIndex={-1} className="chart-home hraness-marketing-main" id="main-content">
+    <main data-hraness-landscape="page" tabIndex={-1} className="chart-home hraness-marketing-main" id="main-content">
       <header className="chart-page-intro chart-home-hero">
         <h1 id="home-title">{homeHeading}</h1>
         <p className="chart-home-hero__lede">{homeLede}</p>

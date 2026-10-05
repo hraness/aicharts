@@ -25,7 +25,7 @@ export function BlogIndex({
   readonly imageForSlug?: (slug: BlogSlug) => BlogEditorialImage | undefined;
 } = {}) {
   return (
-    <main tabIndex={-1}
+    <main data-hraness-landscape="page" tabIndex={-1}
       className="plain-publication__index"
       data-analytics-surface="blog_index"
       id="blog-content"
