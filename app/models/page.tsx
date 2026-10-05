@@ -107,7 +107,7 @@ export default function ModelCardsPage() {
   ));
   const gridId = "model-card-grid";
   return (
-    <main tabIndex={-1}
+    <main data-hraness-landscape="page" tabIndex={-1}
       className="model-card-gallery hraness-marketing-main"
       data-analytics-surface="models_gallery"
       id="model-cards-content"

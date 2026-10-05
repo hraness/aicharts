@@ -2206,44 +2206,16 @@ a[href] {
 }
 a[href]:where(:hover, :focus-visible) { text-decoration-color: currentColor; }
 
-/* Product landscape: the generated, product-themed world behind the homepage.
- * A grayscale luminance mask carries the drawing, so its ink is the page's own
- * text mixed into the paper: a deeper shade of the background hue in light
- * themes and a lifted one in dark themes, never an accent colour. */
-body:has(main.chart-home) {
-  isolation: isolate;
-  position: relative;
+/* Product landscape: this product's drawing for @hraness/design-kit/product-landscape.css.
+ * Public pages opt in with data-hraness-landscape="page"; see the kit's LANDSCAPE.md. */
+:root {
+  --hraness-landscape-image: image-set(url("/landscape/landscape-275444f014ad8ebf617cdf9760eed2f9868e2ca99be955087a5a666b2aea67c6.webp") 1x, url("/landscape/landscape-6af005de23d4bce5ed72f148211b1024390bceee0a7aee00d4e222e16a35204b.webp") 2x);
+  --hraness-landscape-image-narrow: url("/landscape/landscape-4e4f02d760883072652ce58f670f4d103576a68666d2cd81c0b4f424d577eb25.webp");
+  --hraness-landscape-ink: color-mix(in oklch, var(--foreground, var(--ink, CanvasText)) 30%, var(--background, var(--paper, Canvas)));
+  --hraness-landscape-opacity: .3;
+  --hraness-landscape-opacity-narrow: .22;
 }
-
-@supports (mask-mode: luminance) {
-  body:has(main.chart-home)::before {
-    background: color-mix(in oklch, var(--foreground, var(--ink, CanvasText)) 30%, var(--background, var(--paper, Canvas)));
-    content: "";
-    inset: 0;
-    mask-image: image-set(url("/landscape/landscape-3edc5bc52cd9b7a6960dc9e7358b7f5cce9492e95470b428325f401407c5e9df.webp") 1x, url("/landscape/landscape-ced580c006f716169267391f84ba3c2550495a8819b0a25fbc68c95db8db4289.webp") 2x);
-    mask-mode: luminance;
-    mask-position: top center;
-    mask-repeat: no-repeat;
-    mask-size: 100% auto;
-    opacity: .3;
-    pointer-events: none;
-    position: absolute;
-    z-index: -1;
-  }
-}
-
-@media (max-width: 48rem) {
-  body:has(main.chart-home)::before {
-    mask-image: url("/landscape/landscape-f99b8b6cab6bc7446959767ca7258f7554088561ba9c3da716d6d0182697f676.webp");
-    opacity: .22;
-  }
-}
-
-@media (forced-colors: active), print {
-  body:has(main.chart-home)::before {
-    display: none;
-  }
-}
+/* Product landscape: end */
 
 main.chart-home {
   background: transparent;
