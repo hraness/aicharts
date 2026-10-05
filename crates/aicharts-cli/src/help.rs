@@ -68,7 +68,6 @@ Automatic publishing
   refresh                  Save usage from a provider account (Cursor, Warp)
 
 Check and open
-  tui                      Collection status in the terminal
   doctor                   Check setup; doctor retire sets the menu bar aside
   open                     Open the dashboard, setup guide, support or error log
   outputs                  List and open files in the outputs folder
@@ -265,17 +264,6 @@ but never scans files or uploads.
 Example
   aicharts status
   aicharts status --state-dir ~/.aicharts/state --key-file ~/.aicharts/key
-"
-        }
-        "tui" => {
-            "Usage: aicharts tui [--snapshot | --json] [--width 20..500]
-
-Show collection status and the newest outputs in the terminal. Tab switches
-views, r reloads and q quits. When stdout is not a terminal, or with
---snapshot, it prints every view once as plain text.
-
-Example
-  aicharts tui --snapshot --width 100
 "
         }
         "commands" => {

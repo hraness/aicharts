@@ -122,8 +122,7 @@ live-status statement in this README and the usage guides with its evidence.
 
 `aicharts status` shows whether usage collection is working: when the last
 pass ran, when your usage last synced, and any failures in plain words, with
-the next command to run. `aicharts tui` shows the same in the terminal, and
-`--snapshot` or `--json` print it without one.
+the next command to run. `--json` prints the same state for scripts and agents.
 
 ```sh
 aicharts status

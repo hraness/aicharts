@@ -127,8 +127,8 @@ test("vendored Tokscale retains its pinned MIT notice and rejects identity or no
 // every byte against the reviewed allowlist before the collector sees it.
 const GIT_FIXTURES = [
   { marker: "support-foundation", npm: "@hraness/support-foundation", checkout: "support-foundation-fixture/ed89e58", package: "hraness-support-foundation" },
-  { marker: "desktop-foundation", npm: "@hraness/desktop-foundation", checkout: "desktop-foundation-fixture/6174033", package: "hraness-cli-kit" },
-  { marker: "desktop-foundation", npm: "@hraness/desktop-foundation", checkout: "desktop-foundation-fixture/6174033", package: "hraness-control-kit" },
+  { marker: "desktop-foundation", npm: "@hraness/desktop-foundation", checkout: "desktop-foundation-fixture/798be31", package: "hraness-cli-kit" },
+  { marker: "desktop-foundation", npm: "@hraness/desktop-foundation", checkout: "desktop-foundation-fixture/798be31", package: "hraness-control-kit" },
 ].map(fixture => {
   const source = Object.keys(GIT_SOURCES).find(key => key.includes(fixture.marker));
   assert.ok(source, fixture.marker);
