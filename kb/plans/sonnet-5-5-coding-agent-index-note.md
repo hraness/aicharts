@@ -66,7 +66,7 @@ Provenance: drafted by a Cursor cloud agent (Grok) on 2026-10-05 from the checke
 
 ## Figure handoff
 
-Until the figure lands, `bun run typecheck` fails on `app/blog/editorial-images.ts` (the registry type requires a row for every public slug) and `bun test app/blog/blog.test.tsx` fails its image gate and the new note’s `blogEditorialImage` assertion; both are the intended fail-closed behavior.
+Until the figure lands, `bun run typecheck` fails on `app/blog/editorial-images.ts` (the registry type requires a row for every public slug) and on the blog image-gate assertions that compare registered slugs to `BLOG_SLUGS`. `bun test app/blog/blog.test.tsx -t "Sonnet 5.5"` fails only the new note’s `blogEditorialImage` assertion. All three are the intended fail-closed behavior.
 
 ### Prompt
 

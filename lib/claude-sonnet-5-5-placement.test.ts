@@ -14,6 +14,7 @@ import {
   sonnet55CodingAgentRows,
   sonnet55IntelligencePlacement,
 } from "./claude-sonnet-5-5-placement";
+import type { CostedCodingAgentRecord } from "./snapshot-placement";
 import { parseCodingAgentSnapshot } from "./coding-agent-data";
 import { aaIndexCostFrontier } from "./coding-agent-snapshot-rows";
 import { codingAgentRecord } from "./grok-4-7-placement.test";
@@ -97,6 +98,13 @@ describe("Claude Code · Sonnet 5.5 coding-agent placement", () => {
   const costless = codingAgentRecord({ aaIndex: 70, costUsd: null, id: "costless" });
   const indexless = codingAgentRecord({ aaIndex: null, costUsd: 1, deepSwe: 80, id: "indexless" });
 
+  function asCosted(record: typeof sonnetMax): CostedCodingAgentRecord {
+    if (record.benchmarks.aaIndex === null || record.economics.costUsd === null || record.economics.costUsd <= 0) {
+      throw new Error("Fixture must carry an AA Index and a positive cost.");
+    }
+    return record as CostedCodingAgentRecord;
+  }
+
   test("places the leader, ranks its cost, walks the frontier, and contrasts each component", () => {
     const records = [sol, argon, indexless, sonnetLow, opusMax, sonnetMax, sonnetXhigh];
     const placement = sonnet55CodingAgentPlacement(records);
@@ -136,7 +144,13 @@ describe("Claude Code · Sonnet 5.5 coding-agent placement", () => {
   });
 
   test("orders the effort ladder cheapest first and states what each step buys", () => {
-    const ladder = codingEffortLadder([sonnetMax, sonnetLow, sonnetXhigh, sonnetHigh, sonnetMedium]);
+    const ladder = codingEffortLadder([
+      asCosted(sonnetMax),
+      asCosted(sonnetLow),
+      asCosted(sonnetXhigh),
+      asCosted(sonnetHigh),
+      asCosted(sonnetMedium),
+    ]);
     expect(ladder.map(step => step.record.setting)).toEqual(["low", "medium", "high", "xhigh", "max"]);
     expect(ladder[0]?.pointsOverCheaper).toBeNull();
     expect(ladder[0]?.costMultipleOverCheaper).toBeNull();
