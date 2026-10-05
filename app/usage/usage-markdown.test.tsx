@@ -21,8 +21,18 @@ function decode(html: string): string {
     .replaceAll("&amp;", "&");
 }
 
+/** Rendered markup without its tags, removed until none remain. */
+function stripTags(html: string): string {
+  let text = html;
+  for (let previous = ""; previous !== text;) {
+    previous = text;
+    text = text.replace(/<[^<>]*>/gu, "");
+  }
+  return text.replaceAll("<", "").replaceAll(">", "");
+}
+
 function visibleText(html: string): string {
-  return decode(html.replace(/<[^>]+>/gu, "")).replace(/\s+/gu, " ").trim();
+  return decode(stripTags(html)).replace(/\s+/gu, " ").trim();
 }
 
 /** Markdown reduced to the words a reader sees, for comparison with page text. */
@@ -88,7 +98,7 @@ describe("usage page Markdown", () => {
   });
 
   test("carries every install and setup command with its note", () => {
-    const pageText = decode(fullMain.replace(/<[^>]+>/gu, ""));
+    const pageText = decode(stripTags(fullMain));
     for (const platform of usageInstallPlatforms) {
       if ("unavailable" in platform) {
         expect(pageText).toContain(platform.unavailableNote);
