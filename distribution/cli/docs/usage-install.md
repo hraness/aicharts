@@ -2,7 +2,7 @@
 
 AI Charts provides local `stats` reports across its pinned parser roster and legacy usage collection for Codex, Claude Code, and Devin ATIF exports. Its separate `turns` command reports observed Codex daily runtime and partial token and requested-call subtotals. The foreground `daemon` command can repeat the legacy collector, but it never uploads or installs an OS service. `aicharts history` keeps a daily record of the same reports on this computer, and `aicharts mcp` lets your agents read it; see [usage history and agent queries](https://github.com/hraness/aicharts/blob/main/docs/usage-history.md). `aicharts update` installs a newer release after verifying the archive's published SHA-256, and `aicharts update enable` schedules that verified check daily through a systemd user timer. This Linux profile does not provide account sign-in, enrollment, native credential storage, or a tray application.
 
-The published Linux release is [cli-v0.3.1](https://github.com/hraness/aicharts/releases/tag/cli-v0.3.1), built from commit `fc8efdbe34e5358a5027822a013fa7b3c3b720bf`. Its [Linux build and installation checks](https://github.com/hraness/aicharts/actions/runs/37233364946) and [publication with GitHub build attestations](https://github.com/hraness/aicharts/actions/runs/37233748701) passed on 4 October 2026. The same release carries the signed macOS build; see [local usage](https://github.com/hraness/aicharts/blob/main/docs/usage-local.md#build-and-run). The download commands below verify the checksums and the publishing workflow before extracting the CLI.
+The published Linux release is [cli-v0.4.0](https://github.com/hraness/aicharts/releases/tag/cli-v0.4.0), built from commit `7ef97280e1b7897597ae5ca9fa46c82d606a41ed`. Its [Linux build and installation checks](https://github.com/hraness/aicharts/actions/runs/37350385653) and [publication with GitHub build attestations](https://github.com/hraness/aicharts/actions/runs/37351093830) passed on 5 October 2026. The same release carries the signed macOS build; see [local usage](https://github.com/hraness/aicharts/blob/main/docs/usage-local.md#build-and-run). The download commands below verify the checksums and the publishing workflow before extracting the CLI.
 
 ## Requirements
 
@@ -17,7 +17,7 @@ Install the [GitHub CLI](https://cli.github.com/) for downloading and verifying 
 Download into a new directory. `mkdir` and `gh release download` refuse to overwrite an existing installation or download. The command checks all four files in `SHA256SUMS`, verifies each archive and the manifest against the publishing workflow, and extracts only if every check passes:
 
 ```sh
-aicharts_version=0.3.1
+aicharts_version=0.4.0
 mkdir "aicharts-cli-v${aicharts_version}" && (
   cd "aicharts-cli-v${aicharts_version}" &&
   gh release download "cli-v${aicharts_version}" --repo hraness/aicharts &&

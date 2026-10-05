@@ -11,13 +11,13 @@ The quickest install, on a Mac with Apple silicon or on Linux x86_64, is `curl -
 To check the release yourself, on a Mac with Apple silicon, download the published release with the GitHub CLI. The command checks the archive's checksum and the publishing workflow's attestation before extracting it; the binary is signed with Developer ID and notarized by Apple:
 
 ```sh
-mkdir aicharts-cli-v0.3.1 && (cd aicharts-cli-v0.3.1 && gh release download cli-v0.3.1 --repo hraness/aicharts --pattern 'aicharts-0.3.1-aarch64-apple-darwin.tar.gz*' && shasum -a 256 -c aicharts-0.3.1-aarch64-apple-darwin.tar.gz.sha256 && gh attestation verify aicharts-0.3.1-aarch64-apple-darwin.tar.gz --repo hraness/aicharts --signer-workflow hraness/aicharts/.github/workflows/cli-publish.yml --deny-self-hosted-runners && tar -xzf aicharts-0.3.1-aarch64-apple-darwin.tar.gz) && export PATH="$PWD/aicharts-cli-v0.3.1/aicharts-0.3.1-aarch64-apple-darwin/bin:$PATH"
+mkdir aicharts-cli-v0.4.0 && (cd aicharts-cli-v0.4.0 && gh release download cli-v0.4.0 --repo hraness/aicharts --pattern 'aicharts-0.4.0-aarch64-apple-darwin.tar.gz*' && shasum -a 256 -c aicharts-0.4.0-aarch64-apple-darwin.tar.gz.sha256 && gh attestation verify aicharts-0.4.0-aarch64-apple-darwin.tar.gz --repo hraness/aicharts --signer-workflow hraness/aicharts/.github/workflows/cli-publish.yml --deny-self-hosted-runners && tar -xzf aicharts-0.4.0-aarch64-apple-darwin.tar.gz) && export PATH="$PWD/aicharts-cli-v0.4.0/aicharts-0.4.0-aarch64-apple-darwin/bin:$PATH"
 ```
 
 That adds `aicharts` to this terminal's path only; copy `bin/aicharts` into a directory on your path to keep it. On an Intel Mac, or to build it yourself, install the CLI from the release's source commit with Rust 1.97.1 and a C compiler:
 
 ```sh
-cargo +1.97.1 install --locked --git https://github.com/hraness/aicharts --rev fc8efdbe34e5358a5027822a013fa7b3c3b720bf aicharts-cli
+cargo +1.97.1 install --locked --git https://github.com/hraness/aicharts --rev 7ef97280e1b7897597ae5ca9fa46c82d606a41ed aicharts-cli
 ```
 
 Cargo puts `aicharts` in `~/.cargo/bin`; add that directory to your shell's path if your Rust installation has not already done so. A source build is not signed or notarized. For a Linux x86-64 download, use the [release verification guide](../distribution/cli/docs/usage-install.md).

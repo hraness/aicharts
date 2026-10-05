@@ -1,11 +1,11 @@
-/** Published CLI release, checked against its assets and attestations on 2026-10-04.
- * Linux qualification: https://github.com/hraness/aicharts/actions/runs/37233364946
- * macOS qualification: https://github.com/hraness/aicharts/actions/runs/37233366601
- * Publication: https://github.com/hraness/aicharts/actions/runs/37233748701
+/** Published CLI release, checked against its assets and attestations on 2026-10-05.
+ * Linux qualification: https://github.com/hraness/aicharts/actions/runs/37350385653
+ * macOS qualification: https://github.com/hraness/aicharts/actions/runs/37350389304
+ * Publication: https://github.com/hraness/aicharts/actions/runs/37351093830
  */
 export const usageCliRelease = {
-  version: "0.3.1",
-  sourceCommit: "fc8efdbe34e5358a5027822a013fa7b3c3b720bf",
+  version: "0.4.0",
+  sourceCommit: "7ef97280e1b7897597ae5ca9fa46c82d606a41ed",
   rustToolchain: "1.97.1",
   linuxTarget: "x86_64-unknown-linux-gnu",
   macTarget: "aarch64-apple-darwin",

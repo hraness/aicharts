@@ -27,9 +27,9 @@
 # Everything is inside main(), so a partial download runs nothing.
 
 # The release this installer adds, with its reviewed archive digests.
-AICHARTS_VERSION=0.3.1
-AICHARTS_SHA256_DARWIN_AARCH64=e79a19b0b174845c939e2472b4dbf3e5738b6bf867bd16aba2daa86be6f049b6
-AICHARTS_SHA256_LINUX_X86_64=c2a8acf56019565668bbcf84884503428d857ab5c54fecec85ae145644f83559
+AICHARTS_VERSION=0.4.0
+AICHARTS_SHA256_DARWIN_AARCH64=8ec354f1bf9f1c58be9274a9cb3e603b62026de2b264a9aefbe58bed5b0c6cbb
+AICHARTS_SHA256_LINUX_X86_64=4991ae4595e927815b3298eac54315fd334a415bd48c40caa79b239ff1ad26e9
 
 main() {
   set -eu
