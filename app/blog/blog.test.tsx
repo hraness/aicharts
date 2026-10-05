@@ -1898,6 +1898,8 @@ describe("aicharts benchmark notes", () => {
     expect(markdown).toContain(GPT_6_SOL.artificialAnalysis.gdpvalRegression);
     expect(markdown).toContain(GPT_6_SOL.artificialAnalysis.hallucinationClaim);
     expect(markdown).toContain(GPT_6_SOL.openAi.vendorDeepSwe);
+    expect(markdown).toContain("The current Intelligence Index roster does not list GPT-6 Sol.");
+    expect(markdown).toContain("Codex · GPT-6.1 Sol as a later configuration");
     // OpenAI’s vendor table is described once, never restated as chart evidence.
     expect(markdown).not.toContain("CursorBench");
     expect(markdown).not.toContain("33.2%");
