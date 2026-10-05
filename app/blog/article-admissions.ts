@@ -15,6 +15,7 @@ import {
   type BlogSlug,
   type BlogSourceId,
 } from "./articles";
+import { GPT_6_1_SOL_ARTICLE_ADMISSION_DRAFT } from "./gpt-6-1-sol-coding-agent-index-admission";
 
 type AdmissionScore = 0 | 1 | 2;
 
@@ -194,6 +195,9 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     },
     sourceCheckedOn: INTRODUCING_REVIEWED_ON,
   },
+  "gpt-6-1-sol-coding-agent-index": GPT_6_1_SOL_ARTICLE_ADMISSION_DRAFT,
+
+
   "opus-5-5-coding-agent-index": {
     canonicalOwner: blogArticlePath("opus-5-5-coding-agent-index"),
     decision: "keep",
@@ -207,6 +211,11 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     humanReviewedOn: null,
     lifecycleState: "indexable",
     nearestUrls: [
+      {
+        distinction:
+          "The GPT-6.1 Sol page places a cheaper Codex configuration and shows that max is not its highest Codex setting; this page places the chart’s leading Claude Code row and asks what each step down the frontier gives up.",
+        url: blogArticlePath("gpt-6-1-sol-coding-agent-index"),
+      },
       {
         distinction:
           "The Intelligence Index page places Claude Opus 5.5 (max) on the capability and cost chart, walks that frontier, and tabulates the model’s effort levels; this page places the Claude Code row on the coding-agent chart, walks the coding frontier down from it, and uses the Index row only to keep the two costs apart.",
@@ -434,10 +443,15 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     harmIfWrong:
       "A coding-agent AA Index and an Intelligence Index score for the same model at the same effort setting could be quoted as one ranking, the $2.99 mean harness cost per task could be compared with the $1.06 Intelligence Index cost per task or with a list price, a launch-day frontier claim could be repeated after cheaper higher-scoring rows entered the chart, a same-harness generation step could be read as a like-for-like rerun, or OpenAI’s vendor-run figures could be cited as independent evidence.",
     hostFit:
-      "AI Charts stores GPT-6 Sol in both checked snapshots, the coding-agent chart with its Codex row and GPT-5.6 Sol predecessor and the Intelligence Index chart with one row per effort level, so it can derive rank, frontier position, component split, generation step, neighbors, and the effort ladder from the same data the charts plot without adding a data surface.",
+      "This note is pinned to the cited September 25, 2026 coding-agent snapshot and the cited September 23, 2026 Intelligence Index snapshot. Those cited rows still let the page derive rank, frontier position, component split, generation step, neighbors, and the effort ladder. The live Intelligence Index roster no longer lists GPT-6 Sol; the live coding-agent chart still stores Codex · GPT-6 Sol (max) and also stores Codex · GPT-6.1 Sol as a later configuration.",
     humanReviewedOn: null,
     lifecycleState: "indexable",
     nearestUrls: [
+      {
+        distinction:
+          "The GPT-6.1 Sol page places Codex · GPT-6.1 Sol on the live coding-agent chart, shows that max is not the highest Codex setting, and uses the live Index only as a two-unit cost callout; this page stays pinned to cited September snapshots of Codex · GPT-6 Sol (max) and an Index roster that no longer lists that model.",
+        url: blogArticlePath("gpt-6-1-sol-coding-agent-index"),
+      },
       {
         distinction:
           "The Grok 4.7 page places Grok Build · Grok 4.7 and names GPT-6 Sol only as a cheaper row that scores higher; this page makes GPT-6 Sol the subject, adds its Codex predecessor, its Intelligence Index effort ladder, and OpenAI’s price change, and never places Grok.",
@@ -462,7 +476,7 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     originalContribution:
       "A snapshot-derived statement of Codex · GPT-6 Sol (max)’s AA Index rank, frontier position, cheapest higher-scoring row, and one-point neighbors; a same-harness GPT-5.6 Sol to GPT-6 Sol table showing the index gain came from Terminal-Bench 4 and SWE-Atlas-QnA while DeepSWE v1.1 fell, at half the cost per task with tokens per task nearly unchanged; a component table showing DeepSWE v1.1 and Terminal-Bench 4 near the top while SWE-Atlas-QnA sits mid-table; the Intelligence Index rank, frontier position, one-point neighbors, and a six-row effort ladder stating what each step buys; and an explicit separation of the two per-task costs behind one list price.",
     overlapDecision:
-      "Keep separately: the Grok 4.7 page names GPT-6 Sol in one dominator sentence and shares the two-chart frame, but no current route places GPT-6 Sol, compares it with GPT-5.6 Sol in Codex, or tabulates its effort ladder, and fewer than a third of the headings or claims overlap the Grok, AA Index, small-models, or MiMo pages.",
+      "Keep separately: the Grok 4.7 page names GPT-6 Sol in one dominator sentence and shares the two-chart frame; the live coding-agent chart also stores Codex · GPT-6.1 Sol as a later configuration, which this pinned note does not place. No current route places the cited GPT-6 Sol snapshots, compares them with GPT-5.6 Sol in Codex, or tabulates that effort ladder, and fewer than a third of the headings or claims overlap the Grok, AA Index, small-models, or MiMo pages.",
     primaryEvidence:
       "The checked coding-agent snapshot supplies every AA Index, component score, cost, token, and duration value and the update log; the checked Intelligence Index snapshot supplies every Intelligence Index score, cost per task, and output token value for each effort level; Artificial Analysis’s launch note and model page supply the quoted launch-day claims, prices, speed, and context window; OpenAI’s launch page supplies the release date, availability, price change, and vendor-run figures.",
     primarySourceIds: [
@@ -501,6 +515,11 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     humanReviewedOn: null,
     lifecycleState: "indexable",
     nearestUrls: [
+      {
+        distinction:
+          "The GPT-6.1 Sol page places Codex · GPT-6.1 Sol and compares it with GPT-6 Sol in Codex; this page places Grok Build · Grok 4.7 on both charts and compares it with Grok 4.6 in the same harness.",
+        url: blogArticlePath("gpt-6-1-sol-coding-agent-index"),
+      },
       {
         distinction:
           "The MiMo page places one open-weights model on the Intelligence Index cost frontier and tests an investor’s price and cybersecurity claims; this page places one proprietary model on both AI Charts charts and explains why its two scores and two costs are not one measurement.",

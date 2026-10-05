@@ -646,6 +646,7 @@ export function createGrok47Article(
       "xaiGrok47Announcement",
     ],
     relatedSlugs: [
+      "gpt-6-1-sol-coding-agent-index",
       "aa-index-cost-coding-agents",
       "mimo-v2-6-pro-cost-frontier",
     ],

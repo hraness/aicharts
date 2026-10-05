@@ -700,6 +700,7 @@ export function createGpt6SolArticle(
       "openAiGpt6SolLuna",
     ],
     relatedSlugs: [
+      "gpt-6-1-sol-coding-agent-index",
       "grok-4-7-coding-agent-index",
       "aa-index-cost-coding-agents",
     ],
@@ -807,6 +808,12 @@ export function createGpt6SolArticle(
         ],
         [
           "The 68.8% DeepSWE v1.1 figure, the prices, and the availability statement are OpenAI’s. aicharts did not run GPT-6 Sol.",
+        ],
+        [
+          "The Intelligence Index figures in this note come from the cited snapshot retrieved September 23, 2026. The current Intelligence Index roster does not list GPT-6 Sol.",
+        ],
+        [
+          "The live coding-agent chart still stores Codex · GPT-6 Sol (max) and also stores Codex · GPT-6.1 Sol as a later configuration. This note does not place GPT-6.1 Sol.",
         ],
       ),
     ],

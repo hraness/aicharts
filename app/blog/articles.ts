@@ -6,6 +6,7 @@ import { PUBLIC_BLOG_SLUGS } from "@/lib/public-analytics-routes";
 import { createAaIndexCostArticle } from "./aa-index-cost-article";
 import { createCodingAgentScoreHoldoutsArticle } from "./coding-agent-score-holdouts-article";
 import { createDevinFusionCostSavingArticle } from "./devin-fusion-cost-saving-article";
+import { createGpt61SolArticle } from "./gpt-6-1-sol-coding-agent-index-article";
 import { createGpt6SolArticle } from "./gpt-6-sol-coding-agent-index-article";
 import { createGrok47Article } from "./grok-4-7-coding-agent-index-article";
 import { createHarnessDesignArticle } from "./harness-design-coding-agents-article";
@@ -322,6 +323,30 @@ export const BLOG_SOURCES = {
     url: "https://openai.com/index/introducing-gpt-6-sol-and-luna/",
     year: 2026,
   },
+  openAiGpt61Sol: {
+    note:
+      "Cited for the launch headline, the $2, $10, and $0.10 per million token prices, ChatGPT Work and Codex availability, the statement that the model is not yet in Chat, the API name, and the vendor-run DeepSWE v1.1 claim against GPT-6 Astra and GPT-6 Sol. aicharts does not chart those vendor figures.",
+    publication: "OpenAI",
+    title: "Introducing GPT-6.1 Sol",
+    url: "https://openai.com/index/introducing-gpt-6-1-sol/",
+    year: 2026,
+  },
+  openAiGpt61SolDocs: {
+    note:
+      "Cited for the effort levels low, medium (default), high, xhigh, and max, the 1,050,000-token context window, and the matching list prices.",
+    publication: "OpenAI",
+    title: "GPT-6.1 Sol Model",
+    url: "https://developers.openai.com/api/docs/models/gpt-6.1-sol",
+    year: 2026,
+  },
+  artificialAnalysisGpt61SolModel: {
+    note:
+      "Cited, from the page captured October 5, 2026 UTC, for the rounded 52 index score, the proprietary label, the September 29, 2026 release date, the $2.00 and $10.00 per million token prices with a 95% cache discount, the $0.72 cost per index task, the 67M output tokens across the index, and the 1M token context window.",
+    publication: "Artificial Analysis",
+    title: "GPT-6.1 Sol (max) - Intelligence, Performance & Price Analysis",
+    url: "https://artificialanalysis.ai/models/gpt-6-1-sol",
+    year: 2026,
+  },
   anthropicClaudeOpus55: {
     note:
       "Cited for the September 22, 2026 release, the $4 and $20 per million token prices against $5 and $25 for Opus 5, the $0.20 cache-read price, the 40% cost claim against Opus 5, medium as the default effort level, the max-effort setting behind Anthropic’s benchmark table, the statement that thinking can no longer be switched off, the safeguard fallback sentence, and the vendor-run benchmark table that this site does not chart.",
@@ -515,6 +540,7 @@ const mirrorCodeArticle = {
 
 export const blogArticles = [
   createIntroducingAiChartsArticle(),
+  createGpt61SolArticle(),
   createOpus55CodingArticle(),
   createSonnet55CodingArticle(),
   createOpus55Article(),
