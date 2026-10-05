@@ -227,6 +227,15 @@ export const BLOG_EDITORIAL_IMAGES = {
     "20260928T144950178Z-image-998872d6-f05/receipt.json",
     "gateway_df0cd393e68145e5afd13c915ab310d8.json",
   ),
+  "sonnet-5-5-coding-agent-index": image(
+    "sonnet-5-5-coding-agent-index",
+    "Five shallow ivory terraces rise along one low charcoal rail; a matte ivory wedge sits on the highest terrace, with a short brass line on that terrace’s leading edge.",
+    "Claude Code · Sonnet 5.5 holds the coding-agent chart’s top score and its highest cost per task at once, and the same harness stores four cheaper settings below it.",
+    "8852c92e69226f3f1e94ac36f8d5200169cb893e2ce2375a5e6ea7a04035a9a9",
+    "0524b64194f689215505550a74f45fa8e080a97ea7b9da9f6e1f2bb8d955cf50",
+    "20261005T151701783Z-image-923150cd-471/receipt.json",
+    "gateway_3d7b73727a3b4bac99e37aaf85f6c9b4.json",
+  ),
 } as const satisfies EditorialImageRecord;
 
 export function blogEditorialImage<Slug extends BlogSlug>(
