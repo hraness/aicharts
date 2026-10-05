@@ -93,7 +93,7 @@ const sourceRowSchema = z.object({
   }
 });
 
-type SourceRow = z.infer<typeof sourceRowSchema>;
+export type SourceRow = z.infer<typeof sourceRowSchema>;
 
 /** Resolves the model-creator display name used as `providerName`. */
 export function codingAgentCreatorName(

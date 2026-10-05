@@ -8,9 +8,10 @@ import {
   normalizeSourceRows,
   reconcileSnapshotSeriesIds,
   validateSnapshotUpdate,
+  type SourceRow,
 } from "./refresh-coding-agents";
 
-function sourceRow(index: number, model = `Model ${index}`) {
+function sourceRow(index: number, model = `Model ${index}`): SourceRow {
   return {
     id: `row-${index}`,
     agentName: "codex",
@@ -91,7 +92,7 @@ describe("Artificial Analysis Flight extraction", () => {
   test("accepts creator-less Cognition composites without accepting unowned missing attribution", () => {
     const rows = Array.from({ length: 10 }, (_, index) => sourceRow(index));
     const display = { agent: rows[0]!.display.agent, model: rows[0]!.display.model };
-    rows[0] = { ...rows[0]!, agentName: "Devin Fusion CLI", provider: "cognition", display } as typeof rows[number];
+    rows[0] = { ...rows[0]!, agentName: "Devin Fusion CLI", provider: "cognition", display };
     const extracted = extractSourceRows(flightScript(`0:{"benchmarkRows":${JSON.stringify(rows)}}`));
     expect(extracted.ok).toBeTrue();
     if (!extracted.ok) return;
@@ -108,7 +109,7 @@ describe("Artificial Analysis Flight extraction", () => {
       ...rows[0]!,
       display,
       modelCreators: [{ slug: "xai", name: "SpaceXAI" }],
-    } as typeof rows[number];
+    };
     const extracted = extractSourceRows(flightScript(`0:{"benchmarkRows":${JSON.stringify(rows)}}`));
     expect(extracted.ok).toBeTrue();
     if (!extracted.ok) return;
