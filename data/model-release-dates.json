@@ -140,6 +140,12 @@
     ]
   },
   {
+    "canonicalModelId": "anthropic/claude-sonnet-5.5",
+    "status": "pending",
+    "reason": "Claude Sonnet 5.5 appears on the checked coding-agent and Intelligence snapshots; an Anthropic-owned publication date has not been verified.",
+    "researchedOn": "2026-10-05"
+  },
+  {
     "canonicalModelId": "cognition/swe-1.7",
     "appliesTo": {
       "kind": "base-model",
@@ -300,6 +306,12 @@
         "url": "https://ai.google.dev/gemini-api/docs/deprecations"
       }
     ]
+  },
+  {
+    "canonicalModelId": "google/gemini-4-argon",
+    "status": "pending",
+    "reason": "Gemini 4 Argon appears on the checked coding-agent and Intelligence snapshots; a Google-owned publication date has not been verified.",
+    "researchedOn": "2026-10-05"
   },
   {
     "canonicalModelId": "meta/muse-spark-1.1",
@@ -494,6 +506,12 @@
         "url": "https://developers.openai.com/changelog"
       }
     ]
+  },
+  {
+    "canonicalModelId": "openai/gpt-6.1-sol",
+    "status": "pending",
+    "reason": "GPT-6.1 Sol appears on the checked coding-agent and Intelligence snapshots and the OpenAI model catalog; an OpenAI-owned publication date has not been verified.",
+    "researchedOn": "2026-10-05"
   },
   {
     "canonicalModelId": "spacexai/grok-4.5",

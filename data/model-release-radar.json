@@ -400,7 +400,7 @@
       "providerId": "openai",
       "providerName": "OpenAI",
       "sourceAddedAt": "2026-09-29T17:28:02.000Z",
-      "status": "awaiting-benchmark"
+      "status": "benchmarked"
     },
     {
       "capabilities": {
@@ -421,7 +421,7 @@
       "providerId": "anthropic",
       "providerName": "Anthropic",
       "sourceAddedAt": "2026-09-28T18:04:46.000Z",
-      "status": "awaiting-benchmark"
+      "status": "benchmarked"
     },
     {
       "capabilities": {

@@ -167,6 +167,28 @@
     "aliases": ["anthropic_claude-sonnet-4-6"]
   },
   {
+    "providerId": "anthropic",
+    "model": "Sonnet 5.5",
+    "canonicalModelId": "anthropic/claude-sonnet-5.5",
+    "emblemIdentity": {
+      "familyId": "sonnet",
+      "generation": ["5", "5"],
+      "revision": null,
+      "editionId": "base",
+      "role": "general"
+    },
+    "gatewayModelId": null,
+    "lobeIconKey": "claude",
+    "intrinsicClass": "standard",
+    "aliases": [
+      "private-anthropic_claude-beignet-eap-low",
+      "private-anthropic_claude-beignet-eap-medium",
+      "private-anthropic_claude-beignet-eap-high",
+      "private-anthropic_claude-beignet-eap-xhigh",
+      "private-anthropic_claude-beignet-eap-max"
+    ]
+  },
+  {
     "providerId": "cognition",
     "model": "SWE-1.7 Lightning Max",
     "canonicalModelId": "cognition/swe-1.7",
@@ -341,6 +363,22 @@
     "lobeIconKey": "gemini",
     "intrinsicClass": "fast",
     "aliases": ["google_skimaki_ai-studio"]
+  },
+  {
+    "providerId": "google",
+    "model": "Gemini 4 Argon",
+    "canonicalModelId": "google/gemini-4-argon",
+    "emblemIdentity": {
+      "familyId": "gemini",
+      "generation": ["4"],
+      "revision": null,
+      "editionId": "argon",
+      "role": "flagship"
+    },
+    "gatewayModelId": null,
+    "lobeIconKey": "gemini",
+    "intrinsicClass": "standard",
+    "aliases": ["google_barium-bb_ai-studio"]
   },
   {
     "providerId": "meta",
@@ -558,6 +596,22 @@
     "lobeIconKey": "openai",
     "intrinsicClass": "standard",
     "aliases": ["openai_gpt-6-sol"]
+  },
+  {
+    "providerId": "openai",
+    "model": "GPT-6.1 Sol",
+    "canonicalModelId": "openai/gpt-6.1-sol",
+    "emblemIdentity": {
+      "familyId": "gpt",
+      "generation": ["6", "1"],
+      "revision": null,
+      "editionId": "sol",
+      "role": "flagship"
+    },
+    "gatewayModelId": null,
+    "lobeIconKey": "openai",
+    "intrinsicClass": "standard",
+    "aliases": ["openai_quasar-alpha"]
   },
   {
     "providerId": "xai",

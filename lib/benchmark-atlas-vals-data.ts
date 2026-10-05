@@ -15,7 +15,7 @@ export const VALS_METHODOLOGY_URL = "https://www.vals.ai/about";
 
 /** Slug, catalog id, and pinned publisher version. A version bump is a new admission. */
 export const VALS_ADMITTED_BENCHMARKS = [
-  { slug: "vals_index", benchmarkId: "vals-index", family: "vals_index", version: "2" },
+  { slug: "vals_index", benchmarkId: "vals-index", family: "vals_index", version: "2.1" },
   { slug: "fabv2", benchmarkId: "vals-finance-agent-v2", family: "finance_agent", version: "2" },
   { slug: "legal_research", benchmarkId: "vals-legal-research", family: "legal_research", version: "1" },
   { slug: "tax_agent_bench", benchmarkId: "vals-tax-agent", family: "tax_agent_bench", version: "1" },
@@ -78,10 +78,11 @@ const benchmarkSchema = z.object({
   rows: z.array(rowSchema).min(1).max(150),
 }).strict();
 
-export const valsSnapshotSchema = z.object({
-  schemaVersion: z.literal(1),
-  benchmarks: z.array(benchmarkSchema).length(VALS_ADMITTED_BENCHMARKS.length),
-}).strict().superRefine((value, ctx) => {
+function refineValsSnapshot(
+  value: { readonly benchmarks: ReadonlyArray<z.infer<typeof benchmarkSchema>> },
+  ctx: z.RefinementCtx,
+  options: { readonly requireAdmittedVersion: boolean },
+): void {
   const seen = new Set<string>();
   for (const [index, benchmark] of value.benchmarks.entries()) {
     const path: (string | number)[] = ["benchmarks", index];
@@ -95,7 +96,7 @@ export const valsSnapshotSchema = z.object({
     if (benchmark.benchmarkId !== admitted.benchmarkId) {
       ctx.addIssue({ code: "custom", path: [...path, "benchmarkId"], message: `Catalog id must stay ${admitted.benchmarkId}.` });
     }
-    if (benchmark.family !== admitted.family || benchmark.version !== admitted.version) {
+    if (options.requireAdmittedVersion && (benchmark.family !== admitted.family || benchmark.version !== admitted.version)) {
       ctx.addIssue({ code: "custom", path: [...path, "version"], message: `Admitted ${admitted.family} v${admitted.version}; the source now publishes ${benchmark.family} v${benchmark.version}. A version change needs a separate admission.` });
     }
     if (benchmark.source.url !== valsBenchmarkUrl(benchmark.slug)) {
@@ -112,6 +113,23 @@ export const valsSnapshotSchema = z.object({
       ctx.addIssue({ code: "custom", path: [...path, "rows"], message: "The source does not present a comparable cost for this board; it must not be charted as one." });
     }
   }
+}
+
+const valsSnapshotShape = z.object({
+  schemaVersion: z.literal(1),
+  benchmarks: z.array(benchmarkSchema).length(VALS_ADMITTED_BENCHMARKS.length),
+}).strict();
+
+export const valsSnapshotSchema = valsSnapshotShape.superRefine((value, ctx) => {
+  refineValsSnapshot(value, ctx, { requireAdmittedVersion: true });
+});
+
+/**
+ * Last-known snapshot used only as the refresh predecessor. A version admission
+ * may change the cohort; the current snapshot still has to match the pin.
+ */
+export const valsRefreshPredecessorSchema = valsSnapshotShape.superRefine((value, ctx) => {
+  refineValsSnapshot(value, ctx, { requireAdmittedVersion: false });
 });
 
 export type ValsSnapshot = z.infer<typeof valsSnapshotSchema>;

@@ -828,10 +828,24 @@ function unparseableMarkdownRow(definition: FirstPartyReleaseSourceDefinition, k
   return err(new Error(`${definition.id} contains an unparseable ${kind}: ${row.trim().slice(0, 160)}`));
 }
 
-function parseOpenAiCatalog(definition: FirstPartyReleaseSourceDefinition, markdown: string): Result<ParsedProviderSitemap, Error> {
+function ownedOpenAiCatalogSection(
+  definition: FirstPartyReleaseSourceDefinition,
+  markdown: string,
+): Result<string, Error> {
+  const flagship = ownedMarkdownSection(definition, markdown, "## Flagship models");
   const featured = ownedMarkdownSection(definition, markdown, "## Featured models");
-  if (!featured.ok) return featured;
-  const lines = markdownLinesOutsideCodeFences(definition, featured.value);
+  if (flagship.ok && featured.ok) {
+    return err(new Error(`${definition.id} must contain exactly one of ## Flagship models or ## Featured models; found both.`));
+  }
+  if (flagship.ok) return flagship;
+  if (featured.ok) return featured;
+  return err(new Error(`${definition.id} must contain exactly one of ## Flagship models or ## Featured models; found 0.`));
+}
+
+function parseOpenAiCatalog(definition: FirstPartyReleaseSourceDefinition, markdown: string): Result<ParsedProviderSitemap, Error> {
+  const catalog = ownedOpenAiCatalogSection(definition, markdown);
+  if (!catalog.ok) return catalog;
+  const lines = markdownLinesOutsideCodeFences(definition, catalog.value);
   if (!lines.ok) return lines;
   const rawEntries: SitemapEntry[] = [];
   for (const line of lines.value) {
@@ -840,7 +854,7 @@ function parseOpenAiCatalog(definition: FirstPartyReleaseSourceDefinition, markd
     const title = match?.[1]?.trim();
     const href = match?.[2];
     if (title === undefined || title === "" || href === undefined) {
-      return unparseableMarkdownRow(definition, "featured-model row", line);
+      return unparseableMarkdownRow(definition, "catalog-model row", line);
     }
     const canonical = canonicalProviderUrl(definition, href, false);
     if (!canonical.ok) return canonical;

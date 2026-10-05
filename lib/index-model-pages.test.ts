@@ -81,8 +81,11 @@ describe("Index-only model pages", () => {
   test("gives no Index-only page to a model that has a catalogued coding card", () => {
     for (const retired of [
       "/models/anthropic/claude-opus-5-5/index",
+      "/models/anthropic/claude-sonnet-5-5/index",
+      "/models/google/gemini-4-argon/index",
       "/models/openai/gpt-6-sol/index",
       "/models/openai/gpt-6-luna/index",
+      "/models/openai/gpt-6-1-sol/index",
       "/models/xai/grok-4-7/index",
     ]) {
       expect(INDEX_MODEL_PAGES.some(page => page.path === retired)).toBeFalse();

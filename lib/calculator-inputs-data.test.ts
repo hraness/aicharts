@@ -46,6 +46,7 @@ describe("calculator inputs schema", () => {
 
   test("rejects promotional pricing without a published guarantee date", () => {
     const broken = mutated((clone) => {
+      clone.openAiApiPricing.currentBasis = "promotional";
       clone.openAiApiPricing.promoGuaranteedThrough = null;
     });
     expect(parseCalculatorInputsSnapshot(broken).ok).toBe(false);

@@ -147,10 +147,10 @@ function openAiSafetyXml(): string {
   ]);
 }
 
-function openAiCatalogMarkdown(): string {
+function openAiCatalogMarkdown(heading = "## Flagship models"): string {
   return [
     "# Models",
-    "## Featured models",
+    heading,
     "- [GPT-6 Astra](/api/docs/models/gpt-6-astra): Latest frontier model.",
     "- [GPT-5.6](/api/docs/models/gpt-5.6): General-purpose model.",
     "- [GPT-5.6 Sol](/api/docs/models/gpt-5.6-sol): Coding model.",
@@ -1108,6 +1108,34 @@ describe("first-party release source adapters", () => {
         sourceId: "openai-model-catalog",
         sourceModifiedAt: observedAt,
       });
+  });
+
+  test("accepts either Flagship or Featured as the OpenAI catalog heading and refuses both or neither", () => {
+    const flagship = parseProviderSitemap(openAiCatalog, openAiCatalogMarkdown("## Flagship models"));
+    const featured = parseProviderSitemap(openAiCatalog, openAiCatalogMarkdown("## Featured models"));
+    expect(flagship.ok).toBeTrue();
+    expect(featured.ok).toBeTrue();
+    if (flagship.ok && featured.ok) {
+      expect(flagship.value.entries.map(entry => entry.url)).toEqual(featured.value.entries.map(entry => entry.url));
+    }
+
+    const neither = parseProviderSitemap(openAiCatalog, "# Models\n## All models\n- [GPT-6 Astra](/api/docs/models/gpt-6-astra): Latest.\n");
+    expect(neither.ok).toBeFalse();
+    if (!neither.ok) expect(neither.error.message).toContain("found 0");
+
+    const both = parseProviderSitemap(
+      openAiCatalog,
+      [
+        "# Models",
+        "## Flagship models",
+        "- [GPT-6 Astra](/api/docs/models/gpt-6-astra): Latest frontier model.",
+        "## Featured models",
+        "- [GPT-5.6](/api/docs/models/gpt-5.6): General-purpose model.",
+        "- [GPT-5.6 Sol](/api/docs/models/gpt-5.6-sol): Coding model.",
+      ].join("\n"),
+    );
+    expect(both.ok).toBeFalse();
+    if (!both.ok) expect(both.error.message).toContain("found both");
   });
 
   test("also recognizes Astra in OpenAI's safety sitemap", () => {

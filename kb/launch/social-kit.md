@@ -12,16 +12,16 @@ Post 1 of 9, 196 characters
 aicharts puts published AI benchmark scores and the cost of a task on one chart, so you can see which model gives the most for your budget. Every point names its source and the day it was checked.
 ```
 
-Post 2 of 9, 212 characters
+Post 2 of 9, 213 characters
 
 ```text
-The homepage chart plots 97 model settings by Artificial Analysis Intelligence Index v4.3.2 score against cost per task. The line joins the models nothing cheaper beats, so the best pick at each price stands out.
+The homepage chart plots 103 model settings by Artificial Analysis Intelligence Index v4.3.2 score against cost per task. The line joins the models nothing cheaper beats, so the best pick at each price stands out.
 ```
 
 Post 3 of 9, 183 characters
 
 ```text
-The coding chart compares 20 coding-agent setups. Each point is a model, the agent app running it, and an effort setting. Hover one to see its scores, cost per task, time, and tokens.
+The coding chart compares 31 coding-agent setups. Each point is a model, the agent app running it, and an effort setting. Hover one to see its scores, cost per task, time, and tokens.
 ```
 
 Post 4 of 9, 201 characters
@@ -70,16 +70,16 @@ Post 1 of 9, 196 characters
 aicharts puts published AI benchmark scores and the cost of a task on one chart, so you can see which model gives the most for your budget. Every point names its source and the day it was checked.
 ```
 
-Post 2 of 9, 212 characters
+Post 2 of 9, 213 characters
 
 ```text
-The homepage chart plots 97 model settings by Artificial Analysis Intelligence Index v4.3.2 score against cost per task. The line joins the models nothing cheaper beats, so the best pick at each price stands out.
+The homepage chart plots 103 model settings by Artificial Analysis Intelligence Index v4.3.2 score against cost per task. The line joins the models nothing cheaper beats, so the best pick at each price stands out.
 ```
 
 Post 3 of 9, 183 characters
 
 ```text
-The coding chart compares 20 coding-agent setups. Each point is a model, the agent app running it, and an effort setting. Hover one to see its scores, cost per task, time, and tokens.
+The coding chart compares 31 coding-agent setups. Each point is a model, the agent app running it, and an effort setting. Hover one to see its scores, cost per task, time, and tokens.
 ```
 
 Post 4 of 9, 201 characters
@@ -128,16 +128,16 @@ Post 1 of 9, 196 characters
 aicharts puts published AI benchmark scores and the cost of a task on one chart, so you can see which model gives the most for your budget. Every point names its source and the day it was checked.
 ```
 
-Post 2 of 9, 212 characters
+Post 2 of 9, 213 characters
 
 ```text
-The homepage chart plots 97 model settings by Artificial Analysis Intelligence Index v4.3.2 score against cost per task. The line joins the models nothing cheaper beats, so the best pick at each price stands out.
+The homepage chart plots 103 model settings by Artificial Analysis Intelligence Index v4.3.2 score against cost per task. The line joins the models nothing cheaper beats, so the best pick at each price stands out.
 ```
 
 Post 3 of 9, 183 characters
 
 ```text
-The coding chart compares 20 coding-agent setups. Each point is a model, the agent app running it, and an effort setting. Hover one to see its scores, cost per task, time, and tokens.
+The coding chart compares 31 coding-agent setups. Each point is a model, the agent app running it, and an effort setting. Hover one to see its scores, cost per task, time, and tokens.
 ```
 
 Post 4 of 9, 201 characters
@@ -183,9 +183,9 @@ https://aicharts.io/blog/introducing-ai-charts
 ```text
 aicharts puts published AI benchmark scores and the cost of a task on one chart, so you can see which model gives the most for your budget. Every point names its source and the day it was checked.
 
-The homepage chart plots 97 model settings by Artificial Analysis Intelligence Index v4.3.2 score against cost per task. The line joins the models nothing cheaper beats, so the best pick at each price stands out.
+The homepage chart plots 103 model settings by Artificial Analysis Intelligence Index v4.3.2 score against cost per task. The line joins the models nothing cheaper beats, so the best pick at each price stands out.
 
-The coding chart compares 20 coding-agent setups. Each point is a model, the agent app running it, and an effort setting. Hover one to see its scores, cost per task, time, and tokens.
+The coding chart compares 31 coding-agent setups. Each point is a model, the agent app running it, and an effort setting. Hover one to see its scores, cost per task, time, and tokens.
 
 The benchmarks library covers 62 tests across reasoning, research, memory, images, video and audio. Each one is labelled as a chart, a guide to the source, or an early test, and it keeps its own scale.
 
@@ -218,8 +218,8 @@ Topics: Artificial Intelligence, Developer Tools, Data Visualization
 
 - See which model wins at each price.
 - aicharts puts published AI benchmark scores and the cost of a task on one chart, so you can see which model gives the most for your budget. Every point names its source and the day it was checked.
-- The homepage chart plots 97 model settings by Artificial Analysis Intelligence Index v4.3.2 score against cost per task. The line joins the models nothing cheaper beats, so the best pick at each price stands out.
-- The coding chart compares 20 coding-agent setups. Each point is a model, the agent app running it, and an effort setting. Hover one to see its scores, cost per task, time, and tokens.
+- The homepage chart plots 103 model settings by Artificial Analysis Intelligence Index v4.3.2 score against cost per task. The line joins the models nothing cheaper beats, so the best pick at each price stands out.
+- The coding chart compares 31 coding-agent setups. Each point is a model, the agent app running it, and an effort setting. Hover one to see its scores, cost per task, time, and tokens.
 - The benchmarks library covers 62 tests across reasoning, research, memory, images, video and audio. Each one is labelled as a chart, a guide to the source, or an early test, and it keeps its own scale.
 - The aicharts collector reads the usage files your coding agents already keep, from 55 supported sources, and adds up tokens, cost and speed per model and day. Prompts and transcripts stay on your machine.
 - A local report is a file you open in your browser tab. On a Mac you can also sync daily totals to your dashboard: token counts, cost and time per agent and model. Prompts, transcripts, file paths and keys stay on your machine.
@@ -242,9 +242,9 @@ Topics: Artificial Intelligence, Developer Tools, Data Visualization
 
 ## Facts and their records
 
-- intelligenceConfigs: 97. data/artificial-analysis-intelligence-v4-3.json selection.positiveCostRecordCount, the configurations with a task cost above zero that the homepage chart plots (comparableIntelligenceRecords)
+- intelligenceConfigs: 103. data/artificial-analysis-intelligence-v4-3.json selection.positiveCostRecordCount, the configurations with a task cost above zero that the homepage chart plots (comparableIntelligenceRecords)
 - intelligenceVersion: v4.3.2. data/artificial-analysis-intelligence-v4-3.json benchmark.version
-- codingConfigs: 20. data/coding-agents.json records.length, the model, harness, and effort configurations on the /coding chart
+- codingConfigs: 31. data/coding-agents.json records.length, the model, harness, and effort configurations on the /coding chart
 - libraryEntries: 62. lib/benchmark-atlas-catalog.ts ATLAS_ENTRIES.length, the entries in the /benchmarks library
 - usageSources: 55. README.md and app/usage/page.tsx: the sources in the pinned Tokscale parser registry
 - cliVersion: 0.3.1. Cargo.toml [workspace.package] version, released through the cli-v0.3.1 tag on GitHub Releases
