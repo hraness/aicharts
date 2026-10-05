@@ -1,4 +1,4 @@
-import { articleProvenanceSentence } from "@hraness/design-kit";
+import { articleProvenanceSentence, platformLabel } from "@hraness/design-kit";
 
 import {
   articleToMarkdown,
@@ -24,8 +24,17 @@ import {
   modelCardsLede,
   notFoundRecoveryLinks,
   site,
-  usageReleaseUrl,
 } from "@/app/site";
+import {
+  usageDashboard,
+  usageHero,
+  usageLocalReport,
+  usageSetup,
+  usageSimilarTools,
+  usageTrust,
+  type UsageCopy,
+} from "@/app/usage/content";
+import { usageInstallPlatforms } from "@/app/usage/install";
 import artificialAnalysisIntelligenceData from "@/data/artificial-analysis-intelligence.json";
 import intelligenceV43Data from "@/data/artificial-analysis-intelligence-v4-3.json";
 import codingAgentData from "@/data/coding-agents.json";
@@ -438,6 +447,83 @@ function calculatorMarkdown(): string {
   ]);
 }
 
+// External links keep the page's exact href; in-page and relative links
+// resolve against the usage page itself.
+function usageHref(href: string): string {
+  return /^https?:\/\//u.test(href) ? href : new URL(href, absolute("/usage")).toString();
+}
+
+export function usageCopyMarkdown(copy: UsageCopy): string {
+  return copy.map(segment => typeof segment === "string"
+    ? segment
+    : "code" in segment
+      ? `\`${segment.code}\``
+      : `[${segment.text}](${usageHref(segment.href)})`).join("");
+}
+
+function shellBlock(command: string): string[] {
+  return ["```sh", command, "```"];
+}
+
+// The dashboard illustration is left out: it shows made-up numbers.
+function usageMarkdown(): string {
+  return joinMarkdown([
+    `# ${usageHero.heading}`,
+    "",
+    usageHero.lede,
+    "",
+    usageCopyMarkdown(usageHero.status),
+    "",
+    `Runs on ${usageHero.platforms.map(platform => `${platformLabel(platform.id)} (${platform.note})`).join(" and ")}.`,
+    "",
+    [usageHero.dashboardAction, usageHero.setupAction]
+      .map(link => `[${link.label}](${usageHref(link.href)})`).join(" · "),
+    "",
+    `## ${usageSimilarTools.heading}`,
+    "",
+    usageCopyMarkdown(usageSimilarTools.body),
+    "",
+    `## ${usageSetup.heading}`,
+    "",
+    usageSetup.intro,
+    "",
+    ...usageSetup.steps.map((step, index) => `${index + 1}. **${step.title}.** ${step.description}`),
+    "",
+    ...usageInstallPlatforms.flatMap(platform => "unavailable" in platform
+      ? [`**${platformLabel(platform.id)}**`, "", platform.unavailableNote, ""]
+      : [`**${platformLabel(platform.id)}** · ${platform.shell}`, "", ...shellBlock(platform.command), "", platform.note, ""]),
+    ...shellBlock(usageSetup.enroll.command),
+    "",
+    `*${usageSetup.enroll.note}*`,
+    "",
+    usageSetup.guides.map(guide => `[${guide.label}](${usageHref(guide.href)})`).join(" · "),
+    "",
+    `## ${usageDashboard.heading}`,
+    "",
+    usageDashboard.intro,
+    "",
+    ...usageDashboard.metrics.map(metric => `- **${metric.label} · ${metric.title}.** ${metric.description}`),
+    "",
+    `## ${usageLocalReport.heading}`,
+    "",
+    ...usageLocalReport.paragraphs.flatMap((paragraph, index) => [
+      `${index === 0 ? `${usageLocalReport.eyebrow}. ` : ""}${usageCopyMarkdown(paragraph)}`,
+      "",
+    ]),
+    ...shellBlock(usageLocalReport.report.command),
+    "",
+    `*${usageLocalReport.report.note}*`,
+    "",
+    `[${usageLocalReport.action.label}](${usageHref(usageLocalReport.action.href)})`,
+    "",
+    `## ${usageTrust.heading}`,
+    "",
+    usageTrust.body,
+    "",
+    ...usageTrust.points.map(point => `- ${point}`),
+  ]);
+}
+
 function benchmarksMarkdown(): string {
   return joinMarkdown([
     "# Explore benchmarks",
@@ -762,7 +848,7 @@ export function agentGuideMarkdown(
     `- [Coding agent comparisons](${absolute("/coding")}). Compare benchmark scores with API cost, active time, or total tokens from the separate Artificial Analysis coding-agents source.`,
     `- [AI benchmark explorer](${absolute("/benchmarks")}). Choose a task, inspect a measured cohort, or read a source guide. Terminal-Bench 4 is the current terminal-engineering standard.`,
     `- [Subscription vs API vs GPUs](${absolute("/calculator")}). Price one fully used ChatGPT Pro seat's token volume at OpenAI and DeepSeek API rates, on purchased GPUs, and on rented GPUs, with sourced assumptions.`,
-    `- [AI usage tracking](${absolute("/usage")}). Measure your own coding agents' token use, cost, and speed with the aicharts collector. It is in development. A Linux x86-64 build for local reports is on [GitHub Releases](${usageReleaseUrl}); on a Mac, build it from source. Account sync runs on macOS only.`,
+    `- [AI usage tracking](${absolute("/usage")}). Measure your own coding agents' token use, cost, and speed with the aicharts collector. ${usageCopyMarkdown(usageHero.status)}`,
     `- [Atlas catalog JSON](${absolute(ATLAS_CATALOG_DOWNLOAD_PATH)}). All benchmark IDs, coverage, versions, source dates, and per-cohort JSON distribution links.`,
     `- [Models](${absolute("/models")}). ${modelCardsLede}`,
     `- [Data](${absolute(CODING_AGENT_DATASET_PATH)}). Every benchmark’s source, version, definitions, dataset downloads, and limits.`,
@@ -780,7 +866,7 @@ export function agentGuideMarkdown(
     "",
     "## How to read the site",
     "",
-    "Request `Accept: text/markdown` on the charts, benchmarks, calculator, data, model, and blog page URLs. Usage and account pages are HTML only. `/` Markdown describes the leading Pareto chart; `/coding` describes the coding-agent comparison; `/benchmarks` includes the default library chart and links to every benchmark; `/calculator` describes the default cost scenario with its sources; `/data` includes all benchmark definitions and source details. Query parameters select interactive views, while the canonical Markdown representation describes the default view. JSON routes stay `application/json`, including `/data/benchmark-atlas.json`, `/data/benchmark-atlas/{benchmarkId}`, and the versioned source downloads. Only charted IDs have a dataset download; unknown and source-only IDs return HTTP 404.",
+    "Request `Accept: text/markdown` on the charts, benchmarks, calculator, usage, data, model, and blog page URLs. The dashboard, leaderboard, and the usage report, session, and pairing pages are HTML only. `/` Markdown describes the leading Pareto chart; `/coding` describes the coding-agent comparison; `/benchmarks` includes the default library chart and links to every benchmark; `/calculator` describes the default cost scenario with its sources; `/usage` describes collector setup, what the dashboard shows, and what its totals cover; `/data` includes all benchmark definitions and source details. Query parameters select interactive views, while the canonical Markdown representation describes the default view. JSON routes stay `application/json`, including `/data/benchmark-atlas.json`, `/data/benchmark-atlas/{benchmarkId}`, and the versioned source downloads. Only charted IDs have a dataset download; unknown and source-only IDs return HTTP 404.",
     "",
     "Cite the benchmark owner, exact version, model-agent configuration, and retrieval timestamp when quoting a score. aicharts publishes normalized snapshots; it does not create the measurements.",
   ]);
@@ -823,6 +909,9 @@ export function markdownForPath(pathname: string): MarkdownDocument {
   }
   if (path === "/calculator") {
     return { body: calculatorMarkdown(), contentType: MARKDOWN_CONTENT_TYPE, found: true };
+  }
+  if (path === "/usage") {
+    return { body: usageMarkdown(), contentType: MARKDOWN_CONTENT_TYPE, found: true };
   }
   if (path === CODING_AGENT_DATASET_PATH) {
     return { body: datasetMarkdown(snapshot), contentType: MARKDOWN_CONTENT_TYPE, found: true };

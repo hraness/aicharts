@@ -13,6 +13,7 @@ import {
   notFoundRecoveryLinks,
   site,
 } from "@/app/site";
+import { usageHero } from "@/app/usage/content";
 import artificialAnalysisIntelligenceData from "@/data/artificial-analysis-intelligence.json";
 import currentIntelligenceData from "@/data/artificial-analysis-intelligence-v4-3.json";
 import codingAgentData from "@/data/coding-agents.json";
@@ -46,6 +47,7 @@ import {
   homeDocumentText,
   markdownForPath,
   notFoundMarkdown,
+  usageCopyMarkdown,
 } from "./site-markdown";
 
 const parsed = parseCodingAgentSnapshot(codingAgentData);
@@ -332,6 +334,12 @@ describe("agent instruction file", () => {
     expect(guide).toContain("/usage");
     expect(guide).toContain(`[GitHub Releases](https://github.com/hraness/aicharts/releases/tag/cli-v${usageCliRelease.version})`);
     expect(guide).not.toContain("no packaged release yet");
+    // The usage line repeats the page's own status, and the guide offers its Markdown.
+    expect(guide).toContain(usageCopyMarkdown(usageHero.status));
+    expect(guide).toContain("calculator, usage, data, model, and blog page URLs");
+    expect(guide).not.toContain("Usage and account pages are HTML only");
+    expect(markdownForPath("/usage")).toMatchObject({ found: true, contentType: MARKDOWN_CONTENT_TYPE });
+    expect(markdownForPath("/usage/details").found).toBeFalse();
     expect(guide).toContain("answer plus reasoning tokens");
     expect(guide).toContain("Accept: text/markdown");
     expect(guide).toContain("the benchmark owners create the measurements");

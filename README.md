@@ -19,7 +19,7 @@ aicharts and turn this history on.
 
 The homepage leads with an interactive Pareto frontier: compare model capability against output tokens or cost, then inspect the configuration behind each point. The original coding-agent charts have a focused home at [`/coding`](https://aicharts.io/coding). The separate [`/benchmarks`](https://aicharts.io/benchmarks) library covers coding, reasoning, research, memory, images, video, audio, and world models. Charted results, source guides, and emerging evaluations are labeled separately, and older research cohorts are labeled with their dates.
 
-The site header links Charts (`/`), Benchmarks (`/benchmarks`), Usage (`/usage`), Dashboard (`/dashboard`), Leaderboard (`/leaderboard`), and Notes (`/blog`). Coding comparisons, model pages, and source data are linked where relevant. Legacy root chart and atlas links resolve to the matching workspace; new shares use that workspace’s URL. The charts, benchmarks, calculator, data, model, and blog pages also have Markdown representations through `Accept: text/markdown`. The usage and account pages do not.
+The site header links Charts (`/`), Benchmarks (`/benchmarks`), Usage (`/usage`), Dashboard (`/dashboard`), Leaderboard (`/leaderboard`), and Notes (`/blog`). Coding comparisons, model pages, and source data are linked where relevant. Legacy root chart and atlas links resolve to the matching workspace; new shares use that workspace’s URL. The charts, benchmarks, calculator, usage, data, model, and blog pages also have Markdown representations through `Accept: text/markdown`. The dashboard, leaderboard, and usage report pages do not.
 
 ## Measure your coding-agent usage
 

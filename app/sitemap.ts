@@ -110,11 +110,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // The last authored copy change on /, /coding, and /usage: the About section,
   // the configurations table, and the published collector release.
   const pageCopyUpdatedAt = "2026-09-28T00:00:00Z";
+  // /usage alone: the signed Apple silicon download and its status line.
+  const usageCopyUpdatedAt = "2026-10-04T00:00:00Z";
   const homeModifiedAt = [navigationUpdatedAt, pageCopyUpdatedAt, parsedIntelligence.value.source.retrievedAt]
     .sort((left, right) => Date.parse(right) - Date.parse(left))[0]!;
   const codingModifiedAt = [navigationUpdatedAt, pageCopyUpdatedAt, datasetModifiedAt]
     .sort((left, right) => Date.parse(right) - Date.parse(left))[0]!;
-  const usageModifiedAt = [navigationUpdatedAt, pageCopyUpdatedAt]
+  const usageModifiedAt = [navigationUpdatedAt, pageCopyUpdatedAt, usageCopyUpdatedAt]
     .sort((left, right) => Date.parse(right) - Date.parse(left))[0]!;
   const benchmarkPortfolioModifiedAt = [
     navigationUpdatedAt,

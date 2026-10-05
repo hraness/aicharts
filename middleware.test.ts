@@ -28,6 +28,7 @@ describe("markdown content negotiation", () => {
       ["/coding.md", "/api/markdown/coding"],
       ["/benchmarks.md", "/api/markdown/benchmarks"],
       ["/calculator.md", "/api/markdown/calculator"],
+      ["/usage.md", "/api/markdown/usage"],
       ["/blog/terminal-bench-science.md", "/api/markdown/blog/terminal-bench-science"],
       ["/models/openai/gpt-5.6-sol/max.md", "/api/markdown/models/openai/gpt-5.6-sol/max"],
     ] as const) {
@@ -67,6 +68,7 @@ describe("markdown content negotiation", () => {
       "/coding",
       "/benchmarks",
       "/calculator",
+      "/usage",
       "/models",
       "/models/openai/gpt-5.6-sol/max",
       "/blog",
@@ -74,6 +76,31 @@ describe("markdown content negotiation", () => {
     ]) {
       const response = middleware(request(path, { Accept: "text/markdown" }));
       expect(response.headers.get("x-middleware-rewrite")).toContain("/api/markdown");
+    }
+  });
+
+  test("negotiates /usage like the other pages: Markdown, Vary on HTML, 406 otherwise", () => {
+    const markdown = middleware(request("/usage", { Accept: "text/markdown, text/html;q=0.8" }));
+    expect(new URL(markdown.headers.get("x-middleware-rewrite")!).pathname).toBe("/api/markdown/usage");
+    expect(markdown.headers.get(`x-middleware-request-${CANONICAL_MARKDOWN_REQUEST_HEADER}`)).toBe("1");
+    expect(markdown.headers.get("Vary")).toContain("Accept");
+
+    const html = middleware(request("/usage", { Accept: "text/html" }));
+    expect(html.headers.get("x-middleware-rewrite")).toBeNull();
+    expect(html.headers.get("Vary")).toContain("Accept");
+
+    expect(middleware(request("/usage", { Accept: "application/pdf" })).status).toBe(406);
+  });
+
+  test("keeps the dashboard, leaderboard, and usage report pages on HTML only", () => {
+    for (const path of ["/usage/details", "/usage/sessions", "/usage/pairing", "/dashboard", "/leaderboard"]) {
+      for (const accept of ["text/markdown", "application/pdf"]) {
+        const response = middleware(request(path, { Accept: accept }));
+        expect(response.headers.get("x-middleware-rewrite"), path).toBeNull();
+        expect(response.status, path).toBe(200);
+      }
+      // A .md alias of an HTML-only page is not rewritten; Next.js answers 404.
+      expect(middleware(request(`${path}.md`)).headers.get("x-middleware-rewrite"), path).toBeNull();
     }
   });
 

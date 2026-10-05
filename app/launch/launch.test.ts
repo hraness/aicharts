@@ -11,6 +11,7 @@ import {
   renderMatrix,
 } from "@hraness/design-kit/testing";
 
+import { usageDashboard, usageLocalReport, usageSetup } from "@/app/usage/content";
 import codingAgentData from "@/data/coding-agents.json";
 import intelligenceData from "@/data/artificial-analysis-intelligence-v4-3.json";
 import {
@@ -51,7 +52,7 @@ describe("launch facts match their records", () => {
 
   test("the usage source count is the one the README and /usage state", () => {
     expect(read("README.md")).toContain(`the ${LAUNCH_USAGE_SOURCES} sources in the pinned Tokscale parser registry`);
-    expect(read("app/usage/page.tsx")).toContain(`"${LAUNCH_USAGE_SOURCES} sources"`);
+    expect(usageDashboard.metrics.map(metric => metric.title)).toContain(`${LAUNCH_USAGE_SOURCES} sources`);
   });
 
   test("the status is the collector's label on /usage and in the README", () => {
@@ -60,9 +61,8 @@ describe("launch facts match their records", () => {
   });
 
   test("the collector commands are the ones /usage prints", () => {
-    const usage = read("app/usage/page.tsx");
-    expect(usage).toContain(COLLECTOR_ENROLL_COMMAND);
-    expect(usage).toContain(COLLECTOR_REPORT_COMMAND);
+    expect(usageSetup.enroll.command).toBe(COLLECTOR_ENROLL_COMMAND);
+    expect(usageLocalReport.report.command).toBe(COLLECTOR_REPORT_COMMAND);
   });
 
   test("the status mockup copies the CLI golden", () => {
