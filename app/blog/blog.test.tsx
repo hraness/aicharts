@@ -1298,7 +1298,6 @@ describe("aicharts benchmark notes", () => {
       "artificialAnalysisCodingAgents",
       "artificialAnalysisIntelligenceIndex",
     ]);
-    expect(blogEditorialImage(article.slug)?.slug).toBe(article.slug);
     for (const sourceId of article.sourceIds) {
       expect(markup).toContain(`href="${BLOG_SOURCES[sourceId].url}"`);
     }
@@ -1433,6 +1432,8 @@ describe("aicharts benchmark notes", () => {
     expect(markdown).toContain("| Intelligence Index |");
     expect(markdown).toContain("Two charts, two units");
     expect(markdown).toContain("The Index score is a different unit");
+    // Fail-closed until the Slopcamera figure is registered.
+    expect(blogEditorialImage(article.slug)?.slug).toBe(article.slug);
   });
 
   test("states the Claude Code · Sonnet 5.5 placement from the records it is given", () => {

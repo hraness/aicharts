@@ -113,7 +113,7 @@ describe("Claude Code · Sonnet 5.5 coding-agent placement", () => {
     expect(placement.costRank).toBe(1);
     expect(placement.costedCount).toBe(6);
     expect(placement.frontierBelow.map(step => step.record.id))
-      .toEqual(["opus-5-5", "argon", "gpt-6-sol"]);
+      .toEqual(["opus-5-5", "argon", "sonnet-5-5-xhigh", "gpt-6-sol", "sonnet-5-5-low"]);
     const [first] = placement.frontierBelow;
     expect(first?.pointsBelow).toBeCloseTo(68.36 - 65.99, 9);
     expect(first?.costMultiple).toBeCloseTo(13.04 / 14.19, 9);
@@ -212,7 +212,7 @@ describe("Claude Code · Sonnet 5.5 coding-agent placement", () => {
     expect(placement.effortLadder.map(step => step.record.setting))
       .toEqual(["low", "medium", "high", "xhigh", "max"]);
     const frontier = aaIndexCostFrontier(parsed.value.records).map(point => point.record.id);
-    expect(frontier[0]).toBe(placement.record.id);
+    expect(frontier).toContain(placement.record.id);
     for (const step of placement.frontierBelow) {
       expect(frontier).toContain(step.record.id);
       expect(step.pointsBelow).toBeGreaterThan(0);

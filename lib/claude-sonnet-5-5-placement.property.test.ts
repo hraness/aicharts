@@ -189,13 +189,17 @@ test("the effort ladder is the costed Claude Code · Sonnet 5.5 rows cheapest fi
 
 test("same-harness Opus is the Claude Code · Opus 5.5 row at the placed setting, when the snapshot stores one", () => {
   assertProperty(fc.property(codingChartArb, fc.boolean(), ({ others, siblings, sonnet }, includeOpus) => {
+    const placedSetting = [sonnet, ...siblings].toSorted((left, right) => (
+      (right.benchmarks.aaIndex ?? Number.NEGATIVE_INFINITY) - (left.benchmarks.aaIndex ?? Number.NEGATIVE_INFINITY)
+      || left.id.localeCompare(right.id)
+    ))[0]?.setting ?? sonnet.setting;
     const opus = includeOpus
       ? codingAgentRecord({
           ...CLAUDE_OPUS_55_CODING_CONFIGURATION,
           aaIndex: 60,
           costUsd: 10,
           id: "opus-same-setting",
-          setting: sonnet.setting,
+          setting: placedSetting,
         })
       : undefined;
     const records = [...others, ...siblings, sonnet, ...(opus === undefined ? [] : [opus])];

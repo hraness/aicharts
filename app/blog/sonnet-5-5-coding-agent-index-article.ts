@@ -28,6 +28,7 @@ import { modelAddedAt, spellOrdinal } from "@/lib/snapshot-placement";
 import {
   BLOG_SOURCE_NOTE,
   BLOG_SOURCES,
+  blogArticlePath,
   callout,
   heading,
   list,
@@ -318,6 +319,9 @@ function sameHarnessBlocks(
       timeMultiple === null
         ? "."
         : `, and ${formatCostMultiple(timeMultiple)} the mean time per task.`,
+      " The ",
+      { href: blogArticlePath("opus-5-5-coding-agent-index"), text: "Claude Code · Opus 5.5 note" },
+      " places that row and compares it with Claude Code · Opus 5.",
     ),
     table(
       `${ROW_LABEL} and ${OPUS_LABEL} at the ${record.setting} setting in the snapshot retrieved ${retrievedAt}`,
