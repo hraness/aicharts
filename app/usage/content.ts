@@ -113,7 +113,7 @@ export const usageLocalReport = {
       { href: "https://xcb.sh", text: "xcb" },
       " or ",
       { href: "https://gobstopper.sh", text: "Gobstopper" },
-      " adds aicharts and turns on its daily history on your computer, so ",
+      " adds aicharts and turns on its daily history and daily update check on your computer, so ",
       { code: "aicharts history report" },
       " and ",
       { code: "aicharts mcp" },
