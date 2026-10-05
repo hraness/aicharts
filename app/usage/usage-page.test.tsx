@@ -3,7 +3,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import UsagePage from "./page";
-import { usageInstallPlatforms, usageLinuxInstallCommand, usageMacInstallCommand, usageMacSourceCommand } from "./install";
+import { usageInstallPlatforms, usageInstallScriptCommand, usageLinuxInstallCommand, usageMacInstallCommand, usageMacSourceCommand } from "./install";
 import { usageCliRelease, usageReleaseTag, usageReleaseUrl } from "@/lib/usage-cli-release";
 
 describe("usage page", () => {
@@ -23,7 +23,9 @@ describe("usage page", () => {
     expect(markup).toContain('data-hraness-platform-badges=""');
     expect(usageInstallPlatforms[2]).toMatchObject({ unavailable: true });
     expect(usageInstallPlatforms[2]).not.toHaveProperty("command");
-    expect(usageInstallPlatforms[0]).toMatchObject({ command: usageMacInstallCommand });
+    expect(usageInstallPlatforms[0]).toMatchObject({ command: usageInstallScriptCommand });
+    expect(usageInstallPlatforms[1]).toMatchObject({ command: usageInstallScriptCommand });
+    expect(usageInstallScriptCommand).toBe("curl -fsSL https://aicharts.io/install.sh | sh");
     expect(usageInstallPlatforms[0]).not.toHaveProperty("unavailable");
     expect(usageMacInstallCommand).toContain(`gh release download ${usageReleaseTag} --repo hraness/aicharts --pattern 'aicharts-${usageCliRelease.version}-aarch64-apple-darwin.tar.gz*'`);
     expect(usageMacInstallCommand).toContain(`shasum -a 256 -c aicharts-${usageCliRelease.version}-aarch64-apple-darwin.tar.gz.sha256`);
