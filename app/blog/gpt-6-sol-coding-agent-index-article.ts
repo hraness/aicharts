@@ -1,5 +1,5 @@
-import intelligenceData from "@/data/artificial-analysis-intelligence-v4-3.json";
-import codingAgentData from "@/data/coding-agents.json";
+import citedIntelligenceData from "./cited/gpt-6-sol-intelligence-v4-3.json";
+import citedCodingAgentData from "./cited/gpt-6-sol-coding-agents.json";
 import type { ArtificialAnalysisIntelligenceRecord } from "@/lib/artificial-analysis-intelligence-data";
 import {
   parseArtificialAnalysisIntelligenceV43Snapshot,
@@ -97,20 +97,25 @@ const CODING_CHART_LABEL = "Codex · GPT-6 Sol (max)" as const;
 const INDEX_ROW_LABEL = "GPT-6 Sol (max)" as const;
 const MAX_TITLE_LENGTH = 64;
 
-function checkedCodingSnapshot(): CodingAgentSnapshot {
-  const parsed = parseCodingAgentSnapshot(codingAgentData);
+/**
+ * Published figures stay on the dated snapshots this note cites (coding agents
+ * 2026-09-25, Intelligence Index 2026-09-23). Later refreshes must not rewrite
+ * those ranks when AA drops GPT-6 Sol from the current cohort.
+ */
+function citedCodingSnapshot(): CodingAgentSnapshot {
+  const parsed = parseCodingAgentSnapshot(citedCodingAgentData);
   if (!parsed.ok) {
-    throw new Error(`Checked coding-agent snapshot is invalid: ${parsed.error.message}`, {
+    throw new Error(`Cited GPT-6 Sol coding-agent snapshot is invalid: ${parsed.error.message}`, {
       cause: parsed.error,
     });
   }
   return parsed.value;
 }
 
-function checkedIntelligenceSnapshot(): ArtificialAnalysisIntelligenceV43Snapshot {
-  const parsed = parseArtificialAnalysisIntelligenceV43Snapshot(intelligenceData);
+function citedIntelligenceSnapshot(): ArtificialAnalysisIntelligenceV43Snapshot {
+  const parsed = parseArtificialAnalysisIntelligenceV43Snapshot(citedIntelligenceData);
   if (!parsed.ok) {
-    throw new Error(`Checked Intelligence Index snapshot is invalid: ${parsed.error.message}`, {
+    throw new Error(`Cited GPT-6 Sol Intelligence Index snapshot is invalid: ${parsed.error.message}`, {
       cause: parsed.error,
     });
   }
@@ -609,8 +614,8 @@ function derivedTitle(codingScore: string | undefined, codingCost: string | unde
 }
 
 export function createGpt6SolArticle(
-  codingSnapshot: CodingAgentSnapshot = checkedCodingSnapshot(),
-  intelligenceSnapshot: ArtificialAnalysisIntelligenceV43Snapshot = checkedIntelligenceSnapshot(),
+  codingSnapshot: CodingAgentSnapshot = citedCodingSnapshot(),
+  intelligenceSnapshot: ArtificialAnalysisIntelligenceV43Snapshot = citedIntelligenceSnapshot(),
 ): BlogArticle {
   const codingRetrievedAt = formatRetrievedAt(codingSnapshot.source.retrievedAt);
   const intelligenceRetrievedAt = formatRetrievedAt(intelligenceSnapshot.source.retrievedAt);

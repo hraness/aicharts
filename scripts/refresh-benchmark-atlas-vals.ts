@@ -5,6 +5,7 @@ import path from "node:path";
 import {
   VALS_ADMITTED_BENCHMARKS,
   VALS_DATASET_TYPE,
+  VALS_SOURCE_ORIGIN,
   valsBenchmarkUrl,
   valsSnapshotSchema,
   type ValsAdmittedBenchmark,
@@ -17,12 +18,14 @@ const OUTPUT = path.join(import.meta.dir, "..", "data", "benchmark-atlas-vals.js
 const MAX_BYTES = 12_000_000;
 
 /**
- * Vals benchmark pages are server-rendered Astro. Each page inlines its complete board in
- * the `props` attribute of the island whose `component-url` names `BenchmarkView`, using
- * Astro's `[typeTag, value]` client serialization. Reading that attribute is the whole
- * import; there is no second request and no derived value.
+ * Vals benchmark pages are server-rendered Astro. Older pages inlined the complete
+ * board on the island whose `component-url` named `BenchmarkView`. Current pages
+ * hydrate that board from a same-origin `/_astro/benchmark_view_*.json` URL on
+ * `BenchmarkViewLoader`. Chart islands may carry a partial `benchmarkView` copy
+ * (overall scores only), so they are never treated as the board.
  */
-const ISLAND = /<astro-island\b[^>]*?component-url="([^"]*)"[^>]*?props="([^"]*)"/gu;
+const ISLAND_TAG = /<astro-island\b([^>]*)>/gu;
+const LOADER_BOARD_PATH = /^\/_astro\/benchmark_view_[A-Za-z0-9._-]+\.json$/u;
 
 const HTML_ENTITIES: Readonly<Record<string, string>> = {
   "&amp;": "&", "&lt;": "<", "&gt;": ">", "&quot;": "\"", "&#34;": "\"", "&apos;": "'", "&#39;": "'",
@@ -47,16 +50,81 @@ export function unwrapAstroProps(value: unknown): unknown {
   return value;
 }
 
-export function extractBenchmarkViewProps(html: string): unknown {
-  const matches = [...html.matchAll(ISLAND)].filter(match => /\bBenchmarkView\b/u.test(decodeAttribute(match[1])));
-  if (matches.length !== 1) throw new Error(`Expected exactly one BenchmarkView island; found ${matches.length}.`);
-  let parsed: unknown;
+function islandAttribute(attributes: string, name: string): string | undefined {
+  const match = attributes.match(new RegExp(`\\b${name}="([^"]*)"`, "u"));
+  return match?.[1] === undefined ? undefined : decodeAttribute(match[1]);
+}
+
+export type ValsBoardSource =
+  | Readonly<{ kind: "inline"; view: unknown }>
+  | Readonly<{ kind: "loader"; path: string }>;
+
+function parseIslandProps(raw: string, label: string): unknown {
   try {
-    parsed = JSON.parse(decodeAttribute(matches[0][2]));
+    return unwrapAstroProps(JSON.parse(raw));
   } catch (cause) {
-    throw new Error("BenchmarkView island props are not JSON.", { cause });
+    throw new Error(`${label} props are not JSON.`, { cause });
   }
-  return unwrapAstroProps(parsed);
+}
+
+/** Locates the complete board: one BenchmarkView island, or one loader JSON path. */
+export function locateValsBoardSource(html: string): ValsBoardSource {
+  const islands = [...html.matchAll(ISLAND_TAG)].map(match => ({
+    componentUrl: islandAttribute(match[1] ?? "", "component-url") ?? "",
+    props: islandAttribute(match[1] ?? "", "props"),
+  }));
+  const inline = islands.filter(island => (
+    /\bBenchmarkView\b/u.test(island.componentUrl)
+    && !/BenchmarkViewLoader/u.test(island.componentUrl)
+  ));
+  if (inline.length > 1) {
+    throw new Error(`Expected exactly one BenchmarkView island; found ${inline.length}.`);
+  }
+  if (inline.length === 1) {
+    const props = inline[0]?.props;
+    if (props === undefined) throw new Error("BenchmarkView island is missing props.");
+    return { kind: "inline", view: parseIslandProps(props, "BenchmarkView island") };
+  }
+
+  const loaders = islands.flatMap(island => {
+    if (!/BenchmarkViewLoader/u.test(island.componentUrl) || island.props === undefined) return [];
+    const parsed = parseIslandProps(island.props, "BenchmarkViewLoader island");
+    const path = typeof parsed === "object" && parsed !== null && "benchmarkViewUrl" in parsed
+      ? parsed.benchmarkViewUrl
+      : undefined;
+    return typeof path === "string" ? [{ path }] : [];
+  });
+  if (loaders.length !== 1 || loaders[0] === undefined) {
+    throw new Error(`Expected exactly one BenchmarkView island; found 0.`);
+  }
+  if (!LOADER_BOARD_PATH.test(loaders[0].path)) {
+    throw new Error(`BenchmarkViewLoader URL is not a same-origin board payload: ${loaders[0].path}.`);
+  }
+  return { kind: "loader", path: loaders[0].path };
+}
+
+export function extractBenchmarkViewProps(html: string): unknown {
+  const source = locateValsBoardSource(html);
+  if (source.kind !== "inline") {
+    throw new Error(`Expected exactly one BenchmarkView island; found 0.`);
+  }
+  return source.view;
+}
+
+function parseBoardPayload(text: string, label: string): unknown {
+  try {
+    return JSON.parse(text) as unknown;
+  } catch (cause) {
+    throw new Error(`${label} is not JSON.`, { cause });
+  }
+}
+
+function asBenchmarkView(value: unknown): unknown {
+  if (typeof value === "object" && value !== null && "benchmarkView" in value) return value;
+  if (typeof value === "object" && value !== null && "metadata" in value && "tasks" in value) {
+    return { benchmarkView: value };
+  }
+  throw new Error("Vals board payload is not a benchmark view.");
 }
 
 const tokenTotalsSchema = z.object({
@@ -126,8 +194,9 @@ export function extractBenchmark(
   html: string,
   admitted: ValsAdmittedBenchmark,
   source: ValsBenchmarkSnapshot["source"],
+  board: unknown = extractBenchmarkViewProps(html),
 ): ValsBenchmarkSnapshot {
-  const view = propsSchema.parse(extractBenchmarkViewProps(html)).benchmarkView.default;
+  const view = propsSchema.parse(asBenchmarkView(board)).benchmarkView.default;
   const { metadata, tasks } = view;
   if (metadata.slug !== admitted.slug) throw new Error(`Page ${admitted.slug} now identifies as ${metadata.slug}.`);
   if (metadata.archived) throw new Error(`Vals archived ${admitted.slug}; withdraw it rather than refreshing it.`);
@@ -180,6 +249,24 @@ export function extractBenchmark(
   };
 }
 
+/** Same-revision rows must persist; a family+version admission is a new cohort. */
+export function assertValsRefreshGuards(previous: ValsSnapshot, next: ValsSnapshot): void {
+  for (const before of previous.benchmarks) {
+    const after = next.benchmarks.find(benchmark => benchmark.slug === before.slug);
+    if (after === undefined) throw new Error(`Refusing to drop admitted board ${before.slug}.`);
+    const sameRevision = before.family === after.family && before.version === after.version;
+    if (sameRevision) {
+      const missing = before.rows.filter(row => !after.rows.some(candidate => candidate.id === row.id));
+      if (missing.length > 0) {
+        throw new Error(`Refusing disappearing ${before.slug} observations: ${missing.map(row => row.id).join(", ")}.`);
+      }
+    }
+    if (before.source.observedAt && after.source.observedAt && after.source.observedAt < before.source.observedAt) {
+      throw new Error(`Refusing ${before.slug} publication-date regression.`);
+    }
+  }
+}
+
 async function fetchText(url: string): Promise<string> {
   const response = await fetch(url, {
     redirect: "error",
@@ -219,27 +306,26 @@ export async function main(args: readonly string[]): Promise<void> {
   for (const admitted of VALS_ADMITTED_BENCHMARKS) {
     const url = valsBenchmarkUrl(admitted.slug);
     const html = await fetchText(url);
+    const located = locateValsBoardSource(html);
+    const payload = located.kind === "inline"
+      ? html
+      : await fetchText(new URL(located.path, VALS_SOURCE_ORIGIN).href);
+    const board = located.kind === "inline"
+      ? located.view
+      : parseBoardPayload(payload, `Vals ${admitted.slug} board`);
     benchmarks.push(extractBenchmark(html, admitted, {
       url,
       retrievedAt,
-      sha256: createHash("sha256").update(html).digest("hex"),
+      sha256: createHash("sha256").update(payload).digest("hex"),
       observedAt: null,
       revision: `${admitted.family} v${admitted.version}`,
-    }));
+    }, board));
   }
   const next = valsSnapshotSchema.parse({ schemaVersion: 1, benchmarks });
 
   if (await Bun.file(OUTPUT).exists()) {
     const previous = valsSnapshotSchema.parse(await Bun.file(OUTPUT).json());
-    for (const before of previous.benchmarks) {
-      const after = next.benchmarks.find(benchmark => benchmark.slug === before.slug);
-      if (after === undefined) throw new Error(`Refusing to drop admitted board ${before.slug}.`);
-      const missing = before.rows.filter(row => !after.rows.some(candidate => candidate.id === row.id));
-      if (missing.length > 0) throw new Error(`Refusing disappearing ${before.slug} observations: ${missing.map(row => row.id).join(", ")}.`);
-      if (before.source.observedAt && after.source.observedAt && after.source.observedAt < before.source.observedAt) {
-        throw new Error(`Refusing ${before.slug} publication-date regression.`);
-      }
-    }
+    assertValsRefreshGuards(previous, next);
     // A successful unchanged read is not a new observation and must not churn the snapshot.
     const rowsOf = (snapshot: ValsSnapshot) => JSON.stringify(snapshot.benchmarks.map(benchmark => [benchmark.slug, benchmark.rows]));
     if (rowsOf(next) === rowsOf(previous)) { console.log("Vals atlas unchanged."); return; }

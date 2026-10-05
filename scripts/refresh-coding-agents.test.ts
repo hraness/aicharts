@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { assertProperty, fc } from "../lib/property-test";
 import {
+  codingAgentCreatorName,
   deriveSnapshotUpdates,
   extractSourceRows,
   mergeSnapshotUpdates,
@@ -97,6 +98,46 @@ describe("Artificial Analysis Flight extraction", () => {
     expect(normalizeSourceRows(extracted.value, "2026-09-17T00:00:00.000Z").records[0]?.providerName).toBe("Cognition");
 
     rows[0] = { ...rows[0]!, provider: "unknown" };
+    expect(extractSourceRows(flightScript(`0:{"benchmarkRows":${JSON.stringify(rows)}}`)).ok).toBeFalse();
+  });
+
+  test("derives the model creator from modelCreators when display.creator is omitted", () => {
+    const rows = Array.from({ length: 10 }, (_, index) => sourceRow(index));
+    const display = { agent: rows[0]!.display.agent, model: rows[0]!.display.model };
+    rows[0] = {
+      ...rows[0]!,
+      display,
+      modelCreators: [{ slug: "xai", name: "SpaceXAI" }],
+    } as typeof rows[number];
+    const extracted = extractSourceRows(flightScript(`0:{"benchmarkRows":${JSON.stringify(rows)}}`));
+    expect(extracted.ok).toBeTrue();
+    if (!extracted.ok) return;
+    expect(normalizeSourceRows(extracted.value, "2026-10-05T00:00:00.000Z").records[0]?.providerName).toBe("xAI");
+    expect(codingAgentCreatorName({
+      display,
+      modelCreators: [{ slug: "kimi", name: "Kimi" }],
+      provider: "moonshotai",
+    })).toBe("Moonshot AI");
+    expect(codingAgentCreatorName({
+      display,
+      modelCreators: [{ slug: "alibaba", name: "Alibaba" }],
+      provider: "alibaba_cloud",
+    })).toBe("Alibaba Cloud");
+    expect(codingAgentCreatorName({
+      display,
+      modelCreators: [
+        { slug: "openai", name: "OpenAI" },
+        { slug: "cognition", name: "Cognition" },
+      ],
+      provider: "cognition",
+    })).toBe("Cognition");
+    expect(codingAgentCreatorName({
+      display,
+      modelCreators: [{ slug: "unknown-lab", name: "Unknown Lab" }],
+      provider: "unknown-lab",
+    })).toBeUndefined();
+
+    rows[0] = { ...rows[0]!, modelCreators: [{ slug: "unknown-lab", name: "Unknown Lab" }] };
     expect(extractSourceRows(flightScript(`0:{"benchmarkRows":${JSON.stringify(rows)}}`)).ok).toBeFalse();
   });
 

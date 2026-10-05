@@ -32,6 +32,29 @@ const guardedMetrics = [
 ] as const;
 
 const sourceMetricSchema = z.number().finite().nonnegative().nullable().optional();
+const sourceCreatorSchema = z.object({
+  slug: z.string().min(1),
+  name: z.string().min(1),
+});
+
+/**
+ * AA used to nest the model creator under `display.creator.model`. It now
+ * publishes `modelCreators` (and sometimes omits both on Cognition composites).
+ * Display names stay the ones already used for provider IDs; unknown slugs fail.
+ */
+const MODEL_CREATOR_DISPLAY_NAMES = {
+  alibaba: "Alibaba Cloud",
+  anthropic: "Anthropic",
+  cognition: "Cognition",
+  deepseek: "DeepSeek",
+  google: "Google",
+  kimi: "Moonshot AI",
+  meta: "Meta",
+  openai: "OpenAI",
+  xai: "xAI",
+  zai: "Z.ai",
+} as const satisfies Record<string, string>;
+
 const sourceRowSchema = z.object({
   id: z.string().min(1),
   agentName: z.string().min(1),
@@ -46,6 +69,8 @@ const sourceRowSchema = z.object({
     }).optional(),
   }),
   displayLabel: z.string().min(1),
+  agentCreator: sourceCreatorSchema.optional(),
+  modelCreators: z.array(sourceCreatorSchema).optional(),
   indexComponentCount: z.number().int().nonnegative(),
   evalCount: z.number().int().nonnegative(),
   indexScore: sourceMetricSchema,
@@ -59,7 +84,7 @@ const sourceRowSchema = z.object({
     totalTokens: sourceMetricSchema,
   }),
 }).superRefine((row, context) => {
-  if (row.display.creator === undefined && row.provider !== "cognition") {
+  if (codingAgentCreatorName(row) === undefined) {
     context.addIssue({
       code: "custom",
       message: "Only Cognition-owned composite systems may omit a model creator.",
@@ -69,6 +94,30 @@ const sourceRowSchema = z.object({
 });
 
 type SourceRow = z.infer<typeof sourceRowSchema>;
+
+/** Resolves the model-creator display name used as `providerName`. */
+export function codingAgentCreatorName(
+  row: Pick<SourceRow, "display" | "modelCreators" | "provider">,
+): string | undefined {
+  const legacy = row.display.creator?.model;
+  if (legacy !== undefined && legacy !== "") return legacy;
+
+  const creators = row.modelCreators ?? [];
+  if (row.provider === "cognition") {
+    if (creators.length === 0) return "Cognition";
+    if (creators.some(creator => creator.slug === "cognition") && creators.length > 1) {
+      return "Cognition";
+    }
+    if (creators.length === 1 && creators[0]?.slug === "cognition") return "Cognition";
+  }
+
+  if (creators.length !== 1) return undefined;
+  const slug = creators[0]?.slug;
+  if (slug === undefined) return undefined;
+  return Object.hasOwn(MODEL_CREATOR_DISPLAY_NAMES, slug)
+    ? MODEL_CREATOR_DISPLAY_NAMES[slug as keyof typeof MODEL_CREATOR_DISPLAY_NAMES]
+    : undefined;
+}
 
 const effortRank: Record<string, number> = {
   default: 0,
@@ -239,7 +288,10 @@ function extractSetting(modelLabel: string): { model: string; setting: string; s
 export function normalizeSourceRows(rows: readonly SourceRow[], retrievedAt: string): CodingAgentSnapshot {
   const records: CodingAgentRecord[] = rows.map((row) => {
     const setting = extractSetting(row.display.model);
-    const providerName = row.display.creator?.model ?? "Cognition";
+    const providerName = codingAgentCreatorName(row);
+    if (providerName === undefined) {
+      throw new Error(`Source row ${row.id} has no derivable model creator.`);
+    }
     return {
       id: row.id,
       agent: row.display.agent,

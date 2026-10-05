@@ -6,7 +6,7 @@ import ModelCardsPage from "@/app/models/page";
 import { modelCardsHeading, modelCardsLede } from "@/app/site";
 import { ModelCardFace } from "@/components/model-card-face";
 import { ModelCardRasterFace } from "@/components/model-card-image";
-import { INDEX_MODEL_PAGES } from "@/lib/index-model-pages";
+import { INDEX_MODEL_PAGES, intelligenceObservationForCard } from "@/lib/index-model-pages";
 import {
   MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH,
   MODEL_CARD_COLLECTION_SOCIAL_IMAGE_URL,
@@ -406,7 +406,9 @@ describe("public model cards", () => {
     const detailMarkup = renderToStaticMarkup(await ModelCardPage({
       params: Promise.resolve(params),
     }));
-    expect(detailMarkup).toContain("Intelligence Index");
+    if (intelligenceObservationForCard(card) !== undefined) {
+      expect(detailMarkup).toContain("Intelligence Index");
+    }
     expect(detailMarkup).toContain("Coding-agent observations");
     expect(detailMarkup).toContain(agentName);
     expect(markdownForPath(card.path).found).toBe(true);

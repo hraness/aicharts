@@ -9,10 +9,12 @@ import {
   valsSnapshotSchema,
 } from "../lib/benchmark-atlas-vals-data";
 import {
+  assertValsRefreshGuards,
   componentTaskIds,
   decodeAttribute,
   extractBenchmark,
   extractBenchmarkViewProps,
+  locateValsBoardSource,
   unwrapAstroProps,
 } from "./refresh-benchmark-atlas-vals";
 
@@ -61,10 +63,20 @@ function view(overrides: { metadata?: Record<string, unknown>; tasks?: Record<st
   };
 }
 
-function page(value: unknown = view(), componentUrl = "/_astro/BenchmarkView.BJcgr7Je.js"): string {
-  const props = JSON.stringify(astro({ benchmarkView: { default: value } }))
+function encodeProps(value: unknown): string {
+  return JSON.stringify(astro(value))
     .replaceAll("&", "&amp;").replaceAll("\"", "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
-  return `<html><body><astro-island component-url="${componentUrl}" props="${props}"></astro-island></body></html>`;
+}
+
+function page(value: unknown = view(), componentUrl = "/_astro/BenchmarkView.BJcgr7Je.js"): string {
+  return `<html><body><astro-island component-url="${componentUrl}" props="${encodeProps({ benchmarkView: { default: value } })}"></astro-island></body></html>`;
+}
+
+function loaderPage(
+  boardPath = "/_astro/benchmark_view_vals_index.BJcgr7Je.json",
+  extraIslands = "",
+): string {
+  return `<html><body><astro-island component-url="/_astro/BenchmarkViewLoader.BJcgr7Je.js" props="${encodeProps({ benchmarkViewUrl: boardPath })}"></astro-island>${extraIslands}</body></html>`;
 }
 
 describe("Astro island decoding", () => {
@@ -88,6 +100,46 @@ describe("Astro island decoding", () => {
     expect(() => extractBenchmarkViewProps("<html></html>")).toThrow("found 0");
     expect(() => extractBenchmarkViewProps(page() + page())).toThrow("found 2");
     expect(() => extractBenchmarkViewProps(page(view(), "/_astro/ScatterGraph.js"))).toThrow("found 0");
+  });
+
+  test("reads a BenchmarkView island regardless of attribute order", () => {
+    const props = encodeProps({ benchmarkView: { default: view() } });
+    const html = `<html><body><astro-island props="${props}" component-url="/_astro/BenchmarkView.BJcgr7Je.js"></astro-island></body></html>`;
+    expect(locateValsBoardSource(html).kind).toBe("inline");
+    expect(extractBenchmark(html, ADMITTED, SOURCE).rows).toHaveLength(2);
+  });
+
+  test("locates a unique same-origin BenchmarkViewLoader board and refuses an inline extract from it", () => {
+    const html = loaderPage();
+    expect(locateValsBoardSource(html)).toEqual({
+      kind: "loader",
+      path: "/_astro/benchmark_view_vals_index.BJcgr7Je.json",
+    });
+    expect(() => extractBenchmarkViewProps(html)).toThrow("found 0");
+    expect(extractBenchmark(html, ADMITTED, SOURCE, view()).rows.map(row => row.id))
+      .toEqual(["anthropic-claude-opus-5", "openai-gpt-6-astra"]);
+  });
+
+  test("hydrates a loader JSON payload that is the view itself rather than a wrapper", () => {
+    expect(extractBenchmark(loaderPage(), ADMITTED, SOURCE, view()).rows).toHaveLength(2);
+  });
+
+  test("refuses a loader path that is not a same-origin board payload", () => {
+    expect(() => locateValsBoardSource(loaderPage("https://evil.example/benchmark_view_vals_index.json")))
+      .toThrow("same-origin board payload");
+    expect(() => locateValsBoardSource(loaderPage("/static/benchmark_view_vals_index.json")))
+      .toThrow("same-origin board payload");
+    expect(() => locateValsBoardSource(loaderPage() + loaderPage("/_astro/benchmark_view_fabv2.abc.json")))
+      .toThrow("found 0");
+  });
+
+  test("never treats a ScatterGraph island as the complete board", () => {
+    const scatter = page(view(), "/_astro/ScatterGraph.abc.js");
+    expect(() => locateValsBoardSource(scatter)).toThrow("found 0");
+    expect(locateValsBoardSource(loaderPage("/_astro/benchmark_view_vals_index.abc.json", scatter))).toEqual({
+      kind: "loader",
+      path: "/_astro/benchmark_view_vals_index.abc.json",
+    });
   });
 
   test("reports unparsable island props instead of returning a partial value", () => {
@@ -149,6 +201,24 @@ describe("Vals source contract", () => {
   test("a missing overall column fails instead of charting a component as the headline", () => {
     expect(() => extractBenchmark(page({ ...view(), tasks: { finance_agent: {} } }), ADMITTED, SOURCE))
       .toThrow("no longer publishes an overall score");
+  });
+
+  test("same-revision disappearing rows fail, and a version admission may change the cohort", () => {
+    const current = extractBenchmark(page(), ADMITTED, SOURCE);
+    const previous = { schemaVersion: 1 as const, benchmarks: [current] };
+    const dropped = {
+      ...current,
+      rows: current.rows.slice(0, 1),
+      totalModels: 1,
+    };
+    expect(() => assertValsRefreshGuards(previous, { schemaVersion: 1, benchmarks: [dropped] }))
+      .toThrow("Refusing disappearing");
+    expect(() => assertValsRefreshGuards(
+      previous,
+      { schemaVersion: 1, benchmarks: [{ ...dropped, version: `${current.version}.1` }] },
+    )).not.toThrow();
+    expect(() => assertValsRefreshGuards(previous, { schemaVersion: 1, benchmarks: [] }))
+      .toThrow("Refusing to drop admitted board");
   });
 });
 

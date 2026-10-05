@@ -109,8 +109,13 @@ describe("GPT-6 Sol coding-agent placement", () => {
     const parsed = parseCodingAgentSnapshot(codingAgentData);
     if (!parsed.ok) throw parsed.error;
     const placement = solCodingAgentPlacement(parsed.value.records);
-    expect(placement).toBeDefined();
-    if (placement === undefined) return;
+    if (placement === undefined) {
+      expect(parsed.value.records.some(record => (
+        record.agent === GPT_6_SOL_CODING_CONFIGURATION.agent
+        && record.model === GPT_6_SOL_CODING_CONFIGURATION.model
+      ))).toBeFalse();
+      return;
+    }
     expect(placement.record.setting).toBe("max");
     expect(placement.onCostFrontier)
       .toBe(aaIndexCostFrontier(parsed.value.records).some(point => point.record.id === placement.record.id));
@@ -222,8 +227,10 @@ describe("GPT-6 Sol Intelligence Index placement", () => {
     const parsed = parseArtificialAnalysisIntelligenceV43Snapshot(intelligenceData);
     if (!parsed.ok) throw parsed.error;
     const placement = solIntelligencePlacement(parsed.value.records);
-    expect(placement).toBeDefined();
-    if (placement === undefined) return;
+    if (placement === undefined) {
+      expect(parsed.value.records.some(record => record.release.slug === GPT_6_SOL_INTELLIGENCE_SLUG)).toBeFalse();
+      return;
+    }
     const cohort = comparableIntelligenceRecords(parsed.value.records);
     expect(placement.cohortSize).toBe(cohort.length);
     expect(placement.onCostFrontier)

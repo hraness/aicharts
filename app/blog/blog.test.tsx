@@ -9,6 +9,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 import intelligenceData from "@/data/artificial-analysis-intelligence-v4-3.json";
 import codingAgentData from "@/data/coding-agents.json";
+import citedGpt6SolIntelligenceData from "./cited/gpt-6-sol-intelligence-v4-3.json";
+import citedGpt6SolCodingAgentData from "./cited/gpt-6-sol-coding-agents.json";
 import editorialImageManifest from "@/editorial/images.manifest.json";
 import { parseArtificialAnalysisIntelligenceV43Snapshot } from "@/lib/artificial-analysis-intelligence-v4-3-data";
 import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
@@ -1479,9 +1481,9 @@ describe("aicharts benchmark notes", () => {
   });
 
   test("places GPT-6 Sol on both checked charts from the same rows the charts plot", () => {
-    const codingParsed = parseCodingAgentSnapshot(codingAgentData);
+    const codingParsed = parseCodingAgentSnapshot(citedGpt6SolCodingAgentData);
     if (!codingParsed.ok) throw codingParsed.error;
-    const intelligenceParsed = parseArtificialAnalysisIntelligenceV43Snapshot(intelligenceData);
+    const intelligenceParsed = parseArtificialAnalysisIntelligenceV43Snapshot(citedGpt6SolIntelligenceData);
     if (!intelligenceParsed.ok) throw intelligenceParsed.error;
     const article = getBlogArticle("gpt-6-sol-coding-agent-index");
     expect(article).toBeDefined();
@@ -1616,9 +1618,9 @@ describe("aicharts benchmark notes", () => {
   });
 
   test("states the GPT-6 Sol placement from the records it is given", () => {
-    const codingParsed = parseCodingAgentSnapshot(codingAgentData);
+    const codingParsed = parseCodingAgentSnapshot(citedGpt6SolCodingAgentData);
     if (!codingParsed.ok) throw codingParsed.error;
-    const intelligenceParsed = parseArtificialAnalysisIntelligenceV43Snapshot(intelligenceData);
+    const intelligenceParsed = parseArtificialAnalysisIntelligenceV43Snapshot(citedGpt6SolIntelligenceData);
     if (!intelligenceParsed.ok) throw intelligenceParsed.error;
     const codingSnapshot = codingParsed.value;
     const intelligenceSnapshot = intelligenceParsed.value;
