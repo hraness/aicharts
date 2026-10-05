@@ -48,6 +48,7 @@ describe("public search discovery", () => {
     if (!intelligence.ok) throw intelligence.error;
     const navigationUpdatedAt = "2026-09-09T02:50:00Z";
     const pageCopyUpdatedAt = "2026-09-28T00:00:00Z";
+    const usageCopyUpdatedAt = "2026-10-04T00:00:00Z";
     const homeModifiedAt = [navigationUpdatedAt, pageCopyUpdatedAt, intelligence.value.source.retrievedAt]
       .sort((left, right) => Date.parse(right) - Date.parse(left))[0];
     const codingModifiedAt = [navigationUpdatedAt, pageCopyUpdatedAt, datasetModifiedAt]
@@ -88,7 +89,7 @@ describe("public search discovery", () => {
     expect(entries.find(entry => entry.url === "https://aicharts.io/calculator")?.lastModified)
       .toBe(calculatorInputsModifiedAt(calculatorInputs.value));
     expect(entries.find(entry => entry.url === "https://aicharts.io/usage")?.lastModified)
-      .toBe(pageCopyUpdatedAt);
+      .toBe(usageCopyUpdatedAt);
     expect(urls).not.toContain("https://aicharts.io/leaderboard");
     expect(urls.every(url => !url.includes("?") && !url.includes("#"))).toBeTrue();
     expect(entries.find(entry => entry.url.endsWith(CODING_AGENT_DATASET_PATH))?.lastModified)
