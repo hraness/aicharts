@@ -14,6 +14,7 @@ use std::process::Command;
 
 use super::release::Version;
 
+#[cfg(target_os = "macos")]
 const MACOS_REQUIREMENT: &str = "anchor apple generic and identifier \"dev.hraness.aicharts\" and certificate 1[field.1.2.840.113635.100.6.2.6] exists and certificate leaf[field.1.2.840.113635.100.6.1.13] exists and certificate leaf[subject.OU] = \"8AAP53VTW3\"";
 
 struct Scratch(PathBuf);
