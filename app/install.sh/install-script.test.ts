@@ -14,7 +14,8 @@ const source = join(process.cwd(), "scripts/install.sh");
 const version = usageCliRelease.version;
 const root = `aicharts-${version}-x86_64-unknown-linux-gnu`;
 
-// A stand-in aicharts: reports the pinned version and records history calls.
+// A stand-in aicharts: reports the pinned version and records history and
+// update calls.
 const fake = `#!/bin/sh
 case "$*" in
   --version) echo "aicharts ${version} (fc8efdbe34e5)" ;;
@@ -22,6 +23,10 @@ case "$*" in
     if [ -f "$HOME/on" ]; then echo '{"data":{"collecting":"every 6 hours"},"ok":true}'
     else echo '{"data":{"collecting":"off"},"ok":true}'; fi ;;
   "history enable") touch "$HOME/on"; echo enable >> "$HOME/calls" ;;
+  "update status --json")
+    if [ -f "$HOME/updates-on" ]; then echo '{"scheduler":"on"}'
+    else echo '{"scheduler":"off"}'; fi ;;
+  "update enable") touch "$HOME/updates-on"; echo update-enable >> "$HOME/calls" ;;
 esac
 `;
 
@@ -96,18 +101,29 @@ describe("aicharts.io/install.sh", () => {
     expect(installScript).not.toContain("enroll");
   });
 
-  test("a first install turns on local history once; a reinstall leaves the choice alone", async () => {
+  test("a first install turns on local history and daily updates once; a reinstall leaves the choices alone", async () => {
     const home = join(work, "first");
     const first = await install(home);
     expect(first.status).toBe(0);
     expect(existsSync(join(home, ".local/bin/aicharts"))).toBe(true);
     expect(first.stdout).toContain("Local usage history is on");
+    expect(first.stdout).toContain("Daily updates are on");
     expect(first.stdout).toContain(`aicharts ${version}`);
-    expect(first.calls).toEqual(["enable"]);
+    expect(first.calls).toEqual(["enable", "update-enable"]);
     rmSync(join(home, "on"));
+    rmSync(join(home, "updates-on"));
     const again = await install(home);
     expect(again.status).toBe(0);
-    expect(again.calls).toEqual(["enable"]);
+    expect(again.calls).toEqual(["enable", "update-enable"]);
+  });
+
+  test("a first install leaves updates alone when they already run", async () => {
+    const home = join(work, "updates-already-on");
+    mkdirSync(home, { recursive: true });
+    writeFileSync(join(home, "updates-on"), "");
+    const result = await install(home);
+    expect(result.status).toBe(0);
+    expect(result.calls).toEqual(["enable"]);
   });
 
   test("AICHARTS_USAGE_HISTORY=no installs with history off, into AICHARTS_INSTALL_DIR", async () => {
@@ -115,8 +131,16 @@ describe("aicharts.io/install.sh", () => {
     const result = await install(home, { AICHARTS_USAGE_HISTORY: "no", AICHARTS_INSTALL_DIR: join(home, "tools") });
     expect(result.status).toBe(0);
     expect(existsSync(join(home, "tools/aicharts"))).toBe(true);
-    expect(result.calls).toEqual([]);
+    expect(result.calls).toEqual(["update-enable"]);
     expect(result.stdout).toContain("Local usage history is off");
+  });
+
+  test("AICHARTS_AUTO_UPDATE=no installs with daily updates off", async () => {
+    const home = join(work, "updates-off");
+    const result = await install(home, { AICHARTS_AUTO_UPDATE: "no" });
+    expect(result.status).toBe(0);
+    expect(result.calls).toEqual(["enable"]);
+    expect(result.stdout).toContain("Daily updates are off");
   });
 
   test("refuses a checksum mismatch, a remote test server and a relative directory", async () => {

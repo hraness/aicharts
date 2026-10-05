@@ -228,6 +228,64 @@ pub(crate) fn explain(code: &str, args: &[String]) -> Explained {
             "Usage history needs macOS or Linux.",
             "aicharts stats --help".to_owned(),
         ),
+        "update_check_unavailable" | "update_download_unavailable" => explained(
+            "aicharts couldn't reach the release. Check your connection and try again.",
+            "aicharts update --check".to_owned(),
+        ),
+        "update_release_not_found" => explained(
+            "No aicharts CLI release was found to install.",
+            "aicharts update --check".to_owned(),
+        ),
+        "update_release_list_invalid" => explained(
+            "The release list didn't look right, so nothing was installed.",
+            "aicharts update --check".to_owned(),
+        ),
+        "update_platform_unsupported" => explained(
+            "No aicharts release exists for this platform yet.",
+            "aicharts --version".to_owned(),
+        ),
+        "update_requires_unix" => explained(
+            "aicharts update needs macOS or Linux.",
+            "aicharts --version".to_owned(),
+        ),
+        "update_checksum_missing" | "update_checksum_mismatch" => explained(
+            "The download didn't match the release's published checksum, so nothing was installed.",
+            "aicharts update --check".to_owned(),
+        ),
+        "update_signature_invalid" | "update_signature_unavailable" => explained(
+            "The download's Apple Developer ID signature could not be verified, so nothing was installed.",
+            "aicharts update --check".to_owned(),
+        ),
+        "update_extract_failed" | "update_candidate_failed" | "update_version_mismatch" => {
+            explained(
+                "The downloaded release failed its checks, so nothing was installed.",
+                "aicharts update --check".to_owned(),
+            )
+        }
+        "update_replace_failed" | "update_scratch_unwritable" | "update_unwritable" => explained(
+            "aicharts couldn't replace its own binary. Nothing was installed.",
+            "aicharts update --check".to_owned(),
+        ),
+        "update_scheduler_unavailable" => explained(
+            "Scheduled updates aren't available on this system. Run aicharts update when you want the newest release.",
+            "aicharts update".to_owned(),
+        ),
+        "update_program_path_unsupported" => explained(
+            "The scheduler can't run aicharts from its current folder. Install it in a folder without spaces or symbols.",
+            "aicharts update --help".to_owned(),
+        ),
+        "update_not_ours" => explained(
+            "A scheduler entry named for aicharts update exists that aicharts did not write, so it is left alone.",
+            "aicharts update status".to_owned(),
+        ),
+        "update_state_unknown" => explained(
+            "The update scheduler's state could not be read.",
+            "aicharts update status".to_owned(),
+        ),
+        "update_version_internal" | "update_encode_failed" => explained(
+            "aicharts couldn't read its own version.",
+            "aicharts --version".to_owned(),
+        ),
         "history_window_too_large" => explained(
             "That period holds too many rows. Choose fewer days or agents.",
             "aicharts history report --help".to_owned(),

@@ -45,13 +45,13 @@ export const usageInstallPlatforms = [
     id: "macos",
     command: usageInstallScriptCommand,
     shell: "Terminal",
-    note: "Apple silicon. Checks the pinned SHA-256 and Apple's Developer ID signature, installs ~/.local/bin/aicharts, and turns on local history. Nothing is uploaded.",
+    note: "Apple silicon. Checks the pinned SHA-256 and Apple's Developer ID signature, installs ~/.local/bin/aicharts, and turns on local history and a daily verified update check. Nothing is uploaded.",
   },
   {
     id: "linux",
     command: usageInstallScriptCommand,
     shell: "Terminal",
-    note: "x86_64, glibc 2.35+. Checks the pinned SHA-256, installs ~/.local/bin/aicharts, and turns on local history. Nothing is uploaded.",
+    note: "x86_64, glibc 2.35+. Checks the pinned SHA-256, installs ~/.local/bin/aicharts, and turns on local history and a daily verified update check. Nothing is uploaded.",
   },
   {
     id: "windows",

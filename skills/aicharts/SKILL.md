@@ -5,7 +5,7 @@ description: Retrieve public aicharts benchmark cohorts with source, version, un
 
 # aicharts
 
-Choose the requested mode: public benchmarks, local usage history, retained-ledger inspection, Codex turn observations, or explicitly authorized local collection. Public benchmarks never need private usage or sign-in. The local modes make no network request. Analysis does not authorize collection or ledger changes.
+Choose the requested mode: public benchmarks, local usage history, retained-ledger inspection, Codex turn observations, or explicitly authorized local collection. Public benchmarks never need private usage or sign-in. The local modes make no network request; the installed CLI's separate `aicharts update` command does read GitHub Releases. Analysis does not authorize collection or ledger changes.
 
 ## Local usage history
 

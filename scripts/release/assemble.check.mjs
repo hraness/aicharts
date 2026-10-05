@@ -170,7 +170,7 @@ test("complete synthetic join binds every source member, both BUILDs and four ch
   assert.notDeepEqual(joined.archived.source.files.find((file) => file.path === "NOTICE.md").bytes,
     joined.archived.cli.files.find((file) => file.path === "NOTICE.md").bytes);
   assert.deepEqual(joined.manifest.disabledCapabilities,
-    ["authentication", "enrollment", "upload", "backgroundCollection", "nativeCustody", "autoUpdate"]);
+    ["authentication", "enrollment", "upload", "backgroundCollection", "nativeCustody"]);
 });
 
 function missingPackagedLinks(files) {
