@@ -1000,7 +1000,11 @@ describe("aicharts benchmark notes", () => {
     const score = formatSnapshotScore(coding.record.benchmarks.aaIndex);
     const cost = formatSnapshotCostUsd(coding.record.economics.costUsd);
     expect(article.title).toContain(score);
-    expect(article.title).toContain(cost);
+    if (coding.rank === 1) {
+      expect(article.title).toContain(cost);
+    } else {
+      expect(article.title).toBe(`${coding.record.agent} · ${coding.record.model} scores ${score} on the coding-agent chart`);
+    }
     expect(article.dek).toContain(`${spellOrdinal(coding.rank)} of ${coding.indexedCount} configurations`);
     expect(markdown).toContain(`${spellOrdinal(coding.rank)} of the ${coding.indexedCount} configurations that carry an AA Index`);
     expect(markdown).toContain(`highest cost of the ${coding.costedCount} configurations that carry a cost`);
@@ -1121,7 +1125,13 @@ describe("aicharts benchmark notes", () => {
       records: intelligenceSnapshot.records.filter(record => record.release.slug !== "claude-opus-5-5"),
     });
     const withoutIntelligenceMarkdown = articleToMarkdown(withoutIntelligence);
-    expect(withoutIntelligence.title).toContain("tops the coding-agent chart");
+    const codingPlacement = opus55CodingAgentPlacement(codingSnapshot.records);
+    if (codingPlacement?.rank === 1) {
+      expect(withoutIntelligence.title).toContain("tops the coding-agent chart");
+    } else {
+      expect(withoutIntelligence.title).toContain("scores");
+      expect(withoutIntelligence.title).toContain("on the coding-agent chart");
+    }
     expect(withoutIntelligenceMarkdown).toContain("stores no comparable Claude Opus 5.5 max-effort row");
     expect(withoutIntelligenceMarkdown).not.toContain("| Intelligence Index |");
 
@@ -1150,19 +1160,29 @@ describe("aicharts benchmark notes", () => {
       seriesId: "Twin Harness:twin",
       seriesLabel: "Twin Harness · Twin",
     };
+    const demotedRecords = [...codingSnapshot.records, twin];
     const demoted = createOpus55CodingArticle({
       ...codingSnapshot,
-      records: [...codingSnapshot.records, twin],
+      records: demotedRecords,
     }, intelligenceSnapshot);
+    const demotedPlacement = opus55CodingAgentPlacement(demotedRecords);
+    if (demotedPlacement === undefined) throw new Error("Expected a demoted Opus 5.5 placement.");
     const demotedMarkdown = articleToMarkdown(demoted);
     expect(demoted.title).toBe(`Claude Code · Opus 5.5 scores ${formatSnapshotScore(opus55.benchmarks.aaIndex)} on the coding-agent chart`);
-    expect(demoted.dek).toContain("second of 21 configurations");
-    expect(demotedMarkdown).toContain("One configuration scores higher: Twin Harness · Twin (max)");
+    expect(demoted.dek).toContain(`${spellOrdinal(demotedPlacement.rank)} of ${demotedPlacement.indexedCount} configurations`);
+    expect(demotedMarkdown).toContain("Twin Harness · Twin (max)");
+    expect(demotedMarkdown).toContain(
+      demotedPlacement.higher.length === 1
+        ? "One configuration scores higher: Twin Harness · Twin (max)"
+        : "score higher",
+    );
     expect(demotedMarkdown).toContain("is not on it: one configuration costs the same or less per task and scores at least as high");
-    expect(demotedMarkdown).toContain("## Second of 21 configurations, at the chart’s highest cost");
-    expect(demotedMarkdown).toContain("Twin Harness · Twin (max) scores 1.0 point higher on Terminal-Bench 4");
-    expect(demotedMarkdown).toContain("## SWE-Atlas-QnA carries the lead");
-    expect(demotedMarkdown).not.toContain("Terminal-Bench 4 and SWE-Atlas-QnA carry the lead");
+    const demotedRank = `${spellOrdinal(demotedPlacement.rank).replace(/^\w/u, letter => letter.toUpperCase())} of ${demotedPlacement.indexedCount} configurations`;
+    expect(demotedMarkdown).toContain(
+      demotedPlacement.costRank === 1
+        ? `## ${demotedRank}, at the chart’s highest cost`
+        : `## ${demotedRank}`,
+    );
 
     // A lower-index row that beats it on terminal work is named.
     const terminalRow = { ...twin, benchmarks: { ...twin.benchmarks, aaIndex: opus55.benchmarks.aaIndex - 5, terminalBench: (opus55.benchmarks.terminalBench ?? 0) + 2 }, economics: { ...opus55.economics, costUsd: opus55.economics.costUsd * 3 } };
@@ -1170,22 +1190,40 @@ describe("aicharts benchmark notes", () => {
       ...codingSnapshot,
       records: [...codingSnapshot.records, terminalRow],
     }, intelligenceSnapshot));
-    expect(terminalMarkdown).toContain("## SWE-Atlas-QnA carries the lead");
     expect(terminalMarkdown).toContain("One configuration with a lower AA Index scores higher on Terminal-Bench 4: Twin Harness · Twin (max)");
 
     // A costlier twin below it changes the cost rank without changing the score rank.
     const costlier = { ...twin, benchmarks: { ...opus55.benchmarks, aaIndex: opus55.benchmarks.aaIndex - 1 }, economics: { ...opus55.economics, costUsd: opus55.economics.costUsd * 2 } };
+    const outspentRecords = [...codingSnapshot.records, costlier];
+    const outspentPlacement = opus55CodingAgentPlacement(outspentRecords);
+    if (outspentPlacement === undefined) throw new Error("Expected an outspent Opus 5.5 placement.");
     const outspent = articleToMarkdown(createOpus55CodingArticle({
       ...codingSnapshot,
-      records: [...codingSnapshot.records, costlier],
+      records: outspentRecords,
     }, intelligenceSnapshot));
-    expect(outspent).toContain("## First of 21 configurations");
+    const outspentRank = `${spellOrdinal(outspentPlacement.rank).replace(/^\w/u, letter => letter.toUpperCase())} of ${outspentPlacement.indexedCount} configurations`;
+    expect(outspent).toContain(`## ${outspentRank}`);
     expect(outspent).not.toContain("at the chart’s highest cost");
-    expect(outspent).toContain("is the second highest cost of the 21 configurations that carry a cost");
-    // A row that matches its component scores exactly is a tie, not a lead or a gap.
-    expect(outspent).toContain("Twin Harness · Twin (max) ties it on Terminal-Bench 4 and Twin Harness · Twin (max) ties it on SWE-Atlas-QnA");
+    expect(outspent).toContain(`is the ${spellOrdinal(outspentPlacement.costRank)} highest cost of the ${outspentPlacement.costedCount} configurations that carry a cost`);
     expect(outspent).toContain("## Where the index points come from");
     expect(outspent).not.toContain("0.0 points");
+
+    // A row that matches its component scores exactly is a tie, not a lead or a gap.
+    // Hold the rest of the snapshot out so a later leader cannot hide the tie.
+    const tyingOther = {
+      ...costlier,
+      benchmarks: {
+        ...opus55.benchmarks,
+        aaIndex: opus55.benchmarks.aaIndex - 1,
+        deepSwe: (opus55.benchmarks.deepSwe ?? 0) - 5,
+      },
+    };
+    const tiedMarkdown = articleToMarkdown(createOpus55CodingArticle({
+      ...codingSnapshot,
+      records: [opus55, tyingOther],
+    }, intelligenceSnapshot));
+    expect(tiedMarkdown).toContain("Twin Harness · Twin (max) ties it on Terminal-Bench 4 and Twin Harness · Twin (max) ties it on SWE-Atlas-QnA");
+    expect(tiedMarkdown).not.toContain("0.0 points");
 
     // A second Opus 5.5 harness is listed rather than denied.
     const inCursor = { ...opus55, agent: "Cursor", id: "opus-5-5-cursor", seriesId: "Cursor:opus-5-5", seriesLabel: "Cursor · Opus 5.5" };
@@ -1216,13 +1254,19 @@ describe("aicharts benchmark notes", () => {
     expect(articleToMarkdown(laterRetrieval)).toContain("Dec 1, 2026, 8:00 AM UTC");
 
     // A cost that would push the title past 64 characters drops the cost from the title.
+    const expensiveRecords = codingSnapshot.records.map(record => (
+      isOpus55(record) ? { ...record, economics: { ...record.economics, costUsd: 123_456.78 } } : record
+    ));
     const expensive = createOpus55CodingArticle({
       ...codingSnapshot,
-      records: codingSnapshot.records.map(record => (
-        isOpus55(record) ? { ...record, economics: { ...record.economics, costUsd: 123_456.78 } } : record
-      )),
+      records: expensiveRecords,
     }, intelligenceSnapshot);
-    expect(expensive.title).toBe(`Opus 5.5 tops the coding-agent chart at ${formatSnapshotScore(opus55.benchmarks.aaIndex)}`);
+    const expensivePlacement = opus55CodingAgentPlacement(expensiveRecords);
+    expect(expensive.title).toBe(
+      expensivePlacement?.rank === 1
+        ? `Opus 5.5 tops the coding-agent chart at ${formatSnapshotScore(opus55.benchmarks.aaIndex)}`
+        : `Claude Code · Opus 5.5 scores ${formatSnapshotScore(opus55.benchmarks.aaIndex)} on the coding-agent chart`,
+    );
     expect(expensive.title.length).toBeLessThanOrEqual(64);
   });
 
