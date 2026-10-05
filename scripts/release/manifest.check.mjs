@@ -84,7 +84,7 @@ test("exact public DTO keys, fixed provenance fields, ordering and no self-hash 
   const value = good(parseManifest(bytes, expected));
   assert.deepEqual(Object.keys(value), ["schemaVersion", "profile", "repository", "tag", "version", "source", "workflow", "toolchain", "targets", "disabledCapabilities", "assets"]);
   assert.deepEqual(value.workflow, { path: ".github/workflows/cli-release.yml", sourceRef: "refs/heads/main", sourceCommit: expected.source.commit, runId: expected.run.runId, runAttempt: 1 });
-  assert.deepEqual(value.disabledCapabilities, ["authentication", "enrollment", "upload", "backgroundCollection", "nativeCustody", "autoUpdate"]);
+  assert.deepEqual(value.disabledCapabilities, ["authentication", "enrollment", "upload", "backgroundCollection", "nativeCustody"]);
   assert.deepEqual(value.assets.map((a) => a.name), ["aicharts-0.1.0-x86_64-unknown-linux-gnu.tar.gz", "aicharts-skill-0.1.0.tar.gz", "aicharts-source-0.1.0.tar.gz"]);
   assert.deepEqual(value.assets.map((a) => a.root), ["aicharts-0.1.0-x86_64-unknown-linux-gnu", "aicharts", "aicharts-source-0.1.0"]);
   assert.deepEqual(value.assets.map((a) => a.target), ["x86_64-unknown-linux-gnu", null, null]);

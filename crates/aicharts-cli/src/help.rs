@@ -75,6 +75,10 @@ Check and open
   diagnostics              Error codes to paste into a support request
   commands                 List commands for agents (--json)
 
+Stay current
+  update                   Install the newest release; update enable adds a
+                           daily check (the installer turns it on)
+
 Options
   -h, --help               Show help (also: aicharts help <command>)
   -V, --version            Show the version
@@ -429,6 +433,7 @@ Example
         }
         "history" => crate::history::help(),
         "mcp" => crate::mcp::help(),
+        "update" => crate::update::help(),
         "publish" => PUBLISH,
         "setup" => {
             "Usage: aicharts setup [--json]
@@ -565,6 +570,7 @@ pub(crate) fn resolve(args: &[String]) -> Option<Help> {
                 | "capture"
                 | "contribution-sync"
                 | "refresh"
+                | "update"
                 | "support"
         )
     );

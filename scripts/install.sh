@@ -12,9 +12,16 @@
 # on this computer. Nothing is uploaded. Publishing to aicharts.io is a
 # separate choice you make later with `aicharts publish enable`.
 #
+# A first install also turns on daily self-updates: once a day aicharts
+# checks GitHub for a newer release, verifies the archive's SHA-256 against
+# the digest the release published and, on macOS, its Apple Developer ID
+# signature, then replaces only itself. It downloads releases; it never
+# uploads anything.
+#
 # Options (environment):
 #   AICHARTS_INSTALL_DIR=DIR     install into DIR (default: ~/.local/bin)
 #   AICHARTS_USAGE_HISTORY=no    install, but leave usage history off
+#   AICHARTS_AUTO_UPDATE=no      install, but leave daily updates off
 # Source: https://github.com/hraness/aicharts/blob/main/scripts/install.sh
 #
 # Everything is inside main(), so a partial download runs nothing.
@@ -88,6 +95,10 @@ main() {
       no | 0 | false | off) echo "Local usage history is off. Turn it on with: aicharts history enable" ;;
       *) turn_on_history "$installed" ;;
     esac
+    case "${AICHARTS_AUTO_UPDATE:-yes}" in
+      no | 0 | false | off) echo "Daily updates are off. Turn them on with: aicharts update enable" ;;
+      *) turn_on_updates "$installed" ;;
+    esac
   fi
   case ":${PATH:-}:" in
     *":$bin:"*) ;;
@@ -108,6 +119,19 @@ turn_on_history() {
     echo "  Turn off:  aicharts history disable"
   else
     warn "could not turn on local usage history; run: aicharts history enable"
+  fi
+}
+
+# turn_on_updates AICHARTS starts the daily update check unless it already runs.
+turn_on_updates() {
+  status=$(HRANESS_SUPPORT_AUDIENCE=off "$1" update status --json 2>/dev/null) || status=
+  case "$status" in *'"scheduler":"on"'* | *'"scheduler":"not-ours"'* | *'"scheduler":"unsupported"'*) return 0 ;; esac
+  if HRANESS_SUPPORT_AUDIENCE=off "$1" update enable >/dev/null 2>&1; then
+    echo "Daily updates are on: aicharts checks GitHub once a day and installs"
+    echo "a new release only after verifying it. Nothing is uploaded."
+    echo "  Turn off:  aicharts update disable"
+  else
+    warn "could not turn on daily updates; run: aicharts update enable"
   fi
 }
 

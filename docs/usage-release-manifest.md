@@ -53,7 +53,7 @@ The single target requires `x86_64-unknown-linux-gnu`, OS `linux`, architecture 
 
 `runnerImageVersion` has one through four canonical decimal components and at most 48 bytes. Compiler name is `gcc` or `clang`, never a free-form banner. `dynamicDependencies` is a sorted, distinct array of 1–16 ASCII single-component SONAME-shaped names, each at most 128 bytes, without case-fold collisions. It is metadata, not an ELF inspection.
 
-The fixed disabled-capability list is `authentication`, `enrollment`, `upload`, `backgroundCollection`, `nativeCustody`, and `autoUpdate`. This describes the intended distribution scope, not a sandbox guarantee. No current release workflow, artifact, or installation is implied by the profile.
+The fixed disabled-capability list is `authentication`, `enrollment`, `upload`, `backgroundCollection`, and `nativeCustody`. This describes the intended distribution scope, not a sandbox guarantee. No current release workflow, artifact, or installation is implied by the profile.
 
 ## Assets and limits
 

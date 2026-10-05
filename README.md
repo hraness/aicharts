@@ -100,7 +100,9 @@ See [detailed usage reports](docs/usage-details.md) for commands, acquisition
 requirements, and what parser support does and does not cover. The [scheduled publisher guide](docs/usage-autosubmit.md) covers
 native refresh profiles, dry runs, failure recovery and a reversible macOS cutover.
 
-To install the CLI on a Mac with Apple silicon or on Linux x86_64, run `curl -fsSL https://aicharts.io/install.sh | sh`. The [script](scripts/install.sh) checks the release archive against its pinned SHA-256 and, on a Mac, Apple's Developer ID signature, installs `~/.local/bin/aicharts`, and on a first install turns on local history; `AICHARTS_USAGE_HISTORY=no` leaves it off.
+To install the CLI on a Mac with Apple silicon or on Linux x86_64, run `curl -fsSL https://aicharts.io/install.sh | sh`. The [script](scripts/install.sh) checks the release archive against its pinned SHA-256 and, on a Mac, Apple's Developer ID signature, installs `~/.local/bin/aicharts`, and on a first install turns on local history and a daily self-update check; `AICHARTS_USAGE_HISTORY=no` leaves history off and `AICHARTS_AUTO_UPDATE=no` leaves updates off.
+
+`aicharts update` installs the newest `cli-v*` release: the downloaded archive must match the SHA-256 the release published, the macOS build must carry the Hraness Developer ID signature, and the new binary must report the release's version before it replaces the running one. `aicharts update status`, `enable`, and `disable` inspect and control the daily check, and `--check` reports without installing.
 
 `aicharts history enable` (or `aicharts setup` with no options) keeps a daily record of the same report rows on this computer. Four times a day, a launchd agent on a Mac or a systemd user timer on Linux reads the sources `stats` reads, and a day in the record never goes down when an agent deletes its old session files. `aicharts history report` reads only that record and prints text, the `stats --json` format or CSV. `aicharts mcp` gives agents five read-only tools over the same data. Publishing stays a separate step: `aicharts help publish`. See [usage history and agent queries](docs/usage-history.md).
 

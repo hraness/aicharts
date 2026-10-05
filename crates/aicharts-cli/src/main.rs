@@ -39,6 +39,7 @@ mod transport_dns;
 #[cfg(test)]
 mod transport_test_log;
 mod turns;
+mod update;
 mod upload;
 mod version;
 
@@ -441,6 +442,9 @@ fn run(args: &[String]) -> Result<String, &'static str> {
     }
     if args.first().map(String::as_str) == Some("contribution-sync") {
         return contribution_sync::run(args);
+    }
+    if args.first().map(String::as_str) == Some("update") {
+        return update::dispatch(args);
     }
     if args.first().map(String::as_str) == Some("refresh") {
         return source_refresh::run(&args[1..]);
