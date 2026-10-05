@@ -214,7 +214,12 @@ export const BLOG_ARTICLE_ADMISSIONS = {
       },
       {
         distinction:
-          "The GPT-6 Sol page places a frontier row that is sixth on the chart and compares it with its Codex predecessor; this page places the chart’s leading and costliest row and asks what each step down the frontier gives up.",
+          "The Sonnet 5.5 page places Claude Code · Sonnet 5.5 (max) as the current leading coding-agent row and tabulates its Claude Code settings; this page places Claude Code · Opus 5.5 (max), compares it with Claude Code · Opus 5, and uses Sonnet only as the first cheaper frontier contrast when the snapshot ranks Sonnet higher.",
+        url: blogArticlePath("sonnet-5-5-coding-agent-index"),
+      },
+      {
+        distinction:
+          "The GPT-6 Sol page places a frontier row and compares it with its Codex predecessor; this page places the Claude Code · Opus 5.5 row and asks what each step down the frontier from that row gives up.",
         url: blogArticlePath("gpt-6-sol-coding-agent-index"),
       },
       {
@@ -229,16 +234,16 @@ export const BLOG_ARTICLE_ADMISSIONS = {
       },
     ],
     nonObviousAnswer:
-      "Claude Code · Opus 5.5 (max) holds the coding-agent chart’s top score and its highest cost per task at once, the first step down the cost frontier gives up 3.8 index points for 95% of the cost, the composite lead rests on Terminal-Bench 4 and SWE-Atlas-QnA while five configurations score higher on DeepSWE v1.1, and the row records 1.2x the cost and 1.4x the total tokens per task alongside lower listed per-token prices. Token totals do not establish the cause of the cost difference; input, output, and cache mix also affect the bill.",
+      "Claude Code · Opus 5.5 (max) sits immediately below Claude Code · Sonnet 5.5 (max) on the dated coding-agent snapshot, the first step down the cost frontier from the Opus row gives up a few index points for most of the cost, the composite position rests on Terminal-Bench 4 and SWE-Atlas-QnA while other configurations score higher on DeepSWE v1.1, and the row records 1.2x the cost and 1.4x the total tokens per task against Claude Code · Opus 5 alongside lower listed per-token prices. Token totals do not establish the cause of the cost difference; input, output, and cache mix also affect the bill.",
     observations: [
       "In the coding-agent snapshot retrieved 2026-09-25, Claude Code · Opus 5.5 (max) is first of 20 configurations on AA Index at 66.0 and the highest cost per task at $13.04; the frontier below it runs through Claude Code · Fable 5.1 (with fallback) (max), Devin Fusion CLI · Claude Fable 5.1 XHigh + SWE-2 Medium, Codex · GPT-6 Astra (max), Devin Fusion CLI · GPT-6 Astra XHigh + SWE-2 Medium, and Codex · GPT-6 Sol (max) before reaching the rows under one dollar.",
       "The row leads Terminal-Bench 4 by 5.6 points over the next configuration and SWE-Atlas-QnA by 0.3 points, and is sixth of 20 on DeepSWE v1.1, where Muse Code · Muse Spark 1.3 (xhigh) leads.",
       "Against Claude Code · Opus 5 (max) in the same harness and setting, Opus 5.5 adds 6.3 index points at 1.2x the mean cost per task, 1.4x the total tokens per task, and 1.5x the mean time per task, while Anthropic lists lower per-token prices for Opus 5.5 than for Opus 5.",
     ],
     originalContribution:
-      "A snapshot-derived statement of Claude Code · Opus 5.5 (max)’s AA Index rank, cost rank, and frontier position; a walk down the coding-agent cost frontier from the leading row stating the points each cheaper vertex gives up and its share of the leader’s cost; a component table naming the best other configuration on each of DeepSWE v1.1, Terminal-Bench 4, and SWE-Atlas-QnA with the signed gap; a same-harness Opus 5 to Opus 5.5 table showing the point gain bought with tokens and time at lower list prices; and an explicit separation of the coding-agent row from the Intelligence Index row.",
+      "A snapshot-derived statement of Claude Code · Opus 5.5 (max)’s AA Index rank, cost rank, and frontier position; a walk down the coding-agent cost frontier from that row stating the points each cheaper vertex gives up and its share of the row’s cost; a component table naming the best other configuration on each of DeepSWE v1.1, Terminal-Bench 4, and SWE-Atlas-QnA with the signed gap; a same-harness Opus 5 to Opus 5.5 table showing the point gain bought with tokens and time at lower list prices; and an explicit separation of the coding-agent row from the Intelligence Index row.",
     overlapDecision:
-      "Keep separately: the Intelligence Index page shares the model and the two-chart contrast but never places the Claude Code row, walks the coding frontier, splits the AA Index into components, or compares Opus 5 with Opus 5.5 in one harness; the GPT-6 Sol and Grok 4.7 pages share the component and predecessor tables as structure for other models; the AA Index page derives the whole frontier without a placed row. Fewer than a third of the headings or claims overlap any of them.",
+      "Keep separately: the Sonnet 5.5 page shares the Claude Code harness and the two-chart contrast but places a different model, tabulates five Sonnet settings, and compares Sonnet with Opus 5.5 rather than Opus 5; the Intelligence Index page never places the Claude Code row or walks the coding frontier; the GPT-6 Sol and Grok 4.7 pages share the component and predecessor tables as structure for other models; the AA Index page derives the whole frontier without a placed row. Fewer than a third of the headings or claims overlap any of them.",
     primaryEvidence:
       "The checked coding-agent snapshot supplies every AA Index, component score, cost, token, and duration value, the frontier, and the update log for the Claude Code · Opus 5.5 and Claude Code · Opus 5 rows and every configuration around them; the checked Intelligence Index snapshot supplies the Claude Opus 5.5 (max) score, cost per task, output tokens, rank, and cohort; Anthropic’s announcement supplies the release date, prices, cost claim, and vendor-run Terminal-Bench figure; Artificial Analysis’s model page supplies the list prices and cache discount behind both costs.",
     primarySourceIds: [
@@ -248,7 +253,7 @@ export const BLOG_ARTICLE_ADMISSIONS = {
       "artificialAnalysisClaudeOpus55Model",
     ],
     readerJob:
-      "Understand what Claude Code · Opus 5.5’s leading coding-agent AA Index and $13.04 cost per task measure on the dated snapshot, what each step down the chart’s cost frontier gives up against that row, where the index points come from, how the row moved from Claude Code · Opus 5, and why its cost is not the Intelligence Index cost.",
+      "Understand what Claude Code · Opus 5.5’s coding-agent AA Index and $13.04 cost per task measure on the dated snapshot, what each step down the chart’s cost frontier gives up against that row, where the index points come from, how the row moved from Claude Code · Opus 5, and why its cost is not the Intelligence Index cost.",
     reassessOn: REASSESS_ON,
     refreshTriggers: [
       "A data refresh adds, removes, or rescores a Claude Code · Opus 5.5 row, a Claude Code · Opus 5 row, or any row that changes the AA Index rank, cost rank, frontier, or component leaders",
@@ -268,6 +273,78 @@ export const BLOG_ARTICLE_ADMISSIONS = {
       voiceIntegrity: 1,
     },
     sourceCheckedOn: "2026-09-28",
+  },
+  "sonnet-5-5-coding-agent-index": {
+    canonicalOwner: blogArticlePath("sonnet-5-5-coding-agent-index"),
+    decision: "keep",
+    drafting: AI_DRAFTED,
+    evidenceOwner: EVIDENCE_OWNER,
+    evidenceType: "checked-dataset-analysis",
+    harmIfWrong:
+      "The Claude Code · Sonnet 5.5 AA Index could be quoted as a model ranking rather than a harness measurement, its mean cost per task could be pooled with the Intelligence Index cost per task or read as a price, the launch-week rank and five-setting ladder could be repeated after new rows entered the chart, or the Intelligence Index score could be averaged with the coding-agent score.",
+    hostFit:
+      "AI Charts stores every Claude Code · Sonnet 5.5 setting and Claude Code · Opus 5.5 (max) on the coding-agent chart in one snapshot, so it can derive the rank, cost rank, effort ladder, frontier steps, component gaps, and same-harness contrast from the rows the chart plots without adding a data surface, and it stores the Intelligence Index row needed to keep the two measurements apart.",
+    humanReviewedOn: null,
+    lifecycleState: "indexable",
+    nearestUrls: [
+      {
+        distinction:
+          "The Opus 5.5 coding-agent page places Claude Code · Opus 5.5 (max), walks the frontier from that row, and compares it with Claude Code · Opus 5; this page places Claude Code · Sonnet 5.5 (max), tabulates the five Claude Code settings, and uses Opus 5.5 only as the first cheaper frontier row and the same-harness contrast.",
+        url: blogArticlePath("opus-5-5-coding-agent-index"),
+      },
+      {
+        distinction:
+          "The AA Index page derives the whole coding-agent cost frontier and the AA Index per dollar view; this page reads the frontier from one row at its top and states what each cheaper vertex gives up against that row.",
+        url: blogArticlePath("aa-index-cost-coding-agents"),
+      },
+      {
+        distinction:
+          "The GPT-6 Sol page places a Codex row and compares it with its Codex predecessor; this page places the leading Claude Code row, lists its effort settings, and compares it with Claude Code · Opus 5.5.",
+        url: blogArticlePath("gpt-6-sol-coding-agent-index"),
+      },
+      {
+        distinction:
+          "The Grok 4.7 page places Grok Build · Grok 4.7 on both charts and compares it with Grok 4.6 in the same harness; this page never places Grok and compares Sonnet 5.5 with Opus 5.5 in Claude Code.",
+        url: blogArticlePath("grok-4-7-coding-agent-index"),
+      },
+    ],
+    nonObviousAnswer:
+      "Claude Code · Sonnet 5.5 (max) holds the coding-agent chart’s top score and its highest cost per task at once, the first cheaper frontier row is Claude Code · Opus 5.5 (max), the last step from xhigh to max buys several index points at a multiple of that setting’s cost, and the Intelligence Index row for the same model is a different unit that must not be pooled with the coding-agent score.",
+    observations: [
+      "In the coding-agent snapshot retrieved 2026-10-05, Claude Code · Sonnet 5.5 (max) is first of 31 configurations on AA Index at 68.4 and the highest cost per task at $14.19; Claude Code · Opus 5.5 (max) is the first cheaper frontier vertex, 2.4 points lower for 92% of the cost.",
+      "The snapshot stores five Claude Code · Sonnet 5.5 settings. The last step, from xhigh at 62.9 and $3.33 to max at 68.4 and $14.19, adds 5.5 index points at 4.3x the cost of the setting below it.",
+      "The max row leads Terminal-Bench 4 and SWE-Atlas-QnA and is sixth of 31 on DeepSWE v1.1, where Antigravity CLI · Gemini 4 Argon (default) leads. The Intelligence Index snapshot retrieved the same day stores Claude Sonnet 5.5 (Max, Default Fallback) at 56.0 for $7.67 per task, second of the comparable cohort.",
+    ],
+    originalContribution:
+      "A snapshot-derived statement of Claude Code · Sonnet 5.5 (max)’s AA Index rank, cost rank, and frontier position; a five-setting Claude Code effort ladder stating what each step buys; a walk down the coding-agent cost frontier from the leading row stating the points each cheaper vertex gives up and its share of the leader’s cost; a same-harness table against Claude Code · Opus 5.5 (max); a component table naming the best other configuration on each of DeepSWE v1.1, Terminal-Bench 4, and SWE-Atlas-QnA with the signed gap; and an explicit two-unit separation from the Intelligence Index row.",
+    overlapDecision:
+      "Keep separately: the Opus 5.5 coding-agent page shares the Claude Code harness and the two-chart contrast but places a different model, compares generations of Opus, and does not tabulate Sonnet settings; the GPT-6 Sol and Grok 4.7 pages share the component table as structure for other models; the AA Index page derives the whole frontier without a placed row. Fewer than a third of the headings or claims overlap any of them.",
+    primaryEvidence:
+      "The coding-agent snapshot supplies every AA Index, component score, cost, token, and duration value, the frontier, the five Claude Code · Sonnet 5.5 settings, the Claude Code · Opus 5.5 row, and the update log; the Intelligence Index snapshot supplies the Claude Sonnet 5.5 (max with fallback) score, cost per task, output tokens, rank, and cohort.",
+    primarySourceIds: [
+      "artificialAnalysisCodingAgents",
+      "artificialAnalysisIntelligenceIndex",
+    ],
+    readerJob:
+      "Understand what Claude Code · Sonnet 5.5’s leading coding-agent AA Index and $14.19 cost per task measure on the dated snapshot, what each Claude Code setting buys, what each step down the chart’s cost frontier gives up against that row, how the row sits beside Claude Code · Opus 5.5, and why its cost is not the Intelligence Index cost.",
+    reassessOn: "2026-11-09",
+    refreshTriggers: [
+      "A data refresh adds, removes, or rescores a Claude Code · Sonnet 5.5 row, a Claude Code · Opus 5.5 row, or any row that changes the AA Index rank, cost rank, frontier, effort ladder, or component leaders",
+      "The coding-agent snapshot gains a Claude Sonnet 5.5 row in a harness other than Claude Code",
+      "Artificial Analysis changes the Coding Agent Index components or the Claude Sonnet 5.5 Intelligence Index row",
+    ],
+    reviewedBy: REVIEWED_BY,
+    reviewerType: AI_REVIEWER,
+    reviewedOn: "2026-10-05",
+    scores: {
+      factualConfidence: 1,
+      hostFit: 2,
+      maintenanceValue: 2,
+      originalEvidence: 2,
+      readerUtility: 2,
+      voiceIntegrity: 1,
+    },
+    sourceCheckedOn: "2026-10-05",
   },
   "opus-5-5-intelligence-index": {
     canonicalOwner: blogArticlePath("opus-5-5-intelligence-index"),
