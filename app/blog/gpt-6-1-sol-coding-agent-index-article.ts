@@ -23,7 +23,7 @@ import {
   type Gpt61SolIntelligencePlacement,
 } from "@/lib/gpt-6-1-sol-placement";
 import { comparableTaskCost, formatCostMultiple, formatPointGap } from "@/lib/mimo-v2-6-pro-frontier";
-import { modelAddedAt, spellOrdinal } from "@/lib/snapshot-placement";
+import { modelAddedAt, spellOrdinal, type CostedCodingAgentRecord } from "@/lib/snapshot-placement";
 
 import {
   BLOG_SOURCE_NOTE,
@@ -132,7 +132,7 @@ function costPhrase(multiple: number, subject: string): string {
     : `${formatCostPercent(multiple)} of ${subject}`;
 }
 
-function maxSetting(placement: Gpt61SolCodingAgentPlacement): CodingAgentRecord | undefined {
+function maxSetting(placement: Gpt61SolCodingAgentPlacement): CostedCodingAgentRecord | undefined {
   return placement.settings.find(record => record.setting === "max");
 }
 
@@ -148,7 +148,7 @@ function placedBeatsMax(placement: Gpt61SolCodingAgentPlacement): boolean {
 
 function sameSettingPrevious(
   placement: Gpt61SolCodingAgentPlacement,
-): CodingAgentRecord | undefined {
+): CostedCodingAgentRecord | undefined {
   const previous = placement.previousGeneration;
   if (previous === undefined) return undefined;
   return placement.settings.find(record => record.setting === previous.setting);
@@ -827,5 +827,5 @@ export function createGpt61SolArticle(
 
 /** Canonical Markdown for the draft factory. Casts only the unpublished slug. */
 export function gpt61SolArticleMarkdown(article: Gpt61SolArticle): string {
-  return articleToMarkdown(article as BlogArticle);
+  return articleToMarkdown(article as unknown as BlogArticle);
 }

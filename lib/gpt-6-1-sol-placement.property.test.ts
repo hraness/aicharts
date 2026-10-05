@@ -59,12 +59,14 @@ test("the placed row is the highest-index costed Codex · GPT-6.1 Sol setting", 
   assertProperty(fc.property(codingCohortArb, ({ others, own }) => {
     const placement = gpt61SolCodingAgentPlacement([...others, ...own]);
     if (placement === undefined) throw new Error("At least one own row is indexed and costed.");
-    const best = own.reduce((leader, row) => (
-      row.benchmarks.aaIndex > leader.benchmarks.aaIndex
-        || (row.benchmarks.aaIndex === leader.benchmarks.aaIndex && row.id < leader.id)
-        ? row
-        : leader
-    ));
+    const best = own.reduce((leader, row) => {
+      const score = row.benchmarks.aaIndex;
+      const leaderScore = leader.benchmarks.aaIndex;
+      if (score === null || leaderScore === null) {
+        throw new Error("Own rows carry an AA Index.");
+      }
+      return score > leaderScore || (score === leaderScore && row.id < leader.id) ? row : leader;
+    });
     expect(placement.record.id).toBe(best.id);
     expect(placement.rank).toBe(placement.higher.length + 1);
     expect(placement.settings).toHaveLength(own.length);
