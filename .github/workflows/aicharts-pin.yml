@@ -76,13 +76,15 @@ jobs:
           git config user.email "894119+0thernet@users.noreply.github.com"
           git add scripts/install.sh lib/usage-cli-release.ts docs/usage-local.md distribution/cli/docs/usage-install.md
           git commit -m "chore: pin aicharts $VERSION"
-          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/$branch"
+          # The branch is disposable automation state; a rerun for the same
+          # release regenerates it rather than descending from the stale tip.
+          git push --force "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/$branch"
 
           run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
           while IFS= read -r stale_number; do
             [[ -z "$stale_number" ]] && continue
             gh pr close "$stale_number" --delete-branch --comment "Superseded by the pin refresh in ${run_url}." || true
-          done < <(gh pr list --state open --limit 50 --json number,headRefName --jq '.[] | select(.headRefName | startswith("automation/aicharts-pin-")) | .number')
+          done < <(gh pr list --state open --limit 50 --json number,headRefName --jq --arg keep "$branch" '.[] | select(.headRefName | startswith("automation/aicharts-pin-")) | select(.headRefName != $keep) | .number')
 
           pr_url="$(gh pr list --head "$branch" --json url --jq '.[0].url')"
           if [[ -z "$pr_url" ]]; then
