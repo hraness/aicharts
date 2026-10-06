@@ -62,6 +62,10 @@ describe("dependency pins", () => {
     expect((JSON.parse(read("package.json")) as { overrides?: Record<string, string> }).overrides?.["source-map-js"]).toBe("1.2.2");
     expect(lock.packages["source-map-js"]?.[0]).toBe("source-map-js@1.2.2");
   });
+  test("sharp is overridden to the patched 0.35.5 release (GHSA-wq5f-xc86-pv6w)", () => {
+    expect((JSON.parse(read("package.json")) as { overrides?: Record<string, string> }).overrides?.sharp).toBe("0.35.5");
+    expect(lock.packages.sharp?.[0]).toBe("sharp@0.35.5");
+  });
   test("the Next.js lint plugin's fast-glob resolves to the locked tinyglobby, keeping braces (GHSA-vfj7-8cjw-p6xm, no patched release) out of the lockfile", () => {
     expect((JSON.parse(read("package.json")) as { overrides?: Record<string, string> }).overrides?.["fast-glob"]).toBe("npm:tinyglobby@0.2.17");
     expect(lock.packages["fast-glob"]?.[0]).toBe("tinyglobby@0.2.17");
