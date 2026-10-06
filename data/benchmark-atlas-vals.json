@@ -16,8 +16,8 @@
       "totalModels": 43,
       "source": {
         "url": "https://www.vals.ai/benchmarks/vals_index",
-        "retrievedAt": "2026-10-05T14:14:03.855Z",
-        "sha256": "8e58c3a8770f42d8f53d0e3d920b81dfe0ce6f4773568c7a5a5458ea296e00a4",
+        "retrievedAt": "2026-10-06T01:18:27.092Z",
+        "sha256": "00b0b30a209d48c9a75fc799de2ab9979136ba2acc2a5e431a5e8da612f645d2",
         "observedAt": "2026-10-02T00:00:00.000Z",
         "revision": "vals_index v2.1"
       },
@@ -137,7 +137,7 @@
           "score": 65.827,
           "standardError": 1.115,
           "costUsdPerTest": 28.711785,
-          "latencySeconds": 4608.953,
+          "latencySeconds": 4611.975,
           "components": [
             {
               "id": "finance_agent",
@@ -190,7 +190,7 @@
           "score": 55.1,
           "standardError": 1.009,
           "costUsdPerTest": 13.136067,
-          "latencySeconds": 2388.429,
+          "latencySeconds": 2388.428,
           "components": [
             {
               "id": "finance_agent",
@@ -243,7 +243,7 @@
           "score": 63.674,
           "standardError": 0.957,
           "costUsdPerTest": 19.314752,
-          "latencySeconds": 3461.381,
+          "latencySeconds": 3461.558,
           "components": [
             {
               "id": "finance_agent",
@@ -296,7 +296,7 @@
           "score": 66.972,
           "standardError": 0.888,
           "costUsdPerTest": 32.143857,
-          "latencySeconds": 4710.68,
+          "latencySeconds": 4740.124,
           "components": [
             {
               "id": "finance_agent",
@@ -349,7 +349,7 @@
           "score": 51.775,
           "standardError": 1.092,
           "costUsdPerTest": 13.721168,
-          "latencySeconds": 3255.617,
+          "latencySeconds": 3255.608,
           "components": [
             {
               "id": "finance_agent",
@@ -402,7 +402,7 @@
           "score": 67.037,
           "standardError": 0.92,
           "costUsdPerTest": 21.344634,
-          "latencySeconds": 4684.189,
+          "latencySeconds": 4684.303,
           "components": [
             {
               "id": "finance_agent",
@@ -455,7 +455,7 @@
           "score": 51.32,
           "standardError": 1.13,
           "costUsdPerTest": 0.332286,
-          "latencySeconds": 1673.174,
+          "latencySeconds": 1673.173,
           "components": [
             {
               "id": "finance_agent",
@@ -508,7 +508,7 @@
           "score": 47.963,
           "standardError": 1.24,
           "costUsdPerTest": 0.847519,
-          "latencySeconds": 2585.577,
+          "latencySeconds": 2585.953,
           "components": [
             {
               "id": "finance_agent",
@@ -561,7 +561,7 @@
           "score": 38.63,
           "standardError": 1.157,
           "costUsdPerTest": 1.30566,
-          "latencySeconds": 1928.909,
+          "latencySeconds": 1928.908,
           "components": [
             {
               "id": "finance_agent",
@@ -614,7 +614,7 @@
           "score": 47.628,
           "standardError": 1.116,
           "costUsdPerTest": 3.352436,
-          "latencySeconds": 3845.24,
+          "latencySeconds": 3845.238,
           "components": [
             {
               "id": "finance_agent",
@@ -720,7 +720,7 @@
           "score": 33.442,
           "standardError": 1.133,
           "costUsdPerTest": 2.180322,
-          "latencySeconds": 591.994,
+          "latencySeconds": 591.992,
           "components": [
             {
               "id": "finance_agent",
@@ -773,7 +773,7 @@
           "score": 44.786,
           "standardError": 1.098,
           "costUsdPerTest": 3.297245,
-          "latencySeconds": 1097.105,
+          "latencySeconds": 1097.194,
           "components": [
             {
               "id": "finance_agent",
@@ -826,7 +826,7 @@
           "score": 51.273,
           "standardError": 1.097,
           "costUsdPerTest": 4.708904,
-          "latencySeconds": 2847.081,
+          "latencySeconds": 2847.08,
           "components": [
             {
               "id": "finance_agent",
@@ -879,7 +879,7 @@
           "score": 54.825,
           "standardError": 1.028,
           "costUsdPerTest": 5.728779,
-          "latencySeconds": 3117.159,
+          "latencySeconds": 3117.158,
           "components": [
             {
               "id": "finance_agent",
@@ -985,7 +985,7 @@
           "score": 44.723,
           "standardError": 1.171,
           "costUsdPerTest": 2.458898,
-          "latencySeconds": 944.196,
+          "latencySeconds": 944.195,
           "components": [
             {
               "id": "finance_agent",
@@ -1038,7 +1038,7 @@
           "score": 52.092,
           "standardError": 1.153,
           "costUsdPerTest": 4.49288,
-          "latencySeconds": 2221.071,
+          "latencySeconds": 2221.07,
           "components": [
             {
               "id": "finance_agent",
@@ -1091,7 +1091,7 @@
           "score": 54.947,
           "standardError": 1.072,
           "costUsdPerTest": 12.118089,
-          "latencySeconds": 2131.404,
+          "latencySeconds": 2131.435,
           "components": [
             {
               "id": "finance_agent",
@@ -1144,7 +1144,7 @@
           "score": 8.855,
           "standardError": 0.446,
           "costUsdPerTest": 0.285616,
-          "latencySeconds": 340.966,
+          "latencySeconds": 341.744,
           "components": [
             {
               "id": "finance_agent",
@@ -1303,7 +1303,7 @@
           "score": 53.197,
           "standardError": 1.066,
           "costUsdPerTest": 3.37642,
-          "latencySeconds": 1962.38,
+          "latencySeconds": 1965.589,
           "components": [
             {
               "id": "finance_agent",
@@ -1356,7 +1356,7 @@
           "score": 58.162,
           "standardError": 1.188,
           "costUsdPerTest": 3.787017,
-          "latencySeconds": 1413.286,
+          "latencySeconds": 1414.241,
           "components": [
             {
               "id": "finance_agent",
@@ -1409,7 +1409,7 @@
           "score": 36.535,
           "standardError": 1.167,
           "costUsdPerTest": 3.082399,
-          "latencySeconds": 2334.662,
+          "latencySeconds": 2334.674,
           "components": [
             {
               "id": "finance_agent",
@@ -1462,7 +1462,7 @@
           "score": 33.169,
           "standardError": 1.282,
           "costUsdPerTest": 1.45173,
-          "latencySeconds": 1788.543,
+          "latencySeconds": 1788.542,
           "components": [
             {
               "id": "finance_agent",
@@ -1515,7 +1515,7 @@
           "score": 51.687,
           "standardError": 1.057,
           "costUsdPerTest": 0.824394,
-          "latencySeconds": 1767.439,
+          "latencySeconds": 1767.438,
           "components": [
             {
               "id": "finance_agent",
@@ -1568,7 +1568,7 @@
           "score": 58.005,
           "standardError": 1.017,
           "costUsdPerTest": 14.239384,
-          "latencySeconds": 2242.722,
+          "latencySeconds": 2242.736,
           "components": [
             {
               "id": "finance_agent",
@@ -1621,7 +1621,7 @@
           "score": 53.085,
           "standardError": 1.293,
           "costUsdPerTest": 5.776241,
-          "latencySeconds": 2138.854,
+          "latencySeconds": 2138.853,
           "components": [
             {
               "id": "finance_agent",
@@ -1727,7 +1727,7 @@
           "score": 63.125,
           "standardError": 1.19,
           "costUsdPerTest": 18.457813,
-          "latencySeconds": 1667.741,
+          "latencySeconds": 1667.737,
           "components": [
             {
               "id": "finance_agent",
@@ -1780,7 +1780,7 @@
           "score": 51.216,
           "standardError": 1.072,
           "costUsdPerTest": 0.431072,
-          "latencySeconds": 1833.676,
+          "latencySeconds": 1833.681,
           "components": [
             {
               "id": "finance_agent",
@@ -1939,7 +1939,7 @@
           "score": 49.942,
           "standardError": 1.149,
           "costUsdPerTest": 1.438575,
-          "latencySeconds": 3656.531,
+          "latencySeconds": 3656.53,
           "components": [
             {
               "id": "finance_agent",
@@ -1992,7 +1992,7 @@
           "score": 28.668,
           "standardError": 1.1,
           "costUsdPerTest": 1.464372,
-          "latencySeconds": 1205.921,
+          "latencySeconds": 1205.929,
           "components": [
             {
               "id": "finance_agent",
@@ -2045,7 +2045,7 @@
           "score": 25.459,
           "standardError": 1.032,
           "costUsdPerTest": 0.281793,
-          "latencySeconds": 1261.928,
+          "latencySeconds": 1261.927,
           "components": [
             {
               "id": "finance_agent",
@@ -2098,7 +2098,7 @@
           "score": 33.842,
           "standardError": 1.171,
           "costUsdPerTest": 0.161806,
-          "latencySeconds": 2073.113,
+          "latencySeconds": 2073.112,
           "components": [
             {
               "id": "finance_agent",
@@ -2204,7 +2204,7 @@
           "score": 55.199,
           "standardError": 1.182,
           "costUsdPerTest": 0.410427,
-          "latencySeconds": 4038.374,
+          "latencySeconds": 4038.85,
           "components": [
             {
               "id": "finance_agent",
@@ -2257,7 +2257,7 @@
           "score": 53.514,
           "standardError": 1.305,
           "costUsdPerTest": 7.248682,
-          "latencySeconds": 4392.772,
+          "latencySeconds": 4392.771,
           "components": [
             {
               "id": "finance_agent",
@@ -2318,7 +2318,7 @@
       "totalModels": 74,
       "source": {
         "url": "https://www.vals.ai/benchmarks/fabv2",
-        "retrievedAt": "2026-10-05T14:14:03.855Z",
+        "retrievedAt": "2026-10-06T01:18:27.092Z",
         "sha256": "5f865eeef45db4cb5b1293d3883fad2d267e5be5b2e08b5bba98455d1be7da2e",
         "observedAt": "2026-10-01T00:00:00.000Z",
         "revision": "finance_agent v2"
@@ -7003,7 +7003,7 @@
       "totalModels": 73,
       "source": {
         "url": "https://www.vals.ai/benchmarks/legal_research",
-        "retrievedAt": "2026-10-05T14:14:03.855Z",
+        "retrievedAt": "2026-10-06T01:18:27.092Z",
         "sha256": "7cee19c04b6f56b1b758b0d27d8462ba6ad8af39b8db7f5fff0b22c827ac90fd",
         "observedAt": "2026-10-01T00:00:00.000Z",
         "revision": "legal_research v1"
@@ -11260,7 +11260,7 @@
       "totalModels": 65,
       "source": {
         "url": "https://www.vals.ai/benchmarks/tax_agent_bench",
-        "retrievedAt": "2026-10-05T14:14:03.855Z",
+        "retrievedAt": "2026-10-06T01:18:27.092Z",
         "sha256": "db5281119d5993c2e2c002edd325ce208eb39ac57dfb0d73fd1afd34153bc96f",
         "observedAt": "2026-09-30T00:00:00.000Z",
         "revision": "tax_agent_bench v1"
@@ -14403,7 +14403,7 @@
       "totalModels": 104,
       "source": {
         "url": "https://www.vals.ai/benchmarks/medcode",
-        "retrievedAt": "2026-10-05T14:14:03.855Z",
+        "retrievedAt": "2026-10-06T01:18:27.092Z",
         "sha256": "7a10326d8efc4030bc0762020cf43a1d7a1750b299b573b625920a7b1bec326b",
         "observedAt": "2026-10-01T00:00:00.000Z",
         "revision": "medcode v1"
