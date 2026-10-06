@@ -29,7 +29,6 @@ const codingChartArb = fc.record({
     costUsd: shape.costUsd ?? 5,
     id: "gemini-4-argon",
     setting: "default",
-    settingRank: 0,
   })),
   googleRows: fc.array(codingRowArb, { maxLength: 4 })
     .map(shapes => shapes.map((shape, position) => codingAgentRecord({

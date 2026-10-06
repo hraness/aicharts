@@ -28,7 +28,6 @@ describe("Antigravity CLI · Gemini 4 Argon coding-agent placement", () => {
     deepSwe: 78.76,
     id: "argon",
     setting: "default",
-    settingRank: 0,
     sweAtlas: 56.45,
     terminalBench: 56.06,
     totalTokens: 13_733_794,
