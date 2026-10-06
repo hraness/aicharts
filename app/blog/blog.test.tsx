@@ -135,6 +135,9 @@ import {
   createGpt6SolArticle,
 } from "./gpt-6-sol-coding-agent-index-article";
 import {
+  GEMINI_4_ARGON_ARTICLE_PUBLISHED_AT,
+} from "./gemini-4-argon-coding-agent-index-article";
+import {
   GPT_6_1_SOL_ARTICLE_PUBLISHED_AT,
 } from "./gpt-6-1-sol-coding-agent-index-article";
 import {
@@ -279,6 +282,10 @@ describe("aicharts benchmark notes", () => {
         expect(article.publishedAt).toBe(INTRODUCING_AI_CHARTS_PUBLISHED_AT);
         expect(article.updatedAt >= article.publishedAt).toBeTrue();
         expect(provenance).toStartWith("Drafted with AI from the source code and reviewed by ");
+      } else if (article.slug === "gemini-4-argon-coding-agent-index") {
+        expect(article.publishedAt).toBe(GEMINI_4_ARGON_ARTICLE_PUBLISHED_AT);
+        expect(article.updatedAt >= article.publishedAt).toBeTrue();
+        expect(articleToMarkdown(article)).toContain("captured October 6, 2026 UTC");
       } else if (article.slug === "gpt-6-1-sol-coding-agent-index") {
         expect(article.publishedAt).toBe(GPT_6_1_SOL_ARTICLE_PUBLISHED_AT);
         expect(article.updatedAt >= article.publishedAt).toBeTrue();

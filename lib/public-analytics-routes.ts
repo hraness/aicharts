@@ -6,6 +6,7 @@
  */
 export const PUBLIC_BLOG_SLUGS = [
   "introducing-ai-charts",
+  "gemini-4-argon-coding-agent-index",
   "gpt-6-1-sol-coding-agent-index",
   "opus-5-5-coding-agent-index",
   "sonnet-5-5-coding-agent-index",

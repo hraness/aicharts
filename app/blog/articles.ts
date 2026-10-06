@@ -6,6 +6,7 @@ import { PUBLIC_BLOG_SLUGS } from "@/lib/public-analytics-routes";
 import { createAaIndexCostArticle } from "./aa-index-cost-article";
 import { createCodingAgentScoreHoldoutsArticle } from "./coding-agent-score-holdouts-article";
 import { createDevinFusionCostSavingArticle } from "./devin-fusion-cost-saving-article";
+import { createGemini4ArgonCodingArticle } from "./gemini-4-argon-coding-agent-index-article";
 import { createGpt61SolArticle } from "./gpt-6-1-sol-coding-agent-index-article";
 import { createGpt6SolArticle } from "./gpt-6-sol-coding-agent-index-article";
 import { createGrok47Article } from "./grok-4-7-coding-agent-index-article";
@@ -347,6 +348,22 @@ export const BLOG_SOURCES = {
     url: "https://artificialanalysis.ai/models/gpt-6-1-sol",
     year: 2026,
   },
+  googleGemini4Argon: {
+    note:
+      "Cited for the September 30, 2026 announcement, the rollout to trusted cyber defenders through the Fairwind Program, the phased-release and wider-release statements, the introductory $2 and $10 per million token prices with the 95% cached-input discount and the later $4 and $20 prices, the 1M output token limit, the statement that trusted defenders receive the model without cyber guardrails, and the vendor-run DeepSWE v1.1 and other vendor benchmark figures that this site does not chart.",
+    publication: "Google",
+    title: "Gemini 4 Argon: our next era of frontier intelligence",
+    url: "https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-4-argon/",
+    year: 2026,
+  },
+  artificialAnalysisGemini4ArgonModel: {
+    note:
+      "Cited, from the page captured October 6, 2026 UTC, for the rounded 53 index score and #8 of 225 rank, the proprietary label, the “Not publicly available” marker, the September 30, 2026 release date, the $2.00 and $10.00 per million token prices with a 95% cache discount, the $1.99 cost per index task, the 110M output tokens across the index, and the 1M token context window.",
+    publication: "Artificial Analysis",
+    title: "Gemini 4 Argon (High) Intelligence, Performance & Price Analysis",
+    url: "https://artificialanalysis.ai/models/gemini-4-argon",
+    year: 2026,
+  },
   anthropicClaudeOpus55: {
     note:
       "Cited for the September 22, 2026 release, the $4 and $20 per million token prices against $5 and $25 for Opus 5, the $0.20 cache-read price, the 40% cost claim against Opus 5, medium as the default effort level, the max-effort setting behind Anthropic’s benchmark table, the statement that thinking can no longer be switched off, the safeguard fallback sentence, and the vendor-run benchmark table that this site does not chart.",
@@ -540,6 +557,7 @@ const mirrorCodeArticle = {
 
 export const blogArticles = [
   createIntroducingAiChartsArticle(),
+  createGemini4ArgonCodingArticle(),
   createGpt61SolArticle(),
   createOpus55CodingArticle(),
   createSonnet55CodingArticle(),

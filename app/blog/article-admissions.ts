@@ -15,6 +15,7 @@ import {
   type BlogSlug,
   type BlogSourceId,
 } from "./articles";
+import { GEMINI_4_ARGON_ARTICLE_ADMISSION_DRAFT } from "./gemini-4-argon-coding-agent-index-admission";
 import { GPT_6_1_SOL_ARTICLE_ADMISSION_DRAFT } from "./gpt-6-1-sol-coding-agent-index-admission";
 
 type AdmissionScore = 0 | 1 | 2;
@@ -46,7 +47,7 @@ export type BlogArticleAdmission = Readonly<{
   /** How the note was drafted; the visible provenance note states it. */
   drafting: ArticleDraftingKind;
   /** The recorded reviewer. An AI reviewer is named as AI and never called human. */
-  reviewedBy: typeof REVIEWED_BY;
+  reviewedBy: AiReviewer;
   reviewerType: "ai";
   /**
    * The answer a reader could not get from the obvious first result. Older
@@ -85,6 +86,10 @@ const REVIEWED_ON = "2026-10-01" as const;
 const REASSESS_ON = "2026-11-05" as const;
 const EVIDENCE_OWNER = "AI Charts editorial" as const;
 const REVIEWED_BY = "Codex" as const;
+/** Independent review of the Gemini 4 Argon note ran in a fresh-context Claude Fable 5.1 agent (2026-10-06). */
+export const CLAUDE_REVIEWED_BY = "Claude Fable 5.1" as const;
+/** Named AI reviewers a record may cite; each name reads as AI in the provenance note. */
+export type AiReviewer = typeof REVIEWED_BY | typeof CLAUDE_REVIEWED_BY;
 /** Notes written before the drafting field existed were drafted by AI agents from their cited sources. */
 const AI_DRAFTED = "ai" as const;
 const AI_REVIEWER = "ai" as const;
@@ -195,6 +200,7 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     },
     sourceCheckedOn: INTRODUCING_REVIEWED_ON,
   },
+  "gemini-4-argon-coding-agent-index": GEMINI_4_ARGON_ARTICLE_ADMISSION_DRAFT,
   "gpt-6-1-sol-coding-agent-index": GPT_6_1_SOL_ARTICLE_ADMISSION_DRAFT,
 
 
@@ -315,6 +321,11 @@ export const BLOG_ARTICLE_ADMISSIONS = {
         distinction:
           "The Grok 4.7 page places Grok Build · Grok 4.7 on both charts and compares it with Grok 4.6 in the same harness; this page never places Grok and compares Sonnet 5.5 with Opus 5.5 in Claude Code.",
         url: blogArticlePath("grok-4-7-coding-agent-index"),
+      },
+      {
+        distinction:
+          "The Gemini 4 Argon page places the third row, prices the two Claude Code rows above it as multiples of its cost, and reads Google’s limited-access statements; this page places the leading row and names Argon only as the DeepSWE v1.1 leader in the component table.",
+        url: blogArticlePath("gemini-4-argon-coding-agent-index"),
       },
     ],
     nonObviousAnswer:
