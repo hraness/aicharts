@@ -3,7 +3,7 @@
   "source": {
     "method": "models-api",
     "name": "OpenRouter",
-    "retrievedAt": "2026-09-29T20:53:07.559Z",
+    "retrievedAt": "2026-10-06T17:16:03.588Z",
     "timestampMeaning": "source-added-at",
     "url": "https://openrouter.ai/api/v1/models?sort=newest"
   },
@@ -28,6 +28,12 @@
     "windowDays": 90
   },
   "observedListings": [
+    {
+      "id": "google/gemini-nano-banana-2.1",
+      "model": "Nano Banana 2.1",
+      "providerId": "google",
+      "sourceAddedAt": "2026-10-06T15:33:45.000Z"
+    },
     {
       "id": "openai/gpt-6.1-sol-pro",
       "model": "GPT-6.1 Sol Pro",
@@ -360,6 +366,27 @@
     }
   ],
   "releases": [
+    {
+      "capabilities": {
+        "inputModalities": [
+          "image",
+          "text"
+        ],
+        "outputModalities": [
+          "image",
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "google/gemini-nano-banana-2.1-20261006",
+      "id": "google/gemini-nano-banana-2.1",
+      "model": "Nano Banana 2.1",
+      "modelUrl": "https://openrouter.ai/google/gemini-nano-banana-2.1",
+      "providerId": "google",
+      "providerName": "Google",
+      "sourceAddedAt": "2026-10-06T15:33:45.000Z",
+      "status": "awaiting-benchmark"
+    },
     {
       "capabilities": {
         "inputModalities": [
@@ -1326,27 +1353,6 @@
       "providerName": "OpenAI",
       "sourceAddedAt": "2026-07-09T09:54:10.000Z",
       "status": "benchmarked"
-    },
-    {
-      "capabilities": {
-        "inputModalities": [
-          "file",
-          "image",
-          "text"
-        ],
-        "outputModalities": [
-          "text"
-        ],
-        "supportsTools": true
-      },
-      "canonicalSlug": "x-ai/grok-4.5-20260708",
-      "id": "x-ai/grok-4.5",
-      "model": "Grok 4.5",
-      "modelUrl": "https://openrouter.ai/x-ai/grok-4.5",
-      "providerId": "xai",
-      "providerName": "xAI",
-      "sourceAddedAt": "2026-07-08T15:05:54.000Z",
-      "status": "awaiting-benchmark"
     }
   ]
 }
