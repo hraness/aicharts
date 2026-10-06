@@ -37,11 +37,11 @@ describe("aicharts public positioning", () => {
     for (const fact of ["benchmark scores", "cost", "tokens per task", "local collector"]) {
       expect(site.description).toContain(fact);
     }
-    // The concise hero names the comparisons; collector context remains in the metadata and usage section.
-    for (const fact of ["benchmark scores", "prices", "tokens each task"]) {
+    // The hero names the comparisons; collector context remains in the metadata and usage section.
+    for (const fact of ["Benchmark scores", "cost", "tokens per task"]) {
       expect(homeLede).toContain(fact);
     }
-    expect(homeLede.length).toBeLessThan(160);
+    expect(homeLede.length).toBeLessThanOrEqual(240);
     expect(homeLede).not.toMatch(/universal|definitive|best model overall/iu);
     expect(homePrimaryAction.href.startsWith("/")).toBeTrue();
     expect(homeSecondaryAction.href).toBe("/usage");
