@@ -3,7 +3,7 @@ title: Publish the Antigravity CLI · Gemini 4 Argon coding-agent note
 description: Ship /blog/gemini-4-argon-coding-agent-index, a note that places Antigravity CLI · Gemini 4 Argon (default) third on the coding-agent chart from the checked snapshot, prices the two rows above it as multiples of its cost, walks the cost frontier down from it, names the component that carries the composite, separates the Intelligence Index row from it, reads Google's limited-access statements, and completes its Slopcamera figure through the documented generation path.
 type: plan
 area: blog
-status: blocked
+status: in-progress
 repository_scopes:
   - app/blog
   - lib/gemini-4-argon-placement.ts
@@ -67,12 +67,12 @@ Provenance: drafted by a Cursor cloud agent (Claude Fable 5.1) on 2026-10-06 fro
 
 1. Verify the snapshot rows and every quotation against `data/coding-agents.json`, `data/artificial-analysis-intelligence-v4-3.json`, and the two primary pages. Done 2026-10-06.
 2. Write the placement binding, the article factory, registration, admission, Sonnet nearest-URL update, ledger reason, and tests; run the admission gate and the independent review; apply the review's required changes. Done 2026-10-06.
-3. Generate, review, and register the Slopcamera figure. Blocked 2026-10-06: the cloud VM has no Vercel CLI (`vercel: command not found`), no `~/.vercel` link, no `VERCEL_TOKEN`, no `SLOPCAMERA_SOURCE_ROOT`, and no provider credential in the environment, so `vercel env run` cannot inject the gateway credential and the reviewed source build is not present. The prompt and provider options are written to ignored `artifacts/slopcamera/`; only the credentialed call, review, and registration are outstanding.
+3. Generate, review, and register the Slopcamera figure. Done 2026-10-06. Generation was blocked in the cloud VM (no Vercel CLI, no `~/.vercel` link, no `VERCEL_TOKEN`, no `SLOPCAMERA_SOURCE_ROOT`, no provider credential), so the owner ran the documented command on a credentialed machine: one paid call, gateway directory `20261006T151140770Z-image-06130a7c-4ac`, job `gateway_c84e8a377e0a4b8b83606d2ba2042e94`, output `image-01.webp` at 81,450 bytes, SHA-256 `94b3560d9765c5d19613bc330b30ef5b1c2b2d8806e1f9802e77ad0962bf9941`, prompt SHA-256 matching the prompt below, `localValidation` `decode-passed`, reviewed at 1536×864 and in the 384×216 contact sheet and accepted. The registry row, manifest entry, and `public/images/blog/gemini-4-argon-coding-agent-index.webp` were added from those values; `bun test app/blog/blog.test.tsx app/blog/gemini-4-argon-coding-agent-index-article.test.ts` and `bun run typecheck` pass.
 4. Let CI pass, enable auto-merge on the task-owned pull request, and verify the live URL, figure, Open Graph image, `/blog` listing, and `/llms.txt` entry.
 
 ## Figure handoff
 
-Until the figure lands, `bun run typecheck` fails on `app/blog/editorial-images.ts` (the registry type requires a row for every public slug) and on the blog image-gate assertion that compares registered slugs to `BLOG_SLUGS`, and `bun test app/blog/gemini-4-argon-coding-agent-index-article.test.ts` fails only the `blogEditorialImage` assertion. All three are the intended fail-closed behavior.
+The figure landed on 2026-10-06 through the steps below. Until it did, `bun run typecheck` fails on `app/blog/editorial-images.ts` (the registry type requires a row for every public slug) and on the blog image-gate assertion that compares registered slugs to `BLOG_SLUGS`, and `bun test app/blog/gemini-4-argon-coding-agent-index-article.test.ts` fails only the `blogEditorialImage` assertion. All three are the intended fail-closed behavior.
 
 ### Prompt
 
