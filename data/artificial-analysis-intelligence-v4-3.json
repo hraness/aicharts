@@ -2191,13 +2191,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.06747128715875697,
-        "cacheRead": 0.21247096111146266,
-        "cacheWrite": 0.21662372833624222,
-        "input": 0.45738411814947544,
+        "cacheRead": 0.1431538743289597,
+        "cacheWrite": 0.9097945961612719,
+        "input": 1.0812378991920018,
         "nonCacheInput": 0.028289428701770453,
         "output": 0.21734760942006193,
         "reasoning": 0.14987632226130493,
-        "total": 0.6747317275695374
+        "total": 1.2985855086120641
       },
       "creator": {
         "id": "faddc6d9-2c14-445f-9b28-56726f59c793",
@@ -2717,13 +2717,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.017753866403875142,
-        "cacheRead": 0.02108940475429524,
-        "cacheWrite": 0.054250309264039676,
-        "input": 0.07976014869581427,
+        "cacheRead": 0.013398725129293753,
+        "cacheWrite": 0.13115710551405457,
+        "input": 0.14897626532082772,
         "nonCacheInput": 0.004420434677479369,
         "output": 0.04376674782012017,
         "reasoning": 0.026012881416245023,
-        "total": 0.12352689651593446
+        "total": 0.1927430131409478
       },
       "creator": {
         "id": "faddc6d9-2c14-445f-9b28-56726f59c793",
@@ -3909,7 +3909,7 @@
     "method": "public-next-flight",
     "methodologyUrl": "https://artificialanalysis.ai/methodology/intelligence-benchmarking",
     "name": "Artificial Analysis",
-    "retrievedAt": "2026-10-06T01:18:12.647Z",
+    "retrievedAt": "2026-10-06T11:15:48.331Z",
     "sourceClass": "benchmark-publisher",
     "termsUrl": "https://artificialanalysis.ai/docs/legal/Terms-of-Use.pdf",
     "url": "https://artificialanalysis.ai/models"
