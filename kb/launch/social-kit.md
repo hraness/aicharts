@@ -204,7 +204,7 @@ https://aicharts.io/blog/introducing-ai-charts
 
 ## Product Hunt
 
-Tagline: See which model wins at each price.
+Tagline: Model benchmarks at a glance
 
 Description:
 
@@ -216,7 +216,7 @@ Topics: Artificial Intelligence, Developer Tools, Data Visualization
 
 ## Show HN and first comment fact sheet
 
-- See which model wins at each price.
+- Model benchmarks at a glance
 - aicharts puts published AI benchmark scores and the cost of a task on one chart, so you can see which model gives the most for your budget. Every point names its source and the day it was checked.
 - The homepage chart plots 103 model settings by Artificial Analysis Intelligence Index v4.3.2 score against cost per task. The line joins the models nothing cheaper beats, so the best pick at each price stands out.
 - The coding chart compares 31 coding-agent setups. Each point is a model, the agent app running it, and an effort setting. Hover one to see its scores, cost per task, time, and tokens.

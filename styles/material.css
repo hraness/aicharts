@@ -48,7 +48,7 @@
   font-size: clamp(1.0625rem, 1rem + .3vw, 1.1875rem);
   line-height: 1.55;
   margin-top: 1rem;
-  max-inline-size: 42rem;
+  max-inline-size: 56rem;
   text-wrap: pretty;
 }
 .chart-home-hero > .chart-page-intro__actions {

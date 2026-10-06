@@ -111,5 +111,5 @@
 /* Product introduction follows the studio hero rhythm above the chart workspace. */
 .chart-home-hero { display: grid; justify-items: center; padding-block: clamp(2.5rem, 6vw, 4.5rem); text-align: center; }
 .chart-home-hero h1 { font-size: clamp(2.375rem, 1.65rem + 2.4vw, 4rem); max-inline-size: 22ch; text-wrap: balance; }
-.chart-home-hero > .chart-home-hero__lede { max-inline-size: 48ch; font-size: clamp(1.0625rem, 1rem + .3vw, 1.25rem); }
+.chart-home-hero > .chart-home-hero__lede { max-inline-size: 56rem; font-size: clamp(1.0625rem, 1rem + .3vw, 1.25rem); }
 .chart-home-hero > .chart-page-intro__actions { justify-content: center; margin-block-start: 1.4rem; }

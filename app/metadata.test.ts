@@ -7,6 +7,7 @@ import { metadata as homeMetadata } from "./page";
 import { metadata as calculatorMetadata } from "./calculator/page";
 import { metadata as codingMetadata } from "./coding/page";
 import { metadata as benchmarksMetadata } from "./benchmarks/page";
+import { productMessaging } from "./messaging";
 import { homeHeading, notFoundSearchSite, searchSite, site } from "./site";
 
 describe("page metadata ownership", () => {
@@ -37,7 +38,7 @@ describe("page metadata ownership", () => {
       },
       twitter: { card: "summary_large_image", title: searchSite.title },
     });
-    expect(homeHeading).toBe(site.tagline);
+    expect(homeHeading).toBe(productMessaging.hero.heading);
   });
 
   test("gives focused comparison workspaces distinct indexable identities", () => {
