@@ -380,6 +380,26 @@
       },
       "validation": "decode-passed",
       "review": "accepted"
+    },
+    {
+      "slug": "gemini-4-argon-coding-agent-index",
+      "promptSha256": "c0dfd0bc86d88d7918aa81627db4ed68e2f3155b82ac927fe72b8e9d09e15d16",
+      "master": {
+        "path": "/images/blog/gemini-4-argon-coding-agent-index.webp",
+        "width": 1536,
+        "height": 864,
+        "bytes": 81450,
+        "sha256": "94b3560d9765c5d19613bc330b30ef5b1c2b2d8806e1f9802e77ad0962bf9941"
+      },
+      "receiptPath": "artifacts/slopcamera/generated/gateway/20261006T151140770Z-image-06130a7c-4ac/receipt.json",
+      "jobPath": "artifacts/slopcamera/generated/gateway-jobs/gateway_c84e8a377e0a4b8b83606d2ba2042e94.json",
+      "generator": {
+        "package": "@hraness/slopcamera",
+        "version": "3.2.5",
+        "sourceCommit": "66b4322030f4de24f4d5b6d0c2515c109259f901"
+      },
+      "validation": "decode-passed",
+      "review": "accepted"
     }
   ]
 }

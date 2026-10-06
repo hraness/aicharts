@@ -245,6 +245,15 @@ export const BLOG_EDITORIAL_IMAGES = {
     "20261005T151733086Z-image-91b46b61-53d/receipt.json",
     "gateway_7e57d5c4adea49d6a6a0afd0c170b2b8.json",
   ),
+  "gemini-4-argon-coding-agent-index": image(
+    "gemini-4-argon-coding-agent-index",
+    "A matte ivory column stands behind a sheer dark veil near the left end of a long low charcoal shelf; two taller dark pillars stand together at the right end, with one brass line along the shelf’s front edge.",
+    "Antigravity CLI · Gemini 4 Argon is third on the coding-agent chart, and every row above it costs at least twice as much per task; Google has limited access to the model to named groups.",
+    "94b3560d9765c5d19613bc330b30ef5b1c2b2d8806e1f9802e77ad0962bf9941",
+    "c0dfd0bc86d88d7918aa81627db4ed68e2f3155b82ac927fe72b8e9d09e15d16",
+    "20261006T151140770Z-image-06130a7c-4ac/receipt.json",
+    "gateway_c84e8a377e0a4b8b83606d2ba2042e94.json",
+  ),
 } as const satisfies EditorialImageRecord;
 
 export function blogEditorialImage<Slug extends BlogSlug>(
