@@ -2826,14 +2826,14 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.08686542652752176,
-        "cacheRead": 0.12712219085262877,
-        "cacheWrite": 0.10760879640129688,
-        "input": 0.2428299298199591,
-        "nonCacheInput": 0.008098942566033468,
-        "output": 0.08686542652752176,
+        "answer": 0.11543190907684102,
+        "cacheRead": 0.1310729843254109,
+        "cacheWrite": 0.2191712061001953,
+        "input": 0.36199210711479757,
+        "nonCacheInput": 0.011747916689191404,
+        "output": 0.11543190907684102,
         "reasoning": 0,
-        "total": 0.3296953563474809
+        "total": 0.47742401619163854
       },
       "creator": {
         "id": "58b835bf-4c87-4f87-a846-df4b692c6e7d",
@@ -3909,7 +3909,7 @@
     "method": "public-next-flight",
     "methodologyUrl": "https://artificialanalysis.ai/methodology/intelligence-benchmarking",
     "name": "Artificial Analysis",
-    "retrievedAt": "2026-10-05T14:11:25.490Z",
+    "retrievedAt": "2026-10-06T01:18:12.647Z",
     "sourceClass": "benchmark-publisher",
     "termsUrl": "https://artificialanalysis.ai/docs/legal/Terms-of-Use.pdf",
     "url": "https://artificialanalysis.ai/models"
