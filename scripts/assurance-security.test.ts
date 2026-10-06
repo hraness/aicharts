@@ -58,6 +58,10 @@ describe("dependency pins", () => {
     expect(checkCargoLock(read("Cargo.lock"), "Cargo.lock")).toEqual([]);
     for (const file of ["ci.yml", "cli-release.yml", "cli-macos.yml", "cli-publish.yml", "auto-tag.yml", "codex-auto-merge.yml", "data-refresh.yml"]) expect(checkWorkflowPins(read(`.github/workflows/${file}`), file)).toEqual([]);
   });
+  test("source-map-js is overridden to the patched 1.2.2 release (GHSA-68fv-2mgg-jv7q)", () => {
+    expect((JSON.parse(read("package.json")) as { overrides?: Record<string, string> }).overrides?.["source-map-js"]).toBe("1.2.2");
+    expect(lock.packages["source-map-js"]?.[0]).toBe("source-map-js@1.2.2");
+  });
   test("the Next.js lint plugin's fast-glob resolves to the locked tinyglobby, keeping braces (GHSA-vfj7-8cjw-p6xm, no patched release) out of the lockfile", () => {
     expect((JSON.parse(read("package.json")) as { overrides?: Record<string, string> }).overrides?.["fast-glob"]).toBe("npm:tinyglobby@0.2.17");
     expect(lock.packages["fast-glob"]?.[0]).toBe("tinyglobby@0.2.17");
