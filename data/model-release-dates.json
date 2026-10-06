@@ -310,8 +310,8 @@
   {
     "canonicalModelId": "google/gemini-4-argon",
     "status": "pending",
-    "reason": "Gemini 4 Argon appears on the checked coding-agent and Intelligence snapshots; a Google-owned publication date has not been verified.",
-    "researchedOn": "2026-10-05"
+    "reason": "Google announced Gemini 4 Argon on 2026-09-30 (https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-4-argon/) as a rollout to trusted cyber defenders through its Fairwind Program with no general release date; that limited rollout matches no verified stage (general-availability, public-preview, public-release), so the record stays pending until Google publishes a public or preview release.",
+    "researchedOn": "2026-10-06"
   },
   {
     "canonicalModelId": "meta/muse-spark-1.1",
