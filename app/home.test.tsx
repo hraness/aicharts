@@ -309,13 +309,13 @@ describe("homepage canonical content", () => {
     expect(renderToStaticMarkup(createElement(BenchmarkAtlasExplorer, { entries: [], datasets: [] }))).toBe("");
   });
 
-  test("sets the author's blurb in a founder note below the hero", () => {
+  test("sets the author's blurb in a founder note after the lead chart", () => {
     const markup = renderToStaticMarkup(createElement(Home));
     expect(markup).toContain('class="founder-note"');
     expect(markup).toContain("and marks the best score at every budget. A local collector adds your own agents");
     expect(markup).toContain('href="https://aicharts.io"');
     expect(markup).not.toContain("founder-note__signature");
     expect(markup.indexOf("chart-home-hero")).toBeLessThan(markup.indexOf("founder-note"));
-    expect(markup.indexOf("founder-note")).toBeLessThan(markup.indexOf('class="chart-navigation'));
+    expect(markup.indexOf("founder-note")).toBeGreaterThan(markup.indexOf("chart-home-hero"));
   });
 });

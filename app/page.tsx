@@ -48,13 +48,13 @@ export default function Home() {
           <Link className="chart-home-hero__secondary" href={homeSecondaryAction.href}>{homeSecondaryAction.label} <span aria-hidden="true">→</span></Link>
         </p>
       </header>
+      <ChartNavigation current="/" />
+      <HomeIntelligenceEfficiency snapshot={parsed.value} />
       <FounderNote
         emoji="📈"
         paragraphs={["aicharts plots published AI benchmark scores against cost and tokens per task, and marks the best score at every budget. A local collector adds your own agents' token use, so your work sits on the same chart."]}
         action={{ label: "See the charts:", href: "https://aicharts.io" }}
       />
-      <ChartNavigation current="/" />
-      <HomeIntelligenceEfficiency snapshot={parsed.value} />
       <section aria-labelledby="home-about-title" className="home-about">
         <h2 id="home-about-title">{homeAboutHeading}</h2>
         <p>{site.introduction}</p>
