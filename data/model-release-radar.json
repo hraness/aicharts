@@ -3,7 +3,7 @@
   "source": {
     "method": "models-api",
     "name": "OpenRouter",
-    "retrievedAt": "2026-10-07T16:36:57.035Z",
+    "retrievedAt": "2026-10-07T22:03:41.312Z",
     "timestampMeaning": "source-added-at",
     "url": "https://openrouter.ai/api/v1/models?sort=newest"
   },
@@ -28,6 +28,12 @@
     "windowDays": 90
   },
   "observedListings": [
+    {
+      "id": "anthropic/claude-haiku-5.5",
+      "model": "Claude Haiku 5.5",
+      "providerId": "anthropic",
+      "sourceAddedAt": "2026-10-07T18:31:23.000Z"
+    },
     {
       "id": "google/gemini-nano-banana-2.1",
       "model": "Nano Banana 2.1",
@@ -366,6 +372,27 @@
     }
   ],
   "releases": [
+    {
+      "capabilities": {
+        "inputModalities": [
+          "file",
+          "image",
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "anthropic/claude-haiku-5.5-20261007",
+      "id": "anthropic/claude-haiku-5.5",
+      "model": "Claude Haiku 5.5",
+      "modelUrl": "https://openrouter.ai/anthropic/claude-haiku-5.5",
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "sourceAddedAt": "2026-10-07T18:31:23.000Z",
+      "status": "awaiting-benchmark"
+    },
     {
       "capabilities": {
         "inputModalities": [
