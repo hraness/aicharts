@@ -17,7 +17,6 @@ const contentSecurityPolicy = [
   "default-src 'none'",
   "base-uri 'none'",
   "form-action 'none'",
-  "frame-ancestors 'self' https://hraness.com",
   "img-src 'none'",
   "object-src 'none'",
   "script-src 'none'",

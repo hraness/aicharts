@@ -42,7 +42,6 @@ export const CONTENT_SECURITY_POLICY = [
   "font-src 'self' data:",
   "connect-src 'self' https://us.i.posthog.com https://eu.i.posthog.com https://account.hraness.com https://usage.aicharts.io https://challenges.cloudflare.com",
   "frame-src https://challenges.cloudflare.com",
-  "frame-ancestors 'none'",
   "base-uri 'self'",
   "object-src 'none'",
 ].join("; ");
@@ -53,7 +52,6 @@ export const SECURITY_HEADERS = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()" },
   { key: "Strict-Transport-Security", value: "max-age=63072000" },
-  { key: "X-Frame-Options", value: "DENY" },
 ] as const;
 
 const nextConfig: NextConfig = {
