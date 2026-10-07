@@ -1,5 +1,13 @@
 # aicharts
 
+> 📈 aicharts plots published AI benchmark scores against cost and tokens per
+> task on one chart, and marks the best score at every budget. A local collector
+> measures your own agents' token use, so the chart covers your work too.
+>
+> See the charts: https://aicharts.io
+>
+> — Ben Guo
+
 [aicharts](https://aicharts.io) plots published AI benchmark scores against
 cost and tokens per task, marking the best score at every budget. A local
 collector measures your own agents' token use.
