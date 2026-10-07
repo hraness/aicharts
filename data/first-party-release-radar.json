@@ -7452,7 +7452,7 @@
       "id": "anthropic-sitemap",
       "providerId": "anthropic",
       "providerName": "Anthropic",
-      "retrievedAt": "2026-10-07T01:38:02.066Z",
+      "retrievedAt": "2026-10-07T08:47:34.618Z",
       "url": "https://www.anthropic.com/sitemap.xml"
     },
     {
@@ -7496,7 +7496,7 @@
       "id": "meta-research-sitemap",
       "providerId": "meta",
       "providerName": "Meta",
-      "retrievedAt": "2026-10-07T01:38:02.066Z",
+      "retrievedAt": "2026-10-07T08:47:34.618Z",
       "url": "https://research.meta.ai/sitemap.xml"
     },
     {
@@ -7504,7 +7504,7 @@
         "contentType": "application/xml",
         "httpStatus": 200,
         "shape": {
-          "byteLength": 1227758,
+          "byteLength": 1227870,
           "candidateCount": 9,
           "canonicalHostEntryCount": 172,
           "datedEntryCount": 172,
@@ -7518,7 +7518,7 @@
       "id": "openai-safety-sitemap",
       "providerId": "openai",
       "providerName": "OpenAI",
-      "retrievedAt": "2026-10-07T01:38:02.066Z",
+      "retrievedAt": "2026-10-07T08:47:34.618Z",
       "url": "https://openai.com/sitemap.xml/safety/"
     },
     {
@@ -7540,7 +7540,7 @@
       "id": "openai-model-catalog",
       "providerId": "openai",
       "providerName": "OpenAI",
-      "retrievedAt": "2026-10-07T01:38:02.066Z",
+      "retrievedAt": "2026-10-07T08:47:34.618Z",
       "url": "https://developers.openai.com/api/docs/models/all.md"
     },
     {
@@ -7562,7 +7562,7 @@
       "id": "meta-newsroom-index",
       "providerId": "meta",
       "providerName": "Meta",
-      "retrievedAt": "2026-10-07T01:38:02.066Z",
+      "retrievedAt": "2026-10-07T08:47:34.618Z",
       "url": "https://about.fb.com/llms.txt"
     },
     {
@@ -7584,7 +7584,7 @@
       "id": "google-deepmind-sitemap",
       "providerId": "google",
       "providerName": "Google DeepMind",
-      "retrievedAt": "2026-10-07T01:38:02.066Z",
+      "retrievedAt": "2026-10-07T08:47:34.618Z",
       "url": "https://deepmind.google/sitemap.xml"
     },
     {
@@ -7606,7 +7606,7 @@
       "id": "xai-release-notes",
       "providerId": "xai",
       "providerName": "xAI",
-      "retrievedAt": "2026-10-07T01:38:02.066Z",
+      "retrievedAt": "2026-10-07T08:47:34.618Z",
       "url": "https://docs.x.ai/developers/release-notes.md"
     },
     {
@@ -7628,7 +7628,7 @@
       "id": "mistral-site-sitemap",
       "providerId": "mistral",
       "providerName": "Mistral AI",
-      "retrievedAt": "2026-10-07T01:38:02.066Z",
+      "retrievedAt": "2026-10-07T08:47:34.618Z",
       "url": "https://mistral.ai/sitemap-0.xml"
     },
     {
@@ -7650,7 +7650,7 @@
       "id": "cohere-docs-sitemap",
       "providerId": "cohere",
       "providerName": "Cohere",
-      "retrievedAt": "2026-10-07T01:38:02.066Z",
+      "retrievedAt": "2026-10-07T08:47:34.618Z",
       "url": "https://docs.cohere.com/sitemap.xml"
     },
     {
@@ -7672,7 +7672,7 @@
       "id": "deepseek-site-sitemap",
       "providerId": "deepseek",
       "providerName": "DeepSeek",
-      "retrievedAt": "2026-10-07T01:38:02.066Z",
+      "retrievedAt": "2026-10-07T08:47:34.618Z",
       "url": "https://www.deepseek.com/sitemap.xml"
     },
     {
@@ -7694,7 +7694,7 @@
       "id": "deepseek-api-sitemap",
       "providerId": "deepseek",
       "providerName": "DeepSeek",
-      "retrievedAt": "2026-10-07T01:38:02.066Z",
+      "retrievedAt": "2026-10-07T08:47:34.618Z",
       "url": "https://api-docs.deepseek.com/updates/"
     },
     {
@@ -7716,7 +7716,7 @@
       "id": "zai-release-notes",
       "providerId": "z_ai",
       "providerName": "Z.ai",
-      "retrievedAt": "2026-10-07T01:38:02.066Z",
+      "retrievedAt": "2026-10-07T08:47:34.618Z",
       "url": "https://docs.z.ai/release-notes/new-released.md"
     },
     {
@@ -7738,7 +7738,7 @@
       "id": "kimi-docs-sitemap",
       "providerId": "moonshot_ai",
       "providerName": "Moonshot AI",
-      "retrievedAt": "2026-10-07T01:38:02.066Z",
+      "retrievedAt": "2026-10-07T08:47:34.618Z",
       "url": "https://platform.kimi.com/docs/sitemap.xml"
     },
     {
@@ -7760,7 +7760,7 @@
       "id": "qwen-model-releases",
       "providerId": "alibaba_cloud",
       "providerName": "Alibaba Qwen",
-      "retrievedAt": "2026-10-07T01:38:02.066Z",
+      "retrievedAt": "2026-10-07T08:47:34.618Z",
       "url": "https://docs.qwencloud.com/changelog/models.md"
     },
     {
@@ -7782,7 +7782,7 @@
       "id": "minimax-model-releases",
       "providerId": "minimax",
       "providerName": "MiniMax",
-      "retrievedAt": "2026-10-07T01:38:02.066Z",
+      "retrievedAt": "2026-10-07T08:47:34.618Z",
       "url": "https://platform.minimax.io/docs/release-notes/models.md"
     },
     {
@@ -7804,7 +7804,7 @@
       "id": "bytedance-seed-sitemap",
       "providerId": "bytedance",
       "providerName": "ByteDance Seed",
-      "retrievedAt": "2026-10-07T01:38:02.066Z",
+      "retrievedAt": "2026-10-07T08:47:34.618Z",
       "url": "https://seed.bytedance.com/sitemap.xml"
     },
     {
@@ -7826,7 +7826,7 @@
       "id": "microsoft-model-sitemap",
       "providerId": "microsoft",
       "providerName": "Microsoft AI",
-      "retrievedAt": "2026-10-07T01:38:02.066Z",
+      "retrievedAt": "2026-10-07T08:47:34.618Z",
       "url": "https://microsoft.ai/model-sitemap.xml"
     },
     {
@@ -7848,7 +7848,7 @@
       "id": "nvidia-nemotron-rss",
       "providerId": "nvidia",
       "providerName": "NVIDIA",
-      "retrievedAt": "2026-10-07T01:38:02.066Z",
+      "retrievedAt": "2026-10-07T08:47:34.618Z",
       "url": "https://blogs.nvidia.com/blog/tag/nemotron/feed/"
     },
     {
@@ -7870,7 +7870,7 @@
       "id": "amazon-nova-rss",
       "providerId": "amazon",
       "providerName": "Amazon",
-      "retrievedAt": "2026-10-07T01:38:02.066Z",
+      "retrievedAt": "2026-10-07T08:47:34.618Z",
       "url": "https://aws.amazon.com/blogs/aws/category/artificial-intelligence/amazon-machine-learning/amazon-bedrock/amazon-nova/feed/"
     },
     {
@@ -7892,7 +7892,7 @@
       "id": "baidu-ernie-sitemap",
       "providerId": "baidu",
       "providerName": "Baidu",
-      "retrievedAt": "2026-10-07T01:38:02.066Z",
+      "retrievedAt": "2026-10-07T08:47:34.618Z",
       "url": "https://ernie.baidu.com/blog/en/sitemap.xml"
     },
     {
@@ -7914,7 +7914,7 @@
       "id": "tencent-post-sitemaps",
       "providerId": "tencent",
       "providerName": "Tencent",
-      "retrievedAt": "2026-10-07T01:38:02.066Z",
+      "retrievedAt": "2026-10-07T08:47:34.618Z",
       "url": "https://www.tencent.com/sitemap_index.xml"
     },
     {
@@ -7936,7 +7936,7 @@
       "id": "xiaomi-mimo-sitemap",
       "providerId": "xiaomi",
       "providerName": "Xiaomi MiMo",
-      "retrievedAt": "2026-10-07T01:38:02.066Z",
+      "retrievedAt": "2026-10-07T08:47:34.618Z",
       "url": "https://mimo.mi.com/sitemap.xml"
     },
     {
@@ -7958,7 +7958,7 @@
       "id": "ai21-post-sitemap",
       "providerId": "ai21",
       "providerName": "AI21 Labs",
-      "retrievedAt": "2026-10-07T01:38:02.066Z",
+      "retrievedAt": "2026-10-07T08:47:34.618Z",
       "url": "https://www.ai21.com/post-sitemap.xml"
     },
     {
@@ -7966,7 +7966,7 @@
         "contentType": "application/xml",
         "httpStatus": 200,
         "shape": {
-          "byteLength": 926829,
+          "byteLength": 926820,
           "candidateCount": 5,
           "canonicalHostEntryCount": 5000,
           "datedEntryCount": 4064,
@@ -7980,7 +7980,7 @@
       "id": "ibm-granite-sitemap",
       "providerId": "ibm",
       "providerName": "IBM Granite",
-      "retrievedAt": "2026-10-07T01:38:02.066Z",
+      "retrievedAt": "2026-10-07T08:47:34.618Z",
       "url": "https://research.ibm.com/sitemap-0.xml"
     },
     {
@@ -8002,7 +8002,7 @@
       "id": "ai2-model-sitemap",
       "providerId": "ai2",
       "providerName": "Ai2",
-      "retrievedAt": "2026-10-07T01:38:02.066Z",
+      "retrievedAt": "2026-10-07T08:47:34.618Z",
       "url": "https://allenai.org/sitemap.xml"
     },
     {
@@ -8024,7 +8024,7 @@
       "id": "stepfun-model-sitemap",
       "providerId": "stepfun",
       "providerName": "StepFun",
-      "retrievedAt": "2026-10-07T01:38:02.066Z",
+      "retrievedAt": "2026-10-07T08:47:34.618Z",
       "url": "https://platform.stepfun.ai/docs/sitemap.xml"
     },
     {
@@ -8046,7 +8046,7 @@
       "id": "stepfun-china-model-sitemap",
       "providerId": "stepfun",
       "providerName": "StepFun",
-      "retrievedAt": "2026-10-07T01:38:02.066Z",
+      "retrievedAt": "2026-10-07T08:47:34.618Z",
       "url": "https://platform.stepfun.com/docs/sitemap.xml"
     },
     {
@@ -8068,7 +8068,7 @@
       "id": "cognition-sitemap",
       "providerId": "cognition",
       "providerName": "Cognition",
-      "retrievedAt": "2026-10-07T01:38:02.066Z",
+      "retrievedAt": "2026-10-07T08:47:34.618Z",
       "url": "https://cognition.com/sitemap.xml"
     },
     {
@@ -8090,7 +8090,7 @@
       "id": "cognition-blog-index",
       "providerId": "cognition",
       "providerName": "Cognition",
-      "retrievedAt": "2026-10-07T01:38:02.066Z",
+      "retrievedAt": "2026-10-07T08:47:34.618Z",
       "url": "https://cognition.com/blog"
     }
   ]
