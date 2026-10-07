@@ -1,0 +1,5 @@
+Contact: https://github.com/hraness/aicharts/security/advisories/new
+Expires: 2027-10-07T00:00:00.000Z
+Policy: https://github.com/hraness/aicharts/blob/main/SECURITY.md
+Canonical: https://aicharts.io/.well-known/security.txt
+Preferred-Languages: en

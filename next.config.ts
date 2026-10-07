@@ -28,7 +28,38 @@ export const MODEL_ROUTE_REDIRECTS = [
   ["/models/unlisted/glm-5-3.fffd32adf07098d3cd835ee1/default", "/models/zai/glm-5.3/default"],
 ] as const satisfies readonly (readonly [`/models/${string}`, `/models/${string}`])[];
 
+/**
+ * The page loads its own scripts and styles, the consent-gated PostHog
+ * capture host, the Hraness account host used by the footer, and the
+ * Cloudflare Turnstile widget. Inline script and style stay allowed because
+ * Next.js and the theme bootstrap emit inline tags that carry no nonce.
+ */
+export const CONTENT_SECURITY_POLICY = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https:",
+  "font-src 'self' data:",
+  "connect-src 'self' https://us.i.posthog.com https://eu.i.posthog.com https://account.hraness.com https://usage.aicharts.io https://challenges.cloudflare.com",
+  "frame-src https://challenges.cloudflare.com",
+  "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "object-src 'none'",
+].join("; ");
+
+export const SECURITY_HEADERS = [
+  { key: "Content-Security-Policy", value: CONTENT_SECURITY_POLICY },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()" },
+  { key: "Strict-Transport-Security", value: "max-age=63072000" },
+  { key: "X-Frame-Options", value: "DENY" },
+] as const;
+
 const nextConfig: NextConfig = {
+  async headers() {
+    return [{ headers: [...SECURITY_HEADERS], source: "/:path*" }];
+  },
   async redirects() {
     return [
       {

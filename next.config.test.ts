@@ -11,7 +11,7 @@ import { INDEX_MODEL_PAGES } from "@/lib/index-model-pages";
 import { MODEL_CARD_PRESENTATIONS } from "@/lib/model-card-collection";
 import { modelCardRouteStatus } from "@/lib/model-card-route-status";
 
-import nextConfig, { createNextConfig, MODEL_ROUTE_REDIRECTS } from "./next.config";
+import nextConfig, { createNextConfig, MODEL_ROUTE_REDIRECTS, SECURITY_HEADERS } from "./next.config";
 
 const identity = {
   VERCEL: "1",
@@ -107,6 +107,7 @@ describe("site migration redirects", () => {
       "https://aicharts-git-example-hraness.vercel.app",
     );
     expect(headers).toEqual([
+      { headers: [...SECURITY_HEADERS], source: "/:path*" },
       {
         headers: [
           {
@@ -123,5 +124,19 @@ describe("site migration redirects", () => {
         source: "/:path*",
       },
     ]);
+  });
+});
+
+describe("security headers", () => {
+  test("sends the baseline headers on every route and forbids framing", async () => {
+    const rules = await nextConfig.headers?.();
+    const rule = rules?.find(entry => entry.source === "/:path*" && entry.headers.some(h => h.key === "Content-Security-Policy"));
+    const byKey = new Map(rule?.headers.map(h => [h.key, h.value]));
+    expect(byKey.get("X-Content-Type-Options")).toBe("nosniff");
+    expect(byKey.get("Referrer-Policy")).toBe("strict-origin-when-cross-origin");
+    expect(byKey.get("Permissions-Policy")).toContain("camera=()");
+    expect(byKey.get("Strict-Transport-Security")).toContain("max-age=");
+    expect(byKey.get("Content-Security-Policy")).toContain("frame-ancestors 'none'");
+    expect(byKey.get("Content-Security-Policy")).toContain("object-src 'none'");
   });
 });
