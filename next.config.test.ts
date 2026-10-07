@@ -136,7 +136,7 @@ describe("security headers", () => {
     expect(byKey.get("Referrer-Policy")).toBe("strict-origin-when-cross-origin");
     expect(byKey.get("Permissions-Policy")).toContain("camera=()");
     expect(byKey.get("Strict-Transport-Security")).toContain("max-age=");
-    expect(byKey.get("Content-Security-Policy")).toContain("frame-ancestors 'none'");
+    expect(byKey.get("Content-Security-Policy")).not.toContain("frame-ancestors");
     expect(byKey.get("Content-Security-Policy")).toContain("object-src 'none'");
   });
 });

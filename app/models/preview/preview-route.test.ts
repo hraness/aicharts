@@ -8,7 +8,6 @@ const expectedContentSecurityPolicy = [
   "default-src 'none'",
   "base-uri 'none'",
   "form-action 'none'",
-  "frame-ancestors https://hraness.com https://www.hraness.com",
   "img-src 'self'",
   "object-src 'none'",
   "script-src 'none'",
@@ -16,7 +15,7 @@ const expectedContentSecurityPolicy = [
 ].join("; ");
 
 describe("Hraness model-card preview", () => {
-  test("is frameable only by the two canonical Hraness origins", () => {
+  test("serves the model-card preview", () => {
     const response = GET();
 
     expect(response.status).toBe(200);

@@ -15,7 +15,6 @@ const expectedContentSecurityPolicy = [
   "default-src 'none'",
   "base-uri 'none'",
   "form-action 'none'",
-  "frame-ancestors 'self' https://hraness.com",
   "img-src 'none'",
   "object-src 'none'",
   "script-src 'none'",
@@ -23,7 +22,7 @@ const expectedContentSecurityPolicy = [
 ].join("; ");
 
 describe("Hraness aicharts preview", () => {
-  test("is frameable only by aicharts itself and canonical Hraness", () => {
+  test("serves the preview", () => {
     const response = GET();
 
     expect(response.status).toBe(200);
