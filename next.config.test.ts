@@ -11,7 +11,7 @@ import { INDEX_MODEL_PAGES } from "@/lib/index-model-pages";
 import { MODEL_CARD_PRESENTATIONS } from "@/lib/model-card-collection";
 import { modelCardRouteStatus } from "@/lib/model-card-route-status";
 
-import nextConfig, { createNextConfig, MODEL_ROUTE_REDIRECTS, SECURITY_HEADERS } from "./next.config";
+import nextConfig, { ACCOUNT_FRAME_HEADERS, ACCOUNT_FRAME_SOURCES, createNextConfig, MODEL_ROUTE_REDIRECTS, SECURITY_HEADERS } from "./next.config";
 
 const identity = {
   VERCEL: "1",
@@ -108,6 +108,7 @@ describe("site migration redirects", () => {
     );
     expect(headers).toEqual([
       { headers: [...SECURITY_HEADERS], source: "/:path*" },
+      ...ACCOUNT_FRAME_SOURCES.map(source => ({ headers: [...ACCOUNT_FRAME_HEADERS], source })),
       {
         headers: [
           {
@@ -128,7 +129,7 @@ describe("site migration redirects", () => {
 });
 
 describe("security headers", () => {
-  test("sends the baseline headers on every route and forbids framing", async () => {
+  test("sends the baseline headers on every route without a site-wide frame policy", async () => {
     const rules = await nextConfig.headers?.();
     const rule = rules?.find(entry => entry.source === "/:path*" && entry.headers.some(h => h.key === "Content-Security-Policy"));
     const byKey = new Map(rule?.headers.map(h => [h.key, h.value]));
@@ -138,5 +139,20 @@ describe("security headers", () => {
     expect(byKey.get("Strict-Transport-Security")).toContain("max-age=");
     expect(byKey.get("Content-Security-Policy")).not.toContain("frame-ancestors");
     expect(byKey.get("Content-Security-Policy")).toContain("object-src 'none'");
+  });
+
+  test("signed-in dashboard, usage detail pages and usage APIs refuse framing", async () => {
+    const rules = await nextConfig.headers?.() ?? [];
+    for (const source of ["/dashboard/:path*", "/usage/:path+", "/api/usage/:path*", "/api/suite-auth/:path*"]) {
+      const byKey = new Map(rules.find(entry => entry.source === source)?.headers.map(h => [h.key, h.value]));
+      expect(byKey.get("Content-Security-Policy")).toContain("frame-ancestors 'none'");
+      expect(byKey.get("Content-Security-Policy")).toContain("object-src 'none'");
+      expect(byKey.get("X-Frame-Options")).toBe("DENY");
+    }
+    for (const source of ["/:path*"]) {
+      const text = JSON.stringify(rules.filter(entry => entry.source === source));
+      expect(text).not.toContain("frame-ancestors");
+      expect(text).not.toContain("X-Frame-Options");
+    }
   });
 });
