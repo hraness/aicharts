@@ -4,6 +4,7 @@ import { ArticleFigure, MarketingAccount, MarketingAccountActions, MarketingRela
 import Link from "next/link";
 import artificialAnalysisIntelligenceData from "@/data/artificial-analysis-intelligence-v4-3.json";
 import { ChartNavigation, HomeExploreFooter } from "@/components/chart-navigation";
+import { FounderNote } from "@/components/founder-note";
 import { HomeActivityFeed } from "@/components/home-activity-feed";
 import { HomeIndexStrip } from "@/components/home-index-strip";
 import { UsageMockup } from "@/components/launch-mockups";
@@ -47,6 +48,11 @@ export default function Home() {
           <Link className="chart-home-hero__secondary" href={homeSecondaryAction.href}>{homeSecondaryAction.label} <span aria-hidden="true">→</span></Link>
         </p>
       </header>
+      <FounderNote
+        emoji="📈"
+        paragraphs={["aicharts plots published AI benchmark scores against cost and tokens per task, and marks the best score at every budget. A local collector adds your own agents' token use, so your work sits on the same chart."]}
+        action={{ label: "See the charts:", href: "https://aicharts.io" }}
+      />
       <ChartNavigation current="/" />
       <HomeIntelligenceEfficiency snapshot={parsed.value} />
       <section aria-labelledby="home-about-title" className="home-about">
