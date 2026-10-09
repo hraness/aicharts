@@ -13,12 +13,12 @@
       "mode": "agentic",
       "runner": "external",
       "costBasis": "cost-per-test",
-      "totalModels": 43,
+      "totalModels": 45,
       "source": {
         "url": "https://www.vals.ai/benchmarks/vals_index",
-        "retrievedAt": "2026-10-06T01:18:27.092Z",
-        "sha256": "00b0b30a209d48c9a75fc799de2ab9979136ba2acc2a5e431a5e8da612f645d2",
-        "observedAt": "2026-10-02T00:00:00.000Z",
+        "retrievedAt": "2026-10-09T16:00:35.747Z",
+        "sha256": "12511298669f429a5e3ca557d804e8c789537eb7db6de28c922f609824684103",
+        "observedAt": "2026-10-07T00:00:00.000Z",
         "revision": "vals_index v2.1"
       },
       "rows": [
@@ -178,6 +178,59 @@
               "id": "tax_agent_bench",
               "label": "Tax Agent",
               "score": 77.642
+            }
+          ]
+        },
+        {
+          "id": "anthropic-claude-haiku-5-5",
+          "modelId": "anthropic/claude-haiku-5-5",
+          "provider": "Anthropic",
+          "effort": "max",
+          "harness": null,
+          "score": 54.312,
+          "standardError": 1.41,
+          "costUsdPerTest": 2.991465,
+          "latencySeconds": 2836.532,
+          "components": [
+            {
+              "id": "finance_agent",
+              "label": "Finance Agent v2",
+              "score": 54.138
+            },
+            {
+              "id": "emb",
+              "label": "EMB",
+              "score": 59.015
+            },
+            {
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 35.354
+            },
+            {
+              "id": "vibe_code_bench",
+              "label": "Vibe Code Bench",
+              "score": 90.444
+            },
+            {
+              "id": "code_migration",
+              "label": "Code Migration",
+              "score": 45.921
+            },
+            {
+              "id": "legal_research",
+              "label": "Legal Research",
+              "score": 43.269
+            },
+            {
+              "id": "legal_agent_benchmark",
+              "label": "HLAB",
+              "score": 1.25
+            },
+            {
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 62.203
             }
           ]
         },
@@ -1454,6 +1507,59 @@
           ]
         },
         {
+          "id": "mistralai-mistral-large-4",
+          "modelId": "mistralai/mistral-large-4",
+          "provider": "Mistral AI",
+          "effort": "high",
+          "harness": null,
+          "score": 48.045,
+          "standardError": 1.112,
+          "costUsdPerTest": 13.776396,
+          "latencySeconds": 6350.407,
+          "components": [
+            {
+              "id": "finance_agent",
+              "label": "Finance Agent v2",
+              "score": 54.678
+            },
+            {
+              "id": "emb",
+              "label": "EMB",
+              "score": 56.213
+            },
+            {
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 22.727
+            },
+            {
+              "id": "vibe_code_bench",
+              "label": "Vibe Code Bench",
+              "score": 78.403
+            },
+            {
+              "id": "code_migration",
+              "label": "Code Migration",
+              "score": 22.799
+            },
+            {
+              "id": "legal_research",
+              "label": "Legal Research",
+              "score": 31.731
+            },
+            {
+              "id": "legal_agent_benchmark",
+              "label": "HLAB",
+              "score": 15.833
+            },
+            {
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 63.294
+            }
+          ]
+        },
+        {
           "id": "openai-gpt-5-4-mini-2026-03-17",
           "modelId": "openai/gpt-5.4-mini-2026-03-17",
           "provider": "OpenAI",
@@ -2315,12 +2421,12 @@
       "mode": "agentic",
       "runner": "external",
       "costBasis": "cost-per-test",
-      "totalModels": 74,
+      "totalModels": 76,
       "source": {
         "url": "https://www.vals.ai/benchmarks/fabv2",
-        "retrievedAt": "2026-10-06T01:18:27.092Z",
-        "sha256": "5f865eeef45db4cb5b1293d3883fad2d267e5be5b2e08b5bba98455d1be7da2e",
-        "observedAt": "2026-10-01T00:00:00.000Z",
+        "retrievedAt": "2026-10-09T16:00:35.747Z",
+        "sha256": "c046558c079b4590669e7c99dbcc0bf4686171c7ba4b808fd2b436751ef05cf1",
+        "observedAt": "2026-10-07T00:00:00.000Z",
         "revision": "finance_agent v2"
       },
       "rows": [
@@ -2951,6 +3057,69 @@
               "id": "financial_modeling",
               "label": "Financial Modeling",
               "score": 5.141
+            }
+          ]
+        },
+        {
+          "id": "anthropic-claude-haiku-5-5",
+          "modelId": "anthropic/claude-haiku-5-5",
+          "provider": "Anthropic",
+          "effort": "max",
+          "harness": null,
+          "score": 54.138,
+          "standardError": 2.132,
+          "costUsdPerTest": 1.636603,
+          "latencySeconds": 1849,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 42.874
+            },
+            {
+              "id": "general_qualitative_analysis",
+              "label": "General Qualitative Analysis",
+              "score": 61.879
+            },
+            {
+              "id": "general_quantitative_analysis",
+              "label": "General Quantitative Analysis",
+              "score": 74.362
+            },
+            {
+              "id": "market_analysis",
+              "label": "Market Analysis",
+              "score": 63.08
+            },
+            {
+              "id": "comparables",
+              "label": "Comparables",
+              "score": 45.325
+            },
+            {
+              "id": "precedents",
+              "label": "Precedents",
+              "score": 26.976
+            },
+            {
+              "id": "adjustments",
+              "label": "Adjustments",
+              "score": 49.557
+            },
+            {
+              "id": "earnings_analysis",
+              "label": "Earnings Analysis",
+              "score": 73.474
+            },
+            {
+              "id": "disclosure_analysis",
+              "label": "Disclosure Analysis",
+              "score": 64.256
+            },
+            {
+              "id": "financial_modeling",
+              "label": "Financial Modeling",
+              "score": 28.33
             }
           ]
         },
@@ -5349,6 +5518,69 @@
           ]
         },
         {
+          "id": "mistralai-mistral-large-4",
+          "modelId": "mistralai/mistral-large-4",
+          "provider": "Mistral AI",
+          "effort": "high",
+          "harness": null,
+          "score": 54.678,
+          "standardError": 0.58,
+          "costUsdPerTest": 1.201399,
+          "latencySeconds": 1561.879,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 43.787
+            },
+            {
+              "id": "general_qualitative_analysis",
+              "label": "General Qualitative Analysis",
+              "score": 65.399
+            },
+            {
+              "id": "general_quantitative_analysis",
+              "label": "General Quantitative Analysis",
+              "score": 75.682
+            },
+            {
+              "id": "market_analysis",
+              "label": "Market Analysis",
+              "score": 62.984
+            },
+            {
+              "id": "comparables",
+              "label": "Comparables",
+              "score": 48.618
+            },
+            {
+              "id": "precedents",
+              "label": "Precedents",
+              "score": 26.18
+            },
+            {
+              "id": "adjustments",
+              "label": "Adjustments",
+              "score": 52.429
+            },
+            {
+              "id": "earnings_analysis",
+              "label": "Earnings Analysis",
+              "score": 76.491
+            },
+            {
+              "id": "disclosure_analysis",
+              "label": "Disclosure Analysis",
+              "score": 63.866
+            },
+            {
+              "id": "financial_modeling",
+              "label": "Financial Modeling",
+              "score": 20.456
+            }
+          ]
+        },
+        {
           "id": "mistralai-mistral-medium-3-5",
           "modelId": "mistralai/mistral-medium-3.5",
           "provider": "Mistral AI",
@@ -7000,12 +7232,12 @@
       "mode": "agentic",
       "runner": "external",
       "costBasis": "cost-per-test",
-      "totalModels": 73,
+      "totalModels": 75,
       "source": {
         "url": "https://www.vals.ai/benchmarks/legal_research",
-        "retrievedAt": "2026-10-06T01:18:27.092Z",
-        "sha256": "7cee19c04b6f56b1b758b0d27d8462ba6ad8af39b8db7f5fff0b22c827ac90fd",
-        "observedAt": "2026-10-01T00:00:00.000Z",
+        "retrievedAt": "2026-10-09T16:00:35.747Z",
+        "sha256": "4a938b5485dc54a67ae6d11d12463d617517e1b30e229e4192c048f8c7169a1c",
+        "observedAt": "2026-10-07T00:00:00.000Z",
         "revision": "legal_research v1"
       },
       "rows": [
@@ -7586,6 +7818,64 @@
               "id": "weighted_pass",
               "label": "Weighted Pass",
               "score": 64.939
+            }
+          ]
+        },
+        {
+          "id": "anthropic-claude-haiku-5-5",
+          "modelId": "anthropic/claude-haiku-5-5",
+          "provider": "Anthropic",
+          "effort": "max",
+          "harness": null,
+          "score": 43.269,
+          "standardError": 3.444,
+          "costUsdPerTest": 1.633459,
+          "latencySeconds": 4911.734,
+          "components": [
+            {
+              "id": "administrative_regulatory",
+              "label": "Administrative / Regulatory",
+              "score": 50
+            },
+            {
+              "id": "business_commercial",
+              "label": "Business & Commercial",
+              "score": 44.186
+            },
+            {
+              "id": "civil_litigation",
+              "label": "Civil Litigation",
+              "score": 40.741
+            },
+            {
+              "id": "constitutional_civil_rights",
+              "label": "Constitutional / Civil Rights",
+              "score": 44.737
+            },
+            {
+              "id": "criminal",
+              "label": "Criminal",
+              "score": 40.351
+            },
+            {
+              "id": "family",
+              "label": "Family",
+              "score": 22.727
+            },
+            {
+              "id": "health",
+              "label": "Health",
+              "score": 66.667
+            },
+            {
+              "id": "immigration",
+              "label": "Immigration",
+              "score": 36.364
+            },
+            {
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 83.859
             }
           ]
         },
@@ -9736,6 +10026,64 @@
           ]
         },
         {
+          "id": "mistralai-mistral-large-4",
+          "modelId": "mistralai/mistral-large-4",
+          "provider": "Mistral AI",
+          "effort": "high",
+          "harness": null,
+          "score": 31.731,
+          "standardError": 3.235,
+          "costUsdPerTest": 5.32689,
+          "latencySeconds": 5571.099,
+          "components": [
+            {
+              "id": "administrative_regulatory",
+              "label": "Administrative / Regulatory",
+              "score": 34.848
+            },
+            {
+              "id": "business_commercial",
+              "label": "Business & Commercial",
+              "score": 25.581
+            },
+            {
+              "id": "civil_litigation",
+              "label": "Civil Litigation",
+              "score": 33.333
+            },
+            {
+              "id": "constitutional_civil_rights",
+              "label": "Constitutional / Civil Rights",
+              "score": 34.211
+            },
+            {
+              "id": "criminal",
+              "label": "Criminal",
+              "score": 31.579
+            },
+            {
+              "id": "family",
+              "label": "Family",
+              "score": 9.091
+            },
+            {
+              "id": "health",
+              "label": "Health",
+              "score": 50
+            },
+            {
+              "id": "immigration",
+              "label": "Immigration",
+              "score": 27.273
+            },
+            {
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 85.271
+            }
+          ]
+        },
+        {
           "id": "mistralai-mistral-medium-3-5",
           "modelId": "mistralai/mistral-medium-3.5",
           "provider": "Mistral AI",
@@ -11257,12 +11605,12 @@
       "mode": "agentic",
       "runner": "external",
       "costBasis": "cost-per-test",
-      "totalModels": 65,
+      "totalModels": 67,
       "source": {
         "url": "https://www.vals.ai/benchmarks/tax_agent_bench",
-        "retrievedAt": "2026-10-06T01:18:27.092Z",
-        "sha256": "db5281119d5993c2e2c002edd325ce208eb39ac57dfb0d73fd1afd34153bc96f",
-        "observedAt": "2026-09-30T00:00:00.000Z",
+        "retrievedAt": "2026-10-09T16:00:35.747Z",
+        "sha256": "55e96d8d4d8fe099790dc8ad4859421f0e6e40eaaccaf80ec0254d54c2bb6207",
+        "observedAt": "2026-10-08T00:00:00.000Z",
         "revision": "tax_agent_bench v1"
       },
       "rows": [
@@ -11272,45 +11620,45 @@
           "provider": "Alibaba",
           "effort": null,
           "harness": null,
-          "score": 32.844,
-          "standardError": 2.752,
+          "score": 7.679,
+          "standardError": 1.81,
           "costUsdPerTest": 0.298017,
           "latencySeconds": 378.159,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 8.808
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 32.844
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 31.978
+              "score": 5.482
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 32.161
+              "score": 10.333
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 30.497
+              "score": 16.542
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 49.085
+              "score": 11.333
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 31.055
+              "score": 0
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 22.664
+              "score": 3.333
             }
           ]
         },
@@ -11320,45 +11668,45 @@
           "provider": "Alibaba",
           "effort": null,
           "harness": null,
-          "score": 47.407,
-          "standardError": 3.237,
+          "score": 15.832,
+          "standardError": 2.617,
           "costUsdPerTest": 0.435494,
           "latencySeconds": 209.726,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 16.062
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 47.407
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 42.198
+              "score": 13.776
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 47.518
+              "score": 23.333
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 49.747
+              "score": 23.107
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 60.565
+              "score": 23.333
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 46.225
+              "score": 10
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 40.447
+              "score": 2.333
             }
           ]
         },
@@ -11368,45 +11716,45 @@
           "provider": "Alibaba",
           "effort": null,
           "harness": null,
-          "score": 38.713,
-          "standardError": 2.81,
+          "score": 10.466,
+          "standardError": 1.993,
           "costUsdPerTest": 0.093885,
           "latencySeconds": 310.263,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 12.953
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 38.713
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 28.136
+              "score": 6.279
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 44.162
+              "score": 17
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 46.103
+              "score": 18.333
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 52.064
+              "score": 16.333
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 30.139
+              "score": 3.333
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 36.258
+              "score": 3.333
             }
           ]
         },
@@ -11416,45 +11764,45 @@
           "provider": "Alibaba",
           "effort": "xhigh",
           "harness": null,
-          "score": 60.038,
-          "standardError": 3.28,
+          "score": 30.894,
+          "standardError": 3.323,
           "costUsdPerTest": 0.81533,
           "latencySeconds": 1333.825,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 31.088
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 60.038
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 57.73
+              "score": 34.884
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 67.97
+              "score": 50
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 58.573
+              "score": 43.088
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 66.225
+              "score": 32.333
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 62.444
+              "score": 16.667
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 48.286
+              "score": 6.667
             }
           ]
         },
@@ -11464,45 +11812,45 @@
           "provider": "Alibaba",
           "effort": null,
           "harness": null,
-          "score": 65.96,
-          "standardError": 3.181,
+          "score": 32.095,
+          "standardError": 3.367,
           "costUsdPerTest": 1.552558,
           "latencySeconds": 2436.106,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 32.124
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 65.96
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 62.106
+              "score": 27.907
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 60.816
+              "score": 43.256
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 71.449
+              "score": 49.889
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 75.563
+              "score": 33.333
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 64.903
+              "score": 20
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 62.591
+              "score": 20
             }
           ]
         },
@@ -11512,45 +11860,45 @@
           "provider": "Ant",
           "effort": null,
           "harness": null,
-          "score": 45.697,
-          "standardError": 3.318,
+          "score": 20.599,
+          "standardError": 2.908,
           "costUsdPerTest": 0.025079,
           "latencySeconds": 333.833,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 20.725
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 45.697
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 33.026
+              "score": 13.768
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 53.763
+              "score": 33.233
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 51.028
+              "score": 36.417
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 66.567
+              "score": 29.8
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 42.966
+              "score": 6.667
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 32.323
+              "score": 6.667
             }
           ]
         },
@@ -11560,45 +11908,45 @@
           "provider": "Anthropic",
           "effort": "max",
           "harness": null,
-          "score": 69.822,
-          "standardError": 3.118,
+          "score": 38.281,
+          "standardError": 3.503,
           "costUsdPerTest": 6.696087,
           "latencySeconds": 866.628,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 38.342
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 69.822
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 74.261
+              "score": 39.433
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 55.936
+              "score": 46.583
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 70.994
+              "score": 53.169
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 83.382
+              "score": 50
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 64.004
+              "score": 26.667
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 68.433
+              "score": 13.333
             }
           ]
         },
@@ -11608,45 +11956,45 @@
           "provider": "Anthropic",
           "effort": "max",
           "harness": null,
-          "score": 77.642,
-          "standardError": 2.835,
+          "score": 49.194,
+          "standardError": 3.606,
           "costUsdPerTest": 13.180073,
           "latencySeconds": 1714.017,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 49.223
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 77.642
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 79.29
+              "score": 51.163
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 72.942
+              "score": 66.667
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 81.205
+              "score": 59.816
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 87.97
+              "score": 60
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 73.177
+              "score": 30
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 70.553
+              "score": 26.667
             }
           ]
         },
@@ -11656,45 +12004,93 @@
           "provider": "Anthropic",
           "effort": null,
           "harness": null,
-          "score": 28.314,
-          "standardError": 2.552,
+          "score": 5.855,
+          "standardError": 1.537,
           "costUsdPerTest": 0.226416,
           "latencySeconds": 155.016,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 7.254
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 28.314
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 22.853
+              "score": 6.279
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 26.976
+              "score": 8
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 25.45
+              "score": 3.333
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 50.407
+              "score": 17.333
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 25.786
+              "score": 0
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 20.775
+              "score": 0
+            }
+          ]
+        },
+        {
+          "id": "anthropic-claude-haiku-5-5",
+          "modelId": "anthropic/claude-haiku-5-5",
+          "provider": "Anthropic",
+          "effort": "max",
+          "harness": null,
+          "score": 31.922,
+          "standardError": 3.352,
+          "costUsdPerTest": 1.164207,
+          "latencySeconds": 2973.647,
+          "components": [
+            {
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 62.203
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 30.158
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 45.554
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 36.667
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 53.25
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 20
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 6.667
             }
           ]
         },
@@ -11704,45 +12100,45 @@
           "provider": "Anthropic",
           "effort": "max",
           "harness": null,
-          "score": 63.864,
-          "standardError": 3.137,
+          "score": 23.738,
+          "standardError": 3.063,
           "costUsdPerTest": 1.274806,
           "latencySeconds": 279.035,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 23.834
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 63.864
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 61.632
+              "score": 20.853
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 60.99
+              "score": 39.714
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 66.471
+              "score": 36.442
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 76.982
+              "score": 36.667
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 60.433
+              "score": 6.667
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 57.642
+              "score": 3.333
             }
           ]
         },
@@ -11752,45 +12148,45 @@
           "provider": "Anthropic",
           "effort": "max",
           "harness": null,
-          "score": 64.906,
-          "standardError": 3.174,
+          "score": 29.999,
+          "standardError": 3.303,
           "costUsdPerTest": 1.68964,
           "latencySeconds": 479.2,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 30.052
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 64.906
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 65.371
+              "score": 25.581
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 54.706
+              "score": 36.667
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 76.033
+              "score": 46.524
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 78.629
+              "score": 46.667
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 55.752
+              "score": 13.333
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 58.743
+              "score": 13.133
             }
           ]
         },
@@ -11800,45 +12196,45 @@
           "provider": "Anthropic",
           "effort": "max",
           "harness": null,
-          "score": 75.06,
-          "standardError": 2.956,
+          "score": 45.548,
+          "standardError": 3.591,
           "costUsdPerTest": 5.136554,
           "latencySeconds": 1008.306,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 45.596
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 75.06
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 77.336
+              "score": 48.837
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 77.978
+              "score": 56.667
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 71.631
+              "score": 49.879
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 85.168
+              "score": 60
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 67.239
+              "score": 33.185
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 70.021
+              "score": 23.295
             }
           ]
         },
@@ -11848,45 +12244,45 @@
           "provider": "Anthropic",
           "effort": "max",
           "harness": null,
-          "score": 70.499,
-          "standardError": 3.145,
+          "score": 45.573,
+          "standardError": 3.593,
           "costUsdPerTest": 15.086184,
           "latencySeconds": 4012.548,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 45.596
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 70.499
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 72.908
+              "score": 46.512
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 56.163
+              "score": 49.962
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 73.299
+              "score": 46.558
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 88.878
+              "score": 70
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 63.833
+              "score": 30
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 66.871
+              "score": 30
             }
           ]
         },
@@ -11896,45 +12292,45 @@
           "provider": "Anthropic",
           "effort": "max",
           "harness": null,
-          "score": 64.854,
-          "standardError": 3.11,
+          "score": 25.84,
+          "standardError": 3.154,
           "costUsdPerTest": 1.193501,
           "latencySeconds": 707.307,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 25.907
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 64.854
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 56.703
+              "score": 23.256
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 65.916
+              "score": 43.333
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 66.078
+              "score": 33.151
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 80.451
+              "score": 40
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 65.556
+              "score": 6.417
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 57.949
+              "score": 10
             }
           ]
         },
@@ -11944,45 +12340,45 @@
           "provider": "Anthropic",
           "effort": "max",
           "harness": null,
-          "score": 62.273,
-          "standardError": 3.186,
+          "score": 29.374,
+          "standardError": 3.248,
           "costUsdPerTest": 1.794774,
           "latencySeconds": 1158.894,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 30.052
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 62.273
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 59.929
+              "score": 27.14
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 61.522
+              "score": 43.129
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 59.973
+              "score": 30
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 70.583
+              "score": 47
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 65.24
+              "score": 19.944
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 57.41
+              "score": 10
             }
           ]
         },
@@ -11992,45 +12388,45 @@
           "provider": "Anthropic",
           "effort": "max",
           "harness": null,
-          "score": 73.395,
-          "standardError": 2.981,
+          "score": 41.959,
+          "standardError": 3.561,
           "costUsdPerTest": 9.245466,
           "latencySeconds": 3560.542,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 41.969
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 73.395
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 73.852
+              "score": 39.535
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 67.821
+              "score": 46.667
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 77.239
+              "score": 49.933
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 85.388
+              "score": 60
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 70.68
+              "score": 40
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 65.191
+              "score": 16.667
             }
           ]
         },
@@ -12038,47 +12434,47 @@
           "id": "deepseek-deepseek-v4-1-flash",
           "modelId": "deepseek/deepseek-v4.1-flash",
           "provider": "DeepSeek",
-          "effort": "high",
+          "effort": "max",
           "harness": null,
-          "score": 62.458,
-          "standardError": 3.155,
+          "score": 26.63,
+          "standardError": 3.141,
           "costUsdPerTest": 0.134662,
           "latencySeconds": 349.076,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 27.461
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 62.458
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 60.624
+              "score": 27.209
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 56.89
+              "score": 39.652
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 71.882
+              "score": 39
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 76.568
+              "score": 38
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 56.777
+              "score": 12.333
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 52.802
+              "score": 3.333
             }
           ]
         },
@@ -12088,45 +12484,45 @@
           "provider": "DeepSeek",
           "effort": "high",
           "harness": null,
-          "score": 62.563,
-          "standardError": 3.136,
+          "score": 28.069,
+          "standardError": 3.158,
           "costUsdPerTest": 0.156388,
           "latencySeconds": 337.343,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 29.534
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 62.563
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 54.742
+              "score": 24.186
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 70.181
+              "score": 42.59
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 70.529
+              "score": 42.99
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 78.048
+              "score": 41.333
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 59.417
+              "score": 15.667
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 45.848
+              "score": 3.333
             }
           ]
         },
@@ -12136,45 +12532,45 @@
           "provider": "DeepSeek",
           "effort": "max",
           "harness": null,
-          "score": 58.499,
-          "standardError": 3.132,
+          "score": 25.17,
+          "standardError": 3.058,
           "costUsdPerTest": 0.719152,
           "latencySeconds": 1244.635,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 26.425
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 58.499
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 55.579
+              "score": 21.86
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 55.079
+              "score": 34.667
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 65.741
+              "score": 36.595
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 62.87
+              "score": 33.667
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 58.15
+              "score": 13.333
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 54.843
+              "score": 12.333
             }
           ]
         },
@@ -12184,45 +12580,45 @@
           "provider": "DeepSeek",
           "effort": "max",
           "harness": null,
-          "score": 58.663,
-          "standardError": 3.138,
+          "score": 26.756,
+          "standardError": 3.093,
           "costUsdPerTest": 0.729136,
           "latencySeconds": 1596.755,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 28.497
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 58.663
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 59.691
+              "score": 28.14
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 49.839
+              "score": 37.909
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 67.902
+              "score": 43.556
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 70.183
+              "score": 32.333
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 52.369
+              "score": 12.333
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 51.549
+              "score": 5.667
             }
           ]
         },
@@ -12232,45 +12628,45 @@
           "provider": "Fireworks AI",
           "effort": null,
           "harness": null,
-          "score": 68.044,
-          "standardError": 3.128,
+          "score": 31.077,
+          "standardError": 3.339,
           "costUsdPerTest": 2.972904,
           "latencySeconds": 1845.939,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 31.088
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 68.044
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 71.843
+              "score": 39.535
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 51.16
+              "score": 26.667
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 80.827
+              "score": 49.929
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 77.664
+              "score": 36.667
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 65.892
+              "score": 20
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 59.234
+              "score": 10
             }
           ]
         },
@@ -12280,45 +12676,45 @@
           "provider": "Fireworks AI",
           "effort": null,
           "harness": null,
-          "score": 13.002,
-          "standardError": 2.049,
+          "score": 2.591,
+          "standardError": 1.146,
           "costUsdPerTest": 0.030533,
           "latencySeconds": 1180.079,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 2.591
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 13.002
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 6.35
+              "score": 0
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 14.685
+              "score": 10
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 10.469
+              "score": 3.333
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 31.499
+              "score": 3.333
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 6.661
+              "score": 0
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 11.232
+              "score": 0
             }
           ]
         },
@@ -12328,45 +12724,45 @@
           "provider": "Google",
           "effort": "high",
           "harness": null,
-          "score": 20.085,
-          "standardError": 2.457,
+          "score": 3.109,
+          "standardError": 1.253,
           "costUsdPerTest": 0.014308,
           "latencySeconds": 18.744,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 3.109
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 20.085
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 21.731
+              "score": 4.651
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 20.684
+              "score": 3.333
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 12.31
+              "score": 0
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 39.5
+              "score": 10
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 14.077
+              "score": 0
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 11.494
+              "score": 0
             }
           ]
         },
@@ -12376,45 +12772,45 @@
           "provider": "Google",
           "effort": "high",
           "harness": null,
-          "score": 37.842,
-          "standardError": 3.098,
+          "score": 9.295,
+          "standardError": 2.092,
           "costUsdPerTest": 0.301555,
           "latencySeconds": 100.956,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 9.326
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 37.842
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 32.873
+              "score": 6.977
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 28.261
+              "score": 13.333
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 36.539
+              "score": 9.8
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 66.459
+              "score": 23.333
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 30.691
+              "score": 3.333
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 34.381
+              "score": 0
             }
           ]
         },
@@ -12424,45 +12820,45 @@
           "provider": "Google",
           "effort": "high",
           "harness": null,
-          "score": 53.526,
-          "standardError": 3.302,
+          "score": 21.652,
+          "standardError": 2.963,
           "costUsdPerTest": 0.859679,
           "latencySeconds": 233.001,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 21.762
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 53.526
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 58.095
+              "score": 16.279
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 46.785
+              "score": 23.097
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 61.648
+              "score": 26.444
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 72.498
+              "score": 46.667
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 45.945
+              "score": 16.667
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 34.209
+              "score": 3.083
             }
           ]
         },
@@ -12472,45 +12868,45 @@
           "provider": "Google",
           "effort": "high",
           "harness": null,
-          "score": 37.451,
-          "standardError": 3.115,
+          "score": 7.254,
+          "standardError": 1.872,
           "costUsdPerTest": 0.081536,
           "latencySeconds": 47.461,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 7.254
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 37.451
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 32.253
+              "score": 4.651
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 34.001
+              "score": 13.333
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 24.916
+              "score": 3.333
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 69.533
+              "score": 20
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 31.655
+              "score": 0
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 34.598
+              "score": 3.333
             }
           ]
         },
@@ -12520,45 +12916,45 @@
           "provider": "Google",
           "effort": "high",
           "harness": null,
-          "score": 49.895,
-          "standardError": 3.302,
+          "score": 18.038,
+          "standardError": 2.766,
           "costUsdPerTest": 0.356293,
           "latencySeconds": 105.32,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 18.135
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 49.895
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 49.834
+              "score": 16.279
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 43.581
+              "score": 23.167
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 48.604
+              "score": 19.875
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 77.948
+              "score": 39.667
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 42.065
+              "score": 6.667
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 37.362
+              "score": 3.333
             }
           ]
         },
@@ -12568,45 +12964,45 @@
           "provider": "Google",
           "effort": "high",
           "harness": null,
-          "score": 57.665,
-          "standardError": 3.313,
+          "score": 22.798,
+          "standardError": 3.028,
           "costUsdPerTest": 0.483978,
           "latencySeconds": 87.24,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 22.798
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 57.665
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 49.293
+              "score": 18.605
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 57.902
+              "score": 40
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 68.827
+              "score": 30
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 78.846
+              "score": 33.333
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 48.751
+              "score": 10
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 45.997
+              "score": 6.667
             }
           ]
         },
@@ -12616,45 +13012,45 @@
           "provider": "Google",
           "effort": "high",
           "harness": null,
-          "score": 66.771,
-          "standardError": 3.148,
+          "score": 32.124,
+          "standardError": 3.37,
           "costUsdPerTest": 0.857214,
           "latencySeconds": 178.329,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 32.124
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 66.771
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 67.954
+              "score": 34.884
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 60.237
+              "score": 36.667
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 64.751
+              "score": 43.333
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 83.051
+              "score": 50
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 65.123
+              "score": 20
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 59.001
+              "score": 6.667
             }
           ]
         },
@@ -12664,45 +13060,45 @@
           "provider": "Google",
           "effort": "high",
           "harness": null,
-          "score": 37.557,
-          "standardError": 3.13,
+          "score": 11.843,
+          "standardError": 2.324,
           "costUsdPerTest": 0.100699,
           "latencySeconds": 100.623,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 11.917
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 37.557
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 38.825
+              "score": 9.302
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 29.323
+              "score": 16.5
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 31.86
+              "score": 13.024
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 67.123
+              "score": 23.333
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 27.521
+              "score": 6.667
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 30.14
+              "score": 3.333
             }
           ]
         },
@@ -12712,45 +13108,45 @@
           "provider": "Google",
           "effort": "high",
           "harness": null,
-          "score": 76.231,
-          "standardError": 2.874,
+          "score": 44.56,
+          "standardError": 3.587,
           "costUsdPerTest": 3.473645,
           "latencySeconds": 985.634,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 44.56
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 76.231
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 76.678
+              "score": 39.535
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 77.359
+              "score": 56.667
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 84.637
+              "score": 66.667
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 87.616
+              "score": 60
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 67.296
+              "score": 26.667
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 63.603
+              "score": 20
             }
           ]
         },
@@ -12760,45 +13156,45 @@
           "provider": "SpaceXAI",
           "effort": null,
           "harness": null,
-          "score": 31.241,
-          "standardError": 2.704,
+          "score": 6.952,
+          "standardError": 1.75,
           "costUsdPerTest": 0.119262,
           "latencySeconds": 89.262,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 7.772
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 31.241
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 25.051
+              "score": 5.581
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 24.795
+              "score": 8
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 37.683
+              "score": 13.056
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 48.818
+              "score": 15.667
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 28.839
+              "score": 0
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 24.946
+              "score": 0
             }
           ]
         },
@@ -12808,45 +13204,45 @@
           "provider": "SpaceXAI",
           "effort": "high",
           "harness": null,
-          "score": 34.416,
-          "standardError": 2.994,
+          "score": 6.179,
+          "standardError": 1.732,
           "costUsdPerTest": 0.116616,
           "latencySeconds": 97.519,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 6.218
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 34.416
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 36.731
+              "score": 4.477
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 26.126
+              "score": 6.667
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 34.603
+              "score": 10
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 51.357
+              "score": 16.667
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 33.823
+              "score": 0
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 22.85
+              "score": 0
             }
           ]
         },
@@ -12856,45 +13252,45 @@
           "provider": "SpaceXAI",
           "effort": "high",
           "harness": null,
-          "score": 64.323,
-          "standardError": 3.156,
+          "score": 24.855,
+          "standardError": 3.118,
           "costUsdPerTest": 0.473604,
           "latencySeconds": 283.566,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 24.87
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 64.323
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 59.491
+              "score": 20.93
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 60.637
+              "score": 33.233
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 70.566
+              "score": 36.667
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 72.496
+              "score": 33.333
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 64.183
+              "score": 16.667
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 60.658
+              "score": 10
             }
           ]
         },
@@ -12904,45 +13300,45 @@
           "provider": "SpaceXAI",
           "effort": "high",
           "harness": null,
-          "score": 70.788,
-          "standardError": 3.005,
+          "score": 33.141,
+          "standardError": 3.396,
           "costUsdPerTest": 0.978328,
           "latencySeconds": 657.844,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 33.161
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 70.788
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 65.96
+              "score": 27.82
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 67.489
+              "score": 43.333
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 73.425
+              "score": 43.333
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 79.76
+              "score": 46.667
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 72.081
+              "score": 23.333
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 68.102
+              "score": 16.667
             }
           ]
         },
@@ -12952,45 +13348,45 @@
           "provider": "SpaceXAI",
           "effort": "xhigh",
           "harness": null,
-          "score": 65.596,
-          "standardError": 3.238,
+          "score": 34.197,
+          "standardError": 3.423,
           "costUsdPerTest": 1.796539,
           "latencySeconds": 996.469,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 34.197
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 65.596
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 64.276
+              "score": 34.884
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 52.194
+              "score": 40
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 74.53
+              "score": 46.667
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 76.696
+              "score": 40
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 63.76
+              "score": 30
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 62.693
+              "score": 13.333
             }
           ]
         },
@@ -13000,45 +13396,45 @@
           "provider": "Inception",
           "effort": "high",
           "harness": null,
-          "score": 12.41,
-          "standardError": 1.805,
+          "score": 2.487,
+          "standardError": 1.018,
           "costUsdPerTest": 0.023633,
           "latencySeconds": 29.67,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 3.109
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 12.41
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 11.667
+              "score": 2.326
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 8.279
+              "score": 2.333
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 13.201
+              "score": 2.333
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 31.134
+              "score": 8
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 6.949
+              "score": 0
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 3.553
+              "score": 0
             }
           ]
         },
@@ -13048,45 +13444,45 @@
           "provider": "Moonshot AI",
           "effort": null,
           "harness": null,
-          "score": 45.135,
-          "standardError": 3.225,
+          "score": 12.404,
+          "standardError": 2.376,
           "costUsdPerTest": 0.565511,
           "latencySeconds": 924.425,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 12.435
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 45.135
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 46.747
+              "score": 9.302
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 30.448
+              "score": 10
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 51.239
+              "score": 26.467
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 61.752
+              "score": 23.333
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 37.63
+              "score": 3.333
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 42.296
+              "score": 3.333
             }
           ]
         },
@@ -13096,45 +13492,45 @@
           "provider": "Moonshot AI",
           "effort": "max",
           "harness": null,
-          "score": 68.672,
-          "standardError": 3.083,
+          "score": 33.368,
+          "standardError": 3.386,
           "costUsdPerTest": 2.790127,
           "latencySeconds": 2415.159,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 33.679
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 68.672
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 62.2
+              "score": 32.558
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 58.356
+              "score": 43.333
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 72.932
+              "score": 45.667
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 83.973
+              "score": 45.667
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 68.577
+              "score": 20
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 68.8
+              "score": 13.333
             }
           ]
         },
@@ -13144,45 +13540,45 @@
           "provider": "Meta",
           "effort": "xhigh",
           "harness": null,
-          "score": 56.86,
-          "standardError": 2.318,
+          "score": 32.798,
+          "standardError": 2.751,
           "costUsdPerTest": 0.269212,
           "latencySeconds": 119.905,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 43.523
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 56.86
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 52.476
+              "score": 32.558
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 55.145
+              "score": 43.667
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 55.238
+              "score": 39.667
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 76.295
+              "score": 48.667
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 59.514
+              "score": 25.333
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 44.39
+              "score": 7
             }
           ]
         },
@@ -13192,45 +13588,45 @@
           "provider": "Meta",
           "effort": "xhigh",
           "harness": null,
-          "score": 71.934,
-          "standardError": 2.917,
+          "score": 35.974,
+          "standardError": 3.42,
           "costUsdPerTest": 0.319558,
           "latencySeconds": 505.365,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 36.788
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 71.934
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 75.079
+              "score": 45.814
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 67.667
+              "score": 40
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 73.142
+              "score": 49.769
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 81.788
+              "score": 43.333
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 71.707
+              "score": 18
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 60.859
+              "score": 14.667
             }
           ]
         },
@@ -13240,45 +13636,45 @@
           "provider": "Meta",
           "effort": "max",
           "harness": null,
-          "score": 72.441,
-          "standardError": 2.879,
+          "score": 42.435,
+          "standardError": 3.511,
           "costUsdPerTest": 0.389917,
           "latencySeconds": 248.818,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 43.523
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 72.441
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 70.171
+              "score": 43.721
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 74.684
+              "score": 63.333
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 69.561
+              "score": 42.333
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 81.055
+              "score": 43.333
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 71.418
+              "score": 24.667
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 68.738
+              "score": 36.667
             }
           ]
         },
@@ -13288,45 +13684,45 @@
           "provider": "MiniMax",
           "effort": null,
           "harness": null,
-          "score": 25.382,
-          "standardError": 2.59,
+          "score": 6.872,
+          "standardError": 1.677,
           "costUsdPerTest": 0.120058,
           "latencySeconds": 302.854,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 8.29
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 25.382
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 20.219
+              "score": 3.953
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 25.175
+              "score": 12.667
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 21.497
+              "score": 6.542
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 47.179
+              "score": 17
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 19.137
+              "score": 0
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 21.321
+              "score": 2.333
             }
           ]
         },
@@ -13336,45 +13732,93 @@
           "provider": "MiniMax",
           "effort": null,
           "harness": null,
-          "score": 49.691,
-          "standardError": 3.248,
+          "score": 20.588,
+          "standardError": 2.874,
           "costUsdPerTest": 0.164063,
           "latencySeconds": 314.575,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 21.244
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 49.691
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 33.802
+              "score": 14.186
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 57.887
+              "score": 36.667
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 52.905
+              "score": 29.653
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 54.9
+              "score": 19.4
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 53.109
+              "score": 19.875
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 52.429
+              "score": 6.524
+            }
+          ]
+        },
+        {
+          "id": "mistralai-mistral-large-4",
+          "modelId": "mistralai/mistral-large-4",
+          "provider": "Mistral AI",
+          "effort": "high",
+          "harness": null,
+          "score": 30.391,
+          "standardError": 3.309,
+          "costUsdPerTest": 2.72124,
+          "latencySeconds": 3438.427,
+          "components": [
+            {
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 63.294
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 31.83
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 33.333
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 46.56
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 40
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 26.667
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 3.333
             }
           ]
         },
@@ -13384,45 +13828,45 @@
           "provider": "Mistral AI",
           "effort": "high",
           "harness": null,
-          "score": 27.291,
-          "standardError": 2.824,
+          "score": 4.482,
+          "standardError": 1.47,
           "costUsdPerTest": 1.443655,
           "latencySeconds": 430.673,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 4.663
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 27.291
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 24.361
+              "score": 2.326
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 26.26
+              "score": 6.667
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 29.444
+              "score": 6.5
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 45.318
+              "score": 9
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 21.256
+              "score": 0
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 18.379
+              "score": 3.333
             }
           ]
         },
@@ -13432,45 +13876,45 @@
           "provider": "OpenAI",
           "effort": "xhigh",
           "harness": null,
-          "score": 36.586,
-          "standardError": 3.095,
+          "score": 8.808,
+          "standardError": 2.045,
           "costUsdPerTest": 0.806171,
           "latencySeconds": 1006.185,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 8.808
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 36.586
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 36.518
+              "score": 6.977
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 26.513
+              "score": 10
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 38.553
+              "score": 10
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 52.296
+              "score": 20
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 33.491
+              "score": 3.333
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 32.174
+              "score": 3.333
             }
           ]
         },
@@ -13480,45 +13924,45 @@
           "provider": "OpenAI",
           "effort": "high",
           "harness": null,
-          "score": 26.578,
-          "standardError": 2.518,
+          "score": 4.974,
+          "standardError": 1.417,
           "costUsdPerTest": 0.069662,
           "latencySeconds": 220.306,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 6.218
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 26.578
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 23.369
+              "score": 7.907
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 23.259
+              "score": 8
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 22.52
+              "score": 3.333
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 42.802
+              "score": 7
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 22.122
+              "score": 0
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 26.789
+              "score": 2.333
             }
           ]
         },
@@ -13528,45 +13972,45 @@
           "provider": "OpenAI",
           "effort": "xhigh",
           "harness": null,
-          "score": 60.456,
-          "standardError": 3.216,
+          "score": 21.762,
+          "standardError": 2.978,
           "costUsdPerTest": 4.073277,
           "latencySeconds": 951.811,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 21.762
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 60.456
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 59.225
+              "score": 27.907
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 44.233
+              "score": 23.333
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 68.195
+              "score": 26.667
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 76.764
+              "score": 30
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 59.946
+              "score": 10
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 54.91
+              "score": 10
             }
           ]
         },
@@ -13576,45 +14020,45 @@
           "provider": "OpenAI",
           "effort": "max",
           "harness": null,
-          "score": 60.815,
-          "standardError": 3.263,
+          "score": 24.815,
+          "standardError": 3.113,
           "costUsdPerTest": 0.465359,
           "latencySeconds": 2565.695,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 24.87
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 60.815
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 59.613
+              "score": 25.581
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 54.292
+              "score": 36.667
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 60.069
+              "score": 32.978
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 71.752
+              "score": 30
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 58.465
+              "score": 13.333
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 61.219
+              "score": 10
             }
           ]
         },
@@ -13624,45 +14068,45 @@
           "provider": "OpenAI",
           "effort": "max",
           "harness": null,
-          "score": 67.955,
-          "standardError": 3.123,
+          "score": 31.088,
+          "standardError": 3.34,
           "costUsdPerTest": 7.513965,
           "latencySeconds": 2681.175,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 31.088
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 67.955
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 60.429
+              "score": 23.256
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 53.787
+              "score": 30
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 74.38
+              "score": 50
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 81.388
+              "score": 46.667
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 72.508
+              "score": 20
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 68.503
+              "score": 20
             }
           ]
         },
@@ -13672,45 +14116,45 @@
           "provider": "OpenAI",
           "effort": "max",
           "harness": null,
-          "score": 65.199,
-          "standardError": 3.188,
+          "score": 30.035,
+          "standardError": 3.307,
           "costUsdPerTest": 4.829225,
           "latencySeconds": 3630.72,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 30.052
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 65.199
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 63.25
+              "score": 37.209
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 53.288
+              "score": 33.333
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 60.331
+              "score": 33.222
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 81.627
+              "score": 40
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 68.713
+              "score": 16.667
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 64.833
+              "score": 16.667
             }
           ]
         },
@@ -13720,45 +14164,45 @@
           "provider": "OpenAI",
           "effort": "max",
           "harness": null,
-          "score": 62.31,
-          "standardError": 3.2,
+          "score": 21.754,
+          "standardError": 2.977,
           "costUsdPerTest": 1.323601,
           "latencySeconds": 1213.878,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 21.762
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 62.31
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 61.713
+              "score": 30.233
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 49.179
+              "score": 20
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 63.366
+              "score": 33.283
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 77.344
+              "score": 33.333
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 57.72
+              "score": 3.333
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 64.799
+              "score": 6.667
             }
           ]
         },
@@ -13768,45 +14212,45 @@
           "provider": "OpenAI",
           "effort": "max",
           "harness": null,
-          "score": 63.335,
-          "standardError": 3.147,
+          "score": 20.717,
+          "standardError": 2.924,
           "costUsdPerTest": 5.7963,
           "latencySeconds": 900.586,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 20.725
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 63.335
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 66.015
+              "score": 27.907
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 49.361
+              "score": 23.333
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 66.224
+              "score": 29.944
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 77.876
+              "score": 20
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 60.759
+              "score": 6.667
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 58.616
+              "score": 13.333
             }
           ]
         },
@@ -13816,45 +14260,45 @@
           "provider": "OpenAI",
           "effort": "max",
           "harness": null,
-          "score": 58.864,
-          "standardError": 3.211,
+          "score": 19.947,
+          "standardError": 2.866,
           "costUsdPerTest": 0.190956,
           "latencySeconds": 1995.736,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 20.207
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 58.864
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 60.23
+              "score": 29.535
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 45.904
+              "score": 20
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 55.344
+              "score": 16.533
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 73.764
+              "score": 30
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 62.926
+              "score": 12.795
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 54.423
+              "score": 6.667
             }
           ]
         },
@@ -13864,45 +14308,45 @@
           "provider": "OpenAI",
           "effort": "max",
           "harness": null,
-          "score": 53.045,
-          "standardError": 3.29,
+          "score": 15.002,
+          "standardError": 2.575,
           "costUsdPerTest": 2.277613,
           "latencySeconds": 1052.036,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 15.026
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 53.045
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 49.931
+              "score": 16.279
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 39.766
+              "score": 16.667
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 56.104
+              "score": 23.179
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 69.483
+              "score": 26.667
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 53.675
+              "score": 0
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 50.662
+              "score": 6.667
             }
           ]
         },
@@ -13912,45 +14356,45 @@
           "provider": "Stepfun",
           "effort": null,
           "harness": null,
-          "score": 59.539,
-          "standardError": 3.09,
+          "score": 27.273,
+          "standardError": 3.113,
           "costUsdPerTest": 0.55338,
           "latencySeconds": 1288.515,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 29.016
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 59.539
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 56.368
+              "score": 31.86
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 60.8
+              "score": 41.667
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 58.681
+              "score": 31.123
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 72.083
+              "score": 29
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 58.822
+              "score": 14.667
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 51.856
+              "score": 13.333
             }
           ]
         },
@@ -13960,45 +14404,45 @@
           "provider": "Tencent",
           "effort": null,
           "harness": null,
-          "score": 63.712,
-          "standardError": 3.26,
+          "score": 32.617,
+          "standardError": 3.381,
           "costUsdPerTest": 0.585277,
           "latencySeconds": 2464.028,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 32.642
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 63.712
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 55.791
+              "score": 30.179
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 57.514
+              "score": 36.667
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 63.664
+              "score": 36.58
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 81.045
+              "score": 60
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 68.547
+              "score": 26.667
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 59.143
+              "score": 6.667
             }
           ]
         },
@@ -14008,45 +14452,45 @@
           "provider": "Thinkingmachines",
           "effort": "0.99",
           "harness": null,
-          "score": 43.516,
-          "standardError": 2.947,
+          "score": 15.291,
+          "standardError": 2.423,
           "costUsdPerTest": 0.353757,
           "latencySeconds": 810.557,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 17.617
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 43.516
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 44.094
+              "score": 24.562
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 31.327
+              "score": 14.485
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 34.385
+              "score": 15.267
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 61.901
+              "score": 17
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 42.449
+              "score": 6.667
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 46.686
+              "score": 9.746
             }
           ]
         },
@@ -14056,45 +14500,45 @@
           "provider": "Thinkingmachines",
           "effort": "0.99",
           "harness": null,
-          "score": 41.461,
-          "standardError": 2.871,
+          "score": 15.389,
+          "standardError": 2.365,
           "costUsdPerTest": 0.091767,
           "latencySeconds": 385.252,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 18.653
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 41.461
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 43.85
+              "score": 12.558
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 32.085
+              "score": 14
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 47.453
+              "score": 26.333
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 51.226
+              "score": 23.667
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 42.965
+              "score": 10.333
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 30.152
+              "score": 6.667
             }
           ]
         },
@@ -14104,45 +14548,45 @@
           "provider": "Xiaomi",
           "effort": null,
           "harness": null,
-          "score": 29.163,
-          "standardError": 2.713,
+          "score": 7.772,
+          "standardError": 1.779,
           "costUsdPerTest": 0.017023,
           "latencySeconds": 500.826,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 9.326
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 29.163
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 29.256
+              "score": 7.209
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 21.557
+              "score": 7
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 30.085
+              "score": 12.333
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 43.247
+              "score": 17
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 19.069
+              "score": 3.333
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 31.723
+              "score": 0
             }
           ]
         },
@@ -14152,45 +14596,45 @@
           "provider": "Xiaomi",
           "effort": null,
           "harness": null,
-          "score": 34.787,
-          "standardError": 2.621,
+          "score": 11.503,
+          "standardError": 1.957,
           "costUsdPerTest": 0.040042,
           "latencySeconds": 376.514,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 15.544
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 34.787
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 23.224
+              "score": 10.465
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 41.128
+              "score": 19.667
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 42.226
+              "score": 15
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 43.12
+              "score": 16.333
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 31.339
+              "score": 4.667
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 32.699
+              "score": 3.333
             }
           ]
         },
@@ -14200,45 +14644,45 @@
           "provider": "Xiaomi",
           "effort": null,
           "harness": null,
-          "score": 59.904,
-          "standardError": 3.13,
+          "score": 28.507,
+          "standardError": 3.14,
           "costUsdPerTest": 0.048982,
           "latencySeconds": 1038.928,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 30.57
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 59.904
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 66.014
+              "score": 38.981
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 56.298
+              "score": 37.933
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 61.439
+              "score": 36.593
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 62.435
+              "score": 32.667
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 54.86
+              "score": 17
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 55.733
+              "score": 3.333
             }
           ]
         },
@@ -14248,45 +14692,45 @@
           "provider": "Xiaomi",
           "effort": null,
           "harness": null,
-          "score": 64.939,
-          "standardError": 3.214,
+          "score": 32.388,
+          "standardError": 3.361,
           "costUsdPerTest": 0.134306,
           "latencySeconds": 1547.695,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 32.642
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 64.939
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 58.414
+              "score": 30.233
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 59.833
+              "score": 32.958
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 73.88
+              "score": 53.122
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 75.514
+              "score": 45.667
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 59.147
+              "score": 19.947
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 65.674
+              "score": 13.333
             }
           ]
         },
@@ -14296,45 +14740,45 @@
           "provider": "Zhipu AI",
           "effort": "max",
           "harness": null,
-          "score": 73.089,
-          "standardError": 2.973,
+          "score": 39.698,
+          "standardError": 3.52,
           "costUsdPerTest": 1.80097,
           "latencySeconds": 3052.932,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 39.896
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 73.089
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 58.245
+              "score": 34.884
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 81.291
+              "score": 60
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 78.164
+              "score": 53.222
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 84.524
+              "score": 53.167
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 71.666
+              "score": 20
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 71.078
+              "score": 19
             }
           ]
         },
@@ -14344,45 +14788,45 @@
           "provider": "Zhipu AI",
           "effort": "max",
           "harness": null,
-          "score": 61.956,
-          "standardError": 3.256,
+          "score": 31.55,
+          "standardError": 3.35,
           "costUsdPerTest": 0.138062,
           "latencySeconds": 1297.006,
           "components": [
             {
-              "id": "all_pass",
-              "label": "All-Pass",
-              "score": 31.606
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 61.956
             },
             {
               "id": "fact_pattern_analysis",
               "label": "Fact-Pattern Analysis",
-              "score": 57.286
+              "score": 27.8
             },
             {
               "id": "rule_source_lookup",
               "label": "Rule & Source Lookup",
-              "score": 60.234
+              "score": 39.929
             },
             {
               "id": "current_temporal_analysis",
               "label": "Current & Temporal Analysis",
-              "score": 61.439
+              "score": 43.197
             },
             {
               "id": "numbers_calculations",
               "label": "Numbers & Calculations",
-              "score": 81.017
+              "score": 46.667
             },
             {
               "id": "forms_filings",
               "label": "Forms & Filings",
-              "score": 61.369
+              "score": 23.333
             },
             {
               "id": "controversy_precedence_analysis",
               "label": "Controversy & Precedence Analysis",
-              "score": 52.416
+              "score": 10
             }
           ]
         }
@@ -14400,12 +14844,12 @@
       "mode": "one-shot",
       "runner": "custom",
       "costBasis": "unavailable",
-      "totalModels": 104,
+      "totalModels": 106,
       "source": {
         "url": "https://www.vals.ai/benchmarks/medcode",
-        "retrievedAt": "2026-10-06T01:18:27.092Z",
-        "sha256": "7a10326d8efc4030bc0762020cf43a1d7a1750b299b573b625920a7b1bec326b",
-        "observedAt": "2026-10-01T00:00:00.000Z",
+        "retrievedAt": "2026-10-09T16:00:35.747Z",
+        "sha256": "4acf7dcae4e06b1ec573fcdf1fd71c4fbd316b80116e8c77f101bd323b806048",
+        "observedAt": "2026-10-08T00:00:00.000Z",
         "revision": "medcode v1"
       },
       "rows": [
@@ -14551,6 +14995,18 @@
           "standardError": 1.998,
           "costUsdPerTest": null,
           "latencySeconds": 34.291,
+          "components": []
+        },
+        {
+          "id": "anthropic-claude-haiku-5-5",
+          "modelId": "anthropic/claude-haiku-5-5",
+          "provider": "Anthropic",
+          "effort": "max",
+          "harness": null,
+          "score": 51.542,
+          "standardError": 2.166,
+          "costUsdPerTest": null,
+          "latencySeconds": 226.464,
           "components": []
         },
         {
@@ -15259,6 +15715,18 @@
           "standardError": 2.104,
           "costUsdPerTest": null,
           "latencySeconds": 63.12,
+          "components": []
+        },
+        {
+          "id": "mistralai-mistral-large-4",
+          "modelId": "mistralai/mistral-large-4",
+          "provider": "Mistral AI",
+          "effort": "high",
+          "harness": null,
+          "score": 40.685,
+          "standardError": 2.171,
+          "costUsdPerTest": null,
+          "latencySeconds": 68.682,
           "components": []
         },
         {

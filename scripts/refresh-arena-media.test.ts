@@ -101,6 +101,11 @@ describe("Arena licensed source admission", () => {
     expect(hasArenaMediaChanged(before, next)).toBeTrue();
     next.cohorts.text_to_image.rows = next.cohorts.text_to_image.rows.slice(1);
     expect(() => hasArenaMediaChanged(before, next)).toThrow("retention");
+    const republished = structuredClone(next);
+    republished.cohorts.text_to_image.publishedAt = "2026-09-20";
+    expect(hasArenaMediaChanged(before, republished)).toBeTrue();
+    republished.cohorts.text_to_image.rows = [];
+    expect(() => hasArenaMediaChanged(before, republished)).toThrow("retention");
     const older = snapshot(); older.cohorts.image_edit.publishedAt = "2026-09-03";
     expect(() => hasArenaMediaChanged(before, older)).toThrow("publication date regressed");
   });

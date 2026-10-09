@@ -21,6 +21,7 @@ import {
 import { ATLAS_DATASETS, ATLAS_ENTRIES } from "@/lib/benchmark-atlas-catalog";
 import type { BenchmarkAtlasDataset, BenchmarkAtlasEntry } from "@/lib/benchmark-atlas";
 
+import { HOME_ACTIVITY_FEED } from "@/lib/home-activity-feed";
 import Home from "./page";
 import {
   homeAboutHeading,
@@ -148,8 +149,12 @@ describe("homepage canonical content", () => {
     expect(markup).toContain("Release radar");
     expect(markup).toContain('data-analytics-surface="home_activity"');
     expect(markup).toContain("Recent models and notes");
-    expect(markup).toContain('href="/models/xiaomi/mimo-v2-6-pro/index"');
-    expect(markup).toContain('href="/models/anthropic/claude-opus-5.5/max"');
+    // The feed is the newest Index listings and notes, so its members change
+    // with every data refresh; assert the rendered links match the feed.
+    expect(HOME_ACTIVITY_FEED.some(item => item.kind === "model")).toBeTrue();
+    for (const item of HOME_ACTIVITY_FEED) {
+      expect(markup).toContain(`href="${item.href}"`);
+    }
     expect(markup).not.toContain('href="/models/anthropic/claude-opus-5/max">Claude Opus 5.5');
     expect(exploreFooterAt).toBeGreaterThan(calculatorAt);
     expect(resourceFooterAt).toBeGreaterThan(exploreFooterAt);

@@ -82,13 +82,26 @@ export async function collectArenaMedia(fetchSource: FetchSource = fetch, retrie
   });
 }
 
+/** A newer publication may retire at most this many configurations: 10%, at least two. */
+export function maxRetiredConfigurations(previousRows: number): number {
+  return Math.max(2, Math.floor(previousRows / 10));
+}
+
 export function hasArenaMediaChanged(previous: ArenaMediaSnapshot, next: ArenaMediaSnapshot): boolean {
   if (Date.parse(next.source.retrievedAt) < Date.parse(previous.source.retrievedAt)) throw new Error("Arena retrieval time regressed.");
   for (const track of ARENA_MEDIA_TRACKS) {
     const before = previous.cohorts[track]; const after = next.cohorts[track];
     if (after.publishedAt < before.publishedAt) throw new Error(`Arena ${track} publication date regressed.`);
     const retained = new Set(after.rows.map(row => row.model_name));
-    if (before.rows.some(row => !retained.has(row.model_name))) throw new Error(`Arena ${track} lost a model configuration; review cohort retention.`);
+    const lost = before.rows.filter(row => !retained.has(row.model_name)).map(row => row.model_name);
+    if (lost.length === 0) continue;
+    // Arena retires configurations between leaderboard publications. A newer
+    // publication may drop a few; a loss within the same publication, or a
+    // large one, still looks like a partial read and stops for review.
+    if (after.publishedAt === before.publishedAt || lost.length > maxRetiredConfigurations(before.rows.length)) {
+      throw new Error(`Arena ${track} lost a model configuration; review cohort retention.`);
+    }
+    console.log(`Arena ${track} ${after.publishedAt} retired ${lost.join(", ")}.`);
   }
   // A new upstream commit or retrieval alone does not manufacture fresh observations.
   return JSON.stringify(previous.cohorts) !== JSON.stringify(next.cohorts);
