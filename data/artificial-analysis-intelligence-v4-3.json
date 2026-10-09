@@ -1459,14 +1459,14 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.030836869286634754,
-        "cacheRead": 0.550980668121204,
-        "cacheWrite": 0.3411244809203483,
-        "input": 0.8950856809590835,
+        "answer": 0.031577281286634756,
+        "cacheRead": 0.5599150798944313,
+        "cacheWrite": 0.34678103800875737,
+        "input": 0.9096766498207198,
         "nonCacheInput": 0.0029805319175311134,
-        "output": 0.09060381742459483,
-        "reasoning": 0.05976694813796007,
-        "total": 0.9856894983836784
+        "output": 0.09192623037914029,
+        "reasoning": 0.06034894909250552,
+        "total": 1.00160288019986
       },
       "creator": {
         "id": "4df238a9-d4fd-4cf2-ab1e-d12956c41f9b",
@@ -1479,9 +1479,9 @@
       "intelligenceIndex": 41.0906200397391,
       "name": "Ling 3.1 Flash",
       "outputTokensPerTask": {
-        "answer": 34263.188096260834,
-        "reasoning": 66407.72015328896,
-        "total": 100670.9082495498
+        "answer": 35085.868096260834,
+        "reasoning": 67054.38788056168,
+        "total": 102140.25597682252
       },
       "release": {
         "name": "Ling 3.1 Flash",
@@ -1823,14 +1823,14 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.005549420756484062,
-        "cacheRead": 0.017951590352690297,
-        "cacheWrite": 0.01936753077794491,
-        "input": 0.04053302730439002,
+        "answer": 0.00555278877466588,
+        "cacheRead": 0.017973304690042755,
+        "cacheWrite": 0.01938959744668555,
+        "input": 0.04057680831048311,
         "nonCacheInput": 0.0032139061737548142,
-        "output": 0.02178167406180075,
-        "reasoning": 0.016232253305316684,
-        "total": 0.06231470136619077
+        "output": 0.02179886644361893,
+        "reasoning": 0.016246077668953043,
+        "total": 0.06237567475410205
       },
       "creator": {
         "id": "5147c8b4-61d5-4070-9324-8adf8aa144c2",
@@ -1843,9 +1843,9 @@
       "intelligenceIndex": 37.8843590141754,
       "name": "MiMo-V2.6-Flash",
       "outputTokensPerTask": {
-        "answer": 19819.35984458594,
-        "reasoning": 57972.333233273865,
-        "total": 77791.6930778598
+        "answer": 19831.38848094958,
+        "reasoning": 58021.70596054659,
+        "total": 77853.09444149617
       },
       "release": {
         "name": "MiMo-V2.6-Flash",
@@ -2872,14 +2872,14 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.0066733914601051735,
-        "cacheRead": 0.02727954800094194,
-        "cacheWrite": 0.29966756739375966,
-        "input": 0.328040900516393,
+        "answer": 0.006710864369196082,
+        "cacheRead": 0.027442042566141942,
+        "cacheWrite": 0.30146830987812323,
+        "input": 0.33000413756595665,
         "nonCacheInput": 0.0010937851216913808,
-        "output": 0.035320224702197534,
-        "reasoning": 0.028646833242092367,
-        "total": 0.36336112521859043
+        "output": 0.035581074520379355,
+        "reasoning": 0.028870210151183275,
+        "total": 0.3655852120863359
       },
       "creator": {
         "id": "64ff7f06-c6fb-42ea-ba24-9cd103ab2d61",
@@ -2892,9 +2892,9 @@
       "intelligenceIndex": 24.0522018844171,
       "name": "Solar Mini 4",
       "outputTokensPerTask": {
-        "answer": 16683.478650262932,
-        "reasoning": 71617.0831052309,
-        "total": 88300.56175549382
+        "answer": 16777.16092299021,
+        "reasoning": 72175.52537795817,
+        "total": 88952.68630094838
       },
       "release": {
         "name": "Solar Mini 4",
@@ -3118,14 +3118,14 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.012153176549254055,
-        "cacheRead": 0.008116554630439778,
-        "cacheWrite": 0.01788576750314126,
-        "input": 0.02955960854015911,
-        "nonCacheInput": 0.00355728640657807,
-        "output": 0.029430300274173423,
-        "reasoning": 0.017277123724919363,
-        "total": 0.05898990881433253
+        "answer": 0.029876559016916226,
+        "cacheRead": 0.02029138657609944,
+        "cacheWrite": 0.044714418757853154,
+        "input": 0.07389902135039778,
+        "nonCacheInput": 0.008893216016445176,
+        "output": 0.07234948817400967,
+        "reasoning": 0.04247292915709344,
+        "total": 0.14624850952440743
       },
       "creator": {
         "id": "45d124a1-e1be-402d-97be-7adf239b9988",
@@ -3152,14 +3152,14 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.0018790097520346404,
-        "cacheRead": 0.0051211338333094795,
-        "cacheWrite": 0.0022023718201069874,
-        "input": 0.009463681110617798,
+        "answer": 0.0018802695247619131,
+        "cacheRead": 0.005121424707130641,
+        "cacheWrite": 0.002203187431433381,
+        "input": 0.009464787595765353,
         "nonCacheInput": 0.0021401754572013326,
-        "output": 0.0018790097520346404,
+        "output": 0.0018802695247619131,
         "reasoning": 0,
-        "total": 0.011342690862652438
+        "total": 0.011345057120527267
       },
       "creator": {
         "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
@@ -3172,9 +3172,9 @@
       "intelligenceIndex": 18.4678465935701,
       "name": "GPT-6 Luna (Non-reasoning)",
       "outputTokensPerTask": {
-        "answer": 3758.0195040692806,
+        "answer": 3760.5390495238253,
         "reasoning": 0,
-        "total": 3758.0195040692806
+        "total": 3760.5390495238253
       },
       "release": {
         "name": "GPT-6 Luna",
@@ -3814,12 +3814,12 @@
       "costUsdPerTask": {
         "answer": 0.018173793419151645,
         "cacheRead": 0,
-        "cacheWrite": 0.5300556496894258,
-        "input": 0.5336303340748841,
-        "nonCacheInput": 0.0035746843854585005,
+        "cacheWrite": 0.7572223566991798,
+        "input": 0.7623290486784063,
+        "nonCacheInput": 0.005106691979226429,
         "output": 0.018173793419151645,
         "reasoning": 0,
-        "total": 0.5518041274940361
+        "total": 0.7805028420975578
       },
       "creator": {
         "id": "d874d370-74d3-4fa0-ba00-5272f92f946b",
@@ -3880,14 +3880,14 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.0003601214910537822,
+        "answer": 0.00043014511431424004,
         "cacheRead": 0,
         "cacheWrite": 0.008607381834335454,
         "input": 0.009201055957464534,
         "nonCacheInput": 0.0005936741231290805,
-        "output": 0.0032595842847146787,
-        "reasoning": 0.0028994627936608968,
-        "total": 0.012460640242179213
+        "output": 0.0038933923400758675,
+        "reasoning": 0.003463247225761627,
+        "total": 0.0130944482975404
       },
       "creator": {
         "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
@@ -4099,7 +4099,7 @@
     "method": "public-next-flight",
     "methodologyUrl": "https://artificialanalysis.ai/methodology/intelligence-benchmarking",
     "name": "Artificial Analysis",
-    "retrievedAt": "2026-10-09T16:00:23.522Z",
+    "retrievedAt": "2026-10-09T20:53:43.189Z",
     "sourceClass": "benchmark-publisher",
     "termsUrl": "https://artificialanalysis.ai/docs/legal/Terms-of-Use.pdf",
     "url": "https://artificialanalysis.ai/models"
