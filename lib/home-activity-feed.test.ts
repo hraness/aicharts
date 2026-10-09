@@ -6,6 +6,7 @@ import {
   HOME_ACTIVITY_MODEL_LIMIT,
   HOME_ACTIVITY_NOTE_LIMIT,
 } from "./home-activity-feed";
+import { PUBLIC_MODEL_CARD_PATHS } from "./public-analytics-routes";
 
 describe("home activity feed", () => {
   test("mixes recent models and notes without exceeding the compact cap", () => {
@@ -15,14 +16,13 @@ describe("home activity feed", () => {
       .toBeLessThanOrEqual(HOME_ACTIVITY_MODEL_LIMIT);
     expect(HOME_ACTIVITY_FEED.filter(item => item.kind === "note").length)
       .toBeLessThanOrEqual(HOME_ACTIVITY_NOTE_LIMIT);
-    expect(HOME_ACTIVITY_FEED.some(item => (
-      item.href === "/models/inclusionai/ling-3-1-flash/index"
-      && item.title === "Ling 3.1 Flash"
-    ))).toBeTrue();
-    expect(HOME_ACTIVITY_FEED.some(item => (
-      item.href === "/models/anthropic/claude-opus-5.5/max"
-      && item.title === "Claude Opus 5.5"
-    ))).toBeTrue();
+    // Which models are newest changes with every data refresh, so check the
+    // feed's shape: it holds models, and each links to a published model route.
+    const models = HOME_ACTIVITY_FEED.filter(item => item.kind === "model");
+    expect(models.length).toBeGreaterThan(0);
+    for (const item of models) {
+      expect(PUBLIC_MODEL_CARD_PATHS as readonly string[]).toContain(item.href);
+    }
     expect(HOME_ACTIVITY_FEED.some(item => (
       item.title === "Claude Opus 5.5"
       && item.href.includes("claude-opus-5/")

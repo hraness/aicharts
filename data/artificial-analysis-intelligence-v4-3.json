@@ -66,13 +66,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.5079688280987351,
-        "cacheRead": 4.411847445202884,
+        "cacheRead": 2.205923722601442,
         "cacheWrite": 1.229081634246536,
-        "input": 5.692472601310081,
+        "input": 3.486548878708639,
         "nonCacheInput": 0.051543521860660954,
         "output": 1.974303716101193,
         "reasoning": 1.466334888002458,
-        "total": 7.666776317411276
+        "total": 5.4608525948098325
       },
       "creator": {
         "id": "f0aa413f-e8ae-4fcd-9c48-0e049f4f3128",
@@ -370,13 +370,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.26856344904683976,
-        "cacheRead": 1.4683247635797327,
+        "cacheRead": 0.7341623817898664,
         "cacheWrite": 0.4782798213602554,
-        "input": 1.9981004778636917,
+        "input": 1.2639380960738253,
         "nonCacheInput": 0.0514958929237036,
         "output": 0.7480964840807534,
         "reasoning": 0.4795330350339135,
-        "total": 2.7461969619444453
+        "total": 2.0120345801545785
       },
       "creator": {
         "id": "f0aa413f-e8ae-4fcd-9c48-0e049f4f3128",
@@ -826,13 +826,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.186016042710417,
-        "cacheRead": 0.476067434943033,
+        "cacheRead": 0.2380337174715165,
         "cacheWrite": 0.22173545277707035,
-        "input": 0.7492096454357585,
+        "input": 0.5111759279642422,
         "nonCacheInput": 0.051406757715655296,
         "output": 0.37327393013630916,
         "reasoning": 0.18725788742589217,
-        "total": 1.1224835755720677
+        "total": 0.8844498581005511
       },
       "creator": {
         "id": "f0aa413f-e8ae-4fcd-9c48-0e049f4f3128",
@@ -1122,13 +1122,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.05588091808424126,
-        "cacheRead": 0.30891671284001165,
+        "cacheRead": 0.6178334256800233,
         "cacheWrite": 0.22138216014465614,
-        "input": 0.5443005696425625,
+        "input": 0.8532172824825741,
         "nonCacheInput": 0.014001696657894582,
         "output": 0.1731895812858314,
         "reasoning": 0.11730866320159015,
-        "total": 0.7174901509283937
+        "total": 1.0264068637684054
       },
       "creator": {
         "id": "ce2e2e8b-7a22-4020-98ec-8ef71000dd42",
@@ -1190,6 +1190,44 @@
       "releaseDate": "2026-07-16",
       "shortName": "Kimi K3 (max)",
       "slug": "kimi-k3"
+    },
+    {
+      "costUsdPerTask": {
+        "answer": 0.016558819900074292,
+        "cacheRead": 0.09543831887163462,
+        "cacheWrite": 0.03368336208777227,
+        "input": 0.13168761556562894,
+        "nonCacheInput": 0.0025659346062220315,
+        "output": 0.0810820966042913,
+        "reasoning": 0.06452327670421702,
+        "total": 0.21276971216992022
+      },
+      "creator": {
+        "id": "f0aa413f-e8ae-4fcd-9c48-0e049f4f3128",
+        "name": "Anthropic",
+        "slug": "anthropic"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/claude-haiku-5-5",
+      "effort": {
+        "label": "max",
+        "level": 60,
+        "slug": "max"
+      },
+      "id": "7d064a11-6e78-4030-b535-cdf940615041",
+      "intelligenceIndex": 43.3950199670746,
+      "name": "Claude Haiku 5.5 (Max)",
+      "outputTokensPerTask": {
+        "answer": 33117.63980014857,
+        "reasoning": 129046.55340843403,
+        "total": 162164.1932085826
+      },
+      "release": {
+        "name": "Claude Haiku 5.5",
+        "slug": "claude-haiku-5-5"
+      },
+      "releaseDate": "2026-10-07",
+      "shortName": "Claude Haiku 5.5 (max)",
+      "slug": "claude-haiku-5-5"
     },
     {
       "costUsdPerTask": {
@@ -1367,19 +1405,57 @@
       },
       "id": "19496b81-9f41-4214-a77a-1df803b3c5ae",
       "intelligenceIndex": 41.807466113455,
-      "name": "GLM 5.3 Flash",
+      "name": "GLM-5.3-Flash",
       "outputTokensPerTask": {
         "answer": 22023.666872022226,
         "reasoning": 46649.4851844942,
         "total": 68673.15205651642
       },
       "release": {
-        "name": "GLM 5.3 Flash",
+        "name": "GLM-5.3-Flash",
         "slug": "glm-5-3-flash"
       },
       "releaseDate": "2026-08-26",
       "shortName": "GLM-5.3-Flash",
       "slug": "glm-5-3-flash"
+    },
+    {
+      "costUsdPerTask": {
+        "answer": 0.01184299526644202,
+        "cacheRead": 0.05582925953192968,
+        "cacheWrite": 0.020691962829172815,
+        "input": 0.07908867352699991,
+        "nonCacheInput": 0.002567451165897436,
+        "output": 0.044696937393961106,
+        "reasoning": 0.03285394212751909,
+        "total": 0.12378561092096102
+      },
+      "creator": {
+        "id": "f0aa413f-e8ae-4fcd-9c48-0e049f4f3128",
+        "name": "Anthropic",
+        "slug": "anthropic"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/claude-haiku-5-5-xhigh",
+      "effort": {
+        "label": "xhigh",
+        "level": 50,
+        "slug": "xhigh"
+      },
+      "id": "41b5bf5e-daf6-42d9-b8d1-60e340a3028d",
+      "intelligenceIndex": 41.2489304677024,
+      "name": "Claude Haiku 5.5 (Xhigh)",
+      "outputTokensPerTask": {
+        "answer": 23685.990532884036,
+        "reasoning": 65707.88425503818,
+        "total": 89393.87478792222
+      },
+      "release": {
+        "name": "Claude Haiku 5.5",
+        "slug": "claude-haiku-5-5"
+      },
+      "releaseDate": "2026-10-07",
+      "shortName": "Claude Haiku 5.5 (xhigh)",
+      "slug": "claude-haiku-5-5-xhigh"
     },
     {
       "costUsdPerTask": {
@@ -1456,13 +1532,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.12747454553298956,
-        "cacheRead": 0.212287795199691,
+        "cacheRead": 0.1061438975998455,
         "cacheWrite": 0.11640671530465035,
-        "input": 0.3800314040594717,
+        "input": 0.2738875064596263,
         "nonCacheInput": 0.05133689355513041,
         "output": 0.20937627614580473,
         "reasoning": 0.08190173061281518,
-        "total": 0.5894076802052765
+        "total": 0.48326378260543096
       },
       "creator": {
         "id": "f0aa413f-e8ae-4fcd-9c48-0e049f4f3128",
@@ -1637,6 +1713,40 @@
     },
     {
       "costUsdPerTask": {
+        "answer": 0.07239495930631494,
+        "cacheRead": 0.5737175470549178,
+        "cacheWrite": 0.24380354982082658,
+        "input": 0.8419598076676681,
+        "nonCacheInput": 0.024438710791923564,
+        "output": 0.2897992456331666,
+        "reasoning": 0.2174042863268516,
+        "total": 1.1317590533008346
+      },
+      "creator": {
+        "id": "b5c0639a-cc9c-443b-a07e-bae6b7088933",
+        "name": "Mistral",
+        "slug": "mistral"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/mistral-large-4",
+      "effort": null,
+      "id": "34fc646a-0174-470e-9e62-d8df452210b3",
+      "intelligenceIndex": 38.3770408917494,
+      "name": "Mistral Large 4 Preview",
+      "outputTokensPerTask": {
+        "answer": 17319.36825509927,
+        "reasoning": 52010.59481503627,
+        "total": 69329.96307013553
+      },
+      "release": {
+        "name": "Mistral Large 4 Preview",
+        "slug": "mistral-large-4"
+      },
+      "releaseDate": "2026-10-06",
+      "shortName": "Mistral Large 4 Preview",
+      "slug": "mistral-large-4"
+    },
+    {
+      "costUsdPerTask": {
         "answer": 0.005561004985629364,
         "cacheRead": 0.02897687860847939,
         "cacheWrite": 0.011695120408665187,
@@ -1747,6 +1857,44 @@
     },
     {
       "costUsdPerTask": {
+        "answer": 0.009206310971460241,
+        "cacheRead": 0.03500997649418093,
+        "cacheWrite": 0.014153075630541492,
+        "input": 0.05173280618930581,
+        "nonCacheInput": 0.0025697540645833886,
+        "output": 0.02769390949806441,
+        "reasoning": 0.018487598526604167,
+        "total": 0.07942671568737021
+      },
+      "creator": {
+        "id": "f0aa413f-e8ae-4fcd-9c48-0e049f4f3128",
+        "name": "Anthropic",
+        "slug": "anthropic"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/claude-haiku-5-5-high",
+      "effort": {
+        "label": "high",
+        "level": 40,
+        "slug": "high"
+      },
+      "id": "20829974-af06-497e-9f42-77fb958d43b9",
+      "intelligenceIndex": 37.8240211671094,
+      "name": "Claude Haiku 5.5 (High)",
+      "outputTokensPerTask": {
+        "answer": 18412.621942920476,
+        "reasoning": 36975.197053208336,
+        "total": 55387.818996128815
+      },
+      "release": {
+        "name": "Claude Haiku 5.5",
+        "slug": "claude-haiku-5-5"
+      },
+      "releaseDate": "2026-10-07",
+      "shortName": "Claude Haiku 5.5 (high)",
+      "slug": "claude-haiku-5-5-high"
+    },
+    {
+      "costUsdPerTask": {
         "answer": 0.06728320630239852,
         "cacheRead": 0.26752018427641244,
         "cacheWrite": 0.1749667500217311,
@@ -1786,13 +1934,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.09665055699466614,
-        "cacheRead": 0.14361884944620498,
+        "cacheRead": 0.07180942472310249,
         "cacheWrite": 0.07950401753906641,
-        "input": 0.2744382232484685,
+        "input": 0.20262879852536597,
         "nonCacheInput": 0.05131535626319711,
         "output": 0.14253222854129013,
         "reasoning": 0.04588167154662399,
-        "total": 0.41697045178975856
+        "total": 0.3451610270666562
       },
       "creator": {
         "id": "f0aa413f-e8ae-4fcd-9c48-0e049f4f3128",
@@ -1896,6 +2044,44 @@
       "releaseDate": "2026-09-22",
       "shortName": "GPT-6 Luna (xhigh)",
       "slug": "gpt-6-luna-xhigh"
+    },
+    {
+      "costUsdPerTask": {
+        "answer": 0.006561192702190671,
+        "cacheRead": 0.019020923618643826,
+        "cacheWrite": 0.009037554051695235,
+        "input": 0.030624569613193774,
+        "nonCacheInput": 0.0025660919428547157,
+        "output": 0.016406278326361896,
+        "reasoning": 0.009845085624171227,
+        "total": 0.04703084793955566
+      },
+      "creator": {
+        "id": "f0aa413f-e8ae-4fcd-9c48-0e049f4f3128",
+        "name": "Anthropic",
+        "slug": "anthropic"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/claude-haiku-5-5-medium",
+      "effort": {
+        "label": "medium",
+        "level": 30,
+        "slug": "medium"
+      },
+      "id": "af26fff4-8120-41be-a5f0-86aaea023f20",
+      "intelligenceIndex": 34.4646519474657,
+      "name": "Claude Haiku 5.5 (Medium)",
+      "outputTokensPerTask": {
+        "answer": 13122.38540438134,
+        "reasoning": 19690.171248342453,
+        "total": 32812.5566527238
+      },
+      "release": {
+        "name": "Claude Haiku 5.5",
+        "slug": "claude-haiku-5-5"
+      },
+      "releaseDate": "2026-10-07",
+      "shortName": "Claude Haiku 5.5 (medium)",
+      "slug": "claude-haiku-5-5-medium"
     },
     {
       "costUsdPerTask": {
@@ -2221,6 +2407,44 @@
       "releaseDate": "2026-02-19",
       "shortName": "Gemini 3.1 Pro Preview",
       "slug": "gemini-3-1-pro-preview"
+    },
+    {
+      "costUsdPerTask": {
+        "answer": 0.0040271432296149975,
+        "cacheRead": 0.00840255642245219,
+        "cacheWrite": 0.004850273067865566,
+        "input": 0.015816529848763406,
+        "nonCacheInput": 0.002563700358445651,
+        "output": 0.00864283117014633,
+        "reasoning": 0.00461568794053133,
+        "total": 0.02445936101890973
+      },
+      "creator": {
+        "id": "f0aa413f-e8ae-4fcd-9c48-0e049f4f3128",
+        "name": "Anthropic",
+        "slug": "anthropic"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/claude-haiku-5-5-low",
+      "effort": {
+        "label": "low",
+        "level": 20,
+        "slug": "low"
+      },
+      "id": "42908ae3-d3bd-4934-be19-fbff93d3fde8",
+      "intelligenceIndex": 29.4523685891139,
+      "name": "Claude Haiku 5.5 (Low)",
+      "outputTokensPerTask": {
+        "answer": 8054.286459229995,
+        "reasoning": 9231.375881062662,
+        "total": 17285.662340292656
+      },
+      "release": {
+        "name": "Claude Haiku 5.5",
+        "slug": "claude-haiku-5-5"
+      },
+      "releaseDate": "2026-10-07",
+      "shortName": "Claude Haiku 5.5 (low)",
+      "slug": "claude-haiku-5-5-low"
     },
     {
       "costUsdPerTask": {
@@ -2827,13 +3051,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.11543190907684102,
-        "cacheRead": 0.1310729843254109,
-        "cacheWrite": 0.2191712061001953,
-        "input": 0.36199210711479757,
+        "cacheRead": 0.1318375056271196,
+        "cacheWrite": 0.1962355670489333,
+        "input": 0.3398209893652443,
         "nonCacheInput": 0.011747916689191404,
         "output": 0.11543190907684102,
         "reasoning": 0,
-        "total": 0.47742401619163854
+        "total": 0.4552528984420853
       },
       "creator": {
         "id": "58b835bf-4c87-4f87-a846-df4b692c6e7d",
@@ -3068,40 +3292,6 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.05409783421079809,
-        "cacheRead": 0.03602685714253466,
-        "cacheWrite": 0.13490375124288925,
-        "input": 0.18439818123698212,
-        "nonCacheInput": 0.013467572851558248,
-        "output": 0.09242257706478244,
-        "reasoning": 0.03832474285398434,
-        "total": 0.27682075830176456
-      },
-      "creator": {
-        "id": "f0aa413f-e8ae-4fcd-9c48-0e049f4f3128",
-        "name": "Anthropic",
-        "slug": "anthropic"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/claude-4-5-haiku-reasoning",
-      "effort": null,
-      "id": "a6340098-d7ae-462d-b372-0a0a67fc44b4",
-      "intelligenceIndex": 16.8822352291856,
-      "name": "Claude 4.5 Haiku (Reasoning)",
-      "outputTokensPerTask": {
-        "answer": 10819.566842159622,
-        "reasoning": 7664.948570796869,
-        "total": 18484.51541295649
-      },
-      "release": {
-        "name": "Claude 4.5 Haiku",
-        "slug": "claude-4-5-haiku"
-      },
-      "releaseDate": "2025-10-15",
-      "shortName": "Claude 4.5 Haiku",
-      "slug": "claude-4-5-haiku-reasoning"
-    },
-    {
-      "costUsdPerTask": {
         "answer": 0.04417368927412484,
         "cacheRead": 0,
         "cacheWrite": 0.17333838502746568,
@@ -3327,6 +3517,40 @@
       "releaseDate": "2026-03-11",
       "shortName": "Nemotron 3 Super",
       "slug": "nvidia-nemotron-3-super-120b-a12b"
+    },
+    {
+      "costUsdPerTask": {
+        "answer": 0.00650784435958385,
+        "cacheRead": 0.02690775370973946,
+        "cacheWrite": 0.008506283978235912,
+        "input": 0.036627958416775415,
+        "nonCacheInput": 0.0012139207288000354,
+        "output": 0.035036190079511684,
+        "reasoning": 0.02852834571992782,
+        "total": 0.0716641484962871
+      },
+      "creator": {
+        "id": "512ef1e4-e02e-4532-a5f2-d11a40962498",
+        "name": "IBM",
+        "slug": "ibm"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/granite-4-2-30b",
+      "effort": null,
+      "id": "1071dea1-43e7-4fe9-b936-3034bb622b2e",
+      "intelligenceIndex": 12.68315341158,
+      "name": "Granite 4.2 30B",
+      "outputTokensPerTask": {
+        "answer": 10012.068245513614,
+        "reasoning": 43889.7626460428,
+        "total": 53901.83089155641
+      },
+      "release": {
+        "name": "Granite 4.2 30B",
+        "slug": "granite-4-2-30b"
+      },
+      "releaseDate": "2026-08-25",
+      "shortName": "Granite 4.2 30B",
+      "slug": "granite-4-2-30b"
     },
     {
       "costUsdPerTask": {
@@ -3585,40 +3809,6 @@
       "releaseDate": "2026-06-09",
       "shortName": "North Mini Code",
       "slug": "north-mini-code"
-    },
-    {
-      "costUsdPerTask": {
-        "answer": 0.008349663645151875,
-        "cacheRead": 0.008138050212927744,
-        "cacheWrite": 0.009089473098443853,
-        "input": 0.02277632861547262,
-        "nonCacheInput": 0.00554880530410102,
-        "output": 0.008349663645151875,
-        "reasoning": 0,
-        "total": 0.031125992260624492
-      },
-      "creator": {
-        "id": "b5c0639a-cc9c-443b-a07e-bae6b7088933",
-        "name": "Mistral",
-        "slug": "mistral"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/mistral-large-3",
-      "effort": null,
-      "id": "4928e950-7f37-4475-b0dc-c5bad781a321",
-      "intelligenceIndex": 9.26608812860467,
-      "name": "Mistral Large 3",
-      "outputTokensPerTask": {
-        "answer": 5566.44243010125,
-        "reasoning": 0,
-        "total": 5566.44243010125
-      },
-      "release": {
-        "name": "Mistral Large 3",
-        "slug": "mistral-large-3"
-      },
-      "releaseDate": "2025-12-02",
-      "shortName": "Mistral Large 3",
-      "slug": "mistral-large-3"
     },
     {
       "costUsdPerTask": {
@@ -3899,17 +4089,17 @@
   ],
   "schemaVersion": 1,
   "selection": {
-    "measuredCompleteRecordCount": 108,
-    "positiveCostRecordCount": 103,
+    "measuredCompleteRecordCount": 113,
+    "positiveCostRecordCount": 108,
     "rule": "current, non-estimated model configurations with a finite 0–100 Intelligence Index, finite positive per-task output-token total, and a complete finite nonnegative per-task cost breakdown; source cost totals at or below zero normalize to null",
-    "sourceRecordCount": 690
+    "sourceRecordCount": 697
   },
   "source": {
     "citation": "Artificial Analysis (2025). LLM benchmarks dataset. https://artificialanalysis.ai",
     "method": "public-next-flight",
     "methodologyUrl": "https://artificialanalysis.ai/methodology/intelligence-benchmarking",
     "name": "Artificial Analysis",
-    "retrievedAt": "2026-10-06T11:15:48.331Z",
+    "retrievedAt": "2026-10-09T16:00:23.522Z",
     "sourceClass": "benchmark-publisher",
     "termsUrl": "https://artificialanalysis.ai/docs/legal/Terms-of-Use.pdf",
     "url": "https://artificialanalysis.ai/models"

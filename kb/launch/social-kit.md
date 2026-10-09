@@ -15,7 +15,7 @@ aicharts puts published AI benchmark scores and the cost of a task on one chart,
 Post 2 of 9, 213 characters
 
 ```text
-The homepage chart plots 103 model settings by Artificial Analysis Intelligence Index v4.3.2 score against cost per task. The line joins the models nothing cheaper beats, so the best pick at each price stands out.
+The homepage chart plots 108 model settings by Artificial Analysis Intelligence Index v4.3.2 score against cost per task. The line joins the models nothing cheaper beats, so the best pick at each price stands out.
 ```
 
 Post 3 of 9, 183 characters
@@ -73,7 +73,7 @@ aicharts puts published AI benchmark scores and the cost of a task on one chart,
 Post 2 of 9, 213 characters
 
 ```text
-The homepage chart plots 103 model settings by Artificial Analysis Intelligence Index v4.3.2 score against cost per task. The line joins the models nothing cheaper beats, so the best pick at each price stands out.
+The homepage chart plots 108 model settings by Artificial Analysis Intelligence Index v4.3.2 score against cost per task. The line joins the models nothing cheaper beats, so the best pick at each price stands out.
 ```
 
 Post 3 of 9, 183 characters
@@ -131,7 +131,7 @@ aicharts puts published AI benchmark scores and the cost of a task on one chart,
 Post 2 of 9, 213 characters
 
 ```text
-The homepage chart plots 103 model settings by Artificial Analysis Intelligence Index v4.3.2 score against cost per task. The line joins the models nothing cheaper beats, so the best pick at each price stands out.
+The homepage chart plots 108 model settings by Artificial Analysis Intelligence Index v4.3.2 score against cost per task. The line joins the models nothing cheaper beats, so the best pick at each price stands out.
 ```
 
 Post 3 of 9, 183 characters
@@ -183,7 +183,7 @@ https://aicharts.io/blog/introducing-ai-charts
 ```text
 aicharts puts published AI benchmark scores and the cost of a task on one chart, so you can see which model gives the most for your budget. Every point names its source and the day it was checked.
 
-The homepage chart plots 103 model settings by Artificial Analysis Intelligence Index v4.3.2 score against cost per task. The line joins the models nothing cheaper beats, so the best pick at each price stands out.
+The homepage chart plots 108 model settings by Artificial Analysis Intelligence Index v4.3.2 score against cost per task. The line joins the models nothing cheaper beats, so the best pick at each price stands out.
 
 The coding chart compares 31 coding-agent setups. Each point is a model, the agent app running it, and an effort setting. Hover one to see its scores, cost per task, time, and tokens.
 
@@ -218,7 +218,7 @@ Topics: Artificial Intelligence, Developer Tools, Data Visualization
 
 - Model benchmarks at a glance
 - aicharts puts published AI benchmark scores and the cost of a task on one chart, so you can see which model gives the most for your budget. Every point names its source and the day it was checked.
-- The homepage chart plots 103 model settings by Artificial Analysis Intelligence Index v4.3.2 score against cost per task. The line joins the models nothing cheaper beats, so the best pick at each price stands out.
+- The homepage chart plots 108 model settings by Artificial Analysis Intelligence Index v4.3.2 score against cost per task. The line joins the models nothing cheaper beats, so the best pick at each price stands out.
 - The coding chart compares 31 coding-agent setups. Each point is a model, the agent app running it, and an effort setting. Hover one to see its scores, cost per task, time, and tokens.
 - The benchmarks library covers 62 tests across reasoning, research, memory, images, video and audio. Each one is labelled as a chart, a guide to the source, or an early test, and it keeps its own scale.
 - The aicharts collector reads the usage files your coding agents already keep, from 55 supported sources, and adds up tokens, cost and speed per model and day. Prompts and transcripts stay on your machine.
@@ -242,7 +242,7 @@ Topics: Artificial Intelligence, Developer Tools, Data Visualization
 
 ## Facts and their records
 
-- intelligenceConfigs: 103. data/artificial-analysis-intelligence-v4-3.json selection.positiveCostRecordCount, the configurations with a task cost above zero that the homepage chart plots (comparableIntelligenceRecords)
+- intelligenceConfigs: 108. data/artificial-analysis-intelligence-v4-3.json selection.positiveCostRecordCount, the configurations with a task cost above zero that the homepage chart plots (comparableIntelligenceRecords)
 - intelligenceVersion: v4.3.2. data/artificial-analysis-intelligence-v4-3.json benchmark.version
 - codingConfigs: 31. data/coding-agents.json records.length, the model, harness, and effort configurations on the /coding chart
 - libraryEntries: 62. lib/benchmark-atlas-catalog.ts ATLAS_ENTRIES.length, the entries in the /benchmarks library
