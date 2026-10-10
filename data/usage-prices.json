@@ -3,8 +3,8 @@
   "registryRevision": 1,
   "source": {
     "url": "https://models.dev/api.json",
-    "retrievedAt": "2026-10-09",
-    "sha256": "6172b02b1955b5812647eb8a4434908b154a138fc551a74d65e7024b1329ba20"
+    "retrievedAt": "2026-10-10",
+    "sha256": "75191d6bf888400b168e795ca04776ff30dd24cfb6045ff798f0bb8707a1a5f9"
   },
   "unit": "picousd-per-token",
   "basis": "dated-retail-estimate",
@@ -3861,11 +3861,23 @@
       "cacheWrite": "0",
       "output": "3490000"
     },
+    "ambient\u0000qwen/qwen3-30b-a3b-instruct-2507": {
+      "input": "90000",
+      "cacheRead": "90000",
+      "cacheWrite": "0",
+      "output": "300000"
+    },
     "ambient\u0000qwen/qwen3.6-27b": {
       "input": "320000",
       "cacheRead": "160000",
       "cacheWrite": "0",
       "output": "3200000"
+    },
+    "ambient\u0000qwen/qwen3.6-35b-a3b": {
+      "input": "150000",
+      "cacheRead": "150000",
+      "cacheWrite": "0",
+      "output": "1000000"
     },
     "ambient\u0000qwen/qwen3.8-27b": {
       "input": "320000",
@@ -7533,6 +7545,12 @@
       "cacheWrite": null,
       "output": "880000"
     },
+    "deepinfra\u0000qwen/qwen3-vl-30b-a3b-instruct": {
+      "input": "150000",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "600000"
+    },
     "deepinfra\u0000qwen/qwen3.5-122b-a10b": {
       "input": "290000",
       "cacheRead": null,
@@ -7767,11 +7785,23 @@
       "cacheWrite": "18750000",
       "output": "75000000"
     },
+    "digitalocean\u0000anthropic-claude-5-5-haiku": {
+      "input": "100000",
+      "cacheRead": "10000",
+      "cacheWrite": "125000",
+      "output": "500000"
+    },
     "digitalocean\u0000anthropic-claude-5-sonnet": {
       "input": "2000000",
       "cacheRead": "200000",
       "cacheWrite": "2500000",
       "output": "10000000"
+    },
+    "digitalocean\u0000anthropic-claude-5.5-haiku": {
+      "input": "100000",
+      "cacheRead": "10000",
+      "cacheWrite": "125000",
+      "output": "500000"
     },
     "digitalocean\u0000anthropic-claude-fable-5": {
       "input": "10000000",
@@ -8583,6 +8613,12 @@
       "cacheWrite": null,
       "output": "3960000"
     },
+    "edenai\u0000cloudflare/@cf/meta/llama-3.2-1b-instruct": {
+      "input": "27000",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "201000"
+    },
     "edenai\u0000cloudflare/@cf/meta/llama-guard-3-8b": {
       "input": "484000",
       "cacheRead": null,
@@ -8703,6 +8739,12 @@
       "cacheWrite": null,
       "output": "2400000"
     },
+    "edenai\u0000deepinfra/deepseek-ai/deepseek-r1-0528": {
+      "input": "500000",
+      "cacheRead": "350000",
+      "cacheWrite": null,
+      "output": "2150000"
+    },
     "edenai\u0000deepinfra/deepseek-ai/deepseek-v3": {
       "input": "320000",
       "cacheRead": null,
@@ -8751,6 +8793,12 @@
       "cacheWrite": null,
       "output": "100000"
     },
+    "edenai\u0000deepinfra/gryphe/mythomax-l2-13b": {
+      "input": "400000",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "400000"
+    },
     "edenai\u0000deepinfra/meta-llama/llama-3.2-11b-vision-instruct": {
       "input": "345000",
       "cacheRead": null,
@@ -8774,6 +8822,18 @@
       "cacheRead": "40000",
       "cacheWrite": null,
       "output": "1200000"
+    },
+    "edenai\u0000deepinfra/microsoft/wizardlm-2-8x22b": {
+      "input": "480000",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "480000"
+    },
+    "edenai\u0000deepinfra/moonshotai/kimi-k2-instruct": {
+      "input": "500000",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "2000000"
     },
     "edenai\u0000deepinfra/moonshotai/kimi-k2.5": {
       "input": "450000",
@@ -9399,6 +9459,12 @@
       "cacheWrite": null,
       "output": "6400000"
     },
+    "edenai\u0000qwen/qwen-mt-plus": {
+      "input": "2460000",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "7370000"
+    },
     "edenai\u0000qwen/qwen-vl-max": {
       "input": "800000",
       "cacheRead": "160000",
@@ -9489,6 +9555,12 @@
       "cacheWrite": null,
       "output": "4000000"
     },
+    "edenai\u0000qwen/qwen3-vl-30b-a3b-instruct": {
+      "input": "200000",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "800000"
+    },
     "edenai\u0000qwen/qwen3.8-2.4t-a95b": {
       "input": "2000000",
       "cacheRead": "250000",
@@ -9572,6 +9644,12 @@
       "cacheRead": "42000",
       "cacheWrite": null,
       "output": "2501000"
+    },
+    "edenai\u0000tensorx/deepseek/deepseek-r1-0528": {
+      "input": "660000",
+      "cacheRead": "165000",
+      "cacheWrite": null,
+      "output": "2600000"
     },
     "edenai\u0000tensorx/deepseek/deepseek-v4-flash-0731": {
       "input": "250000",
@@ -9711,23 +9789,11 @@
       "cacheWrite": null,
       "output": "4000000"
     },
-    "empiriolabs\u0000deepseek-v3-2": {
-      "input": "570000",
-      "cacheRead": "570000",
-      "cacheWrite": null,
-      "output": "1710000"
-    },
     "empiriolabs\u0000deepseek-v4-1-flash": {
       "input": "300000",
       "cacheRead": "300000",
       "cacheWrite": null,
       "output": "1200000"
-    },
-    "empiriolabs\u0000deepseek-v4-flash": {
-      "input": "140000",
-      "cacheRead": "140000",
-      "cacheWrite": null,
-      "output": "280000"
     },
     "empiriolabs\u0000deepseek-v4-flash-0731": {
       "input": "424000",
@@ -12471,6 +12537,12 @@
       "cacheWrite": null,
       "output": "790000"
     },
+    "huggingface\u0000minimaxai/minimax-m1-80k": {
+      "input": "550000",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "2200000"
+    },
     "huggingface\u0000minimaxai/minimax-m2": {
       "input": "300000",
       "cacheRead": null,
@@ -12645,6 +12717,12 @@
       "cacheWrite": null,
       "output": "3950000"
     },
+    "huggingface\u0000qwen/qwen3-vl-30b-a3b-instruct": {
+      "input": "200000",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "700000"
+    },
     "huggingface\u0000qwen/qwen3.5-122b-a10b": {
       "input": "400000",
       "cacheRead": null,
@@ -12752,6 +12830,12 @@
       "cacheRead": null,
       "cacheWrite": null,
       "output": "3000000"
+    },
+    "huggingface\u0000zai-org/autoglm-phone-9b-multilingual": {
+      "input": "35000",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "138000"
     },
     "huggingface\u0000zai-org/glm-4.5": {
       "input": "600000",
@@ -14555,9 +14639,9 @@
     },
     "kilo\u0000deepseek/deepseek-v3.2": {
       "input": "259000",
-      "cacheRead": "135000",
+      "cacheRead": "140000",
       "cacheWrite": null,
-      "output": "420000"
+      "output": "800000"
     },
     "kilo\u0000deepseek/deepseek-v3.2-exp": {
       "input": "270000",
@@ -14566,10 +14650,10 @@
       "output": "410000"
     },
     "kilo\u0000deepseek/deepseek-v4-flash": {
-      "input": "140000",
-      "cacheRead": "28000",
+      "input": "30000",
+      "cacheRead": "30000",
       "cacheWrite": null,
-      "output": "280000"
+      "output": "1280000"
     },
     "kilo\u0000deepseek/deepseek-v4-flash-0731": {
       "input": "440000",
@@ -15029,7 +15113,7 @@
     },
     "kilo\u0000moonshotai/kimi-k2-thinking": {
       "input": "600000",
-      "cacheRead": null,
+      "cacheRead": "150000",
       "cacheWrite": null,
       "output": "2500000"
     },
@@ -15040,8 +15124,8 @@
       "output": "3000000"
     },
     "kilo\u0000moonshotai/kimi-k2.6": {
-      "input": "434800",
-      "cacheRead": "120200",
+      "input": "437500",
+      "cacheRead": "108700",
       "cacheWrite": null,
       "output": "2450000"
     },
@@ -15457,7 +15541,7 @@
       "input": "30000",
       "cacheRead": "30000",
       "cacheWrite": null,
-      "output": "170000"
+      "output": "150000"
     },
     "kilo\u0000openai/gpt-oss-20b": {
       "input": "18000",
@@ -15597,12 +15681,6 @@
       "cacheWrite": "325000",
       "output": "780000"
     },
-    "kilo\u0000qwen/qwen-plus-2025-07-28": {
-      "input": "260000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "780000"
-    },
     "kilo\u0000qwen/qwen2.5-vl-72b-instruct": {
       "input": "800000",
       "cacheRead": "400000",
@@ -15610,46 +15688,34 @@
       "output": "1000000"
     },
     "kilo\u0000qwen/qwen3-14b": {
-      "input": "227500",
+      "input": "120000",
       "cacheRead": null,
       "cacheWrite": null,
-      "output": "910000"
-    },
-    "kilo\u0000qwen/qwen3-235b-a22b": {
-      "input": "455000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "1820000"
+      "output": "240000"
     },
     "kilo\u0000qwen/qwen3-235b-a22b-2507": {
-      "input": "149500",
+      "input": "90000",
       "cacheRead": null,
       "cacheWrite": null,
-      "output": "598000"
+      "output": "550000"
     },
     "kilo\u0000qwen/qwen3-235b-a22b-thinking-2507": {
-      "input": "230000",
+      "input": "450000",
       "cacheRead": null,
       "cacheWrite": null,
-      "output": "2300000"
+      "output": "3500000"
     },
     "kilo\u0000qwen/qwen3-30b-a3b": {
-      "input": "130000",
+      "input": "120000",
       "cacheRead": null,
       "cacheWrite": null,
-      "output": "520000"
+      "output": "500000"
     },
     "kilo\u0000qwen/qwen3-30b-a3b-instruct-2507": {
-      "input": "130000",
+      "input": "100000",
       "cacheRead": null,
       "cacheWrite": null,
-      "output": "520000"
-    },
-    "kilo\u0000qwen/qwen3-30b-a3b-thinking-2507": {
-      "input": "200000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "2400000"
+      "output": "300000"
     },
     "kilo\u0000qwen/qwen3-32b": {
       "input": "80000",
@@ -15657,23 +15723,17 @@
       "cacheWrite": null,
       "output": "280000"
     },
-    "kilo\u0000qwen/qwen3-8b": {
-      "input": "117000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "455000"
-    },
     "kilo\u0000qwen/qwen3-coder": {
-      "input": "975000",
-      "cacheRead": null,
+      "input": "300000",
+      "cacheRead": "100000",
       "cacheWrite": null,
-      "output": "4875000"
+      "output": "1000000"
     },
     "kilo\u0000qwen/qwen3-coder-30b-a3b-instruct": {
-      "input": "292500",
+      "input": "70000",
       "cacheRead": null,
       "cacheWrite": null,
-      "output": "1462500"
+      "output": "280000"
     },
     "kilo\u0000qwen/qwen3-coder-flash": {
       "input": "195000",
@@ -15682,34 +15742,16 @@
       "output": "975000"
     },
     "kilo\u0000qwen/qwen3-coder-next": {
-      "input": "300000",
-      "cacheRead": null,
+      "input": "120000",
+      "cacheRead": "70000",
       "cacheWrite": null,
-      "output": "1500000"
-    },
-    "kilo\u0000qwen/qwen3-coder-plus": {
-      "input": "650000",
-      "cacheRead": "130000",
-      "cacheWrite": "812500",
-      "output": "3250000"
-    },
-    "kilo\u0000qwen/qwen3-max": {
-      "input": "780000",
-      "cacheRead": "156000",
-      "cacheWrite": "975000",
-      "output": "3900000"
-    },
-    "kilo\u0000qwen/qwen3-max-thinking": {
-      "input": "780000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "3900000"
+      "output": "800000"
     },
     "kilo\u0000qwen/qwen3-next-80b-a3b-instruct": {
-      "input": "97500",
-      "cacheRead": null,
+      "input": "100000",
+      "cacheRead": "70000",
       "cacheWrite": null,
-      "output": "780000"
+      "output": "1100000"
     },
     "kilo\u0000qwen/qwen3-next-80b-a3b-thinking": {
       "input": "150000",
@@ -15718,46 +15760,28 @@
       "output": "1200000"
     },
     "kilo\u0000qwen/qwen3-vl-235b-a22b-instruct": {
-      "input": "260000",
-      "cacheRead": null,
+      "input": "210000",
+      "cacheRead": "100000",
       "cacheWrite": null,
-      "output": "1040000"
-    },
-    "kilo\u0000qwen/qwen3-vl-235b-a22b-thinking": {
-      "input": "400000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "4000000"
+      "output": "1900000"
     },
     "kilo\u0000qwen/qwen3-vl-30b-a3b-instruct": {
-      "input": "130000",
+      "input": "150000",
       "cacheRead": null,
       "cacheWrite": null,
-      "output": "520000"
+      "output": "600000"
     },
     "kilo\u0000qwen/qwen3-vl-30b-a3b-thinking": {
-      "input": "200000",
+      "input": "290000",
       "cacheRead": null,
       "cacheWrite": null,
-      "output": "2400000"
-    },
-    "kilo\u0000qwen/qwen3-vl-32b-instruct": {
-      "input": "104000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "416000"
+      "output": "1000000"
     },
     "kilo\u0000qwen/qwen3-vl-8b-instruct": {
-      "input": "117000",
-      "cacheRead": null,
+      "input": "250000",
+      "cacheRead": "120000",
       "cacheWrite": null,
-      "output": "455000"
-    },
-    "kilo\u0000qwen/qwen3-vl-8b-thinking": {
-      "input": "180000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "2100000"
+      "output": "750000"
     },
     "kilo\u0000qwen/qwen3.5-122b-a10b": {
       "input": "260000",
@@ -15830,12 +15854,6 @@
       "cacheRead": null,
       "cacheWrite": "234375",
       "output": "1125000"
-    },
-    "kilo\u0000qwen/qwen3.6-max-preview": {
-      "input": "1027000",
-      "cacheRead": null,
-      "cacheWrite": "1283750",
-      "output": "6162000"
     },
     "kilo\u0000qwen/qwen3.6-plus": {
       "input": "325000",
@@ -16174,10 +16192,10 @@
       "output": "1800000"
     },
     "kilo\u0000z-ai/glm-4.6": {
-      "input": "430000",
-      "cacheRead": "80000",
+      "input": "500000",
+      "cacheRead": "100000",
       "cacheWrite": null,
-      "output": "1750000"
+      "output": "2000000"
     },
     "kilo\u0000z-ai/glm-4.6v": {
       "input": "300000",
@@ -17229,12 +17247,6 @@
       "cacheWrite": null,
       "output": "4400000"
     },
-    "llmgateway\u0000qwen-coder-plus": {
-      "input": "502000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "1004000"
-    },
     "llmgateway\u0000qwen-flash": {
       "input": "50000",
       "cacheRead": "10000",
@@ -17246,12 +17258,6 @@
       "cacheRead": null,
       "cacheWrite": null,
       "output": "6400000"
-    },
-    "llmgateway\u0000qwen-omni-turbo": {
-      "input": "200000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "800000"
     },
     "llmgateway\u0000qwen-plus-latest": {
       "input": "400000",
@@ -17301,12 +17307,6 @@
       "cacheWrite": null,
       "output": "675000"
     },
-    "llmgateway\u0000qwen3-coder-plus": {
-      "input": "1000000",
-      "cacheRead": "200000",
-      "cacheWrite": "1250000",
-      "output": "5000000"
-    },
     "llmgateway\u0000qwen3-max": {
       "input": "845000",
       "cacheRead": "600000",
@@ -17343,12 +17343,6 @@
       "cacheWrite": null,
       "output": "600000"
     },
-    "llmgateway\u0000qwen3-vl-flash": {
-      "input": "50000",
-      "cacheRead": "10000",
-      "cacheWrite": null,
-      "output": "400000"
-    },
     "llmgateway\u0000qwen3.5-122b-a10b": {
       "input": "400000",
       "cacheRead": null,
@@ -17384,12 +17378,6 @@
       "cacheRead": "50000",
       "cacheWrite": "312500",
       "output": "1500000"
-    },
-    "llmgateway\u0000qwen3.6-max-preview": {
-      "input": "1300000",
-      "cacheRead": "130000",
-      "cacheWrite": "1625000",
-      "output": "7800000"
     },
     "llmgateway\u0000qwen3.7-flash": {
       "input": "30000",
@@ -17438,6 +17426,12 @@
       "cacheRead": null,
       "cacheWrite": null,
       "output": "3600000"
+    },
+    "llmgateway\u0000reka-edge-2603": {
+      "input": "100000",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "100000"
     },
     "llmgateway\u0000seed-1-6-250615": {
       "input": "250000",
@@ -17547,12 +17541,6 @@
       "cacheWrite": null,
       "output": "15000000"
     },
-    "llmgateway-providers\u0000alibaba/qwen-coder-plus": {
-      "input": "502000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "1004000"
-    },
     "llmgateway-providers\u0000alibaba/qwen-flash": {
       "input": "50000",
       "cacheRead": "10000",
@@ -17564,12 +17552,6 @@
       "cacheRead": null,
       "cacheWrite": null,
       "output": "6400000"
-    },
-    "llmgateway-providers\u0000alibaba/qwen-omni-turbo": {
-      "input": "200000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "800000"
     },
     "llmgateway-providers\u0000alibaba/qwen-plus": {
       "input": "400000",
@@ -17588,24 +17570,6 @@
       "cacheRead": "60000",
       "cacheWrite": "375000",
       "output": "1500000"
-    },
-    "llmgateway-providers\u0000alibaba/qwen3-coder-plus": {
-      "input": "1000000",
-      "cacheRead": "200000",
-      "cacheWrite": "1250000",
-      "output": "5000000"
-    },
-    "llmgateway-providers\u0000alibaba/qwen3-max": {
-      "input": "1200000",
-      "cacheRead": "240000",
-      "cacheWrite": "1500000",
-      "output": "6000000"
-    },
-    "llmgateway-providers\u0000alibaba/qwen3-vl-flash": {
-      "input": "50000",
-      "cacheRead": "10000",
-      "cacheWrite": null,
-      "output": "400000"
     },
     "llmgateway-providers\u0000alibaba/qwen3-vl-plus": {
       "input": "200000",
@@ -17642,12 +17606,6 @@
       "cacheRead": "50000",
       "cacheWrite": "312500",
       "output": "1500000"
-    },
-    "llmgateway-providers\u0000alibaba/qwen3.6-max-preview": {
-      "input": "1300000",
-      "cacheRead": "130000",
-      "cacheWrite": null,
-      "output": "7800000"
     },
     "llmgateway-providers\u0000alibaba/qwen3.7-flash": {
       "input": "30000",
@@ -19485,6 +19443,42 @@
       "cacheWrite": null,
       "output": "280000"
     },
+    "llmgateway-providers\u0000reka-ai/deepseek-v4-flash": {
+      "input": "110000",
+      "cacheRead": "7000",
+      "cacheWrite": null,
+      "output": "660000"
+    },
+    "llmgateway-providers\u0000reka-ai/deepseek-v4-pro": {
+      "input": "1200000",
+      "cacheRead": "130000",
+      "cacheWrite": null,
+      "output": "3300000"
+    },
+    "llmgateway-providers\u0000reka-ai/glm-5.3": {
+      "input": "1170000",
+      "cacheRead": "234000",
+      "cacheWrite": null,
+      "output": "3960000"
+    },
+    "llmgateway-providers\u0000reka-ai/glm-5.3-flash": {
+      "input": "150000",
+      "cacheRead": "15000",
+      "cacheWrite": null,
+      "output": "500000"
+    },
+    "llmgateway-providers\u0000reka-ai/qwen3.8-27b": {
+      "input": "200000",
+      "cacheRead": "50000",
+      "cacheWrite": null,
+      "output": "2500000"
+    },
+    "llmgateway-providers\u0000reka-ai/reka-edge-2603": {
+      "input": "100000",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "100000"
+    },
     "llmgateway-providers\u0000runpod/kimi-k3": {
       "input": "3000000",
       "cacheRead": "300000",
@@ -20247,6 +20241,54 @@
       "cacheWrite": null,
       "output": "2950000"
     },
+    "lowrouter\u0000auto/mistralai/codestral-2508": {
+      "input": "313800",
+      "cacheRead": "31400",
+      "cacheWrite": null,
+      "output": "941300"
+    },
+    "lowrouter\u0000auto/mistralai/ministral-14b-2512": {
+      "input": "209200",
+      "cacheRead": "20900",
+      "cacheWrite": null,
+      "output": "209200"
+    },
+    "lowrouter\u0000auto/mistralai/ministral-3b-2512": {
+      "input": "104600",
+      "cacheRead": "10500",
+      "cacheWrite": null,
+      "output": "104600"
+    },
+    "lowrouter\u0000auto/mistralai/ministral-8b-2512": {
+      "input": "156900",
+      "cacheRead": "15700",
+      "cacheWrite": null,
+      "output": "156900"
+    },
+    "lowrouter\u0000auto/mistralai/mistral-large-2512": {
+      "input": "522900",
+      "cacheRead": "52300",
+      "cacheWrite": null,
+      "output": "1568800"
+    },
+    "lowrouter\u0000auto/mistralai/mistral-large-4": {
+      "input": "711200",
+      "cacheRead": "73200",
+      "cacheWrite": null,
+      "output": "2185900"
+    },
+    "lowrouter\u0000auto/mistralai/mistral-medium-3.5": {
+      "input": "1568800",
+      "cacheRead": "156900",
+      "cacheWrite": null,
+      "output": "7844200"
+    },
+    "lowrouter\u0000auto/mistralai/mistral-small-2603": {
+      "input": "156900",
+      "cacheRead": "15700",
+      "cacheWrite": null,
+      "output": "627500"
+    },
     "lucidquery\u0000lucidnova-rf1-100b": {
       "input": "2000000",
       "cacheRead": null,
@@ -20652,6 +20694,12 @@
     "merge-gateway\u0000deepseek/deepseek-r1": {
       "input": "1350000",
       "cacheRead": null,
+      "cacheWrite": null,
+      "output": "5400000"
+    },
+    "merge-gateway\u0000deepseek/deepseek-r1-0528": {
+      "input": "1350000",
+      "cacheRead": "945000",
       "cacheWrite": null,
       "output": "5400000"
     },
@@ -21314,6 +21362,12 @@
       "cacheRead": "57400",
       "cacheWrite": null,
       "output": "2867000"
+    },
+    "merge-gateway\u0000qwen/qwen3-vl-30b-a3b-instruct": {
+      "input": "108000",
+      "cacheRead": "21600",
+      "cacheWrite": null,
+      "output": "430000"
     },
     "merge-gateway\u0000qwen/qwen3-vl-plus": {
       "input": "143000",
@@ -22654,20 +22708,20 @@
       "output": "6000000"
     },
     "nano-gpt\u0000claw-high": {
-      "input": "700000",
-      "cacheRead": "130000",
+      "input": "600000",
+      "cacheRead": "200000",
       "cacheWrite": null,
       "output": "2200000"
     },
     "nano-gpt\u0000claw-low": {
-      "input": "700000",
-      "cacheRead": "130000",
+      "input": "600000",
+      "cacheRead": "200000",
       "cacheWrite": "83330",
       "output": "2200000"
     },
     "nano-gpt\u0000claw-medium": {
-      "input": "700000",
-      "cacheRead": "130000",
+      "input": "600000",
+      "cacheRead": "200000",
       "cacheWrite": null,
       "output": "2200000"
     },
@@ -23494,20 +23548,20 @@
       "output": "4500000"
     },
     "nano-gpt\u0000hermes-high": {
-      "input": "700000",
-      "cacheRead": "130000",
+      "input": "600000",
+      "cacheRead": "200000",
       "cacheWrite": null,
       "output": "2200000"
     },
     "nano-gpt\u0000hermes-low": {
-      "input": "700000",
-      "cacheRead": "130000",
+      "input": "600000",
+      "cacheRead": "200000",
       "cacheWrite": "83330",
       "output": "2200000"
     },
     "nano-gpt\u0000hermes-medium": {
-      "input": "700000",
-      "cacheRead": "130000",
+      "input": "600000",
+      "cacheRead": "200000",
       "cacheWrite": null,
       "output": "2200000"
     },
@@ -24682,10 +24736,10 @@
       "output": "1500000"
     },
     "nano-gpt\u0000qwen/qwen3-coder-next": {
-      "input": "200000",
-      "cacheRead": "100000",
+      "input": "250251",
+      "cacheRead": "79764",
       "cacheWrite": null,
-      "output": "1500000"
+      "output": "802930"
     },
     "nano-gpt\u0000qwen/qwen3-coder-plus": {
       "input": "1000000",
@@ -24976,16 +25030,16 @@
       "output": "600000"
     },
     "nano-gpt\u0000qwen/qwen3.8-27b-uncensored": {
-      "input": "150000",
+      "input": "750000",
       "cacheRead": "125000",
       "cacheWrite": null,
-      "output": "1200000"
+      "output": "2500000"
     },
     "nano-gpt\u0000qwen/qwen3.8-27b-uncensored:thinking": {
-      "input": "150000",
+      "input": "750000",
       "cacheRead": "125000",
       "cacheWrite": null,
-      "output": "1200000"
+      "output": "2500000"
     },
     "nano-gpt\u0000qwen/qwen3.8-27b:thinking": {
       "input": "150000",
@@ -25810,8 +25864,8 @@
       "output": "1320000"
     },
     "nano-gpt\u0000z-ai/glm-5.3": {
-      "input": "700000",
-      "cacheRead": "130000",
+      "input": "600000",
+      "cacheRead": "200000",
       "cacheWrite": null,
       "output": "2200000"
     },
@@ -25852,8 +25906,8 @@
       "output": "2250000"
     },
     "nano-gpt\u0000z-ai/glm-5.3:thinking": {
-      "input": "700000",
-      "cacheRead": "130000",
+      "input": "600000",
+      "cacheRead": "200000",
       "cacheWrite": null,
       "output": "2200000"
     },
@@ -25876,8 +25930,8 @@
       "output": "4000000"
     },
     "nano-gpt\u0000z-ai/glm-latest": {
-      "input": "700000",
-      "cacheRead": "130000",
+      "input": "600000",
+      "cacheRead": "200000",
       "cacheWrite": null,
       "output": "2200000"
     },
@@ -26565,11 +26619,29 @@
       "cacheWrite": null,
       "output": "747500"
     },
+    "novita-ai\u0000baai/bge-m3": {
+      "input": "10000",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "0"
+    },
+    "novita-ai\u0000baai/bge-reranker-v2-m3": {
+      "input": "10000",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "0"
+    },
     "novita-ai\u0000baichuan/baichuan-m2-32b": {
       "input": "70000",
       "cacheRead": null,
       "cacheWrite": null,
       "output": "70000"
+    },
+    "novita-ai\u0000baidu/cobuddy": {
+      "input": "280000",
+      "cacheRead": "70000",
+      "cacheWrite": null,
+      "output": "1130000"
     },
     "novita-ai\u0000baidu/ernie-4.5-21b-a3b": {
       "input": "70000",
@@ -26577,53 +26649,11 @@
       "cacheWrite": null,
       "output": "280000"
     },
-    "novita-ai\u0000baidu/ernie-4.5-21b-a3b-thinking": {
-      "input": "70000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "280000"
-    },
-    "novita-ai\u0000baidu/ernie-4.5-300b-a47b-paddle": {
-      "input": "280000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "1100000"
-    },
-    "novita-ai\u0000baidu/ernie-4.5-vl-28b-a3b": {
-      "input": "140000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "560000"
-    },
-    "novita-ai\u0000baidu/ernie-4.5-vl-28b-a3b-thinking": {
-      "input": "390000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "390000"
-    },
-    "novita-ai\u0000baidu/ernie-4.5-vl-424b-a47b": {
-      "input": "420000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "1250000"
-    },
-    "novita-ai\u0000deepseek/deepseek-ocr": {
-      "input": "30000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "30000"
-    },
     "novita-ai\u0000deepseek/deepseek-ocr-2": {
       "input": "30000",
       "cacheRead": null,
       "cacheWrite": null,
       "output": "30000"
-    },
-    "novita-ai\u0000deepseek/deepseek-prover-v2-671b": {
-      "input": "700000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "2500000"
     },
     "novita-ai\u0000deepseek/deepseek-r1-0528": {
       "input": "700000",
@@ -26637,77 +26667,41 @@
       "cacheWrite": null,
       "output": "90000"
     },
-    "novita-ai\u0000deepseek/deepseek-r1-distill-llama-70b": {
-      "input": "800000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "800000"
-    },
-    "novita-ai\u0000deepseek/deepseek-r1-distill-qwen-14b": {
-      "input": "150000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "150000"
-    },
-    "novita-ai\u0000deepseek/deepseek-r1-distill-qwen-32b": {
-      "input": "300000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "300000"
-    },
     "novita-ai\u0000deepseek/deepseek-r1-turbo": {
       "input": "700000",
       "cacheRead": null,
       "cacheWrite": null,
       "output": "2500000"
     },
-    "novita-ai\u0000deepseek/deepseek-v3-0324": {
-      "input": "270000",
-      "cacheRead": "135000",
-      "cacheWrite": null,
-      "output": "1120000"
-    },
-    "novita-ai\u0000deepseek/deepseek-v3-turbo": {
-      "input": "400000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "1300000"
-    },
-    "novita-ai\u0000deepseek/deepseek-v3.1": {
-      "input": "270000",
-      "cacheRead": "135000",
-      "cacheWrite": null,
-      "output": "1000000"
-    },
-    "novita-ai\u0000deepseek/deepseek-v3.1-terminus": {
-      "input": "270000",
-      "cacheRead": "135000",
-      "cacheWrite": null,
-      "output": "1000000"
-    },
-    "novita-ai\u0000deepseek/deepseek-v3.2": {
-      "input": "269000",
-      "cacheRead": "134500",
-      "cacheWrite": null,
-      "output": "400000"
-    },
-    "novita-ai\u0000deepseek/deepseek-v3.2-exp": {
-      "input": "270000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "410000"
-    },
-    "novita-ai\u0000deepseek/deepseek-v4-flash": {
-      "input": "140000",
+    "novita-ai\u0000deepseek/deepseek-v4-flash-0731": {
+      "input": "440000",
       "cacheRead": "28000",
       "cacheWrite": null,
-      "output": "280000"
+      "output": "1320000"
     },
     "novita-ai\u0000deepseek/deepseek-v4-pro": {
       "input": "1600000",
       "cacheRead": "135000",
       "cacheWrite": null,
       "output": "3200000"
+    },
+    "novita-ai\u0000deepseek/deepseek-v4-pro-0813": {
+      "input": "1320000",
+      "cacheRead": "44000",
+      "cacheWrite": null,
+      "output": "3960000"
+    },
+    "novita-ai\u0000deepseek/deepseek-v4.1-flash": {
+      "input": "300000",
+      "cacheRead": "6000",
+      "cacheWrite": null,
+      "output": "1200000"
+    },
+    "novita-ai\u0000deepseek/deepseek_v3": {
+      "input": "890000",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "890000"
     },
     "novita-ai\u0000google/gemma-3-12b-it": {
       "input": "50000",
@@ -26739,41 +26733,29 @@
       "cacheWrite": null,
       "output": "90000"
     },
-    "novita-ai\u0000inclusionai/ling-2.6-1t": {
-      "input": "300000",
-      "cacheRead": "60000",
+    "novita-ai\u0000inclusionai/ling-3.0-flash": {
+      "input": "60000",
+      "cacheRead": "12000",
       "cacheWrite": null,
-      "output": "2500000"
+      "output": "180000"
     },
-    "novita-ai\u0000inclusionai/ling-2.6-flash": {
-      "input": "100000",
-      "cacheRead": "20000",
+    "novita-ai\u0000inclusionai/ling-3.0-flash-fin": {
+      "input": "75000",
+      "cacheRead": "15000",
       "cacheWrite": null,
-      "output": "300000"
+      "output": "220000"
     },
-    "novita-ai\u0000inclusionai/ring-2.6-1t": {
-      "input": "300000",
-      "cacheRead": "60000",
+    "novita-ai\u0000inclusionai/ling-3.0-flash-sante": {
+      "input": "75000",
+      "cacheRead": "15000",
       "cacheWrite": null,
-      "output": "2500000"
+      "output": "220000"
     },
-    "novita-ai\u0000kwaipilot/kat-coder-pro": {
-      "input": "300000",
-      "cacheRead": "60000",
+    "novita-ai\u0000inclusionai/ling-3.0-flash-vl": {
+      "input": "75000",
+      "cacheRead": "15000",
       "cacheWrite": null,
-      "output": "1200000"
-    },
-    "novita-ai\u0000meta-llama/llama-3-70b-instruct": {
-      "input": "510000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "740000"
-    },
-    "novita-ai\u0000meta-llama/llama-3-8b-instruct": {
-      "input": "40000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "40000"
+      "output": "220000"
     },
     "novita-ai\u0000meta-llama/llama-3.1-8b-instruct": {
       "input": "20000",
@@ -26781,11 +26763,11 @@
       "cacheWrite": null,
       "output": "50000"
     },
-    "novita-ai\u0000meta-llama/llama-3.2-3b-instruct": {
-      "input": "30000",
+    "novita-ai\u0000meta-llama/llama-3.2-1b-instruct": {
+      "input": "20000",
       "cacheRead": null,
       "cacheWrite": null,
-      "output": "50000"
+      "output": "20000"
     },
     "novita-ai\u0000meta-llama/llama-3.3-70b-instruct": {
       "input": "135000",
@@ -26811,29 +26793,23 @@
       "cacheWrite": null,
       "output": "620000"
     },
-    "novita-ai\u0000minimax/minimax-m2": {
-      "input": "300000",
-      "cacheRead": "30000",
+    "novita-ai\u0000mindai/macaron-v1-tall": {
+      "input": "247500",
+      "cacheRead": "44000",
       "cacheWrite": null,
-      "output": "1200000"
+      "output": "1430000"
     },
-    "novita-ai\u0000minimax/minimax-m2.1": {
-      "input": "300000",
-      "cacheRead": "30000",
+    "novita-ai\u0000mindai/macaron-v1-venti": {
+      "input": "825000",
+      "cacheRead": "165000",
       "cacheWrite": null,
-      "output": "1200000"
+      "output": "2475000"
     },
     "novita-ai\u0000minimax/minimax-m2.5": {
       "input": "300000",
       "cacheRead": "30000",
       "cacheWrite": null,
       "output": "1200000"
-    },
-    "novita-ai\u0000minimax/minimax-m2.5-highspeed": {
-      "input": "600000",
-      "cacheRead": "30000",
-      "cacheWrite": null,
-      "output": "2400000"
     },
     "novita-ai\u0000minimax/minimax-m2.7": {
       "input": "300000",
@@ -26852,12 +26828,6 @@
       "cacheRead": null,
       "cacheWrite": null,
       "output": "2200000"
-    },
-    "novita-ai\u0000mistralai/mistral-nemo": {
-      "input": "40000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "170000"
     },
     "novita-ai\u0000moonshotai/kimi-k2-0905": {
       "input": "600000",
@@ -26907,17 +26877,17 @@
       "cacheWrite": null,
       "output": "140000"
     },
+    "novita-ai\u0000nvidia/nemotron-3-nano-30b-a3b": {
+      "input": "50000",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "200000"
+    },
     "novita-ai\u0000openai/gpt-oss-120b": {
       "input": "50000",
       "cacheRead": null,
       "cacheWrite": null,
       "output": "250000"
-    },
-    "novita-ai\u0000openai/gpt-oss-20b": {
-      "input": "40000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "150000"
     },
     "novita-ai\u0000paddlepaddle/paddleocr-vl": {
       "input": "20000",
@@ -26925,137 +26895,29 @@
       "cacheWrite": null,
       "output": "20000"
     },
-    "novita-ai\u0000qwen/qwen-2.5-72b-instruct": {
-      "input": "380000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "400000"
-    },
     "novita-ai\u0000qwen/qwen-mt-plus": {
       "input": "250000",
       "cacheRead": null,
       "cacheWrite": null,
       "output": "750000"
     },
-    "novita-ai\u0000qwen/qwen2.5-7b-instruct": {
+    "novita-ai\u0000qwen/qwen3-embedding-8b": {
       "input": "70000",
       "cacheRead": null,
       "cacheWrite": null,
-      "output": "70000"
+      "output": "0"
     },
-    "novita-ai\u0000qwen/qwen2.5-vl-72b-instruct": {
-      "input": "800000",
+    "novita-ai\u0000qwen/qwen3-reranker-8b": {
+      "input": "50000",
       "cacheRead": null,
       "cacheWrite": null,
-      "output": "800000"
-    },
-    "novita-ai\u0000qwen/qwen3-235b-a22b-fp8": {
-      "input": "200000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "800000"
-    },
-    "novita-ai\u0000qwen/qwen3-235b-a22b-instruct-2507": {
-      "input": "90000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "580000"
-    },
-    "novita-ai\u0000qwen/qwen3-235b-a22b-thinking-2507": {
-      "input": "300000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "3000000"
-    },
-    "novita-ai\u0000qwen/qwen3-30b-a3b-fp8": {
-      "input": "90000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "450000"
-    },
-    "novita-ai\u0000qwen/qwen3-32b-fp8": {
-      "input": "100000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "450000"
-    },
-    "novita-ai\u0000qwen/qwen3-4b-fp8": {
-      "input": "30000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "30000"
-    },
-    "novita-ai\u0000qwen/qwen3-8b-fp8": {
-      "input": "35000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "138000"
-    },
-    "novita-ai\u0000qwen/qwen3-coder-30b-a3b-instruct": {
-      "input": "70000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "270000"
-    },
-    "novita-ai\u0000qwen/qwen3-coder-480b-a35b-instruct": {
-      "input": "380000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "1550000"
-    },
-    "novita-ai\u0000qwen/qwen3-coder-next": {
-      "input": "200000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "1500000"
-    },
-    "novita-ai\u0000qwen/qwen3-max": {
-      "input": "2110000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "8450000"
-    },
-    "novita-ai\u0000qwen/qwen3-next-80b-a3b-instruct": {
-      "input": "150000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "1500000"
-    },
-    "novita-ai\u0000qwen/qwen3-next-80b-a3b-thinking": {
-      "input": "150000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "1500000"
-    },
-    "novita-ai\u0000qwen/qwen3-vl-235b-a22b-instruct": {
-      "input": "300000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "1500000"
-    },
-    "novita-ai\u0000qwen/qwen3-vl-235b-a22b-thinking": {
-      "input": "980000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "3950000"
+      "output": "0"
     },
     "novita-ai\u0000qwen/qwen3-vl-30b-a3b-instruct": {
       "input": "200000",
       "cacheRead": null,
       "cacheWrite": null,
       "output": "700000"
-    },
-    "novita-ai\u0000qwen/qwen3-vl-30b-a3b-thinking": {
-      "input": "200000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "1000000"
-    },
-    "novita-ai\u0000qwen/qwen3-vl-8b-instruct": {
-      "input": "80000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "500000"
     },
     "novita-ai\u0000qwen/qwen3.5-122b-a10b": {
       "input": "400000",
@@ -27081,53 +26943,95 @@
       "cacheWrite": null,
       "output": "3600000"
     },
+    "novita-ai\u0000qwen/qwen3.6-27b": {
+      "input": "600000",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "3600000"
+    },
+    "novita-ai\u0000qwen/qwen3.6-35b-a3b": {
+      "input": "248000",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "1485000"
+    },
     "novita-ai\u0000qwen/qwen3.7-max": {
       "input": "1250000",
       "cacheRead": "250000",
-      "cacheWrite": "1562500",
+      "cacheWrite": null,
       "output": "3750000"
     },
-    "novita-ai\u0000sao10k/l3-70b-euryale-v2.1": {
-      "input": "1480000",
-      "cacheRead": null,
+    "novita-ai\u0000qwen/qwen3.8-2.4t-a95b": {
+      "input": "2000000",
+      "cacheRead": "250000",
       "cacheWrite": null,
-      "output": "1480000"
+      "output": "6000000"
     },
-    "novita-ai\u0000sao10k/l3-8b-lunaris": {
-      "input": "50000",
-      "cacheRead": null,
+    "novita-ai\u0000qwen/qwen3.8-27b": {
+      "input": "420000",
+      "cacheRead": "85000",
       "cacheWrite": null,
-      "output": "50000"
+      "output": "3000000"
     },
-    "novita-ai\u0000sao10k/l3-8b-stheno-v3.2": {
-      "input": "50000",
-      "cacheRead": null,
+    "novita-ai\u0000qwen/qwen3.8-flash": {
+      "input": "150000",
+      "cacheRead": "16000",
       "cacheWrite": null,
-      "output": "50000"
+      "output": "470000"
     },
-    "novita-ai\u0000sao10k/l31-70b-euryale-v2.2": {
-      "input": "1480000",
-      "cacheRead": null,
+    "novita-ai\u0000qwen/qwen3.8-max": {
+      "input": "2000000",
+      "cacheRead": "250000",
       "cacheWrite": null,
-      "output": "1480000"
+      "output": "6000000"
     },
-    "novita-ai\u0000xiaomimimo/mimo-v2-flash": {
-      "input": "100000",
-      "cacheRead": "300000",
+    "novita-ai\u0000stepfun/step-3.7-flash": {
+      "input": "200000",
+      "cacheRead": "40000",
       "cacheWrite": null,
-      "output": "300000"
+      "output": "1150000"
+    },
+    "novita-ai\u0000tencent/hy3": {
+      "input": "140000",
+      "cacheRead": "35000",
+      "cacheWrite": null,
+      "output": "580000"
+    },
+    "novita-ai\u0000tencent/hy4-preview": {
+      "input": "834000",
+      "cacheRead": "42000",
+      "cacheWrite": null,
+      "output": "2501000"
+    },
+    "novita-ai\u0000xiaomimimo/mimo-v2.5": {
+      "input": "168000",
+      "cacheRead": "3400",
+      "cacheWrite": null,
+      "output": "336000"
+    },
+    "novita-ai\u0000xiaomimimo/mimo-v2.5-pro": {
+      "input": "522000",
+      "cacheRead": "4300",
+      "cacheWrite": null,
+      "output": "1044000"
+    },
+    "novita-ai\u0000xiaomimimo/mimo-v2.6-flash": {
+      "input": "140000",
+      "cacheRead": "2800",
+      "cacheWrite": null,
+      "output": "280000"
+    },
+    "novita-ai\u0000xiaomimimo/mimo-v2.6-pro": {
+      "input": "435000",
+      "cacheRead": "3600",
+      "cacheWrite": null,
+      "output": "870000"
     },
     "novita-ai\u0000zai-org/autoglm-phone-9b-multilingual": {
       "input": "35000",
       "cacheRead": null,
       "cacheWrite": null,
       "output": "138000"
-    },
-    "novita-ai\u0000zai-org/glm-4.5": {
-      "input": "600000",
-      "cacheRead": "110000",
-      "cacheWrite": null,
-      "output": "2200000"
     },
     "novita-ai\u0000zai-org/glm-4.5-air": {
       "input": "130000",
@@ -27182,6 +27086,18 @@
       "cacheRead": "260000",
       "cacheWrite": null,
       "output": "4400000"
+    },
+    "novita-ai\u0000zai-org/glm-5.3": {
+      "input": "1400000",
+      "cacheRead": "260000",
+      "cacheWrite": null,
+      "output": "4400000"
+    },
+    "novita-ai\u0000zai-org/glm-5.3-flash": {
+      "input": "150000",
+      "cacheRead": "30000",
+      "cacheWrite": null,
+      "output": "500000"
     },
     "nvidia\u0000deepseek-ai/deepseek-v4-flash": {
       "input": "140000",
@@ -29303,9 +29219,9 @@
     },
     "openrouter\u0000deepseek/deepseek-v3.2": {
       "input": "259000",
-      "cacheRead": "135000",
+      "cacheRead": "140000",
       "cacheWrite": null,
-      "output": "420000"
+      "output": "800000"
     },
     "openrouter\u0000deepseek/deepseek-v3.2-exp": {
       "input": "270000",
@@ -29320,8 +29236,8 @@
       "output": "1280000"
     },
     "openrouter\u0000deepseek/deepseek-v4-flash-0731": {
-      "input": "7900",
-      "cacheRead": "7900",
+      "input": "16800",
+      "cacheRead": "16800",
       "cacheWrite": null,
       "output": "1280000"
     },
@@ -29332,10 +29248,10 @@
       "output": "646800"
     },
     "openrouter\u0000deepseek/deepseek-v4-pro": {
-      "input": "287100",
-      "cacheRead": "23925",
+      "input": "208800",
+      "cacheRead": "17400",
       "cacheWrite": null,
-      "output": "574200"
+      "output": "417600"
     },
     "openrouter\u0000deepseek/deepseek-v4-pro-0813": {
       "input": "660000",
@@ -29410,10 +29326,10 @@
       "output": "100000"
     },
     "openrouter\u0000google/gemma-4-26b-a4b-it": {
-      "input": "90000",
-      "cacheRead": "50000",
+      "input": "67500",
+      "cacheRead": "37500",
       "cacheWrite": null,
-      "output": "300000"
+      "output": "225000"
     },
     "openrouter\u0000google/gemma-4-31b-it": {
       "input": "90000",
@@ -29777,19 +29693,19 @@
     },
     "openrouter\u0000moonshotai/kimi-k2-thinking": {
       "input": "600000",
-      "cacheRead": null,
+      "cacheRead": "150000",
       "cacheWrite": null,
       "output": "2500000"
     },
     "openrouter\u0000moonshotai/kimi-k2.5": {
-      "input": "450000",
-      "cacheRead": "70000",
+      "input": "500000",
+      "cacheRead": "150000",
       "cacheWrite": null,
-      "output": "2250000"
+      "output": "2500000"
     },
     "openrouter\u0000moonshotai/kimi-k2.6": {
-      "input": "434800",
-      "cacheRead": "120200",
+      "input": "437500",
+      "cacheRead": "108700",
       "cacheWrite": null,
       "output": "2450000"
     },
@@ -29801,9 +29717,9 @@
     },
     "openrouter\u0000moonshotai/kimi-k3": {
       "input": "500000",
-      "cacheRead": "330000",
+      "cacheRead": "280000",
       "cacheWrite": null,
-      "output": "12000000"
+      "output": "13500000"
     },
     "openrouter\u0000morph/morph-v3-fast": {
       "input": "800000",
@@ -29872,10 +29788,10 @@
       "output": "200000"
     },
     "openrouter\u0000nvidia/nemotron-3.5-lightning": {
-      "input": "46900",
-      "cacheRead": "23450",
+      "input": "70000",
+      "cacheRead": "40000",
       "cacheWrite": null,
-      "output": "134000"
+      "output": "200000"
     },
     "openrouter\u0000openai/gpt-3.5-turbo": {
       "input": "500000",
@@ -30243,12 +30159,6 @@
       "cacheWrite": null,
       "output": "240000"
     },
-    "openrouter\u0000qwen/qwen3-235b-a22b": {
-      "input": "455000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "1820000"
-    },
     "openrouter\u0000qwen/qwen3-235b-a22b-2507": {
       "input": "90000",
       "cacheRead": null,
@@ -30256,10 +30166,10 @@
       "output": "550000"
     },
     "openrouter\u0000qwen/qwen3-235b-a22b-thinking-2507": {
-      "input": "230000",
+      "input": "450000",
       "cacheRead": null,
       "cacheWrite": null,
-      "output": "2300000"
+      "output": "3500000"
     },
     "openrouter\u0000qwen/qwen3-30b-a3b": {
       "input": "120000",
@@ -30273,23 +30183,11 @@
       "cacheWrite": null,
       "output": "300000"
     },
-    "openrouter\u0000qwen/qwen3-30b-a3b-thinking-2507": {
-      "input": "200000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "2400000"
-    },
     "openrouter\u0000qwen/qwen3-32b": {
       "input": "80000",
       "cacheRead": null,
       "cacheWrite": null,
       "output": "280000"
-    },
-    "openrouter\u0000qwen/qwen3-8b": {
-      "input": "117000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "455000"
     },
     "openrouter\u0000qwen/qwen3-coder": {
       "input": "300000",
@@ -30327,12 +30225,6 @@
       "cacheWrite": null,
       "output": "1900000"
     },
-    "openrouter\u0000qwen/qwen3-vl-235b-a22b-thinking": {
-      "input": "400000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "4000000"
-    },
     "openrouter\u0000qwen/qwen3-vl-30b-a3b-instruct": {
       "input": "150000",
       "cacheRead": null,
@@ -30340,28 +30232,16 @@
       "output": "600000"
     },
     "openrouter\u0000qwen/qwen3-vl-30b-a3b-thinking": {
-      "input": "200000",
+      "input": "290000",
       "cacheRead": null,
       "cacheWrite": null,
-      "output": "2400000"
-    },
-    "openrouter\u0000qwen/qwen3-vl-32b-instruct": {
-      "input": "104000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "416000"
+      "output": "1000000"
     },
     "openrouter\u0000qwen/qwen3-vl-8b-instruct": {
-      "input": "117000",
-      "cacheRead": null,
+      "input": "250000",
+      "cacheRead": "120000",
       "cacheWrite": null,
-      "output": "455000"
-    },
-    "openrouter\u0000qwen/qwen3-vl-8b-thinking": {
-      "input": "180000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "2100000"
+      "output": "750000"
     },
     "openrouter\u0000qwen/qwen3.5-122b-a10b": {
       "input": "260000",
@@ -30432,13 +30312,13 @@
     "openrouter\u0000qwen/qwen3.8-flash": {
       "input": "150000",
       "cacheRead": "16000",
-      "cacheWrite": "200000",
+      "cacheWrite": null,
       "output": "470000"
     },
     "openrouter\u0000qwen/qwen3.8-max-0902": {
       "input": "2000000",
       "cacheRead": "250000",
-      "cacheWrite": "2500000",
+      "cacheWrite": null,
       "output": "6000000"
     },
     "openrouter\u0000qwen/qwen3.8-max-prime": {
@@ -30688,10 +30568,10 @@
       "output": "1800000"
     },
     "openrouter\u0000z-ai/glm-4.6": {
-      "input": "430000",
-      "cacheRead": "80000",
+      "input": "500000",
+      "cacheRead": "100000",
       "cacheWrite": null,
-      "output": "1750000"
+      "output": "2000000"
     },
     "openrouter\u0000z-ai/glm-4.6v": {
       "input": "300000",
@@ -30733,13 +30613,13 @@
       "input": "60000",
       "cacheRead": "59000",
       "cacheWrite": null,
-      "output": "4200000"
+      "output": "7000000"
     },
     "openrouter\u0000z-ai/glm-5.3": {
-      "input": "40000",
-      "cacheRead": "39000",
+      "input": "39000",
+      "cacheRead": "38000",
       "cacheWrite": null,
-      "output": "7000000"
+      "output": "4800000"
     },
     "openrouter\u0000z-ai/glm-5.3-flash": {
       "input": "150000",
@@ -36063,12 +35943,6 @@
       "cacheWrite": null,
       "output": "5750000"
     },
-    "tinfoil\u0000glm-5-3-flash": {
-      "input": "400000",
-      "cacheRead": "100000",
-      "cacheWrite": null,
-      "output": "1250000"
-    },
     "tinfoil\u0000gpt-oss-120b": {
       "input": "150000",
       "cacheRead": null,
@@ -37852,7 +37726,7 @@
       "output": "7500000"
     },
     "vercel\u0000mistral/mistral-nemo": {
-      "input": "19000",
+      "input": "29000",
       "cacheRead": null,
       "cacheWrite": null,
       "output": "30000"
