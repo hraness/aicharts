@@ -3051,13 +3051,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.11543190907684102,
-        "cacheRead": 0.1318375056271196,
-        "cacheWrite": 0.1962355670489333,
-        "input": 0.3398209893652443,
+        "cacheRead": 0.13527827269914466,
+        "cacheWrite": 0.09301255488818255,
+        "input": 0.24003874427651864,
         "nonCacheInput": 0.011747916689191404,
         "output": 0.11543190907684102,
         "reasoning": 0,
-        "total": 0.4552528984420853
+        "total": 0.35547065335335964
       },
       "creator": {
         "id": "58b835bf-4c87-4f87-a846-df4b692c6e7d",
@@ -3588,14 +3588,14 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.0070623520432959485,
+        "answer": 0.007003004547133797,
         "cacheRead": 0,
         "cacheWrite": 0.09008853164257433,
         "input": 0.09138690981620429,
         "nonCacheInput": 0.0012983781736299591,
-        "output": 0.016037613087745158,
-        "reasoning": 0.00897526104444921,
-        "total": 0.10742452290394947
+        "output": 0.015902843229864946,
+        "reasoning": 0.008899838682731148,
+        "total": 0.10728975304606923
       },
       "creator": {
         "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
@@ -3880,14 +3880,14 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.00043014511431424004,
+        "answer": 0.0003601214910537822,
         "cacheRead": 0,
         "cacheWrite": 0.008607381834335454,
         "input": 0.009201055957464534,
         "nonCacheInput": 0.0005936741231290805,
-        "output": 0.0038933923400758675,
-        "reasoning": 0.003463247225761627,
-        "total": 0.0130944482975404
+        "output": 0.0032595842847146787,
+        "reasoning": 0.0028994627936608968,
+        "total": 0.012460640242179213
       },
       "creator": {
         "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
@@ -4099,7 +4099,7 @@
     "method": "public-next-flight",
     "methodologyUrl": "https://artificialanalysis.ai/methodology/intelligence-benchmarking",
     "name": "Artificial Analysis",
-    "retrievedAt": "2026-10-09T20:53:43.189Z",
+    "retrievedAt": "2026-10-10T05:51:08.244Z",
     "sourceClass": "benchmark-publisher",
     "termsUrl": "https://artificialanalysis.ai/docs/legal/Terms-of-Use.pdf",
     "url": "https://artificialanalysis.ai/models"
