@@ -3,7 +3,7 @@ title: Publish the Claude Haiku 5.5 Intelligence Index note
 description: Ship /blog/haiku-5-5-intelligence-index, a note that places the five Claude Haiku 5.5 effort rows on the Intelligence Index against cost from the checked snapshot, states what each effort step buys, prices the max row against the Sonnet 5.5 and Opus 5.5 rows, keeps Anthropic's vendor numbers off the chart, and completes its Slopcamera figure through the documented generation path.
 type: plan
 area: blog
-status: blocked
+status: done
 repository_scopes:
   - app/blog
   - lib/claude-haiku-5-5-placement.ts
@@ -60,7 +60,7 @@ Provenance: drafted by a Cursor cloud agent (Claude Fable 5.1) on 2026-10-12 fro
 
 1. Verify the snapshot rows, fetch Artificial Analysis's model page and Anthropic's announcement, and record the quoted claims. Done 2026-10-12.
 2. Write the placement binding, the article factory, registration, admission, and tests. Done 2026-10-12.
-3. Generate, review, and register the Slopcamera figure. Blocked 2026-10-12: the cloud agent VM has no Vercel CLI link or token, no `SLOPCAMERA_SOURCE_ROOT` build, and no image-provider credential, so the paid call cannot run there. The handoff below is complete.
+3. Generate, review, and register the Slopcamera figure. Done 2026-10-12: one paid call on the box at Slopcamera 66b4322030f4 (job `gateway_b7636b139acf430ca7c8980d7ac30b96`, receipt `20261012T150152962Z-image-84bc717a-676/receipt.json`), decode passed, reviewed and accepted; 1536×864 WebP, 44654 bytes, SHA-256 `6e41e769a4e3c402d08ab51b8b0c9325cb69333434102dd289f92c96bb87a27e`.
 4. Let CI pass, enable auto-merge on the task-owned pull request, and verify the live URL, figure, Open Graph image, Markdown twin, sitemap, and `llms.txt` entry. Waits on step 3.
 
 ## Figure handoff

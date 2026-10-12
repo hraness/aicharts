@@ -322,6 +322,26 @@
       "review": "accepted"
     },
     {
+      "slug": "haiku-5-5-intelligence-index",
+      "promptSha256": "e0c171fdbb677ac7b2a70d520f3cc1031225fd7fa018f506f03119ca26d002c2",
+      "master": {
+        "path": "/images/blog/haiku-5-5-intelligence-index.webp",
+        "width": 1536,
+        "height": 864,
+        "bytes": 44654,
+        "sha256": "6e41e769a4e3c402d08ab51b8b0c9325cb69333434102dd289f92c96bb87a27e"
+      },
+      "receiptPath": "artifacts/slopcamera/generated/gateway/20261012T150152962Z-image-84bc717a-676/receipt.json",
+      "jobPath": "artifacts/slopcamera/generated/gateway-jobs/gateway_b7636b139acf430ca7c8980d7ac30b96.json",
+      "generator": {
+        "package": "@hraness/slopcamera",
+        "version": "3.2.5",
+        "sourceCommit": "66b4322030f4de24f4d5b6d0c2515c109259f901"
+      },
+      "validation": "decode-passed",
+      "review": "accepted"
+    },
+    {
       "slug": "opus-5-5-coding-agent-index",
       "promptSha256": "89bf0ca0420013ffe9078b787fb535bd633bdd214f074bca7751872cd248d0af",
       "master": {
