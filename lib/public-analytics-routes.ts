@@ -11,6 +11,7 @@ export const PUBLIC_BLOG_SLUGS = [
   "opus-5-5-coding-agent-index",
   "sonnet-5-5-coding-agent-index",
   "opus-5-5-intelligence-index",
+  "haiku-5-5-intelligence-index",
   "gpt-6-sol-coding-agent-index",
   "grok-4-7-coding-agent-index",
   "mimo-v2-6-pro-cost-frontier",

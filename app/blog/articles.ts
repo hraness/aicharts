@@ -16,6 +16,7 @@ import { createIntroducingAiChartsArticle } from "./introducing-ai-charts-articl
 import { createMimoV26Article } from "./mimo-v2-6-pro-cost-frontier-article";
 import { createOpenModelsCodingAgentsArticle } from "./open-models-coding-agents-article";
 import { createOpus55CodingArticle } from "./opus-5-5-coding-agent-index-article";
+import { createHaiku55Article } from "./haiku-5-5-intelligence-index-article";
 import { createOpus55Article } from "./opus-5-5-intelligence-index-article";
 import { createSonnet55CodingArticle } from "./sonnet-5-5-coding-agent-index-article";
 import { createRealSweArticle } from "./real-swe-private-enterprise-benchmark-article";
@@ -380,6 +381,22 @@ export const BLOG_SOURCES = {
     url: "https://artificialanalysis.ai/models/claude-opus-5-5",
     year: 2026,
   },
+  anthropicClaudeHaiku55: {
+    note:
+      "Cited for the October 7, 2026 release, the $0.10 and $0.50 per million token prices for prompts up to 100,000 tokens and the $0.50 and $2.50 prices above that, the cache prices, the 75% average saving and the 90% and 50% price cuts against Claude Haiku 4.5, the adjustable effort setting, the sentence that keeps Sonnet 5.5 and Opus 5.5 ahead for complex agentic coding, the 90% prompt-share claim, the Cognition quotation, and the vendor-run benchmark table that this site does not chart.",
+    publication: "Anthropic",
+    title: "Introducing Claude Haiku 5.5",
+    url: "https://www.anthropic.com/claude-haiku-5-5",
+    year: 2026,
+  },
+  artificialAnalysisClaudeHaiku55Model: {
+    note:
+      "Cited, from the page captured October 12, 2026 UTC, for the rounded 43 index score and #2 of 180 rank among models of the same price class, the proprietary label, the October 7, 2026 release date, the $0.10 and $0.50 per million token prices with a 90% cache discount, the $0.21 cost per index task, the 440M output tokens across the index, the 235.3 output tokens per second, the 1M token context window, and its summary and verbosity sentences.",
+    publication: "Artificial Analysis",
+    title: "Claude Haiku 5.5 (Max) Intelligence, Performance & Price Analysis",
+    url: "https://artificialanalysis.ai/models/claude-haiku-5-5",
+    year: 2026,
+  },
   terminalBenchRepository: {
     note:
       "The benchmark owners’ repository publishes Terminal-Bench and its versioned task releases. The version-pinned Terminal-Bench 4.0 cohort in the aicharts benchmarks library comes from the owners, separately from Artificial Analysis’s own Terminal-Bench 4 runs.",
@@ -562,6 +579,7 @@ export const blogArticles = [
   createOpus55CodingArticle(),
   createSonnet55CodingArticle(),
   createOpus55Article(),
+  createHaiku55Article(),
   createGpt6SolArticle(),
   createGrok47Article(),
   createMimoV26Article(),
