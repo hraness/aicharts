@@ -17,6 +17,7 @@ import {
 } from "./articles";
 import { GEMINI_4_ARGON_ARTICLE_ADMISSION_DRAFT } from "./gemini-4-argon-coding-agent-index-admission";
 import { GPT_6_1_SOL_ARTICLE_ADMISSION_DRAFT } from "./gpt-6-1-sol-coding-agent-index-admission";
+import { HAIKU_55_ARTICLE_ADMISSION_DRAFT } from "./haiku-5-5-intelligence-index-admission";
 
 type AdmissionScore = 0 | 1 | 2;
 
@@ -446,6 +447,7 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     },
     sourceCheckedOn: "2026-09-25",
   },
+  "haiku-5-5-intelligence-index": HAIKU_55_ARTICLE_ADMISSION_DRAFT,
   "gpt-6-sol-coding-agent-index": {
     canonicalOwner: blogArticlePath("gpt-6-sol-coding-agent-index"),
     decision: "keep",
