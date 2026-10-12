@@ -218,6 +218,15 @@ export const BLOG_EDITORIAL_IMAGES = {
     "20260925T142331481Z-image-b610dbf3-4b0/receipt.json",
     "gateway_ed81c1ffbc75415f85306049c6668893.json",
   ),
+  "haiku-5-5-intelligence-index": image(
+    "haiku-5-5-intelligence-index",
+    "Five slim matte ivory rods of rising height stand in a row on a low charcoal plinth, with a brass ring around the base of the tallest.",
+    "Each effort level of Claude Haiku 5.5 is its own row on the Intelligence Index, and the step from low to max buys 13.9 points for 8.7x the cost per task.",
+    "6e41e769a4e3c402d08ab51b8b0c9325cb69333434102dd289f92c96bb87a27e",
+    "e0c171fdbb677ac7b2a70d520f3cc1031225fd7fa018f506f03119ca26d002c2",
+    "20261012T150152962Z-image-84bc717a-676/receipt.json",
+    "gateway_b7636b139acf430ca7c8980d7ac30b96.json",
+  ),
   "opus-5-5-coding-agent-index": image(
     "opus-5-5-coding-agent-index",
     "A tall matte ivory block stands near the right end of a long low charcoal table, with one thin brass line running left along the table’s edge.",

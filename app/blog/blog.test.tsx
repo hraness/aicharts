@@ -150,6 +150,7 @@ import {
   SONNET_55_CODING_ARTICLE_PUBLISHED_AT,
   createSonnet55CodingArticle,
 } from "./sonnet-5-5-coding-agent-index-article";
+import { HAIKU_55_ARTICLE_PUBLISHED_AT } from "./haiku-5-5-intelligence-index-article";
 import {
   CLAUDE_OPUS_55,
   OPUS_55_ARTICLE_PUBLISHED_AT,
@@ -302,6 +303,10 @@ describe("aicharts benchmark notes", () => {
         expect(article.publishedAt).toBe(OPUS_55_ARTICLE_PUBLISHED_AT);
         expect(article.updatedAt >= article.publishedAt).toBeTrue();
         expect(articleToMarkdown(article)).toContain("captured September 25, 2026 UTC");
+      } else if (article.slug === "haiku-5-5-intelligence-index") {
+        expect(article.publishedAt).toBe(HAIKU_55_ARTICLE_PUBLISHED_AT);
+        expect(article.updatedAt >= article.publishedAt).toBeTrue();
+        expect(articleToMarkdown(article)).toContain("captured October 12, 2026 UTC");
       } else if (article.slug === "gpt-6-sol-coding-agent-index") {
         expect(article.publishedAt).toBe(GPT_6_SOL_ARTICLE_PUBLISHED_AT);
         expect(article.updatedAt >= article.publishedAt).toBeTrue();
