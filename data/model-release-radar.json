@@ -3,7 +3,7 @@
   "source": {
     "method": "models-api",
     "name": "OpenRouter",
-    "retrievedAt": "2026-10-07T22:03:41.312Z",
+    "retrievedAt": "2026-10-12T23:02:50.274Z",
     "timestampMeaning": "source-added-at",
     "url": "https://openrouter.ai/api/v1/models?sort=newest"
   },
@@ -28,6 +28,12 @@
     "windowDays": 90
   },
   "observedListings": [
+    {
+      "id": "meta/muse-wonder",
+      "model": "Muse Wonder",
+      "providerId": "meta",
+      "sourceAddedAt": "2026-10-12T12:25:45.000Z"
+    },
     {
       "id": "anthropic/claude-haiku-5.5",
       "model": "Claude Haiku 5.5",
@@ -372,6 +378,29 @@
     }
   ],
   "releases": [
+    {
+      "capabilities": {
+        "inputModalities": [
+          "audio",
+          "file",
+          "image",
+          "text",
+          "video"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "meta/muse-wonder-20261012",
+      "id": "meta/muse-wonder",
+      "model": "Muse Wonder",
+      "modelUrl": "https://openrouter.ai/meta/muse-wonder",
+      "providerId": "meta",
+      "providerName": "Meta",
+      "sourceAddedAt": "2026-10-12T12:25:45.000Z",
+      "status": "awaiting-benchmark"
+    },
     {
       "capabilities": {
         "inputModalities": [
