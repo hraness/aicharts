@@ -344,7 +344,6 @@ fn registry_lists_every_dispatched_verb() {
     let listed: Vec<String> = registry.verbs().iter().map(|v| v.command()).collect();
     for verb in [
         "status",
-        "tui",
         "commands",
         "doctor",
         "doctor retire",
@@ -486,35 +485,24 @@ fn every_menu_action_has_a_verb_and_a_parity_row() {
     }
 }
 
-// --- TUI clock ------------------------------------------------------------
+// --- Outputs section -------------------------------------------------------
 
 #[test]
-fn the_outputs_view_reads_the_clock_when_it_draws() {
-    // The interactive TUI stays open: ages must follow the clock at render
-    // time, not the moment it launched.
-    use std::cell::Cell;
-    use std::rc::Rc;
-    let clock = Rc::new(Cell::new(now()));
-    let reader = Rc::clone(&clock);
-    let views = views(Box::new(move || reader.get()));
-    let outputs_view = views.iter().find(|view| view.id() == "outputs").unwrap();
+fn the_outputs_section_ages_follow_the_supplied_time() {
+    // Ages in the rendered text follow the `now` the caller supplies, not a
+    // captured moment.
     let Envelope::Ok { data, .. } = build(&Health::default(), outputs(1), vec![]) else {
         unreachable!()
     };
-    let first = tui::render_to_string(outputs_view.as_ref(), &data, 80);
+    let first = outputs_lines(&data.outputs, 80, now()).join("\n");
     assert!(first.contains("10 min ago"), "{first}");
-    clock.set(now() + Duration::from_secs(3_600));
-    let later = tui::render_to_string(outputs_view.as_ref(), &data, 80);
+    let later = outputs_lines(&data.outputs, 80, now() + Duration::from_secs(3_600)).join("\n");
     assert!(later.contains("1 hour ago"), "{later}");
-    // A file written after launch is still only minutes old, not "just now"
-    // forever and not in the future.
+    // A file written recently is only minutes old, never "just now" forever
+    // and never in the future.
     let mut fresh = outputs(1);
     fresh.files[0].modified = now() + Duration::from_secs(1_800);
-    let data = StatusData {
-        outputs: fresh,
-        ..data
-    };
-    let fresh_text = tui::render_to_string(outputs_view.as_ref(), &data, 80);
+    let fresh_text = outputs_lines(&fresh, 80, now() + Duration::from_secs(3_600)).join("\n");
     assert!(fresh_text.contains("30 min ago"), "{fresh_text}");
 }
 
@@ -707,18 +695,6 @@ fn ledger_flags_keep_the_older_status() {
 #[test]
 fn flags_are_checked() {
     let words = |values: &[&str]| values.iter().map(|v| (*v).to_owned()).collect::<Vec<_>>();
-    assert_eq!(
-        parse(&words(&["--width", "19"]), "tui", &["--width"])
-            .unwrap_err()
-            .code,
-        ErrorCode::Usage
-    );
-    assert_eq!(
-        parse(&words(&["--width", "120"]), "tui", &["--width"])
-            .unwrap()
-            .width,
-        Some(120)
-    );
     assert_eq!(
         parse(&words(&["--snapshot"]), "status", &["--json"])
             .unwrap_err()

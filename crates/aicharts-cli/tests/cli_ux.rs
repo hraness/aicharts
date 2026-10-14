@@ -120,7 +120,6 @@ fn every_command_answers_its_own_help_with_exit_zero() {
         "refresh",
         "service",
         "setup",
-        "tui",
         "commands",
         "doctor",
         "open",
@@ -281,9 +280,9 @@ fn status_reads_the_collector_files_and_answers_in_one_envelope() {
     assert_eq!(value["ok"], true);
     assert_eq!(value["schema"], "aicharts.status/1");
     assert_eq!(value["data"]["state"], "not-set-up");
-    let snapshot = run(&["tui", "--snapshot", "--width", "60"], &env);
-    assert_eq!(snapshot.status.code(), Some(0));
-    assert!(text(&snapshot.stdout).contains("Not set up on this Mac"));
+    let status = run(&["status"], &env);
+    assert_eq!(status.status.code(), Some(0));
+    assert!(text(&status.stdout).contains("Not set up on this Mac"));
     let commands = run(&["commands", "--json"], &env);
     let value: serde_json::Value = serde_json::from_slice(&commands.stdout).unwrap();
     assert_eq!(value["schema"], "hraness.commands/1");

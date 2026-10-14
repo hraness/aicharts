@@ -47,7 +47,6 @@ const COMMANDS: &[&str] = &[
     "status",
     "support",
     "sync",
-    "tui",
     "turns",
     "upgrade",
     "upload",

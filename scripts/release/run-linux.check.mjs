@@ -292,10 +292,10 @@ test("source admission adds only the full reviewed Git revisions", t => {
   const support = Object.keys(GIT_SOURCES).find(source => source.includes("support-foundation"));
   const kit = Object.keys(GIT_SOURCES).find(source => source.includes("desktop-foundation"));
   for (const source of [support.replace("ed89e584", "00000000"), support.replace("hraness/", "other/"),
-    kit.replace("6174033a51cd0fa4f5259c8c2492b9a28b942602", "0000000000000000000000000000000000000000"),
-    kit.replace("tag=v0.9.0", "tag=v0.9.1"), kit.replace("hraness/", "other/"),
-    kit.replace("tag=v0.9.0", "rev=6174033a51cd0fa4f5259c8c2492b9a28b942602"),
-    "git+https://github.com/hraness/support-foundation#main", "git+https://github.com/hraness/desktop-foundation#v0.9.0", "git+https://github.com/hraness/desktop-foundation?tag=v0.8.1#6040606576167e4e8d0163a564463f04fa238be4",
+    kit.replace("798be31fca87bbe9195e351cdf358c4d14eb42d4", "0000000000000000000000000000000000000000"),
+    kit.replace("tag=v2.0.0", "tag=v2.0.1"), kit.replace("hraness/", "other/"),
+    kit.replace("tag=v2.0.0", "rev=798be31fca87bbe9195e351cdf358c4d14eb42d4"),
+    "git+https://github.com/hraness/support-foundation#main", "git+https://github.com/hraness/desktop-foundation#v2.0.0", "git+https://github.com/hraness/desktop-foundation?tag=v0.9.0#6174033a51cd0fa4f5259c8c2492b9a28b942602",
     "git+https://example.invalid/private"]) {
     lock.bytes = bytes(`version = 4\n[[package]]\nsource = "${source}"\n`);
     assert.throws(() => internals.checkSource(f.source), { code: "unsupported_source" }, source);
