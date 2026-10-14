@@ -3,7 +3,7 @@
   "source": {
     "method": "models-api",
     "name": "OpenRouter",
-    "retrievedAt": "2026-10-13T19:20:52.063Z",
+    "retrievedAt": "2026-10-14T18:42:04.991Z",
     "timestampMeaning": "source-added-at",
     "url": "https://openrouter.ai/api/v1/models?sort=newest"
   },
@@ -1268,49 +1268,6 @@
       "providerId": "google",
       "providerName": "Google",
       "sourceAddedAt": "2026-07-21T15:12:06.000Z",
-      "status": "awaiting-benchmark"
-    },
-    {
-      "capabilities": {
-        "inputModalities": [
-          "image",
-          "text",
-          "video"
-        ],
-        "outputModalities": [
-          "text"
-        ],
-        "supportsTools": true
-      },
-      "canonicalSlug": "moonshotai/kimi-k3-20260715",
-      "id": "moonshotai/kimi-k3",
-      "model": "Kimi K3",
-      "modelUrl": "https://openrouter.ai/moonshotai/kimi-k3",
-      "providerId": "moonshot_ai",
-      "providerName": "Moonshot AI",
-      "sourceAddedAt": "2026-07-16T15:30:58.000Z",
-      "status": "benchmarked"
-    },
-    {
-      "capabilities": {
-        "inputModalities": [
-          "file",
-          "image",
-          "text",
-          "video"
-        ],
-        "outputModalities": [
-          "text"
-        ],
-        "supportsTools": true
-      },
-      "canonicalSlug": "meta/muse-spark-1.1-20260709",
-      "id": "meta/muse-spark-1.1",
-      "model": "Muse Spark 1.1",
-      "modelUrl": "https://openrouter.ai/meta/muse-spark-1.1",
-      "providerId": "meta",
-      "providerName": "Meta",
-      "sourceAddedAt": "2026-07-16T15:29:01.000Z",
       "status": "awaiting-benchmark"
     }
   ]
