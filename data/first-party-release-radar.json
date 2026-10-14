@@ -1,6 +1,74 @@
 {
   "candidates": [
     {
+      "candidateDate": "2026-10-14",
+      "candidateDateMeaning": "first-observed",
+      "canonicalUrl": "https://docs.x.ai/developers/release-notes#grok-voice-1-0-is-available",
+      "firstSeenAt": "2026-10-14T18:42:00.394Z",
+      "id": "xai:/developers/release-notes#grok-voice-1-0-is-available",
+      "lastChangedAt": "2026-10-14T18:42:00.394Z",
+      "namedModels": [
+        "Unresolved announcement: Grok Voice 1.0 Is Available"
+      ],
+      "providerId": "xai",
+      "providerName": "xAI",
+      "sourceId": "xai-release-notes",
+      "sourceModifiedAt": "2026-10-14T18:42:00.394Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-10-14",
+      "candidateDateMeaning": "first-observed",
+      "canonicalUrl": "https://docs.x.ai/developers/release-notes#grok-voice-2-0-deprecation",
+      "firstSeenAt": "2026-10-14T18:42:00.394Z",
+      "id": "xai:/developers/release-notes#grok-voice-2-0-deprecation",
+      "lastChangedAt": "2026-10-14T18:42:00.394Z",
+      "namedModels": [
+        "Unresolved announcement: Grok Voice 2.0 Deprecation"
+      ],
+      "providerId": "xai",
+      "providerName": "xAI",
+      "sourceId": "xai-release-notes",
+      "sourceModifiedAt": "2026-10-14T18:42:00.394Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-10-14",
+      "candidateDateMeaning": "first-observed",
+      "canonicalUrl": "https://docs.x.ai/developers/release-notes#grok-voice-2-0-is-available",
+      "firstSeenAt": "2026-10-14T18:42:00.394Z",
+      "id": "xai:/developers/release-notes#grok-voice-2-0-is-available",
+      "lastChangedAt": "2026-10-14T18:42:00.394Z",
+      "namedModels": [
+        "Unresolved announcement: Grok Voice 2.0 Is Available"
+      ],
+      "providerId": "xai",
+      "providerName": "xAI",
+      "sourceId": "xai-release-notes",
+      "sourceModifiedAt": "2026-10-14T18:42:00.394Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-10-14",
+      "candidateDateMeaning": "first-observed",
+      "canonicalUrl": "https://docs.x.ai/developers/release-notes#grok-voice-3-0-is-available",
+      "firstSeenAt": "2026-10-14T18:42:00.394Z",
+      "id": "xai:/developers/release-notes#grok-voice-3-0-is-available",
+      "lastChangedAt": "2026-10-14T18:42:00.394Z",
+      "namedModels": [
+        "Unresolved announcement: Grok Voice 3.0 Is Available"
+      ],
+      "providerId": "xai",
+      "providerName": "xAI",
+      "sourceId": "xai-release-notes",
+      "sourceModifiedAt": "2026-10-14T18:42:00.394Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
       "candidateDate": "2026-10-13",
       "candidateDateMeaning": "provider-sitemap-lastmod",
       "canonicalUrl": "https://deepmind.google/models/model-cards/gemini-4-argon/",
@@ -1417,7 +1485,7 @@
       "canonicalUrl": "https://docs.x.ai/developers/release-notes#grok-voice-think-fast-1-0-is-available",
       "firstSeenAt": "2026-09-03T23:30:02.890Z",
       "id": "xai:/developers/release-notes#grok-voice-think-fast-1-0-is-available",
-      "lastChangedAt": "2026-09-03T23:30:02.890Z",
+      "lastChangedAt": "2026-10-14T18:42:00.394Z",
       "namedModels": [
         "Grok Voice Think Fast 1.0"
       ],
@@ -1425,7 +1493,7 @@
       "providerName": "xAI",
       "sourceId": "xai-release-notes",
       "sourceModifiedAt": "2026-09-03T23:30:02.890Z",
-      "sourcePresence": "present",
+      "sourcePresence": "missing",
       "status": "needs-review"
     },
     {
@@ -1434,7 +1502,7 @@
       "canonicalUrl": "https://docs.x.ai/developers/release-notes#grok-voice-think-fast-2-0-is-available",
       "firstSeenAt": "2026-09-03T23:30:02.890Z",
       "id": "xai:/developers/release-notes#grok-voice-think-fast-2-0-is-available",
-      "lastChangedAt": "2026-09-03T23:30:02.890Z",
+      "lastChangedAt": "2026-10-14T18:42:00.394Z",
       "namedModels": [
         "Grok Voice Think Fast 2.0"
       ],
@@ -1442,7 +1510,7 @@
       "providerName": "xAI",
       "sourceId": "xai-release-notes",
       "sourceModifiedAt": "2026-09-03T23:30:02.890Z",
-      "sourcePresence": "present",
+      "sourcePresence": "missing",
       "status": "needs-review"
     },
     {
@@ -7503,7 +7571,7 @@
       "id": "anthropic-sitemap",
       "providerId": "anthropic",
       "providerName": "Anthropic",
-      "retrievedAt": "2026-10-14T13:48:38.709Z",
+      "retrievedAt": "2026-10-14T18:42:00.394Z",
       "url": "https://www.anthropic.com/sitemap.xml"
     },
     {
@@ -7533,21 +7601,21 @@
         "contentType": "application/xml",
         "httpStatus": 200,
         "shape": {
-          "byteLength": 2552,
+          "byteLength": 2767,
           "candidateCount": 6,
-          "canonicalHostEntryCount": 14,
-          "datedEntryCount": 14,
+          "canonicalHostEntryCount": 15,
+          "datedEntryCount": 15,
           "duplicateEntryCount": 0,
-          "entryCount": 14,
+          "entryCount": 15,
           "rootElement": "urlset",
-          "uniqueEntryCount": 14
+          "uniqueEntryCount": 15
         },
         "status": "healthy"
       },
       "id": "meta-research-sitemap",
       "providerId": "meta",
       "providerName": "Meta",
-      "retrievedAt": "2026-10-14T13:48:38.709Z",
+      "retrievedAt": "2026-10-14T18:42:00.394Z",
       "url": "https://research.meta.ai/sitemap.xml"
     },
     {
@@ -7555,7 +7623,7 @@
         "contentType": "application/xml",
         "httpStatus": 200,
         "shape": {
-          "byteLength": 1261529,
+          "byteLength": 1262156,
           "candidateCount": 9,
           "canonicalHostEntryCount": 174,
           "datedEntryCount": 174,
@@ -7569,7 +7637,7 @@
       "id": "openai-safety-sitemap",
       "providerId": "openai",
       "providerName": "OpenAI",
-      "retrievedAt": "2026-10-14T13:48:38.709Z",
+      "retrievedAt": "2026-10-14T18:42:00.394Z",
       "url": "https://openai.com/sitemap.xml/safety/"
     },
     {
@@ -7591,7 +7659,7 @@
       "id": "openai-model-catalog",
       "providerId": "openai",
       "providerName": "OpenAI",
-      "retrievedAt": "2026-10-14T13:48:38.709Z",
+      "retrievedAt": "2026-10-14T18:42:00.394Z",
       "url": "https://developers.openai.com/api/docs/models/all.md"
     },
     {
@@ -7613,7 +7681,7 @@
       "id": "meta-newsroom-index",
       "providerId": "meta",
       "providerName": "Meta",
-      "retrievedAt": "2026-10-14T13:48:38.709Z",
+      "retrievedAt": "2026-10-14T18:42:00.394Z",
       "url": "https://about.fb.com/llms.txt"
     },
     {
@@ -7635,7 +7703,7 @@
       "id": "google-deepmind-sitemap",
       "providerId": "google",
       "providerName": "Google DeepMind",
-      "retrievedAt": "2026-10-14T13:48:38.709Z",
+      "retrievedAt": "2026-10-14T18:42:00.394Z",
       "url": "https://deepmind.google/sitemap.xml"
     },
     {
@@ -7643,21 +7711,21 @@
         "contentType": "text/markdown",
         "httpStatus": 200,
         "shape": {
-          "byteLength": 18478,
-          "candidateCount": 14,
-          "canonicalHostEntryCount": 55,
+          "byteLength": 19071,
+          "candidateCount": 16,
+          "canonicalHostEntryCount": 57,
           "datedEntryCount": 0,
           "duplicateEntryCount": 0,
-          "entryCount": 55,
+          "entryCount": 57,
           "rootElement": "markdown-release-notes",
-          "uniqueEntryCount": 55
+          "uniqueEntryCount": 57
         },
         "status": "healthy"
       },
       "id": "xai-release-notes",
       "providerId": "xai",
       "providerName": "xAI",
-      "retrievedAt": "2026-10-14T13:48:38.709Z",
+      "retrievedAt": "2026-10-14T18:42:00.394Z",
       "url": "https://docs.x.ai/developers/release-notes.md"
     },
     {
@@ -7665,21 +7733,21 @@
         "contentType": "application/xml",
         "httpStatus": 200,
         "shape": {
-          "byteLength": 216874,
+          "byteLength": 217852,
           "candidateCount": 35,
-          "canonicalHostEntryCount": 546,
-          "datedEntryCount": 546,
+          "canonicalHostEntryCount": 549,
+          "datedEntryCount": 549,
           "duplicateEntryCount": 0,
-          "entryCount": 546,
+          "entryCount": 549,
           "rootElement": "urlset",
-          "uniqueEntryCount": 546
+          "uniqueEntryCount": 549
         },
         "status": "healthy"
       },
       "id": "mistral-site-sitemap",
       "providerId": "mistral",
       "providerName": "Mistral AI",
-      "retrievedAt": "2026-10-14T13:48:38.709Z",
+      "retrievedAt": "2026-10-14T18:42:00.394Z",
       "url": "https://mistral.ai/sitemap-0.xml"
     },
     {
@@ -7701,7 +7769,7 @@
       "id": "cohere-docs-sitemap",
       "providerId": "cohere",
       "providerName": "Cohere",
-      "retrievedAt": "2026-10-14T13:48:38.709Z",
+      "retrievedAt": "2026-10-14T18:42:00.394Z",
       "url": "https://docs.cohere.com/sitemap.xml"
     },
     {
@@ -7723,7 +7791,7 @@
       "id": "deepseek-site-sitemap",
       "providerId": "deepseek",
       "providerName": "DeepSeek",
-      "retrievedAt": "2026-10-14T13:48:38.709Z",
+      "retrievedAt": "2026-10-14T18:42:00.394Z",
       "url": "https://www.deepseek.com/sitemap.xml"
     },
     {
@@ -7745,7 +7813,7 @@
       "id": "deepseek-api-sitemap",
       "providerId": "deepseek",
       "providerName": "DeepSeek",
-      "retrievedAt": "2026-10-14T13:48:38.709Z",
+      "retrievedAt": "2026-10-14T18:42:00.394Z",
       "url": "https://api-docs.deepseek.com/updates/"
     },
     {
@@ -7789,7 +7857,7 @@
       "id": "kimi-docs-sitemap",
       "providerId": "moonshot_ai",
       "providerName": "Moonshot AI",
-      "retrievedAt": "2026-10-14T13:48:38.709Z",
+      "retrievedAt": "2026-10-14T18:42:00.394Z",
       "url": "https://platform.kimi.com/docs/sitemap.xml"
     },
     {
@@ -7811,7 +7879,7 @@
       "id": "qwen-model-releases",
       "providerId": "alibaba_cloud",
       "providerName": "Alibaba Qwen",
-      "retrievedAt": "2026-10-14T13:48:38.709Z",
+      "retrievedAt": "2026-10-14T18:42:00.394Z",
       "url": "https://docs.qwencloud.com/changelog/models.md"
     },
     {
@@ -7833,7 +7901,7 @@
       "id": "minimax-model-releases",
       "providerId": "minimax",
       "providerName": "MiniMax",
-      "retrievedAt": "2026-10-14T13:48:38.709Z",
+      "retrievedAt": "2026-10-14T18:42:00.394Z",
       "url": "https://platform.minimax.io/docs/release-notes/models.md"
     },
     {
@@ -7855,7 +7923,7 @@
       "id": "bytedance-seed-sitemap",
       "providerId": "bytedance",
       "providerName": "ByteDance Seed",
-      "retrievedAt": "2026-10-14T13:48:38.709Z",
+      "retrievedAt": "2026-10-14T18:42:00.394Z",
       "url": "https://seed.bytedance.com/sitemap.xml"
     },
     {
@@ -7877,7 +7945,7 @@
       "id": "microsoft-model-sitemap",
       "providerId": "microsoft",
       "providerName": "Microsoft AI",
-      "retrievedAt": "2026-10-14T13:48:38.709Z",
+      "retrievedAt": "2026-10-14T18:42:00.394Z",
       "url": "https://microsoft.ai/model-sitemap.xml"
     },
     {
@@ -7885,7 +7953,7 @@
         "contentType": "application/rss+xml",
         "httpStatus": 200,
         "shape": {
-          "byteLength": 249685,
+          "byteLength": 249830,
           "candidateCount": 2,
           "canonicalHostEntryCount": 18,
           "datedEntryCount": 18,
@@ -7899,7 +7967,7 @@
       "id": "nvidia-nemotron-rss",
       "providerId": "nvidia",
       "providerName": "NVIDIA",
-      "retrievedAt": "2026-10-14T13:48:38.709Z",
+      "retrievedAt": "2026-10-14T18:42:00.394Z",
       "url": "https://blogs.nvidia.com/blog/tag/nemotron/feed/"
     },
     {
@@ -7921,7 +7989,7 @@
       "id": "amazon-nova-rss",
       "providerId": "amazon",
       "providerName": "Amazon",
-      "retrievedAt": "2026-10-14T13:48:38.709Z",
+      "retrievedAt": "2026-10-14T18:42:00.394Z",
       "url": "https://aws.amazon.com/blogs/aws/category/artificial-intelligence/amazon-machine-learning/amazon-bedrock/amazon-nova/feed/"
     },
     {
@@ -7943,7 +8011,7 @@
       "id": "baidu-ernie-sitemap",
       "providerId": "baidu",
       "providerName": "Baidu",
-      "retrievedAt": "2026-10-14T13:48:38.709Z",
+      "retrievedAt": "2026-10-14T18:42:00.394Z",
       "url": "https://ernie.baidu.com/blog/en/sitemap.xml"
     },
     {
@@ -7965,7 +8033,7 @@
       "id": "tencent-post-sitemaps",
       "providerId": "tencent",
       "providerName": "Tencent",
-      "retrievedAt": "2026-10-14T13:48:38.709Z",
+      "retrievedAt": "2026-10-14T18:42:00.394Z",
       "url": "https://www.tencent.com/sitemap_index.xml"
     },
     {
@@ -7987,7 +8055,7 @@
       "id": "xiaomi-mimo-sitemap",
       "providerId": "xiaomi",
       "providerName": "Xiaomi MiMo",
-      "retrievedAt": "2026-10-14T13:48:38.709Z",
+      "retrievedAt": "2026-10-14T18:42:00.394Z",
       "url": "https://mimo.mi.com/sitemap.xml"
     },
     {
@@ -8009,7 +8077,7 @@
       "id": "ai21-post-sitemap",
       "providerId": "ai21",
       "providerName": "AI21 Labs",
-      "retrievedAt": "2026-10-14T13:48:38.709Z",
+      "retrievedAt": "2026-10-14T18:42:00.394Z",
       "url": "https://www.ai21.com/post-sitemap.xml"
     },
     {
@@ -8031,7 +8099,7 @@
       "id": "ibm-granite-sitemap",
       "providerId": "ibm",
       "providerName": "IBM Granite",
-      "retrievedAt": "2026-10-14T13:48:38.709Z",
+      "retrievedAt": "2026-10-14T18:42:00.394Z",
       "url": "https://research.ibm.com/sitemap-0.xml"
     },
     {
@@ -8053,7 +8121,7 @@
       "id": "ai2-model-sitemap",
       "providerId": "ai2",
       "providerName": "Ai2",
-      "retrievedAt": "2026-10-14T13:48:38.709Z",
+      "retrievedAt": "2026-10-14T18:42:00.394Z",
       "url": "https://allenai.org/sitemap.xml"
     },
     {
@@ -8075,7 +8143,7 @@
       "id": "stepfun-model-sitemap",
       "providerId": "stepfun",
       "providerName": "StepFun",
-      "retrievedAt": "2026-10-14T13:48:38.709Z",
+      "retrievedAt": "2026-10-14T18:42:00.394Z",
       "url": "https://platform.stepfun.ai/docs/sitemap.xml"
     },
     {
@@ -8083,21 +8151,21 @@
         "contentType": "text/xml",
         "httpStatus": 200,
         "shape": {
-          "byteLength": 21732,
+          "byteLength": 22014,
           "candidateCount": 8,
-          "canonicalHostEntryCount": 144,
-          "datedEntryCount": 144,
+          "canonicalHostEntryCount": 146,
+          "datedEntryCount": 146,
           "duplicateEntryCount": 0,
-          "entryCount": 144,
+          "entryCount": 146,
           "rootElement": "urlset",
-          "uniqueEntryCount": 144
+          "uniqueEntryCount": 146
         },
         "status": "healthy"
       },
       "id": "stepfun-china-model-sitemap",
       "providerId": "stepfun",
       "providerName": "StepFun",
-      "retrievedAt": "2026-10-14T13:48:38.709Z",
+      "retrievedAt": "2026-10-14T18:42:00.394Z",
       "url": "https://platform.stepfun.com/docs/sitemap.xml"
     },
     {
@@ -8119,7 +8187,7 @@
       "id": "cognition-sitemap",
       "providerId": "cognition",
       "providerName": "Cognition",
-      "retrievedAt": "2026-10-14T13:48:38.709Z",
+      "retrievedAt": "2026-10-14T18:42:00.394Z",
       "url": "https://cognition.com/sitemap.xml"
     },
     {
@@ -8141,7 +8209,7 @@
       "id": "cognition-blog-index",
       "providerId": "cognition",
       "providerName": "Cognition",
-      "retrievedAt": "2026-10-14T13:48:38.709Z",
+      "retrievedAt": "2026-10-14T18:42:00.394Z",
       "url": "https://cognition.com/blog"
     }
   ]
