@@ -154,7 +154,7 @@
     "iwanthue": "2.1.1",
     "playwright-core": "1.63.0",
     "typescript": "^6.0.3",
-    "vitest": "4.1.11",
+    "vitest": "5.0.4",
     "wrangler": "4.131.0",
     "yaml": "2.9.1",
     "@hraness/desktop-foundation": "github:hraness/desktop-foundation#6174033a51cd0fa4f5259c8c2492b9a28b942602",
