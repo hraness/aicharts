@@ -1,4 +1,6 @@
 import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { isWorkerEnvironmentFile, workerToolCommands, workerToolEnvironment } from "./usage-worker-tools";
 
 describe("local-only Worker tool boundary", () => {
@@ -48,6 +50,10 @@ describe("local-only Worker tool boundary", () => {
     expect(workerToolCommands(["test-restore-fence-control", "--remote"])).toBeNull();
     expect(workerToolCommands(["test-synthetic-qualification", "--remote"])).toBeNull();
     expect(JSON.stringify(workerToolCommands(["check"]))).not.toContain("deploy");
+  });
+  test("disables vitest 5 filesystem module cache so workerd can load tests", () => {
+    const config = readFileSync(resolve(import.meta.dir, "../services/usage-worker/vitest.config.ts"), "utf8");
+    expect(config).toContain("fsModuleCache: false");
   });
   test("refuses environment files without reading their contents", () => {
     for (const name of [".env", ".env.local", ".env.production", ".dev.vars", ".dev.vars.test"]) expect(isWorkerEnvironmentFile(name)).toBe(true);

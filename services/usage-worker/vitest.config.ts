@@ -11,5 +11,10 @@ export default defineConfig({
     // in parallel. Four workers match a hosted Linux runner. No remote service overrides.
     maxWorkers: 4,
     testTimeout: 10_000,
+    // vitest 5 defaults fsModuleCache on. @cloudflare/vitest-plugin 1.4.0's
+    // workerd runner then fails every file with readAll ENOENT on
+    // node_modules/.vitest-cache (cloudflare/workers-sdk#16237). Keep the
+    // cache off until a plugin release that reads those files from Node.
+    fsModuleCache: false,
   },
 });
