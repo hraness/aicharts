@@ -126,6 +126,7 @@ type Row = (
         bool,
         bool,
         bool,
+        Option<String>,
     ),
 );
 fn row_options() -> impl bincode::Options {
@@ -169,6 +170,7 @@ fn append_row(bytes: &mut Vec<u8>, row: &UnifiedMessage) -> Result<(), &'static 
                     row.is_turn_start,
                     row.model_attribution_conflicted,
                     row.tokens_estimated,
+                    &row.service_tier,
                 ),
             ),
         )
@@ -213,6 +215,7 @@ fn decode_rows(bytes: &[u8], count: u64) -> Result<Vec<UnifiedMessage>, &'static
                 is_turn_start,
                 model_attribution_conflicted,
                 tokens_estimated,
+                service_tier,
             ),
         ): Row = row_options()
             .deserialize(body)
@@ -240,6 +243,7 @@ fn decode_rows(bytes: &[u8], count: u64) -> Result<Vec<UnifiedMessage>, &'static
             is_turn_start,
             model_attribution_conflicted,
             tokens_estimated,
+            service_tier,
         });
         at += 4 + length;
     }

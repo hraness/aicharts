@@ -1056,6 +1056,52 @@ define_clients!(
         headless: false,
         parse_local: true,
         submit_default: true
+    },
+    // Xiaomi MiMo AI (desktop) shares MiMo Code's engine and on-disk SQLite
+    // store. Sessions are split at parse time by `session.version` (desktop
+    // installs stamp a `desktop-` InstallationVersion); both clients therefore
+    // resolve the same XDG data directory so either filter still discovers
+    // the shared `mimocode*.db` files.
+    MiMoDesktop = 53 => {
+        id: "micode-desktop",
+        display: "Xiaomi MiMo AI",
+        logo: Some("https://raw.githubusercontent.com/junhoyeo/tokscale/main/.github/assets/client-micode-desktop.png"),
+        root: PathRoot::XdgData,
+        relative: "mimocode",
+        pattern: "*.db",
+        headless: false,
+        parse_local: true,
+        submit_default: true
+    },
+    // Muse Code (Meta) persists one event-sourced `session.jsonl` per
+    // session under an XDG-style data dir on every platform, including
+    // Windows. Subagent transcripts live in `subagent/<uuid>/` beside the
+    // parent session and are picked up by the same recursive scan.
+    Muse = 54 => {
+        id: "muse",
+        display: "Muse Code",
+        logo: None,
+        root: PathRoot::XdgData,
+        relative: "muse/sessions",
+        pattern: "session.jsonl",
+        headless: false,
+        parse_local: true,
+        submit_default: true
+    },
+    // Antigravity IDE Extensions (VS Code, JetBrains, Zed, and others) persist
+    // the same generation databases as the CLI under a separate application
+    // directory. Keep the client identity distinct for attribution; the
+    // Antigravity parser family removes repeated response IDs across surfaces.
+    AntigravityExtension = 55 => {
+        id: "antigravity-extension",
+        display: "Antigravity IDE Extension",
+        logo: Some("https://raw.githubusercontent.com/junhoyeo/tokscale/main/.github/assets/client-antigravity.png"),
+        root: PathRoot::Home,
+        relative: ".gemini/antigravity/conversations",
+        pattern: "*.db",
+        headless: false,
+        parse_local: true,
+        submit_default: true
     }
 );
 
@@ -1171,7 +1217,7 @@ mod tests {
 
     #[test]
     fn test_client_id_count() {
-        assert_eq!(ClientId::COUNT, 53);
+        assert_eq!(ClientId::COUNT, 56);
     }
 
     #[test]
@@ -1763,6 +1809,24 @@ mod tests {
     }
 
     #[test]
+    fn test_muse_client_registered_as_local_session_source() {
+        let client = ClientId::from_str("muse").expect("muse client should be registered");
+        assert_eq!(
+            client
+                .data()
+                .resolve_path_with_env_strategy("/tmp/home", false),
+            native_join(
+                std::path::Path::new("/tmp/home"),
+                ".local/share/muse/sessions"
+            )
+        );
+        assert_eq!(client.data().pattern, "session.jsonl");
+        assert!(client.data().parse_local);
+        assert!(client.data().submit_default);
+        assert!(!client.data().headless);
+    }
+
+    #[test]
     fn test_junie_client_registered_as_local_session_source() {
         let client = ClientId::from_str("junie").expect("junie client should be registered");
         assert_eq!(
@@ -2249,6 +2313,21 @@ mod tests {
     #[test]
     fn test_antigravity_submit_default_is_true() {
         assert!(ClientId::Antigravity.submit_default());
+    }
+
+    #[test]
+    fn test_antigravity_extension_database_path() {
+        let client = ClientId::AntigravityExtension;
+        assert_eq!(
+            client.data().resolve_path("/tmp/home"),
+            native_join(
+                std::path::Path::new("/tmp/home"),
+                ".gemini/antigravity/conversations"
+            )
+        );
+        assert_eq!(client.data().pattern, "*.db");
+        assert!(client.parse_local());
+        assert!(client.submit_default());
     }
 
     #[test]

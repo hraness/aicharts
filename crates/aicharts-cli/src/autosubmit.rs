@@ -340,7 +340,7 @@ fn parse(bytes: &[u8], now: u64) -> Result<Config, &'static str> {
         || !path_valid(&config.home)
         || !(1..=366).contains(&config.days)
         || config.clients.is_empty()
-        || config.clients.len() > 54
+        || config.clients.len() > 57
         || config.sinks.len() > 8
     {
         return Err(INVALID);
