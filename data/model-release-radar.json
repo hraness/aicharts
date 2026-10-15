@@ -3,7 +3,7 @@
   "source": {
     "method": "models-api",
     "name": "OpenRouter",
-    "retrievedAt": "2026-10-14T18:42:04.991Z",
+    "retrievedAt": "2026-10-15T20:23:17.020Z",
     "timestampMeaning": "source-added-at",
     "url": "https://openrouter.ai/api/v1/models?sort=newest"
   },
@@ -28,6 +28,12 @@
     "windowDays": 90
   },
   "observedListings": [
+    {
+      "id": "meta/muse-spark-open",
+      "model": "Muse Spark Open",
+      "providerId": "meta",
+      "sourceAddedAt": "2026-10-15T17:57:49.000Z"
+    },
     {
       "id": "google/gemini-4-argon",
       "model": "Gemini 4 Argon",
@@ -384,6 +390,29 @@
     }
   ],
   "releases": [
+    {
+      "capabilities": {
+        "inputModalities": [
+          "audio",
+          "file",
+          "image",
+          "text",
+          "video"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "meta/muse-spark-open-20261015",
+      "id": "meta/muse-spark-open",
+      "model": "Muse Spark Open",
+      "modelUrl": "https://openrouter.ai/meta/muse-spark-open",
+      "providerId": "meta",
+      "providerName": "Meta",
+      "sourceAddedAt": "2026-10-15T17:57:49.000Z",
+      "status": "awaiting-benchmark"
+    },
     {
       "capabilities": {
         "inputModalities": [
