@@ -261,6 +261,50 @@ const VAST_SKUS = [
   { gpuId: "h100-sxm", vastName: "H100 SXM" },
 ] as const;
 
+/**
+ * Vast.ai's bundles search matches `verified` against the status string
+ * `verified` | `deverified` | `unverified`. A boolean `true` used to work and
+ * now returns a thin leftover slice of the same market.
+ */
+export function vastSearchQuery(vastName: string): Readonly<{
+  gpu_name: { eq: string };
+  limit: 20;
+  num_gpus: { eq: 1 };
+  order: readonly (readonly ["dph_total", "asc"])[];
+  rentable: { eq: true };
+  type: "ask";
+  verified: { eq: "verified" };
+}> {
+  return {
+    gpu_name: { eq: vastName },
+    limit: 20,
+    num_gpus: { eq: 1 },
+    order: [["dph_total", "asc"]],
+    rentable: { eq: true },
+    type: "ask",
+    verified: { eq: "verified" },
+  };
+}
+
+export class ThinVastMarketError extends Error {
+  readonly gpuId: string;
+  readonly offerCount: number;
+
+  constructor(gpuId: string, offerCount: number) {
+    super(
+      `Vast.ai lists only ${offerCount} verified ${gpuId} offers; `
+      + "retaining the last validated rate for this SKU.",
+    );
+    this.name = "ThinVastMarketError";
+    this.gpuId = gpuId;
+    this.offerCount = offerCount;
+  }
+}
+
+export function isThinVastMarketError(error: Error): error is ThinVastMarketError {
+  return error instanceof ThinVastMarketError;
+}
+
 function medianOf(values: readonly number[]): number {
   const sorted = [...values].sort((left, right) => left - right);
   const middle = Math.floor(sorted.length / 2);
@@ -287,10 +331,13 @@ export function rentalOfferFromVastResponse(
         : null
     ))
     .filter((price): price is number => typeof price === "number" && Number.isFinite(price) && price > 0);
-  if (prices.length < 3) {
+  if (prices.length === 0) {
     return err(new Error(
-      `Vast.ai lists only ${prices.length} verified ${gpuId} offers; the market feed is stale or the query broke.`,
+      `Vast.ai listed no verified ${gpuId} offers; the query may have broken.`,
     ));
+  }
+  if (prices.length < 3) {
+    return err(new ThinVastMarketError(gpuId, prices.length));
   }
   return ok({
     gpuId,
@@ -329,8 +376,10 @@ export async function validateCommittedCalculatorInputs(): Promise<
 
 /**
  * Live-refreshes the OpenAI, DeepSeek, EIA, and Vast.ai sections and preserves the
- * curated hardware, plan, and subsidy-anchor sections byte for byte. Every source
- * must parse and every replacement guard must pass, or the checked snapshot stays.
+ * curated hardware, plan, and subsidy-anchor sections byte for byte. A thin but
+ * well-formed Vast.ai SKU keeps its last validated rate so other live sections
+ * can still publish. A broken query, empty offer list, or failed source leaves
+ * the checked snapshot in place.
  */
 export async function refreshCalculatorInputs(
   overrides: Partial<CalculatorInputsRefreshDependencies> = {},
@@ -358,20 +407,22 @@ export async function refreshCalculatorInputs(
   for (const sku of VAST_SKUS) {
     const response = await dependencies.postJson(
       CALCULATOR_VAST_RENTAL_URL,
-      {
-        gpu_name: { eq: sku.vastName },
-        limit: 20,
-        num_gpus: { eq: 1 },
-        order: [["dph_total", "asc"]],
-        rentable: { eq: true },
-        type: "ask",
-        verified: { eq: true },
-      },
+      vastSearchQuery(sku.vastName),
       `Vast.ai ${sku.vastName}`,
     );
     if (!response.ok) return response;
     const offer = rentalOfferFromVastResponse(sku.gpuId, response.value);
-    if (!offer.ok) return offer;
+    if (!offer.ok) {
+      const previousOffer = previous.value.gpuRental.offers.find(candidate => (
+        candidate.gpuId === sku.gpuId
+      ));
+      if (isThinVastMarketError(offer.error) && previousOffer !== undefined) {
+        console.warn(offer.error.message);
+        rentalOffers.push(previousOffer);
+        continue;
+      }
+      return offer;
+    }
     rentalOffers.push(offer.value);
   }
 

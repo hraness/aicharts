@@ -34,7 +34,7 @@ The server request-error hook uses the same exact ingest-host approval. It sends
 
 Home and `/coding` use page kind `benchmark_chart`; `/benchmarks` uses `benchmark_library`. Their default interaction surfaces are `benchmark_chart` and `benchmark_atlas`, respectively. These additive public route IDs retain schema version 3. Query-selected benchmark, point, provider, and comparison state never enters page context; old root links are resolved by navigation compatibility, not by sending their raw state to analytics.
 
-Article and model-card identifiers must appear in the small client-safe public-route allowlists, which have drift tests against the publishing registries. Unknown but syntactically valid slugs still collapse to `other`. These are public content identifiers, not visitor or account identifiers.
+Article identifiers must appear in the small client-safe public-route allowlist. Model-card paths are generated from the published coding cards and Index pages (`bun run analytics-routes:generate`) so a refresh can admit a new route without a hand-edited list; `analytics-routes:check` and the page-analytics drift test keep that file aligned. Unknown but syntactically valid slugs still collapse to `other`. These are public content identifiers, not visitor or account identifiers.
 
 ## Event allowlist
 

@@ -177,6 +177,7 @@ async function executeWorkflowShell(
         CHECKOUT_OUTCOME: "success",
         DEEP_SWE_OUTCOME: "success",
         DEPENDENCIES_OUTCOME: "success",
+        DERIVED_OUTCOME: "success",
         DETECT_OUTCOME: "success",
         FAKE_GH_LOG: ghLog,
         FAKE_ISSUE_BODY: options.issueBody,
@@ -379,7 +380,16 @@ describe("scheduled model-data refresh", () => {
     expect(String(step("usage_prices").run)).toContain("bun run scripts/usage-catalog.ts --source");
     expect(String(step("usage_prices").run)).toContain("--retrieved-at");
     expect(steps.indexOf(step("calculator"))).toBeLessThan(steps.indexOf(step("usage_prices")));
-    expect(steps.indexOf(step("usage_prices"))).toBeLessThan(steps.indexOf(step("snapshot")));
+    expect(steps.indexOf(step("usage_prices"))).toBeLessThan(steps.indexOf(step("derived")));
+    expect(steps.indexOf(step("derived"))).toBeLessThan(steps.indexOf(step("snapshot")));
+    expect(step("derived")).toMatchObject({
+      "continue-on-error": true,
+      if: "steps.dependencies.outcome == 'success'",
+    });
+    expect(String(step("derived").run).trim().split("\n")).toEqual([
+      "bun run analytics-routes:generate",
+      "bun run launch:kit",
+    ]);
     expect(String(step("release_reconcile").if)).toContain("steps.dependencies.outcome == 'success'");
     expect(steps.indexOf(step("first_party_releases"))).toBeLessThan(
       steps.indexOf(step("first_party_review")),
@@ -418,6 +428,8 @@ describe("scheduled model-data refresh", () => {
       TERMINAL_BENCH_SCIENCE_PATH: "data/terminal-bench-science.json",
       USAGE_PRICES_PATH: "data/usage-prices.json",
       USAGE_REGISTRY_PATH: "data/usage-registry.json",
+      SOCIAL_KIT_PATH: "kb/launch/social-kit.md",
+      PUBLIC_MODEL_CARD_PATHS_PATH: "lib/public-model-card-paths.generated.ts",
     });
     expect(String(step("snapshot").run)).toContain('"$BENCHMARK_PATH"');
     expect(String(step("snapshot").run)).toContain('"$CALCULATOR_PATH"');
@@ -434,6 +446,9 @@ describe("scheduled model-data refresh", () => {
     expect(String(step("snapshot").run)).toContain('"$USAGE_PRICES_PATH"');
     expect(String(step("snapshot").run)).toContain('"$USAGE_REGISTRY_PATH"');
     expect(String(step("snapshot").run)).toContain('"$ATLAS_VALS_PATH"');
+    expect(String(step("snapshot").run)).toContain('"$SOCIAL_KIT_PATH"');
+    expect(String(step("snapshot").run)).toContain('"$PUBLIC_MODEL_CARD_PATHS_PATH"');
+    expect(String(step("snapshot").run)).not.toContain("bun run analytics-routes:generate");
     expect(String(step("snapshot").run)).toContain("del(.benchmarks[].source.retrievedAt)");
     // A data-scoped gate fails before a PR opens; the PR's Required CI stays the complete gate.
     expect(step("validation")).toMatchObject({
@@ -481,7 +496,7 @@ describe("scheduled model-data refresh", () => {
       },
     });
     expect(publish).toContain(
-      'git add -- "$BENCHMARK_PATH" "$CALCULATOR_PATH" "$DEEP_SWE_PATH" "$FIRST_PARTY_RELEASE_PATH" "$INTELLIGENCE_PATH" "$RELEASE_RADAR_PATH" "$TERMINAL_BENCH_PATH" "$TERMINAL_BENCH_SCIENCE_PATH" "$ATLAS_REASONING_PATH" "$ATLAS_MULTIMODAL_PATH" "$ARENA_MEDIA_PATH" "$ATLAS_AUDIO_PATH" "$ATLAS_VALS_PATH" "$USAGE_PRICES_PATH" "$USAGE_REGISTRY_PATH"',
+      'git add -- "$BENCHMARK_PATH" "$CALCULATOR_PATH" "$DEEP_SWE_PATH" "$FIRST_PARTY_RELEASE_PATH" "$INTELLIGENCE_PATH" "$RELEASE_RADAR_PATH" "$TERMINAL_BENCH_PATH" "$TERMINAL_BENCH_SCIENCE_PATH" "$ATLAS_REASONING_PATH" "$ATLAS_MULTIMODAL_PATH" "$ARENA_MEDIA_PATH" "$ATLAS_AUDIO_PATH" "$ATLAS_VALS_PATH" "$USAGE_PRICES_PATH" "$USAGE_REGISTRY_PATH" "$SOCIAL_KIT_PATH" "$PUBLIC_MODEL_CARD_PATHS_PATH"',
     );
     expect(publish).toContain('"HEAD:refs/heads/${REFRESH_BRANCH}"');
     expect(publish).toContain('gh pr create --base main');
@@ -610,6 +625,10 @@ describe("scheduled model-data refresh", () => {
     expect(String(health?.run)).toContain("$ATLAS_VALS_OUTCOME");
     expect(String(health?.run)).toContain("$CALCULATOR_OUTCOME");
     expect(String(health?.run)).toContain("$USAGE_PRICES_OUTCOME");
+    expect(String(health?.run)).toContain("$DERIVED_OUTCOME");
+    expect(String(health?.run)).toContain(
+      '[[ "$DERIVED_OUTCOME" != "success" ]]',
+    );
     expect(String(health?.run)).toContain(
       '[[ "$RUN_USAGE_PRICES_REFRESH" == "true" ]]',
     );
@@ -625,6 +644,7 @@ describe("scheduled model-data refresh", () => {
       ATLAS_VALS_OUTCOME: "${{ steps.atlas_vals.outcome }}",
       CALCULATOR_OUTCOME: "${{ steps.calculator.outcome }}",
       USAGE_PRICES_OUTCOME: "${{ steps.usage_prices.outcome }}",
+      DERIVED_OUTCOME: "${{ steps.derived.outcome }}",
     });
     expect(String(health?.run)).toContain(
       '[[ "$RUN_AAI_REFRESH" == "true" && "$BENCHMARK_OUTCOME" != "success" ]]',

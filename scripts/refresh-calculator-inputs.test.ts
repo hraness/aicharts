@@ -8,6 +8,8 @@ import {
   parseOpenAiSolRates,
   refreshCalculatorInputs,
   rentalOfferFromVastResponse,
+  ThinVastMarketError,
+  vastSearchQuery,
 } from "./refresh-calculator-inputs";
 
 const openAiPromoPage = `
@@ -131,10 +133,29 @@ describe("Vast.ai rental offers", () => {
     expect(offer).toEqual(ok({ gpuId: "rtx-4090", offerCount: 4, usdPerHour: 0.6 }));
   });
 
-  test("fails closed on a thin market", () => {
+  test("refuses to price a SKU from fewer than three offers", () => {
     const offer = rentalOfferFromVastResponse("h100-sxm", vastResponse([3.9, 4.2]));
     expect(offer.ok).toBe(false);
-    if (!offer.ok) expect(offer.error.message).toContain("stale");
+    if (!offer.ok) {
+      expect(offer.error).toBeInstanceOf(ThinVastMarketError);
+      expect(offer.error.message).toContain("h100-sxm");
+    }
+  });
+
+  test("treats an empty well-formed offer list as a broken query", () => {
+    const offer = rentalOfferFromVastResponse("h100-sxm", vastResponse([]));
+    expect(offer.ok).toBe(false);
+    if (!offer.ok) {
+      expect(offer.error).not.toBeInstanceOf(ThinVastMarketError);
+      expect(offer.error.message).toContain("no verified");
+    }
+  });
+
+  test("uses the published Vast.ai verified-status string", () => {
+    expect(vastSearchQuery("H100 SXM")).toMatchObject({
+      gpu_name: { eq: "H100 SXM" },
+      verified: { eq: "verified" },
+    });
   });
 
   test("ignores malformed offers instead of pricing them at zero", () => {
@@ -229,6 +250,77 @@ describe("calculator inputs refresh flow", () => {
     };
     const result = await refreshCalculatorInputs(failing);
     expect(result.ok).toBe(false);
+    expect(written).toHaveLength(0);
+  });
+
+  test("queries Vast.ai with the published verified-status string", async () => {
+    const { deps, written } = dependencies();
+    const bodies: unknown[] = [];
+    const result = await refreshCalculatorInputs({
+      ...deps,
+      postJson: (_url, body) => {
+        bodies.push(body);
+        return Promise.resolve(ok(vastResponse([0.5, 0.55, 0.6])));
+      },
+    });
+    expect(result.ok).toBe(true);
+    expect(written).toHaveLength(1);
+    expect(bodies).toHaveLength(3);
+    for (const body of bodies) {
+      expect(body).toMatchObject({ verified: { eq: "verified" } });
+    }
+  });
+
+  test("retains the last validated rate when one Vast.ai SKU is thin", async () => {
+    const previous = goldenCalculatorSnapshot();
+    const { deps, written } = dependencies();
+    const result = await refreshCalculatorInputs({
+      ...deps,
+      postJson: (_url, body) => {
+        const gpuName = (
+          typeof body === "object"
+          && body !== null
+          && "gpu_name" in body
+          && typeof body.gpu_name === "object"
+          && body.gpu_name !== null
+          && "eq" in body.gpu_name
+          ? body.gpu_name.eq
+          : null
+        );
+        if (gpuName === "H100 SXM") return Promise.resolve(ok(vastResponse([3.9, 4.2])));
+        return Promise.resolve(ok(vastResponse([0.5, 0.55, 0.6])));
+      },
+    });
+    expect(result.ok).toBe(true);
+    expect(written).toHaveLength(1);
+    expect(written[0]!.gpuRental.offers.find(offer => offer.gpuId === "h100-sxm"))
+      .toEqual(previous.gpuRental.offers.find(offer => offer.gpuId === "h100-sxm"));
+    expect(written[0]!.gpuRental.offers.find(offer => offer.gpuId === "rtx-5090")?.usdPerHour)
+      .toBe(0.55);
+    expect(written[0]!.openAiApiPricing.source.retrievedAt).toBe("2026-09-11T10:00:00.000Z");
+  });
+
+  test("does not write when Vast.ai returns no offers for a SKU", async () => {
+    const { deps, written } = dependencies();
+    const result = await refreshCalculatorInputs({
+      ...deps,
+      postJson: (_url, body) => {
+        const gpuName = (
+          typeof body === "object"
+          && body !== null
+          && "gpu_name" in body
+          && typeof body.gpu_name === "object"
+          && body.gpu_name !== null
+          && "eq" in body.gpu_name
+          ? body.gpu_name.eq
+          : null
+        );
+        if (gpuName === "H100 SXM") return Promise.resolve(ok(vastResponse([])));
+        return Promise.resolve(ok(vastResponse([0.5, 0.55, 0.6])));
+      },
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.message).toContain("no verified");
     expect(written).toHaveLength(0);
   });
 });

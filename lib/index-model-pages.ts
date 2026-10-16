@@ -11,10 +11,12 @@ import { MODEL_CARD_CATALOG } from "./model-card-data";
 import { modelCardArtDirection } from "./model-card-art-direction";
 import { modelIconDataUrl } from "./model-card-icons";
 import { MODEL_CARD_PRESENTATIONS } from "./model-card-collection";
+import { MODEL_COMMENTARY } from "./model-commentary";
 import type { ModelCardPresentation } from "./model-card-presentation";
 import type { ModelCardPath, ModelCardRouteParams } from "./model-card-data";
 
 export const INDEX_MODEL_PROFILE_SLUG = "index" as const;
+/** Recent Index-only pages, plus any still-measured model that has seeded commentary. */
 export const INDEX_MODEL_RECENT_WINDOW_DAYS = 21;
 
 const parsedIntelligence = parseArtificialAnalysisIntelligenceV43Snapshot(
@@ -165,6 +167,17 @@ function catalogEntryForRecord(
   ));
 }
 
+export function indexModelCanonicalId(
+  record: ArtificialAnalysisIntelligenceRecord,
+): string {
+  const catalogEntry = catalogEntryForRecord(record);
+  return catalogEntry?.canonicalModelId ?? `${record.creator.slug}/${record.release.slug}`;
+}
+
+function commentaryCanonicalIds(): ReadonlySet<string> {
+  return new Set(MODEL_COMMENTARY.notes.map(note => note.canonicalModelId));
+}
+
 function buildIndexModelPage(
   record: ArtificialAnalysisIntelligenceRecord,
   snapshot: ArtificialAnalysisIntelligenceV43Snapshot,
@@ -212,6 +225,7 @@ function codingCardCoversRelease(
 export function buildIndexModelPages(
   snapshot: ArtificialAnalysisIntelligenceV43Snapshot = INDEX_MODEL_SNAPSHOT,
   windowDays = INDEX_MODEL_RECENT_WINDOW_DAYS,
+  stickyCanonicalModelIds: ReadonlySet<string> = commentaryCanonicalIds(),
 ): readonly IndexModelPage[] {
   if (!Number.isSafeInteger(windowDays) || windowDays < 1) {
     throw new RangeError("Index-model window must be a positive integer.");
@@ -219,7 +233,9 @@ export function buildIndexModelPages(
   const cutoff = addUtcDays(latestReleaseDate(snapshot), -windowDays);
   const groups = new Map<string, ArtificialAnalysisIntelligenceRecord[]>();
   for (const record of snapshot.records) {
-    if (record.releaseDate < cutoff) continue;
+    const recent = record.releaseDate >= cutoff;
+    const sticky = stickyCanonicalModelIds.has(indexModelCanonicalId(record));
+    if (!recent && !sticky) continue;
     const key = `${record.creator.slug}/${record.release.slug}`;
     const group = groups.get(key) ?? [];
     group.push(record);

@@ -4,14 +4,14 @@ The `/calculator` page prices one implied monthly token volume five ways. Its in
 
 ## Live sections
 
-`bun run calculator:refresh` (`scripts/refresh-calculator-inputs.ts`) refreshes four sections from their authoritative sources and fails closed on any parse error, thin market, or out-of-bounds movement:
+`bun run calculator:refresh` (`scripts/refresh-calculator-inputs.ts`) refreshes four sections from their authoritative sources and fails closed on any parse error, broken market query, or out-of-bounds movement:
 
 | Section | Source | Method |
 | --- | --- | --- |
 | `openAiApiPricing.current` | [OpenAI API pricing](https://developers.openai.com/api/docs/pricing) | First `gpt-5.6-sol` standard-table row in the serialized page payload, plus the promotional-guarantee prose. Absent promo prose flips `currentBasis` to `list`. |
 | `deepSeekApiPricing` | [DeepSeek pricing docs](https://api-docs.deepseek.com/quick_start/pricing) | First pricing column (`deepseek-flash`) of the server-rendered table. The schema enforces the published off-peak-is-half-of-peak policy, and a changed peak-hour sentence fails the refresh for review. |
 | `electricity` | [EIA Electric Power Monthly, Table 5.6.A](https://www.eia.gov/electricity/monthly/epm_table_grapher.php?t=epmt_5_6_a) | U.S. Total residential average and its reporting month. |
-| `gpuRental` | [Vast.ai bundles API](https://console.vast.ai/api/v0/bundles/) | Median hourly ask of the cheapest verified single-GPU on-demand offers, up to 20 per SKU, minimum three offers. |
+| `gpuRental` | [Vast.ai bundles API](https://console.vast.ai/api/v0/bundles/) | Median hourly ask of the cheapest verified single-GPU on-demand offers, up to 20 per SKU. The search matches Vast.ai's `verified` status string. A SKU needs three priced offers to replace its rate; a thinner well-formed market keeps the last validated rate for that SKU so the other live sections can still publish. An empty or malformed offer list fails the refresh. |
 
 Guards in `validateCalculatorInputsReplacement` reject any live rate that moves more than 8x in either direction, rental SKUs that appear or disappear, and any automated edit to a curated section. The scheduled `data-refresh.yml` workflow runs the refresh on the four-hour benchmarks lane, restores timestamp-only diffs, and publishes material changes through the required-CI pull-request gate like every other owned snapshot.
 
