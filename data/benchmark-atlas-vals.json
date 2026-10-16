@@ -13,12 +13,12 @@
       "mode": "agentic",
       "runner": "external",
       "costBasis": "cost-per-test",
-      "totalModels": 48,
+      "totalModels": 49,
       "source": {
         "url": "https://www.vals.ai/benchmarks/vals_index",
-        "retrievedAt": "2026-10-16T15:01:09.305Z",
-        "sha256": "7647c67f9f1ba09c0d634f107800c8372c35b95c2ab0f23753768d818eed4e33",
-        "observedAt": "2026-10-13T00:00:00.000Z",
+        "retrievedAt": "2026-10-16T19:33:29.987Z",
+        "sha256": "27534a1801c3e8ec9d3e0868216942a17a7e520733696c80c428df87c5536648",
+        "observedAt": "2026-10-16T00:00:00.000Z",
         "revision": "vals_index v2.1"
       },
       "rows": [
@@ -1454,6 +1454,59 @@
           ]
         },
         {
+          "id": "meta-muse-spark-open",
+          "modelId": "meta/muse-spark-open",
+          "provider": "Together AI",
+          "effort": "xhigh",
+          "harness": null,
+          "score": 46.611,
+          "standardError": 1.198,
+          "costUsdPerTest": 4.077018,
+          "latencySeconds": 4059.598,
+          "components": [
+            {
+              "id": "finance_agent",
+              "label": "Finance Agent v2",
+              "score": 61.336
+            },
+            {
+              "id": "emb",
+              "label": "EMB",
+              "score": 53.667
+            },
+            {
+              "id": "terminal_bench_4",
+              "label": "Terminal-Bench 4.0",
+              "score": 6.566
+            },
+            {
+              "id": "vibe_code_bench",
+              "label": "Vibe Code Bench",
+              "score": 76.187
+            },
+            {
+              "id": "code_migration",
+              "label": "Code Migration",
+              "score": 21.191
+            },
+            {
+              "id": "legal_research",
+              "label": "Legal Research",
+              "score": 38.462
+            },
+            {
+              "id": "legal_agent_benchmark",
+              "label": "HLAB",
+              "score": 16.667
+            },
+            {
+              "id": "tax_agent_bench",
+              "label": "Tax Agent",
+              "score": 52.066
+            }
+          ]
+        },
+        {
           "id": "meta-muse-wonder",
           "modelId": "meta/muse-wonder",
           "provider": "Meta",
@@ -1618,10 +1671,10 @@
           "provider": "Mistral AI",
           "effort": "high",
           "harness": null,
-          "score": 48.106,
-          "standardError": 1.119,
-          "costUsdPerTest": 13.776396,
-          "latencySeconds": 6135.607,
+          "score": 48.661,
+          "standardError": 1.129,
+          "costUsdPerTest": 14.070121,
+          "latencySeconds": 6468.1,
           "components": [
             {
               "id": "finance_agent",
@@ -1636,7 +1689,7 @@
             {
               "id": "terminal_bench_4",
               "label": "Terminal-Bench 4.0",
-              "score": 23.232
+              "score": 27.778
             },
             {
               "id": "vibe_code_bench",
@@ -2580,12 +2633,12 @@
       "mode": "agentic",
       "runner": "external",
       "costBasis": "cost-per-test",
-      "totalModels": 78,
+      "totalModels": 79,
       "source": {
         "url": "https://www.vals.ai/benchmarks/fabv2",
-        "retrievedAt": "2026-10-16T15:01:09.305Z",
-        "sha256": "3780be1a23c9133a3c34a6095024af162b35a8ef50963a62fc67a6049880426c",
-        "observedAt": "2026-10-12T00:00:00.000Z",
+        "retrievedAt": "2026-10-16T19:33:29.987Z",
+        "sha256": "7866e6e30c2711b19ad9a6b19e935a9ed5456a9aa4a56434517ecf8e78675fae",
+        "observedAt": "2026-10-16T00:00:00.000Z",
         "revision": "finance_agent v2"
       },
       "rows": [
@@ -5551,6 +5604,69 @@
           ]
         },
         {
+          "id": "meta-muse-spark-open",
+          "modelId": "meta/muse-spark-open",
+          "provider": "Together AI",
+          "effort": "xhigh",
+          "harness": null,
+          "score": 61.336,
+          "standardError": 2.088,
+          "costUsdPerTest": 0.770844,
+          "latencySeconds": 1453.439,
+          "components": [
+            {
+              "id": "all_pass",
+              "label": "All-Pass",
+              "score": 50.593
+            },
+            {
+              "id": "general_qualitative_analysis",
+              "label": "General Qualitative Analysis",
+              "score": 72.28
+            },
+            {
+              "id": "general_quantitative_analysis",
+              "label": "General Quantitative Analysis",
+              "score": 80.648
+            },
+            {
+              "id": "market_analysis",
+              "label": "Market Analysis",
+              "score": 71.134
+            },
+            {
+              "id": "comparables",
+              "label": "Comparables",
+              "score": 47.584
+            },
+            {
+              "id": "precedents",
+              "label": "Precedents",
+              "score": 40.761
+            },
+            {
+              "id": "adjustments",
+              "label": "Adjustments",
+              "score": 57.182
+            },
+            {
+              "id": "earnings_analysis",
+              "label": "Earnings Analysis",
+              "score": 80.276
+            },
+            {
+              "id": "disclosure_analysis",
+              "label": "Disclosure Analysis",
+              "score": 67.78
+            },
+            {
+              "id": "financial_modeling",
+              "label": "Financial Modeling",
+              "score": 34.381
+            }
+          ]
+        },
+        {
           "id": "meta-muse-wonder",
           "modelId": "meta/muse-wonder",
           "provider": "Meta",
@@ -7517,12 +7633,12 @@
       "mode": "agentic",
       "runner": "external",
       "costBasis": "cost-per-test",
-      "totalModels": 78,
+      "totalModels": 79,
       "source": {
         "url": "https://www.vals.ai/benchmarks/legal_research",
-        "retrievedAt": "2026-10-16T15:01:09.305Z",
-        "sha256": "f16d6b6678c06111a5c628248d14f0eb5c918491d50288c7f649729fcd5dcfaf",
-        "observedAt": "2026-10-12T00:00:00.000Z",
+        "retrievedAt": "2026-10-16T19:33:29.987Z",
+        "sha256": "cdc2df9a264dd86e6b941bfcc8df20954739fc6a8dc9001e8526dc47625908e5",
+        "observedAt": "2026-10-16T00:00:00.000Z",
         "revision": "legal_research v1"
       },
       "rows": [
@@ -10195,6 +10311,64 @@
           ]
         },
         {
+          "id": "meta-muse-spark-open",
+          "modelId": "meta/muse-spark-open",
+          "provider": "Together AI",
+          "effort": "xhigh",
+          "harness": null,
+          "score": 38.462,
+          "standardError": 3.381,
+          "costUsdPerTest": 1.559385,
+          "latencySeconds": 1763.023,
+          "components": [
+            {
+              "id": "administrative_regulatory",
+              "label": "Administrative / Regulatory",
+              "score": 50
+            },
+            {
+              "id": "business_commercial",
+              "label": "Business & Commercial",
+              "score": 39.535
+            },
+            {
+              "id": "civil_litigation",
+              "label": "Civil Litigation",
+              "score": 25.926
+            },
+            {
+              "id": "constitutional_civil_rights",
+              "label": "Constitutional / Civil Rights",
+              "score": 44.737
+            },
+            {
+              "id": "criminal",
+              "label": "Criminal",
+              "score": 35.088
+            },
+            {
+              "id": "family",
+              "label": "Family",
+              "score": 22.727
+            },
+            {
+              "id": "health",
+              "label": "Health",
+              "score": 53.333
+            },
+            {
+              "id": "immigration",
+              "label": "Immigration",
+              "score": 27.273
+            },
+            {
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 85.989
+            }
+          ]
+        },
+        {
           "id": "meta-muse-wonder",
           "modelId": "meta/muse-wonder",
           "provider": "Meta",
@@ -12064,12 +12238,12 @@
       "mode": "agentic",
       "runner": "external",
       "costBasis": "cost-per-test",
-      "totalModels": 69,
+      "totalModels": 70,
       "source": {
         "url": "https://www.vals.ai/benchmarks/tax_agent_bench",
-        "retrievedAt": "2026-10-16T15:01:09.305Z",
-        "sha256": "05d520e65520cb13dbba02402d163477cc798ab3f0578f42af6ea7e28e213f1f",
-        "observedAt": "2026-10-12T00:00:00.000Z",
+        "retrievedAt": "2026-10-16T19:33:29.987Z",
+        "sha256": "603a4e6046f65004d35e2d1b091159968258186a823902baa0fc84586c5b7dc6",
+        "observedAt": "2026-10-16T00:00:00.000Z",
         "revision": "tax_agent_bench v1"
       },
       "rows": [
@@ -14138,6 +14312,54 @@
           ]
         },
         {
+          "id": "meta-muse-spark-open",
+          "modelId": "meta/muse-spark-open",
+          "provider": "Together AI",
+          "effort": "xhigh",
+          "harness": null,
+          "score": 26.321,
+          "standardError": 2.653,
+          "costUsdPerTest": 0.883559,
+          "latencySeconds": 701.825,
+          "components": [
+            {
+              "id": "weighted_pass",
+              "label": "Weighted Pass",
+              "score": 52.066
+            },
+            {
+              "id": "fact_pattern_analysis",
+              "label": "Fact-Pattern Analysis",
+              "score": 26.744
+            },
+            {
+              "id": "rule_source_lookup",
+              "label": "Rule & Source Lookup",
+              "score": 42.333
+            },
+            {
+              "id": "current_temporal_analysis",
+              "label": "Current & Temporal Analysis",
+              "score": 28
+            },
+            {
+              "id": "numbers_calculations",
+              "label": "Numbers & Calculations",
+              "score": 38.667
+            },
+            {
+              "id": "forms_filings",
+              "label": "Forms & Filings",
+              "score": 11.667
+            },
+            {
+              "id": "controversy_precedence_analysis",
+              "label": "Controversy & Precedence Analysis",
+              "score": 10.333
+            }
+          ]
+        },
+        {
           "id": "meta-muse-wonder",
           "modelId": "meta/muse-wonder",
           "provider": "Meta",
@@ -15402,7 +15624,7 @@
       "totalModels": 107,
       "source": {
         "url": "https://www.vals.ai/benchmarks/medcode",
-        "retrievedAt": "2026-10-16T15:01:09.305Z",
+        "retrievedAt": "2026-10-16T19:33:29.987Z",
         "sha256": "988a6ae1e07e33ce031572ed4a804be11c36ee97a1dd75cbe4740fff3b534f8c",
         "observedAt": "2026-10-13T00:00:00.000Z",
         "revision": "medcode v1"

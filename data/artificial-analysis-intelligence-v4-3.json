@@ -2681,14 +2681,14 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.007805950700608077,
-        "cacheRead": 0.04640269944431808,
-        "cacheWrite": 0.1732687830405366,
-        "input": 0.22253412661375122,
+        "answer": 0.006787783217920068,
+        "cacheRead": 0.05366576110190494,
+        "cacheWrite": 0.1273428275213463,
+        "input": 0.18387123275214767,
         "nonCacheInput": 0.002862644128896465,
-        "output": 0.028274953944046156,
-        "reasoning": 0.020469003243438078,
-        "total": 0.2508090805577973
+        "output": 0.02458691647308361,
+        "reasoning": 0.017799133255163548,
+        "total": 0.2084581492252313
       },
       "creator": {
         "id": "0c303112-430d-4367-a484-51defaa2e166",
@@ -3025,14 +3025,14 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.033289571079160044,
-        "cacheRead": 0.043512265416853074,
-        "cacheWrite": 0.4773007602532254,
-        "input": 0.5266832381784258,
+        "answer": 0.035952736765492856,
+        "cacheRead": 0.05308024736348252,
+        "cacheWrite": 0.4414208279533649,
+        "input": 0.5003712878251949,
         "nonCacheInput": 0.005870212508347456,
-        "output": 0.07091524177490993,
-        "reasoning": 0.03762567069574988,
-        "total": 0.5975984799533358
+        "output": 0.07658846111690273,
+        "reasoning": 0.04063572435140988,
+        "total": 0.5769597489420976
       },
       "creator": {
         "id": "0c303112-430d-4367-a484-51defaa2e166",
@@ -3374,13 +3374,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.005252799228642194,
-        "cacheRead": 0.024014277935722587,
-        "cacheWrite": 0.00959954350640331,
-        "input": 0.03683863436177846,
+        "cacheRead": 0.02339852721942201,
+        "cacheWrite": 0.014217673878657648,
+        "input": 0.04084101401773222,
         "nonCacheInput": 0.0032248129196525664,
         "output": 0.016710236373052,
         "reasoning": 0.011457437144409801,
-        "total": 0.05354887073483047
+        "total": 0.05755125039078422
       },
       "creator": {
         "id": "e1694725-0192-4e54-b1b8-c97e816c6cbe",
@@ -3673,14 +3673,14 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.007003004547133797,
+        "answer": 0.0070623520432959485,
         "cacheRead": 0,
-        "cacheWrite": 0.09008853164257433,
-        "input": 0.09138690981620429,
-        "nonCacheInput": 0.0012983781736299591,
-        "output": 0.015902843229864946,
-        "reasoning": 0.008899838682731148,
-        "total": 0.10728975304606923
+        "cacheWrite": 0.07507377636881192,
+        "input": 0.0761557581801702,
+        "nonCacheInput": 0.0010819818113582996,
+        "output": 0.016037613087745158,
+        "reasoning": 0.00897526104444921,
+        "total": 0.0921933712679154
       },
       "creator": {
         "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
@@ -3897,14 +3897,14 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.0017811158312188429,
+        "answer": 0.0018834788100245236,
         "cacheRead": 0,
         "cacheWrite": 0.03504461518691544,
         "input": 0.03641631889700396,
         "nonCacheInput": 0.0013717037100885224,
-        "output": 0.0017811158312188429,
+        "output": 0.0018834788100245236,
         "reasoning": 0,
-        "total": 0.03819743472822281
+        "total": 0.038299797707028495
       },
       "creator": {
         "id": "e1694725-0192-4e54-b1b8-c97e816c6cbe",
@@ -3931,14 +3931,14 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.018173793419151645,
-        "cacheRead": 0,
-        "cacheWrite": 0.7572223566991798,
-        "input": 0.7623290486784063,
-        "nonCacheInput": 0.005106691979226429,
-        "output": 0.018173793419151645,
+        "answer": 0.015144827849293038,
+        "cacheRead": 0.20626230307677407,
+        "cacheWrite": 0.24512237359629863,
+        "input": 0.4545508257001931,
+        "nonCacheInput": 0.0031661490271203867,
+        "output": 0.015144827849293038,
         "reasoning": 0,
-        "total": 0.7805028420975578
+        "total": 0.46969565354948617
       },
       "creator": {
         "id": "d874d370-74d3-4fa0-ba00-5272f92f946b",
@@ -3999,14 +3999,14 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.0003601214910537822,
+        "answer": 0.00043014511431424004,
         "cacheRead": 0,
-        "cacheWrite": 0.008607381834335454,
-        "input": 0.009201055957464534,
-        "nonCacheInput": 0.0005936741231290805,
-        "output": 0.0032595842847146787,
-        "reasoning": 0.0028994627936608968,
-        "total": 0.012460640242179213
+        "cacheWrite": 0.007070349363918408,
+        "input": 0.007558010250774438,
+        "nonCacheInput": 0.00048766088685603035,
+        "output": 0.0038933923400758675,
+        "reasoning": 0.003463247225761627,
+        "total": 0.011451402590850306
       },
       "creator": {
         "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
@@ -4286,7 +4286,7 @@
     "method": "public-next-flight",
     "methodologyUrl": "https://artificialanalysis.ai/methodology/intelligence-benchmarking",
     "name": "Artificial Analysis",
-    "retrievedAt": "2026-10-16T15:01:03.571Z",
+    "retrievedAt": "2026-10-16T19:33:22.473Z",
     "sourceClass": "benchmark-publisher",
     "termsUrl": "https://artificialanalysis.ai/docs/legal/Terms-of-Use.pdf",
     "url": "https://artificialanalysis.ai/models"
