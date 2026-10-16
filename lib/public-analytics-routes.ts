@@ -1,9 +1,15 @@
+import { PUBLIC_MODEL_CARD_PATHS } from "./public-model-card-paths.generated";
+
 /**
  * Small client-safe allowlists for public dynamic routes.
  *
  * Keep these identifiers bounded: analytics may retain them as content IDs, while
- * every other route-shaped value collapses to the shared `other` bucket.
+ * every other route-shaped value collapses to the shared `other` bucket. Model-card
+ * paths are generated from the published coding cards and Index pages so a data
+ * refresh can admit a new route without a hand-edited list.
  */
+
+export { PUBLIC_MODEL_CARD_PATHS };
 export const PUBLIC_BLOG_SLUGS = [
   "introducing-ai-charts",
   "gemini-4-argon-coding-agent-index",
@@ -34,47 +40,6 @@ const publicBlogSlugSet = new Set<string>(PUBLIC_BLOG_SLUGS);
 export function isPublicBlogSlug(value: unknown): value is PublicBlogSlug {
   return typeof value === "string" && publicBlogSlugSet.has(value);
 }
-
-export const PUBLIC_MODEL_CARD_PATHS = [
-  "/models/alibaba/qwen3.8-max/default",
-  "/models/anthropic/claude-fable-5.1/max",
-  "/models/anthropic/claude-opus-5/max",
-  "/models/anthropic/claude-opus-5.5/max",
-  "/models/anthropic/claude-sonnet-5.5/low",
-  "/models/anthropic/claude-sonnet-5.5/medium",
-  "/models/anthropic/claude-sonnet-5.5/high",
-  "/models/anthropic/claude-sonnet-5.5/xhigh",
-  "/models/anthropic/claude-sonnet-5.5/max",
-  "/models/deepseek/deepseek-v4-flash-0731/max",
-  "/models/deepseek/deepseek-v4-pro-0813/max",
-  "/models/google/gemini-3.8-flash/high",
-  "/models/google/gemini-4-argon/default",
-  "/models/meta/muse-spark-1.3/xhigh",
-  "/models/meta/muse-spark-1.3/max",
-  "/models/moonshotai/kimi-k3/default",
-  "/models/openai/gpt-5.6-luna/max",
-  "/models/openai/gpt-5.6-sol/max",
-  "/models/openai/gpt-6-astra/max",
-  "/models/openai/gpt-6-luna/max",
-  "/models/openai/gpt-6-sol/max",
-  "/models/openai/gpt-6.1-sol/low",
-  "/models/openai/gpt-6.1-sol/medium",
-  "/models/openai/gpt-6.1-sol/high",
-  "/models/openai/gpt-6.1-sol/xhigh",
-  "/models/openai/gpt-6.1-sol/max",
-  "/models/spacexai/grok-4.6/xhigh",
-  "/models/spacexai/grok-4.7/xhigh",
-  "/models/unlisted/claude-fable-5-1-xhigh-swe-2-medium.e2f060e68d045988c8f73d9b/default",
-  "/models/unlisted/gpt-6-astra-xhigh-swe-2-medium.54c5f1484f55a9b95f428406/default",
-  "/models/zai/glm-5.3/default",
-  "/models/anthropic/claude-haiku-5-5/index",
-  "/models/mistral/mistral-large-4/index",
-  "/models/inclusionai/ling-3-1-flash/index",
-  "/models/upstage/solar-mini4/index",
-  "/models/xiaomi/mimo-v2-6-flash/index",
-  "/models/xiaomi/mimo-v2-6-pro/index",
-  "/models/stepfun/step-5-preview/index",
-] as const;
 
 const publicModelCardPathSet = new Set<string>(PUBLIC_MODEL_CARD_PATHS);
 

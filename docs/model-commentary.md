@@ -8,7 +8,7 @@ v1 does not scrape X, load `widgets.js`, or keep X API secrets in CI. Official e
 
 ## How to add a note
 
-1. Confirm the model has a catalog identity in `data/model-card-catalog.json` (or an Index-only page whose `canonicalModelId` matches).
+1. Confirm the model has a catalog identity in `data/model-card-catalog.json` (or an Index-only page whose `canonicalModelId` matches). A note also keeps that Index-only page after the model leaves the 21-day recency window, so seeded commentary is not dropped when Artificial Analysis adds a newer release.
 2. Open the public status on `x.com` or `twitter.com`. Copy the handle, numeric status id, author display name, UTC timestamp, and exact tweet text. Do not invent or paraphrase.
 3. Add or extend one note in `data/model-commentary.json`:
 

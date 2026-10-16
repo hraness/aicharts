@@ -4,6 +4,7 @@ import {
   INDEX_MODEL_PAGES,
   INDEX_MODEL_PROFILE_SLUG,
   INDEX_MODEL_SNAPSHOT,
+  buildIndexModelPages,
   findIndexModelPage,
   identityTokenCovers,
   intelligenceObservationForCard,
@@ -46,6 +47,54 @@ describe("Index-only model pages", () => {
     for (const page of INDEX_MODEL_PAGES) {
       expect(MODEL_CARD_PRESENTATIONS.some(card => card.path === page.path)).toBeFalse();
     }
+  });
+
+  test("keeps commentary-backed Index pages after they leave the recency window", () => {
+    const mimo = snapshotRelease("mimo-v2-6-pro");
+    const latest = [...INDEX_MODEL_SNAPSHOT.records]
+      .map(record => record.releaseDate)
+      .sort((left, right) => (left < right ? -1 : left > right ? 1 : 0))
+      .at(-1);
+    if (latest === undefined) throw new Error("Expected a latest Intelligence release date.");
+    const windowDays = Math.max(
+      1,
+      Math.round((Date.parse(`${latest}T00:00:00Z`) - Date.parse(`${mimo.releaseDate}T00:00:00Z`)) / 86_400_000) - 1,
+    );
+    expect(buildIndexModelPages(INDEX_MODEL_SNAPSHOT, windowDays).some(page => (
+      page.canonicalModelId === "xiaomi/mimo-v2-6-pro"
+    ))).toBeTrue();
+    expect(buildIndexModelPages(INDEX_MODEL_SNAPSHOT, windowDays, new Set()).some(page => (
+      page.canonicalModelId === "xiaomi/mimo-v2-6-pro"
+    ))).toBeFalse();
+  });
+
+  test("admits a newer Index release without dropping commentary-backed pages", () => {
+    const template = INDEX_MODEL_SNAPSHOT.records[0];
+    if (template === undefined) throw new Error("Expected an Intelligence record to clone.");
+    const pages = buildIndexModelPages({
+      ...INDEX_MODEL_SNAPSHOT,
+      records: [
+        ...INDEX_MODEL_SNAPSHOT.records,
+        {
+          ...template,
+          costUsdPerTask: template.costUsdPerTask === null
+            ? null
+            : { ...template.costUsdPerTask, total: 0.84 },
+          creator: { id: "meta-test", name: "Meta", slug: "meta" },
+          detailsUrl: "https://artificialanalysis.ai/models/muse-spark-open",
+          effort: { label: "xhigh", level: 50, slug: "xhigh" },
+          id: "muse-spark-open-test",
+          intelligenceIndex: 39,
+          name: "Muse Spark Open (Xhigh)",
+          release: { name: "Muse Spark Open", slug: "muse-spark-open" },
+          releaseDate: "2099-01-01",
+          shortName: "Muse Spark Open",
+          slug: "muse-spark-open-xhigh",
+        },
+      ],
+    });
+    expect(pages.some(page => page.path === "/models/meta/muse-spark-open/index")).toBeTrue();
+    expect(pages.some(page => page.canonicalModelId === "xiaomi/mimo-v2-6-pro")).toBeTrue();
   });
 
   test("folds Claude Opus 5.5 into its coding card instead of an Index-only page", () => {
