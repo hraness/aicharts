@@ -331,6 +331,44 @@
     },
     {
       "costUsdPerTask": {
+        "answer": 0.5110225736453711,
+        "cacheRead": 1.4380477452612228,
+        "cacheWrite": 1.921817672901104,
+        "input": 3.4310439592243527,
+        "nonCacheInput": 0.07117854106202538,
+        "output": 1.0846334848386647,
+        "reasoning": 0.5736109111932937,
+        "total": 4.515677444063016
+      },
+      "creator": {
+        "id": "e1694725-0192-4e54-b1b8-c97e816c6cbe",
+        "name": "Meta",
+        "slug": "meta"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/muse-wonder",
+      "effort": {
+        "label": "max",
+        "level": 60,
+        "slug": "max"
+      },
+      "id": "ff2f3f3d-783f-4e27-8a39-47237501a313",
+      "intelligenceIndex": 52.393894697293,
+      "name": "Muse Wonder (Max)",
+      "outputTokensPerTask": {
+        "answer": 25551.128682268547,
+        "reasoning": 28680.54555966468,
+        "total": 54231.67424193323
+      },
+      "release": {
+        "name": "Muse Wonder",
+        "slug": "muse-wonder"
+      },
+      "releaseDate": "2026-10-12",
+      "shortName": "Muse Wonder (max)",
+      "slug": "muse-wonder"
+    },
+    {
+      "costUsdPerTask": {
         "answer": 0.41593469674469413,
         "cacheRead": 0.7237054006606568,
         "cacheWrite": 0.5229802700124153,
@@ -1384,13 +1422,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.01101183343601111,
-        "cacheRead": 0.19717920806761985,
+        "cacheRead": 0.22751447084725368,
         "cacheWrite": 0.01844679201070141,
-        "input": 0.21892298440247968,
+        "input": 0.24925824718211345,
         "nonCacheInput": 0.003296984324158392,
         "output": 0.034336576028258216,
         "reasoning": 0.023324742592247094,
-        "total": 0.2532595604307378
+        "total": 0.2835948232103717
       },
       "creator": {
         "id": "67437eb6-7dc1-4e93-befd-22c8b8ec2065",
@@ -1459,14 +1497,14 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.031577281286634756,
-        "cacheRead": 0.5599150798944313,
-        "cacheWrite": 0.34678103800875737,
-        "input": 0.9096766498207198,
+        "answer": 0.03149527205936203,
+        "cacheRead": 0.5587788604620494,
+        "cacheWrite": 0.3460960507615763,
+        "input": 0.9078554431411568,
         "nonCacheInput": 0.0029805319175311134,
-        "output": 0.09192623037914029,
-        "reasoning": 0.06034894909250552,
-        "total": 1.00160288019986
+        "output": 0.09178851278823119,
+        "reasoning": 0.060293240728869164,
+        "total": 0.9996439559293879
       },
       "creator": {
         "id": "4df238a9-d4fd-4cf2-ab1e-d12956c41f9b",
@@ -1479,9 +1517,9 @@
       "intelligenceIndex": 41.0906200397391,
       "name": "Ling 3.1 Flash",
       "outputTokensPerTask": {
-        "answer": 35085.868096260834,
-        "reasoning": 67054.38788056168,
-        "total": 102140.25597682252
+        "answer": 34994.746732624466,
+        "reasoning": 66992.4896987435,
+        "total": 101987.23643136797
       },
       "release": {
         "name": "Ling 3.1 Flash",
@@ -1569,14 +1607,14 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.13130591179529474,
+        "answer": 0.13126806979529473,
         "cacheRead": 1.2243770642088534,
         "cacheWrite": 0.5001053384259188,
-        "input": 1.7443035365339405,
-        "nonCacheInput": 0.0198211338991681,
-        "output": 0.41161351370952703,
-        "reasoning": 0.2803076019142323,
-        "total": 2.1559170502434677
+        "input": 1.7440718525339405,
+        "nonCacheInput": 0.0195894498991681,
+        "output": 0.41109009170952704,
+        "reasoning": 0.27982202191423233,
+        "total": 2.1551619442434675
       },
       "creator": {
         "id": "d874d370-74d3-4fa0-ba00-5272f92f946b",
@@ -1586,12 +1624,12 @@
       "detailsUrl": "https://artificialanalysis.ai/models/qwen3-8-2-4t-a95b",
       "effort": null,
       "id": "8df710d3-9dae-4498-9b4e-9818238e6f31",
-      "intelligenceIndex": 39.8861723105325,
+      "intelligenceIndex": 39.9461723105325,
       "name": "Qwen3.8 2.4T A95B",
       "outputTokensPerTask": {
-        "answer": 21884.31863254913,
-        "reasoning": 46717.933652372056,
-        "total": 68602.25228492118
+        "answer": 21878.01163254913,
+        "reasoning": 46637.003652372056,
+        "total": 68515.01528492119
       },
       "release": {
         "name": "Qwen3.8 2.4T A95B",
@@ -1713,14 +1751,52 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.07239495930631494,
-        "cacheRead": 0.5737175470549178,
-        "cacheWrite": 0.24380354982082658,
-        "input": 0.8419598076676681,
+        "answer": 0.09323372300886533,
+        "cacheRead": 0.39849239515163404,
+        "cacheWrite": 0.2509763462155496,
+        "input": 0.6720947669052677,
+        "nonCacheInput": 0.022626025538084113,
+        "output": 0.17142401339060007,
+        "reasoning": 0.07819029038173474,
+        "total": 0.8435187802958677
+      },
+      "creator": {
+        "id": "e1694725-0192-4e54-b1b8-c97e816c6cbe",
+        "name": "Meta",
+        "slug": "meta"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/muse-spark-open",
+      "effort": {
+        "label": "xhigh",
+        "level": 50,
+        "slug": "xhigh"
+      },
+      "id": "3661c8fb-caf7-4118-aa18-65b84fea8e44",
+      "intelligenceIndex": 38.8666662997805,
+      "name": "Muse Spark Open (Xhigh)",
+      "outputTokensPerTask": {
+        "answer": 21937.346590321253,
+        "reasoning": 18397.715383937586,
+        "total": 40335.06197425884
+      },
+      "release": {
+        "name": "Muse Spark Open",
+        "slug": "muse-spark-open"
+      },
+      "releaseDate": "2026-10-15",
+      "shortName": "Muse Spark Open (xhigh)",
+      "slug": "muse-spark-open"
+    },
+    {
+      "costUsdPerTask": {
+        "answer": 0.07260843190631494,
+        "cacheRead": 0.5749966143719745,
+        "cacheWrite": 0.24430676696422438,
+        "input": 0.8437420921281225,
         "nonCacheInput": 0.024438710791923564,
-        "output": 0.2897992456331666,
-        "reasoning": 0.2174042863268516,
-        "total": 1.1317590533008346
+        "output": 0.29035965633316657,
+        "reasoning": 0.2177512244268516,
+        "total": 1.1341017484612892
       },
       "creator": {
         "id": "b5c0639a-cc9c-443b-a07e-bae6b7088933",
@@ -1733,9 +1809,9 @@
       "intelligenceIndex": 38.3770408917494,
       "name": "Mistral Large 4 Preview",
       "outputTokensPerTask": {
-        "answer": 17319.36825509927,
-        "reasoning": 52010.59481503627,
-        "total": 69329.96307013553
+        "answer": 17370.43825509927,
+        "reasoning": 52093.59436049082,
+        "total": 69464.03261559008
       },
       "release": {
         "name": "Mistral Large 4 Preview",
@@ -2161,14 +2237,14 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.057259691355187124,
+        "answer": 0.057274850355187125,
         "cacheRead": 0.3745911160120289,
         "cacheWrite": 0.4231391110871978,
-        "input": 0.8069225391027849,
-        "nonCacheInput": 0.009192312003558188,
-        "output": 0.20039241455380952,
-        "reasoning": 0.14313272319862239,
-        "total": 1.0073149536565944
+        "input": 0.807140002602785,
+        "nonCacheInput": 0.009409775503558189,
+        "output": 0.20034969155380952,
+        "reasoning": 0.14307484119862238,
+        "total": 1.0074896941565943
       },
       "creator": {
         "id": "d874d370-74d3-4fa0-ba00-5272f92f946b",
@@ -2182,12 +2258,12 @@
         "slug": "xhigh"
       },
       "id": "b01dee41-c62b-48ed-8d16-984adc405e5c",
-      "intelligenceIndex": 33.6962858057476,
+      "intelligenceIndex": 33.6762858057476,
       "name": "Qwen3.8 27B (Xhigh)",
       "outputTokensPerTask": {
-        "answer": 19086.56378506237,
-        "reasoning": 47710.90773287412,
-        "total": 66797.47151793649
+        "answer": 19091.61678506237,
+        "reasoning": 47691.613732874124,
+        "total": 66783.23051793649
       },
       "release": {
         "name": "Qwen3.8 27B",
@@ -2234,31 +2310,6 @@
       "releaseDate": "2026-09-22",
       "shortName": "GPT-6 Luna (high)",
       "slug": "gpt-6-luna-high"
-    },
-    {
-      "costUsdPerTask": null,
-      "creator": {
-        "id": "8b8b84fb-4b24-45be-b9e2-74ed50d00ff7",
-        "name": "Institute of Foundation Models",
-        "slug": "ifm"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/k2-horizon-375b-a23b",
-      "effort": null,
-      "id": "bb3d7e75-8e22-4082-b9d6-1db0803e042f",
-      "intelligenceIndex": 30.5015302696723,
-      "name": "K2 Horizon 375B A23B",
-      "outputTokensPerTask": {
-        "answer": 15749.933253652986,
-        "reasoning": 35767.52344738368,
-        "total": 51517.456701036666
-      },
-      "release": {
-        "name": "K2 Horizon 375B A23B",
-        "slug": "k2-horizon-375b-a23b"
-      },
-      "releaseDate": "2026-09-03",
-      "shortName": "K2 Horizon 375B A23B",
-      "slug": "k2-horizon-375b-a23b"
     },
     {
       "costUsdPerTask": {
@@ -2593,6 +2644,74 @@
       "releaseDate": "2026-08-10",
       "shortName": "Quasar 438B (max)",
       "slug": "quasar-438b"
+    },
+    {
+      "costUsdPerTask": {
+        "answer": 0.04239697248366416,
+        "cacheRead": 0.26462651240317797,
+        "cacheWrite": 0.09890296473444182,
+        "input": 0.3663409543591244,
+        "nonCacheInput": 0.0028114772215047,
+        "output": 0.3449656353921885,
+        "reasoning": 0.30256866290852436,
+        "total": 0.7113065897513132
+      },
+      "creator": {
+        "id": "64ff7f06-c6fb-42ea-ba24-9cd103ab2d61",
+        "name": "Upstage",
+        "slug": "upstage"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/solar-pro4",
+      "effort": null,
+      "id": "15c4cbd7-b9aa-42c8-9ce5-5abbde0e6963",
+      "intelligenceIndex": 26.5600314812231,
+      "name": "Solar Pro 4",
+      "outputTokensPerTask": {
+        "answer": 35330.81040305349,
+        "reasoning": 252140.5524237703,
+        "total": 287471.3628268238
+      },
+      "release": {
+        "name": "Solar Pro 4",
+        "slug": "solar-pro-4-2026-09-18"
+      },
+      "releaseDate": "2026-08-06",
+      "shortName": "Solar Pro 4",
+      "slug": "solar-pro4"
+    },
+    {
+      "costUsdPerTask": {
+        "answer": 0.007805950700608077,
+        "cacheRead": 0.04640269944431808,
+        "cacheWrite": 0.1732687830405366,
+        "input": 0.22253412661375122,
+        "nonCacheInput": 0.002862644128896465,
+        "output": 0.028274953944046156,
+        "reasoning": 0.020469003243438078,
+        "total": 0.2508090805577973
+      },
+      "creator": {
+        "id": "0c303112-430d-4367-a484-51defaa2e166",
+        "name": "NVIDIA",
+        "slug": "nvidia"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/nemotron-3-5-super-vl",
+      "effort": null,
+      "id": "e2c0623e-c855-4a61-bb66-be1f1ed43234",
+      "intelligenceIndex": 26.4910658661689,
+      "name": "Nemotron 3.5 Super VL",
+      "outputTokensPerTask": {
+        "answer": 13575.566435840135,
+        "reasoning": 35598.2665103271,
+        "total": 49173.83294616723
+      },
+      "release": {
+        "name": "Nemotron 3.5 Super VL",
+        "slug": "nemotron-3-5-super"
+      },
+      "releaseDate": "2026-10-15",
+      "shortName": "Nemotron 3.5 Super VL",
+      "slug": "nemotron-3-5-super-vl"
     },
     {
       "costUsdPerTask": {
@@ -3254,14 +3373,14 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.00590939913222247,
+        "answer": 0.005252799228642194,
         "cacheRead": 0.024014277935722587,
-        "cacheWrite": 0.010399505465270251,
-        "input": 0.037907330730616445,
-        "nonCacheInput": 0.0034935473296236136,
-        "output": 0.0187990159196835,
-        "reasoning": 0.012889616787461027,
-        "total": 0.05670634665029995
+        "cacheWrite": 0.00959954350640331,
+        "input": 0.03683863436177846,
+        "nonCacheInput": 0.0032248129196525664,
+        "output": 0.016710236373052,
+        "reasoning": 0.011457437144409801,
+        "total": 0.05354887073483047
       },
       "creator": {
         "id": "e1694725-0192-4e54-b1b8-c97e816c6cbe",
@@ -3483,40 +3602,6 @@
       "releaseDate": "2026-08-11",
       "shortName": "Nemotron 3.5 Lightning",
       "slug": "nemotron-3-5-lightning"
-    },
-    {
-      "costUsdPerTask": {
-        "answer": 0.04208687538887301,
-        "cacheRead": 0,
-        "cacheWrite": 1.5345712436854402,
-        "input": 1.536626096863286,
-        "nonCacheInput": 0.0020548531778459994,
-        "output": 0.10244027039832393,
-        "reasoning": 0.060353395009450896,
-        "total": 1.6390663672616101
-      },
-      "creator": {
-        "id": "0c303112-430d-4367-a484-51defaa2e166",
-        "name": "NVIDIA",
-        "slug": "nvidia"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/nvidia-nemotron-3-super-120b-a12b",
-      "effort": null,
-      "id": "63872e9c-3377-4a6b-b477-7bba244c38e9",
-      "intelligenceIndex": 12.8287575290979,
-      "name": "Nemotron 3 Super 120B A12B (Reasoning)",
-      "outputTokensPerTask": {
-        "answer": 46763.194876525566,
-        "reasoning": 67059.32778827878,
-        "total": 113822.52266480435
-      },
-      "release": {
-        "name": "Nemotron 3 Super 120B A12B",
-        "slug": "nvidia-nemotron-3-super-120b-a12b"
-      },
-      "releaseDate": "2026-03-11",
-      "shortName": "Nemotron 3 Super",
-      "slug": "nvidia-nemotron-3-super-120b-a12b"
     },
     {
       "costUsdPerTask": {
@@ -3812,6 +3897,40 @@
     },
     {
       "costUsdPerTask": {
+        "answer": 0.0017811158312188429,
+        "cacheRead": 0,
+        "cacheWrite": 0.03504461518691544,
+        "input": 0.03641631889700396,
+        "nonCacheInput": 0.0013717037100885224,
+        "output": 0.0017811158312188429,
+        "reasoning": 0,
+        "total": 0.03819743472822281
+      },
+      "creator": {
+        "id": "e1694725-0192-4e54-b1b8-c97e816c6cbe",
+        "name": "Meta",
+        "slug": "meta"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/llama-4-maverick",
+      "effort": null,
+      "id": "922c69c7-9037-43c6-8bcf-a1c555e7f3eb",
+      "intelligenceIndex": 9.29902687437199,
+      "name": "Llama 4 Maverick",
+      "outputTokensPerTask": {
+        "answer": 2047.2595761136122,
+        "reasoning": 0,
+        "total": 2047.2595761136122
+      },
+      "release": {
+        "name": "Llama 4 Maverick",
+        "slug": "llama-4-maverick"
+      },
+      "releaseDate": "2025-04-05",
+      "shortName": "Llama 4 Maverick",
+      "slug": "llama-4-maverick"
+    },
+    {
+      "costUsdPerTask": {
         "answer": 0.018173793419151645,
         "cacheRead": 0,
         "cacheWrite": 0.7572223566991798,
@@ -3846,14 +3965,14 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.0008918211178915149,
-        "cacheRead": 0.0028990366849914336,
-        "cacheWrite": 0.0006265123189812555,
-        "input": 0.003748330216007333,
+        "answer": 0.0008924055724369694,
+        "cacheRead": 0.0028998849527238197,
+        "cacheWrite": 0.0006268187935062554,
+        "input": 0.0037494849582647193,
         "nonCacheInput": 0.00022278121203464407,
-        "output": 0.0022369321207368065,
-        "reasoning": 0.0013451110028452917,
-        "total": 0.005985262336744139
+        "output": 0.002237758266191352,
+        "reasoning": 0.0013453526937543827,
+        "total": 0.005987243224456071
       },
       "creator": {
         "id": "512ef1e4-e02e-4532-a5f2-d11a40962498",
@@ -3866,9 +3985,9 @@
       "intelligenceIndex": 9.05588232376756,
       "name": "Granite 4.2 3B",
       "outputTokensPerTask": {
-        "answer": 7431.842649095959,
-        "reasoning": 11209.258357044097,
-        "total": 18641.101006140056
+        "answer": 7436.713103641413,
+        "reasoning": 11211.272447953186,
+        "total": 18647.9855515946
       },
       "release": {
         "name": "Granite 4.2 3B",
@@ -3918,6 +4037,40 @@
     },
     {
       "costUsdPerTask": {
+        "answer": 0.0005597225544279264,
+        "cacheRead": 0,
+        "cacheWrite": 0.007093082029453954,
+        "input": 0.007263646050419832,
+        "nonCacheInput": 0.00017056402096587818,
+        "output": 0.0008996301954875531,
+        "reasoning": 0.0003399076410596269,
+        "total": 0.008163276245907385
+      },
+      "creator": {
+        "id": "faddc6d9-2c14-445f-9b28-56726f59c793",
+        "name": "Google",
+        "slug": "google"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/gemma-4-e4b",
+      "effort": null,
+      "id": "d80eb0f1-f62e-4d31-99d2-7a925eb126b0",
+      "intelligenceIndex": 8.90908441839731,
+      "name": "Gemma 4 E4B (Reasoning)",
+      "outputTokensPerTask": {
+        "answer": 5597.225544279264,
+        "reasoning": 3399.0764105962685,
+        "total": 8996.301954875533
+      },
+      "release": {
+        "name": "Gemma 4 E4B",
+        "slug": "gemma-4-e4b"
+      },
+      "releaseDate": "2026-04-03",
+      "shortName": "Gemma 4 E4B",
+      "slug": "gemma-4-e4b"
+    },
+    {
+      "costUsdPerTask": {
         "answer": 0.000601138471437137,
         "cacheRead": 0,
         "cacheWrite": 0.010896778316075858,
@@ -3949,6 +4102,40 @@
       "releaseDate": "2025-12-15",
       "shortName": "Nemotron 3 Nano",
       "slug": "nvidia-nemotron-3-nano-30b-a3b-reasoning"
+    },
+    {
+      "costUsdPerTask": {
+        "answer": 0.0012659513206398562,
+        "cacheRead": 0,
+        "cacheWrite": 0.11051318206096916,
+        "input": 0.11091015634193753,
+        "nonCacheInput": 0.0003969742809683569,
+        "output": 0.0012659513206398562,
+        "reasoning": 0,
+        "total": 0.1121761076625774
+      },
+      "creator": {
+        "id": "e1694725-0192-4e54-b1b8-c97e816c6cbe",
+        "name": "Meta",
+        "slug": "meta"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/llama-4-scout",
+      "effort": null,
+      "id": "adf9a85e-abc3-4f28-937b-db6655cc5238",
+      "intelligenceIndex": 6.45126865234633,
+      "name": "Llama 4 Scout",
+      "outputTokensPerTask": {
+        "answer": 1918.1080615755395,
+        "reasoning": 0,
+        "total": 1918.1080615755395
+      },
+      "release": {
+        "name": "Llama 4 Scout",
+        "slug": "llama-4-scout"
+      },
+      "releaseDate": "2025-04-05",
+      "shortName": "Llama 4 Scout",
+      "slug": "llama-4-scout"
     },
     {
       "costUsdPerTask": {
@@ -4089,17 +4276,17 @@
   ],
   "schemaVersion": 1,
   "selection": {
-    "measuredCompleteRecordCount": 113,
-    "positiveCostRecordCount": 108,
+    "measuredCompleteRecordCount": 118,
+    "positiveCostRecordCount": 114,
     "rule": "current, non-estimated model configurations with a finite 0–100 Intelligence Index, finite positive per-task output-token total, and a complete finite nonnegative per-task cost breakdown; source cost totals at or below zero normalize to null",
-    "sourceRecordCount": 697
+    "sourceRecordCount": 704
   },
   "source": {
     "citation": "Artificial Analysis (2025). LLM benchmarks dataset. https://artificialanalysis.ai",
     "method": "public-next-flight",
     "methodologyUrl": "https://artificialanalysis.ai/methodology/intelligence-benchmarking",
     "name": "Artificial Analysis",
-    "retrievedAt": "2026-10-10T05:51:08.244Z",
+    "retrievedAt": "2026-10-16T15:01:03.571Z",
     "sourceClass": "benchmark-publisher",
     "termsUrl": "https://artificialanalysis.ai/docs/legal/Terms-of-Use.pdf",
     "url": "https://artificialanalysis.ai/models"
