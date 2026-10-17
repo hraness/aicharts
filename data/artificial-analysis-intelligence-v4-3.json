@@ -2312,15 +2312,40 @@
       "slug": "gpt-6-luna-high"
     },
     {
+      "costUsdPerTask": null,
+      "creator": {
+        "id": "8b8b84fb-4b24-45be-b9e2-74ed50d00ff7",
+        "name": "Institute of Foundation Models",
+        "slug": "ifm"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/k2-horizon-375b-a23b",
+      "effort": null,
+      "id": "bb3d7e75-8e22-4082-b9d6-1db0803e042f",
+      "intelligenceIndex": 30.5015302696723,
+      "name": "K2 Horizon 375B A23B",
+      "outputTokensPerTask": {
+        "answer": 15749.933253652986,
+        "reasoning": 35767.52344738368,
+        "total": 51517.456701036666
+      },
+      "release": {
+        "name": "K2 Horizon 375B A23B",
+        "slug": "k2-horizon-375b-a23b"
+      },
+      "releaseDate": "2026-09-03",
+      "shortName": "K2 Horizon 375B A23B",
+      "slug": "k2-horizon-375b-a23b"
+    },
+    {
       "costUsdPerTask": {
-        "answer": 0.029399421768721252,
-        "cacheRead": 0.23037253895659532,
-        "cacheWrite": 0.0440781598002629,
-        "input": 0.28681008307071554,
-        "nonCacheInput": 0.012359384313857334,
-        "output": 0.11315465944977865,
-        "reasoning": 0.08375523768105742,
-        "total": 0.3999647425204942
+        "answer": 0.014357857142863866,
+        "cacheRead": 0.14948076609489389,
+        "cacheWrite": 0.3543189871413173,
+        "input": 0.5104548063282883,
+        "nonCacheInput": 0.006655053092077025,
+        "output": 0.05526157787082214,
+        "reasoning": 0.04090372072795827,
+        "total": 0.5657163841991104
       },
       "creator": {
         "id": "90bf1f7e-b589-4f69-8efc-bd04bbd0b494",
@@ -2715,14 +2740,14 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.006787783217920068,
-        "cacheRead": 0.05366576110190494,
-        "cacheWrite": 0.1273428275213463,
-        "input": 0.18387123275214767,
-        "nonCacheInput": 0.002862644128896465,
-        "output": 0.02458691647308361,
-        "reasoning": 0.017799133255163548,
-        "total": 0.2084581492252313
+        "answer": 0.007805950700608077,
+        "cacheRead": 0.06514724998170254,
+        "cacheWrite": 0.09159398100242531,
+        "input": 0.1599617056291364,
+        "nonCacheInput": 0.0032204746450085232,
+        "output": 0.028274953944046156,
+        "reasoning": 0.020469003243438078,
+        "total": 0.18823665957318256
       },
       "creator": {
         "id": "0c303112-430d-4367-a484-51defaa2e166",
@@ -4310,7 +4335,7 @@
   ],
   "schemaVersion": 1,
   "selection": {
-    "measuredCompleteRecordCount": 119,
+    "measuredCompleteRecordCount": 120,
     "positiveCostRecordCount": 115,
     "rule": "current, non-estimated model configurations with a finite 0–100 Intelligence Index, finite positive per-task output-token total, and a complete finite nonnegative per-task cost breakdown; source cost totals at or below zero normalize to null",
     "sourceRecordCount": 704
@@ -4320,7 +4345,7 @@
     "method": "public-next-flight",
     "methodologyUrl": "https://artificialanalysis.ai/methodology/intelligence-benchmarking",
     "name": "Artificial Analysis",
-    "retrievedAt": "2026-10-16T22:51:04.421Z",
+    "retrievedAt": "2026-10-17T04:23:47.085Z",
     "sourceClass": "benchmark-publisher",
     "termsUrl": "https://artificialanalysis.ai/docs/legal/Terms-of-Use.pdf",
     "url": "https://artificialanalysis.ai/models"
