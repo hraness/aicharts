@@ -3,7 +3,7 @@
   "source": {
     "method": "models-api",
     "name": "OpenRouter",
-    "retrievedAt": "2026-10-15T20:23:17.020Z",
+    "retrievedAt": "2026-10-17T09:28:17.688Z",
     "timestampMeaning": "source-added-at",
     "url": "https://openrouter.ai/api/v1/models?sort=newest"
   },
@@ -28,6 +28,12 @@
     "windowDays": 90
   },
   "observedListings": [
+    {
+      "id": "deepseek/deepseek-v4.1-flash-1017",
+      "model": "DeepSeek V4.1 Flash 1017",
+      "providerId": "deepseek",
+      "sourceAddedAt": "2026-10-17T08:27:04.000Z"
+    },
     {
       "id": "meta/muse-spark-open",
       "model": "Muse Spark Open",
@@ -390,6 +396,26 @@
     }
   ],
   "releases": [
+    {
+      "capabilities": {
+        "inputModalities": [
+          "image",
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "deepseek/deepseek-v4.1-flash-20261017",
+      "id": "deepseek/deepseek-v4.1-flash-1017",
+      "model": "DeepSeek V4.1 Flash 1017",
+      "modelUrl": "https://openrouter.ai/deepseek/deepseek-v4.1-flash-1017",
+      "providerId": "deepseek",
+      "providerName": "DeepSeek",
+      "sourceAddedAt": "2026-10-17T08:27:04.000Z",
+      "status": "awaiting-benchmark"
+    },
     {
       "capabilities": {
         "inputModalities": [
