@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+  type NextConfigFunction,
   PREVIEW_NOTICE_ORIGIN_ENV,
   PREVIEW_ROBOTS_HEADER,
   PREVIEW_ROBOTS_POLICY,
@@ -125,6 +126,45 @@ describe("site migration redirects", () => {
         source: "/:path*",
       },
     ]);
+  });
+});
+
+describe("production source maps", () => {
+  test("production credentials keep redirects and wrap the compile hook", async () => {
+    const previousWebpack = process.env.WEBPACK;
+    delete process.env.WEBPACK;
+    try {
+      const environment = {
+        ...identity,
+        POSTHOG_API_KEY: "phx_test_personal_key",
+        POSTHOG_PROJECT_ID: "543691",
+        POSTHOG_UI_HOST: "https://us.posthog.com",
+        VERCEL_ENV: "production",
+      } as const;
+      const config = createNextConfig(environment);
+      expect(typeof config).toBe("function");
+      const resolved = await (config as NextConfigFunction)("phase-production-build", {
+        defaultConfig: {},
+      });
+      expect(resolved.redirects).toBe(nextConfig.redirects);
+      expect(typeof resolved.compiler?.runAfterProductionCompile).toBe("function");
+      const headers = await resolved.headers?.();
+      expect(headers?.some(rule => rule.headers.some(header => (
+        header.key === PRODUCTION_DELIVERY_PROOF_HEADER
+      )))).toBe(true);
+    } finally {
+      if (previousWebpack === undefined) delete process.env.WEBPACK;
+      else process.env.WEBPACK = previousWebpack;
+    }
+  });
+
+  test("preview credentials do not attach a source-map compile hook", async () => {
+    const config = createNextConfig({
+      ...identity,
+      VERCEL_ENV: "preview",
+      VERCEL_URL: "aicharts-git-example-hraness.vercel.app",
+    });
+    expect(config.compiler?.runAfterProductionCompile).toBeUndefined();
   });
 });
 

@@ -246,7 +246,7 @@ Configure these environment variables in Vercel:
 | `POSTHOG_PROJECT_ID` | Production | Numeric PostHog project ID |
 | `POSTHOG_UI_HOST` | Production | `https://us.posthog.com` or `https://eu.posthog.com` |
 
-Production source maps are uploaded only when all private build settings and Vercel's commit SHA are present, then removed from the deployment output.
+Production source maps are injected and uploaded only when all private build settings and Vercel's commit SHA are present, then removed from the deployment output. An upload failure is logged and does not fail the production build.
 
 ## Repository map
 
