@@ -1083,6 +1083,44 @@
     },
     {
       "costUsdPerTask": {
+        "answer": 0.036302448098491355,
+        "cacheRead": 0.05591718391623929,
+        "cacheWrite": 0.09483602508058153,
+        "input": 0.15465436463635565,
+        "nonCacheInput": 0.0039011556395348425,
+        "output": 0.10739406267506157,
+        "reasoning": 0.07109161457657023,
+        "total": 0.2620484273114172
+      },
+      "creator": {
+        "id": "58b835bf-4c87-4f87-a846-df4b692c6e7d",
+        "name": "DeepSeek",
+        "slug": "deepseek"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/deepseek-v4-1-flash-1017",
+      "effort": {
+        "label": "max",
+        "level": 60,
+        "slug": "max"
+      },
+      "id": "f151fd0b-2139-40cf-a3ec-995e8cedc592",
+      "intelligenceIndex": 45.0965048681912,
+      "name": "DeepSeek V4.1 Flash 1017 (Max)",
+      "outputTokensPerTask": {
+        "answer": 30252.040082076124,
+        "reasoning": 59243.01214714186,
+        "total": 89495.05222921798
+      },
+      "release": {
+        "name": "DeepSeek V4.1 Flash 1017",
+        "slug": "deepseek-v4-1-flash-1017"
+      },
+      "releaseDate": "2026-10-17",
+      "shortName": "DeepSeek V4.1 Flash (max)",
+      "slug": "deepseek-v4-1-flash-1017"
+    },
+    {
+      "costUsdPerTask": {
         "answer": 0.09341247289530265,
         "cacheRead": 0.7053631760294088,
         "cacheWrite": 0.40832584827674323,
@@ -4335,17 +4373,17 @@
   ],
   "schemaVersion": 1,
   "selection": {
-    "measuredCompleteRecordCount": 120,
-    "positiveCostRecordCount": 115,
+    "measuredCompleteRecordCount": 121,
+    "positiveCostRecordCount": 116,
     "rule": "current, non-estimated model configurations with a finite 0–100 Intelligence Index, finite positive per-task output-token total, and a complete finite nonnegative per-task cost breakdown; source cost totals at or below zero normalize to null",
-    "sourceRecordCount": 704
+    "sourceRecordCount": 705
   },
   "source": {
     "citation": "Artificial Analysis (2025). LLM benchmarks dataset. https://artificialanalysis.ai",
     "method": "public-next-flight",
     "methodologyUrl": "https://artificialanalysis.ai/methodology/intelligence-benchmarking",
     "name": "Artificial Analysis",
-    "retrievedAt": "2026-10-18T12:36:36.432Z",
+    "retrievedAt": "2026-10-19T04:38:55.223Z",
     "sourceClass": "benchmark-publisher",
     "termsUrl": "https://artificialanalysis.ai/docs/legal/Terms-of-Use.pdf",
     "url": "https://artificialanalysis.ai/models"

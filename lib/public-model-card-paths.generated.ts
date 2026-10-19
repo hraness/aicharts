@@ -31,6 +31,7 @@ export const PUBLIC_MODEL_CARD_PATHS = [
   "/models/unlisted/claude-fable-5-1-xhigh-swe-2-medium.e2f060e68d045988c8f73d9b/default",
   "/models/unlisted/gpt-6-astra-xhigh-swe-2-medium.54c5f1484f55a9b95f428406/default",
   "/models/zai/glm-5.3/default",
+  "/models/deepseek/deepseek-v4-1-flash-1017/index",
   "/models/reflection/reflection-beam/index",
   "/models/meta/muse-spark-open/index",
   "/models/nvidia/nemotron-3-5-super-vl/index",
