@@ -4,7 +4,7 @@ import type {
   NextConfigFunction,
   ProductionDeliveryProofEnvironment,
 } from "@hraness/vercel-delivery";
-import { withPostHogConfig } from "@posthog/nextjs-config";
+import { PosthogWebpackPlugin, type PluginConfig } from "@posthog/webpack-plugin";
 import type { NextConfig } from "next";
 
 export const POSTHOG_UI_HOSTS = new Set([
@@ -21,7 +21,7 @@ export type ProductionSourceMapAdmission = Readonly<{
   releaseVersion: string;
 }>;
 
-export type ProductionPosthogPluginOptions = Parameters<typeof withPostHogConfig>[1];
+export type ProductionPosthogPluginOptions = PluginConfig;
 
 /**
  * Production source maps upload only on Vercel production when the private
@@ -115,36 +115,31 @@ export function wrapResolvedNextConfig(
 }
 
 /**
- * This product always compiles with webpack (`next build --webpack`).
- * `@posthog/nextjs-config` 1.11.2+ treats Next 16 as Turbopack unless
- * `WEBPACK=1` is already set and `TURBOPACK` is not `1`. It reads that
- * pair both when `withPostHogConfig` runs and again when Next.js invokes
- * the config factory, so a compile-hook install can appear after a
- * temporary pin is restored.
+ * Attach PostHog's webpack plugin directly. `withPostHogConfig` 1.11.2+
+ * installs `runAfterProductionCompile` whenever Next 16 looks like
+ * Turbopack at config time, and Next.js rethrows that hook. This product
+ * always runs `next build --webpack`; the plugin injects chunk IDs and
+ * treats a failed upload as non-fatal.
  */
-export function pinPosthogWebpackBuildEnv(): void {
-  process.env.WEBPACK = "1";
-  delete process.env.TURBOPACK;
-}
-
-export function withPosthogWebpackBuildEnv<T>(run: () => T): T {
-  const previousWebpack = process.env.WEBPACK;
-  const previousTurbopack = process.env.TURBOPACK;
-  pinPosthogWebpackBuildEnv();
-  try {
-    return run();
-  } finally {
-    if (previousWebpack === undefined) {
-      delete process.env.WEBPACK;
-    } else {
-      process.env.WEBPACK = previousWebpack;
-    }
-    if (previousTurbopack === undefined) {
-      delete process.env.TURBOPACK;
-    } else {
-      process.env.TURBOPACK = previousTurbopack;
-    }
-  }
+export function withPosthogSourceMapWebpack(
+  config: NextConfig,
+  admission: ProductionSourceMapAdmission,
+): NextConfig {
+  const pluginOptions = productionPosthogPluginOptions(admission);
+  const existingWebpack = config.webpack;
+  return {
+    ...config,
+    webpack(webpackConfig, webpackOptions) {
+      const resolved = typeof existingWebpack === "function"
+        ? existingWebpack(webpackConfig, webpackOptions)
+        : webpackConfig;
+      resolved.plugins = [
+        ...resolved.plugins ?? [],
+        new PosthogWebpackPlugin(pluginOptions),
+      ];
+      return resolved;
+    },
+  };
 }
 
 export function withProductionSourceMaps(
@@ -155,20 +150,7 @@ export function withProductionSourceMaps(
   if (admission === undefined) {
     return config;
   }
-  pinPosthogWebpackBuildEnv();
-  const posthogConfig = withPostHogConfig(
-    config,
-    productionPosthogPluginOptions(admission),
+  return withNonfatalCompilerSourceMapHook(
+    withPosthogSourceMapWebpack(config, admission),
   );
-  if (typeof posthogConfig === "function") {
-    const factory = posthogConfig as NextConfigFunction;
-    return (async (
-      phase: string,
-      context: Parameters<NextConfigFunction>[1],
-    ) => {
-      pinPosthogWebpackBuildEnv();
-      return withNonfatalCompilerSourceMapHook(await factory(phase, context));
-    }) as NextConfig;
-  }
-  return withNonfatalCompilerSourceMapHook(posthogConfig);
 }

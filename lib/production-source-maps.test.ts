@@ -8,13 +8,14 @@ import { fileURLToPath } from "node:url";
 import type { NextConfigFunction } from "@hraness/vercel-delivery";
 import type { NextConfig } from "next";
 
+import { PosthogWebpackPlugin } from "@posthog/webpack-plugin";
+
 import {
   admitProductionSourceMaps,
   ownedPosthogCliBinaryPath,
-  pinPosthogWebpackBuildEnv,
   productionPosthogPluginOptions,
   withNonfatalCompilerSourceMapHook,
-  withPosthogWebpackBuildEnv,
+  withPosthogSourceMapWebpack,
   wrapResolvedNextConfig,
 } from "./production-source-maps";
 
@@ -151,33 +152,16 @@ describe("withNonfatalCompilerSourceMapHook", () => {
   });
 });
 
-describe("withPosthogWebpackBuildEnv", () => {
-  test("reports webpack to PostHog for the callback and restores the previous values", () => {
-    const previousWebpack = process.env.WEBPACK;
-    const previousTurbopack = process.env.TURBOPACK;
-    delete process.env.WEBPACK;
-    process.env.TURBOPACK = "1";
-    try {
-      const inside = withPosthogWebpackBuildEnv(() => ({
-        turbopack: process.env.TURBOPACK,
-        webpack: process.env.WEBPACK,
-      }));
-      expect(inside).toEqual({ turbopack: undefined, webpack: "1" });
-      expect(process.env.WEBPACK).toBeUndefined();
-      expect(process.env.TURBOPACK).toBe("1");
-
-      process.env.WEBPACK = "0";
-      expect(withPosthogWebpackBuildEnv(() => process.env.WEBPACK)).toBe("1");
-      expect(process.env.WEBPACK).toBe("0");
-      pinPosthogWebpackBuildEnv();
-      expect(process.env.WEBPACK).toBe("1");
-      expect(process.env.TURBOPACK).toBeUndefined();
-    } finally {
-      if (previousWebpack === undefined) delete process.env.WEBPACK;
-      else process.env.WEBPACK = previousWebpack;
-      if (previousTurbopack === undefined) delete process.env.TURBOPACK;
-      else process.env.TURBOPACK = previousTurbopack;
-    }
+describe("withPosthogSourceMapWebpack", () => {
+  test("appends PosthogWebpackPlugin without a compile hook", () => {
+    const admission = admitProductionSourceMaps(productionEnvironment)!;
+    const wrapped = withPosthogSourceMapWebpack({ reactStrictMode: true }, admission);
+    expect(wrapped.compiler?.runAfterProductionCompile).toBeUndefined();
+    const webpackConfig = wrapped.webpack?.(
+      { plugins: [] },
+      { isServer: false } as Parameters<NonNullable<typeof wrapped.webpack>>[1],
+    );
+    expect(webpackConfig?.plugins?.some((plugin: unknown) => plugin instanceof PosthogWebpackPlugin)).toBe(true);
   });
 });
 
