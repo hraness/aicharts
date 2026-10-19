@@ -125,9 +125,12 @@ test("previousGeneration is the highest-index GPT-6 Sol row, while predecessor s
     if (previous.length === 0) {
       expect(placement.previousGeneration).toBeUndefined();
     } else {
-      const best = previous.reduce((leader, row) => (
-        (row.benchmarks.aaIndex ?? Number.NaN) > (leader.benchmarks.aaIndex ?? Number.NaN) ? row : leader
-      ));
+      const best = previous.reduce((leader, row) => {
+        const score = row.benchmarks.aaIndex ?? Number.NaN;
+        const leaderScore = leader.benchmarks.aaIndex ?? Number.NaN;
+        if (score !== leaderScore) return score > leaderScore ? row : leader;
+        return row.id < leader.id ? row : leader;
+      });
       expect(placement.previousGeneration?.id).toBe(best.id);
     }
     if (placement.predecessor !== undefined) {
