@@ -162,7 +162,10 @@ export function withProductionSourceMaps(
   );
   if (typeof posthogConfig === "function") {
     const factory = posthogConfig as NextConfigFunction;
-    return (async (phase, context) => {
+    return (async (
+      phase: string,
+      context: Parameters<NextConfigFunction>[1],
+    ) => {
       pinPosthogWebpackBuildEnv();
       return withNonfatalCompilerSourceMapHook(await factory(phase, context));
     }) as NextConfig;
