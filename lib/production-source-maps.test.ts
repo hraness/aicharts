@@ -45,7 +45,7 @@ describe("admitProductionSourceMaps", () => {
     })).toBeUndefined();
     expect(admitProductionSourceMaps({
       ...productionEnvironment,
-      POSTHOG_API_KEY: "phc_public_project_token",
+      POSTHOG_API_KEY: "phc_public",
     })).toBeUndefined();
     expect(admitProductionSourceMaps({
       ...productionEnvironment,

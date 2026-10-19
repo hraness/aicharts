@@ -17,7 +17,7 @@ const brokenGateArb = fc.oneof(
     POSTHOG_API_KEY: fc.constantFrom(
       undefined,
       "",
-      "phc_public_project_token",
+      "phc_public",
       "px_not_personal",
       "PHX_wrong_case",
     ),
