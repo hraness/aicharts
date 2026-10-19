@@ -130,9 +130,11 @@ describe("site migration redirects", () => {
 });
 
 describe("production source maps", () => {
-  test("production credentials keep redirects and wrap the compile hook", async () => {
+  test("production credentials keep redirects and use the webpack plugin path", async () => {
     const previousWebpack = process.env.WEBPACK;
+    const previousTurbopack = process.env.TURBOPACK;
     delete process.env.WEBPACK;
+    process.env.TURBOPACK = "1";
     try {
       const environment = {
         ...identity,
@@ -143,11 +145,15 @@ describe("production source maps", () => {
       } as const;
       const config = createNextConfig(environment);
       expect(typeof config).toBe("function");
+      process.env.TURBOPACK = "1";
+      delete process.env.WEBPACK;
       const resolved = await (config as NextConfigFunction)("phase-production-build", {
         defaultConfig: {},
       });
       expect(resolved.redirects).toBe(nextConfig.redirects);
-      expect(typeof resolved.compiler?.runAfterProductionCompile).toBe("function");
+      expect(typeof resolved.webpack).toBe("function");
+      expect(resolved.compiler?.runAfterProductionCompile).toBeUndefined();
+      expect(resolved.productionBrowserSourceMaps).toBeUndefined();
       const headers = await resolved.headers?.();
       expect(headers?.some(rule => rule.headers.some(header => (
         header.key === PRODUCTION_DELIVERY_PROOF_HEADER
@@ -155,6 +161,8 @@ describe("production source maps", () => {
     } finally {
       if (previousWebpack === undefined) delete process.env.WEBPACK;
       else process.env.WEBPACK = previousWebpack;
+      if (previousTurbopack === undefined) delete process.env.TURBOPACK;
+      else process.env.TURBOPACK = previousTurbopack;
     }
   });
 

@@ -11,8 +11,10 @@ import type { NextConfig } from "next";
 import {
   admitProductionSourceMaps,
   ownedPosthogCliBinaryPath,
+  pinPosthogWebpackBuildEnv,
   productionPosthogPluginOptions,
   withNonfatalCompilerSourceMapHook,
+  withPosthogWebpackBuildEnv,
   wrapResolvedNextConfig,
 } from "./production-source-maps";
 
@@ -146,6 +148,36 @@ describe("withNonfatalCompilerSourceMapHook", () => {
       projectDir: "/tmp",
     });
     expect(ran).toBe(true);
+  });
+});
+
+describe("withPosthogWebpackBuildEnv", () => {
+  test("reports webpack to PostHog for the callback and restores the previous values", () => {
+    const previousWebpack = process.env.WEBPACK;
+    const previousTurbopack = process.env.TURBOPACK;
+    delete process.env.WEBPACK;
+    process.env.TURBOPACK = "1";
+    try {
+      const inside = withPosthogWebpackBuildEnv(() => ({
+        turbopack: process.env.TURBOPACK,
+        webpack: process.env.WEBPACK,
+      }));
+      expect(inside).toEqual({ turbopack: undefined, webpack: "1" });
+      expect(process.env.WEBPACK).toBeUndefined();
+      expect(process.env.TURBOPACK).toBe("1");
+
+      process.env.WEBPACK = "0";
+      expect(withPosthogWebpackBuildEnv(() => process.env.WEBPACK)).toBe("1");
+      expect(process.env.WEBPACK).toBe("0");
+      pinPosthogWebpackBuildEnv();
+      expect(process.env.WEBPACK).toBe("1");
+      expect(process.env.TURBOPACK).toBeUndefined();
+    } finally {
+      if (previousWebpack === undefined) delete process.env.WEBPACK;
+      else process.env.WEBPACK = previousWebpack;
+      if (previousTurbopack === undefined) delete process.env.TURBOPACK;
+      else process.env.TURBOPACK = previousTurbopack;
+    }
   });
 });
 
