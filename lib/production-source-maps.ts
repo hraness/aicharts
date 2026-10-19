@@ -114,6 +114,39 @@ export function wrapResolvedNextConfig(
   return wrap(nextConfig);
 }
 
+/**
+ * This product always compiles with webpack (`next build --webpack`).
+ * `@posthog/nextjs-config` 1.11.2+ treats Next 16 as Turbopack unless
+ * `WEBPACK=1` is already set and `TURBOPACK` is not `1`. It reads that
+ * pair both when `withPostHogConfig` runs and again when Next.js invokes
+ * the config factory, so a compile-hook install can appear after a
+ * temporary pin is restored.
+ */
+export function pinPosthogWebpackBuildEnv(): void {
+  process.env.WEBPACK = "1";
+  delete process.env.TURBOPACK;
+}
+
+export function withPosthogWebpackBuildEnv<T>(run: () => T): T {
+  const previousWebpack = process.env.WEBPACK;
+  const previousTurbopack = process.env.TURBOPACK;
+  pinPosthogWebpackBuildEnv();
+  try {
+    return run();
+  } finally {
+    if (previousWebpack === undefined) {
+      delete process.env.WEBPACK;
+    } else {
+      process.env.WEBPACK = previousWebpack;
+    }
+    if (previousTurbopack === undefined) {
+      delete process.env.TURBOPACK;
+    } else {
+      process.env.TURBOPACK = previousTurbopack;
+    }
+  }
+}
+
 export function withProductionSourceMaps(
   config: NextConfig,
   environment: ProductionDeliveryProofEnvironment,
@@ -122,8 +155,20 @@ export function withProductionSourceMaps(
   if (admission === undefined) {
     return config;
   }
-  return wrapResolvedNextConfig(
-    withPostHogConfig(config, productionPosthogPluginOptions(admission)),
-    withNonfatalCompilerSourceMapHook,
+  pinPosthogWebpackBuildEnv();
+  const posthogConfig = withPostHogConfig(
+    config,
+    productionPosthogPluginOptions(admission),
   );
+  if (typeof posthogConfig === "function") {
+    const factory = posthogConfig as NextConfigFunction;
+    return (async (
+      phase: string,
+      context: Parameters<NextConfigFunction>[1],
+    ) => {
+      pinPosthogWebpackBuildEnv();
+      return withNonfatalCompilerSourceMapHook(await factory(phase, context));
+    }) as NextConfig;
+  }
+  return withNonfatalCompilerSourceMapHook(posthogConfig);
 }
