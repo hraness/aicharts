@@ -3,7 +3,7 @@
   "source": {
     "method": "models-api",
     "name": "OpenRouter",
-    "retrievedAt": "2026-10-17T09:28:17.688Z",
+    "retrievedAt": "2026-10-19T19:59:40.576Z",
     "timestampMeaning": "source-added-at",
     "url": "https://openrouter.ai/api/v1/models?sort=newest"
   },
@@ -1278,52 +1278,6 @@
       "providerName": "Anthropic",
       "sourceAddedAt": "2026-07-24T17:02:24.000Z",
       "status": "benchmarked"
-    },
-    {
-      "capabilities": {
-        "inputModalities": [
-          "audio",
-          "file",
-          "image",
-          "text",
-          "video"
-        ],
-        "outputModalities": [
-          "text"
-        ],
-        "supportsTools": true
-      },
-      "canonicalSlug": "google/gemini-3.6-flash-20260721",
-      "id": "google/gemini-3.6-flash",
-      "model": "Gemini 3.6 Flash",
-      "modelUrl": "https://openrouter.ai/google/gemini-3.6-flash",
-      "providerId": "google",
-      "providerName": "Google",
-      "sourceAddedAt": "2026-07-21T15:12:13.000Z",
-      "status": "awaiting-benchmark"
-    },
-    {
-      "capabilities": {
-        "inputModalities": [
-          "audio",
-          "file",
-          "image",
-          "text",
-          "video"
-        ],
-        "outputModalities": [
-          "text"
-        ],
-        "supportsTools": true
-      },
-      "canonicalSlug": "google/gemini-3.5-flash-lite-20260721",
-      "id": "google/gemini-3.5-flash-lite",
-      "model": "Gemini 3.5 Flash Lite",
-      "modelUrl": "https://openrouter.ai/google/gemini-3.5-flash-lite",
-      "providerId": "google",
-      "providerName": "Google",
-      "sourceAddedAt": "2026-07-21T15:12:06.000Z",
-      "status": "awaiting-benchmark"
     }
   ]
 }
