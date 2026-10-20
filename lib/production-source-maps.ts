@@ -121,14 +121,10 @@ export function wrapResolvedNextConfig(
 }
 
 /**
- * Attach PostHog's webpack plugin directly. `withPostHogConfig` 1.11.2+
- * installs `runAfterProductionCompile` whenever Next 16 looks like
- * Turbopack at config time, and Next.js rethrows that hook. This product
- * always runs `next build --webpack`; the plugin injects chunk IDs and
- * treats a failed upload as non-fatal.
- *
- * CLI discovery and plugin construction run inside the webpack callback so
- * a missing export, binary, or constructor error cannot fail config load.
+ * Attach PostHog's webpack plugin. Production deploys must not call this from
+ * `next.config.ts`: a webpack() function is the production-only difference
+ * from Ready Preview builds. Keep the helper for tests; live upload runs
+ * after `next build` from `scripts/upload-production-source-maps.ts`.
  */
 export function withPosthogSourceMapWebpack(
   config: NextConfig,
@@ -163,16 +159,13 @@ export function withPosthogSourceMapWebpack(
 export function withProductionSourceMaps(
   config: NextConfig,
   environment: ProductionDeliveryProofEnvironment,
-  resolveCliBinaryPath: PosthogCliBinaryPathResolver = ownedPosthogCliBinaryPath,
 ): NextConfig {
   try {
-    const admission = admitProductionSourceMaps(environment);
-    if (admission === undefined) {
-      return config;
-    }
-    return withNonfatalCompilerSourceMapHook(
-      withPosthogSourceMapWebpack(config, admission, resolveCliBinaryPath),
-    );
+    // Admission is re-checked after compile. Do not attach webpack() or a
+    // compile hook here: both have failed Vercel production while Preview,
+    // which never admits this path, stayed Ready.
+    admitProductionSourceMaps(environment);
+    return withNonfatalCompilerSourceMapHook(config);
   } catch (error) {
     console.error(
       "PostHog source-map setup failed; continuing without source-map upload.",

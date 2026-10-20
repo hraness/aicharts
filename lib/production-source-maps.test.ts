@@ -136,12 +136,8 @@ describe("Node production config load", () => {
       const { PHASE_PRODUCTION_BUILD } = require("next/dist/shared/lib/constants.js");
       const loadConfig = loaded.default ?? loaded;
       const cfg = await loadConfig(PHASE_PRODUCTION_BUILD, process.cwd(), { silent: false });
-      if (typeof cfg.webpack !== "function") {
-        throw new Error("expected webpack function on production next config");
-      }
-      const webpackConfig = cfg.webpack({ plugins: [] }, { isServer: false });
-      if (!Array.isArray(webpackConfig.plugins) || webpackConfig.plugins.length === 0) {
-        throw new Error("expected PostHog webpack plugin after production admission");
+      if (typeof cfg.webpack === "function") {
+        throw new Error("production next config must not attach webpack(); that path failed Vercel production");
       }
       process.stdout.write("production-config-ok\\n");
     `], {
@@ -277,25 +273,12 @@ describe("withPosthogSourceMapWebpack", () => {
 });
 
 describe("withProductionSourceMaps", () => {
-  test("a setup exception degrades to the original config", () => {
-    const errors: unknown[] = [];
-    const originalError = console.error;
-    console.error = (...args: unknown[]) => {
-      errors.push(args);
-    };
-    try {
-      const config = { reactStrictMode: true } satisfies NextConfig;
-      Object.defineProperty(config, "webpack", {
-        get() {
-          throw new Error("webpack getter exploded during source-map wrap");
-        },
-      });
-      expect(withProductionSourceMaps(config, productionEnvironment)).toBe(config);
-      expect(errors).toHaveLength(1);
-      expect(String(errors[0])).toContain("continuing without source-map upload");
-    } finally {
-      console.error = originalError;
-    }
+  test("admitted production credentials do not attach webpack or a compile hook", () => {
+    const config = { reactStrictMode: true } satisfies NextConfig;
+    const wrapped = withProductionSourceMaps(config, productionEnvironment);
+    expect(wrapped.webpack).toBeUndefined();
+    expect(wrapped.compiler?.runAfterProductionCompile).toBeUndefined();
+    expect(wrapped.reactStrictMode).toBe(true);
   });
 });
 

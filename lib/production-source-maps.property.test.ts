@@ -76,23 +76,25 @@ test("breaking any one admission gate refuses the upload wrapper", () => {
   }));
 });
 
-test("a throwing CLI resolver never fails production config wrapping", () => {
-  const originalError = console.error;
-  console.error = () => {};
-  try {
-    const config = { reactStrictMode: true };
-    const wrapped = withProductionSourceMaps(config, productionEnvironment, () => {
-      throw Object.assign(new Error("Package subpath './package.json' is not defined"), {
-        code: "ERR_PACKAGE_PATH_NOT_EXPORTED",
-      });
-    });
-    expect(typeof wrapped.webpack).toBe("function");
-    const webpackConfig = wrapped.webpack?.(
-      { plugins: [] },
-      { isServer: false } as Parameters<NonNullable<typeof wrapped.webpack>>[1],
-    );
-    expect(webpackConfig?.plugins).toEqual([]);
-  } finally {
-    console.error = originalError;
-  }
+test("admitted production config wrapping never grows a webpack function", () => {
+  assertProperty(fc.property(
+    fc.record({
+      POSTHOG_API_KEY: fc.constantFrom("phx_test_personal_key", "phx_another_key"),
+      POSTHOG_PROJECT_ID: fc.constantFrom("1", "543691", "999999"),
+      POSTHOG_UI_HOST: fc.option(
+        fc.constantFrom("https://us.posthog.com", "https://eu.posthog.com"),
+        { nil: undefined },
+      ),
+      VERCEL_ENV: fc.constant("production"),
+      VERCEL_GIT_COMMIT_SHA: fc.constantFrom(
+        "0123456789abcdef0123456789abcdef01234567",
+        "abcdef0123456789abcdef0123456789abcdef01",
+      ),
+    }),
+    environment => {
+      const wrapped = withProductionSourceMaps({ reactStrictMode: true }, environment);
+      expect(wrapped.webpack).toBeUndefined();
+      expect(wrapped.compiler?.runAfterProductionCompile).toBeUndefined();
+    },
+  ));
 });
