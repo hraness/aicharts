@@ -20,7 +20,7 @@ Every browser event passes through `normalizedPageAnalyticsProperties` before it
 
 The server request-error hook uses the same exact ingest-host approval. It sends a fixed `server:aicharts` distinct ID with `$process_person_profile: false`, so it needs no cookieless browser hash and creates no person profile. It retains only a standard error type plus bounded framework route fields; original exception messages and stacks never leave the server.
 
-Production Vercel builds inject and upload source maps when the private personal API key, numeric project id, UI host, and commit SHA are all present. The upload uses PostHog's webpack plugin with the Next.js config package's own CLI, matching `next build --webpack`. A failed upload is logged and does not fail the production build. The personal API key never enters a `NEXT_PUBLIC_` variable.
+Production Vercel builds inject and upload source maps when the private personal API key, numeric project id, UI host, and commit SHA are all present. The upload uses PostHog's webpack plugin with the Next.js config package's own CLI, matching `next build --webpack`. A source-map discovery or upload failure is logged and does not fail config load or the production build. The personal API key never enters a `NEXT_PUBLIC_` variable.
 
 | Public route | `canonical_path` | `content_id` |
 | --- | --- | --- |
