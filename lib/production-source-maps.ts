@@ -23,6 +23,8 @@ export type ProductionSourceMapAdmission = Readonly<{
 
 export type ProductionPosthogPluginOptions = PluginConfig;
 
+export type PosthogCliBinaryPathResolver = () => string;
+
 /**
  * Production source maps upload only on Vercel production when the private
  * personal API key, numeric project id, UI host, and commit SHA are all
@@ -51,16 +53,20 @@ export function admitProductionSourceMaps(
  * Resolve the CLI that `@posthog/nextjs-config` depends on. Searching
  * `node_modules/.bin` can pick webpack-plugin's older 0.16.x binary, which
  * hard-fails on an unstamped chunk.
+ *
+ * Node (Vercel loads `next.config.ts` with Node) enforces the package
+ * `exports` map, which does not include `./package.json`. Resolve the public
+ * entry, then require the CLI from that file.
  */
 export function ownedPosthogCliBinaryPath(): string {
   const requireFromHere = createRequire(import.meta.url);
-  const nextjsConfigPackage = requireFromHere.resolve("@posthog/nextjs-config/package.json");
-  return createRequire(nextjsConfigPackage).resolve("@posthog/cli/run-posthog-cli.js");
+  const nextjsConfigEntry = requireFromHere.resolve("@posthog/nextjs-config");
+  return createRequire(nextjsConfigEntry).resolve("@posthog/cli/run-posthog-cli.js");
 }
 
 export function productionPosthogPluginOptions(
   admission: ProductionSourceMapAdmission,
-  cliBinaryPath = ownedPosthogCliBinaryPath(),
+  cliBinaryPath: string,
 ): ProductionPosthogPluginOptions {
   return {
     cliBinaryPath,
@@ -120,12 +126,15 @@ export function wrapResolvedNextConfig(
  * Turbopack at config time, and Next.js rethrows that hook. This product
  * always runs `next build --webpack`; the plugin injects chunk IDs and
  * treats a failed upload as non-fatal.
+ *
+ * CLI discovery and plugin construction run inside the webpack callback so
+ * a missing export, binary, or constructor error cannot fail config load.
  */
 export function withPosthogSourceMapWebpack(
   config: NextConfig,
   admission: ProductionSourceMapAdmission,
+  resolveCliBinaryPath: PosthogCliBinaryPathResolver = ownedPosthogCliBinaryPath,
 ): NextConfig {
-  const pluginOptions = productionPosthogPluginOptions(admission);
   const existingWebpack = config.webpack;
   return {
     ...config,
@@ -133,10 +142,19 @@ export function withPosthogSourceMapWebpack(
       const resolved = typeof existingWebpack === "function"
         ? existingWebpack(webpackConfig, webpackOptions)
         : webpackConfig;
-      resolved.plugins = [
-        ...resolved.plugins ?? [],
-        new PosthogWebpackPlugin(pluginOptions),
-      ];
+      try {
+        resolved.plugins = [
+          ...resolved.plugins ?? [],
+          new PosthogWebpackPlugin(
+            productionPosthogPluginOptions(admission, resolveCliBinaryPath()),
+          ),
+        ];
+      } catch (error) {
+        console.error(
+          "PostHog source-map plugin setup failed; continuing the production build.",
+          error,
+        );
+      }
       return resolved;
     },
   };
@@ -145,12 +163,21 @@ export function withPosthogSourceMapWebpack(
 export function withProductionSourceMaps(
   config: NextConfig,
   environment: ProductionDeliveryProofEnvironment,
+  resolveCliBinaryPath: PosthogCliBinaryPathResolver = ownedPosthogCliBinaryPath,
 ): NextConfig {
-  const admission = admitProductionSourceMaps(environment);
-  if (admission === undefined) {
+  try {
+    const admission = admitProductionSourceMaps(environment);
+    if (admission === undefined) {
+      return config;
+    }
+    return withNonfatalCompilerSourceMapHook(
+      withPosthogSourceMapWebpack(config, admission, resolveCliBinaryPath),
+    );
+  } catch (error) {
+    console.error(
+      "PostHog source-map setup failed; continuing without source-map upload.",
+      error,
+    );
     return config;
   }
-  return withNonfatalCompilerSourceMapHook(
-    withPosthogSourceMapWebpack(config, admission),
-  );
 }

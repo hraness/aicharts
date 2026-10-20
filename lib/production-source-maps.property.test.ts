@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 
-import { admitProductionSourceMaps } from "./production-source-maps";
+import { admitProductionSourceMaps, withProductionSourceMaps } from "./production-source-maps";
 import { assertProperty, fc } from "./property-test";
 
 const productionEnvironment = {
@@ -74,4 +74,25 @@ test("breaking any one admission gate refuses the upload wrapper", () => {
       ...mutation,
     })).toBeUndefined();
   }));
+});
+
+test("a throwing CLI resolver never fails production config wrapping", () => {
+  const originalError = console.error;
+  console.error = () => {};
+  try {
+    const config = { reactStrictMode: true };
+    const wrapped = withProductionSourceMaps(config, productionEnvironment, () => {
+      throw Object.assign(new Error("Package subpath './package.json' is not defined"), {
+        code: "ERR_PACKAGE_PATH_NOT_EXPORTED",
+      });
+    });
+    expect(typeof wrapped.webpack).toBe("function");
+    const webpackConfig = wrapped.webpack?.(
+      { plugins: [] },
+      { isServer: false } as Parameters<NonNullable<typeof wrapped.webpack>>[1],
+    );
+    expect(webpackConfig?.plugins).toEqual([]);
+  } finally {
+    console.error = originalError;
+  }
 });

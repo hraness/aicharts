@@ -6,6 +6,7 @@ import {
   PRODUCTION_DELIVERY_PROOF_HEADER,
   productionDeliveryProofToken,
 } from "@hraness/vercel-delivery";
+import { PosthogWebpackPlugin } from "@posthog/webpack-plugin";
 
 import { INDEX_MODEL_PAGES } from "@/lib/index-model-pages";
 import { MODEL_CARD_PRESENTATIONS } from "@/lib/model-card-collection";
@@ -143,6 +144,11 @@ describe("production source maps", () => {
     expect(typeof config.webpack).toBe("function");
     expect(config.compiler?.runAfterProductionCompile).toBeUndefined();
     expect(config.productionBrowserSourceMaps).toBeUndefined();
+    const webpackConfig = config.webpack?.(
+      { plugins: [] },
+      { isServer: false } as Parameters<NonNullable<typeof config.webpack>>[1],
+    );
+    expect(webpackConfig?.plugins?.some((plugin: unknown) => plugin instanceof PosthogWebpackPlugin)).toBe(true);
     const headers = await config.headers?.();
     expect(headers?.some(rule => rule.headers.some(header => (
       header.key === PRODUCTION_DELIVERY_PROOF_HEADER

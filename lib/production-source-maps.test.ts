@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
+import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -16,8 +16,11 @@ import {
   productionPosthogPluginOptions,
   withNonfatalCompilerSourceMapHook,
   withPosthogSourceMapWebpack,
+  withProductionSourceMaps,
   wrapResolvedNextConfig,
 } from "./production-source-maps";
+
+const repository = fileURLToPath(new URL("..", import.meta.url));
 
 const productionEnvironment = {
   POSTHOG_API_KEY: "phx_test_personal_key",
@@ -26,6 +29,12 @@ const productionEnvironment = {
   VERCEL_ENV: "production",
   VERCEL_GIT_COMMIT_SHA: "0123456789abcdef0123456789abcdef01234567",
 } as const;
+
+const nodeSpawnOptions = {
+  cwd: repository,
+  encoding: "utf8" as const,
+  timeout: 30_000,
+};
 
 describe("admitProductionSourceMaps", () => {
   test("admits only a complete Vercel production credential set", () => {
@@ -70,9 +79,9 @@ describe("productionPosthogPluginOptions", () => {
     const pkg = JSON.parse(readFileSync(fileURLToPath(new URL("../package.json", import.meta.url)), "utf8")) as {
       dependencies: Record<string, string>;
     };
-    const installed = createRequire(import.meta.url)("@posthog/nextjs-config/package.json") as {
-      version: string;
-    };
+    const installed = JSON.parse(
+      readFileSync(join(repository, "node_modules/@posthog/nextjs-config/package.json"), "utf8"),
+    ) as { version: string };
     expect(pkg.dependencies["@posthog/nextjs-config"]).toBe("1.11.3");
     expect(installed.version).toBe("1.11.3");
   });
@@ -99,6 +108,78 @@ describe("productionPosthogPluginOptions", () => {
     expect(cliPackage.name).toBe("@posthog/cli");
     expect(cliPackage.version.startsWith("0.18.")).toBe(true);
     expect(cliBinaryPath).toContain("@posthog/cli");
+  });
+});
+
+describe("Node production config load", () => {
+  test("Node rejects the package.json subpath that failed Vercel config load", () => {
+    const result = spawnSync("node", ["--input-type=module", "--eval", `
+      import { createRequire } from "node:module";
+      const require = createRequire(import.meta.url);
+      try {
+        require.resolve("@posthog/nextjs-config/package.json");
+        process.exit(2);
+      } catch (error) {
+        if (error && error.code === "ERR_PACKAGE_PATH_NOT_EXPORTED") process.exit(0);
+        console.error(error);
+        process.exit(1);
+      }
+    `], nodeSpawnOptions);
+    expect(result.status, result.stderr).toBe(0);
+  });
+
+  test("Next.js loadConfig under Node admits production source maps without throwing", () => {
+    const result = spawnSync("node", ["--input-type=module", "--eval", `
+      import { createRequire } from "node:module";
+      const require = createRequire(import.meta.url);
+      const loaded = require("next/dist/server/config.js");
+      const { PHASE_PRODUCTION_BUILD } = require("next/dist/shared/lib/constants.js");
+      const loadConfig = loaded.default ?? loaded;
+      const cfg = await loadConfig(PHASE_PRODUCTION_BUILD, process.cwd(), { silent: false });
+      if (typeof cfg.webpack !== "function") {
+        throw new Error("expected webpack function on production next config");
+      }
+      const webpackConfig = cfg.webpack({ plugins: [] }, { isServer: false });
+      if (!Array.isArray(webpackConfig.plugins) || webpackConfig.plugins.length === 0) {
+        throw new Error("expected PostHog webpack plugin after production admission");
+      }
+      process.stdout.write("production-config-ok\\n");
+    `], {
+      ...nodeSpawnOptions,
+      env: {
+        ...process.env,
+        NODE_ENV: "production",
+        POSTHOG_API_KEY: productionEnvironment.POSTHOG_API_KEY,
+        POSTHOG_PROJECT_ID: productionEnvironment.POSTHOG_PROJECT_ID,
+        POSTHOG_UI_HOST: productionEnvironment.POSTHOG_UI_HOST,
+        VERCEL: "1",
+        VERCEL_DEPLOYMENT_ID: "dpl_AiChartsPreview123",
+        VERCEL_ENV: productionEnvironment.VERCEL_ENV,
+        VERCEL_GIT_COMMIT_SHA: productionEnvironment.VERCEL_GIT_COMMIT_SHA,
+        VERCEL_PROJECT_ID: "prj_AiChartsProject123",
+      },
+    });
+    expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
+    expect(result.stderr).not.toContain("Failed to load next.config.ts");
+    expect(result.stdout).toContain("production-config-ok");
+  });
+
+  test("ownedPosthogCliBinaryPath resolves the public nextjs-config entry under Node", () => {
+    const result = spawnSync("node", ["--input-type=module", "--eval", `
+      import { createRequire } from "node:module";
+      import { readFileSync } from "node:fs";
+      import { dirname, join } from "node:path";
+      const require = createRequire(import.meta.url);
+      const entry = require.resolve("@posthog/nextjs-config");
+      const cli = createRequire(entry).resolve("@posthog/cli/run-posthog-cli.js");
+      const pkg = JSON.parse(readFileSync(join(dirname(cli), "package.json"), "utf8"));
+      if (pkg.name !== "@posthog/cli" || !String(pkg.version).startsWith("0.18.")) {
+        throw new Error("unexpected CLI " + pkg.name + "@" + pkg.version);
+      }
+      process.stdout.write(cli + "\\n");
+    `], nodeSpawnOptions);
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout.trim()).toBe(ownedPosthogCliBinaryPath());
   });
 });
 
@@ -162,6 +243,59 @@ describe("withPosthogSourceMapWebpack", () => {
       { isServer: false } as Parameters<NonNullable<typeof wrapped.webpack>>[1],
     );
     expect(webpackConfig?.plugins?.some((plugin: unknown) => plugin instanceof PosthogWebpackPlugin)).toBe(true);
+  });
+
+  test("a CLI discovery failure leaves the webpack config usable", () => {
+    const errors: unknown[] = [];
+    const originalError = console.error;
+    console.error = (...args: unknown[]) => {
+      errors.push(args);
+    };
+    try {
+      const wrapped = withPosthogSourceMapWebpack(
+        { reactStrictMode: true },
+        admitProductionSourceMaps(productionEnvironment)!,
+        () => {
+          const error = new Error(
+            "Package subpath './package.json' is not defined by \"exports\" in node_modules/@posthog/nextjs-config/package.json",
+          );
+          (error as NodeJS.ErrnoException).code = "ERR_PACKAGE_PATH_NOT_EXPORTED";
+          throw error;
+        },
+      );
+      const webpackConfig = wrapped.webpack?.(
+        { plugins: [] },
+        { isServer: false } as Parameters<NonNullable<typeof wrapped.webpack>>[1],
+      );
+      expect(webpackConfig?.plugins).toEqual([]);
+      expect(errors).toHaveLength(1);
+      expect(String(errors[0])).toContain("continuing the production build");
+    } finally {
+      console.error = originalError;
+    }
+  });
+});
+
+describe("withProductionSourceMaps", () => {
+  test("a setup exception degrades to the original config", () => {
+    const errors: unknown[] = [];
+    const originalError = console.error;
+    console.error = (...args: unknown[]) => {
+      errors.push(args);
+    };
+    try {
+      const config = { reactStrictMode: true } satisfies NextConfig;
+      Object.defineProperty(config, "webpack", {
+        get() {
+          throw new Error("webpack getter exploded during source-map wrap");
+        },
+      });
+      expect(withProductionSourceMaps(config, productionEnvironment)).toBe(config);
+      expect(errors).toHaveLength(1);
+      expect(String(errors[0])).toContain("continuing without source-map upload");
+    } finally {
+      console.error = originalError;
+    }
   });
 });
 
