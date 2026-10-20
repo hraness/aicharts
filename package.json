@@ -37,7 +37,7 @@
     "kb:search:local": "bunx --bun --package https://github.com/hraness/wordcell/releases/download/v0.24.0/hraness-wordcell-0.24.0.tgz wordcell search --root kb --mode exact --selected-passage",
     "build:theme": "bun scripts/build-theme-bootstrap.ts",
     "dev": "bun run build:theme && next dev --webpack",
-    "build": "bun run build:theme && next build --webpack",
+    "build": "bun run build:theme && bun scripts/next-webpack-build.ts && bun scripts/upload-production-source-maps.ts",
     "start": "next start",
     "launch:kit": "bun scripts/write-social-kit.ts",
     "launch:kit:check": "bun scripts/write-social-kit.ts --check",
