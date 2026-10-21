@@ -3,7 +3,7 @@ title: Publish the Muse Wonder Intelligence Index note
 description: Ship /blog/muse-wonder-intelligence-index, a note that places Meta's Muse Wonder (Max) on the Intelligence Index against cost per task from the checked snapshot, names the four rows that keep it off the cost frontier, splits its $4.52 into five components and ranks each against the whole cohort, prices every other Meta row against it, keeps Meta's vendor table off the chart, and completes its Slopcamera figure through the documented generation path.
 type: plan
 area: blog
-status: blocked
+status: done
 repository_scopes:
   - app/blog
   - lib/muse-wonder-placement.ts
@@ -61,8 +61,8 @@ Provenance: drafted by a Cursor cloud agent (Claude Fable 5.1) on 2026-10-21 fro
 
 1. Verify the snapshot rows, fetch Artificial Analysis's model page and Meta's launch post and model page, and record the quoted claims. Done 2026-10-21.
 2. Write the placement binding, the article factory, registration, admission, and tests. Done 2026-10-21.
-3. Generate, review, and register the Slopcamera figure. Blocked 2026-10-21: the cloud agent VM has no Vercel CLI authentication, no linked aicharts Vercel workspace, and no reviewed Slopcamera source build, so `vercel env run` cannot inject the gateway credential into the generation child. Reading the credential through the Vercel MCP connection would decrypt a project secret into the agent context, which the task did not authorize. The handoff below is complete for a box that has both.
-4. Let CI pass, enable auto-merge on the task-owned pull request, and verify the live URL, figure, Open Graph image, Markdown twin, sitemap, and `llms.txt` entry. Waits on step 3.
+3. Generate, review, and register the Slopcamera figure. Done 2026-10-21: one paid call on the box at Slopcamera 66b4322030f4 (job `gateway_76e19177fa924b2c8d59ba2e985aeb97`, receipt `20261021T142308157Z-image-3a5d1b88-d11/receipt.json`), decode passed, reviewed at full size and in a 384×216 contact sheet beside the live figures and accepted; 1536×864 WebP, 63642 bytes, SHA-256 `229deaf0c4ef315bc7a0b61adbaf1858e2d1e265d6bd4c7d6df6e9872a4a3a61`. The rendered liquid sits low in the basin and the brass line rings the column partway up, so the registered alt text describes that visible composition instead of the draft.
+4. Let CI pass, merge the task-owned pull request, and verify the live URL, figure, Open Graph image, Markdown twin, sitemap, and `llms.txt` entry. Proceeds now that step 3 is done.
 
 ## Figure handoff
 
