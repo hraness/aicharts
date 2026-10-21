@@ -17,6 +17,7 @@ import { createMimoV26Article } from "./mimo-v2-6-pro-cost-frontier-article";
 import { createOpenModelsCodingAgentsArticle } from "./open-models-coding-agents-article";
 import { createOpus55CodingArticle } from "./opus-5-5-coding-agent-index-article";
 import { createHaiku55Article } from "./haiku-5-5-intelligence-index-article";
+import { createMuseWonderArticle } from "./muse-wonder-intelligence-index-article";
 import { createOpus55Article } from "./opus-5-5-intelligence-index-article";
 import { createSonnet55CodingArticle } from "./sonnet-5-5-coding-agent-index-article";
 import { createRealSweArticle } from "./real-swe-private-enterprise-benchmark-article";
@@ -397,6 +398,30 @@ export const BLOG_SOURCES = {
     url: "https://artificialanalysis.ai/models/claude-haiku-5-5",
     year: 2026,
   },
+  metaMuseWonder: {
+    note:
+      "Cited for the October 12, 2026 launch, the $4 and $20 per million token prices, the subscription-only Muse Wonder Full with no API price, the Power Usage and Maximum Usage plan prices and the 80x usage claim, the comparable-performance and most-advanced-model sentences, the leaderboard sentence about DeepSWE and SWE-Marathon, the muse-wonder-1.0 model name, and the vendor-run benchmark table whose Artificial Analysis Index row this note compares with the chart.",
+    publication: "Meta",
+    title: "Put your ideas to work with Muse Wonder and Muse Wonder Full",
+    url: "https://dev.meta.ai/resources/blog/build-with-muse-wonder",
+    year: 2026,
+  },
+  metaMuseWonderModel: {
+    note:
+      "Cited for the $4.00 input, $0.20 cached input, and $20.00 output prices per million tokens, the 1M token context window, the muse-wonder-1.0 and muse-wonder-full-1.0 model names, the absence of a cache-write price and of any API price for Muse Wonder Full, and the $50.00 and $200.00 monthly subscription plans.",
+    publication: "Meta",
+    title: "Muse Wonder",
+    url: "https://dev.meta.ai/models/muse-wonder",
+    year: 2026,
+  },
+  artificialAnalysisMuseWonderModel: {
+    note:
+      "Cited, from the page captured October 21, 2026 UTC, for the rounded 52 index score and #9 of 214 rank among models of the same price class, the speed, cost, and verbosity ranks, the proprietary label, the October 2026 release date, the $4.00 and $20.00 per million token prices with a 95% cache discount, the $4.52 cost per index task, the 130M output tokens across the index, the 152.2 output tokens per second, the modality sentence, the cache-pricing note, and its summary and verbosity sentences.",
+    publication: "Artificial Analysis",
+    title: "Muse Wonder (max) - Intelligence, Performance & Price Analysis",
+    url: "https://artificialanalysis.ai/models/muse-wonder",
+    year: 2026,
+  },
   terminalBenchRepository: {
     note:
       "The benchmark owners’ repository publishes Terminal-Bench and its versioned task releases. The version-pinned Terminal-Bench 4.0 cohort in the aicharts benchmarks library comes from the owners, separately from Artificial Analysis’s own Terminal-Bench 4 runs.",
@@ -580,6 +605,7 @@ export const blogArticles = [
   createSonnet55CodingArticle(),
   createOpus55Article(),
   createHaiku55Article(),
+  createMuseWonderArticle(),
   createGpt6SolArticle(),
   createGrok47Article(),
   createMimoV26Article(),
