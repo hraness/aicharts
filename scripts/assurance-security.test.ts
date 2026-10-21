@@ -62,6 +62,22 @@ describe("dependency pins", () => {
     expect((JSON.parse(read("package.json")) as { overrides?: Record<string, string> }).overrides?.["source-map-js"]).toBe("1.2.2");
     expect(lock.packages["source-map-js"]?.[0]).toBe("source-map-js@1.2.2");
   });
+  test("vite is overridden to the patched 8.3.3 release (GHSA-587h-7wmj-h5pm, GHSA-r825-w8mm-5pxw, GHSA-698v-4r3x-3vcv)", () => {
+    expect((JSON.parse(read("package.json")) as { overrides?: Record<string, string> }).overrides?.vite).toBe("8.3.3");
+    expect(lock.packages.vite?.[0]).toBe("vite@8.3.3");
+    expect(read("video/bun.lock")).not.toContain("launch-editor");
+    expect(read("video/story/bun.lock")).not.toContain("launch-editor");
+  });
+  test("Cargo.lock pins rustls-webpki 0.103.16 and webpki-roots 1.0.10 (RUSTSEC-2026-0382, RUSTSEC-2026-0381)", () => {
+    const cargo = read("Cargo.lock");
+    expect(cargo).toContain('name = "rustls-webpki"\nversion = "0.103.16"');
+    expect(cargo).toContain('name = "webpki-roots"\nversion = "1.0.10"');
+    expect(cargo).not.toContain('name = "rustls-webpki"\nversion = "0.103.15"');
+    expect(cargo).not.toContain('name = "webpki-roots"\nversion = "1.0.9"');
+    const vendor = read("vendor/tokscale-core/Cargo.lock");
+    expect(vendor).toContain('name = "rustls-webpki"\nversion = "0.103.16"');
+    expect(vendor).toContain('name = "webpki-roots"\nversion = "1.0.10"');
+  });
   test("sharp is overridden to the patched 0.35.5 release (GHSA-wq5f-xc86-pv6w)", () => {
     expect((JSON.parse(read("package.json")) as { overrides?: Record<string, string> }).overrides?.sharp).toBe("0.35.5");
     expect(lock.packages.sharp?.[0]).toBe("sharp@0.35.5");
