@@ -227,6 +227,15 @@ export const BLOG_EDITORIAL_IMAGES = {
     "20261012T150152962Z-image-84bc717a-676/receipt.json",
     "gateway_b7636b139acf430ca7c8980d7ac30b96.json",
   ),
+  "muse-wonder-intelligence-index": image(
+    "muse-wonder-intelligence-index",
+    "A slender matte column, ivory at its rounded top and dark gray below a thin brass ring, stands in the center of a shallow charcoal basin of still, dark liquid.",
+    "Three quarters of what a Muse Wonder (Max) task costs on the Intelligence Index is input-side cost, and its cache-write line is the largest of any row on the chart.",
+    "229deaf0c4ef315bc7a0b61adbaf1858e2d1e265d6bd4c7d6df6e9872a4a3a61",
+    "b26fd8c38b73675c33dad953d900f00da5462d4c94b5df5e5c27e32b3f78a18f",
+    "20261021T142308157Z-image-3a5d1b88-d11/receipt.json",
+    "gateway_76e19177fa924b2c8d59ba2e985aeb97.json",
+  ),
   "opus-5-5-coding-agent-index": image(
     "opus-5-5-coding-agent-index",
     "A tall matte ivory block stands near the right end of a long low charcoal table, with one thin brass line running left along the table’s edge.",

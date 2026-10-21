@@ -342,6 +342,26 @@
       "review": "accepted"
     },
     {
+      "slug": "muse-wonder-intelligence-index",
+      "promptSha256": "b26fd8c38b73675c33dad953d900f00da5462d4c94b5df5e5c27e32b3f78a18f",
+      "master": {
+        "path": "/images/blog/muse-wonder-intelligence-index.webp",
+        "width": 1536,
+        "height": 864,
+        "bytes": 63642,
+        "sha256": "229deaf0c4ef315bc7a0b61adbaf1858e2d1e265d6bd4c7d6df6e9872a4a3a61"
+      },
+      "receiptPath": "artifacts/slopcamera/generated/gateway/20261021T142308157Z-image-3a5d1b88-d11/receipt.json",
+      "jobPath": "artifacts/slopcamera/generated/gateway-jobs/gateway_76e19177fa924b2c8d59ba2e985aeb97.json",
+      "generator": {
+        "package": "@hraness/slopcamera",
+        "version": "3.2.5",
+        "sourceCommit": "66b4322030f4de24f4d5b6d0c2515c109259f901"
+      },
+      "validation": "decode-passed",
+      "review": "accepted"
+    },
+    {
       "slug": "opus-5-5-coding-agent-index",
       "promptSha256": "89bf0ca0420013ffe9078b787fb535bd633bdd214f074bca7751872cd248d0af",
       "master": {
