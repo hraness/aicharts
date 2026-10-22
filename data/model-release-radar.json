@@ -3,7 +3,7 @@
   "source": {
     "method": "models-api",
     "name": "OpenRouter",
-    "retrievedAt": "2026-10-19T19:59:40.576Z",
+    "retrievedAt": "2026-10-22T18:36:41.477Z",
     "timestampMeaning": "source-added-at",
     "url": "https://openrouter.ai/api/v1/models?sort=newest"
   },
@@ -1257,27 +1257,6 @@
       "providerName": "Alibaba Cloud",
       "sourceAddedAt": "2026-07-27T22:16:01.000Z",
       "status": "awaiting-benchmark"
-    },
-    {
-      "capabilities": {
-        "inputModalities": [
-          "file",
-          "image",
-          "text"
-        ],
-        "outputModalities": [
-          "text"
-        ],
-        "supportsTools": true
-      },
-      "canonicalSlug": "anthropic/claude-opus-5-20260723",
-      "id": "anthropic/claude-opus-5",
-      "model": "Claude Opus 5",
-      "modelUrl": "https://openrouter.ai/anthropic/claude-opus-5",
-      "providerId": "anthropic",
-      "providerName": "Anthropic",
-      "sourceAddedAt": "2026-07-24T17:02:24.000Z",
-      "status": "benchmarked"
     }
   ]
 }
