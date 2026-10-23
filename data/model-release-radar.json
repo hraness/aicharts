@@ -3,7 +3,7 @@
   "source": {
     "method": "models-api",
     "name": "OpenRouter",
-    "retrievedAt": "2026-10-22T18:36:41.477Z",
+    "retrievedAt": "2026-10-23T18:26:54.951Z",
     "timestampMeaning": "source-added-at",
     "url": "https://openrouter.ai/api/v1/models?sort=newest"
   },
@@ -28,6 +28,12 @@
     "windowDays": 90
   },
   "observedListings": [
+    {
+      "id": "moonshotai/kimi-k3.1-pro",
+      "model": "Kimi K3.1 Pro",
+      "providerId": "moonshot_ai",
+      "sourceAddedAt": "2026-10-23T17:56:28.000Z"
+    },
     {
       "id": "deepseek/deepseek-v4.1-flash-1017",
       "model": "DeepSeek V4.1 Flash 1017",
@@ -396,6 +402,27 @@
     }
   ],
   "releases": [
+    {
+      "capabilities": {
+        "inputModalities": [
+          "image",
+          "text",
+          "video"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "moonshotai/kimi-k3.1-pro-20261023",
+      "id": "moonshotai/kimi-k3.1-pro",
+      "model": "Kimi K3.1 Pro",
+      "modelUrl": "https://openrouter.ai/moonshotai/kimi-k3.1-pro",
+      "providerId": "moonshot_ai",
+      "providerName": "Moonshot AI",
+      "sourceAddedAt": "2026-10-23T17:56:28.000Z",
+      "status": "awaiting-benchmark"
+    },
     {
       "capabilities": {
         "inputModalities": [
