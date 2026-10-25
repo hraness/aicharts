@@ -3,7 +3,7 @@
   "source": {
     "method": "models-api",
     "name": "OpenRouter",
-    "retrievedAt": "2026-10-23T18:26:54.951Z",
+    "retrievedAt": "2026-10-25T22:37:48.130Z",
     "timestampMeaning": "source-added-at",
     "url": "https://openrouter.ai/api/v1/models?sort=newest"
   },
@@ -1263,27 +1263,6 @@
       "providerName": "DeepSeek",
       "sourceAddedAt": "2026-07-31T06:21:48.000Z",
       "status": "benchmarked"
-    },
-    {
-      "capabilities": {
-        "inputModalities": [
-          "image",
-          "text",
-          "video"
-        ],
-        "outputModalities": [
-          "text"
-        ],
-        "supportsTools": true
-      },
-      "canonicalSlug": "qwen/qwen3.7-flash-20260727",
-      "id": "qwen/qwen3.7-flash",
-      "model": "Qwen3.7 Flash",
-      "modelUrl": "https://openrouter.ai/qwen/qwen3.7-flash",
-      "providerId": "alibaba_cloud",
-      "providerName": "Alibaba Cloud",
-      "sourceAddedAt": "2026-07-27T22:16:01.000Z",
-      "status": "awaiting-benchmark"
     }
   ]
 }
