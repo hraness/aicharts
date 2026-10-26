@@ -3,7 +3,7 @@
   "source": {
     "method": "models-api",
     "name": "OpenRouter",
-    "retrievedAt": "2026-10-25T22:37:48.130Z",
+    "retrievedAt": "2026-10-26T19:24:01.328Z",
     "timestampMeaning": "source-added-at",
     "url": "https://openrouter.ai/api/v1/models?sort=newest"
   },
@@ -28,6 +28,12 @@
     "windowDays": 90
   },
   "observedListings": [
+    {
+      "id": "openai/gpt-6.1-terra",
+      "model": "GPT-6.1 Terra",
+      "providerId": "openai",
+      "sourceAddedAt": "2026-10-26T18:13:29.000Z"
+    },
     {
       "id": "moonshotai/kimi-k3.1-pro",
       "model": "Kimi K3.1 Pro",
@@ -402,6 +408,27 @@
     }
   ],
   "releases": [
+    {
+      "capabilities": {
+        "inputModalities": [
+          "file",
+          "image",
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "openai/gpt-6.1-terra-20261026",
+      "id": "openai/gpt-6.1-terra",
+      "model": "GPT-6.1 Terra",
+      "modelUrl": "https://openrouter.ai/openai/gpt-6.1-terra",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceAddedAt": "2026-10-26T18:13:29.000Z",
+      "status": "awaiting-benchmark"
+    },
     {
       "capabilities": {
         "inputModalities": [
