@@ -25,7 +25,7 @@
 # Guidelines
 
 - Follow `WRITING.md` for internal prose and `STYLE.md` for public prose.
-- Follow the managed Next.js compatibility guidance in `CLAUDE.md`: read the relevant installed `node_modules/next/dist/docs/` guide before writing code and heed deprecation notices. The installed version may differ from training data.
+- Follow the managed Next.js compatibility guidance: read the relevant installed `node_modules/next/dist/docs/` guide before writing code and heed deprecation notices. The installed version may differ from training data.
 - Apply unreasonably robust programming when agent work is cheap. Model invalid states out of existence and pair readable regression examples with property tests for general laws.
 - Deliver changes to protected `main` through task-owned pull requests. Autonomously carry every task-owned pull request through required reviews and checks, merge only after every gate passes, and verify the documented production deployment without asking for renewed confirmation. Preserve unrelated work, never bypass a gate, and stop only for missing authority or credentials, a material product decision, or a failed gate that cannot be resolved safely. Repository-owned bounded automation may keep its documented delivery path. Never force-push.
 - Pin Hraness dependencies to reviewed immutable releases or full commits. Never connect repositories with sibling paths, Git submodules, or coordinated `main` assumptions.
@@ -131,3 +131,13 @@
 - Hosted ranking sends the query and each candidate's identifier, title, vault-relative path, and at most 512 UTF-8 bytes of snippet text to TypeSafe, with provider input-token charges. Keep confidential queries and unpublished or private notes on the local path.
 - Use `bun run kb:search:local "query" --json` for local-only search. Keep credentials outside the repository: `TYPESAFE_API_KEY`, `TYPESAFE_API_KEY_FILE`, or the owner-only `~/.config/wordcell/typesafe-api-key` file.
 - Inspect the `rerank` lane status and its structured receipt for attempted requests, elapsed time, known usage, and incomplete usage. Missing credentials or provider failures retain baseline ordering; a successful exit does not prove reranking occurred. Treat ranking probabilities as navigation signals, not evidence of truth.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+## This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
