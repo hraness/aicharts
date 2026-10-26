@@ -31,6 +31,9 @@ export const PUBLIC_MODEL_CARD_PATHS = [
   "/models/unlisted/claude-fable-5-1-xhigh-swe-2-medium.e2f060e68d045988c8f73d9b/default",
   "/models/unlisted/gpt-6-astra-xhigh-swe-2-medium.54c5f1484f55a9b95f428406/default",
   "/models/zai/glm-5.3/default",
+  "/models/kimi/kimi-k3-1-pro/index",
+  "/models/inclusionai/ling-3-1-flash-rc5/index",
+  "/models/minimax/minimax-m3-1-flash/index",
   "/models/deepseek/deepseek-v4-1-flash-1017/index",
   "/models/reflection/reflection-beam/index",
   "/models/meta/muse-spark-open/index",
@@ -38,6 +41,5 @@ export const PUBLIC_MODEL_CARD_PATHS = [
   "/models/meta/muse-wonder/index",
   "/models/anthropic/claude-haiku-5-5/index",
   "/models/mistral/mistral-large-4/index",
-  "/models/inclusionai/ling-3-1-flash/index",
   "/models/xiaomi/mimo-v2-6-pro/index",
 ] as const;
