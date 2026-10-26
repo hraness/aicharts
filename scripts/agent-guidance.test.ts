@@ -13,7 +13,7 @@ test("Next guidance preserves the KB guide format and both agent files", async (
   const root = fileURLToPath(new URL("../", import.meta.url));
   const agents = await readFile(path.join(root, "AGENTS.md"), "utf8");
   const claude = await readFile(path.join(root, "CLAUDE.md"), "utf8");
-  expect(agents.match(/^#+ .+$/gm)).toEqual(["# Contents", "# Guidelines"]);
+  expect(agents.match(/^#+ .+$/gm)).toEqual(["# Contents", "# Guidelines", "## This is NOT the Next.js you know"]);
   expect(agents).toContain("read the relevant installed `node_modules/next/dist/docs/` guide");
   expect(claude.startsWith("@AGENTS.md\n")).toBe(true);
   expect(hasCurrentAgentRules(root)).toBe(true);
@@ -24,8 +24,7 @@ test("Next guidance preserves the KB guide format and both agent files", async (
     await writeFile(path.join(fixture, "CLAUDE.md"), claude);
     expect(hasCurrentAgentRules(fixture)).toBe(true);
     expect(writeAgentFiles(fixture)).toEqual({
-      agentsMd: "skipped",
-      claudeMd: "unchanged",
+      agentsMd: "unchanged",
     });
     expect(await readFile(path.join(fixture, "AGENTS.md"), "utf8")).toBe(agents);
     expect(await readFile(path.join(fixture, "CLAUDE.md"), "utf8")).toBe(claude);

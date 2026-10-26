@@ -3836,20 +3836,20 @@
     },
     {
       "name": "zstd",
-      "version": "0.13.3",
-      "checksum": "e91ee311a569c327171651566e07972200e76fcfe2242a4fa446149a3881c08a",
+      "version": "0.14.3",
+      "checksum": "db3ae9bf90af6e40197bef767eeefc46ad6397420fe873830bd85e5fbbfb3c70",
       "license": "MIT",
       "files": [
         {
           "path": "LICENSE",
-          "sha256": "129e8edef29e9abcd2ebabe252f4ef1b1289cdca356bf0040284a2fbccfb96c8"
+          "sha256": "ce4868c8e4ebe47a7d4b3c93dbf6b802033e5ae2fa7638098173f80836daac60"
         }
       ]
     },
     {
       "name": "zstd-safe",
-      "version": "7.3.0",
-      "checksum": "64d80649ab6db9d9f6f9c80a40becd948eda4714a0a5ac8c4d157a32231c7882",
+      "version": "8.2.0",
+      "checksum": "ded520f16b29e1a9b771c722221b2b0a0398c2316d9bb3c42b458a5414d7434b",
       "license": "BSD-3-Clause",
       "files": [
         {
@@ -3860,8 +3860,8 @@
     },
     {
       "name": "zstd-sys",
-      "version": "2.1.0+zstd.1.5.7",
-      "checksum": "0ef0a8027ec3ee71300ab3bcbcd0393f434aa72b91ca6d635a39941deae8eea0",
+      "version": "2.1.2+zstd.1.5.7",
+      "checksum": "481ada9c543b2323cbb7bbdbb5249177fbf0188ed959ed2c15e4b22421c84ed3",
       "license": "BSD-3-Clause",
       "files": [
         {

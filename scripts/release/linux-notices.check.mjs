@@ -73,8 +73,8 @@ function addCustody(f, changes = {}) {
 function addZstd(f) {
   const pkg = addRing(f);
   const oldId = pkg.id;
-  Object.assign(pkg, { id: `${registry}#zstd-sys@2.1.0+zstd.1.5.7`, name: "zstd-sys", version: "2.1.0+zstd.1.5.7", license: "BSD-3-Clause", links: "zstd",
-    manifest_path: `${f.input.cargoHomeDirectory}/registry/src/index-fixture/zstd-sys-2.1.0+zstd.1.5.7/Cargo.toml` });
+  Object.assign(pkg, { id: `${registry}#zstd-sys@2.1.2+zstd.1.5.7`, name: "zstd-sys", version: "2.1.2+zstd.1.5.7", license: "BSD-3-Clause", links: "zstd",
+    manifest_path: `${f.input.cargoHomeDirectory}/registry/src/index-fixture/zstd-sys-2.1.2+zstd.1.5.7/Cargo.toml` });
   for (const message of f.messages.filter(value => value.package_id === oldId)) {
     message.package_id = pkg.id;
     if (message.reason === "compiler-artifact") {
@@ -677,14 +677,14 @@ test("source mapping is unique, pinned and covers SQLite and Unicode notices", a
       assert.match(file.sha256, /^[0-9a-f]{64}$/u);
       if (file.path.includes("/")) {
         if (id === "ring@0.17.14") assert.ok(ringLicenses.slice(3).includes(file.path));
-        else { assert.equal(id, "zstd-sys@2.1.0+zstd.1.5.7"); assert.ok(zstdLicenses.includes(file.path)); }
+        else { assert.equal(id, "zstd-sys@2.1.2+zstd.1.5.7"); assert.ok(zstdLicenses.includes(file.path)); }
       }
     }
   }
   assert.ok(seen.has("libsqlite3-sys@0.38.2"));
   assert.ok(policy.packages.find(pkg => pkg.name === "unicode-ident").files.some(file => file.path === "LICENSE-UNICODE"));
   assert.deepEqual(policy.packages.find(pkg => pkg.name === "ring" && pkg.version === "0.17.14").files.map(file => file.path).sort(), [...ringLicenses].sort());
-  assert.deepEqual(policy.packages.find(pkg => pkg.name === "zstd-sys" && pkg.version === "2.1.0+zstd.1.5.7").files.map(file => file.path).sort(), [...zstdLicenses].sort());
+  assert.deepEqual(policy.packages.find(pkg => pkg.name === "zstd-sys" && pkg.version === "2.1.2+zstd.1.5.7").files.map(file => file.path).sort(), [...zstdLicenses].sort());
   assert.ok(policy.packages.length <= 256);
 });
 
