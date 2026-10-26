@@ -65,16 +65,66 @@ export const modelsSocialImagePage = {
 export const codingAgentProfileSocialImageDescription =
   "Scores, cost, time, and tokens per coding task.";
 
+/** Alphanumeric runs, matching the shared card's eyebrow-repeat word split. */
+function identityWords(value: string): readonly string[] {
+  return value.trim().toLocaleLowerCase("en-US").split(/[^\p{L}\p{N}]+/u).filter(word => word.length > 0);
+}
+
+function eyebrowOpensHeadline(eyebrow: string, headline: string): boolean {
+  const eyebrowWords = identityWords(eyebrow);
+  const headlineWords = identityWords(headline);
+  return eyebrowWords.length > 0
+    && headlineWords.length >= eyebrowWords.length
+    && eyebrowWords.every((word, index) => headlineWords[index] === word);
+}
+
 /**
  * The card headline under a provider eyebrow. A title that opens with the
- * provider's own name ("DeepSeek V4 Flash") would hide the eyebrow, so the
- * card reads the name top to bottom instead: "DeepSeek" over "V4 Flash".
+ * provider name would hide the eyebrow, so the card reads top to bottom:
+ * "DeepSeek" over "V4 Flash", "MiniMax" over "M3.1-Flash". The prefix match
+ * ignores case and the punctuation between words.
  */
 export function modelSocialImageHeadline(displayTitle: string, eyebrow: string): string {
-  const prefix = `${eyebrow} `;
-  return displayTitle.startsWith(prefix) && displayTitle.length > prefix.length
-    ? displayTitle.slice(prefix.length)
-    : displayTitle;
+  const eyebrowWords = identityWords(eyebrow);
+  const titleWords = identityWords(displayTitle);
+  if (
+    eyebrowWords.length === 0
+    || titleWords.length <= eyebrowWords.length
+    || !eyebrowWords.every((word, index) => titleWords[index] === word)
+  ) {
+    return displayTitle;
+  }
+
+  const tokens = displayTitle.match(/\p{L}+|\p{N}+|[^\p{L}\p{N}]+/gu);
+  if (tokens === null) return displayTitle;
+  let remainingWords = eyebrowWords.length;
+  let consumed = 0;
+  for (const token of tokens) {
+    if (remainingWords === 0) {
+      if (/^[^\p{L}\p{N}]+$/u.test(token)) consumed += token.length;
+      break;
+    }
+    consumed += token.length;
+    if (/\p{L}|\p{N}/u.test(token)) remainingWords -= 1;
+  }
+  const rest = displayTitle.slice(consumed);
+  return rest.length > 0 ? rest : displayTitle;
+}
+
+/**
+ * Provider-over-model card copy that the shared template can draw as written.
+ * When the title is only the provider, or stripping still leaves a repeating
+ * eyebrow, the card keeps the full name and omits the eyebrow.
+ */
+export function modelSocialImageCopy(
+  displayTitle: string,
+  providerName: string,
+): Pick<SocialImagePage, "eyebrow" | "headline"> {
+  const headline = modelSocialImageHeadline(displayTitle, providerName);
+  if (eyebrowOpensHeadline(providerName, headline)) {
+    return { eyebrow: "", headline: displayTitle };
+  }
+  return { eyebrow: providerName, headline };
 }
 
 /** Alt text for a model page card names the whole model, as the page does. */
@@ -100,11 +150,9 @@ export function codingAgentProfileSocialImageEyebrow(
 export function codingAgentProfileSocialImagePage(
   card: Readonly<{ canonicalModelId: string; displayTitle: string; harnessLabel: string; providerName: string }>,
 ): SocialImagePage {
-  const eyebrow = codingAgentProfileSocialImageEyebrow(card);
   return {
     description: codingAgentProfileSocialImageDescription,
-    eyebrow,
-    headline: modelSocialImageHeadline(card.displayTitle, eyebrow),
+    ...modelSocialImageCopy(card.displayTitle, codingAgentProfileSocialImageEyebrow(card)),
   };
 }
 
@@ -123,7 +171,6 @@ export function indexModelSocialImagePage(page: Readonly<{
   const cost = page.costUsdPerTask === null ? "" : `, at ${formatIntelligenceCost(page.costUsdPerTask)} per task`;
   return {
     description: `Scores ${formatIntelligenceIndex(page.intelligenceIndex)} on the ${page.sourceName}${cost}.`,
-    eyebrow: page.providerName,
-    headline: modelSocialImageHeadline(page.displayTitle, page.providerName),
+    ...modelSocialImageCopy(page.displayTitle, page.providerName),
   };
 }
