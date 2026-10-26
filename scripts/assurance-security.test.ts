@@ -68,6 +68,37 @@ describe("dependency pins", () => {
     expect(read("video/bun.lock")).not.toContain("launch-editor");
     expect(read("video/story/bun.lock")).not.toContain("launch-editor");
   });
+  test("dompurify is overridden to the patched 3.4.17 release (GHSA-cg2g-xh64-v4q7, GHSA-mrv2-3pqr-j5jr, GHSA-c6gr-qvv4-5v3f)", () => {
+    expect((JSON.parse(read("package.json")) as { overrides?: Record<string, string> }).overrides?.dompurify).toBe("3.4.17");
+    expect(lock.packages.dompurify?.[0]).toBe("dompurify@3.4.17");
+  });
+  test("fast-uri is overridden to the patched 3.1.9 release (GHSA-w74x-v6f9-j3xg, GHSA-wjr9-j795-jxcr, GHSA-333x-w4r6-6crp, GHSA-xhq7-xmqj-769h)", () => {
+    expect((JSON.parse(read("package.json")) as { overrides?: Record<string, string> }).overrides?.["fast-uri"]).toBe("3.1.9");
+    expect(lock.packages["fast-uri"]?.[0]).toBe("fast-uri@3.1.9");
+  });
+  test("undici is overridden to the patched 7.30.1 release (GHSA-xjj6-f33q-929c, GHSA-4qv8-2p9j-2685, GHSA-f72v-6w45-q472)", () => {
+    expect((JSON.parse(read("package.json")) as { overrides?: Record<string, string> }).overrides?.undici).toBe("7.30.1");
+    expect(lock.packages.undici?.[0]).toBe("undici@7.30.1");
+    const videoManifest = JSON.parse(read("video/package.json")) as { overrides?: Record<string, string> };
+    const videoLock = parseBunLock(read("video/bun.lock"));
+    expect(videoManifest.overrides?.undici).toBe("7.30.1");
+    expect(videoLock.packages.undici?.[0]).toBe("undici@7.30.1");
+  });
+  test("zod is overridden to the patched 4.6.7 release (GHSA-mrhx-c7xc-m3w5)", () => {
+    expect((JSON.parse(read("package.json")) as { overrides?: Record<string, string> }).overrides?.zod).toBe("4.6.7");
+    expect(lock.packages.zod?.[0]).toBe("zod@4.6.7");
+    const videoManifest = JSON.parse(read("video/package.json")) as { overrides?: Record<string, string> };
+    const videoLock = parseBunLock(read("video/bun.lock"));
+    expect(videoManifest.overrides?.zod).toBe("4.6.7");
+    expect(videoLock.packages.zod?.[0]).toBe("zod@4.6.7");
+  });
+  test("Next.js and eslint-config-next are pinned to the patched 16.4.3 release (GHSA-2464-fhr4-w9xw, GHSA-673q-mjm6-r5xr, GHSA-p3m5-59mp-jv5r)", () => {
+    const pkg = JSON.parse(read("package.json")) as { dependencies?: Record<string, string>; devDependencies?: Record<string, string> };
+    expect(pkg.dependencies?.next).toBe("16.4.3");
+    expect(pkg.devDependencies?.["eslint-config-next"]).toBe("16.4.3");
+    expect(lock.packages.next?.[0]).toBe("next@16.4.3");
+    expect(lock.packages["eslint-config-next"]?.[0]).toBe("eslint-config-next@16.4.3");
+  });
   test("Cargo.lock pins rustls-webpki 0.103.16 and webpki-roots 1.0.10 (RUSTSEC-2026-0382, RUSTSEC-2026-0381)", () => {
     const cargo = read("Cargo.lock");
     expect(cargo).toContain('name = "rustls-webpki"\nversion = "0.103.16"');
@@ -77,6 +108,15 @@ describe("dependency pins", () => {
     const vendor = read("vendor/tokscale-core/Cargo.lock");
     expect(vendor).toContain('name = "rustls-webpki"\nversion = "0.103.16"');
     expect(vendor).toContain('name = "webpki-roots"\nversion = "1.0.10"');
+    expect(vendor).toContain('name = "rustls"\nversion = "0.23.46"');
+    expect(vendor).not.toContain('name = "rustls"\nversion = "0.23.45"');
+    expect(cargo).toContain('name = "zstd"\nversion = "0.14.3"');
+    expect(cargo).toContain('name = "zstd-safe"\nversion = "8.2.0"');
+    expect(cargo).toContain('name = "zstd-sys"\nversion = "2.1.2+zstd.1.5.7"');
+    expect(cargo).not.toContain('name = "zstd"\nversion = "0.13.3"');
+    expect(vendor).toContain('name = "zstd"\nversion = "0.14.3"');
+    expect(vendor).toContain('name = "zstd-safe"\nversion = "8.2.0"');
+    expect(vendor).toContain('name = "zstd-sys"\nversion = "2.1.2+zstd.1.5.7"');
   });
   test("sharp is overridden to the patched 0.35.5 release (GHSA-wq5f-xc86-pv6w)", () => {
     expect((JSON.parse(read("package.json")) as { overrides?: Record<string, string> }).overrides?.sharp).toBe("0.35.5");

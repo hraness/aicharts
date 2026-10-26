@@ -49,7 +49,7 @@ const NATIVE_PROVIDERS = new Map([
   // ring builds its test archive even for ordinary release library builds.
   ["ring@0.17.14", { links: "ring_core_0_17_14_", libraries: ["ring_core_0_17_14_", "ring_core_0_17_14__test"] }],
   // Reviewed bundled C build, with the upstream BSD notice retained below.
-  ["zstd-sys@2.1.0+zstd.1.5.7", { links: "zstd", libraries: ["zstd"] }],
+  ["zstd-sys@2.1.2+zstd.1.5.7", { links: "zstd", libraries: ["zstd"] }],
 ]);
 const RING_NESTED_LICENSES = new Set(["src/polyfill/once_cell/LICENSE-APACHE", "src/polyfill/once_cell/LICENSE-MIT"]);
 const ZSTD_NESTED_LICENSES = new Set(["zstd/LICENSE"]);
@@ -408,12 +408,12 @@ export async function collectLinuxNotices(input) {
       if (!array(item.files, 16).length) fail("notices_unmapped_crate");
       if (pkg.name === "ring" && pkg.version === "0.17.14"
         && [...RING_NESTED_LICENSES].some(name => !item.files.some(file => file.path === name))) fail("notices_unmapped_crate");
-      if (pkg.name === "zstd-sys" && pkg.version === "2.1.0+zstd.1.5.7"
+      if (pkg.name === "zstd-sys" && pkg.version === "2.1.2+zstd.1.5.7"
         && [...ZSTD_NESTED_LICENSES].some(name => !item.files.some(file => file.path === name))) fail("notices_unmapped_crate");
       for (const file of item.files) {
         const relativeFile = relative(file.path);
         if (!(LICENSE_FILE.test(relativeFile) || (pkg.name === "ring" && pkg.version === "0.17.14" && RING_NESTED_LICENSES.has(relativeFile))
-          || (pkg.name === "zstd-sys" && pkg.version === "2.1.0+zstd.1.5.7" && ZSTD_NESTED_LICENSES.has(relativeFile)))
+          || (pkg.name === "zstd-sys" && pkg.version === "2.1.2+zstd.1.5.7" && ZSTD_NESTED_LICENSES.has(relativeFile)))
           || !HASH.test(file.sha256)) fail("notices_unmapped_crate");
         const filename = path.join(directory, relativeFile);
         await canonicalFile(filename, "notices_crate_changed");

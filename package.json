@@ -138,7 +138,7 @@
     "@posthog/webpack-plugin": "1.7.1",
     "@vercel/oidc": "4.0.1",
     "jose": "6.2.12",
-    "next": "16.3.8",
+    "next": "16.4.3",
     "posthog-js": "1.438.12",
     "posthog-node": "5.56.2",
     "react": "19.3.1",
@@ -153,7 +153,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.5",
     "eslint": "^9.39.2",
-    "eslint-config-next": "16.3.8",
+    "eslint-config-next": "16.4.3",
     "fast-check": "^4.8.0",
     "iwanthue": "2.1.1",
     "playwright-core": "1.63.0",
@@ -165,10 +165,13 @@
     "@hraness/support-foundation": "github:hraness/support-foundation#ed89e584c2c420e3e0547bbe8f32baf8e3a2ae4d"
   },
   "overrides": {
+    "dompurify": "3.4.17",
     "fast-glob": "npm:tinyglobby@0.2.17",
+    "fast-uri": "3.1.9",
     "sharp": "0.35.5",
     "source-map-js": "1.2.2",
-    "undici": "7.29.1",
-    "vite": "8.3.3"
+    "undici": "7.30.1",
+    "vite": "8.3.3",
+    "zod": "4.6.7"
   }
 }
