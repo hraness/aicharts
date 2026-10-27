@@ -58,6 +58,26 @@ describe("model-release semantic identity", () => {
     expect(modelReleaseProviderForOpenRouterId("~openai/private")).toBeNull();
     expect(modelReleaseProviderForOpenRouterId("openai/gpt-5.6-sol:batch")).toBeNull();
     expect(modelReleaseProviderForOpenRouterId("unknown/example")).toBeNull();
+    expect(modelReleaseProviderForOpenRouterId("reflection/beam-1.0-501b-a23b")).toEqual({
+      providerId: "reflection",
+      providerName: "Reflection",
+    });
+    expect(modelReleaseProviderForOpenRouterId("thinkingmachines/inkling")).toEqual({
+      providerId: "thinking_machines",
+      providerName: "Thinking Machines",
+    });
+    expect(modelReleaseProviderForOpenRouterId("nvidia/nemotron-3-ultra-550b-a55b")).toEqual({
+      providerId: "nvidia",
+      providerName: "NVIDIA",
+    });
+    expect(modelReleaseProviderForOpenRouterId("mistralai/mistral-large")).toEqual({
+      providerId: "mistral",
+      providerName: "Mistral AI",
+    });
+    expect(modelReleaseProviderForOpenRouterId("arcee-ai/trinity-mini")).toEqual({
+      providerId: "arcee_ai",
+      providerName: "Arcee AI",
+    });
   });
 
   test("retains deliberate punctuation, configuration, and Anthropic brand matches", () => {

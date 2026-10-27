@@ -5,10 +5,6 @@ import codingAgentData from "@/data/coding-agents.json";
 import { parseCodingAgentSnapshot, type CodingAgentRecord } from "./coding-agent-data";
 import { codingAgentSnapshotRows } from "./coding-agent-snapshot-rows";
 import {
-  CLOSED_WEIGHT_PROVIDER_IDS,
-  KNOWN_WEIGHT_PROVIDER_IDS,
-  OPEN_WEIGHT_PROVIDER_IDS,
-  UNCLASSIFIED_WEIGHT_PROVIDER_IDS,
   cataloguedSnapshotProviderIds,
   codingAgentWeightClass,
   formatAaIndexGap,
@@ -16,14 +12,23 @@ import {
   highestAaIndexRowForModel,
   isOpenWeightCodingAgent,
   openWeightCodingAgentRows,
+  openWeightIndexFromIntelligenceRecords,
   openWeightProviderNames,
-  uncataloguedSnapshotProviderIds,
   unclassifiedProviderNames,
 } from "./open-weight-coding-agents";
 
 const parsed = parseCodingAgentSnapshot(codingAgentData);
 if (!parsed.ok) throw parsed.error;
 const snapshot = parsed.value;
+
+const index = new Map<string, boolean>([
+  ["glm-5-3", true],
+  ["kimi-k3", true],
+  ["qwen3-8-max", true],
+  ["deepseek-v4-flash-0731", true],
+  ["gpt-6-astra", false],
+  ["opus-5-5", false],
+]);
 
 function record(overrides: Partial<CodingAgentRecord> = {}): CodingAgentRecord {
   return {
@@ -51,55 +56,59 @@ function record(overrides: Partial<CodingAgentRecord> = {}): CodingAgentRecord {
 }
 
 describe("open-weight coding-agent classification", () => {
-  test("keeps the provider catalog disjoint and exhaustive for the checked snapshot", () => {
-    const ids = [...KNOWN_WEIGHT_PROVIDER_IDS];
-    expect(new Set(ids).size).toBe(ids.length);
-    expect(uncataloguedSnapshotProviderIds(snapshot.records)).toEqual([]);
-    expect(cataloguedSnapshotProviderIds(snapshot.records)).toEqual(
-      [...new Set(snapshot.records.map(item => item.providerId))].sort(),
-    );
-    for (const providerId of OPEN_WEIGHT_PROVIDER_IDS) {
-      expect(CLOSED_WEIGHT_PROVIDER_IDS).not.toContain(providerId);
-      expect(UNCLASSIFIED_WEIGHT_PROVIDER_IDS).not.toContain(providerId);
-    }
+  test("classifies from Artificial Analysis model identities instead of lab lists", () => {
+    expect(codingAgentWeightClass(record({ model: "GLM-5.3" }), index)).toBe("open");
+    expect(codingAgentWeightClass(record({
+      model: "Kimi K3",
+      seriesId: "Kimi Code CLI:moonshot_kimi-k3",
+    }), index)).toBe("open");
+    expect(codingAgentWeightClass(record({ model: "GPT-6 Astra" }), index)).toBe("closed");
+    expect(codingAgentWeightClass(record({ model: "Opus 5.5" }), index)).toBe("closed");
+    expect(codingAgentWeightClass(record({ model: "Unknown Model" }), index)).toBe("unclassified");
+    expect(isOpenWeightCodingAgent(record({ model: "Qwen3.8 Max" }), index)).toBeTrue();
+    expect(isOpenWeightCodingAgent(record({ model: "GPT-6 Astra" }), index)).toBeFalse();
   });
 
-  test("classifies only the allowlisted open-weight publishers as open", () => {
-    expect(codingAgentWeightClass("deepseek")).toBe("open");
-    expect(codingAgentWeightClass("moonshot_ai")).toBe("open");
-    expect(codingAgentWeightClass("alibaba_cloud")).toBe("open");
-    expect(codingAgentWeightClass("z_ai")).toBe("open");
-    expect(codingAgentWeightClass("anthropic")).toBe("closed");
-    expect(codingAgentWeightClass("openai")).toBe("closed");
-    expect(codingAgentWeightClass("cognition")).toBe("unclassified");
-    expect(codingAgentWeightClass("meta")).toBe("unclassified");
-    expect(codingAgentWeightClass("unknown_lab")).toBe("unclassified");
-    expect(isOpenWeightCodingAgent(record({ providerId: "deepseek" }))).toBeTrue();
-    expect(isOpenWeightCodingAgent(record({ providerId: "openai" }))).toBeFalse();
-    expect(isOpenWeightCodingAgent(record({ providerId: "meta" }))).toBeFalse();
+  test("drops identities that Artificial Analysis marks both open and closed", () => {
+    const conflicting = openWeightIndexFromIntelligenceRecords([
+      {
+        slug: "shared-model",
+        name: "Shared Model",
+        shortName: "Shared",
+        weights: { open: true },
+      },
+      {
+        slug: "shared-model-closed",
+        name: "Shared Model",
+        shortName: "Shared",
+        weights: { open: false },
+      },
+    ]);
+    expect(conflicting.has("shared-model")).toBeFalse();
+    expect(conflicting.get("shared")).toBeUndefined();
   });
 
   test("lists open and unclassified provider names from records", () => {
     const records = [
-      record({ id: "a", providerId: "deepseek", providerName: "DeepSeek" }),
-      record({ id: "b", providerId: "z_ai", providerName: "Z.ai" }),
-      record({ id: "c", providerId: "deepseek", providerName: "DeepSeek" }),
-      record({ id: "d", providerId: "meta", providerName: "Meta" }),
-      record({ id: "e", providerId: "openai", providerName: "OpenAI" }),
+      record({ id: "a", model: "GLM-5.3", providerId: "z_ai", providerName: "Z.ai" }),
+      record({ id: "b", model: "Kimi K3", providerId: "moonshot_ai", providerName: "Moonshot AI" }),
+      record({ id: "c", model: "GLM-5.3", providerId: "z_ai", providerName: "Z.ai" }),
+      record({ id: "d", model: "Unknown Model", providerId: "meta", providerName: "Meta" }),
+      record({ id: "e", model: "GPT-6 Astra", providerId: "openai", providerName: "OpenAI" }),
     ];
-    expect(openWeightProviderNames(records)).toEqual(["DeepSeek", "Z.ai"]);
-    expect(unclassifiedProviderNames(records)).toEqual(["Meta"]);
+    expect(openWeightProviderNames(records, index)).toEqual(["Moonshot AI", "Z.ai"]);
+    expect(unclassifiedProviderNames(records, index)).toEqual(["Meta"]);
   });
 
   test("keeps open-weight rows inside the snapshot order and scores", () => {
-    const rows = openWeightCodingAgentRows(snapshot.records);
+    const rows = openWeightCodingAgentRows(snapshot.records, index);
     const byId = new Map(snapshot.records.map(item => [item.id, item]));
-    expect(rows.length).toBeGreaterThan(0);
+    expect(cataloguedSnapshotProviderIds(snapshot.records).length).toBeGreaterThan(0);
     for (const row of rows) {
       const source = byId.get(row.id);
       expect(source).toBeDefined();
       if (source === undefined) continue;
-      expect(isOpenWeightCodingAgent(source)).toBeTrue();
+      expect(isOpenWeightCodingAgent(source, index)).toBeTrue();
       expect(row.aaIndex).toBe(source.benchmarks.aaIndex);
       expect(row.model).toBe(source.model);
     }

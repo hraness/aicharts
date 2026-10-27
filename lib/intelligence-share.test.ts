@@ -14,7 +14,11 @@ const records = [
   { id: "uuid-dup-b", slug: "shared-slug" },
 ] as const;
 
-const defaults = { metric: "costUsdPerTask" as const, pinnedId: "uuid-astra" };
+const defaults = {
+  metric: "costUsdPerTask" as const,
+  pinnedId: "uuid-astra",
+  weights: "all" as const,
+};
 
 describe("intelligence share URLs", () => {
   test("prefers unique slugs and falls back to opaque ids on collision", () => {
@@ -25,7 +29,7 @@ describe("intelligence share URLs", () => {
 
   test("round-trips encoded slug and token-metric selections", () => {
     const search = intelligenceShareSearch(
-      { metric: "outputTokensPerTask", pinnedId: "uuid-fable-max" },
+      { metric: "outputTokensPerTask", pinnedId: "uuid-fable-max", weights: "open" },
       records,
       defaults,
       "utm=notes",
@@ -34,11 +38,19 @@ describe("intelligence share URLs", () => {
     expect(url.searchParams.get("utm")).toBe("notes");
     expect(url.searchParams.get("model")).toBe("claude-fable-5-1");
     expect(url.searchParams.get("resource")).toBe("tokens");
+    expect(url.searchParams.get("weights")).toBe("open");
     expect(search).not.toContain(" ");
     expect(parseIntelligenceShareView(`?${search}`, records, defaults)).toEqual({
       metric: "outputTokensPerTask",
       pinnedId: "uuid-fable-max",
+      weights: "open",
     });
+  });
+
+  test("omits the default all-weights filter and restores closed from the share URL", () => {
+    expect(intelligenceShareSearch(defaults, records, defaults)).toBe("");
+    expect(parseIntelligenceShareView("?weights=closed", records, defaults).weights).toBe("closed");
+    expect(parseIntelligenceShareView("?weights=unknown", records, defaults).weights).toBe("all");
   });
 
   test("keeps the default homepage URL empty and restores either slug or id", () => {

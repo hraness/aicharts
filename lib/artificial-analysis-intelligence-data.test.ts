@@ -86,6 +86,22 @@ describe("Artificial Analysis Intelligence snapshot", () => {
     const wrongUrl = checkedSnapshot();
     wrongUrl.records[0]!.detailsUrl = "https://artificialanalysis.ai/models/not-this-model";
     expect(parseArtificialAnalysisIntelligenceSnapshot(wrongUrl).ok).toBeFalse();
+
+    const withWeights = checkedSnapshot();
+    withWeights.records[0]!.weights = {
+      license: "Apache-2.0",
+      open: true,
+      sourceUrl: "https://huggingface.co/example/model",
+    };
+    expect(parseArtificialAnalysisIntelligenceSnapshot(withWeights).ok).toBeTrue();
+
+    const credentialedWeights = checkedSnapshot();
+    credentialedWeights.records[0]!.weights = {
+      license: "Apache-2.0",
+      open: true,
+      sourceUrl: "https://user:pass@huggingface.co/example/model",
+    };
+    expect(parseArtificialAnalysisIntelligenceSnapshot(credentialedWeights).ok).toBeFalse();
   });
 
   test("rejects count, stable-id, semantic-slug, and positive-cost coverage regressions", () => {

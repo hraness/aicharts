@@ -73,6 +73,7 @@ export function HomeIntelligenceEfficiency({
     outputTokensPerTask: record.outputTokensPerTask.total,
     releaseDate: record.releaseDate,
     slug: record.slug,
+    weights: record.weights ?? null,
   }));
   const retrievedAt = new Date(snapshot.source.retrievedAt);
   const retrievalLabel = Number.isNaN(retrievedAt.valueOf())

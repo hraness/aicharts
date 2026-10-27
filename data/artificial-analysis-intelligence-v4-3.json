@@ -61,7 +61,12 @@
       },
       "releaseDate": "2026-09-22",
       "shortName": "Claude Opus 5.5 (max with fallback)",
-      "slug": "claude-opus-5-5"
+      "slug": "claude-opus-5-5",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -99,7 +104,12 @@
       },
       "releaseDate": "2026-09-28",
       "shortName": "Claude Sonnet 5.5 (max with fallback)",
-      "slug": "claude-sonnet-5-5"
+      "slug": "claude-sonnet-5-5",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -137,7 +147,12 @@
       },
       "releaseDate": "2026-09-22",
       "shortName": "Claude Opus 5.5 (xhigh with fallback)",
-      "slug": "claude-opus-5-5-xhigh"
+      "slug": "claude-opus-5-5-xhigh",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -171,7 +186,12 @@
       },
       "releaseDate": "2026-10-23",
       "shortName": "Kimi K3.1 Pro",
-      "slug": "kimi-k3-1-pro"
+      "slug": "kimi-k3-1-pro",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -209,7 +229,12 @@
       },
       "releaseDate": "2026-09-22",
       "shortName": "Claude Opus 5.5 (high with fallback)",
-      "slug": "claude-opus-5-5-high"
+      "slug": "claude-opus-5-5-high",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -247,7 +272,12 @@
       },
       "releaseDate": "2026-09-01",
       "shortName": "Claude Fable 5.1 (max with fallback)",
-      "slug": "claude-fable-5-1"
+      "slug": "claude-fable-5-1",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -285,7 +315,12 @@
       },
       "releaseDate": "2026-09-01",
       "shortName": "Claude Fable 5.1 (xhigh with fallback)",
-      "slug": "claude-fable-5-1-xhigh"
+      "slug": "claude-fable-5-1-xhigh",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -323,7 +358,12 @@
       },
       "releaseDate": "2026-09-03",
       "shortName": "GPT-6 Astra (max)",
-      "slug": "gpt-6-astra"
+      "slug": "gpt-6-astra",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -361,7 +401,12 @@
       },
       "releaseDate": "2026-09-30",
       "shortName": "Gemini 4 Argon (high)",
-      "slug": "gemini-4-argon"
+      "slug": "gemini-4-argon",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -399,7 +444,12 @@
       },
       "releaseDate": "2026-10-12",
       "shortName": "Muse Wonder (max)",
-      "slug": "muse-wonder"
+      "slug": "muse-wonder",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -437,7 +487,12 @@
       },
       "releaseDate": "2026-09-03",
       "shortName": "GPT-6 Astra (xhigh)",
-      "slug": "gpt-6-astra-xhigh"
+      "slug": "gpt-6-astra-xhigh",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -475,7 +530,12 @@
       },
       "releaseDate": "2026-09-28",
       "shortName": "Claude Sonnet 5.5 (xhigh with fallback)",
-      "slug": "claude-sonnet-5-5-xhigh"
+      "slug": "claude-sonnet-5-5-xhigh",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -513,7 +573,12 @@
       },
       "releaseDate": "2026-09-29",
       "shortName": "GPT-6.1 Sol (max)",
-      "slug": "gpt-6-1-sol"
+      "slug": "gpt-6-1-sol",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -551,7 +616,12 @@
       },
       "releaseDate": "2026-09-22",
       "shortName": "Claude Opus 5.5 (medium with fallback)",
-      "slug": "claude-opus-5-5-medium"
+      "slug": "claude-opus-5-5-medium",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -589,7 +659,12 @@
       },
       "releaseDate": "2026-09-01",
       "shortName": "Claude Fable 5.1 (high with fallback)",
-      "slug": "claude-fable-5-1-high"
+      "slug": "claude-fable-5-1-high",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -627,7 +702,12 @@
       },
       "releaseDate": "2026-09-29",
       "shortName": "GPT-6.1 Sol (xhigh)",
-      "slug": "gpt-6-1-sol-xhigh"
+      "slug": "gpt-6-1-sol-xhigh",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -665,7 +745,12 @@
       },
       "releaseDate": "2026-09-03",
       "shortName": "GPT-6 Astra (high)",
-      "slug": "gpt-6-astra-high"
+      "slug": "gpt-6-astra-high",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -703,7 +788,12 @@
       },
       "releaseDate": "2026-09-29",
       "shortName": "GPT-6.1 Sol (high)",
-      "slug": "gpt-6-1-sol-high"
+      "slug": "gpt-6-1-sol-high",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -741,7 +831,12 @@
       },
       "releaseDate": "2026-09-03",
       "shortName": "GPT-6 Astra (medium)",
-      "slug": "gpt-6-astra-medium"
+      "slug": "gpt-6-astra-medium",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -779,7 +874,12 @@
       },
       "releaseDate": "2026-09-01",
       "shortName": "Claude Fable 5.1 (medium with fallback)",
-      "slug": "claude-fable-5-1-medium"
+      "slug": "claude-fable-5-1-medium",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -817,7 +917,12 @@
       },
       "releaseDate": "2026-10-26",
       "shortName": "GPT-6.1 Terra (max)",
-      "slug": "gpt-6-1-terra"
+      "slug": "gpt-6-1-terra",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -855,7 +960,12 @@
       },
       "releaseDate": "2026-09-29",
       "shortName": "GPT-6.1 Sol (medium)",
-      "slug": "gpt-6-1-sol-medium"
+      "slug": "gpt-6-1-sol-medium",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -893,7 +1003,12 @@
       },
       "releaseDate": "2026-09-01",
       "shortName": "Claude Fable 5.1 (low with fallback)",
-      "slug": "claude-fable-5-1-low"
+      "slug": "claude-fable-5-1-low",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -931,7 +1046,12 @@
       },
       "releaseDate": "2026-09-28",
       "shortName": "Claude Sonnet 5.5 (high with fallback)",
-      "slug": "claude-sonnet-5-5-high"
+      "slug": "claude-sonnet-5-5-high",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -969,7 +1089,12 @@
       },
       "releaseDate": "2026-09-21",
       "shortName": "Grok 4.7 (xhigh)",
-      "slug": "grok-4-7"
+      "slug": "grok-4-7",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -1007,7 +1132,12 @@
       },
       "releaseDate": "2026-09-21",
       "shortName": "Grok 4.7 (high)",
-      "slug": "grok-4-7-high"
+      "slug": "grok-4-7-high",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -1041,7 +1171,12 @@
       },
       "releaseDate": "2026-09-21",
       "shortName": "MiMo-V2.6-Pro",
-      "slug": "mimo-v2-6-pro"
+      "slug": "mimo-v2-6-pro",
+      "weights": {
+        "license": "MIT",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/XiaomiMiMo/MiMo-V2.6-Pro-RL"
+      }
     },
     {
       "costUsdPerTask": {
@@ -1079,7 +1214,12 @@
       },
       "releaseDate": "2026-09-03",
       "shortName": "GPT-6 Astra (low)",
-      "slug": "gpt-6-astra-low"
+      "slug": "gpt-6-astra-low",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -1113,7 +1253,12 @@
       },
       "releaseDate": "2026-09-02",
       "shortName": "Qwen3.8 Max (0902)",
-      "slug": "qwen3-8-max"
+      "slug": "qwen3-8-max",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -1151,7 +1296,12 @@
       },
       "releaseDate": "2026-10-26",
       "shortName": "GPT-6.1 Terra (xhigh)",
-      "slug": "gpt-6-1-terra-xhigh"
+      "slug": "gpt-6-1-terra-xhigh",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -1189,7 +1339,12 @@
       },
       "releaseDate": "2026-10-17",
       "shortName": "DeepSeek V4.1 Flash 1017 (max)",
-      "slug": "deepseek-v4-1-flash-1017"
+      "slug": "deepseek-v4-1-flash-1017",
+      "weights": {
+        "license": "MIT",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash-1017"
+      }
     },
     {
       "costUsdPerTask": {
@@ -1227,7 +1382,12 @@
       },
       "releaseDate": "2026-08-18",
       "shortName": "GLM-5.3 (max)",
-      "slug": "glm-5-3"
+      "slug": "glm-5-3",
+      "weights": {
+        "license": "GLM-5.3 License",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/zai-org/GLM-5.3"
+      }
     },
     {
       "costUsdPerTask": {
@@ -1261,7 +1421,12 @@
       },
       "releaseDate": "2026-10-22",
       "shortName": "Ling 3.1 Flash 1019",
-      "slug": "ling-3-1-flash-1019"
+      "slug": "ling-3-1-flash-1019",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -1299,7 +1464,12 @@
       },
       "releaseDate": "2026-10-26",
       "shortName": "GPT-6.1 Terra (high)",
-      "slug": "gpt-6-1-terra-high"
+      "slug": "gpt-6-1-terra-high",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -1333,7 +1503,12 @@
       },
       "releaseDate": "2026-09-18",
       "shortName": "Step 5 Preview",
-      "slug": "step-5"
+      "slug": "step-5",
+      "weights": {
+        "license": "StepFun Model License 1.0",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/stepfun-ai/Step-5-Preview"
+      }
     },
     {
       "costUsdPerTask": {
@@ -1371,7 +1546,12 @@
       },
       "releaseDate": "2026-10-07",
       "shortName": "Claude Haiku 5.5 (max)",
-      "slug": "claude-haiku-5-5"
+      "slug": "claude-haiku-5-5",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -1405,7 +1585,12 @@
       },
       "releaseDate": "2026-10-19",
       "shortName": "MiniMax-M3.1-Flash",
-      "slug": "minimax-m3-1-flash"
+      "slug": "minimax-m3-1-flash",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -1443,7 +1628,12 @@
       },
       "releaseDate": "2026-09-22",
       "shortName": "Claude Opus 5.5 (low with fallback)",
-      "slug": "claude-opus-5-5-low"
+      "slug": "claude-opus-5-5-low",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -1481,7 +1671,12 @@
       },
       "releaseDate": "2026-09-21",
       "shortName": "Grok 4.7 (low)",
-      "slug": "grok-4-7-low"
+      "slug": "grok-4-7-low",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -1519,7 +1714,12 @@
       },
       "releaseDate": "2026-09-29",
       "shortName": "GPT-6.1 Sol (low)",
-      "slug": "gpt-6-1-sol-low"
+      "slug": "gpt-6-1-sol-low",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -1557,7 +1757,12 @@
       },
       "releaseDate": "2026-08-26",
       "shortName": "GLM-5.3-Flash",
-      "slug": "glm-5-3-flash"
+      "slug": "glm-5-3-flash",
+      "weights": {
+        "license": "MIT",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/zai-org/GLM-5.3-Flash"
+      }
     },
     {
       "costUsdPerTask": {
@@ -1595,7 +1800,12 @@
       },
       "releaseDate": "2026-10-26",
       "shortName": "GPT-6.1 Terra (medium)",
-      "slug": "gpt-6-1-terra-medium"
+      "slug": "gpt-6-1-terra-medium",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -1633,7 +1843,12 @@
       },
       "releaseDate": "2026-10-07",
       "shortName": "Claude Haiku 5.5 (xhigh)",
-      "slug": "claude-haiku-5-5-xhigh"
+      "slug": "claude-haiku-5-5-xhigh",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -1667,7 +1882,12 @@
       },
       "releaseDate": "2026-10-01",
       "shortName": "Ling 3.1 Flash",
-      "slug": "ling-3-1-flash"
+      "slug": "ling-3-1-flash",
+      "weights": {
+        "license": "MIT",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/inclusionAI/Ling-3.1-flash"
+      }
     },
     {
       "costUsdPerTask": {
@@ -1705,7 +1925,12 @@
       },
       "releaseDate": "2026-09-02",
       "shortName": "Gemini 3.8 Flash (high)",
-      "slug": "gemini-3-8-flash"
+      "slug": "gemini-3-8-flash",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -1743,7 +1968,12 @@
       },
       "releaseDate": "2026-09-28",
       "shortName": "Claude Sonnet 5.5 (medium with fallback)",
-      "slug": "claude-sonnet-5-5-medium"
+      "slug": "claude-sonnet-5-5-medium",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -1777,7 +2007,12 @@
       },
       "releaseDate": "2026-08-12",
       "shortName": "Qwen3.8 2.4T A95B",
-      "slug": "qwen3-8-2-4t-a95b"
+      "slug": "qwen3-8-2-4t-a95b",
+      "weights": {
+        "license": "Qwen3.8-Max License",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/Qwen/Qwen3.8-2.4T-A95B"
+      }
     },
     {
       "costUsdPerTask": {
@@ -1811,7 +2046,12 @@
       },
       "releaseDate": "2026-08-26",
       "shortName": "Qwen3.8-Flash-Next",
-      "slug": "qwen3-8-flash-next"
+      "slug": "qwen3-8-flash-next",
+      "weights": {
+        "license": "Qwen Community License 1.0",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/Qwen/Qwen3.8-Flash-Next"
+      }
     },
     {
       "costUsdPerTask": {
@@ -1849,7 +2089,12 @@
       },
       "releaseDate": "2026-09-02",
       "shortName": "Gemini 3.8 Flash (medium)",
-      "slug": "gemini-3-8-flash-medium"
+      "slug": "gemini-3-8-flash-medium",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -1887,7 +2132,12 @@
       },
       "releaseDate": "2026-10-15",
       "shortName": "Muse Spark Open (xhigh)",
-      "slug": "muse-spark-open"
+      "slug": "muse-spark-open",
+      "weights": {
+        "license": "Muse Model License",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/meta-models/Muse-Spark-Open-816B-A42B"
+      }
     },
     {
       "costUsdPerTask": {
@@ -1921,7 +2171,12 @@
       },
       "releaseDate": "2026-10-06",
       "shortName": "Mistral Large 4 Preview",
-      "slug": "mistral-large-4"
+      "slug": "mistral-large-4",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -1959,7 +2214,12 @@
       },
       "releaseDate": "2026-09-22",
       "shortName": "GPT-6 Luna (max)",
-      "slug": "gpt-6-luna"
+      "slug": "gpt-6-luna",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -1993,7 +2253,12 @@
       },
       "releaseDate": "2026-09-21",
       "shortName": "MiMo-V2.6-Flash",
-      "slug": "mimo-v2-6-flash"
+      "slug": "mimo-v2-6-flash",
+      "weights": {
+        "license": "MIT",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/XiaomiMiMo/MiMo-V2.6-Flash-RL"
+      }
     },
     {
       "costUsdPerTask": {
@@ -2031,7 +2296,12 @@
       },
       "releaseDate": "2026-10-07",
       "shortName": "Claude Haiku 5.5 (high)",
-      "slug": "claude-haiku-5-5-high"
+      "slug": "claude-haiku-5-5-high",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -2069,7 +2339,12 @@
       },
       "releaseDate": "2026-10-26",
       "shortName": "GPT-6.1 Terra (low)",
-      "slug": "gpt-6-1-terra-low"
+      "slug": "gpt-6-1-terra-low",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -2107,7 +2382,12 @@
       },
       "releaseDate": "2026-08-13",
       "shortName": "DeepSeek V4 Pro 0813 (max)",
-      "slug": "deepseek-v4-pro"
+      "slug": "deepseek-v4-pro",
+      "weights": {
+        "license": "MIT",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro-0813"
+      }
     },
     {
       "costUsdPerTask": {
@@ -2145,7 +2425,12 @@
       },
       "releaseDate": "2026-09-28",
       "shortName": "Claude Sonnet 5.5 (low with fallback)",
-      "slug": "claude-sonnet-5-5-low"
+      "slug": "claude-sonnet-5-5-low",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -2183,7 +2468,12 @@
       },
       "releaseDate": "2026-08-21",
       "shortName": "DeepSeek V4 Flash Vision (max)",
-      "slug": "deepseek-v4-flash-vision"
+      "slug": "deepseek-v4-flash-vision",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -2221,7 +2511,12 @@
       },
       "releaseDate": "2026-09-22",
       "shortName": "GPT-6 Luna (xhigh)",
-      "slug": "gpt-6-luna-xhigh"
+      "slug": "gpt-6-luna-xhigh",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -2259,7 +2554,12 @@
       },
       "releaseDate": "2026-10-07",
       "shortName": "Claude Haiku 5.5 (medium)",
-      "slug": "claude-haiku-5-5-medium"
+      "slug": "claude-haiku-5-5-medium",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -2297,7 +2597,12 @@
       },
       "releaseDate": "2026-08-18",
       "shortName": "GLM-5.3 (low)",
-      "slug": "glm-5-3-low"
+      "slug": "glm-5-3-low",
+      "weights": {
+        "license": "GLM-5.3 License",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/zai-org/GLM-5.3"
+      }
     },
     {
       "costUsdPerTask": {
@@ -2335,7 +2640,12 @@
       },
       "releaseDate": "2026-08-14",
       "shortName": "Qwen3.8 27B (xhigh)",
-      "slug": "qwen3-8-27b"
+      "slug": "qwen3-8-27b",
+      "weights": {
+        "license": "Apache 2.0",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/Qwen/Qwen3.8-27B"
+      }
     },
     {
       "costUsdPerTask": {
@@ -2369,7 +2679,12 @@
       },
       "releaseDate": "2026-10-26",
       "shortName": "GPT-6.1 Terra (non-reasoning)",
-      "slug": "gpt-6-1-terra-non-reasoning"
+      "slug": "gpt-6-1-terra-non-reasoning",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -2407,7 +2722,12 @@
       },
       "releaseDate": "2026-09-22",
       "shortName": "GPT-6 Luna (high)",
-      "slug": "gpt-6-luna-high"
+      "slug": "gpt-6-luna-high",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": null,
@@ -2432,7 +2752,12 @@
       },
       "releaseDate": "2026-09-03",
       "shortName": "K2 Horizon 375B A23B",
-      "slug": "k2-horizon-375b-a23b"
+      "slug": "k2-horizon-375b-a23b",
+      "weights": {
+        "license": "Apache 2.0",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/IFM/K2-Horizon-375B-A23B"
+      }
     },
     {
       "costUsdPerTask": {
@@ -2466,7 +2791,12 @@
       },
       "releaseDate": "2026-10-16",
       "shortName": "Beam 1.0",
-      "slug": "reflection-beam"
+      "slug": "reflection-beam",
+      "weights": {
+        "license": "Apache 2.0",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/reflection/Beam-1.0-501B-A23B"
+      }
     },
     {
       "costUsdPerTask": {
@@ -2504,7 +2834,12 @@
       },
       "releaseDate": "2026-09-22",
       "shortName": "GPT-6 Luna (medium)",
-      "slug": "gpt-6-luna-medium"
+      "slug": "gpt-6-luna-medium",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -2538,7 +2873,12 @@
       },
       "releaseDate": "2026-02-19",
       "shortName": "Gemini 3.1 Pro Preview",
-      "slug": "gemini-3-1-pro-preview"
+      "slug": "gemini-3-1-pro-preview",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -2576,7 +2916,12 @@
       },
       "releaseDate": "2026-10-07",
       "shortName": "Claude Haiku 5.5 (low)",
-      "slug": "claude-haiku-5-5-low"
+      "slug": "claude-haiku-5-5-low",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -2610,7 +2955,12 @@
       },
       "releaseDate": "2026-06-01",
       "shortName": "MiniMax-M3",
-      "slug": "minimax-m3"
+      "slug": "minimax-m3",
+      "weights": {
+        "license": "MINIMAX COMMUNITY LICENSE",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/MiniMaxAI/MiniMax-M3"
+      }
     },
     {
       "costUsdPerTask": {
@@ -2648,7 +2998,12 @@
       },
       "releaseDate": "2026-08-14",
       "shortName": "Qwen3.8 27B (medium)",
-      "slug": "qwen3-8-27b-medium"
+      "slug": "qwen3-8-27b-medium",
+      "weights": {
+        "license": "Apache 2.0",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/Qwen/Qwen3.8-27B"
+      }
     },
     {
       "costUsdPerTask": {
@@ -2686,7 +3041,12 @@
       },
       "releaseDate": "2026-08-10",
       "shortName": "Quasar 438B (max)",
-      "slug": "quasar-438b"
+      "slug": "quasar-438b",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -2720,7 +3080,12 @@
       },
       "releaseDate": "2026-08-06",
       "shortName": "Solar Pro 4",
-      "slug": "solar-pro4"
+      "slug": "solar-pro4",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -2754,7 +3119,12 @@
       },
       "releaseDate": "2026-10-15",
       "shortName": "Nemotron 3.5 Super VL",
-      "slug": "nemotron-3-5-super-vl"
+      "slug": "nemotron-3-5-super-vl",
+      "weights": {
+        "license": "OpenMDW-1.1",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-BF16"
+      }
     },
     {
       "costUsdPerTask": {
@@ -2788,7 +3158,12 @@
       },
       "releaseDate": "2026-08-30",
       "shortName": "Apodex 1.1",
-      "slug": "apodex-1-1"
+      "slug": "apodex-1-1",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -2826,7 +3201,12 @@
       },
       "releaseDate": "2026-08-14",
       "shortName": "Qwen3.8 27B (low)",
-      "slug": "qwen3-8-27b-low"
+      "slug": "qwen3-8-27b-low",
+      "weights": {
+        "license": "Apache 2.0",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/Qwen/Qwen3.8-27B"
+      }
     },
     {
       "costUsdPerTask": {
@@ -2860,7 +3240,12 @@
       },
       "releaseDate": "2026-06-25",
       "shortName": "GPT-5.5 Instant (June 2026)",
-      "slug": "gpt-5-5-instant-06-26"
+      "slug": "gpt-5-5-instant-06-26",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -2894,7 +3279,12 @@
       },
       "releaseDate": "2026-06-12",
       "shortName": "Kimi K2.7 Code",
-      "slug": "kimi-k2-7-code"
+      "slug": "kimi-k2-7-code",
+      "weights": {
+        "license": "Modified MIT License",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/moonshotai/Kimi-K2.7-Code"
+      }
     },
     {
       "costUsdPerTask": {
@@ -2928,7 +3318,12 @@
       },
       "releaseDate": "2026-07-30",
       "shortName": "Inkling Small",
-      "slug": "inkling-small"
+      "slug": "inkling-small",
+      "weights": {
+        "license": "Apache 2.0",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/thinkingmachines/Inkling-Small"
+      }
     },
     {
       "costUsdPerTask": {
@@ -2962,7 +3357,12 @@
       },
       "releaseDate": "2026-07-06",
       "shortName": "Hy3",
-      "slug": "hy3"
+      "slug": "hy3",
+      "weights": {
+        "license": "Apache 2.0",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/tencent/Hy3"
+      }
     },
     {
       "costUsdPerTask": {
@@ -2996,7 +3396,12 @@
       },
       "releaseDate": "2026-06-01",
       "shortName": "Qwen3.7 Plus",
-      "slug": "qwen3-7-plus"
+      "slug": "qwen3-7-plus",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -3034,7 +3439,12 @@
       },
       "releaseDate": "2026-07-15",
       "shortName": "Inkling (xhigh)",
-      "slug": "inkling"
+      "slug": "inkling",
+      "weights": {
+        "license": "Apache 2.0",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/thinkingmachines/Inkling"
+      }
     },
     {
       "costUsdPerTask": {
@@ -3068,7 +3478,12 @@
       },
       "releaseDate": "2026-09-22",
       "shortName": "Solar Mini 4",
-      "slug": "solar-mini4"
+      "slug": "solar-mini4",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -3102,7 +3517,12 @@
       },
       "releaseDate": "2026-06-04",
       "shortName": "Nemotron 3 Ultra",
-      "slug": "nvidia-nemotron-3-ultra-550b-a55b"
+      "slug": "nvidia-nemotron-3-ultra-550b-a55b",
+      "weights": {
+        "license": "OpenMDW",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B-BF16"
+      }
     },
     {
       "costUsdPerTask": {
@@ -3140,7 +3560,12 @@
       },
       "releaseDate": "2026-07-21",
       "shortName": "Gemini 3.5 Flash-Lite",
-      "slug": "gemini-3-5-flash-lite"
+      "slug": "gemini-3-5-flash-lite",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -3178,7 +3603,12 @@
       },
       "releaseDate": "2026-09-22",
       "shortName": "GPT-6 Luna (low)",
-      "slug": "gpt-6-luna-low"
+      "slug": "gpt-6-luna-low",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -3212,7 +3642,12 @@
       },
       "releaseDate": "2026-08-13",
       "shortName": "DeepSeek V4 Pro 0813 (non-reasoning)",
-      "slug": "deepseek-v4-pro-non-reasoning"
+      "slug": "deepseek-v4-pro-non-reasoning",
+      "weights": {
+        "license": "MIT",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro-0813"
+      }
     },
     {
       "costUsdPerTask": {
@@ -3246,7 +3681,12 @@
       },
       "releaseDate": "2026-08-14",
       "shortName": "Qwen3.8 27B (non-reasoning)",
-      "slug": "qwen3-8-27b-non-reasoning"
+      "slug": "qwen3-8-27b-non-reasoning",
+      "weights": {
+        "license": "Apache 2.0",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/Qwen/Qwen3.8-27B"
+      }
     },
     {
       "costUsdPerTask": {
@@ -3280,7 +3720,12 @@
       },
       "releaseDate": "2026-06-29",
       "shortName": "LongCat 2.0",
-      "slug": "longcat-2-0"
+      "slug": "longcat-2-0",
+      "weights": {
+        "license": "MIT",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/meituan-longcat/LongCat-2.0"
+      }
     },
     {
       "costUsdPerTask": {
@@ -3314,7 +3759,12 @@
       },
       "releaseDate": "2026-09-22",
       "shortName": "GPT-6 Luna (non-reasoning)",
-      "slug": "gpt-6-luna-non-reasoning"
+      "slug": "gpt-6-luna-non-reasoning",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -3348,7 +3798,12 @@
       },
       "releaseDate": "2026-02-16",
       "shortName": "Qwen3.5 397B A17B",
-      "slug": "qwen3-5-397b-a17b"
+      "slug": "qwen3-5-397b-a17b",
+      "weights": {
+        "license": "Apache 2.0",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/Qwen/Qwen3.5-397B-A17B"
+      }
     },
     {
       "costUsdPerTask": {
@@ -3382,7 +3837,12 @@
       },
       "releaseDate": "2026-04-16",
       "shortName": "Qwen3.6 35B A3B",
-      "slug": "qwen3-6-35b-a3b"
+      "slug": "qwen3-6-35b-a3b",
+      "weights": {
+        "license": "Apache 2.0",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/Qwen/Qwen3.6-35B-A3B"
+      }
     },
     {
       "costUsdPerTask": {
@@ -3420,7 +3880,12 @@
       },
       "releaseDate": "2026-08-10",
       "shortName": "Muse Glimmer (high)",
-      "slug": "muse-glimmer"
+      "slug": "muse-glimmer",
+      "weights": {
+        "license": "Apache 2.0",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/meta-models/Muse-Glimmer-30B"
+      }
     },
     {
       "costUsdPerTask": {
@@ -3458,7 +3923,12 @@
       },
       "releaseDate": "2026-05-08",
       "shortName": "Ring-2.6-1T",
-      "slug": "ring-2-6-1t"
+      "slug": "ring-2-6-1t",
+      "weights": {
+        "license": "MIT",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/inclusionAI/Ring-2.6-1T"
+      }
     },
     {
       "costUsdPerTask": {
@@ -3492,7 +3962,12 @@
       },
       "releaseDate": "2026-02-24",
       "shortName": "Qwen3.5 122B A10B",
-      "slug": "qwen3-5-122b-a10b"
+      "slug": "qwen3-5-122b-a10b",
+      "weights": {
+        "license": "Apache 2.0",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/Qwen/Qwen3.5-122B-A10B"
+      }
     },
     {
       "costUsdPerTask": null,
@@ -3517,7 +3992,12 @@
       },
       "releaseDate": "2026-04-02",
       "shortName": "Gemma 4 31B",
-      "slug": "gemma-4-31b"
+      "slug": "gemma-4-31b",
+      "weights": {
+        "license": "Apache 2.0",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/google/gemma-4-31B-it"
+      }
     },
     {
       "costUsdPerTask": {
@@ -3555,7 +4035,12 @@
       },
       "releaseDate": "2026-04-29",
       "shortName": "Mistral Medium 3.5",
-      "slug": "mistral-medium-3-5"
+      "slug": "mistral-medium-3-5",
+      "weights": {
+        "license": "Modified MIT License",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/mistralai/Mistral-Medium-3.5-128B"
+      }
     },
     {
       "costUsdPerTask": null,
@@ -3580,7 +4065,12 @@
       },
       "releaseDate": "2026-05-20",
       "shortName": "Command A+",
-      "slug": "command-a-plus"
+      "slug": "command-a-plus",
+      "weights": {
+        "license": "Apache 2.0",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/CohereLabs/command-a-plus-05-2026-bf16"
+      }
     },
     {
       "costUsdPerTask": {
@@ -3614,7 +4104,12 @@
       },
       "releaseDate": "2026-08-11",
       "shortName": "Nemotron 3.5 Lightning",
-      "slug": "nemotron-3-5-lightning"
+      "slug": "nemotron-3-5-lightning",
+      "weights": {
+        "license": "OpenMDW-1.1",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16"
+      }
     },
     {
       "costUsdPerTask": {
@@ -3648,7 +4143,12 @@
       },
       "releaseDate": "2026-08-25",
       "shortName": "Granite 4.2 30B",
-      "slug": "granite-4-2-30b"
+      "slug": "granite-4-2-30b",
+      "weights": {
+        "license": "Apache 2.0",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/ibm-granite/granite-4.2-30b"
+      }
     },
     {
       "costUsdPerTask": {
@@ -3682,7 +4182,12 @@
       },
       "releaseDate": "2026-09-08",
       "shortName": "Mercury 2.5",
-      "slug": "mercury-2-5"
+      "slug": "mercury-2-5",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -3720,7 +4225,12 @@
       },
       "releaseDate": "2025-08-05",
       "shortName": "gpt-oss-120b (high)",
-      "slug": "gpt-oss-120b"
+      "slug": "gpt-oss-120b",
+      "weights": {
+        "license": "Apache 2.0",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/openai/gpt-oss-120b"
+      }
     },
     {
       "costUsdPerTask": {
@@ -3754,7 +4264,12 @@
       },
       "releaseDate": "2026-03-16",
       "shortName": "Mistral Small 4",
-      "slug": "mistral-small-4"
+      "slug": "mistral-small-4",
+      "weights": {
+        "license": "Apache 2.0",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/mistralai/Mistral-Small-4-119B-2603"
+      }
     },
     {
       "costUsdPerTask": {
@@ -3788,7 +4303,12 @@
       },
       "releaseDate": "2026-03-02",
       "shortName": "Qwen3.5 9B",
-      "slug": "qwen3-5-9b"
+      "slug": "qwen3-5-9b",
+      "weights": {
+        "license": "Apache 2.0",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/Qwen/Qwen3.5-9B"
+      }
     },
     {
       "costUsdPerTask": {
@@ -3822,7 +4342,12 @@
       },
       "releaseDate": "2026-08-25",
       "shortName": "Granite 4.2 8B",
-      "slug": "granite-4-2-8b"
+      "slug": "granite-4-2-8b",
+      "weights": {
+        "license": "Apache 2.0",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/ibm-granite/granite-4.2-8b"
+      }
     },
     {
       "costUsdPerTask": null,
@@ -3847,7 +4372,12 @@
       },
       "releaseDate": "2026-08-06",
       "shortName": "Ling 3.0 Tiny",
-      "slug": "ling-3-0-tiny"
+      "slug": "ling-3-0-tiny",
+      "weights": {
+        "license": "MIT",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/inclusionAI/Ling-3.0-tiny-int4"
+      }
     },
     {
       "costUsdPerTask": {
@@ -3881,7 +4411,12 @@
       },
       "releaseDate": "2026-04-01",
       "shortName": "Trinity Large Thinking",
-      "slug": "trinity-large-thinking"
+      "slug": "trinity-large-thinking",
+      "weights": {
+        "license": "Apache 2.0",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/arcee-ai/Trinity-Large-Thinking"
+      }
     },
     {
       "costUsdPerTask": null,
@@ -3906,7 +4441,12 @@
       },
       "releaseDate": "2026-06-09",
       "shortName": "North Mini Code",
-      "slug": "north-mini-code"
+      "slug": "north-mini-code",
+      "weights": {
+        "license": "Apache 2.0",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/CohereLabs/North-Mini-Code-1.0"
+      }
     },
     {
       "costUsdPerTask": {
@@ -3940,7 +4480,12 @@
       },
       "releaseDate": "2025-04-05",
       "shortName": "Llama 4 Maverick",
-      "slug": "llama-4-maverick"
+      "slug": "llama-4-maverick",
+      "weights": {
+        "license": "LLAMA 4 COMMUNITY LICENSE AGREEMENT",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/meta-llama/Llama-4-Maverick-17B-128E-Instruct"
+      }
     },
     {
       "costUsdPerTask": {
@@ -3974,7 +4519,12 @@
       },
       "releaseDate": "2026-02-03",
       "shortName": "Qwen3 Coder Next",
-      "slug": "qwen3-coder-next"
+      "slug": "qwen3-coder-next",
+      "weights": {
+        "license": "Apache 2.0",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/Qwen/Qwen3-Coder-Next"
+      }
     },
     {
       "costUsdPerTask": {
@@ -4008,7 +4558,12 @@
       },
       "releaseDate": "2026-08-25",
       "shortName": "Granite 4.2 3B",
-      "slug": "granite-4-2-3b"
+      "slug": "granite-4-2-3b",
+      "weights": {
+        "license": "Apache 2.0",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/ibm-granite/granite-4.2-3b"
+      }
     },
     {
       "costUsdPerTask": {
@@ -4046,7 +4601,12 @@
       },
       "releaseDate": "2025-08-05",
       "shortName": "gpt-oss-20b (high)",
-      "slug": "gpt-oss-20b"
+      "slug": "gpt-oss-20b",
+      "weights": {
+        "license": "Apache 2.0",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/openai/gpt-oss-20b"
+      }
     },
     {
       "costUsdPerTask": {
@@ -4080,7 +4640,12 @@
       },
       "releaseDate": "2026-04-03",
       "shortName": "Gemma 4 E4B",
-      "slug": "gemma-4-e4b"
+      "slug": "gemma-4-e4b",
+      "weights": {
+        "license": "Apache 2.0",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/google/gemma-4-E4B-it"
+      }
     },
     {
       "costUsdPerTask": {
@@ -4114,7 +4679,12 @@
       },
       "releaseDate": "2025-12-15",
       "shortName": "Nemotron 3 Nano",
-      "slug": "nvidia-nemotron-3-nano-30b-a3b-reasoning"
+      "slug": "nvidia-nemotron-3-nano-30b-a3b-reasoning",
+      "weights": {
+        "license": "Nvidia Nemotron Open Model License",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16"
+      }
     },
     {
       "costUsdPerTask": {
@@ -4148,7 +4718,12 @@
       },
       "releaseDate": "2025-04-05",
       "shortName": "Llama 4 Scout",
-      "slug": "llama-4-scout"
+      "slug": "llama-4-scout",
+      "weights": {
+        "license": "LLAMA 4 COMMUNITY LICENSE AGREEMENT",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/meta-llama/Llama-4-Scout-17B-16E-Instruct"
+      }
     },
     {
       "costUsdPerTask": {
@@ -4182,7 +4757,12 @@
       },
       "releaseDate": "2026-07-24",
       "shortName": "Celeris-1",
-      "slug": "celeris-1"
+      "slug": "celeris-1",
+      "weights": {
+        "license": null,
+        "open": false,
+        "sourceUrl": null
+      }
     },
     {
       "costUsdPerTask": {
@@ -4216,7 +4796,12 @@
       },
       "releaseDate": "2025-12-02",
       "shortName": "Ministral 3 14B",
-      "slug": "ministral-3-14b"
+      "slug": "ministral-3-14b",
+      "weights": {
+        "license": "Apache 2.0",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/mistralai/Ministral-3-14B-Instruct-2512"
+      }
     },
     {
       "costUsdPerTask": {
@@ -4250,7 +4835,12 @@
       },
       "releaseDate": "2025-12-02",
       "shortName": "Ministral 3 8B",
-      "slug": "ministral-3-8b"
+      "slug": "ministral-3-8b",
+      "weights": {
+        "license": "Apache 2.0",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/mistralai/Ministral-3-8B-Instruct-2512"
+      }
     },
     {
       "costUsdPerTask": {
@@ -4284,7 +4874,12 @@
       },
       "releaseDate": "2025-12-02",
       "shortName": "Ministral 3 3B",
-      "slug": "ministral-3-3b"
+      "slug": "ministral-3-3b",
+      "weights": {
+        "license": "Apache 2.0",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/mistralai/Ministral-3-3B-Instruct-2512"
+      }
     }
   ],
   "schemaVersion": 1,
@@ -4299,7 +4894,7 @@
     "method": "public-next-flight",
     "methodologyUrl": "https://artificialanalysis.ai/methodology/intelligence-benchmarking",
     "name": "Artificial Analysis",
-    "retrievedAt": "2026-10-27T05:02:03.835Z",
+    "retrievedAt": "2026-10-27T06:55:01.119Z",
     "sourceClass": "benchmark-publisher",
     "termsUrl": "https://artificialanalysis.ai/docs/legal/Terms-of-Use.pdf",
     "url": "https://artificialanalysis.ai/models"

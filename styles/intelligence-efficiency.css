@@ -205,6 +205,13 @@
   vector-effect: non-scaling-stroke;
 }
 
+.intelligence-efficiency__point-control--open-weights .intelligence-efficiency__point-glyph {
+  fill: var(--background);
+  opacity: 1;
+  stroke: var(--muted);
+  stroke-width: 1.5;
+}
+
 .intelligence-efficiency__point-control--frontier .intelligence-efficiency__point-glyph {
   fill: var(--background);
   opacity: 1;
@@ -293,6 +300,13 @@
   background: var(--muted);
   border-radius: 50%;
   opacity: .8;
+}
+
+.intelligence-efficiency__chart-key i[data-symbol="open-weights"] {
+  background: var(--background);
+  border: 1.5px solid var(--muted);
+  border-radius: 50%;
+  box-sizing: border-box;
 }
 
 .intelligence-efficiency__chart-key i[data-symbol="frontier"] {

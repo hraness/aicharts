@@ -51,6 +51,8 @@ const MODEL_CREATOR_DISPLAY_NAMES = {
   kimi: "Moonshot AI",
   meta: "Meta",
   openai: "OpenAI",
+  reflection: "Reflection",
+  stepfun: "StepFun",
   xai: "xAI",
   zai: "Z.ai",
 } as const satisfies Record<string, string>;
@@ -59,7 +61,7 @@ const sourceRowSchema = z.object({
   id: z.string().min(1),
   agentName: z.string().min(1),
   provider: z.string().min(1),
-  hostModelSlug: z.string().min(1),
+  hostModelSlug: z.string().min(1).optional(),
   display: z.object({
     agent: z.string().min(1),
     model: z.string().min(1),
@@ -104,11 +106,10 @@ export function codingAgentCreatorName(
 
   const creators = row.modelCreators ?? [];
   if (row.provider === "cognition") {
-    if (creators.length === 0) return "Cognition";
-    if (creators.some(creator => creator.slug === "cognition") && creators.length > 1) {
-      return "Cognition";
-    }
-    if (creators.length === 1 && creators[0]?.slug === "cognition") return "Cognition";
+    // Devin Fusion composites list host-model creators (Anthropic, OpenAI, …)
+    // and sometimes omit Cognition itself. The agent provider is still Cognition.
+    if (creators.length !== 1) return "Cognition";
+    if (creators[0]?.slug === "cognition") return "Cognition";
   }
 
   if (creators.length !== 1) return undefined;
@@ -263,13 +264,30 @@ function valueOrNull(value: number | null | undefined): number | null {
 }
 
 function benchmarkScore(row: SourceRow, dataset: string): number | null {
-  const evaluation = row.evals.find((item) => item.datasetIndexName === dataset);
+  const evaluation = row.evals.find((item) => item.datasetIndexName === dataset)
+    ?? (dataset === benchmarkDatasets.deepSwe
+      ? row.evals.find((item) => item.datasetIndexName === "frontiercode-v1.1-main")
+      : undefined);
   const reward = evaluation?.mean.reward;
   return reward === undefined || reward === null ? null : reward * 100;
 }
 
 function providerId(providerName: string): string {
   return providerName.toLowerCase().replace(/[^a-z0-9]+/gu, "_").replace(/^_|_$/gu, "");
+}
+
+/** AA dropped `hostModelSlug`; derive a stable series tail from the display model. */
+export function codingAgentSeriesModelSlug(
+  row: Pick<SourceRow, "hostModelSlug">,
+  model: string,
+): string {
+  if (row.hostModelSlug !== undefined && row.hostModelSlug !== "") return row.hostModelSlug;
+  return model
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/[._]+/gu, "-")
+    .replace(/[^a-z0-9]+/gu, "-")
+    .replace(/^-+|-+$/gu, "");
 }
 
 function extractSetting(modelLabel: string): { model: string; setting: string; settingRank: number } {
@@ -299,7 +317,7 @@ export function normalizeSourceRows(rows: readonly SourceRow[], retrievedAt: str
       modelLabel: row.display.model,
       providerId: providerId(providerName),
       providerName,
-      seriesId: `${row.agentName}:${row.hostModelSlug}`,
+      seriesId: `${row.agentName}:${codingAgentSeriesModelSlug(row, setting.model)}`,
       seriesLabel: `${row.display.agent} · ${setting.model}`,
       setting: setting.setting,
       settingRank: setting.settingRank,

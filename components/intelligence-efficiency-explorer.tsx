@@ -25,6 +25,7 @@ import {
   intelligenceShareSearch,
   parseIntelligenceShareView,
   type IntelligenceShareView,
+  type IntelligenceShareWeights,
 } from "@/lib/intelligence-share";
 import {
   readLocationSearch,
@@ -56,6 +57,11 @@ export type IntelligenceEfficiencyExplorerDatum = Readonly<{
   outputTokensPerTask: number;
   releaseDate: string;
   slug: string;
+  weights: Readonly<{
+    license: string | null;
+    open: boolean;
+    sourceUrl: string | null;
+  }> | null;
 }>;
 
 type ExplorerPoint = Readonly<{
@@ -345,6 +351,15 @@ function closestLabelEdge(
   };
 }
 
+export function matchesIntelligenceWeightsFilter(
+  datum: Pick<IntelligenceEfficiencyExplorerDatum, "weights">,
+  weights: IntelligenceShareWeights,
+): boolean {
+  if (weights === "all") return true;
+  if (datum.weights === null) return false;
+  return weights === "open" ? datum.weights.open : !datum.weights.open;
+}
+
 function pointClassName(
   point: ExplorerPoint,
   metric: IntelligenceEfficiencyMetric,
@@ -355,6 +370,7 @@ function pointClassName(
   return [
     "intelligence-efficiency__point-control",
     isFrontier(point.datum, metric) ? "intelligence-efficiency__point-control--frontier" : "",
+    point.datum.weights?.open === true ? "intelligence-efficiency__point-control--open-weights" : "",
     point.id === astraId ? "intelligence-efficiency__point-control--astra" : "",
     point.id === solId ? "intelligence-efficiency__point-control--sol" : "",
     point.id === activeId ? "intelligence-efficiency__point-control--active" : "",
@@ -393,14 +409,31 @@ function PointGlyph({
 }
 
 function pointAccessibleLabel(datum: IntelligenceEfficiencyExplorerDatum): string {
+  const weightLabel = datum.weights === null
+    ? null
+    : datum.weights.open
+      ? datum.weights.license === null
+        ? "open weights"
+        : `open weights, ${datum.weights.license}`
+      : "closed weights";
   return [
     datum.name,
     datum.creatorName,
     `Intelligence Index ${indexFormatter.format(datum.intelligenceIndex)}`,
     `${tokenFormatter.format(datum.outputTokensPerTask)} output tokens per task`,
     `${formatExactUsd(datum.costUsdPerTask)} per task`,
-  ].join(", ");
+    weightLabel,
+  ].filter((part): part is string => part !== null).join(", ");
 }
+
+const weightsFilterPresentations: ReadonlyArray<Readonly<{
+  id: IntelligenceShareWeights;
+  label: string;
+}>> = [
+  { id: "all", label: "All" },
+  { id: "open", label: "Open weights" },
+  { id: "closed", label: "Closed" },
+];
 
 export function IntelligenceEfficiencyExplorer({
   astraId,
@@ -417,11 +450,19 @@ export function IntelligenceEfficiencyExplorer({
   const defaultShare = useMemo<IntelligenceShareView>(() => ({
     metric: "costUsdPerTask",
     pinnedId: defaultPointId,
+    weights: "all",
   }), [defaultPointId]);
   const search = useSyncExternalStore(subscribeLocationSearch, readLocationSearch, serverLocationSearch);
   const shared = parseIntelligenceShareView(search, data, defaultShare);
   const metric = shared.metric;
-  const pinnedId = shared.pinnedId;
+  const weights = shared.weights;
+  const visibleData = useMemo(
+    () => data.filter(datum => matchesIntelligenceWeightsFilter(datum, weights)),
+    [data, weights],
+  );
+  const pinnedId = visibleData.some(datum => datum.id === shared.pinnedId)
+    ? shared.pinnedId
+    : visibleData.find(datum => datum.id === astraId)?.id ?? visibleData[0]?.id ?? "";
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [focusedId, setFocusedId] = useState<string | null>(null);
   const [rovingId, setRovingId] = useState(defaultPointId);
@@ -431,7 +472,7 @@ export function IntelligenceEfficiencyExplorer({
   const titleId = useId();
   const descriptionId = useId();
   const inspectorTitleId = useId();
-  const modelOptions = useMemo<readonly OptionGridPickerItem[]>(() => data.toSorted((left, right) =>
+  const modelOptions = useMemo<readonly OptionGridPickerItem[]>(() => visibleData.toSorted((left, right) =>
     left.creatorName.localeCompare(right.creatorName)
       || left.name.localeCompare(right.name)
       || left.id.localeCompare(right.id)).map(datum => {
@@ -446,7 +487,7 @@ export function IntelligenceEfficiencyExplorer({
       label: datum.name,
       monogram: brand.monogram,
     };
-  }), [data]);
+  }), [visibleData]);
 
   function writeShare(next: IntelligenceShareView): void {
     replaceLocationSearch(intelligenceShareSearch(next, data, defaultShare, window.location.search));
@@ -469,12 +510,14 @@ export function IntelligenceEfficiencyExplorer({
   }, []);
 
   const geometry = useMemo(
-    () => projectIntelligenceExplorerGeometry(data, metric, yDomain, chartWidth),
-    [chartWidth, data, metric, yDomain],
+    () => projectIntelligenceExplorerGeometry(visibleData, metric, yDomain, chartWidth),
+    [chartWidth, metric, visibleData, yDomain],
   );
   const { chartHeight, compact, plot, points, xDomain } = geometry;
   const activeId = hoveredId ?? focusedId ?? pinnedId;
-  const activeDatum = data.find(datum => datum.id === activeId) ?? data[0];
+  const activeDatum = visibleData.find(datum => datum.id === activeId)
+    ?? data.find(datum => datum.id === activeId)
+    ?? visibleData[0];
   const labeledPoints = useMemo(() => {
     const ids = new Set([astraId, solId, activeId].filter((id): id is string => id !== null && id !== ""));
     return points.filter(point => ids.has(point.id));
@@ -515,7 +558,7 @@ export function IntelligenceEfficiencyExplorer({
   const presentation = metricPresentations[metric];
 
   function pinPoint(pointId: string): void {
-    writeShare({ metric, pinnedId: pointId });
+    writeShare({ metric, pinnedId: pointId, weights });
     setRovingId(pointId);
     const point = data.find(datum => datum.id === pointId);
     if (point !== undefined) {
@@ -583,12 +626,35 @@ export function IntelligenceEfficiencyExplorer({
                       },
                     });
                   }
-                  writeShare({ metric: item, pinnedId });
+                  writeShare({ metric: item, pinnedId, weights });
                 }}
                 type="button"
               >
                 {intelligenceMetricGlyph(item)}
                 {metricPresentations[item].controlLabel}
+              </button>
+            ))}
+          </div>
+          <div aria-label="Show models by weight" className="intelligence-efficiency__metric-control" role="group">
+            {weightsFilterPresentations.map(item => (
+              <button
+                aria-pressed={weights === item.id}
+                data-intelligence-weights={item.id}
+                key={item.id}
+                onClick={() => {
+                  const nextVisible = data.filter(datum => (
+                    matchesIntelligenceWeightsFilter(datum, item.id)
+                  ));
+                  const nextPinned = nextVisible.some(datum => datum.id === pinnedId)
+                    ? pinnedId
+                    : nextVisible.find(datum => datum.id === astraId)?.id
+                      ?? nextVisible[0]?.id
+                      ?? pinnedId;
+                  writeShare({ metric, pinnedId: nextPinned, weights: item.id });
+                }}
+                type="button"
+              >
+                {item.label}
               </button>
             ))}
           </div>
@@ -630,7 +696,7 @@ export function IntelligenceEfficiencyExplorer({
           >
             <title id={titleId}>{`Artificial Analysis Intelligence Index by ${presentation.inspectorLabel.toLowerCase()}`}</title>
             <desc id={descriptionId}>
-              {`${data.length} model configurations. Use arrow keys to move between points, then Enter or Space to pin a selection. The horizontal axis uses a logarithmic scale.`}
+              {`${visibleData.length} model configurations. Use arrow keys to move between points, then Enter or Space to pin a selection. The horizontal axis uses a logarithmic scale.`}
             </desc>
 
             <g aria-hidden="true" className="intelligence-efficiency__grid">
@@ -734,7 +800,8 @@ export function IntelligenceEfficiencyExplorer({
         </div>
 
         <div className="intelligence-efficiency__chart-key">
-          <span><i data-symbol="context" />Model configuration</span>
+          <span><i data-symbol="context" />Closed-weight configuration</span>
+          <span><i data-symbol="open-weights" />Open-weight configuration</span>
           <span><i data-symbol="frontier" />Pareto frontier · best score at each budget</span>
           <span className="intelligence-efficiency__interaction-hint">Select a point or choose a model above</span>
         </div>
@@ -762,7 +829,27 @@ export function IntelligenceEfficiencyExplorer({
               <dt>Output tokens / task</dt>
               <dd><data value={activeDatum.outputTokensPerTask}>{tokenFormatter.format(activeDatum.outputTokensPerTask)}</data></dd>
             </div>
+            {activeDatum.weights === null ? null : (
+              <div>
+                <dt>Weights</dt>
+                <dd>
+                  {activeDatum.weights.open ? "Open" : "Closed"}
+                  {activeDatum.weights.license === null ? null : ` · ${activeDatum.weights.license}`}
+                </dd>
+              </div>
+            )}
           </dl>
+          {activeDatum.weights?.open === true && activeDatum.weights.sourceUrl !== null ? (
+            <p className="intelligence-efficiency__weights-source">
+              <a
+                data-analytics-destination-id="source:model-weights"
+                data-analytics-destination-kind="source"
+                href={activeDatum.weights.sourceUrl}
+              >
+                Model weights ↗
+              </a>
+            </p>
+          ) : null}
           <p className="intelligence-efficiency__frontier-status">
             {isFrontier(activeDatum, metric)
               ? `Best available score at this ${metric === "costUsdPerTask" ? "task cost" : "output-token budget"}.`

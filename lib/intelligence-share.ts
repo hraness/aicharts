@@ -11,16 +11,22 @@ export type IntelligenceShareRecord = Readonly<{
   slug: string;
 }>;
 
+export type IntelligenceShareWeights = "all" | "closed" | "open";
+
 export type IntelligenceShareView = Readonly<{
   metric: IntelligenceShareMetric;
   pinnedId: string;
+  weights: IntelligenceShareWeights;
 }>;
 
 const MODEL_PARAM = "model";
 const RESOURCE_PARAM = "resource";
+const WEIGHTS_PARAM = "weights";
 const TOKENS_RESOURCE = "tokens";
+const OPEN_WEIGHTS = "open";
+const CLOSED_WEIGHTS = "closed";
 
-export const INTELLIGENCE_SHARE_PARAM_KEYS = [MODEL_PARAM, RESOURCE_PARAM] as const;
+export const INTELLIGENCE_SHARE_PARAM_KEYS = [MODEL_PARAM, RESOURCE_PARAM, WEIGHTS_PARAM] as const;
 
 export function intelligenceShareIdentity(
   records: readonly IntelligenceShareRecord[],
@@ -44,9 +50,15 @@ export function parseIntelligenceShareView(
     ? undefined
     : records.find(item => item.slug === requested || item.id === requested);
   const resource = params.get(RESOURCE_PARAM);
+  const weightsValue = params.get(WEIGHTS_PARAM);
   return {
     metric: resource === TOKENS_RESOURCE ? "outputTokensPerTask" : defaults.metric,
     pinnedId: match?.id ?? defaults.pinnedId,
+    weights: weightsValue === OPEN_WEIGHTS
+      ? "open"
+      : weightsValue === CLOSED_WEIGHTS
+        ? "closed"
+        : defaults.weights,
   };
 }
 
@@ -62,5 +74,7 @@ export function intelligenceShareSearch(
   const identity = intelligenceShareIdentity(records, view.pinnedId);
   if (identity !== null && view.pinnedId !== defaults.pinnedId) params.set(MODEL_PARAM, identity);
   if (view.metric !== defaults.metric) params.set(RESOURCE_PARAM, TOKENS_RESOURCE);
+  if (view.weights === "open") params.set(WEIGHTS_PARAM, OPEN_WEIGHTS);
+  if (view.weights === "closed") params.set(WEIGHTS_PARAM, CLOSED_WEIGHTS);
   return params.toString();
 }

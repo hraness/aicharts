@@ -159,7 +159,11 @@ describe("homepage Intelligence efficiency view", () => {
 
     expect(html).toContain("Artificial Analysis Intelligence Index v4.1.1");
     expect(html.match(/<svg/gu)).toHaveLength(3);
-    expect(html.match(/role="group"/gu)).toHaveLength(2);
+    expect(html.match(/role="group"/gu)).toHaveLength(3);
+    expect(html).toContain("Show models by weight");
+    expect(html).toContain('data-intelligence-weights="all"');
+    expect(html).toContain('data-intelligence-weights="open"');
+    expect(html).toContain('data-intelligence-weights="closed"');
     expect(html.match(/role="button"/gu)).toHaveLength(127);
     expect(html.match(/tabindex="0"/gu)).toHaveLength(1);
     expect(html).toContain("Use arrow keys to move between points");
@@ -359,6 +363,7 @@ describe("homepage Intelligence efficiency view", () => {
       outputTokensPerTask: item.outputTokensPerTask.total,
       releaseDate: item.releaseDate,
       slug: item.slug,
+      weights: null,
     }));
     const mobile = projectIntelligenceExplorerGeometry(
       chartData,
