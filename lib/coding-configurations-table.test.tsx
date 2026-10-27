@@ -68,6 +68,7 @@ describe("coding configurations table", () => {
     const cells = firstRule(".coding-configurations__table :is(th, td)");
     expect(section).toContain("max-width: 100%");
     expect(section).toContain("min-width: 0");
+    expect(scroll).toContain("contain: paint");
     expect(scroll).toContain("max-width: 100%");
     expect(scroll).toContain("min-width: 0");
     expect(scroll).toContain("overflow-x: auto");
