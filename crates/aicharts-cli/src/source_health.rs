@@ -9,7 +9,7 @@ use std::{collections::BTreeMap, path::Path};
 
 #[cfg_attr(not(unix), allow(dead_code))]
 pub(crate) const MAX_SOURCE_HEALTH_BYTES: usize = 131_072;
-pub(crate) const MAX_SOURCE_HEALTH_CLIENTS: usize = 55;
+pub(crate) const MAX_SOURCE_HEALTH_CLIENTS: usize = 58;
 #[cfg_attr(not(unix), allow(dead_code))]
 pub(crate) const MAX_SOURCE_HEALTH_CODES: usize = aicharts_import::MAX_SOURCE_HEALTH_CODES;
 /// Incremental collection needs a fixture-supported checkpoint parser and an
@@ -801,7 +801,7 @@ mod tests {
             .unwrap();
         store.install(document).unwrap();
         let before = fs::read(directory.join("health.json")).unwrap();
-        assert_eq!(store.document.clients.len(), 55);
+        assert_eq!(store.document.clients.len(), 58);
         assert!(store
             .cache
             .replace("health.json", &vec![b' '; MAX_SOURCE_HEALTH_BYTES + 1])

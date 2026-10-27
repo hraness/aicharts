@@ -425,7 +425,7 @@
       "id": "source-health-clients",
       "scope": "local-source-health",
       "unit": "count",
-      "value": 55,
+      "value": 58,
       "source": {
         "path": "crates/aicharts-cli/src/source_health.rs",
         "symbol": "MAX_SOURCE_HEALTH_CLIENTS"

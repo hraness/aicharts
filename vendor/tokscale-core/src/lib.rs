@@ -1746,6 +1746,75 @@ fn parse_all_messages_streaming<S: MessageSink>(
         )
     }
 
+    /// MiMo rows and exact provenance are one cache payload. A warm hit never
+    /// opens SQLite, and a cold read collects both in one reader snapshot.
+    fn load_or_parse_micode_source(
+        path: &Path,
+        source_cache: &message_cache::SourceMessageCache,
+    ) -> (
+        sessions::micode::MiMoSource,
+        Option<message_cache::CachedSourceEntry>,
+        bool,
+    ) {
+        let identity = message_cache::CacheIdentity::for_client(ClientId::MiMoCode);
+        let cached = source_cache.take(identity, path);
+        let before = match message_cache::SourceFingerprint::check_sqlite_path(
+            path,
+            cached.as_ref().map(|entry| &entry.fingerprint),
+        ) {
+            Some(message_cache::FingerprintStatus::Unchanged) => {
+                cached.as_ref().map(|entry| entry.fingerprint.clone())
+            }
+            Some(message_cache::FingerprintStatus::Changed(fingerprint)) => Some(fingerprint),
+            None => None,
+        };
+        if let Some(mut entry) = cached {
+            if before.as_ref() == Some(&entry.fingerprint)
+                && !entry.messages.is_empty()
+                && entry.has_valid_micode_metadata()
+            {
+                for message in &mut entry.messages {
+                    message.refresh_derived_fields();
+                }
+                return (
+                    sessions::micode::MiMoSource {
+                        messages: entry.messages,
+                        metadata: entry.micode_metadata.take().unwrap_or_default(),
+                        complete: true,
+                    },
+                    None,
+                    false,
+                );
+            }
+        }
+        let source = sessions::micode::parse_micode_source(path);
+        // A concurrent writer can commit after the read snapshot began. Never
+        // label that older pair with a newer database/WAL fingerprint.
+        let stable = before.as_ref().is_some_and(|fingerprint| {
+            matches!(
+                message_cache::SourceFingerprint::check_sqlite_path(path, Some(fingerprint)),
+                Some(message_cache::FingerprintStatus::Unchanged)
+            )
+        });
+        let cache_entry = if stable && source.complete && !source.messages.is_empty() {
+            before.map(|fingerprint| {
+                message_cache::CachedSourceEntry::new(
+                    identity,
+                    path,
+                    fingerprint,
+                    source.messages.clone(),
+                    Vec::new(),
+                    None,
+                )
+                .with_micode_metadata(source.metadata.clone())
+            })
+        } else {
+            None
+        };
+        let invalidate = !stable || !source.complete || source.messages.is_empty();
+        (source, cache_entry, invalidate)
+    }
+
     /// OpenCode's SQLite lane, where a warm scan reads only the rows that
     /// changed since the last one.
     ///
@@ -2086,55 +2155,30 @@ fn parse_all_messages_streaming<S: MessageSink>(
 
     // Parse MiMo Code: SQLite database(s)
     // OpenCode is the largest lane; release it before MiMo Code starts.
-    // `micode_indices` below stores indices into `all_messages`, so this must
-    // happen before the first one is recorded -- never inside that loop.
     flush_lane(&mut all_messages, &flush_context, sink);
 
-    let mut micode_indices: HashMap<String, usize> = HashMap::new();
+    let mut micode_messages = sessions::micode::MiMoMessages::default();
 
     for db_path in &scan_result.micode_dbs {
-        // Pass `None` so the loader does not reprice: MiMo Code carries an
-        // authoritative per-message cost that unconditional repricing would
-        // overwrite (and persist to the cache). Reprice only messages that had
-        // no embedded cost, mirroring the gjc lane's guard.
-        let CachedParseOutcome {
-            messages,
-            cache_entry,
-            ..
-        } = load_or_parse_sqlite_source(
-            message_cache::CacheIdentity::for_client(ClientId::MiMoCode),
-            db_path,
-            &source_cache,
-            None,
-            sessions::micode::parse_micode_sqlite,
-        );
-
-        for mut message in messages {
-            if !message.has_authoritative_cost() {
-                apply_pricing_if_available(&mut message, pricing);
-            }
-            if let Some(key) = message.dedup_key.as_ref() {
-                if let Some(index) = micode_indices.get(key).copied() {
-                    if message.has_authoritative_cost()
-                        && !all_messages[index].has_authoritative_cost()
-                    {
-                        all_messages[index].cost = message.cost;
-                        all_messages[index].mark_provider_reported_cost();
-                    }
-                    continue;
-                }
-                micode_indices.insert(key.clone(), all_messages.len());
-            }
-            all_messages.push(message);
-        }
-
+        // Pricing happens only after raw source identities are reconciled.
+        let (source, cache_entry, invalidate) = load_or_parse_micode_source(db_path, &source_cache);
+        micode_messages.extend(db_path, source);
         if let Some(entry) = cache_entry {
             source_cache.insert(entry);
+        } else if invalidate {
+            source_cache.remove(
+                message_cache::CacheIdentity::for_client(ClientId::MiMoCode),
+                db_path,
+            );
         }
     }
 
-    // MiMo Code is done indexing into `all_messages`; release it.
-    flush_lane(&mut all_messages, &flush_context, sink);
+    // Buffer the whole shared store before choosing ownership: the original
+    // session can be in a database discovered after a fork's copied history.
+    for mut message in micode_messages.into_messages() {
+        apply_pricing_if_available(&mut message, pricing);
+        flush_message(message, &flush_context, sink);
+    }
 
     let claude_home = PathBuf::from(home_dir);
     let claude_outcomes: Vec<CachedParseOutcome> = scan_result
@@ -2389,7 +2433,7 @@ fn parse_all_messages_streaming<S: MessageSink>(
         crate::offline_checkpoint::parse_cursor,
     );
 
-    parse_cached_lane(
+    parse_cached_lane_deduped(
         &scan_result,
         &mut source_cache,
         pricing,
@@ -3037,6 +3081,24 @@ fn parse_all_messages_streaming<S: MessageSink>(
         sessions::hindsight::parse_hindsight_file,
     );
 
+    // Muse Code `model_completed` records carry usage but never a cost, so
+    // every message leaves the parser at 0.0 and pricing is its only cost
+    // source. That makes the generic source cache safe here — unlike Junie
+    // above, there is no authoritative embedded cost for cached_messages()'s
+    // unconditional reprice to overwrite. The parser skips the parent-side
+    // `workflow_child_lifecycle` usage aggregates (they duplicate the
+    // child's own scanned transcript) and keys each event by its stable
+    // stream sequence, so the cross-file dedup pass is first-wins on keys
+    // that survive a warm cache hit.
+    parse_cached_lane_deduped(
+        &scan_result,
+        &mut source_cache,
+        pricing,
+        &mut all_messages,
+        ClientId::Muse,
+        sessions::muse::parse_muse_file,
+    );
+
     // ZCode (Z.ai GLM-5.2 ADE) JSONL sessions. Token usage may be embedded
     // from the API response; otherwise estimated from content.
     let zcode_messages: Vec<UnifiedMessage> = scan_result
@@ -3373,35 +3435,7 @@ fn parse_all_messages_streaming<S: MessageSink>(
         all_messages.extend(crush_messages);
     }
 
-    let antigravity_messages: Vec<UnifiedMessage> = scan_result
-        .get(ClientId::Antigravity)
-        .par_iter()
-        .flat_map(|path| {
-            sessions::antigravity::parse_antigravity_file(path)
-                .into_iter()
-                .map(|mut msg| {
-                    apply_pricing_if_available(&mut msg, pricing);
-                    msg
-                })
-                .collect::<Vec<_>>()
-        })
-        .collect();
-    all_messages.extend(antigravity_messages);
-
-    let antigravity_cli_messages: Vec<UnifiedMessage> = scan_result
-        .get(ClientId::AntigravityCli)
-        .par_iter()
-        .flat_map(|path| {
-            sessions::antigravity_cli::parse_antigravity_cli_file(path)
-                .into_iter()
-                .map(|mut msg| {
-                    apply_pricing_if_available(&mut msg, pricing);
-                    msg
-                })
-                .collect::<Vec<_>>()
-        })
-        .collect();
-    all_messages.extend(antigravity_cli_messages);
+    all_messages.extend(parse_antigravity_family_messages(&scan_result, pricing));
 
     // Trae API dump uses exact dollar_float totals, so pricing lookup is not needed.
     let trae_messages: Vec<UnifiedMessage> = scan_result
@@ -5324,16 +5358,40 @@ pub fn parse_local_clients(options: LocalParseOptions) -> Result<ParsedMessages,
     // MiMo Code: SQLite database(s). Dedup by the payload's own message id the
     // same way the submit path does -- MiMo writes channel-suffixed databases,
     // so one session can appear in `mimocode.db` and `mimocode-<channel>.db`.
-    let mut micode_seen: HashSet<String> = HashSet::new();
-    let micode_msgs: Vec<ParsedMessage> = scan_result
-        .micode_dbs
+    let mut micode_messages = sessions::micode::MiMoMessages::default();
+    for db_path in &scan_result.micode_dbs {
+        micode_messages.extend(db_path, sessions::micode::parse_micode_source(db_path));
+    }
+    let micode_msgs: Vec<ParsedMessage> = micode_messages
+        .into_messages()
         .iter()
-        .flat_map(|db_path| sessions::micode::parse_micode_sqlite(db_path))
-        .filter(|msg| should_keep_deduped_message(&mut micode_seen, msg))
-        .map(|msg| unified_to_parsed(&msg))
+        .map(unified_to_parsed)
         .collect();
-    let micode_count = summed_parsed_message_count(&micode_msgs);
+    let mut micode_count = 0i32;
+    let mut micode_desktop_count = 0i32;
+    for msg in &micode_msgs {
+        // Counts must respect the requested-client filter the same way the
+        // message list does below; otherwise a desktop-only scan would still
+        // report CLI rows under MiMo Code.
+        if !include_all
+            && !retain_for_requested_clients(
+                &msg.client,
+                &msg.model_id,
+                &msg.provider_id,
+                &requested,
+            )
+        {
+            continue;
+        }
+        let n = msg.message_count.max(0);
+        if msg.client == sessions::micode::MICODE_DESKTOP_CLIENT_ID {
+            micode_desktop_count += n;
+        } else {
+            micode_count += n;
+        }
+    }
     counts.set(ClientId::MiMoCode, micode_count);
+    counts.set(ClientId::MiMoDesktop, micode_desktop_count);
     messages.extend(micode_msgs);
 
     let claude_home = PathBuf::from(&home_dir);
@@ -5958,10 +6016,30 @@ pub fn parse_local_clients(options: LocalParseOptions) -> Result<ParsedMessages,
     counts.set(ClientId::Hindsight, hindsight_count);
     messages.extend(hindsight_msgs);
 
-    let mcode_msgs: Vec<ParsedMessage> = scan_result
+    let muse_msgs_raw: Vec<UnifiedMessage> = scan_result
+        .get(ClientId::Muse)
+        .par_iter()
+        .flat_map(|path| sessions::muse::parse_muse_file(path))
+        .collect();
+    let mut muse_seen: HashSet<String> = HashSet::new();
+    let muse_msgs: Vec<ParsedMessage> = muse_msgs_raw
+        .into_iter()
+        .filter(|message| should_keep_deduped_message(&mut muse_seen, message))
+        .map(|message| unified_to_parsed(&message))
+        .collect();
+    let muse_count = summed_parsed_message_count(&muse_msgs);
+    counts.set(ClientId::Muse, muse_count);
+    messages.extend(muse_msgs);
+
+    let mcode_raw: Vec<UnifiedMessage> = scan_result
         .get(ClientId::Mcode)
         .par_iter()
         .flat_map(|path| sessions::mcode::parse_mcode_file(path))
+        .collect();
+    let mut mcode_seen = HashSet::new();
+    let mcode_msgs: Vec<ParsedMessage> = mcode_raw
+        .into_iter()
+        .filter(|message| should_keep_deduped_message(&mut mcode_seen, message))
         .map(|message| unified_to_parsed(&message))
         .collect();
     let mcode_count = summed_parsed_message_count(&mcode_msgs);
@@ -6192,33 +6270,19 @@ pub fn parse_local_clients(options: LocalParseOptions) -> Result<ParsedMessages,
     counts.set(ClientId::Crush, crush_count);
     messages.extend(crush_msgs);
 
-    let antigravity_msgs: Vec<ParsedMessage> = scan_result
-        .get(ClientId::Antigravity)
-        .par_iter()
-        .flat_map(|path| {
-            sessions::antigravity::parse_antigravity_file(path)
-                .into_iter()
-                .map(|msg| unified_to_parsed(&msg))
-                .collect::<Vec<_>>()
-        })
-        .collect();
-    let antigravity_count = antigravity_msgs.len() as i32;
-    counts.set(ClientId::Antigravity, antigravity_count);
-    messages.extend(antigravity_msgs);
-
-    let antigravity_cli_msgs: Vec<ParsedMessage> = scan_result
-        .get(ClientId::AntigravityCli)
-        .par_iter()
-        .flat_map(|path| {
-            sessions::antigravity_cli::parse_antigravity_cli_file(path)
-                .into_iter()
-                .map(|msg| unified_to_parsed(&msg))
-                .collect::<Vec<_>>()
-        })
-        .collect();
-    let antigravity_cli_count = antigravity_cli_msgs.len() as i32;
-    counts.set(ClientId::AntigravityCli, antigravity_cli_count);
-    messages.extend(antigravity_cli_msgs);
+    let antigravity_msgs = parse_antigravity_family_messages(&scan_result, None);
+    for client in [
+        ClientId::Antigravity,
+        ClientId::AntigravityCli,
+        ClientId::AntigravityExtension,
+    ] {
+        let count = antigravity_msgs
+            .iter()
+            .filter(|message| message.client == client.as_str())
+            .count() as i32;
+        counts.set(client, count);
+    }
+    messages.extend(antigravity_msgs.iter().map(unified_to_parsed));
 
     let trae_msgs: Vec<ParsedMessage> = {
         let unique_trae_messages = dedupe_latest_trae_messages(
@@ -6527,6 +6591,66 @@ fn should_keep_deduped_message(seen_keys: &mut HashSet<String>, message: &Unifie
         .is_none_or(|key| seen_keys.insert(key.clone()))
 }
 
+type AntigravitySourceParser = fn(&Path) -> Vec<UnifiedMessage>;
+
+/// Read every Antigravity surface in legacy-first order, then collapse copies
+/// of the same provider response even when each surface assigned it a
+/// different session ID. Antigravity's response ID is shared by the desktop
+/// cache, CLI database, and IDE extension database; session IDs are not.
+fn parse_antigravity_family_messages(
+    scan_result: &scanner::ScanResult,
+    pricing: Option<&pricing::PricingService>,
+) -> Vec<UnifiedMessage> {
+    let sources: [(ClientId, AntigravitySourceParser); 3] = [
+        (
+            ClientId::Antigravity,
+            sessions::antigravity::parse_antigravity_file,
+        ),
+        (
+            ClientId::AntigravityCli,
+            sessions::antigravity_cli::parse_antigravity_cli_file,
+        ),
+        (
+            ClientId::AntigravityExtension,
+            sessions::antigravity_cli::parse_antigravity_extension_file,
+        ),
+    ];
+
+    let mut messages = Vec::new();
+    for (client, parse) in sources {
+        let mut source_messages: Vec<UnifiedMessage> = scan_result
+            .get(client)
+            .par_iter()
+            .flat_map_iter(|path| parse(path))
+            .collect();
+        if let Some(pricing) = pricing {
+            for message in &mut source_messages {
+                apply_pricing_if_available(message, Some(pricing));
+            }
+        }
+        messages.extend(source_messages);
+    }
+
+    dedupe_antigravity_family_messages(messages)
+}
+
+/// Deduplicate only response IDs within the Antigravity family. Missing IDs
+/// stay separate because identical token counts and timestamps are not proof
+/// that two independent generations are the same call.
+fn dedupe_antigravity_family_messages(messages: Vec<UnifiedMessage>) -> Vec<UnifiedMessage> {
+    let mut seen_response_ids = HashSet::new();
+    messages
+        .into_iter()
+        .filter(|message| {
+            message
+                .dedup_key
+                .as_deref()
+                .filter(|key| !key.trim().is_empty())
+                .is_none_or(|key| seen_response_ids.insert(key.to_string()))
+        })
+        .collect()
+}
+
 fn summed_parsed_message_count(messages: &[ParsedMessage]) -> i32 {
     messages
         .iter()
@@ -6582,19 +6706,22 @@ pub fn parsed_to_unified(msg: &ParsedMessage, cost: f64) -> UnifiedMessage {
         is_turn_start: false,
         model_attribution_conflicted: false,
         tokens_estimated: false,
+        // ParsedMessage is the offline report wire shape and does not carry
+        // the per-request processing tier; rehydrated rows keep no tier.
+        service_tier: None,
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::{
-        aggregate_hourly_usage_entries, aggregate_model_usage_entries,
+        aggregate_by_date, aggregate_hourly_usage_entries, aggregate_model_usage_entries,
         aggregate_monthly_usage_v2_entries, apply_pricing_if_available, build_graph_from_messages,
-        dedupe_latest_trae_messages, filter_messages_for_report,
-        generate_graph_with_loaded_pricing, get_home_dir_string, is_generic_routing_label,
-        merge_claude_cross_file_duplicate, message_cache, message_passes_report_filter,
-        normalize_model_for_grouping, opencode_json_superseded_by_sqlite,
-        parse_all_messages_with_pricing_with_cache_policy,
+        dedupe_antigravity_family_messages, dedupe_latest_trae_messages,
+        filter_messages_for_report, generate_graph_with_loaded_pricing, get_home_dir_string,
+        is_generic_routing_label, merge_claude_cross_file_duplicate, message_cache,
+        message_passes_report_filter, normalize_model_for_grouping,
+        opencode_json_superseded_by_sqlite, parse_all_messages_with_pricing_with_cache_policy,
         parse_all_messages_with_pricing_with_env_strategy, parse_local_clients, parsed_to_unified,
         paths, prepare_submission_pricing, pricing, retain_for_requested_clients, scanner,
         select_local_parse_pricing, sessions, unified_to_parsed, validate_priced_messages,
@@ -6612,6 +6739,56 @@ mod tests {
     use serial_test::serial;
     use std::collections::{BTreeSet, HashMap, HashSet};
     use std::io::Write;
+
+    #[test]
+    fn antigravity_response_ids_deduplicate_across_independent_sessions() {
+        let make_message =
+            |client: &str, session: &str, input: i64, output: i64, dedup_key: Option<&str>| {
+                UnifiedMessage::new_with_dedup(
+                    client,
+                    "gemini-3.5-flash-high",
+                    "google",
+                    session,
+                    1_781_502_653_000,
+                    TokenBreakdown {
+                        input,
+                        output,
+                        ..Default::default()
+                    },
+                    0.0,
+                    dedup_key.map(str::to_string),
+                )
+            };
+
+        let unique = dedupe_antigravity_family_messages(vec![
+            make_message("antigravity-cli", "cli-session", 100, 20, Some("resp-copy")),
+            make_message(
+                "antigravity-extension",
+                "extension-session",
+                100,
+                20,
+                Some("resp-copy"),
+            ),
+            make_message(
+                "antigravity-extension",
+                "extension-session",
+                13,
+                4,
+                Some("resp-new"),
+            ),
+            // Without a stable provider ID, two otherwise identical requests
+            // cannot safely be treated as copies.
+            make_message("antigravity-extension", "another-session", 7, 2, None),
+        ]);
+
+        assert_eq!(unique.len(), 3);
+        assert_eq!(unique[0].client, "antigravity-cli");
+        let daily = aggregate_by_date(unique);
+        assert_eq!(daily.len(), 1);
+        assert_eq!(daily[0].totals.tokens, 146);
+        assert_eq!(daily[0].token_breakdown.input, 120);
+        assert_eq!(daily[0].token_breakdown.output, 26);
+    }
 
     #[test]
     fn graph_sink_keeps_only_one_bounded_pricing_batch() {
@@ -10542,6 +10719,107 @@ mod tests {
 
     #[test]
     #[serial_test::serial]
+    fn test_parse_local_clients_splits_micode_desktop_by_session_version() {
+        let cache_home = tempfile::TempDir::new().unwrap();
+        let source_home = tempfile::TempDir::new().unwrap();
+        let _cache_env = redirect_cache_home(cache_home.path());
+
+        let micode_dir = source_home.path().join(".local/share/mimocode");
+        std::fs::create_dir_all(&micode_dir).unwrap();
+        let conn = rusqlite::Connection::open(micode_dir.join("mimocode.db")).unwrap();
+        conn.execute_batch(
+            "CREATE TABLE message (
+                id TEXT PRIMARY KEY,
+                session_id TEXT NOT NULL,
+                data TEXT NOT NULL
+            );
+            CREATE TABLE session (
+                id TEXT PRIMARY KEY,
+                directory TEXT,
+                version TEXT
+            );",
+        )
+        .unwrap();
+        conn.execute(
+            "INSERT INTO session (id, directory, version) VALUES (?1, ?2, ?3)",
+            rusqlite::params![
+                "ses-desktop",
+                "/Users/alice/desktop-repo",
+                "desktop-5198ff5"
+            ],
+        )
+        .unwrap();
+        conn.execute(
+            "INSERT INTO session (id, directory, version) VALUES (?1, ?2, ?3)",
+            rusqlite::params!["ses-cli", "/Users/alice/cli-repo", "1.0.0"],
+        )
+        .unwrap();
+        let desktop_msg = r#"{"id":"micode-desktop-msg","role":"assistant","modelID":"mimo-x-pro-preview","providerID":"xiaomi","cost":0,"tokens":{"input":1000,"output":200,"reasoning":0,"cache":{"read":0,"write":0}},"time":{"created":1780000000000}}"#;
+        let cli_msg = r#"{"id":"micode-cli-msg","role":"assistant","modelID":"mimo-v2.5-pro","providerID":"mimo","cost":0,"tokens":{"input":500,"output":100,"reasoning":0,"cache":{"read":0,"write":0}},"time":{"created":1780000005000}}"#;
+        for (id, session, data) in [
+            ("row-d", "ses-desktop", desktop_msg),
+            ("row-c", "ses-cli", cli_msg),
+        ] {
+            conn.execute(
+                "INSERT INTO message (id, session_id, data) VALUES (?1, ?2, ?3)",
+                rusqlite::params![id, session, data],
+            )
+            .unwrap();
+        }
+        drop(conn);
+
+        let parsed = parse_local_clients(LocalParseOptions {
+            home_dir: Some(source_home.path().to_str().unwrap().to_string()),
+            use_env_roots: false,
+            clients: Some(vec!["micode".to_string(), "micode-desktop".to_string()]),
+            since: None,
+            until: None,
+            year: None,
+            scanner_settings: scanner::ScannerSettings::default(),
+        })
+        .unwrap();
+
+        let desktop = parsed
+            .messages
+            .iter()
+            .filter(|msg| msg.client == sessions::micode::MICODE_DESKTOP_CLIENT_ID)
+            .count();
+        let cli = parsed
+            .messages
+            .iter()
+            .filter(|msg| msg.client == sessions::micode::MICODE_CLIENT_ID)
+            .count();
+        assert_eq!(
+            desktop, 1,
+            "desktop-version session must land in micode-desktop"
+        );
+        assert_eq!(cli, 1, "non-desktop version session must stay under micode");
+        assert_eq!(parsed.counts.get(ClientId::MiMoDesktop), 1);
+        assert_eq!(parsed.counts.get(ClientId::MiMoCode), 1);
+
+        let desktop_only = parse_local_clients(LocalParseOptions {
+            home_dir: Some(source_home.path().to_str().unwrap().to_string()),
+            use_env_roots: false,
+            clients: Some(vec!["micode-desktop".to_string()]),
+            since: None,
+            until: None,
+            year: None,
+            scanner_settings: scanner::ScannerSettings::default(),
+        })
+        .unwrap();
+        assert!(
+            desktop_only
+                .messages
+                .iter()
+                .all(|m| m.client == sessions::micode::MICODE_DESKTOP_CLIENT_ID),
+            "micode-desktop filter must discover the shared DB and keep only desktop rows"
+        );
+        assert_eq!(desktop_only.counts.get(ClientId::MiMoDesktop), 1);
+        assert_eq!(desktop_only.counts.get(ClientId::MiMoCode), 0);
+    }
+
+    #[test]
+    #[serial_test::serial]
     fn test_parse_local_clients_keeps_provider_reported_cost() {
         // `ParsedMessage` used to carry tokens only, so every consumer of the
         // local lane had to price rows from tokens. fx can report a positive
@@ -11462,6 +11740,32 @@ mod tests {
         .unwrap();
 
         seed_openclaw_agent_db(home, "main", "sess-a", None, &migrated);
+        // A compressed SQLite fork and zstd archive must collapse against
+        // the same events, while a compressed-only event must still count.
+        let compressed_db = home.join(".openclaw/agents/archive/agent/openclaw-agent.sqlite");
+        let conn = sessions::openclaw::test_fixtures::create_compressed_agent_db(&compressed_db);
+        for (seq, event) in migrated.iter().enumerate() {
+            sessions::openclaw::test_fixtures::insert_compressed_event(
+                &conn,
+                "sess-fork",
+                seq as i64,
+                event,
+                1_756_548_000_000,
+            );
+        }
+        sessions::openclaw::test_fixtures::insert_compressed_event(
+            &conn,
+            "sess-fork",
+            migrated.len() as i64,
+            &openclaw_assistant_event("c1", 300, 40, 1_756_548_004_000),
+            1_756_548_004_000,
+        );
+        drop(conn);
+        std::fs::write(
+            sessions_dir.join("sess-a.jsonl.deleted.timestamp.zst"),
+            zstd::encode_all(migrated.join("\n").as_bytes(), 1).unwrap(),
+        )
+        .unwrap();
         // A session that only ever existed in SQLite.
         seed_openclaw_agent_db(
             home,
@@ -11477,6 +11781,7 @@ mod tests {
         let expected_keys = vec![
             "openclaw:a1:1756548001000:100:50",
             "openclaw:a2:1756548002000:20:10",
+            "openclaw:c1:1756548004000:300:40",
             "openclaw:n1:1756548003000:1:1",
             "openclaw:r1:1756541000000:5:5",
             "openclaw:z1:1756540000000:7:3",
@@ -11489,7 +11794,7 @@ mod tests {
         );
         assert_eq!(openclaw_dedup_keys(&cold), expected_keys);
         let input_total: i64 = cold.iter().map(|message| message.tokens.input).sum();
-        assert_eq!(input_total, 100 + 20 + 1 + 7 + 5);
+        assert_eq!(input_total, 100 + 20 + 300 + 1 + 7 + 5);
 
         // Cached entries keep their keys, so a warm scan collapses the same way.
         let warm = parse_all_messages_with_pricing(
@@ -11509,8 +11814,8 @@ mod tests {
             scanner_settings: scanner::ScannerSettings::default(),
         })
         .unwrap();
-        assert_eq!(parsed.counts.get(ClientId::OpenClaw), 5);
-        assert_eq!(parsed.messages.len(), 5);
+        assert_eq!(parsed.counts.get(ClientId::OpenClaw), 6);
+        assert_eq!(parsed.messages.len(), 6);
     }
 
     #[test]

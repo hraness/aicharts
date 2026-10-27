@@ -743,6 +743,11 @@ struct OpenCodeSchemaFingerprint {
     cache_write: i64,
     cost_bits: u64,
     agent: Option<String>,
+    /// Surface/client tag for stores that host more than one product surface
+    /// (e.g. MiMo Code CLI vs Xiaomi MiMo AI desktop sharing one SQLite file).
+    /// `None` keeps legacy fingerprint equality so clients that do not split
+    /// surfaces still collapse fork copies.
+    surface: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -767,9 +772,20 @@ struct OpenCodeSchemaRow {
     eligible: bool,
 }
 
+/// Exact row identity captured by the same decode that produces a message.
+/// Kept outside UnifiedMessage because only the shared-store MiMo reducer
+/// needs fractional timestamps and embedded-id provenance across cache hits.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub(crate) struct OpenCodeRowMetadata {
+    pub created_bits: u64,
+    pub completed_bits: Option<u64>,
+    pub has_embedded_id: bool,
+}
+
 #[derive(Default)]
 struct SchemaAccumulator {
     messages: Vec<UnifiedMessage>,
+    raw_metadata: Option<Vec<OpenCodeRowMetadata>>,
     fingerprint_indices: HashMap<OpenCodeSchemaFingerprint, Vec<usize>>,
     dedup_states: Vec<SchemaDedupState>,
     /// Dedup keys of every row that took part in a fingerprint merge, on both
@@ -794,6 +810,7 @@ impl SchemaAccumulator {
         row: OpenCodeSchemaRow,
         cfg: &OpenCodeSchemaConfig,
         db_namespace: &str,
+        session_clients: Option<&std::collections::HashMap<String, String>>,
     ) -> Option<usize> {
         let OpenCodeSchemaRow {
             row_id,
@@ -808,6 +825,10 @@ impl SchemaAccumulator {
             return None;
         }
 
+        #[cfg(test)]
+        if cfg.client == super::micode::MICODE_CLIENT_ID {
+            super::micode::io_tests::record_decode();
+        }
         let mut bytes = data_json.into_bytes();
         let msg: OpenCodeSchemaMessage = match crate::offline_io::simd_slice(&mut bytes) {
             Ok(m) => m,
@@ -874,6 +895,23 @@ impl SchemaAccumulator {
             row_session_id
         };
 
+        // Classify surface *before* fingerprint merge. A store that hosts both
+        // MiMo Code CLI and Xiaomi MiMo AI desktop can otherwise collapse two
+        // distinct turns that share usage stats, keeping only the first row's
+        // surface label and hiding the other surface's tokens from its filter.
+        let (stamped_client, surface) = match session_clients {
+            Some(map) => {
+                let client = map
+                    .get(&session_id)
+                    .map(String::as_str)
+                    .unwrap_or(cfg.client)
+                    .to_string();
+                let surface = client.clone();
+                (client, Some(surface))
+            }
+            None => (cfg.client.to_string(), None),
+        };
+
         let message_id = msg.id.clone();
         let dedup_key = match message_id.clone() {
             // Embedded ids are globally unique: keep them un-namespaced so the
@@ -886,7 +924,7 @@ impl SchemaAccumulator {
         };
 
         let mut unified = UnifiedMessage::new_with_agent(
-            cfg.client,
+            stamped_client,
             model_id.clone(),
             provider_id.clone(),
             session_id,
@@ -939,6 +977,13 @@ impl SchemaAccumulator {
 
         if cfg.dedup == DedupMode::Off {
             let index = self.messages.len();
+            if let Some(metadata) = &mut self.raw_metadata {
+                metadata.push(OpenCodeRowMetadata {
+                    created_bits: created_ms.to_bits(),
+                    completed_bits: completed_ms.map(f64::to_bits),
+                    has_embedded_id: message_id.is_some(),
+                });
+            }
             self.messages.push(unified);
             return Some(index);
         }
@@ -955,6 +1000,7 @@ impl SchemaAccumulator {
             cache_write,
             cost_bits: cost.to_bits(),
             agent,
+            surface,
         };
 
         // Cloning the small index list avoids holding a borrow of
@@ -1193,7 +1239,56 @@ pub(crate) fn parse_opencode_schema_sqlite(
     db_path: &Path,
     cfg: OpenCodeSchemaConfig,
 ) -> Vec<UnifiedMessage> {
-    scan_opencode_schema_sqlite(db_path, cfg).messages
+    parse_opencode_schema_sqlite_with_session_clients(db_path, cfg, None)
+}
+
+/// Like [`parse_opencode_schema_sqlite`], but stamps each message with the
+/// client id registered for its session (falling back to `cfg.client`) and
+/// keeps fingerprint merges surface-aware.
+pub(crate) fn parse_opencode_schema_sqlite_with_session_clients(
+    db_path: &Path,
+    cfg: OpenCodeSchemaConfig,
+    session_clients: Option<&std::collections::HashMap<String, String>>,
+) -> Vec<UnifiedMessage> {
+    scan_opencode_schema_sqlite_with_session_clients(db_path, cfg, session_clients).messages
+}
+
+/// Parse physical rows using a caller-owned connection and return exact
+/// provenance alongside each accepted message. No row is decoded twice and
+/// no fingerprint merge can discard aliases before shared-store accounting.
+pub(crate) fn parse_opencode_schema_rows_on(
+    db_path: &Path,
+    conn: &rusqlite::Connection,
+    mut cfg: OpenCodeSchemaConfig,
+    session_clients: &HashMap<String, String>,
+) -> (Vec<UnifiedMessage>, Vec<OpenCodeRowMetadata>, bool) {
+    cfg.dedup = DedupMode::Off;
+    let namespace = if cfg.namespace_rowid_dedup_key {
+        db_path.to_string_lossy().into_owned()
+    } else {
+        String::new()
+    };
+    let mut acc = SchemaAccumulator {
+        raw_metadata: Some(Vec::new()),
+        ..Default::default()
+    };
+    let mut complete = true;
+    for group in cfg.query_groups {
+        for query in *group {
+            let scan = collect_rows(db_path, conn, query, &mut |row| {
+                acc.ingest(row, &cfg, &namespace, Some(session_clients));
+            });
+            if scan.prepared() {
+                #[cfg(test)]
+                if cfg.client == super::micode::MICODE_CLIENT_ID {
+                    super::micode::io_tests::record_scan();
+                }
+                complete &= scan.completed();
+                break;
+            }
+        }
+    }
+    (acc.messages, acc.raw_metadata.unwrap_or_default(), complete)
 }
 
 // =============================================================================
@@ -1351,6 +1446,14 @@ pub(crate) fn scan_opencode_schema_sqlite(
     db_path: &Path,
     cfg: OpenCodeSchemaConfig,
 ) -> OpenCodeSchemaScan {
+    scan_opencode_schema_sqlite_with_session_clients(db_path, cfg, None)
+}
+
+pub(crate) fn scan_opencode_schema_sqlite_with_session_clients(
+    db_path: &Path,
+    cfg: OpenCodeSchemaConfig,
+    session_clients: Option<&std::collections::HashMap<String, String>>,
+) -> OpenCodeSchemaScan {
     let Some(conn) = open_readonly_sqlite_opt(db_path) else {
         return OpenCodeSchemaScan::empty();
     };
@@ -1389,7 +1492,7 @@ pub(crate) fn scan_opencode_schema_sqlite(
         for (index, query) in group.iter().enumerate() {
             let scan = collect_rows(db_path, &conn, query, &mut |row| {
                 let row_id = row.row_id.clone();
-                if let Some(message_index) = acc.ingest(row, &cfg, &db_namespace) {
+                if let Some(message_index) = acc.ingest(row, &cfg, &db_namespace, session_clients) {
                     group_parsed_rows.push((row_id, message_index));
                 }
             });
@@ -1511,7 +1614,23 @@ pub(crate) fn rescan_opencode_schema_sqlite(
     db_path: &Path,
     cfg: OpenCodeSchemaConfig,
     cached_state: &OpenCodeIncrementalState,
+    cached_messages: Vec<UnifiedMessage>,
+) -> Option<OpenCodeSchemaScan> {
+    rescan_opencode_schema_sqlite_with_session_clients(
+        db_path,
+        cfg,
+        cached_state,
+        cached_messages,
+        None,
+    )
+}
+
+pub(crate) fn rescan_opencode_schema_sqlite_with_session_clients(
+    db_path: &Path,
+    cfg: OpenCodeSchemaConfig,
+    cached_state: &OpenCodeIncrementalState,
     mut cached_messages: Vec<UnifiedMessage>,
+    session_clients: Option<&std::collections::HashMap<String, String>>,
 ) -> Option<OpenCodeSchemaScan> {
     let incremental_groups = cfg.incremental_groups?;
     if cached_state.groups.len() != cfg.query_groups.len() {
@@ -1640,7 +1759,7 @@ pub(crate) fn rescan_opencode_schema_sqlite(
                 return;
             };
             seen_changed.insert(row.row_id.clone());
-            if let Some(message_slot) = acc.ingest(row, &cfg, &db_namespace) {
+            if let Some(message_slot) = acc.ingest(row, &cfg, &db_namespace, session_clients) {
                 group_parsed_slots.push((row_slot, message_slot));
             }
         }) {
