@@ -240,8 +240,13 @@ describe("Claude Code · Sonnet 5.5 coding-agent placement", () => {
       record.benchmarks.aaIndex !== null && record.economics.costUsd !== null && record.economics.costUsd > 0
     ));
     expect(placement.costedCount).toBe(costed.length);
+    const placementCost = placement.record.economics.costUsd;
+    if (placementCost === null) throw new Error("sonnet coding-agent placement is missing a cost");
     expect(placement.costRank).toBe(
-      costed.filter(record => record.economics.costUsd > placement.record.economics.costUsd).length + 1,
+      costed.filter(record => {
+        const cost = record.economics.costUsd;
+        return cost !== null && cost > placementCost;
+      }).length + 1,
     );
     for (const row of sonnet55CodingAgentRows(parsed.value.records)) {
       expect(row.model).toBe(CLAUDE_SONNET_55_CODING_MODEL.model);

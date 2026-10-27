@@ -439,7 +439,13 @@ const overlapAcknowledgementSchema = z.object({
   added: z.array(stableKeySchema).refine(uniqueStableKeys, "added keys must be unique"),
 }).strict();
 
-export type CodingAgentOverlapAcknowledgement = z.infer<typeof overlapAcknowledgementSchema>;
+export type CodingAgentOverlapAcknowledgement = Readonly<{
+  schemaVersion: 1;
+  id: string;
+  fromRetrievedAt: string;
+  removed: readonly string[];
+  added: readonly string[];
+}>;
 
 export type CodingAgentStableKeyDiff = Readonly<{
   added: readonly string[];
