@@ -193,6 +193,7 @@ bun run first-party-releases:refresh
 bun run terminal-bench:refresh
 bun run terminal-bench-science:refresh
 bun run aa-intelligence-v4-3:refresh
+bun run aa-weights:refresh
 bun run data:refresh
 bun run releases:reconcile
 bun run deepswe:refresh

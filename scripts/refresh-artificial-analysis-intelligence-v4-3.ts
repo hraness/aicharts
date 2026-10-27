@@ -15,6 +15,11 @@ import {
   parseArtificialAnalysisIntelligenceV43Snapshot,
   type ArtificialAnalysisIntelligenceV43Snapshot,
 } from "../lib/artificial-analysis-intelligence-v4-3-data";
+import {
+  commitArtificialAnalysisWeights,
+  parseArtificialAnalysisWeightsSnapshot,
+  type ArtificialAnalysisWeightsSnapshot,
+} from "../lib/artificial-analysis-weights";
 import { err, isRecord, ok, type Result } from "../lib/result";
 import { z } from "../lib/schema";
 import {
@@ -28,6 +33,7 @@ import {
 } from "./refresh-artificial-analysis-intelligence";
 
 const OUTPUT_PATH = path.join(import.meta.dir, "..", "data", "artificial-analysis-intelligence-v4-3.json");
+const WEIGHTS_OUTPUT_PATH = path.join(import.meta.dir, "..", "data", "artificial-analysis-weights.json");
 export const ARTIFICIAL_ANALYSIS_INTELLIGENCE_V43_PAGE_CONTRACT = {
   version: ARTIFICIAL_ANALYSIS_INTELLIGENCE_V43_VERSION,
   evaluations: ARTIFICIAL_ANALYSIS_INTELLIGENCE_V43_EVALUATIONS,
@@ -149,6 +155,8 @@ type RefreshDependencies = Readonly<{
   now: () => string;
   readCommittedSnapshot: () => Promise<Result<ArtificialAnalysisIntelligenceV43Snapshot | null, Error>>;
   writeCommittedSnapshot: typeof writeCommittedSnapshot;
+  readWeightsSnapshot?: () => Promise<Result<ArtificialAnalysisWeightsSnapshot | null, Error>>;
+  writeWeightsSnapshot?: (snapshot: ArtificialAnalysisWeightsSnapshot) => Promise<void>;
 }>;
 
 const defaultDependencies: RefreshDependencies = {
@@ -201,6 +209,17 @@ export async function refreshArtificialAnalysisIntelligenceV43(
   } catch (cause) {
     return err(new Error("Could not atomically write the v4.3 Intelligence snapshot.", { cause }));
   }
+  if (dependencies.writeWeightsSnapshot !== undefined) {
+    const weights = await commitArtificialAnalysisWeights(
+      payload.value.models,
+      dependencies.now(),
+      {
+        read: dependencies.readWeightsSnapshot ?? (async () => ok(null)),
+        write: dependencies.writeWeightsSnapshot,
+      },
+    );
+    if (!weights.ok) return weights;
+  }
   return ok(candidate);
 }
 
@@ -212,11 +231,39 @@ export async function validateCommittedArtificialAnalysisIntelligenceV43(): Prom
   return result.value === null ? err(new Error(`Could not read ${OUTPUT_PATH}.`)) : ok(result.value);
 }
 
+async function readCommittedWeights(allowMissing = false): Promise<
+  Result<ArtificialAnalysisWeightsSnapshot | null, Error>
+> {
+  try {
+    const input: unknown = await Bun.file(WEIGHTS_OUTPUT_PATH).json();
+    const parsed = parseArtificialAnalysisWeightsSnapshot(input);
+    return parsed.ok
+      ? ok(parsed.value)
+      : err(new Error(`Invalid ${WEIGHTS_OUTPUT_PATH}: ${parsed.error.message}`, { cause: parsed.error }));
+  } catch (cause) {
+    if (allowMissing && isRecord(cause) && cause.code === "ENOENT") return ok(null);
+    return err(new Error(`Could not read ${WEIGHTS_OUTPUT_PATH}.`, { cause }));
+  }
+}
+
+async function writeCommittedWeights(snapshot: ArtificialAnalysisWeightsSnapshot): Promise<void> {
+  const temporaryPath = `${WEIGHTS_OUTPUT_PATH}.${process.pid}.${crypto.randomUUID()}.tmp`;
+  try {
+    await Bun.write(temporaryPath, `${JSON.stringify(snapshot, null, 2)}\n`);
+    await rename(temporaryPath, WEIGHTS_OUTPUT_PATH);
+  } finally {
+    await rm(temporaryPath, { force: true });
+  }
+}
+
 if (import.meta.main) {
   const checkOnly = Bun.argv.includes("--check");
   const result = checkOnly
     ? await validateCommittedArtificialAnalysisIntelligenceV43()
-    : await refreshArtificialAnalysisIntelligenceV43();
+    : await refreshArtificialAnalysisIntelligenceV43({
+      readWeightsSnapshot: () => readCommittedWeights(true),
+      writeWeightsSnapshot: writeCommittedWeights,
+    });
   if (!result.ok) {
     console.error(result.error.message);
     process.exitCode = 1;

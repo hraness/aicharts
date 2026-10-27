@@ -58,6 +58,7 @@ jobs:
       DEEP_SWE_PATH: data/deep-swe-evidence.json
       FIRST_PARTY_RELEASE_PATH: data/first-party-release-radar.json
       INTELLIGENCE_PATH: data/artificial-analysis-intelligence-v4-3.json
+      WEIGHTS_PATH: data/artificial-analysis-weights.json
       # Publication polls every 10 seconds: 3 minutes for a CI run to appear
       # for the update PR head (once per dispatch) and 25 minutes for that
       # run's Required result. A cold Worker gate needs about 20 minutes.
@@ -289,7 +290,7 @@ jobs:
           fi
 
           while IFS= read -r changed_file; do
-            if [[ "$changed_file" != "$BENCHMARK_PATH" && "$changed_file" != "$CALCULATOR_PATH" && "$changed_file" != "$DEEP_SWE_PATH" && "$changed_file" != "$FIRST_PARTY_RELEASE_PATH" && "$changed_file" != "$INTELLIGENCE_PATH" && "$changed_file" != "$RELEASE_RADAR_PATH" && "$changed_file" != "$TERMINAL_BENCH_PATH" && "$changed_file" != "$TERMINAL_BENCH_SCIENCE_PATH" && "$changed_file" != "$ATLAS_REASONING_PATH" && "$changed_file" != "$ATLAS_MULTIMODAL_PATH" && "$changed_file" != "$ARENA_MEDIA_PATH" && "$changed_file" != "$ATLAS_AUDIO_PATH" && "$changed_file" != "$ATLAS_VALS_PATH" && "$changed_file" != "$USAGE_PRICES_PATH" && "$changed_file" != "$USAGE_REGISTRY_PATH" && "$changed_file" != "$SOCIAL_KIT_PATH" && "$changed_file" != "$PUBLIC_MODEL_CARD_PATHS_PATH" ]]; then
+            if [[ "$changed_file" != "$BENCHMARK_PATH" && "$changed_file" != "$CALCULATOR_PATH" && "$changed_file" != "$DEEP_SWE_PATH" && "$changed_file" != "$FIRST_PARTY_RELEASE_PATH" && "$changed_file" != "$INTELLIGENCE_PATH" && "$changed_file" != "$WEIGHTS_PATH" && "$changed_file" != "$RELEASE_RADAR_PATH" && "$changed_file" != "$TERMINAL_BENCH_PATH" && "$changed_file" != "$TERMINAL_BENCH_SCIENCE_PATH" && "$changed_file" != "$ATLAS_REASONING_PATH" && "$changed_file" != "$ATLAS_MULTIMODAL_PATH" && "$changed_file" != "$ARENA_MEDIA_PATH" && "$changed_file" != "$ATLAS_AUDIO_PATH" && "$changed_file" != "$ATLAS_VALS_PATH" && "$changed_file" != "$USAGE_PRICES_PATH" && "$changed_file" != "$USAGE_REGISTRY_PATH" && "$changed_file" != "$SOCIAL_KIT_PATH" && "$changed_file" != "$PUBLIC_MODEL_CARD_PATHS_PATH" ]]; then
               echo "Refresh changed unexpected file: ${changed_file}"
               exit 1
             fi
@@ -312,7 +313,7 @@ jobs:
               "$FIRST_PARTY_RELEASE_PATH")
                 semantic_filter='del(.sources[].retrievedAt)'
                 ;;
-              "$INTELLIGENCE_PATH"|"$ARENA_MEDIA_PATH"|"$ATLAS_AUDIO_PATH")
+              "$INTELLIGENCE_PATH"|"$WEIGHTS_PATH"|"$ARENA_MEDIA_PATH"|"$ATLAS_AUDIO_PATH")
                 semantic_filter='del(.source.retrievedAt)'
                 ;;
               "$DEEP_SWE_PATH")
@@ -419,7 +420,7 @@ jobs:
         run: |
           git config user.name "0thernet"
           git config user.email "894119+0thernet@users.noreply.github.com"
-          git add -- "$BENCHMARK_PATH" "$CALCULATOR_PATH" "$DEEP_SWE_PATH" "$FIRST_PARTY_RELEASE_PATH" "$INTELLIGENCE_PATH" "$RELEASE_RADAR_PATH" "$TERMINAL_BENCH_PATH" "$TERMINAL_BENCH_SCIENCE_PATH" "$ATLAS_REASONING_PATH" "$ATLAS_MULTIMODAL_PATH" "$ARENA_MEDIA_PATH" "$ATLAS_AUDIO_PATH" "$ATLAS_VALS_PATH" "$USAGE_PRICES_PATH" "$USAGE_REGISTRY_PATH" "$SOCIAL_KIT_PATH" "$PUBLIC_MODEL_CARD_PATHS_PATH"
+          git add -- "$BENCHMARK_PATH" "$CALCULATOR_PATH" "$DEEP_SWE_PATH" "$FIRST_PARTY_RELEASE_PATH" "$INTELLIGENCE_PATH" "$WEIGHTS_PATH" "$RELEASE_RADAR_PATH" "$TERMINAL_BENCH_PATH" "$TERMINAL_BENCH_SCIENCE_PATH" "$ATLAS_REASONING_PATH" "$ATLAS_MULTIMODAL_PATH" "$ARENA_MEDIA_PATH" "$ATLAS_AUDIO_PATH" "$ATLAS_VALS_PATH" "$USAGE_PRICES_PATH" "$USAGE_REGISTRY_PATH" "$SOCIAL_KIT_PATH" "$PUBLIC_MODEL_CARD_PATHS_PATH"
           git commit -m "chore: refresh model data"
           git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/${REFRESH_BRANCH}"
 
@@ -737,6 +738,9 @@ jobs:
             fi
             if [[ -f "$INTELLIGENCE_PATH" ]]; then
               jq -r '"- AA Intelligence Index v\(.benchmark.version): \(.selection.measuredCompleteRecordCount) current measured configurations; \(.selection.positiveCostRecordCount) with positive comparable cost; retrieved \(.source.retrievedAt)."' "$INTELLIGENCE_PATH"
+            fi
+            if [[ -f "$WEIGHTS_PATH" ]]; then
+              jq -r '"- AA weight roster: \(.records | length) model identities; \([.records[] | select(.deprecated)] | length) deprecated; retrieved \(.source.retrievedAt)."' "$WEIGHTS_PATH"
             fi
             if [[ -f "$RELEASE_RADAR_PATH" ]]; then
               jq -r '"- Release radar: \(.releases | length) tracked; \([.releases[] | select(.status == "awaiting-benchmark")] | length) awaiting complete coverage; retrieved \(.source.retrievedAt)."' "$RELEASE_RADAR_PATH"

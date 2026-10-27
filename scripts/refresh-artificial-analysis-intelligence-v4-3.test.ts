@@ -4,6 +4,7 @@ import { gzipSync } from "node:zlib";
 import currentJson from "../data/artificial-analysis-intelligence-v4-3.json";
 import { ARTIFICIAL_ANALYSIS_INTELLIGENCE_CITATION, ARTIFICIAL_ANALYSIS_INTELLIGENCE_NAME, ARTIFICIAL_ANALYSIS_TERMS_URL } from "../lib/artificial-analysis-intelligence-data";
 import { ARTIFICIAL_ANALYSIS_INTELLIGENCE_V43_EVALUATIONS, parseArtificialAnalysisIntelligenceV43Snapshot, type ArtificialAnalysisIntelligenceV43Snapshot } from "../lib/artificial-analysis-intelligence-v4-3-data";
+import { parseArtificialAnalysisWeightsSnapshot, type ArtificialAnalysisWeightsSnapshot } from "../lib/artificial-analysis-weights";
 import { err, ok } from "../lib/result";
 import { extractArtificialAnalysisIntelligencePage, parseArtificialAnalysisModelsPayload } from "./refresh-artificial-analysis-intelligence";
 import {
@@ -217,6 +218,26 @@ describe("Artificial Analysis Intelligence v4.3 refresh", () => {
       expect(result.ok).toBeFalse();
       expect(writes).toBe(0);
     }
+  });
+
+  test("writes the full source roster when weights I/O is provided", async () => {
+    const payload = sourcePayload();
+    const weightWrites: ArtificialAnalysisWeightsSnapshot[] = [];
+    const result = await refreshArtificialAnalysisIntelligenceV43({
+      fetchPage: async () => ok(sourcePage(payload)),
+      fetchManifest: async () => ok(await encryptPayload(payload)),
+      now: () => current.source.retrievedAt,
+      readCommittedSnapshot: async () => ok(null),
+      writeCommittedSnapshot: async () => {},
+      readWeightsSnapshot: async () => ok(null),
+      writeWeightsSnapshot: async snapshot => { weightWrites.push(snapshot); },
+    });
+    expect(result.ok).toBeTrue();
+    expect(weightWrites).toHaveLength(1);
+    const parsed = parseArtificialAnalysisWeightsSnapshot(weightWrites[0]);
+    expect(parsed.ok).toBeTrue();
+    expect(weightWrites[0]?.records.length).toBe(payload.models.length);
+    expect(weightWrites[0]?.records.some(record => record.deprecated && record.slug.startsWith("excluded-"))).toBeTrue();
   });
 
   test("returns an explicit failure if atomic writing fails", async () => {

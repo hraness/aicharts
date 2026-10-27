@@ -405,7 +405,7 @@ describe("scheduled model-data refresh", () => {
     expect(steps.indexOf(step("release_reconcile"))).toBeLessThan(steps.indexOf(step("deep_swe")));
   });
 
-  test("publishes only the fifteen current owned snapshots through the protected-branch contract", () => {
+  test("publishes only the sixteen current owned snapshots through the protected-branch contract", () => {
     const publish = String(step("publish").run);
     // A few minutes of data-scoped validation plus two bounded publication rounds.
     expect(refresh["timeout-minutes"]).toBe(90);
@@ -422,6 +422,7 @@ describe("scheduled model-data refresh", () => {
       DEEP_SWE_PATH: "data/deep-swe-evidence.json",
       FIRST_PARTY_RELEASE_PATH: "data/first-party-release-radar.json",
       INTELLIGENCE_PATH: "data/artificial-analysis-intelligence-v4-3.json",
+      WEIGHTS_PATH: "data/artificial-analysis-weights.json",
       REFRESH_BRANCH: "automation/model-data-refresh-${{ github.run_id }}-${{ github.run_attempt }}",
       RELEASE_RADAR_PATH: "data/model-release-radar.json",
       TERMINAL_BENCH_PATH: "data/terminal-bench.json",
@@ -436,6 +437,7 @@ describe("scheduled model-data refresh", () => {
     expect(String(step("snapshot").run)).toContain('"$DEEP_SWE_PATH"');
     expect(String(step("snapshot").run)).toContain('"$FIRST_PARTY_RELEASE_PATH"');
     expect(String(step("snapshot").run)).toContain('"$INTELLIGENCE_PATH"');
+    expect(String(step("snapshot").run)).toContain('"$WEIGHTS_PATH"');
     expect(String(step("snapshot").run)).toContain('"$RELEASE_RADAR_PATH"');
     expect(String(step("snapshot").run)).toContain('"$TERMINAL_BENCH_PATH"');
     expect(String(step("snapshot").run)).toContain('"$TERMINAL_BENCH_SCIENCE_PATH"');
@@ -496,7 +498,7 @@ describe("scheduled model-data refresh", () => {
       },
     });
     expect(publish).toContain(
-      'git add -- "$BENCHMARK_PATH" "$CALCULATOR_PATH" "$DEEP_SWE_PATH" "$FIRST_PARTY_RELEASE_PATH" "$INTELLIGENCE_PATH" "$RELEASE_RADAR_PATH" "$TERMINAL_BENCH_PATH" "$TERMINAL_BENCH_SCIENCE_PATH" "$ATLAS_REASONING_PATH" "$ATLAS_MULTIMODAL_PATH" "$ARENA_MEDIA_PATH" "$ATLAS_AUDIO_PATH" "$ATLAS_VALS_PATH" "$USAGE_PRICES_PATH" "$USAGE_REGISTRY_PATH" "$SOCIAL_KIT_PATH" "$PUBLIC_MODEL_CARD_PATHS_PATH"',
+      'git add -- "$BENCHMARK_PATH" "$CALCULATOR_PATH" "$DEEP_SWE_PATH" "$FIRST_PARTY_RELEASE_PATH" "$INTELLIGENCE_PATH" "$WEIGHTS_PATH" "$RELEASE_RADAR_PATH" "$TERMINAL_BENCH_PATH" "$TERMINAL_BENCH_SCIENCE_PATH" "$ATLAS_REASONING_PATH" "$ATLAS_MULTIMODAL_PATH" "$ARENA_MEDIA_PATH" "$ATLAS_AUDIO_PATH" "$ATLAS_VALS_PATH" "$USAGE_PRICES_PATH" "$USAGE_REGISTRY_PATH" "$SOCIAL_KIT_PATH" "$PUBLIC_MODEL_CARD_PATHS_PATH"',
     );
     expect(publish).toContain('"HEAD:refs/heads/${REFRESH_BRANCH}"');
     expect(publish).toContain('gh pr create --base main');
