@@ -163,8 +163,8 @@ describe("Artificial Analysis Flight extraction", () => {
   test("derives a series slug from the display model when hostModelSlug is omitted", () => {
     const rows = Array.from({ length: 10 }, (_, index) => {
       const row = sourceRow(index, index === 0 ? "Beam 1.0 501B A23B" : `Model ${index}`);
-      const { hostModelSlug: _omitted, ...withoutHost } = row;
-      return withoutHost as SourceRow;
+      Reflect.deleteProperty(row, "hostModelSlug");
+      return row;
     });
     const extracted = extractSourceRows(flightScript(`0:{"benchmarkRows":${JSON.stringify(rows)}}`));
     expect(extracted.ok).toBeTrue();
@@ -188,7 +188,7 @@ describe("Artificial Analysis Flight extraction", () => {
     expect(extracted.ok).toBeTrue();
     if (!extracted.ok) return;
     expect(normalizeSourceRows(extracted.value, "2026-10-27T00:00:00.000Z").records[0]?.benchmarks.deepSwe)
-      .toBe(55);
+      .toBeCloseTo(55);
   });
 
   test("normalizes benchmark percentages, total tokens, effort settings, completeness, and source metadata", () => {

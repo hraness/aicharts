@@ -80,7 +80,7 @@ describe("open-weight coding-agent classification", () => {
       {
         slug: "shared-model-closed",
         name: "Shared Model",
-        shortName: "Shared Closed",
+        shortName: "Shared",
         weights: { open: false },
       },
     ]);
