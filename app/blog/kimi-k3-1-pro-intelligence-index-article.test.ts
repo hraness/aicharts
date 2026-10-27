@@ -32,6 +32,7 @@ import {
   moonshotCodingAgentRows,
 } from "./kimi-k3-1-pro-intelligence-index-article";
 import { formatSharePercent } from "./opus-5-5-intelligence-index-article";
+import { spellCount } from "./real-swe-private-enterprise-benchmark-article";
 
 const INTERNAL_WORDS = ["admission", "admitted", "bounded", "custody", "gate", "lane", "manifest", "provenance", "receipt"];
 
@@ -81,7 +82,11 @@ describe("Kimi K3.1 Pro Intelligence Index note", () => {
     expect(markdown).toContain("aicharts did not run Kimi K3.1 Pro");
     expect(markdown).toContain("nothing on this site confirms or contradicts them");
     expect(markdown).toContain("a reader quoting either should name its cohort");
-    expect(markdown).toContain("this note does not count it there yet");
+    expect(markdown).toContain("the release post’s promise does not move it");
+    expect(markdown).not.toContain("would sit");
+    expect(markdown).toContain("each competitor’s score is the higher of the figure in its own post and the official Terminal-Bench 4.0 leaderboard");
+    expect(markdown).toContain("every sentence about the weights release are");
+    expect(markdown).toContain("per million tokens**");
 
     // Every quotation is verbatim from the fetched primary pages.
     for (const quote of Object.values(KIMI_K3_1_PRO.moonshot)) {
@@ -132,6 +137,7 @@ describe("Kimi K3.1 Pro Intelligence Index note", () => {
     expect(record.effort).toBeNull();
     expect(record.creator.slug).toBe(KIMI_CREATOR_SLUG);
     expect(markdown).toContain(`## Inside the ${cost} per task`);
+    expect(markdown).toContain(`**Where the ${cost} goes at `);
     expect(markdown).toContain(`puts the same row ${spellOrdinal(placement.rank)} of ${placement.cohortSize}`);
     expect(markdown).toContain(`${placement.cheaperCount} of the ${placement.cohortSize} cost less`);
     expect(article.dek).toContain(`${spellOrdinal(placement.rank)} of ${placement.cohortSize} and ${placement.onCostFrontier ? "on" : "off"} the cost frontier`);
@@ -139,7 +145,9 @@ describe("Kimi K3.1 Pro Intelligence Index note", () => {
     // The rows above and their creators come from the placement, never from prose.
     const [soleCreator] = placement.creatorsAbove;
     if (placement.creatorsAbove.length === 1 && soleCreator !== undefined) {
-      expect(article.title).toBe(`Only ${soleCreator} outranks Kimi K3.1 Pro, at ${score} for ${cost} a task`);
+      expect(article.title).toBe(`Only ${soleCreator} rows outrank Kimi K3.1 Pro’s ${score} at ${cost} a task`);
+      expect(article.seoDescription).toContain(`Only ${spellCount(placement.rowsAbove.length)} ${soleCreator} rows outrank it, at `);
+      expect(markdown).toContain(`and all ${spellCount(placement.rowsAbove.length)} are ${soleCreator}’s.`);
       expect(markdown).toContain(`## The highest row from outside ${soleCreator}`);
       expect(markdown).toContain(`is the highest-scoring configuration from any creator other than ${soleCreator}`);
       expect(markdown).toContain(`## ${spellOrdinal(placement.rank).charAt(0).toUpperCase()}${spellOrdinal(placement.rank).slice(1)} of ${placement.cohortSize}, behind `);
@@ -152,7 +160,8 @@ describe("Kimi K3.1 Pro Intelligence Index note", () => {
       }
     }
     if (placement.cheapestHigher !== undefined) {
-      expect(markdown).toContain(`The cheapest configuration that scores higher is ${placement.cheapestHigher.record.name}, ${formatFineCostMultiple(placement.cheapestHigher.multiple)} its cost`);
+      expect(markdown).toContain(`The cheapest configuration that scores higher is ${placement.cheapestHigher.record.name}, at ${formatFineCostMultiple(placement.cheapestHigher.multiple)} the Kimi K3.1 Pro cost`);
+      expect(markdown).not.toContain("its cost for");
     }
 
     // Frontier facts come from the placement.
@@ -193,11 +202,11 @@ describe("Kimi K3.1 Pro Intelligence Index note", () => {
     expect(markdown).not.toContain("| Effort level |");
 
     // Cost components and their cohort ranks come from the breakdown.
-    expect(markdown).toContain(`${formatSnapshotCostUsd(breakdown.input)} is input-side cost and ${formatSnapshotCostUsd(breakdown.output)} is output, so input is ${formatSharePercent(inputCostShare(record))} of the bill`);
+    expect(markdown).toContain(`Input-side cost makes up ${formatSnapshotCostUsd(breakdown.input)} of the ${cost} per task, ${formatSharePercent(inputCostShare(record))} of the bill, and output the remaining ${formatSnapshotCostUsd(breakdown.output)}`);
     expect(markdown).toContain(`cache reads at ${formatSnapshotCostUsd(breakdown.cacheRead)}`);
     expect(markdown).toContain(`cache writes at ${formatSnapshotCostUsd(breakdown.cacheWrite)}`);
-    expect(markdown).toContain(`${formatSharePercent(reasoningShare(record))} of them reasoning tokens`);
-    expect(markdown).toContain(`Its input-side bill is the ${spellOrdinal(placement.partRanks.input.rank)}-largest on the chart and its output-side bill the ${spellOrdinal(placement.partRanks.output.rank)}-largest`);
+    expect(markdown).toContain(`are ${formatSharePercent(reasoningShare(record))} reasoning tokens`);
+    expect(markdown).toContain(`the input side as a whole is the ${spellOrdinal(placement.partRanks.input.rank)}-largest and the output side the ${spellOrdinal(placement.partRanks.output.rank)}-largest`);
     const sides = costSideRows(record, placement.rowsAbove.map(row => row.record));
     for (const row of sides) {
       expect(markdown).toContain(`| ${row.record.name} | ${formatSnapshotScore(row.record.intelligenceIndex)} | ${formatSnapshotCostUsd(comparableTaskCost(row.record))} | ${formatSnapshotCostUsd(row.inputCost)} | ${formatSnapshotCostUsd(row.outputCost)} | ${formatSharePercent(row.inputShare)} | ${formatFineCostMultiple(row.costMultiple)} |`);
@@ -231,7 +240,7 @@ describe("Kimi K3.1 Pro Intelligence Index note", () => {
     const moonshotRows = moonshotCodingAgentRows(codingSnapshot.records);
     if (kimiCodingRows.length === 0) {
       expect(markdown).toContain("no row runs Kimi K3.1 Pro in any harness, so this note has no coding-agent score for the model and does not estimate one");
-      expect(markdown).toContain("The coding-agent chart stores no Kimi K3.1 Pro row");
+      expect(markdown).toContain("No row on the coding-agent chart runs Kimi K3.1 Pro yet.");
       expect(markdown).not.toContain("| Coding agents (AA Index) |");
       for (const row of moonshotRows) {
         expect(markdown).toContain(`${row.seriesLabel} (${row.setting}) at ${formatSnapshotScore(row.benchmarks.aaIndex)} on AA Index`);
@@ -335,7 +344,7 @@ describe("Kimi K3.1 Pro Intelligence Index note", () => {
     const mixedMarkdown = articleToMarkdown(mixedCreators);
     expect(mixedCreators.title).toBe(`Kimi K3.1 Pro ranks ${spellOrdinal(placed.rank)} of ${placed.cohortSize} at ${formatSnapshotScore(placed.record.intelligenceIndex)} for ${formatSnapshotCostUsd(comparableTaskCost(placed.record))} a task`);
     expect(mixedMarkdown).toContain("## The best row of each other creator");
-    expect(mixedMarkdown).toContain("above it come from Other Lab and ");
+    expect(mixedMarkdown).toContain("score higher than Kimi K3.1 Pro, from Other Lab and ");
     expect(mixedMarkdown).toContain("| Other Lab | ");
     expect(mixedMarkdown).not.toContain("highest-scoring configuration from any creator other than");
 

@@ -60,7 +60,10 @@ import { spellCount } from "./real-swe-private-enterprise-benchmark-article";
 export const KIMI_K3_1_PRO_ARTICLE_SLUG = "kimi-k3-1-pro-intelligence-index" as const;
 export const KIMI_K3_1_PRO_ARTICLE_PUBLISHED_AT = "2026-10-27" as const;
 
-/** Quoted claims from the primary sources, kept verbatim so tests can check every quotation. */
+/**
+ * Claims from the primary sources, kept verbatim so tests can check every quotation.
+ * The two `*Paraphrase` strings restate footnotes and render without quotation marks.
+ */
 export const KIMI_K3_1_PRO = {
   moonshot: {
     introClaim:
@@ -72,8 +75,10 @@ export const KIMI_K3_1_PRO = {
     terminalBenchClaim:
       "K3.1 Pro scores 65.7%, ahead of GPT-6 Astra (58.2%) and narrowly behind Claude Opus 5.5 (66.4%)",
     harnessNote: "Kimi K3.1 Pro is evaluated with the Claude-Code harness",
-    settingsNote:
-      "all Kimi K3.1 Pro results reported below are obtained with the reasoning effort set to 'max', temperature = 1.0, and top-p = 0.95",
+    settingsParaphrase:
+      "unless a result says otherwise, its figures use the reasoning effort max, temperature 1.0, and top-p 0.95",
+    competitorScoresParaphrase:
+      "each competitor’s score is the higher of the figure in its own post and the official Terminal-Bench 4.0 leaderboard",
     effortField: "reasoning_effort",
     effortLevels: "low, high, and max",
     effortDefault: "max",
@@ -217,19 +222,15 @@ function rankBlocks(
   const { cheaperCount, cheapestHigher, cohortSize, costlierCount, dominators, frontier, neighbors, onCostFrontier, rank, record, rowsAbove } = placement;
   const score = formatSnapshotScore(record.intelligenceIndex);
   const creator = soleCreatorAbove(placement);
-  const multiples = rowsAbove.map(row => row.costMultiple);
   const blocks: BlogBlock[] = [
     paragraph(
       `Among the ${cohortSize} comparable configurations in the snapshot retrieved ${retrievedAt}, ${record.name} ranks ${spellOrdinal(rank)} on the index at ${score}. `,
       rowsAbove.length === 0
         ? "No configuration scores higher."
         : `${capitalize(pluralConfigurations(rowsAbove.length))} score${rowsAbove.length === 1 ? "s" : ""} higher${creator === undefined ? "" : `, and every one of them is ${possessive(creator)}`}: ${joinNames(rowsAbove.map(row => `${row.record.name} at ${scoreAndCost(row.record)}, ${pointsPhrase(row.gapPoints)} higher at ${formatFineCostMultiple(row.costMultiple)} the cost`))}. `,
-      rowsAbove.length < 2
-        ? ""
-        : `Each row above it costs between ${formatFineCostMultiple(Math.min(...multiples))} and ${formatFineCostMultiple(Math.max(...multiples))} as much per task. `,
       cheapestHigher === undefined
         ? ""
-        : `The cheapest configuration that scores higher is ${cheapestHigher.record.name}, ${formatFineCostMultiple(cheapestHigher.multiple)} its cost for ${pointsPhrase(cheapestHigher.record.intelligenceIndex - record.intelligenceIndex)} more.`,
+        : `The cheapest configuration that scores higher is ${cheapestHigher.record.name}, at ${formatFineCostMultiple(cheapestHigher.multiple)} the ${MODEL_NAME} cost for ${pointsPhrase(cheapestHigher.record.intelligenceIndex - record.intelligenceIndex)} more.`,
     ),
   ];
   if (rowsAbove.length >= 2) {
@@ -295,15 +296,15 @@ function creatorBlocks(
           ? `No creator’s best row scores higher than ${record.name}. `
           : `The rows above ${record.name} come from ${joinNames(placement.creatorsAbove)}. `)
         : `Because every row above it is ${possessive(creator)}, ${record.name} is the highest-scoring configuration from any creator other than ${creator}. `,
+      `The table takes the ${spellCount(otherCreatorBests.length)} other creators with the highest-scoring rows, one row each, and measures that row against ${record.name}. `,
       nextBelow === undefined
         ? ""
         : `The next creator’s best row is ${nextBelow.record.name} at ${scoreAndCost(nextBelow.record)}, ${pointsPhrase(nextBelow.gapPoints)} lower at ${formatFineCostMultiple(nextBelow.costMultiple)} the cost. `,
       below.length === 0
         ? ""
         : cheaperBelow.length === 0
-          ? `None of the ${spellCount(below.length)} best rows that score lower is cheaper than ${record.name}.`
-          : `Of the ${spellCount(below.length)} best rows that score lower, ${cheaperBelow.length === 1 ? "one is" : `${spellCount(cheaperBelow.length)} are`} cheaper: ${joinNames(cheaperBelow.map(row => `${row.record.name} at ${formatFineCostMultiple(row.costMultiple)} the cost for ${pointsPhrase(row.gapPoints)} fewer`))}.`,
-      ` The table takes the highest-scoring comparable row of each of the ${spellCount(otherCreatorBests.length)} other creators nearest the top and measures it against ${record.name}.`,
+          ? `None of the ${spellCount(below.length)} rows in the table that score lower is cheaper than ${record.name}.`
+          : `Of the ${spellCount(below.length)} rows in the table that score lower, ${cheaperBelow.length === 1 ? "one is" : `${spellCount(cheaperBelow.length)} are`} cheaper: ${joinNames(cheaperBelow.map(row => `${row.record.name} at ${formatFineCostMultiple(row.costMultiple)} the cost for ${pointsPhrase(row.gapPoints)} fewer`))}.`,
     ),
     table(
       `The highest-scoring comparable configuration of each other creator against ${record.name} in the snapshot retrieved ${retrievedAt}, highest index first`,
@@ -348,11 +349,11 @@ function costBlocks(
   const inputLighter = sides.filter(row => row.inputCost < cost.input);
   const blocks: BlogBlock[] = [
     paragraph(
-      `Of the ${formatSnapshotCostUsd(cost.total)} per task, ${formatSnapshotCostUsd(cost.input)} is input-side cost and ${formatSnapshotCostUsd(cost.output)} is output, so input is ${formatSharePercent(inputShare)} of the bill. Largest first, the ${spellCount(ordered.length)} components are ${joinNames(ordered.map(component => `${component.label} at ${formatSnapshotCostUsd(component.value)}`))}.`,
+      `Input-side cost makes up ${formatSnapshotCostUsd(cost.input)} of the ${formatSnapshotCostUsd(cost.total)} per task, ${formatSharePercent(inputShare)} of the bill, and output the remaining ${formatSnapshotCostUsd(cost.output)}. Ranked by size, the ${spellCount(ordered.length)} parts are ${joinNames(ordered.map(component => `${component.label} at ${formatSnapshotCostUsd(component.value)}`))}.`,
       largest === undefined
         ? ""
-        : ` ${capitalize(largest.label)} alone ${largest.label.endsWith("s") ? "are" : "is"} ${formatSharePercent(largest.value / cost.total)} of the total, and the row’s ${largest.bill} bill is ${ordinalRank(partRanks[largest.part].rank)} of the ${cohortSize} comparable configurations.`,
-      ` Its input-side bill is ${ordinalRank(partRanks.input.rank)} on the chart and its output-side bill ${ordinalRank(partRanks.output.rank)}. The model writes ${formatWholeTokens(record.outputTokensPerTask.total)} output tokens per task, ${formatSharePercent(reasoningShare(record))} of them reasoning tokens.`,
+        : ` ${capitalize(largest.label)} alone ${largest.label.endsWith("s") ? "are" : "is"} ${formatSharePercent(largest.value / cost.total)} of the total; that ${largest.bill} bill is ${ordinalRank(partRanks[largest.part].rank)} of the ${cohortSize} comparable configurations, while the input side as a whole is ${ordinalRank(partRanks.input.rank)} and the output side ${ordinalRank(partRanks.output.rank)}.`,
+      ` The ${formatWholeTokens(record.outputTokensPerTask.total)} output tokens the model writes per task are ${formatSharePercent(reasoningShare(record))} reasoning tokens.`,
     ),
   ];
   if (sides.length > 0) {
@@ -383,35 +384,35 @@ function costBlocks(
   }
   blocks.push(
     paragraph(
-      "Artificial Analysis’s ",
-      { href: BLOG_SOURCES.artificialAnalysisKimiK31ProModel.url, text: "model page" },
-      ", captured ",
-      KIMI_K3_1_PRO.artificialAnalysis.capturedOn,
-      " UTC, lists the prices behind these figures as ",
+      "The prices behind these figures are ",
       KIMI_K3_1_PRO.artificialAnalysis.inputPrice,
       " per million input tokens and ",
       KIMI_K3_1_PRO.artificialAnalysis.outputPrice,
       " per million output tokens with a ",
       KIMI_K3_1_PRO.artificialAnalysis.cacheDiscount,
-      " cache discount, and rounds the row to an index score of ",
+      " cache discount, as Artificial Analysis’s ",
+      { href: BLOG_SOURCES.artificialAnalysisKimiK31ProModel.url, text: "model page" },
+      ", captured ",
+      KIMI_K3_1_PRO.artificialAnalysis.capturedOn,
+      " UTC, records them. The same page rounds the row to ",
       KIMI_K3_1_PRO.artificialAnalysis.intelligenceScore,
       " at ",
       KIMI_K3_1_PRO.artificialAnalysis.costPerTask,
-      " per task. It counts ",
-      KIMI_K3_1_PRO.artificialAnalysis.indexOutputTokens,
-      " output tokens to run the whole index, which it calls “",
-      KIMI_K3_1_PRO.artificialAnalysis.verbosityClaim,
-      ",” measures ",
-      KIMI_K3_1_PRO.artificialAnalysis.outputSpeed,
-      " output tokens per second, lists the model as proprietary and released ",
+      " per task, lists the model as proprietary and released ",
       KIMI_K3_1_PRO.artificialAnalysis.releaseDate,
-      ", writes that it “",
+      ", and writes that it “",
       KIMI_K3_1_PRO.artificialAnalysis.modalityClaim,
-      ",” and sums the row up as “",
+      ".” On volume it counts ",
+      KIMI_K3_1_PRO.artificialAnalysis.indexOutputTokens,
+      " output tokens to run the whole index, “",
+      KIMI_K3_1_PRO.artificialAnalysis.verbosityClaim,
+      ",” at ",
+      KIMI_K3_1_PRO.artificialAnalysis.outputSpeed,
+      " output tokens per second. Its verdict reads: “",
       KIMI_K3_1_PRO.artificialAnalysis.summaryClaim,
       ".” It adds: “",
       KIMI_K3_1_PRO.artificialAnalysis.speedClaim,
-      ".” The page also notes that “",
+      ".” A footnote reads: “",
       KIMI_K3_1_PRO.artificialAnalysis.reasoningNote,
       ".”",
     ),
@@ -471,21 +472,24 @@ function weightsBlocks(
     ? `The snapshot retrieved ${retrievedAt} carries no weights flag for the ${record.name} row.`
     : weights.open
       ? `The snapshot retrieved ${retrievedAt} flags the ${record.name} row as open weights.`
-      : `The snapshot retrieved ${retrievedAt} flags the ${record.name} row as closed: Artificial Analysis lists it as proprietary, and the chart carries that flag until Artificial Analysis changes it, whatever the release post promises.`;
+      : `The snapshot retrieved ${retrievedAt} flags the ${record.name} row as closed: Artificial Analysis lists it as proprietary, and the chart carries that flag until Artificial Analysis changes it; the release post’s promise does not move it.`;
   const countsSentence = ` Of the ${cohortSize} comparable configurations, ${weights.openCount} ${weights.openCount === 1 ? "is" : "are"} flagged open, ${weights.closedCount} closed${weights.unclassifiedCount === 0 ? "" : `, and ${weights.unclassifiedCount} ${weights.unclassifiedCount === 1 ? "carries" : "carry"} no flag`}.`;
   const highestOpenSentence = weights.highestOpen === undefined
     ? " No comparable configuration is flagged open."
     : weights.open === true
       ? ""
-      : ` The highest-scoring open-weights row is ${weights.highestOpen.record.name} at ${scoreAndCost(weights.highestOpen.record)}, ${pointsPhrase(weights.highestOpen.gapPoints)} below ${record.name} at ${formatFineCostMultiple(weights.highestOpen.costMultiple)} the cost. If the weights ship and the flag changes while nothing else on the chart moves, the row would sit ${pointsPhrase(weights.highestOpen.gapPoints)} above the highest row flagged open today; this note does not count it there yet.`;
+      : ` The highest-scoring open-weights row is ${weights.highestOpen.record.name} at ${scoreAndCost(weights.highestOpen.record)}, ${pointsPhrase(weights.highestOpen.gapPoints)} below ${record.name} at ${formatFineCostMultiple(weights.highestOpen.costMultiple)} the cost.`;
+  const familyLead = record.creator.name === COMPANY_NAME
+    ? `The snapshot stores ${pluralConfigurations(family.length)} from ${COMPANY_NAME} besides it`
+    : `The snapshot lists ${COMPANY_NAME}’s rows under the creator name ${record.creator.name} and stores ${pluralConfigurations(family.length)} there besides it`;
   const familySentence = family.length === 0
     ? ` ${record.name} is the only ${record.creator.name} row on the chart with a measured cost per task.`
-    : ` The snapshot stores ${pluralConfigurations(family.length)} from ${record.creator.name} besides it: ${joinNames(family.map(row => `${row.record.name} at ${scoreAndCost(row.record)}, ${pointsPhrase(row.gapPoints)} lower at ${formatFineCostMultiple(row.costMultiple)} the cost${row.record.weights === undefined ? "" : row.record.weights.open ? ", flagged open" : ", flagged closed"}, released ${formatLongUtcDate(row.record.releaseDate)}`))}.`;
+    : ` ${familyLead}: ${joinNames(family.map(row => `${row.record.name} at ${scoreAndCost(row.record)}, ${pointsPhrase(row.gapPoints)} lower at ${formatFineCostMultiple(row.costMultiple)} the cost${row.record.weights === undefined ? "" : row.record.weights.open ? ", flagged open" : ", flagged closed"}, released ${formatLongUtcDate(row.record.releaseDate)}`))}.`;
   return [
     paragraph(...vendorSentences, flagSentence, countsSentence, highestOpenSentence),
     paragraph(
       familySentence.trimStart(),
-      ` The release post says that “${KIMI_K3_1_PRO.moonshot.postTrainedClaim},” and the chart stores no Kimi K3 row with a measured cost per task to set beside it`,
+      ` The release post says that “${KIMI_K3_1_PRO.moonshot.postTrainedClaim},” and the Intelligence Index snapshot stores no Kimi K3 row with a measured cost per task to set beside it`,
       placement.siblings.length === 0
         ? `, nor a ${MODEL_NAME} Highspeed row: the snapshot has one ${MODEL_NAME} configuration, and every figure in this note belongs to it.`
         : `. The snapshot stores ${pluralConfigurations(placement.siblings.length)} of the same release besides it: ${joinNames(placement.siblings.map(sibling => `${sibling.name} at ${scoreAndCost(sibling)}`))}.`,
@@ -513,11 +517,9 @@ function vendorBlocks(
       KIMI_K3_1_PRO.moonshot.terminalBenchClaim,
       ",” with a footnote that “",
       KIMI_K3_1_PRO.moonshot.harnessNote,
-      "” and that “",
-      KIMI_K3_1_PRO.moonshot.settingsNote,
-      ".” Those are figures ",
+      `” and that, ${KIMI_K3_1_PRO.moonshot.settingsParaphrase}. Those are figures `,
       COMPANY_NAME,
-      " reports, with the competitor scores taken from the competitors’ posts and the benchmark leaderboard, and nothing on this site confirms or contradicts them. The post also announces a second model, ",
+      ` reports, and by the same footnote ${KIMI_K3_1_PRO.moonshot.competitorScoresParaphrase}; nothing on this site confirms or contradicts them. The post also announces a second model, `,
       { text: KIMI_K3_1_PRO.moonshot.highspeedModelId, emphasis: "em" },
       ", which it says “",
       KIMI_K3_1_PRO.moonshot.highspeedClaim,
@@ -534,9 +536,9 @@ function vendorBlocks(
     paragraph(
       "The ",
       { href: "/coding", text: "coding-agent chart" },
-      " is a daily snapshot of the public ",
+      " snapshots the public ",
       { href: BLOG_SOURCES.artificialAnalysisCodingAgents.url, text: "Artificial Analysis coding-agents comparison" },
-      `. A row there is a model inside a named agent harness at one effort setting, scored on three coding benchmarks (${SNAPSHOT_COLUMN_LABELS.deepSwe}, ${SNAPSHOT_COLUMN_LABELS.terminalBench}, and ${SNAPSHOT_COLUMN_LABELS.sweAtlas}) and costed as the mean API bill for one task in that harness. `,
+      ` each day, and its unit is different: a model inside a named agent harness at one effort setting, scored on ${SNAPSHOT_COLUMN_LABELS.deepSwe}, ${SNAPSHOT_COLUMN_LABELS.terminalBench}, and ${SNAPSHOT_COLUMN_LABELS.sweAtlas} and costed as the mean API bill for one task in that harness. `,
       kimiRows.length === 0
         ? `In the coding-agent snapshot retrieved ${codingRetrievedAt}, no row runs ${MODEL_NAME} in any harness, so this note has no coding-agent score for the model and does not estimate one. ${moonshotRows.length === 0 ? `The snapshot stores no ${COMPANY_NAME} row at all.` : `The ${COMPANY_NAME} ${moonshotRows.length === 1 ? "row it does store is" : "rows it does store are"} ${joinNames(moonshotRows.map(row => `${configurationLabel(row)} at ${formatSnapshotScore(row.benchmarks.aaIndex)} on AA Index for ${formatSnapshotCostUsd(row.economics.costUsd)} per task`))}, a different model in a different harness from the Terminal-Bench run the release post reports, so the two do not compare.`}`
         : `The coding-agent snapshot retrieved ${codingRetrievedAt} stores ${pluralConfigurations(kimiRows.length)} that run${kimiRows.length === 1 ? "s" : ""} ${MODEL_NAME}: ${joinNames(kimiRows.map(row => `${configurationLabel(row)} at ${formatSnapshotScore(row.benchmarks.aaIndex)} on AA Index for ${formatSnapshotCostUsd(row.economics.costUsd)} per task`))}. Those rows are scored on three coding benchmarks inside a harness rather than on the Intelligence Index, so the two scores do not compare.`,
@@ -561,7 +563,7 @@ function derivedTitle(placement: KimiK31ProIntelligencePlacement | undefined): s
     const top = `${MODEL_NAME} tops the Intelligence Index at ${score} for ${cost}`;
     if (top.length <= MAX_TITLE_LENGTH) return top;
   } else if (creator !== undefined) {
-    const sole = `Only ${creator} outranks ${MODEL_NAME}, at ${score} for ${cost} a task`;
+    const sole = `Only ${creator} rows outrank ${MODEL_NAME}’s ${score} at ${cost} a task`;
     if (sole.length <= MAX_TITLE_LENGTH) return sole;
   }
   const ranked = `${MODEL_NAME} ranks ${rankPhrase(placement)} at ${score} for ${cost} a task`;
@@ -615,22 +617,37 @@ export function createKimiK31ProArticle(
     : `${dekBase}${aboveSentence}`.length <= MAX_DEK_LENGTH
       ? `${dekBase}${aboveSentence}`
       : dekBase;
-  const seoDescription = intelligence === undefined || score === undefined || cost === undefined
-    ? `${MODEL_NAME} on the aicharts Intelligence Index chart: what its row measures, how the chart places it, and how the chart flags its weights.`
-    : `${MODEL_NAME}: ${score} on the Intelligence Index at ${cost} a task, ${rankPhrase(intelligence)}. Who outranks it, what they pay, where the bill goes, and its weights flag.`;
-
-  const openingPlacement = intelligence === undefined
-    ? `Artificial Analysis measures it on the Intelligence Index, and the aicharts snapshot retrieved ${intelligenceRetrievedAt} stores no ${MODEL_NAME} row with a measured cost per task, so this note can describe the chart but not place the model on it.`
-    : `In the Intelligence Index snapshot retrieved ${intelligenceRetrievedAt}, ${intelligence.record.name} scores ${score} at ${cost} per task, ${rankPhrase(intelligence)} comparable configurations, meaning the rows with a measured cost per task, and ${frontierPhrase}.`;
-  const openingCreator = intelligence === undefined
+  const seoAbove = intelligence === undefined
     ? ""
     : intelligence.rowsAbove.length === 0
-      ? " No configuration on the chart scores higher."
+      ? " No row outranks it."
       : creator === undefined
-        ? ` The ${pluralConfigurations(intelligence.rowsAbove.length)} above it come from ${joinNames(intelligence.creatorsAbove)}.`
-        : ` Every row above it is ${possessive(creator)}, which makes it the highest-scoring configuration from any other creator, and the cheapest row that scores higher costs ${formatFineCostMultiple(intelligence.cheapestHigher?.multiple ?? 1)} as much.`;
+        ? ` ${capitalize(pluralConfigurations(intelligence.rowsAbove.length))} outrank it, at ${multipleRange} its cost.`
+        : ` Only ${spellCount(intelligence.rowsAbove.length)} ${creator} ${intelligence.rowsAbove.length === 1 ? "row outranks" : "rows outrank"} it, at ${multipleRange} its cost.`;
+  const seoBase = intelligence === undefined || score === undefined || cost === undefined
+    ? undefined
+    : `${MODEL_NAME} scores ${score} on the Intelligence Index at ${cost} a task, ${rankPhrase(intelligence)}.`;
+  const seoDescription = seoBase === undefined
+    ? `${MODEL_NAME} on the aicharts Intelligence Index chart: what its row measures, how the chart places it, and how the chart flags its weights.`
+    : `${seoBase}${seoAbove}`.length <= 160
+      ? `${seoBase}${seoAbove}`
+      : `${seoBase} This note prices the rows above it against it and reads its weights flag.`;
+
+  const openingLead = intelligence === undefined
+    ? `${COMPANY_NAME} introduced ${MODEL_NAME} in October 2026, and Artificial Analysis measures it on the Intelligence Index, but the aicharts snapshot retrieved ${intelligenceRetrievedAt} stores no ${MODEL_NAME} row with a measured cost per task, so this note can describe the chart but not place the model on it.`
+    : intelligence.rowsAbove.length === 0
+      ? `No row on the Intelligence Index scores higher than ${intelligence.record.name}.`
+      : creator === undefined
+        ? `${capitalize(pluralConfigurations(intelligence.rowsAbove.length))} on the Intelligence Index score higher than ${intelligence.record.name}, from ${joinNames(intelligence.creatorsAbove)}.`
+        : `${capitalize(spellCount(intelligence.rowsAbove.length))} ${intelligence.rowsAbove.length === 1 ? "row" : "rows"} on the Intelligence Index score${intelligence.rowsAbove.length === 1 ? "s" : ""} higher than ${intelligence.record.name}, and ${intelligence.rowsAbove.length === 1 ? "it is" : `all ${spellCount(intelligence.rowsAbove.length)} are`} ${possessive(creator)}.`;
+  const openingPlacement = intelligence === undefined
+    ? ""
+    : ` ${COMPANY_NAME}’s model, released ${formatLongUtcDate(intelligence.record.releaseDate)} by Artificial Analysis’s dating and priced at ${KIMI_K3_1_PRO.artificialAnalysis.inputPrice} and ${KIMI_K3_1_PRO.artificialAnalysis.outputPrice} per million input and output tokens on both its model page and OpenRouter’s listing, scores ${score} at ${cost} per task in the snapshot retrieved ${intelligenceRetrievedAt}: ${rankPhrase(intelligence)} configurations with a measured cost per task, and ${frontierPhrase}.`;
+  const openingCreator = intelligence === undefined || creator === undefined || intelligence.cheapestHigher === undefined
+    ? ""
+    : ` That makes it the highest-scoring configuration from any creator other than ${creator}, and the cheapest row above it costs ${formatFineCostMultiple(intelligence.cheapestHigher.multiple)} as much.`;
   const openingCoding = kimiCodingRows.length === 0
-    ? ` The coding-agent chart stores no ${MODEL_NAME} row.`
+    ? ` No row on the coding-agent chart runs ${MODEL_NAME} yet.`
     : ` The coding-agent chart stores ${pluralConfigurations(kimiCodingRows.length)} running ${MODEL_NAME}, scored on three coding benchmarks inside a harness rather than on the Intelligence Index.`;
 
   const rankHeading = intelligence === undefined
@@ -690,12 +707,7 @@ export function createKimiK31ProArticle(
     },
     body: [
       paragraph(
-        `${COMPANY_NAME} `,
-        { href: BLOG_SOURCES.moonshotKimiK31Pro.url, text: `introduced ${MODEL_NAME}` },
-        intelligence === undefined
-          ? " in October 2026. "
-          : ` in October 2026, and Artificial Analysis dates the release ${formatLongUtcDate(intelligence.record.releaseDate)}. `,
-        `Its model page and OpenRouter’s listing both price the model at ${KIMI_K3_1_PRO.artificialAnalysis.inputPrice} per million input tokens and ${KIMI_K3_1_PRO.artificialAnalysis.outputPrice} per million output tokens. `,
+        openingLead,
         openingPlacement,
         openingCreator,
         openingCoding,
@@ -704,12 +716,12 @@ export function createKimiK31ProArticle(
       paragraph(
         "The ",
         { href: BLOG_SOURCES.artificialAnalysisIntelligenceIndex.url, text: "Artificial Analysis Intelligence Index" },
-        ` runs a model through its API under one harness shared by every model, across ${spellCount(evaluations.length)} evaluations at version ${indexVersion}: ${joinNames([...evaluations])}. The categories weigh ${weights.agents}% agents, ${weights.coding}% coding, ${weights.scientific}% scientific reasoning, and ${weights.general}% general capability. Cost per task is the weighted average API bill for one task across those evaluations, and the chart keeps its five components: non-cached input, cache reads, and cache writes on the input side; reasoning tokens and answer tokens on the output side.`,
+        ` at version ${indexVersion} is one composite over ${spellCount(evaluations.length)} evaluations (${joinNames([...evaluations])}), weighted ${weights.agents}% agents, ${weights.coding}% coding, ${weights.scientific}% scientific reasoning, and ${weights.general}% general capability, with every model run through its API under the same harness; the cost beside each score is the weighted average API bill for one task, which the chart keeps in five parts, non-cached input, cache reads, and cache writes on the input side and reasoning and answer tokens on the output side.`,
       ),
       paragraph(
         intelligence === undefined
-          ? `A row on the chart is one configuration, the model at one effort level. The snapshot stores no ${MODEL_NAME} row to describe.`
-          : `A row on the chart is one configuration, the model at one effort level with the settings Artificial Analysis names in the row. The snapshot stores ${intelligence.effortLadder.length + intelligence.otherModes.length === 1 ? "one" : spellCount(intelligence.effortLadder.length + intelligence.otherModes.length)} ${MODEL_NAME} ${intelligence.effortLadder.length + intelligence.otherModes.length === 1 ? "row" : "rows"}, ${intelligence.record.name}${intelligence.record.effort === null ? ", with no effort label" : ` at ${intelligence.record.effort.label} effort`}${intelligence.effortLadder.length + intelligence.otherModes.length === 1 ? ", so every figure below is that single row" : ""}.`,
+          ? `The snapshot stores no ${MODEL_NAME} row to describe.`
+          : `The snapshot holds ${intelligence.effortLadder.length + intelligence.otherModes.length === 1 ? `a single ${MODEL_NAME} configuration` : `${spellCount(intelligence.effortLadder.length + intelligence.otherModes.length)} ${MODEL_NAME} configurations`}${intelligence.record.name === MODEL_NAME ? "" : `, ${intelligence.record.name},`}${intelligence.record.effort === null ? " with no effort label" : ` at ${intelligence.record.effort.label} effort`}, under the settings Artificial Analysis names in the row${intelligence.effortLadder.length + intelligence.otherModes.length === 1 ? ", so every figure below is that single row" : ""}.`,
       ),
       heading(rankHeading),
       ...rankBlocks(intelligence, intelligenceRetrievedAt),
@@ -720,7 +732,7 @@ export function createKimiK31ProArticle(
       heading("Closed on the chart, with weights promised"),
       ...weightsBlocks(intelligence, intelligenceSnapshot.records, intelligenceRetrievedAt),
       callout(
-        `Why ${MODEL_NAME} costs ${cost ?? "what it costs"} a task at ${KIMI_K3_1_PRO.artificialAnalysis.inputPrice} and ${KIMI_K3_1_PRO.artificialAnalysis.outputPrice} a million`,
+        `Where the ${cost ?? "cost per task"} goes at ${KIMI_K3_1_PRO.artificialAnalysis.inputPrice} and ${KIMI_K3_1_PRO.artificialAnalysis.outputPrice} per million tokens`,
         intelligence === undefined
           ? `Cost per task multiplies the tokens a model consumes on each evaluation by its list prices, so two models at the same prices can land far apart. Without a ${MODEL_NAME} row, this note cannot say where its tokens went.`
           : `Cost per task multiplies the tokens the model consumed on each evaluation by its list prices, so two models at the same prices can land far apart. For ${MODEL_NAME}, ${formatSharePercent(inputCostShare(intelligence.record))} of the ${cost ?? ""} is input-side cost, most of it cache reads at the discounted rate, and the ${formatWholeTokens(intelligence.record.outputTokensPerTask.total)} output tokens per task account for the rest. The ${KIMI_K3_1_PRO.openRouter.cacheReadPrice} per million cached input tokens on OpenRouter’s listing is one tenth of the input price, which matches the ${KIMI_K3_1_PRO.artificialAnalysis.cacheDiscount} cache discount Artificial Analysis records.`,
@@ -730,16 +742,18 @@ export function createKimiK31ProArticle(
       heading("Limits"),
       list(
         [
-          `The chart score, cost, and token counts are Artificial Analysis measurements of the ${MODEL_NAME} row on the retrieval date under Intelligence Index version ${indexVersion}. They say nothing about other tasks, prompts, harnesses, or effort settings.`,
+          `Artificial Analysis measured the ${score ?? "score"}, the ${cost ?? "cost"}, and the token counts through its own harness on the retrieval date under version ${indexVersion} of the index; a different harness, prompt set, or effort setting would give different figures.`,
         ],
         [
-          "The rank, the rows above it, the frontier steps, the other-creator table, the cost-side table, the component ranks, and the weights counts are computed from the snapshot by aicharts. A new, removed, rescored, or reflagged configuration moves them, and the snapshot updates on a schedule.",
+          intelligence === undefined
+            ? "The counts and flags in this note are computed from the snapshot by aicharts and move with it."
+            : `aicharts computed the rank, the ${pluralConfigurations(intelligence.rowsAbove.length)} above it, the frontier steps, the per-creator table, the side split, the component ranks, and the open and closed counts from that snapshot. The next snapshot can move any of them, and the headline rests on ${creator === undefined ? "the rows above it" : `${spellCount(intelligence.rowsAbove.length)} ${creator} rows`} that a rescoring or a new release can change.`,
         ],
         [
           `The weights flag is Artificial Analysis’s classification on the retrieval date. The release post’s promise of weights by November 4, 2026 is ${COMPANY_NAME}’s, and nothing here checks whether it is kept.`,
         ],
         [
-          `The per-evaluation scores behind the composite are not stored, so no sentence here says which of the ${spellCount(evaluations.length)} evaluations the row does well or badly on.`,
+          `No per-evaluation score is stored, so nothing here says which of the ${spellCount(evaluations.length)} evaluations lifts or drags the composite.`,
         ],
         [
           kimiCodingRows.length === 0
@@ -747,7 +761,7 @@ export function createKimiK31ProArticle(
             : `The ${MODEL_NAME} coding-agent scores above are the ${joinNames(kimiCodingRows.map(row => configurationLabel(row)))} ${kimiCodingRows.length === 1 ? "row" : "rows"} in the snapshot. They say nothing about ${MODEL_NAME} inside a harness the snapshot does not store.`,
         ],
         [
-          `The Terminal-Bench 4.0 figures, the Highspeed speed claim, the context window, and every sentence about the weights are ${COMPANY_NAME}’s or OpenRouter’s. aicharts did not run ${MODEL_NAME}.`,
+          `The Terminal-Bench 4.0 figures, the Highspeed speed claim, the context window, and every sentence about the weights release are ${COMPANY_NAME}’s or OpenRouter’s. aicharts did not run ${MODEL_NAME}.`,
         ],
       ),
     ],
