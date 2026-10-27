@@ -1,0 +1,5017 @@
+{
+  "records": [
+    {
+      "creatorSlug": "sk-telecom",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "a-x-k2",
+      "slug": "a-x-k2"
+    },
+    {
+      "creatorSlug": "agnes-ai",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "agnes-2-5-pro-beta",
+      "slug": "agnes-2-5-pro-beta"
+    },
+    {
+      "creatorSlug": "swiss-ai-initiative",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "apertus-70b-instruct",
+      "slug": "apertus-70b-instruct"
+    },
+    {
+      "creatorSlug": "swiss-ai-initiative",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "apertus-8b-instruct",
+      "slug": "apertus-8b-instruct"
+    },
+    {
+      "creatorSlug": "apodex",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "apodex-1-1",
+      "slug": "apodex-1-1"
+    },
+    {
+      "creatorSlug": "servicenow",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "apriel-v1-5-15b-thinker",
+      "slug": "apriel-v1-5-15b-thinker"
+    },
+    {
+      "creatorSlug": "servicenow",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "apriel-v1-6-15b-thinker",
+      "slug": "apriel-v1-6-15b-thinker"
+    },
+    {
+      "creatorSlug": "snowflake",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "arctic-instruct",
+      "slug": "arctic-instruct"
+    },
+    {
+      "creatorSlug": "celeris",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "celeris-1",
+      "slug": "celeris-1"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-2",
+      "slug": "claude-2"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-21",
+      "slug": "claude-21"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-3-5-haiku",
+      "slug": "claude-3-5-haiku"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-3-7-sonnet",
+      "slug": "claude-3-7-sonnet"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-3-7-sonnet",
+      "slug": "claude-3-7-sonnet-thinking"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-3-haiku",
+      "slug": "claude-3-haiku"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-3-opus",
+      "slug": "claude-3-opus"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-3-sonnet",
+      "slug": "claude-3-sonnet"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-35-sonnet",
+      "slug": "claude-35-sonnet"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-35-sonnet-june-24",
+      "slug": "claude-35-sonnet-june-24"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-4-1-opus",
+      "slug": "claude-4-1-opus"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-4-1-opus",
+      "slug": "claude-4-1-opus-thinking"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-4-5-haiku",
+      "slug": "claude-4-5-haiku"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-4-5-haiku",
+      "slug": "claude-4-5-haiku-reasoning"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-4-5-sonnet",
+      "slug": "claude-4-5-sonnet"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-4-5-sonnet",
+      "slug": "claude-4-5-sonnet-thinking"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-4-opus",
+      "slug": "claude-4-opus"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-4-opus",
+      "slug": "claude-4-opus-thinking"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-4-sonnet",
+      "slug": "claude-4-sonnet"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-4-sonnet",
+      "slug": "claude-4-sonnet-thinking"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-fable-5",
+      "slug": "claude-fable-5"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "claude-fable-5-1",
+      "slug": "claude-fable-5-1"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "claude-fable-5-1",
+      "slug": "claude-fable-5-1-high"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "claude-fable-5-1",
+      "slug": "claude-fable-5-1-low"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "claude-fable-5-1",
+      "slug": "claude-fable-5-1-medium"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "claude-fable-5-1",
+      "slug": "claude-fable-5-1-xhigh"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "claude-haiku-5-5",
+      "slug": "claude-haiku-5-5"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "claude-haiku-5-5",
+      "slug": "claude-haiku-5-5-high"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "claude-haiku-5-5",
+      "slug": "claude-haiku-5-5-low"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "claude-haiku-5-5",
+      "slug": "claude-haiku-5-5-medium"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "claude-haiku-5-5",
+      "slug": "claude-haiku-5-5-xhigh"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-instant",
+      "slug": "claude-instant"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-opus-4-5",
+      "slug": "claude-opus-4-5"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-opus-4-5",
+      "slug": "claude-opus-4-5-thinking"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-opus-4-6",
+      "slug": "claude-opus-4-6"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-opus-4-6",
+      "slug": "claude-opus-4-6-adaptive"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-opus-4-7",
+      "slug": "claude-opus-4-7"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-opus-4-7",
+      "slug": "claude-opus-4-7-non-reasoning"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-opus-4-8",
+      "slug": "claude-opus-4-8"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-opus-5",
+      "slug": "claude-opus-5"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "claude-opus-5-5",
+      "slug": "claude-opus-5-5"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "claude-opus-5-5",
+      "slug": "claude-opus-5-5-high"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "claude-opus-5-5",
+      "slug": "claude-opus-5-5-low"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "claude-opus-5-5",
+      "slug": "claude-opus-5-5-medium"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "claude-opus-5-5",
+      "slug": "claude-opus-5-5-xhigh"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-opus-5",
+      "slug": "claude-opus-5-high"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-opus-5",
+      "slug": "claude-opus-5-low"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-opus-5",
+      "slug": "claude-opus-5-medium"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-opus-5",
+      "slug": "claude-opus-5-xhigh"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-sonnet-4-6",
+      "slug": "claude-sonnet-4-6"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-sonnet-4-6",
+      "slug": "claude-sonnet-4-6-adaptive"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-sonnet-4-6",
+      "slug": "claude-sonnet-4-6-non-reasoning-low-effort"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-sonnet-5",
+      "slug": "claude-sonnet-5"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "claude-sonnet-5-5",
+      "slug": "claude-sonnet-5-5"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "claude-sonnet-5-5",
+      "slug": "claude-sonnet-5-5-high"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "claude-sonnet-5-5",
+      "slug": "claude-sonnet-5-5-low"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "claude-sonnet-5-5",
+      "slug": "claude-sonnet-5-5-medium"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "claude-sonnet-5-5",
+      "slug": "claude-sonnet-5-5-xhigh"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-sonnet-5",
+      "slug": "claude-sonnet-5-high"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-sonnet-5",
+      "slug": "claude-sonnet-5-low"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-sonnet-5",
+      "slug": "claude-sonnet-5-medium"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-sonnet-5",
+      "slug": "claude-sonnet-5-non-reasoning"
+    },
+    {
+      "creatorSlug": "anthropic",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "claude-sonnet-5",
+      "slug": "claude-sonnet-5-xhigh"
+    },
+    {
+      "creatorSlug": "deepcogito",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "cogito-v2-1",
+      "slug": "cogito-v2-1-reasoning"
+    },
+    {
+      "creatorSlug": "cohere",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "command-a",
+      "slug": "command-a"
+    },
+    {
+      "creatorSlug": "cohere",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "command-a-plus",
+      "slug": "command-a-plus"
+    },
+    {
+      "creatorSlug": "cohere",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "command-r-03-2024",
+      "slug": "command-r-03-2024"
+    },
+    {
+      "creatorSlug": "cohere",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "command-r-plus-04-2024",
+      "slug": "command-r-plus-04-2024"
+    },
+    {
+      "creatorSlug": "databricks",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "dbrx",
+      "slug": "dbrx"
+    },
+    {
+      "creatorSlug": "nous-research",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "deephermes-3-llama-3-1-8b-preview",
+      "slug": "deephermes-3-llama-3-1-8b-preview"
+    },
+    {
+      "creatorSlug": "nous-research",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "deephermes-3-mistral-24b-preview",
+      "slug": "deephermes-3-mistral-24b-preview"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "deepseek-coder-v2",
+      "slug": "deepseek-coder-v2"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "deepseek-coder-v2-lite",
+      "slug": "deepseek-coder-v2-lite"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "deepseek-llm-67b-chat",
+      "slug": "deepseek-llm-67b-chat"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "deepseek-r1",
+      "slug": "deepseek-r1"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "deepseek-r1-0120",
+      "slug": "deepseek-r1-0120"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "deepseek-r1-distill-llama-70b",
+      "slug": "deepseek-r1-distill-llama-70b"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "deepseek-r1-distill-llama-8b",
+      "slug": "deepseek-r1-distill-llama-8b"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "deepseek-r1-distill-qwen-1-5b",
+      "slug": "deepseek-r1-distill-qwen-1-5b"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "deepseek-r1-distill-qwen-14b",
+      "slug": "deepseek-r1-distill-qwen-14b"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "deepseek-r1-distill-qwen-32b",
+      "slug": "deepseek-r1-distill-qwen-32b"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "deepseek-r1-qwen3-8b",
+      "slug": "deepseek-r1-qwen3-8b"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "deepseek-v2",
+      "slug": "deepseek-v2"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "deepseek-v2-5",
+      "slug": "deepseek-v2-5"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "deepseek-v2-5-sep-2024",
+      "slug": "deepseek-v2-5-sep-2024"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "deepseek-v3",
+      "slug": "deepseek-v3"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "deepseek-v3-0324",
+      "slug": "deepseek-v3-0324"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "deepseek-v3-1",
+      "slug": "deepseek-v3-1"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "deepseek-v3-1",
+      "slug": "deepseek-v3-1-reasoning"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "deepseek-v3-1-terminus",
+      "slug": "deepseek-v3-1-terminus"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "deepseek-v3-1-terminus",
+      "slug": "deepseek-v3-1-terminus-reasoning"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "deepseek-v3-2",
+      "slug": "deepseek-v3-2"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "deepseek-v3-2-0925",
+      "slug": "deepseek-v3-2-0925"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "deepseek-v3-2",
+      "slug": "deepseek-v3-2-reasoning"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "deepseek-v3-2-0925",
+      "slug": "deepseek-v3-2-reasoning-0925"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "deepseek-v3-2-speciale",
+      "slug": "deepseek-v3-2-speciale"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "deepseek-v4-1-flash",
+      "slug": "deepseek-v4-1-flash"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "deepseek-v4-1-flash-1017",
+      "slug": "deepseek-v4-1-flash-1017"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "deepseek-v4-1-flash",
+      "slug": "deepseek-v4-1-flash-non-reasoning"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "deepseek-v4-flash",
+      "slug": "deepseek-v4-flash"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "deepseek-v4-flash-0420",
+      "slug": "deepseek-v4-flash-0420"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "deepseek-v4-flash-0420",
+      "slug": "deepseek-v4-flash-0420-high"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "deepseek-v4-flash-0420",
+      "slug": "deepseek-v4-flash-0420-non-reasoning"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "deepseek-v4-flash-vision",
+      "slug": "deepseek-v4-flash-vision"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "deepseek-v4-pro",
+      "slug": "deepseek-v4-pro"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "deepseek-v4-pro-0424",
+      "slug": "deepseek-v4-pro-0424"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "deepseek-v4-pro-0424",
+      "slug": "deepseek-v4-pro-0424-high"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "deepseek-v4-pro-0424",
+      "slug": "deepseek-v4-pro-0424-non-reasoning"
+    },
+    {
+      "creatorSlug": "deepseek",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "deepseek-v4-pro",
+      "slug": "deepseek-v4-pro-non-reasoning"
+    },
+    {
+      "creatorSlug": "mistral",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "devstral-2",
+      "slug": "devstral-2"
+    },
+    {
+      "creatorSlug": "mistral",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "devstral-medium",
+      "slug": "devstral-medium"
+    },
+    {
+      "creatorSlug": "mistral",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "devstral-small",
+      "slug": "devstral-small"
+    },
+    {
+      "creatorSlug": "mistral",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "devstral-small-2",
+      "slug": "devstral-small-2"
+    },
+    {
+      "creatorSlug": "mistral",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "devstral-small-2505",
+      "slug": "devstral-small-2505"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "diffusiongemma-26b-a4b",
+      "slug": "diffusiongemma-26b-a4b"
+    },
+    {
+      "creatorSlug": "bytedance_seed",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "doubao-seed-code",
+      "slug": "doubao-seed-code"
+    },
+    {
+      "creatorSlug": "baidu",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "ernie-4-5-300b-a47b",
+      "slug": "ernie-4-5-300b-a47b"
+    },
+    {
+      "creatorSlug": "baidu",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "ernie-5-0-thinking-preview",
+      "slug": "ernie-5-0-thinking-preview"
+    },
+    {
+      "creatorSlug": "lg",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "exaone-4-0-1-2b",
+      "slug": "exaone-4-0-1-2b"
+    },
+    {
+      "creatorSlug": "lg",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "exaone-4-0-1-2b",
+      "slug": "exaone-4-0-1-2b-reasoning"
+    },
+    {
+      "creatorSlug": "lg",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "exaone-4-0-32b",
+      "slug": "exaone-4-0-32b"
+    },
+    {
+      "creatorSlug": "lg",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "exaone-4-0-32b",
+      "slug": "exaone-4-0-32b-reasoning"
+    },
+    {
+      "creatorSlug": "lg",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "exaone-4-5-33b",
+      "slug": "exaone-4-5-33b"
+    },
+    {
+      "creatorSlug": "lg",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "exaone-4-5-33b",
+      "slug": "exaone-4-5-33b-non-reasoning"
+    },
+    {
+      "creatorSlug": "tii-uae",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "falcon-h1r-7b",
+      "slug": "falcon-h1r-7b"
+    },
+    {
+      "creatorSlug": "ai9star",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "g9v3-39a5b",
+      "slug": "g9v3-39a5b"
+    },
+    {
+      "creatorSlug": "ai9star",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "g9v3-3b",
+      "slug": "g9v3-3b"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-1-0-pro",
+      "slug": "gemini-1-0-pro"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-1-0-ultra",
+      "slug": "gemini-1-0-ultra"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-1-5-flash-sep-24",
+      "slug": "gemini-1-5-flash"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-1-5-flash-8b",
+      "slug": "gemini-1-5-flash-8b"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-1-5-flash-may-24",
+      "slug": "gemini-1-5-flash-may-2024"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-1-5-pro",
+      "slug": "gemini-1-5-pro"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-1-5-pro-may-24",
+      "slug": "gemini-1-5-pro-may-2024"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-2-0-flash",
+      "slug": "gemini-2-0-flash"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-2-0-flash-experimental",
+      "slug": "gemini-2-0-flash-experimental"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-2-0-flash-lite-001",
+      "slug": "gemini-2-0-flash-lite-001"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-2-0-flash-lite-preview",
+      "slug": "gemini-2-0-flash-lite-preview"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-2-0-flash-thinking-exp-0121",
+      "slug": "gemini-2-0-flash-thinking-exp-0121"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-2-0-flash-thinking-exp-1219",
+      "slug": "gemini-2-0-flash-thinking-exp-1219"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-2-0-pro-experimental-02-05",
+      "slug": "gemini-2-0-pro-experimental-02-05"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-2-5-flash",
+      "slug": "gemini-2-5-flash"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-2-5-flash-04-2025",
+      "slug": "gemini-2-5-flash-04-2025"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-2-5-flash-lite",
+      "slug": "gemini-2-5-flash-lite"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-2-5-flash-lite-preview-09-2025",
+      "slug": "gemini-2-5-flash-lite-preview-09-2025"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-2-5-flash-lite-preview-09-2025",
+      "slug": "gemini-2-5-flash-lite-preview-09-2025-reasoning"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-2-5-flash-lite",
+      "slug": "gemini-2-5-flash-lite-reasoning"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-2-5-flash-preview-09-2025",
+      "slug": "gemini-2-5-flash-preview-09-2025"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-2-5-flash-preview-09-2025",
+      "slug": "gemini-2-5-flash-preview-09-2025-reasoning"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-2-5-flash",
+      "slug": "gemini-2-5-flash-reasoning"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-2-5-flash-04-2025",
+      "slug": "gemini-2-5-flash-reasoning-04-2025"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-2-5-pro",
+      "slug": "gemini-2-5-pro"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-2-5-pro-03-25",
+      "slug": "gemini-2-5-pro-03-25"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-2-5-pro-05-06",
+      "slug": "gemini-2-5-pro-05-06"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-3-1-flash-lite",
+      "slug": "gemini-3-1-flash-lite-preview"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "gemini-3-1-pro-preview",
+      "slug": "gemini-3-1-pro-preview"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-3-5-flash",
+      "slug": "gemini-3-5-flash"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "gemini-3-5-flash-lite",
+      "slug": "gemini-3-5-flash-lite"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-3-5-flash",
+      "slug": "gemini-3-5-flash-medium"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-3-5-flash",
+      "slug": "gemini-3-5-flash-minimal"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-3-6-flash",
+      "slug": "gemini-3-6-flash"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-3-7-flash",
+      "slug": "gemini-3-7-flash"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-3-7-flash",
+      "slug": "gemini-3-7-flash-low"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-3-7-flash",
+      "slug": "gemini-3-7-flash-medium"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "gemini-3-8-flash",
+      "slug": "gemini-3-8-flash"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "gemini-3-8-flash",
+      "slug": "gemini-3-8-flash-low"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "gemini-3-8-flash",
+      "slug": "gemini-3-8-flash-medium"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "gemini-3-deep-think",
+      "slug": "gemini-3-deep-think"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-3-flash-preview",
+      "slug": "gemini-3-flash"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-3-flash-preview",
+      "slug": "gemini-3-flash-reasoning"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-3-pro-preview",
+      "slug": "gemini-3-pro"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gemini-3-pro-preview",
+      "slug": "gemini-3-pro-low"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "gemini-4-argon",
+      "slug": "gemini-4-argon"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "gemma-3-12b-instruct",
+      "slug": "gemma-3-12b"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "gemma-3-1b-instruct",
+      "slug": "gemma-3-1b"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "gemma-3-270m",
+      "slug": "gemma-3-270m"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "gemma-3-27b-instruct",
+      "slug": "gemma-3-27b"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "gemma-3-4b-instruct",
+      "slug": "gemma-3-4b"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "gemma-3n-e2b-instruct",
+      "slug": "gemma-3n-e2b"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "gemma-3n-e4b-instruct",
+      "slug": "gemma-3n-e4b"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "gemma-3n-e4b-preview-0520",
+      "slug": "gemma-3n-e4b-preview-0520"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "gemma-4-12b",
+      "slug": "gemma-4-12b"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "gemma-4-12b",
+      "slug": "gemma-4-12b-non-reasoning"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "gemma-4-26b-a4b",
+      "slug": "gemma-4-26b-a4b"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "gemma-4-26b-a4b",
+      "slug": "gemma-4-26b-a4b-non-reasoning"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "gemma-4-31b",
+      "slug": "gemma-4-31b"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "gemma-4-31b",
+      "slug": "gemma-4-31b-non-reasoning"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "gemma-4-e2b",
+      "slug": "gemma-4-e2b"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "gemma-4-e2b",
+      "slug": "gemma-4-e2b-non-reasoning"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "gemma-4-e4b",
+      "slug": "gemma-4-e4b"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "gemma-4-e4b",
+      "slug": "gemma-4-e4b-non-reasoning"
+    },
+    {
+      "creatorSlug": "zai",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "glm-4-5-air",
+      "slug": "glm-4-5-air"
+    },
+    {
+      "creatorSlug": "zai",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "glm-4-5v",
+      "slug": "glm-4-5v"
+    },
+    {
+      "creatorSlug": "zai",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "glm-4-5v",
+      "slug": "glm-4-5v-reasoning"
+    },
+    {
+      "creatorSlug": "zai",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "glm-4-6",
+      "slug": "glm-4-6"
+    },
+    {
+      "creatorSlug": "zai",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "glm-4-6",
+      "slug": "glm-4-6-reasoning"
+    },
+    {
+      "creatorSlug": "zai",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "glm-4-6v",
+      "slug": "glm-4-6v"
+    },
+    {
+      "creatorSlug": "zai",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "glm-4-6v",
+      "slug": "glm-4-6v-reasoning"
+    },
+    {
+      "creatorSlug": "zai",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "glm-4-7",
+      "slug": "glm-4-7"
+    },
+    {
+      "creatorSlug": "zai",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "glm-4-7-flash",
+      "slug": "glm-4-7-flash"
+    },
+    {
+      "creatorSlug": "zai",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "glm-4-7-flash",
+      "slug": "glm-4-7-flash-non-reasoning"
+    },
+    {
+      "creatorSlug": "zai",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "glm-4-7",
+      "slug": "glm-4-7-non-reasoning"
+    },
+    {
+      "creatorSlug": "zai",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "glm-4-5",
+      "slug": "glm-4.5"
+    },
+    {
+      "creatorSlug": "zai",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "glm-5",
+      "slug": "glm-5"
+    },
+    {
+      "creatorSlug": "zai",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "glm-5-1",
+      "slug": "glm-5-1"
+    },
+    {
+      "creatorSlug": "zai",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "glm-5-1",
+      "slug": "glm-5-1-non-reasoning"
+    },
+    {
+      "creatorSlug": "zai",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "glm-5-2",
+      "slug": "glm-5-2"
+    },
+    {
+      "creatorSlug": "zai",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "glm-5-2",
+      "slug": "glm-5-2-non-reasoning"
+    },
+    {
+      "creatorSlug": "zai",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "glm-5-3",
+      "slug": "glm-5-3"
+    },
+    {
+      "creatorSlug": "zai",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "glm-5-3-flash",
+      "slug": "glm-5-3-flash"
+    },
+    {
+      "creatorSlug": "zai",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "glm-5-3",
+      "slug": "glm-5-3-low"
+    },
+    {
+      "creatorSlug": "zai",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "glm-5",
+      "slug": "glm-5-non-reasoning"
+    },
+    {
+      "creatorSlug": "zai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "glm-5-turbo",
+      "slug": "glm-5-turbo"
+    },
+    {
+      "creatorSlug": "zai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "glm-5v-turbo",
+      "slug": "glm-5v-turbo"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-3-5-turbo-0613",
+      "slug": "gpt-3-5-turbo-0613"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-3-5-turbo",
+      "slug": "gpt-35-turbo"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-4",
+      "slug": "gpt-4"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-4-1",
+      "slug": "gpt-4-1"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-4-1-mini",
+      "slug": "gpt-4-1-mini"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-4-1-nano",
+      "slug": "gpt-4-1-nano"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-4-5-preview",
+      "slug": "gpt-4-5"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-4-turbo",
+      "slug": "gpt-4-turbo"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-4o",
+      "slug": "gpt-4o"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-4o-2024-05-13",
+      "slug": "gpt-4o-2024-05-13"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-4o-2024-08-06",
+      "slug": "gpt-4o-2024-08-06"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-4o-chatgpt",
+      "slug": "gpt-4o-chatgpt"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-4o-chatgpt-03-25",
+      "slug": "gpt-4o-chatgpt-03-25"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-4o-mini",
+      "slug": "gpt-4o-mini"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-4o-mini-realtime-dec-24",
+      "slug": "gpt-4o-mini-realtime-dec-2024"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-4o-realtime-dec-24",
+      "slug": "gpt-4o-realtime-dec-2024"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5",
+      "slug": "gpt-5"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-1",
+      "slug": "gpt-5-1"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-1-codex",
+      "slug": "gpt-5-1-codex"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-1-codex-mini",
+      "slug": "gpt-5-1-codex-mini"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-1",
+      "slug": "gpt-5-1-non-reasoning"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-2",
+      "slug": "gpt-5-2"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-2-codex",
+      "slug": "gpt-5-2-codex"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-2",
+      "slug": "gpt-5-2-medium"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-2",
+      "slug": "gpt-5-2-non-reasoning"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "gpt-5-3-codex",
+      "slug": "gpt-5-3-codex"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-4",
+      "slug": "gpt-5-4"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-4",
+      "slug": "gpt-5-4-low"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-4-mini",
+      "slug": "gpt-5-4-mini"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-4-mini",
+      "slug": "gpt-5-4-mini-medium"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-4-mini",
+      "slug": "gpt-5-4-mini-non-reasoning"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-4-nano",
+      "slug": "gpt-5-4-nano"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-4-nano",
+      "slug": "gpt-5-4-nano-medium"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-4-nano",
+      "slug": "gpt-5-4-nano-non-reasoning"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-4",
+      "slug": "gpt-5-4-non-reasoning"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-4-pro",
+      "slug": "gpt-5-4-pro"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-5",
+      "slug": "gpt-5-5"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-5",
+      "slug": "gpt-5-5-high"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-5-instant-05-26",
+      "slug": "gpt-5-5-instant-05-26"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "gpt-5-5-instant-06-26",
+      "slug": "gpt-5-5-instant-06-26"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-5",
+      "slug": "gpt-5-5-low"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-5",
+      "slug": "gpt-5-5-medium"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-5",
+      "slug": "gpt-5-5-non-reasoning"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "gpt-5-5-pro",
+      "slug": "gpt-5-5-pro"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-6-luna",
+      "slug": "gpt-5-6-luna"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-6-luna",
+      "slug": "gpt-5-6-luna-high"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-6-luna",
+      "slug": "gpt-5-6-luna-low"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-6-luna",
+      "slug": "gpt-5-6-luna-medium"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-6-luna",
+      "slug": "gpt-5-6-luna-non-reasoning"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-6-luna",
+      "slug": "gpt-5-6-luna-xhigh"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-6-sol",
+      "slug": "gpt-5-6-sol"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-6-sol",
+      "slug": "gpt-5-6-sol-high"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-6-sol",
+      "slug": "gpt-5-6-sol-low"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-6-sol",
+      "slug": "gpt-5-6-sol-medium"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-6-sol",
+      "slug": "gpt-5-6-sol-non-reasoning"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-6-sol",
+      "slug": "gpt-5-6-sol-xhigh"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-6-terra",
+      "slug": "gpt-5-6-terra"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-6-terra",
+      "slug": "gpt-5-6-terra-high"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-6-terra",
+      "slug": "gpt-5-6-terra-low"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-6-terra",
+      "slug": "gpt-5-6-terra-medium"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-6-terra",
+      "slug": "gpt-5-6-terra-non-reasoning"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-6-terra",
+      "slug": "gpt-5-6-terra-xhigh"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-chatgpt",
+      "slug": "gpt-5-chatgpt"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-codex",
+      "slug": "gpt-5-codex"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5",
+      "slug": "gpt-5-low"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5",
+      "slug": "gpt-5-medium"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-mini",
+      "slug": "gpt-5-mini"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-mini",
+      "slug": "gpt-5-mini-medium"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-mini",
+      "slug": "gpt-5-mini-minimal"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5",
+      "slug": "gpt-5-minimal"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-nano",
+      "slug": "gpt-5-nano"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-nano",
+      "slug": "gpt-5-nano-medium"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-5-nano",
+      "slug": "gpt-5-nano-minimal"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "gpt-6-1-sol",
+      "slug": "gpt-6-1-sol"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "gpt-6-1-sol",
+      "slug": "gpt-6-1-sol-high"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "gpt-6-1-sol",
+      "slug": "gpt-6-1-sol-low"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "gpt-6-1-sol",
+      "slug": "gpt-6-1-sol-medium"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "gpt-6-1-sol",
+      "slug": "gpt-6-1-sol-xhigh"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "gpt-6-1-terra",
+      "slug": "gpt-6-1-terra"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "gpt-6-1-terra",
+      "slug": "gpt-6-1-terra-high"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "gpt-6-1-terra",
+      "slug": "gpt-6-1-terra-low"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "gpt-6-1-terra",
+      "slug": "gpt-6-1-terra-medium"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "gpt-6-1-terra",
+      "slug": "gpt-6-1-terra-non-reasoning"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "gpt-6-1-terra",
+      "slug": "gpt-6-1-terra-xhigh"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "gpt-6-astra",
+      "slug": "gpt-6-astra"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "gpt-6-astra",
+      "slug": "gpt-6-astra-high"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "gpt-6-astra",
+      "slug": "gpt-6-astra-low"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "gpt-6-astra",
+      "slug": "gpt-6-astra-medium"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "gpt-6-astra",
+      "slug": "gpt-6-astra-xhigh"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "gpt-6-luna",
+      "slug": "gpt-6-luna"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "gpt-6-luna",
+      "slug": "gpt-6-luna-high"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "gpt-6-luna",
+      "slug": "gpt-6-luna-low"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "gpt-6-luna",
+      "slug": "gpt-6-luna-medium"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "gpt-6-luna",
+      "slug": "gpt-6-luna-non-reasoning"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "gpt-6-luna",
+      "slug": "gpt-6-luna-xhigh"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-6-sol",
+      "slug": "gpt-6-sol"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "gpt-6-sol-daybreak-blue",
+      "slug": "gpt-6-sol-daybreak-blue"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-6-sol",
+      "slug": "gpt-6-sol-high"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-6-sol",
+      "slug": "gpt-6-sol-low"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-6-sol",
+      "slug": "gpt-6-sol-medium"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-6-sol",
+      "slug": "gpt-6-sol-non-reasoning"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "gpt-6-sol",
+      "slug": "gpt-6-sol-xhigh"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "gpt-oss-120b",
+      "slug": "gpt-oss-120b"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "gpt-oss-120b",
+      "slug": "gpt-oss-120b-low"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "gpt-oss-20b",
+      "slug": "gpt-oss-20b"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "gpt-oss-20b",
+      "slug": "gpt-oss-20b-low"
+    },
+    {
+      "creatorSlug": "ibm",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "granite-3-3-8b-instruct",
+      "slug": "granite-3-3-8b-instruct"
+    },
+    {
+      "creatorSlug": "ibm",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "granite-4-0-350m",
+      "slug": "granite-4-0-350m"
+    },
+    {
+      "creatorSlug": "ibm",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "granite-4-0-h-350m",
+      "slug": "granite-4-0-h-350m"
+    },
+    {
+      "creatorSlug": "ibm",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "granite-4-0-h-nano-1b",
+      "slug": "granite-4-0-h-nano-1b"
+    },
+    {
+      "creatorSlug": "ibm",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "granite-4-0-h-small",
+      "slug": "granite-4-0-h-small"
+    },
+    {
+      "creatorSlug": "ibm",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "granite-4-0-micro",
+      "slug": "granite-4-0-micro"
+    },
+    {
+      "creatorSlug": "ibm",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "granite-4-0-nano-1b",
+      "slug": "granite-4-0-nano-1b"
+    },
+    {
+      "creatorSlug": "ibm",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "granite-4-1-30b",
+      "slug": "granite-4-1-30b"
+    },
+    {
+      "creatorSlug": "ibm",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "granite-4-1-3b",
+      "slug": "granite-4-1-3b"
+    },
+    {
+      "creatorSlug": "ibm",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "granite-4-1-8b",
+      "slug": "granite-4-1-8b"
+    },
+    {
+      "creatorSlug": "ibm",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "granite-4-2-30b",
+      "slug": "granite-4-2-30b"
+    },
+    {
+      "creatorSlug": "ibm",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "granite-4-2-3b",
+      "slug": "granite-4-2-3b"
+    },
+    {
+      "creatorSlug": "ibm",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "granite-4-2-8b",
+      "slug": "granite-4-2-8b"
+    },
+    {
+      "creatorSlug": "xai",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "grok-1",
+      "slug": "grok-1"
+    },
+    {
+      "creatorSlug": "xai",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "grok-2-1212",
+      "slug": "grok-2-1212"
+    },
+    {
+      "creatorSlug": "xai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "grok-3",
+      "slug": "grok-3"
+    },
+    {
+      "creatorSlug": "xai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "grok-3-mini-reasoning",
+      "slug": "grok-3-mini-reasoning"
+    },
+    {
+      "creatorSlug": "xai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "grok-3-reasoning",
+      "slug": "grok-3-reasoning"
+    },
+    {
+      "creatorSlug": "xai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "grok-4",
+      "slug": "grok-4"
+    },
+    {
+      "creatorSlug": "xai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "grok-4-1-fast",
+      "slug": "grok-4-1-fast"
+    },
+    {
+      "creatorSlug": "xai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "grok-4-1-fast",
+      "slug": "grok-4-1-fast-reasoning"
+    },
+    {
+      "creatorSlug": "xai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "grok-4-20",
+      "slug": "grok-4-20"
+    },
+    {
+      "creatorSlug": "xai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "grok-4-20-0309",
+      "slug": "grok-4-20-0309"
+    },
+    {
+      "creatorSlug": "xai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "grok-4-20-0309",
+      "slug": "grok-4-20-0309-non-reasoning"
+    },
+    {
+      "creatorSlug": "xai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "grok-4-20",
+      "slug": "grok-4-20-non-reasoning"
+    },
+    {
+      "creatorSlug": "xai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "grok-4-3",
+      "slug": "grok-4-3"
+    },
+    {
+      "creatorSlug": "xai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "grok-4-3",
+      "slug": "grok-4-3-low"
+    },
+    {
+      "creatorSlug": "xai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "grok-4-3",
+      "slug": "grok-4-3-medium"
+    },
+    {
+      "creatorSlug": "xai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "grok-4-3",
+      "slug": "grok-4-3-non-reasoning"
+    },
+    {
+      "creatorSlug": "xai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "grok-4-5",
+      "slug": "grok-4-5"
+    },
+    {
+      "creatorSlug": "xai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "grok-4-6",
+      "slug": "grok-4-6"
+    },
+    {
+      "creatorSlug": "xai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "grok-4-6",
+      "slug": "grok-4-6-low"
+    },
+    {
+      "creatorSlug": "xai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "grok-4-6",
+      "slug": "grok-4-6-medium"
+    },
+    {
+      "creatorSlug": "xai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "grok-4-6",
+      "slug": "grok-4-6-xhigh"
+    },
+    {
+      "creatorSlug": "xai",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "grok-4-7",
+      "slug": "grok-4-7"
+    },
+    {
+      "creatorSlug": "xai",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "grok-4-7",
+      "slug": "grok-4-7-high"
+    },
+    {
+      "creatorSlug": "xai",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "grok-4-7",
+      "slug": "grok-4-7-low"
+    },
+    {
+      "creatorSlug": "xai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "grok-4-fast",
+      "slug": "grok-4-fast"
+    },
+    {
+      "creatorSlug": "xai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "grok-4-fast",
+      "slug": "grok-4-fast-reasoning"
+    },
+    {
+      "creatorSlug": "xai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "grok-beta",
+      "slug": "grok-beta"
+    },
+    {
+      "creatorSlug": "xai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "grok-build-0-1-0616",
+      "slug": "grok-build-0-1-06-16"
+    },
+    {
+      "creatorSlug": "xai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "grok-code-fast-1",
+      "slug": "grok-code-fast-1"
+    },
+    {
+      "creatorSlug": "nous-research",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "hermes-3-llama-3-1-70b",
+      "slug": "hermes-3-llama-3-1-70b"
+    },
+    {
+      "creatorSlug": "nous-research",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "hermes-4-llama-3-1-405b",
+      "slug": "hermes-4-llama-3-1-405b"
+    },
+    {
+      "creatorSlug": "nous-research",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "hermes-4-llama-3-1-405b",
+      "slug": "hermes-4-llama-3-1-405b-reasoning"
+    },
+    {
+      "creatorSlug": "nous-research",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "hermes-4-llama-3-1-70b",
+      "slug": "hermes-4-llama-3-1-70b"
+    },
+    {
+      "creatorSlug": "nous-research",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "hermes-4-llama-3-1-70b",
+      "slug": "hermes-4-llama-3-1-70b-reasoning"
+    },
+    {
+      "creatorSlug": "tencent",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "hy3",
+      "slug": "hy3"
+    },
+    {
+      "creatorSlug": "tencent",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "hy3-preview",
+      "slug": "hy3-non-reasoning"
+    },
+    {
+      "creatorSlug": "tencent",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "hy3-preview",
+      "slug": "hy3-preview"
+    },
+    {
+      "creatorSlug": "naver",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "hyperclova-x-seed-think-32b",
+      "slug": "hyperclova-x-seed-think-32b"
+    },
+    {
+      "creatorSlug": "multiversecomputing",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "hypernova-60b",
+      "slug": "hypernova-60b"
+    },
+    {
+      "creatorSlug": "thinking-machines",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "inkling",
+      "slug": "inkling"
+    },
+    {
+      "creatorSlug": "thinking-machines",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "inkling-small",
+      "slug": "inkling-small"
+    },
+    {
+      "creatorSlug": "prime-intellect",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "intellect-3",
+      "slug": "intellect-3"
+    },
+    {
+      "creatorSlug": "ai21-labs",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "jamba-1-5-large",
+      "slug": "jamba-1-5-large"
+    },
+    {
+      "creatorSlug": "ai21-labs",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "jamba-1-5-mini",
+      "slug": "jamba-1-5-mini"
+    },
+    {
+      "creatorSlug": "ai21-labs",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "jamba-1-6-large",
+      "slug": "jamba-1-6-large"
+    },
+    {
+      "creatorSlug": "ai21-labs",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "jamba-1-6-mini",
+      "slug": "jamba-1-6-mini"
+    },
+    {
+      "creatorSlug": "ai21-labs",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "jamba-1-7-large",
+      "slug": "jamba-1-7-large"
+    },
+    {
+      "creatorSlug": "ai21-labs",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "jamba-1-7-mini",
+      "slug": "jamba-1-7-mini"
+    },
+    {
+      "creatorSlug": "ai21-labs",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "jamba-reasoning-3b",
+      "slug": "jamba-reasoning-3b"
+    },
+    {
+      "creatorSlug": "china-mobile",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "jt-35b-flash",
+      "slug": "jt-35b-flash"
+    },
+    {
+      "creatorSlug": "china-mobile",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "jt-4-1-flash-236b-a21b",
+      "slug": "jt-4-1-flash-236b-a21b"
+    },
+    {
+      "creatorSlug": "china-mobile",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "jt-4-1-flash-236b-a21b",
+      "slug": "jt-4-1-flash-236b-a21b-non-reasoning"
+    },
+    {
+      "creatorSlug": "china-mobile",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "jt-mini",
+      "slug": "jt-mini"
+    },
+    {
+      "creatorSlug": "lg",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "k-exaone",
+      "slug": "k-exaone"
+    },
+    {
+      "creatorSlug": "lg",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "k-exaone-2-0-0803",
+      "slug": "k-exaone-2-0-0803"
+    },
+    {
+      "creatorSlug": "lg",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "k-exaone",
+      "slug": "k-exaone-non-reasoning"
+    },
+    {
+      "creatorSlug": "ifm",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "k2-horizon-0-9b",
+      "slug": "k2-horizon-0-9b"
+    },
+    {
+      "creatorSlug": "ifm",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "k2-horizon-3-7b",
+      "slug": "k2-horizon-3-7b"
+    },
+    {
+      "creatorSlug": "ifm",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "k2-horizon-375b-a23b",
+      "slug": "k2-horizon-375b-a23b"
+    },
+    {
+      "creatorSlug": "ifm",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "k2-horizon-7b",
+      "slug": "k2-horizon-7b"
+    },
+    {
+      "creatorSlug": "ifm",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "k2-horizon-mova-36b-a4b",
+      "slug": "k2-horizon-mova-36b-a4b"
+    },
+    {
+      "creatorSlug": "ifm",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "k2-think-v2",
+      "slug": "k2-think-v2"
+    },
+    {
+      "creatorSlug": "ifm",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "k2-v2",
+      "slug": "k2-v2"
+    },
+    {
+      "creatorSlug": "ifm",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "k2-v2",
+      "slug": "k2-v2-low"
+    },
+    {
+      "creatorSlug": "ifm",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "k2-v2",
+      "slug": "k2-v2-medium"
+    },
+    {
+      "creatorSlug": "kwaikat",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "kat-coder-pro-v1",
+      "slug": "kat-coder-pro-v1"
+    },
+    {
+      "creatorSlug": "kwaikat",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "kat-coder-pro-v2",
+      "slug": "kat-coder-pro-v2"
+    },
+    {
+      "creatorSlug": "kimi",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "kimi-k2",
+      "slug": "kimi-k2"
+    },
+    {
+      "creatorSlug": "kimi",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "kimi-k2-0905",
+      "slug": "kimi-k2-0905"
+    },
+    {
+      "creatorSlug": "kimi",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "kimi-k2-5",
+      "slug": "kimi-k2-5"
+    },
+    {
+      "creatorSlug": "kimi",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "kimi-k2-5",
+      "slug": "kimi-k2-5-non-reasoning"
+    },
+    {
+      "creatorSlug": "kimi",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "kimi-k2-6",
+      "slug": "kimi-k2-6"
+    },
+    {
+      "creatorSlug": "kimi",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "kimi-k2-6",
+      "slug": "kimi-k2-6-non-reasoning"
+    },
+    {
+      "creatorSlug": "kimi",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "kimi-k2-7-code",
+      "slug": "kimi-k2-7-code"
+    },
+    {
+      "creatorSlug": "kimi",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "kimi-k2-thinking",
+      "slug": "kimi-k2-thinking"
+    },
+    {
+      "creatorSlug": "kimi",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "kimi-k3",
+      "slug": "kimi-k3"
+    },
+    {
+      "creatorSlug": "kimi",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "kimi-k3-1-pro",
+      "slug": "kimi-k3-1-pro"
+    },
+    {
+      "creatorSlug": "kimi",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "kimi-k3",
+      "slug": "kimi-k3-low"
+    },
+    {
+      "creatorSlug": "kimi",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "kimi-linear-48b-a3b-instruct",
+      "slug": "kimi-linear-48b-a3b-instruct"
+    },
+    {
+      "creatorSlug": "liquidai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "lfm-40b",
+      "slug": "lfm-40b"
+    },
+    {
+      "creatorSlug": "liquidai",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "lfm2-1-2b",
+      "slug": "lfm2-1-2b"
+    },
+    {
+      "creatorSlug": "liquidai",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "lfm2-2-6b",
+      "slug": "lfm2-2-6b"
+    },
+    {
+      "creatorSlug": "liquidai",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "lfm2-24b-a2b",
+      "slug": "lfm2-24b-a2b"
+    },
+    {
+      "creatorSlug": "liquidai",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "lfm2-5-1-2b-instruct",
+      "slug": "lfm2-5-1-2b-instruct"
+    },
+    {
+      "creatorSlug": "liquidai",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "lfm2-5-1-2b-thinking",
+      "slug": "lfm2-5-1-2b-thinking"
+    },
+    {
+      "creatorSlug": "liquidai",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "lfm2-5-2-6b",
+      "slug": "lfm2-5-2-6b"
+    },
+    {
+      "creatorSlug": "liquidai",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "lfm2-5-8b-a1b",
+      "slug": "lfm2-5-8b-a1b"
+    },
+    {
+      "creatorSlug": "liquidai",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "lfm2-5-vl-1-6b",
+      "slug": "lfm2-5-vl-1-6b"
+    },
+    {
+      "creatorSlug": "liquidai",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "lfm2-8b-a1b",
+      "slug": "lfm2-8b-a1b"
+    },
+    {
+      "creatorSlug": "inclusionai",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "ling-1t",
+      "slug": "ling-1t"
+    },
+    {
+      "creatorSlug": "inclusionai",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "ling-2-6-1t",
+      "slug": "ling-2-6-1t"
+    },
+    {
+      "creatorSlug": "inclusionai",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "ling-2-6-flash",
+      "slug": "ling-2-6-flash"
+    },
+    {
+      "creatorSlug": "inclusionai",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "ling-3-0-flash",
+      "slug": "ling-3-0-flash"
+    },
+    {
+      "creatorSlug": "inclusionai",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "ling-3-0-flash-fin",
+      "slug": "ling-3-0-flash-fin"
+    },
+    {
+      "creatorSlug": "inclusionai",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "ling-3-0-flash-vl",
+      "slug": "ling-3-0-flash-vl"
+    },
+    {
+      "creatorSlug": "inclusionai",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "ling-3-0-tiny",
+      "slug": "ling-3-0-tiny"
+    },
+    {
+      "creatorSlug": "inclusionai",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "ling-3-1-flash",
+      "slug": "ling-3-1-flash"
+    },
+    {
+      "creatorSlug": "inclusionai",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "ling-3-1-flash-rc5",
+      "slug": "ling-3-1-flash-1019"
+    },
+    {
+      "creatorSlug": "inclusionai",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "ling-flash-2-0",
+      "slug": "ling-flash-2-0"
+    },
+    {
+      "creatorSlug": "inclusionai",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "ling-mini-2-0",
+      "slug": "ling-mini-2-0"
+    },
+    {
+      "creatorSlug": "meta",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "llama-2-chat-13b",
+      "slug": "llama-2-chat-13b"
+    },
+    {
+      "creatorSlug": "meta",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "llama-2-chat-70b",
+      "slug": "llama-2-chat-70b"
+    },
+    {
+      "creatorSlug": "meta",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "llama-2-chat-7b",
+      "slug": "llama-2-chat-7b"
+    },
+    {
+      "creatorSlug": "meta",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "llama-3-1-instruct-405b",
+      "slug": "llama-3-1-instruct-405b"
+    },
+    {
+      "creatorSlug": "meta",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "llama-3-1-instruct-70b",
+      "slug": "llama-3-1-instruct-70b"
+    },
+    {
+      "creatorSlug": "meta",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "llama-3-1-instruct-8b",
+      "slug": "llama-3-1-instruct-8b"
+    },
+    {
+      "creatorSlug": "nvidia",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "llama-3-1-nemotron-instruct-70b",
+      "slug": "llama-3-1-nemotron-instruct-70b"
+    },
+    {
+      "creatorSlug": "nvidia",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "llama-3-1-nemotron-nano-4b",
+      "slug": "llama-3-1-nemotron-nano-4b-reasoning"
+    },
+    {
+      "creatorSlug": "nvidia",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "llama-3-1-nemotron-ultra-253b-v1",
+      "slug": "llama-3-1-nemotron-ultra-253b-v1-reasoning"
+    },
+    {
+      "creatorSlug": "meta",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "llama-3-2-instruct-11b-vision",
+      "slug": "llama-3-2-instruct-11b-vision"
+    },
+    {
+      "creatorSlug": "meta",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "llama-3-2-instruct-1b",
+      "slug": "llama-3-2-instruct-1b"
+    },
+    {
+      "creatorSlug": "meta",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "llama-3-2-instruct-3b",
+      "slug": "llama-3-2-instruct-3b"
+    },
+    {
+      "creatorSlug": "meta",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "llama-3-2-instruct-90b-vision",
+      "slug": "llama-3-2-instruct-90b-vision"
+    },
+    {
+      "creatorSlug": "meta",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "llama-3-3-instruct-70b",
+      "slug": "llama-3-3-instruct-70b"
+    },
+    {
+      "creatorSlug": "nvidia",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "llama-3-3-nemotron-super-49b",
+      "slug": "llama-3-3-nemotron-super-49b"
+    },
+    {
+      "creatorSlug": "nvidia",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "llama-3-3-nemotron-super-49b",
+      "slug": "llama-3-3-nemotron-super-49b-reasoning"
+    },
+    {
+      "creatorSlug": "meta",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "llama-3-instruct-70b",
+      "slug": "llama-3-instruct-70b"
+    },
+    {
+      "creatorSlug": "meta",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "llama-3-instruct-8b",
+      "slug": "llama-3-instruct-8b"
+    },
+    {
+      "creatorSlug": "meta",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "llama-4-maverick",
+      "slug": "llama-4-maverick"
+    },
+    {
+      "creatorSlug": "meta",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "llama-4-scout",
+      "slug": "llama-4-scout"
+    },
+    {
+      "creatorSlug": "meta",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "llama-65b",
+      "slug": "llama-65b"
+    },
+    {
+      "creatorSlug": "nvidia",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "llama-nemotron-super-49b-v1-5",
+      "slug": "llama-nemotron-super-49b-v1-5"
+    },
+    {
+      "creatorSlug": "nvidia",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "llama-nemotron-super-49b-v1-5",
+      "slug": "llama-nemotron-super-49b-v1-5-reasoning"
+    },
+    {
+      "creatorSlug": "longcat",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "longcat-2-0",
+      "slug": "longcat-2-0"
+    },
+    {
+      "creatorSlug": "longcat",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "longcat-flash-lite",
+      "slug": "longcat-flash-lite"
+    },
+    {
+      "creatorSlug": "mistral",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "magistral-medium",
+      "slug": "magistral-medium"
+    },
+    {
+      "creatorSlug": "mistral",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "magistral-medium-2509",
+      "slug": "magistral-medium-2509"
+    },
+    {
+      "creatorSlug": "mistral",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "magistral-small",
+      "slug": "magistral-small"
+    },
+    {
+      "creatorSlug": "mistral",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "magistral-small-2509",
+      "slug": "magistral-small-2509"
+    },
+    {
+      "creatorSlug": "inception",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "mercury-2",
+      "slug": "mercury-2"
+    },
+    {
+      "creatorSlug": "inception",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "mercury-2-5",
+      "slug": "mercury-2-5"
+    },
+    {
+      "creatorSlug": "korea-telecom",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "mi-dm-k-2-5-pro-dec28",
+      "slug": "mi-dm-k-2-5-pro-dec28"
+    },
+    {
+      "creatorSlug": "korea-telecom",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "midm-250-pro-rsnsft",
+      "slug": "midm-250-pro-rsnsft"
+    },
+    {
+      "creatorSlug": "xiaomi",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "mimo-v2-0206",
+      "slug": "mimo-v2-0206"
+    },
+    {
+      "creatorSlug": "xiaomi",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "mimo-v2-5-0424",
+      "slug": "mimo-v2-5-0424"
+    },
+    {
+      "creatorSlug": "xiaomi",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "mimo-v2-5-pro",
+      "slug": "mimo-v2-5-pro"
+    },
+    {
+      "creatorSlug": "xiaomi",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "mimo-v2-5-pro",
+      "slug": "mimo-v2-5-pro-non-reasoning"
+    },
+    {
+      "creatorSlug": "xiaomi",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "mimo-v2-6-flash",
+      "slug": "mimo-v2-6-flash"
+    },
+    {
+      "creatorSlug": "xiaomi",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "mimo-v2-6-pro",
+      "slug": "mimo-v2-6-pro"
+    },
+    {
+      "creatorSlug": "xiaomi",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "mimo-v2-flash",
+      "slug": "mimo-v2-flash"
+    },
+    {
+      "creatorSlug": "xiaomi",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "mimo-v2-flash",
+      "slug": "mimo-v2-flash-reasoning"
+    },
+    {
+      "creatorSlug": "xiaomi",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "mimo-v2-omni",
+      "slug": "mimo-v2-omni"
+    },
+    {
+      "creatorSlug": "xiaomi",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "mimo-v2-omni-0327",
+      "slug": "mimo-v2-omni-0327"
+    },
+    {
+      "creatorSlug": "xiaomi",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "mimo-v2-pro",
+      "slug": "mimo-v2-pro"
+    },
+    {
+      "creatorSlug": "openbmb",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "minicpm-v-4-6-1-3b",
+      "slug": "minicpm-v4-6-1-3b"
+    },
+    {
+      "creatorSlug": "openbmb",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "minicpm5-1b",
+      "slug": "minicpm5-1b"
+    },
+    {
+      "creatorSlug": "openbmb",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "minicpm5-1b",
+      "slug": "minicpm5-1b-non-reasoning"
+    },
+    {
+      "creatorSlug": "openbmb",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "minicpm5-2b",
+      "slug": "minicpm5-2b"
+    },
+    {
+      "creatorSlug": "minimax",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "minimax-m1-40k",
+      "slug": "minimax-m1-40k"
+    },
+    {
+      "creatorSlug": "minimax",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "minimax-m1-80k",
+      "slug": "minimax-m1-80k"
+    },
+    {
+      "creatorSlug": "minimax",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "minimax-m2",
+      "slug": "minimax-m2"
+    },
+    {
+      "creatorSlug": "minimax",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "minimax-m2-1",
+      "slug": "minimax-m2-1"
+    },
+    {
+      "creatorSlug": "minimax",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "minimax-m2-5",
+      "slug": "minimax-m2-5"
+    },
+    {
+      "creatorSlug": "minimax",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "minimax-m2-7",
+      "slug": "minimax-m2-7"
+    },
+    {
+      "creatorSlug": "minimax",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "minimax-m3",
+      "slug": "minimax-m3"
+    },
+    {
+      "creatorSlug": "minimax",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "minimax-m3-1-flash",
+      "slug": "minimax-m3-1-flash"
+    },
+    {
+      "creatorSlug": "mistral",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "ministral-3-14b",
+      "slug": "ministral-3-14b"
+    },
+    {
+      "creatorSlug": "mistral",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "ministral-3-3b",
+      "slug": "ministral-3-3b"
+    },
+    {
+      "creatorSlug": "mistral",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "ministral-3-8b",
+      "slug": "ministral-3-8b"
+    },
+    {
+      "creatorSlug": "mistral",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "mistral-7b-instruct",
+      "slug": "mistral-7b-instruct"
+    },
+    {
+      "creatorSlug": "mistral",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "mistral-8x22b-instruct",
+      "slug": "mistral-8x22b-instruct"
+    },
+    {
+      "creatorSlug": "mistral",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "mistral-large",
+      "slug": "mistral-large"
+    },
+    {
+      "creatorSlug": "mistral",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "mistral-large-2",
+      "slug": "mistral-large-2"
+    },
+    {
+      "creatorSlug": "mistral",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "mistral-large-2407",
+      "slug": "mistral-large-2407"
+    },
+    {
+      "creatorSlug": "mistral",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "mistral-large-3",
+      "slug": "mistral-large-3"
+    },
+    {
+      "creatorSlug": "mistral",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "mistral-large-4",
+      "slug": "mistral-large-4"
+    },
+    {
+      "creatorSlug": "mistral",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "mistral-medium",
+      "slug": "mistral-medium"
+    },
+    {
+      "creatorSlug": "mistral",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "mistral-medium-3",
+      "slug": "mistral-medium-3"
+    },
+    {
+      "creatorSlug": "mistral",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "mistral-medium-3-1",
+      "slug": "mistral-medium-3-1"
+    },
+    {
+      "creatorSlug": "mistral",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "mistral-medium-3-5",
+      "slug": "mistral-medium-3-5"
+    },
+    {
+      "creatorSlug": "mistral",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "mistral-saba",
+      "slug": "mistral-saba"
+    },
+    {
+      "creatorSlug": "mistral",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "mistral-small",
+      "slug": "mistral-small"
+    },
+    {
+      "creatorSlug": "mistral",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "mistral-small-2402",
+      "slug": "mistral-small-2402"
+    },
+    {
+      "creatorSlug": "mistral",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "mistral-small-3",
+      "slug": "mistral-small-3"
+    },
+    {
+      "creatorSlug": "mistral",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "mistral-small-3-1",
+      "slug": "mistral-small-3-1"
+    },
+    {
+      "creatorSlug": "mistral",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "mistral-small-3-2",
+      "slug": "mistral-small-3-2"
+    },
+    {
+      "creatorSlug": "mistral",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "mistral-small-4",
+      "slug": "mistral-small-4"
+    },
+    {
+      "creatorSlug": "mistral",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "mistral-small-4",
+      "slug": "mistral-small-4-non-reasoning"
+    },
+    {
+      "creatorSlug": "mistral",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "mixtral-8x7b-instruct",
+      "slug": "mixtral-8x7b-instruct"
+    },
+    {
+      "creatorSlug": "ai2",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "molmo-7b-d",
+      "slug": "molmo-7b-d"
+    },
+    {
+      "creatorSlug": "ai2",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "molmo2-8b",
+      "slug": "molmo2-8b"
+    },
+    {
+      "creatorSlug": "motif-technologies",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "motif-0714",
+      "slug": "motif-0714"
+    },
+    {
+      "creatorSlug": "motif-technologies",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "motif-2-12-7b-reasoning",
+      "slug": "motif-2-12-7b"
+    },
+    {
+      "creatorSlug": "motif-technologies",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "motif-3",
+      "slug": "motif-3"
+    },
+    {
+      "creatorSlug": "meta",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "muse-glimmer",
+      "slug": "muse-glimmer"
+    },
+    {
+      "creatorSlug": "meta",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "muse-spark",
+      "slug": "muse-spark"
+    },
+    {
+      "creatorSlug": "meta",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "muse-spark-1-1",
+      "slug": "muse-spark-1-1"
+    },
+    {
+      "creatorSlug": "meta",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "muse-spark-1-2",
+      "slug": "muse-spark-1-2"
+    },
+    {
+      "creatorSlug": "meta",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "muse-spark-1-3",
+      "slug": "muse-spark-1-3"
+    },
+    {
+      "creatorSlug": "meta",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "muse-spark-1-3",
+      "slug": "muse-spark-1-3-xhigh"
+    },
+    {
+      "creatorSlug": "meta",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "muse-spark-open",
+      "slug": "muse-spark-open"
+    },
+    {
+      "creatorSlug": "meta",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "muse-wonder",
+      "slug": "muse-wonder"
+    },
+    {
+      "creatorSlug": "meta",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "muse-wonder-full",
+      "slug": "muse-wonder-full"
+    },
+    {
+      "creatorSlug": "nanbeige",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "nanbeige4-1-3b",
+      "slug": "nanbeige4-1-3b"
+    },
+    {
+      "creatorSlug": "nvidia",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "nemotron-3-5-bolt-74b-a9b",
+      "slug": "nemotron-3-5-bolt-74b-a9b"
+    },
+    {
+      "creatorSlug": "nvidia",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "nemotron-3-5-bolt-e4b-4gb",
+      "slug": "nemotron-3-5-bolt-e4b-4gb"
+    },
+    {
+      "creatorSlug": "nvidia",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "nemotron-3-5-lightning",
+      "slug": "nemotron-3-5-lightning"
+    },
+    {
+      "creatorSlug": "nvidia",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "nemotron-3-5-super-vl",
+      "slug": "nemotron-3-5-super-vl"
+    },
+    {
+      "creatorSlug": "nvidia",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "nemotron-3-nano-omni-30b-a3b",
+      "slug": "nemotron-3-nano-omni-30b-a3b"
+    },
+    {
+      "creatorSlug": "nvidia",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "nemotron-cascade-2-30b-a3b",
+      "slug": "nemotron-cascade-2-30b-a3b"
+    },
+    {
+      "creatorSlug": "nex",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "nex-n2-pro",
+      "slug": "nex-n2-pro"
+    },
+    {
+      "creatorSlug": "cohere",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "north-mini-code",
+      "slug": "north-mini-code"
+    },
+    {
+      "creatorSlug": "aws",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "nova-2-0-lite",
+      "slug": "nova-2-0-lite"
+    },
+    {
+      "creatorSlug": "aws",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "nova-2-0-lite",
+      "slug": "nova-2-0-lite-reasoning"
+    },
+    {
+      "creatorSlug": "aws",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "nova-2-0-lite",
+      "slug": "nova-2-0-lite-reasoning-low"
+    },
+    {
+      "creatorSlug": "aws",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "nova-2-0-lite",
+      "slug": "nova-2-0-lite-reasoning-medium"
+    },
+    {
+      "creatorSlug": "aws",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "nova-2-0-omni",
+      "slug": "nova-2-0-omni"
+    },
+    {
+      "creatorSlug": "aws",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "nova-2-0-omni",
+      "slug": "nova-2-0-omni-reasoning-low"
+    },
+    {
+      "creatorSlug": "aws",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "nova-2-0-omni",
+      "slug": "nova-2-0-omni-reasoning-medium"
+    },
+    {
+      "creatorSlug": "aws",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "nova-2-0-pro-preview",
+      "slug": "nova-2-0-pro"
+    },
+    {
+      "creatorSlug": "aws",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "nova-2-0-pro-preview",
+      "slug": "nova-2-0-pro-reasoning-low"
+    },
+    {
+      "creatorSlug": "aws",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "nova-2-0-pro-preview",
+      "slug": "nova-2-0-pro-reasoning-medium"
+    },
+    {
+      "creatorSlug": "aws",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "nova-lite",
+      "slug": "nova-lite"
+    },
+    {
+      "creatorSlug": "aws",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "nova-micro",
+      "slug": "nova-micro"
+    },
+    {
+      "creatorSlug": "aws",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "nova-premier",
+      "slug": "nova-premier"
+    },
+    {
+      "creatorSlug": "aws",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "nova-pro",
+      "slug": "nova-pro"
+    },
+    {
+      "creatorSlug": "nvidia",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "nvidia-nemotron-3-nano-30b-a3b",
+      "slug": "nvidia-nemotron-3-nano-30b-a3b"
+    },
+    {
+      "creatorSlug": "nvidia",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "nvidia-nemotron-3-nano-30b-a3b",
+      "slug": "nvidia-nemotron-3-nano-30b-a3b-reasoning"
+    },
+    {
+      "creatorSlug": "nvidia",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "nvidia-nemotron-3-nano-4b",
+      "slug": "nvidia-nemotron-3-nano-4b"
+    },
+    {
+      "creatorSlug": "nvidia",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "nvidia-nemotron-3-super-120b-a12b",
+      "slug": "nvidia-nemotron-3-super-120b-a12b"
+    },
+    {
+      "creatorSlug": "nvidia",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "nemotron-3-ultra-550b-a55b",
+      "slug": "nvidia-nemotron-3-ultra-550b-a55b"
+    },
+    {
+      "creatorSlug": "nvidia",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "nvidia-nemotron-nano-12b-v2-vl",
+      "slug": "nvidia-nemotron-nano-12b-v2-vl"
+    },
+    {
+      "creatorSlug": "nvidia",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "nvidia-nemotron-nano-12b-v2-vl",
+      "slug": "nvidia-nemotron-nano-12b-v2-vl-reasoning"
+    },
+    {
+      "creatorSlug": "nvidia",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "nvidia-nemotron-nano-9b-v2",
+      "slug": "nvidia-nemotron-nano-9b-v2"
+    },
+    {
+      "creatorSlug": "nvidia",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "nvidia-nemotron-nano-9b-v2",
+      "slug": "nvidia-nemotron-nano-9b-v2-reasoning"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "o1",
+      "slug": "o1"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "o1-mini",
+      "slug": "o1-mini"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "o1-preview",
+      "slug": "o1-preview"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "o1-pro",
+      "slug": "o1-pro"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "o3",
+      "slug": "o3"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "o3-mini",
+      "slug": "o3-mini"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "o3-mini",
+      "slug": "o3-mini-high"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "o3-pro",
+      "slug": "o3-pro"
+    },
+    {
+      "creatorSlug": "openai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "o4-mini",
+      "slug": "o4-mini"
+    },
+    {
+      "creatorSlug": "ai2",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "olmo-2-32b",
+      "slug": "olmo-2-32b"
+    },
+    {
+      "creatorSlug": "ai2",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "olmo-2-7b",
+      "slug": "olmo-2-7b"
+    },
+    {
+      "creatorSlug": "ai2",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "olmo-3-1-32b-instruct",
+      "slug": "olmo-3-1-32b-instruct"
+    },
+    {
+      "creatorSlug": "ai2",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "olmo-3-1-32b-think",
+      "slug": "olmo-3-1-32b-think"
+    },
+    {
+      "creatorSlug": "ai2",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "olmo-3-32b-think",
+      "slug": "olmo-3-32b-think"
+    },
+    {
+      "creatorSlug": "ai2",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "olmo-3-7b-instruct",
+      "slug": "olmo-3-7b-instruct"
+    },
+    {
+      "creatorSlug": "ai2",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "olmo-3-7b-think",
+      "slug": "olmo-3-7b-think"
+    },
+    {
+      "creatorSlug": "openchat",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "openchat-35",
+      "slug": "openchat-35"
+    },
+    {
+      "creatorSlug": "google",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "palm-2",
+      "slug": "palm-2"
+    },
+    {
+      "creatorSlug": "azure",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "phi-3-mini",
+      "slug": "phi-3-mini"
+    },
+    {
+      "creatorSlug": "azure",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "phi-4",
+      "slug": "phi-4"
+    },
+    {
+      "creatorSlug": "azure",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "phi-4-mini",
+      "slug": "phi-4-mini"
+    },
+    {
+      "creatorSlug": "azure",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "phi-4-multimodal",
+      "slug": "phi-4-multimodal"
+    },
+    {
+      "creatorSlug": "mistral",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "pixtral-large-2411",
+      "slug": "pixtral-large-2411"
+    },
+    {
+      "creatorSlug": "multiversecomputing",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "quasar-438b",
+      "slug": "quasar-438b"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "qwen-2-5-max",
+      "slug": "qwen-2-5-max"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen-chat-14b",
+      "slug": "qwen-chat-14b"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen-chat-72b",
+      "slug": "qwen-chat-72b"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "qwen-turbo",
+      "slug": "qwen-turbo"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen1.5-110b-chat",
+      "slug": "qwen1.5-110b-chat"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen2-5-72b-instruct",
+      "slug": "qwen2-5-72b-instruct"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen2-5-coder-32b-instruct",
+      "slug": "qwen2-5-coder-32b-instruct"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen2-5-coder-7b-instruct",
+      "slug": "qwen2-5-coder-7b-instruct"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen2-72b-instruct",
+      "slug": "qwen2-72b-instruct"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen2.5-32b-instruct",
+      "slug": "qwen2.5-32b-instruct"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-0.6b-instruct",
+      "slug": "qwen3-0.6b-instruct"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-0.6b-instruct",
+      "slug": "qwen3-0.6b-instruct-reasoning"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-1.7b-instruct",
+      "slug": "qwen3-1.7b-instruct"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-1.7b-instruct",
+      "slug": "qwen3-1.7b-instruct-reasoning"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-14b-instruct",
+      "slug": "qwen3-14b-instruct"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-14b-instruct",
+      "slug": "qwen3-14b-instruct-reasoning"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-235b-a22b-instruct",
+      "slug": "qwen3-235b-a22b-instruct"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-235b-a22b-instruct-2507",
+      "slug": "qwen3-235b-a22b-instruct-2507"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-235b-a22b-instruct-2507-reasoning",
+      "slug": "qwen3-235b-a22b-instruct-2507-reasoning"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-235b-a22b-instruct",
+      "slug": "qwen3-235b-a22b-instruct-reasoning"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-30b-a3b-2507",
+      "slug": "qwen3-30b-a3b-2507"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-30b-a3b-2507-reasoning",
+      "slug": "qwen3-30b-a3b-2507-reasoning"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-30b-a3b-instruct",
+      "slug": "qwen3-30b-a3b-instruct"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-30b-a3b-instruct",
+      "slug": "qwen3-30b-a3b-instruct-reasoning"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-32b-instruct",
+      "slug": "qwen3-32b-instruct"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-32b-instruct",
+      "slug": "qwen3-32b-instruct-reasoning"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-4b-2507-instruct",
+      "slug": "qwen3-4b-2507-instruct"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-4b-2507-instruct-reasoning",
+      "slug": "qwen3-4b-2507-instruct-reasoning"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-4b-instruct",
+      "slug": "qwen3-4b-instruct"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-4b-instruct",
+      "slug": "qwen3-4b-instruct-reasoning"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "qwen3-5-0-8b",
+      "slug": "qwen3-5-0-8b"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "qwen3-5-0-8b",
+      "slug": "qwen3-5-0-8b-non-reasoning"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "qwen3-5-122b-a10b",
+      "slug": "qwen3-5-122b-a10b"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "qwen3-5-122b-a10b",
+      "slug": "qwen3-5-122b-a10b-non-reasoning"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-5-27b",
+      "slug": "qwen3-5-27b"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-5-27b",
+      "slug": "qwen3-5-27b-non-reasoning"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "qwen3-5-2b",
+      "slug": "qwen3-5-2b"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "qwen3-5-2b",
+      "slug": "qwen3-5-2b-non-reasoning"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-5-35b-a3b",
+      "slug": "qwen3-5-35b-a3b"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-5-35b-a3b",
+      "slug": "qwen3-5-35b-a3b-non-reasoning"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "qwen3-5-397b-a17b",
+      "slug": "qwen3-5-397b-a17b"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "qwen3-5-397b-a17b",
+      "slug": "qwen3-5-397b-a17b-non-reasoning"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "qwen3-5-4b",
+      "slug": "qwen3-5-4b"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "qwen3-5-4b",
+      "slug": "qwen3-5-4b-non-reasoning"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "qwen3-5-9b",
+      "slug": "qwen3-5-9b"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "qwen3-5-9b",
+      "slug": "qwen3-5-9b-non-reasoning"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "qwen3-5-omni-flash",
+      "slug": "qwen3-5-omni-flash"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "qwen3-5-omni-plus",
+      "slug": "qwen3-5-omni-plus"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-6-27b",
+      "slug": "qwen3-6-27b"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-6-27b",
+      "slug": "qwen3-6-27b-non-reasoning"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "qwen3-6-35b-a3b",
+      "slug": "qwen3-6-35b-a3b"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "qwen3-6-35b-a3b",
+      "slug": "qwen3-6-35b-a3b-non-reasoning"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "qwen3-6-max",
+      "slug": "qwen3-6-max"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "qwen3-6-plus",
+      "slug": "qwen3-6-plus"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "qwen3-7-max",
+      "slug": "qwen3-7-max"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "qwen3-7-plus",
+      "slug": "qwen3-7-plus"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "qwen3-8-2-4t-a95b",
+      "slug": "qwen3-8-2-4t-a95b"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "qwen3-8-27b",
+      "slug": "qwen3-8-27b"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "qwen3-8-27b",
+      "slug": "qwen3-8-27b-low"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "qwen3-8-27b",
+      "slug": "qwen3-8-27b-medium"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "qwen3-8-27b",
+      "slug": "qwen3-8-27b-non-reasoning"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "qwen3-8-flash-next",
+      "slug": "qwen3-8-flash-next"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "qwen3-8-max-0902",
+      "slug": "qwen3-8-max"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "qwen3-8-max",
+      "slug": "qwen3-8-max-0803"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-8b-instruct",
+      "slug": "qwen3-8b-instruct"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-8b-instruct",
+      "slug": "qwen3-8b-instruct-reasoning"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-coder-30b-a3b-instruct",
+      "slug": "qwen3-coder-30b-a3b-instruct"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-coder-480b-a35b-instruct",
+      "slug": "qwen3-coder-480b-a35b-instruct"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "qwen3-coder-next",
+      "slug": "qwen3-coder-next"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "qwen3-max",
+      "slug": "qwen3-max"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "qwen3-max-preview",
+      "slug": "qwen3-max-preview"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "qwen3-max-thinking",
+      "slug": "qwen3-max-thinking"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "qwen3-max-thinking-preview",
+      "slug": "qwen3-max-thinking-preview"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "qwen3-next-80b-a3b-instruct",
+      "slug": "qwen3-next-80b-a3b-instruct"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "qwen3-next-80b-a3b",
+      "slug": "qwen3-next-80b-a3b-reasoning"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "qwen3-omni-30b-a3b-instruct",
+      "slug": "qwen3-omni-30b-a3b-instruct"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "qwen3-omni-30b-a3b",
+      "slug": "qwen3-omni-30b-a3b-reasoning"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-vl-235b-a22b-instruct",
+      "slug": "qwen3-vl-235b-a22b-instruct"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-vl-235b-a22b",
+      "slug": "qwen3-vl-235b-a22b-reasoning"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-vl-30b-a3b-instruct",
+      "slug": "qwen3-vl-30b-a3b-instruct"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-vl-30b-a3b",
+      "slug": "qwen3-vl-30b-a3b-reasoning"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-vl-32b-instruct",
+      "slug": "qwen3-vl-32b-instruct"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-vl-32b",
+      "slug": "qwen3-vl-32b-reasoning"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-vl-4b-instruct",
+      "slug": "qwen3-vl-4b-instruct"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-vl-4b",
+      "slug": "qwen3-vl-4b-reasoning"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-vl-8b-instruct",
+      "slug": "qwen3-vl-8b-instruct"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwen3-vl-8b",
+      "slug": "qwen3-vl-8b-reasoning"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "qwq-32b",
+      "slug": "qwq-32b"
+    },
+    {
+      "creatorSlug": "alibaba",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "QwQ-32B-Preview",
+      "slug": "QwQ-32B-Preview"
+    },
+    {
+      "creatorSlug": "perplexity",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "r1-1776",
+      "slug": "r1-1776"
+    },
+    {
+      "creatorSlug": "reflection",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "reflection-beam",
+      "slug": "reflection-beam"
+    },
+    {
+      "creatorSlug": "reka-ai",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "reka-flash",
+      "slug": "reka-flash"
+    },
+    {
+      "creatorSlug": "reka-ai",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "reka-flash-3",
+      "slug": "reka-flash-3"
+    },
+    {
+      "creatorSlug": "inclusionai",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "ring-1t",
+      "slug": "ring-1t"
+    },
+    {
+      "creatorSlug": "inclusionai",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "ring-2-6-1t",
+      "slug": "ring-2-6-1t"
+    },
+    {
+      "creatorSlug": "inclusionai",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "ring-flash-2-0",
+      "slug": "ring-flash-2-0"
+    },
+    {
+      "creatorSlug": "sarvam",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "sarvam-105b",
+      "slug": "sarvam-105b"
+    },
+    {
+      "creatorSlug": "sarvam",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "sarvam-30b",
+      "slug": "sarvam-30b"
+    },
+    {
+      "creatorSlug": "sarvam",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "sarvam-m",
+      "slug": "sarvam-m-reasoning"
+    },
+    {
+      "creatorSlug": "bytedance_seed",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "seed-oss-36b-instruct",
+      "slug": "seed-oss-36b-instruct"
+    },
+    {
+      "creatorSlug": "upstage",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "solar-mini",
+      "slug": "solar-mini"
+    },
+    {
+      "creatorSlug": "upstage",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "solar-mini4",
+      "slug": "solar-mini4"
+    },
+    {
+      "creatorSlug": "upstage",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "solar-open-100b",
+      "slug": "solar-open-100b-reasoning"
+    },
+    {
+      "creatorSlug": "upstage",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "solar-open2-250b",
+      "slug": "solar-open2-250b"
+    },
+    {
+      "creatorSlug": "upstage",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "solar-pro-2",
+      "slug": "solar-pro-2"
+    },
+    {
+      "creatorSlug": "upstage",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "solar-pro-2-preview",
+      "slug": "solar-pro-2-preview"
+    },
+    {
+      "creatorSlug": "upstage",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "solar-pro-2-preview",
+      "slug": "solar-pro-2-preview-reasoning"
+    },
+    {
+      "creatorSlug": "upstage",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "solar-pro-2",
+      "slug": "solar-pro-2-reasoning"
+    },
+    {
+      "creatorSlug": "upstage",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "solar-pro-3",
+      "slug": "solar-pro-3"
+    },
+    {
+      "creatorSlug": "upstage",
+      "deprecated": false,
+      "open": false,
+      "releaseSlug": "solar-pro-4-2026-09-18",
+      "slug": "solar-pro4"
+    },
+    {
+      "creatorSlug": "perplexity",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "sonar",
+      "slug": "sonar"
+    },
+    {
+      "creatorSlug": "perplexity",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "sonar-pro",
+      "slug": "sonar-pro"
+    },
+    {
+      "creatorSlug": "perplexity",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "sonar-reasoning",
+      "slug": "sonar-reasoning"
+    },
+    {
+      "creatorSlug": "perplexity",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "sonar-reasoning-pro",
+      "slug": "sonar-reasoning-pro"
+    },
+    {
+      "creatorSlug": "stepfun",
+      "deprecated": true,
+      "open": false,
+      "releaseSlug": "step-3-5-flash",
+      "slug": "step-3-5-flash"
+    },
+    {
+      "creatorSlug": "stepfun",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "step-3-5-flash-0202",
+      "slug": "step-3-5-flash-0202"
+    },
+    {
+      "creatorSlug": "stepfun",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "step-3-7-flash",
+      "slug": "step-3-7-flash"
+    },
+    {
+      "creatorSlug": "stepfun",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "step3-vl-10b",
+      "slug": "step-3-vl-10b"
+    },
+    {
+      "creatorSlug": "stepfun",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "step-5-preview",
+      "slug": "step-5"
+    },
+    {
+      "creatorSlug": "cohere",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "tiny-aya-global",
+      "slug": "tiny-aya-global"
+    },
+    {
+      "creatorSlug": "trillionlabs",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "tri-21b-think-preview",
+      "slug": "tri-21b-think-preview"
+    },
+    {
+      "creatorSlug": "trillionlabs",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "tri-21b-think-v0-5",
+      "slug": "tri-21b-think-v0-5"
+    },
+    {
+      "creatorSlug": "arcee",
+      "deprecated": false,
+      "open": true,
+      "releaseSlug": "trinity-large-thinking",
+      "slug": "trinity-large-thinking"
+    },
+    {
+      "creatorSlug": "ai2",
+      "deprecated": true,
+      "open": true,
+      "releaseSlug": "tulu3-405b",
+      "slug": "tulu3-405b"
+    }
+  ],
+  "schemaVersion": 1,
+  "source": {
+    "method": "public-next-flight",
+    "name": "Artificial Analysis",
+    "retrievedAt": "2026-10-27T08:20:03.356Z",
+    "sourceRecordCount": 715,
+    "url": "https://artificialanalysis.ai/models"
+  }
+}

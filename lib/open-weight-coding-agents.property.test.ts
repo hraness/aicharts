@@ -67,6 +67,31 @@ test("property: open-weight rows are exactly the AA-flagged subset", () => {
   }));
 });
 
+test("property: a composite is open only when every component is open", () => {
+  assertProperty(fc.property(
+    fc.constantFrom("open", "closed", "unclassified"),
+    fc.constantFrom("open", "closed", "unclassified"),
+    (left, right) => {
+      const identities = new Map<string, boolean>([
+        ...(left === "unclassified" ? [] : [["left-model", left === "open"] as const]),
+        ...(right === "unclassified" ? [] : [["right-model", right === "open"] as const]),
+      ]);
+      const record: Pick<CodingAgentRecord, "model" | "modelLabel" | "providerId" | "seriesId"> = {
+        model: "Left Model + Right Model",
+        modelLabel: "Left Model + Right Model",
+        providerId: "cognition",
+        seriesId: "Devin Fusion CLI:left-right",
+      };
+      const expected = left === "closed" || right === "closed"
+        ? "closed"
+        : left === "open" && right === "open"
+          ? "open"
+          : "unclassified";
+      expect(codingAgentWeightClass(record, identities)).toBe(expected);
+    },
+  ));
+});
+
 test("property: unmatched models stay unclassified and out of the open set", () => {
   assertProperty(fc.property(generatedRecords, (records) => {
     const unknown = records.filter(item => item.model === "Unknown Model");
