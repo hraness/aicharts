@@ -3076,7 +3076,7 @@
     {
       "creatorSlug": "inclusionai",
       "deprecated": false,
-      "open": false,
+      "open": true,
       "releaseSlug": "ling-3-1-flash-rc5",
       "slug": "ling-3-1-flash-1019"
     },
@@ -5010,7 +5010,7 @@
   "source": {
     "method": "public-next-flight",
     "name": "Artificial Analysis",
-    "retrievedAt": "2026-10-27T08:20:03.356Z",
+    "retrievedAt": "2026-10-27T14:30:45.133Z",
     "sourceRecordCount": 715,
     "url": "https://artificialanalysis.ai/models"
   }
