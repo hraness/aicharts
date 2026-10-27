@@ -3,7 +3,7 @@
   "source": {
     "name": "Artificial Analysis",
     "url": "https://artificialanalysis.ai/agents/coding-agents/",
-    "retrievedAt": "2026-10-05T14:10:36.287Z",
+    "retrievedAt": "2026-10-27T07:14:48.057Z",
     "method": "next-flight",
     "benchmarkDatasets": {
       "deepSwe": "deep-swe-v1.1",
@@ -12,6 +12,671 @@
     }
   },
   "updates": [
+    {
+      "id": "[\"benchmark-changed\",\"2026-10-27T07:14:48.057Z\",\"[\\\"Claude Code:anthropic_claude-opus-5-5\\\",\\\"max\\\"]\"]",
+      "detectedAt": "2026-10-27T07:14:48.057Z",
+      "agent": "Claude Code",
+      "model": "Opus 5.5",
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "setting": "max",
+      "benchmarks": {
+        "aaIndex": 61.6528649505811,
+        "deepSwe": 55.967066666666696,
+        "terminalBench": 63.13131313131311,
+        "sweAtlas": 65.8602150537634
+      },
+      "kind": "benchmark-changed",
+      "changes": [
+        {
+          "metric": "aaIndex",
+          "previous": 65.9885802549234,
+          "current": 61.6528649505811
+        },
+        {
+          "metric": "deepSwe",
+          "previous": 68.4365781710915,
+          "current": 55.967066666666696
+        },
+        {
+          "metric": "sweAtlas",
+          "previous": 66.3978494623656,
+          "current": 65.8602150537634
+        }
+      ]
+    },
+    {
+      "id": "[\"model-added\",\"2026-10-27T07:14:48.057Z\",\"[\\\"Devin Fusion CLI\\\",\\\"cognition\\\",\\\"Claude Opus 5.5 Max + GPT-6 Luna High\\\"]\"]",
+      "detectedAt": "2026-10-27T07:14:48.057Z",
+      "agent": "Devin Fusion CLI",
+      "model": "Claude Opus 5.5 Max + GPT-6 Luna High",
+      "providerId": "cognition",
+      "providerName": "Cognition",
+      "setting": "default",
+      "benchmarks": {
+        "aaIndex": 61.511721950689704,
+        "deepSwe": 53.62933333333329,
+        "terminalBench": 62.626262626262594,
+        "sweAtlas": 68.2795698924731
+      },
+      "kind": "model-added",
+      "variantCount": 1
+    },
+    {
+      "id": "[\"benchmark-changed\",\"2026-10-27T07:14:48.057Z\",\"[\\\"Claude Code:private-anthropic_claude-beignet-eap-max\\\",\\\"max\\\"]\"]",
+      "detectedAt": "2026-10-27T07:14:48.057Z",
+      "agent": "Claude Code",
+      "model": "Sonnet 5.5",
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "setting": "max",
+      "benchmarks": {
+        "aaIndex": 59.3374426631911,
+        "deepSwe": 47.6034,
+        "terminalBench": 66.1616161616162,
+        "sweAtlas": 64.24731182795699
+      },
+      "kind": "benchmark-changed",
+      "changes": [
+        {
+          "metric": "aaIndex",
+          "previous": 68.35783373750832,
+          "current": 59.3374426631911
+        },
+        {
+          "metric": "deepSwe",
+          "previous": 71.97640117994099,
+          "current": 47.6034
+        },
+        {
+          "metric": "sweAtlas",
+          "previous": 66.9354838709677,
+          "current": 64.24731182795699
+        }
+      ]
+    },
+    {
+      "id": "[\"model-added\",\"2026-10-27T07:14:48.057Z\",\"[\\\"Muse Code\\\",\\\"meta\\\",\\\"Muse Wonder Full\\\"]\"]",
+      "detectedAt": "2026-10-27T07:14:48.057Z",
+      "agent": "Muse Code",
+      "model": "Muse Wonder Full",
+      "providerId": "meta",
+      "providerName": "Meta",
+      "setting": "max",
+      "benchmarks": {
+        "aaIndex": 58.8804489084392,
+        "deepSwe": 48.733233333333295,
+        "terminalBench": 59.09090909090911,
+        "sweAtlas": 68.8172043010753
+      },
+      "kind": "model-added",
+      "variantCount": 1
+    },
+    {
+      "id": "[\"benchmark-changed\",\"2026-10-27T07:14:48.057Z\",\"[\\\"Devin Fusion CLI:cognition_fusion-claude-fable-5-1-xhigh-sidekick-penguin-medium\\\",\\\"default\\\"]\"]",
+      "detectedAt": "2026-10-27T07:14:48.057Z",
+      "agent": "Devin Fusion CLI",
+      "model": "Claude Fable 5.1 XHigh + SWE-2 Medium",
+      "providerId": "cognition",
+      "providerName": "Cognition",
+      "setting": "default",
+      "benchmarks": {
+        "aaIndex": 58.661903095470805,
+        "deepSwe": 51.645533333333304,
+        "terminalBench": 56.0606060606061,
+        "sweAtlas": 68.2795698924731
+      },
+      "kind": "benchmark-changed",
+      "changes": [
+        {
+          "metric": "aaIndex",
+          "previous": 61.68255492406223,
+          "current": 58.661903095470805
+        },
+        {
+          "metric": "deepSwe",
+          "previous": 63.1268436578171,
+          "current": 51.645533333333304
+        },
+        {
+          "metric": "sweAtlas",
+          "previous": 65.86021505376351,
+          "current": 68.2795698924731
+        }
+      ]
+    },
+    {
+      "id": "[\"benchmark-changed\",\"2026-10-27T07:14:48.057Z\",\"[\\\"Claude Code:anthropic_claude-fable-5-1\\\",\\\"max\\\"]\"]",
+      "detectedAt": "2026-10-27T07:14:48.057Z",
+      "agent": "Claude Code",
+      "model": "Fable 5.1 (with fallback)",
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "setting": "max",
+      "benchmarks": {
+        "aaIndex": 57.6200245682633,
+        "deepSwe": 48.8864666666667,
+        "terminalBench": 57.5757575757576,
+        "sweAtlas": 66.3978494623656
+      },
+      "kind": "benchmark-changed",
+      "changes": [
+        {
+          "metric": "aaIndex",
+          "previous": 62.22249615769457,
+          "current": 57.6200245682633
+        },
+        {
+          "metric": "deepSwe",
+          "previous": 64.30678466076701,
+          "current": 48.8864666666667
+        },
+        {
+          "metric": "sweAtlas",
+          "previous": 64.78494623655911,
+          "current": 66.3978494623656
+        }
+      ]
+    },
+    {
+      "id": "[\"benchmark-changed\",\"2026-10-27T07:14:48.057Z\",\"[\\\"Codex:openai_vega-alpha\\\",\\\"max\\\"]\"]",
+      "detectedAt": "2026-10-27T07:14:48.057Z",
+      "agent": "Codex",
+      "model": "GPT-6 Astra",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "setting": "max",
+      "benchmarks": {
+        "aaIndex": 54.66356905615291,
+        "deepSwe": 49.2953666666667,
+        "terminalBench": 55.5555555555555,
+        "sweAtlas": 59.139784946236595
+      },
+      "kind": "benchmark-changed",
+      "changes": [
+        {
+          "metric": "aaIndex",
+          "previous": 61.64504498789397,
+          "current": 54.66356905615291
+        },
+        {
+          "metric": "deepSwe",
+          "previous": 67.55162241887909,
+          "current": 49.2953666666667
+        },
+        {
+          "metric": "sweAtlas",
+          "previous": 61.8279569892473,
+          "current": 59.139784946236595
+        }
+      ]
+    },
+    {
+      "id": "[\"benchmark-changed\",\"2026-10-27T07:14:48.057Z\",\"[\\\"Codex:openai_quasar-alpha\\\",\\\"max\\\"]\"]",
+      "detectedAt": "2026-10-27T07:14:48.057Z",
+      "agent": "Codex",
+      "model": "GPT-6.1 Sol",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "setting": "max",
+      "benchmarks": {
+        "aaIndex": 54.1279798631476,
+        "deepSwe": 49.4074,
+        "terminalBench": 53.030303030303,
+        "sweAtlas": 59.9462365591398
+      },
+      "kind": "benchmark-changed",
+      "changes": [
+        {
+          "metric": "aaIndex",
+          "previous": 60.14750704302517,
+          "current": 54.1279798631476
+        },
+        {
+          "metric": "deepSwe",
+          "previous": 69.6165191740413,
+          "current": 49.4074
+        },
+        {
+          "metric": "sweAtlas",
+          "previous": 57.7956989247312,
+          "current": 59.9462365591398
+        }
+      ]
+    },
+    {
+      "id": "[\"benchmark-changed\",\"2026-10-27T07:14:48.057Z\",\"[\\\"Antigravity CLI:google_barium-bb_ai-studio\\\",\\\"default\\\"]\"]",
+      "detectedAt": "2026-10-27T07:14:48.057Z",
+      "agent": "Antigravity CLI",
+      "model": "Gemini 4 Argon",
+      "providerId": "google",
+      "providerName": "Google",
+      "setting": "default",
+      "benchmarks": {
+        "aaIndex": 53.2462665363311,
+        "deepSwe": 48.5706666666667,
+        "terminalBench": 56.0606060606061,
+        "sweAtlas": 55.1075268817204
+      },
+      "kind": "benchmark-changed",
+      "changes": [
+        {
+          "metric": "aaIndex",
+          "previous": 63.7577603035782,
+          "current": 53.2462665363311
+        },
+        {
+          "metric": "deepSwe",
+          "previous": 78.7610619469027,
+          "current": 48.5706666666667
+        },
+        {
+          "metric": "sweAtlas",
+          "previous": 56.4516129032258,
+          "current": 55.1075268817204
+        }
+      ]
+    },
+    {
+      "id": "[\"benchmark-changed\",\"2026-10-27T07:14:48.057Z\",\"[\\\"Devin Fusion CLI:cognition_fusion-gpt-6-astra-xhigh-sidekick-penguin-medium\\\",\\\"default\\\"]\"]",
+      "detectedAt": "2026-10-27T07:14:48.057Z",
+      "agent": "Devin Fusion CLI",
+      "model": "GPT-6 Astra XHigh + SWE-2 Medium",
+      "providerId": "cognition",
+      "providerName": "Cognition",
+      "setting": "default",
+      "benchmarks": {
+        "aaIndex": 53.076973476702506,
+        "deepSwe": 49.0158666666667,
+        "terminalBench": 50,
+        "sweAtlas": 60.21505376344089
+      },
+      "kind": "benchmark-changed",
+      "changes": [
+        {
+          "metric": "aaIndex",
+          "previous": 58.8884131062264,
+          "current": 53.076973476702506
+        },
+        {
+          "metric": "deepSwe",
+          "previous": 67.2566371681416,
+          "current": 49.0158666666667
+        },
+        {
+          "metric": "sweAtlas",
+          "previous": 59.408602150537604,
+          "current": 60.21505376344089
+        }
+      ]
+    },
+    {
+      "id": "[\"model-added\",\"2026-10-27T07:14:48.057Z\",\"[\\\"Muse Code\\\",\\\"meta\\\",\\\"Muse Wonder\\\"]\"]",
+      "detectedAt": "2026-10-27T07:14:48.057Z",
+      "agent": "Muse Code",
+      "model": "Muse Wonder",
+      "providerId": "meta",
+      "providerName": "Meta",
+      "setting": "max",
+      "benchmarks": {
+        "aaIndex": 51.9768236993592,
+        "deepSwe": 46.3915333333333,
+        "terminalBench": 47.979797979798,
+        "sweAtlas": 61.559139784946204
+      },
+      "kind": "model-added",
+      "variantCount": 1
+    },
+    {
+      "id": "[\"benchmark-changed\",\"2026-10-27T07:14:48.057Z\",\"[\\\"Opencode:zai_glm-5-3\\\",\\\"default\\\"]\"]",
+      "detectedAt": "2026-10-27T07:14:48.057Z",
+      "agent": "Opencode",
+      "model": "GLM-5.3",
+      "providerId": "z_ai",
+      "providerName": "Z.ai",
+      "setting": "default",
+      "benchmarks": {
+        "aaIndex": 48.916169034430304,
+        "deepSwe": 48.2473666666667,
+        "terminalBench": 39.8989898989899,
+        "sweAtlas": 58.6021505376344
+      },
+      "kind": "benchmark-changed",
+      "changes": [
+        {
+          "metric": "aaIndex",
+          "previous": 53.55484140097326,
+          "current": 48.916169034430304
+        },
+        {
+          "metric": "deepSwe",
+          "previous": 61.35693215339229,
+          "current": 48.2473666666667
+        },
+        {
+          "metric": "sweAtlas",
+          "previous": 59.408602150537604,
+          "current": 58.6021505376344
+        }
+      ]
+    },
+    {
+      "id": "[\"model-added\",\"2026-10-27T07:14:48.057Z\",\"[\\\"Codex\\\",\\\"openai\\\",\\\"GPT-6.1 Terra\\\"]\"]",
+      "detectedAt": "2026-10-27T07:14:48.057Z",
+      "agent": "Codex",
+      "model": "GPT-6.1 Terra",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "setting": "xhigh",
+      "benchmarks": {
+        "aaIndex": 48.223834495492504,
+        "deepSwe": 44.9484666666666,
+        "terminalBench": 45.959595959596,
+        "sweAtlas": 53.76344086021499
+      },
+      "kind": "model-added",
+      "variantCount": 6
+    },
+    {
+      "id": "[\"model-added\",\"2026-10-27T07:14:48.057Z\",\"[\\\"Codex\\\",\\\"deepseek\\\",\\\"DeepSeek V4.1 Flash\\\"]\"]",
+      "detectedAt": "2026-10-27T07:14:48.057Z",
+      "agent": "Codex",
+      "model": "DeepSeek V4.1 Flash",
+      "providerId": "deepseek",
+      "providerName": "DeepSeek",
+      "setting": "default",
+      "benchmarks": {
+        "aaIndex": 47.3001334419464,
+        "deepSwe": 52.596066666666694,
+        "terminalBench": 28.282828282828298,
+        "sweAtlas": 61.021505376344095
+      },
+      "kind": "model-added",
+      "variantCount": 1
+    },
+    {
+      "id": "[\"benchmark-changed\",\"2026-10-27T07:14:48.057Z\",\"[\\\"Grok Build:xai_grok-bop-o86-xhigh\\\",\\\"xhigh\\\"]\"]",
+      "detectedAt": "2026-10-27T07:14:48.057Z",
+      "agent": "Grok Build",
+      "model": "Grok 4.7",
+      "providerId": "xai",
+      "providerName": "xAI",
+      "setting": "xhigh",
+      "benchmarks": {
+        "aaIndex": 46.5968752688172,
+        "deepSwe": 43.5540666666667,
+        "terminalBench": 33.3333333333333,
+        "sweAtlas": 62.9032258064516
+      },
+      "kind": "benchmark-changed",
+      "changes": [
+        {
+          "metric": "aaIndex",
+          "previous": 56.26764360706693,
+          "current": 46.5968752688172
+        },
+        {
+          "metric": "deepSwe",
+          "previous": 72.5663716814159,
+          "current": 43.5540666666667
+        }
+      ]
+    },
+    {
+      "id": "[\"model-added\",\"2026-10-27T07:14:48.057Z\",\"[\\\"DeepSeek Harness\\\",\\\"deepseek\\\",\\\"DeepSeek V4.1 Flash 1017\\\"]\"]",
+      "detectedAt": "2026-10-27T07:14:48.057Z",
+      "agent": "DeepSeek Harness",
+      "model": "DeepSeek V4.1 Flash 1017",
+      "providerId": "deepseek",
+      "providerName": "DeepSeek",
+      "setting": "default",
+      "benchmarks": {
+        "aaIndex": 46.305195753231196,
+        "deepSwe": 46.5483666666667,
+        "terminalBench": 30.808080808080803,
+        "sweAtlas": 61.559139784946204
+      },
+      "kind": "model-added",
+      "variantCount": 1
+    },
+    {
+      "id": "[\"benchmark-changed\",\"2026-10-27T07:14:48.057Z\",\"[\\\"Muse Code 1.0.2 RC:meta_goofy-glacier135\\\",\\\"max\\\"]\"]",
+      "detectedAt": "2026-10-27T07:14:48.057Z",
+      "agent": "Muse Code",
+      "model": "Muse Spark 1.3",
+      "providerId": "meta",
+      "providerName": "Meta",
+      "setting": "max",
+      "benchmarks": {
+        "aaIndex": 45.7077885630498,
+        "deepSwe": 46.7030333333333,
+        "terminalBench": 31.818181818181802,
+        "sweAtlas": 58.6021505376344
+      },
+      "kind": "benchmark-changed",
+      "changes": [
+        {
+          "metric": "aaIndex",
+          "previous": 54.30273329930766,
+          "current": 45.7077885630498
+        },
+        {
+          "metric": "deepSwe",
+          "previous": 71.6814159292036,
+          "current": 46.7030333333333
+        },
+        {
+          "metric": "sweAtlas",
+          "previous": 59.408602150537604,
+          "current": 58.6021505376344
+        }
+      ]
+    },
+    {
+      "id": "[\"model-added\",\"2026-10-27T07:14:48.057Z\",\"[\\\"Claude Code\\\",\\\"stepfun\\\",\\\"Step 5 Preview\\\"]\"]",
+      "detectedAt": "2026-10-27T07:14:48.057Z",
+      "agent": "Claude Code",
+      "model": "Step 5 Preview",
+      "providerId": "stepfun",
+      "providerName": "StepFun",
+      "setting": "default",
+      "benchmarks": {
+        "aaIndex": 43.1274491691105,
+        "deepSwe": 40.4771666666667,
+        "terminalBench": 30.303030303030297,
+        "sweAtlas": 58.6021505376344
+      },
+      "kind": "model-added",
+      "variantCount": 1
+    },
+    {
+      "id": "[\"benchmark-changed\",\"2026-10-27T07:14:48.057Z\",\"[\\\"Kimi Code CLI:moonshot_kimi-k3\\\",\\\"default\\\"]\"]",
+      "detectedAt": "2026-10-27T07:14:48.057Z",
+      "agent": "Kimi Code CLI",
+      "model": "Kimi K3",
+      "providerId": "moonshot_ai",
+      "providerName": "Moonshot AI",
+      "setting": "default",
+      "benchmarks": {
+        "aaIndex": 41.417319257087,
+        "deepSwe": 43.093599999999995,
+        "terminalBench": 21.2121212121212,
+        "sweAtlas": 59.9462365591398
+      },
+      "kind": "benchmark-changed",
+      "changes": [
+        {
+          "metric": "aaIndex",
+          "previous": 51.9259105470924,
+          "current": 41.417319257087
+        },
+        {
+          "metric": "deepSwe",
+          "previous": 68.4365781710915,
+          "current": 43.093599999999995
+        },
+        {
+          "metric": "sweAtlas",
+          "previous": 66.1290322580645,
+          "current": 59.9462365591398
+        }
+      ]
+    },
+    {
+      "id": "[\"benchmark-changed\",\"2026-10-27T07:14:48.057Z\",\"[\\\"Claude Code:alibaba_cloud_qwen3-8-max-public\\\",\\\"default\\\"]\"]",
+      "detectedAt": "2026-10-27T07:14:48.057Z",
+      "agent": "Claude Code",
+      "model": "Qwen3.8 Max",
+      "providerId": "alibaba_cloud",
+      "providerName": "Alibaba Cloud",
+      "setting": "default",
+      "benchmarks": {
+        "aaIndex": 39.2199207885305,
+        "deepSwe": 44.8103,
+        "terminalBench": 16.6666666666667,
+        "sweAtlas": 56.18279569892481
+      },
+      "kind": "benchmark-changed",
+      "changes": [
+        {
+          "metric": "aaIndex",
+          "previous": 43.26529641259874,
+          "current": 39.2199207885305
+        },
+        {
+          "metric": "deepSwe",
+          "previous": 51.0324483775811,
+          "current": 44.8103
+        },
+        {
+          "metric": "sweAtlas",
+          "previous": 62.0967741935484,
+          "current": 56.18279569892481
+        }
+      ]
+    },
+    {
+      "id": "[\"model-added\",\"2026-10-27T07:14:48.057Z\",\"[\\\"Claude Code\\\",\\\"anthropic\\\",\\\"Haiku 5.5\\\"]\"]",
+      "detectedAt": "2026-10-27T07:14:48.057Z",
+      "agent": "Claude Code",
+      "model": "Haiku 5.5",
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "setting": "max",
+      "benchmarks": {
+        "aaIndex": 37.349605072227696,
+        "deepSwe": 47.3697666666667,
+        "terminalBench": 30.808080808080803,
+        "sweAtlas": 33.8709677419355
+      },
+      "kind": "model-added",
+      "variantCount": 1
+    },
+    {
+      "id": "[\"benchmark-changed\",\"2026-10-27T07:14:48.057Z\",\"[\\\"Antigravity SDK v0.1.12:google_skimaki_ai-studio\\\",\\\"high\\\"]\"]",
+      "detectedAt": "2026-10-27T07:14:48.057Z",
+      "agent": "Antigravity SDK",
+      "model": "Gemini 3.8 Flash",
+      "providerId": "google",
+      "providerName": "Google",
+      "setting": "high",
+      "benchmarks": {
+        "aaIndex": 33.272301118714,
+        "deepSwe": 40.8156,
+        "terminalBench": 14.6464646464646,
+        "sweAtlas": 44.3548387096774
+      },
+      "kind": "benchmark-changed",
+      "changes": [
+        {
+          "metric": "aaIndex",
+          "previous": 41.86315529449987,
+          "current": 33.272301118714
+        },
+        {
+          "metric": "deepSwe",
+          "previous": 65.78171091445431,
+          "current": 40.8156
+        },
+        {
+          "metric": "sweAtlas",
+          "previous": 45.1612903225807,
+          "current": 44.3548387096774
+        }
+      ]
+    },
+    {
+      "id": "[\"benchmark-changed\",\"2026-10-27T07:14:48.057Z\",\"[\\\"Codex:openai_gpt-6-luna\\\",\\\"max\\\"]\"]",
+      "detectedAt": "2026-10-27T07:14:48.057Z",
+      "agent": "Codex",
+      "model": "GPT-6 Luna",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "setting": "max",
+      "benchmarks": {
+        "aaIndex": 31.1260251113284,
+        "deepSwe": 39.5494666666667,
+        "terminalBench": 15.656565656565698,
+        "sweAtlas": 38.1720430107527
+      },
+      "kind": "benchmark-changed",
+      "changes": [
+        {
+          "metric": "aaIndex",
+          "previous": 41.07438934016153,
+          "current": 31.1260251113284
+        },
+        {
+          "metric": "deepSwe",
+          "previous": 63.716814159292,
+          "current": 39.5494666666667
+        },
+        {
+          "metric": "terminalBench",
+          "previous": 15.151515151515198,
+          "current": 15.656565656565698
+        },
+        {
+          "metric": "sweAtlas",
+          "previous": 44.3548387096774,
+          "current": 38.1720430107527
+        }
+      ]
+    },
+    {
+      "id": "[\"model-added\",\"2026-10-27T07:14:48.057Z\",\"[\\\"Muse Code\\\",\\\"meta\\\",\\\"Muse Spark Open\\\"]\"]",
+      "detectedAt": "2026-10-27T07:14:48.057Z",
+      "agent": "Muse Code",
+      "model": "Muse Spark Open",
+      "providerId": "meta",
+      "providerName": "Meta",
+      "setting": "xhigh",
+      "benchmarks": {
+        "aaIndex": 26.300702389486304,
+        "deepSwe": 22.5401,
+        "terminalBench": 5.55555555555556,
+        "sweAtlas": 50.8064516129032
+      },
+      "kind": "model-added",
+      "variantCount": 1
+    },
+    {
+      "id": "[\"model-added\",\"2026-10-27T07:14:48.057Z\",\"[\\\"Mirror\\\",\\\"reflection\\\",\\\"Beam 1.0\\\"]\"]",
+      "detectedAt": "2026-10-27T07:14:48.057Z",
+      "agent": "Mirror",
+      "model": "Beam 1.0",
+      "providerId": "reflection",
+      "providerName": "Reflection",
+      "setting": "default",
+      "benchmarks": {
+        "aaIndex": 20.478987379168,
+        "deepSwe": 20.2672,
+        "terminalBench": 3.53535353535354,
+        "sweAtlas": 37.6344086021506
+      },
+      "kind": "model-added",
+      "variantCount": 1
+    },
     {
       "id": "[\"model-added\",\"2026-10-05T14:10:36.287Z\",\"[\\\"Claude Code\\\",\\\"anthropic\\\",\\\"Sonnet 5.5\\\"]\"]",
       "detectedAt": "2026-10-05T14:10:36.287Z",
@@ -472,7 +1137,7 @@
   ],
   "records": [
     {
-      "id": "ef63fafa9b4a635522183c879ae8435b",
+      "id": "ee454ece0aab8dacb7127770643dcb6b",
       "agent": "Antigravity CLI",
       "model": "Gemini 4 Argon",
       "modelLabel": "Gemini 4 Argon",
@@ -484,21 +1149,21 @@
       "settingRank": 0,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 63.7577603035782,
-        "deepSwe": 78.7610619469027,
+        "aaIndex": 53.2462665363311,
+        "deepSwe": 48.5706666666667,
         "terminalBench": 56.0606060606061,
-        "sweAtlas": 56.4516129032258
+        "sweAtlas": 55.1075268817204
       },
       "economics": {
-        "costUsd": 5.84390538944481,
-        "durationSeconds": 2070.1686032008843
+        "costUsd": 5.86148606882067,
+        "durationSeconds": 2081.39574652818
       },
       "usage": {
-        "totalTokens": 13733793.781456953
+        "totalTokens": 13865930.859975
       }
     },
     {
-      "id": "d1003684d8f29b95a3b14d2a7722221a",
+      "id": "e17ee3a79eab160154a92f31c6c2b1fa",
       "agent": "Antigravity SDK",
       "model": "Gemini 3.8 Flash",
       "modelLabel": "Gemini 3.8 Flash (high)",
@@ -510,21 +1175,21 @@
       "settingRank": 4,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 41.86315529449987,
-        "deepSwe": 65.78171091445431,
+        "aaIndex": 33.272301118714,
+        "deepSwe": 40.8156,
         "terminalBench": 14.6464646464646,
-        "sweAtlas": 45.1612903225807
+        "sweAtlas": 44.3548387096774
       },
       "economics": {
-        "costUsd": 2.4673922004125437,
-        "durationSeconds": 702.7110253025301
+        "costUsd": 2.51071545979138,
+        "durationSeconds": 786.045572632779
       },
       "usage": {
-        "totalTokens": 13511073.155115515
+        "totalTokens": 14251510.9748887
       }
     },
     {
-      "id": "29a1cdad0d140781d05b9b4746cfdd0d",
+      "id": "5c82a7985b08f35190cc0db574fd1773",
       "agent": "Claude Code",
       "model": "Fable 5.1 (with fallback)",
       "modelLabel": "Fable 5.1 (max) (with fallback)",
@@ -536,47 +1201,47 @@
       "settingRank": 6,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 62.22249615769457,
-        "deepSwe": 64.30678466076701,
+        "aaIndex": 57.6200245682633,
+        "deepSwe": 48.8864666666667,
         "terminalBench": 57.5757575757576,
-        "sweAtlas": 64.78494623655911
+        "sweAtlas": 66.3978494623656
       },
       "economics": {
-        "costUsd": 12.388092375137534,
-        "durationSeconds": 2089.900125412543
+        "costUsd": 11.5301045391259,
+        "durationSeconds": 2115.55138904529
       },
       "usage": {
-        "totalTokens": 5715253.85918592
+        "totalTokens": 5989151.58443575
       }
     },
     {
-      "id": "409518818f1e9ad21995d70631ab05b6",
+      "id": "2a2fed494e0d1343b14efe96e6bc3669",
       "agent": "Claude Code",
-      "model": "Opus 5",
-      "modelLabel": "Opus 5 (max)",
+      "model": "Haiku 5.5",
+      "modelLabel": "Haiku 5.5 (max)",
       "providerId": "anthropic",
       "providerName": "Anthropic",
-      "seriesId": "Claude Code:anthropic_claude-hotteok-eap-rerun-2",
-      "seriesLabel": "Claude Code · Opus 5",
+      "seriesId": "Claude Code:haiku-5-5",
+      "seriesLabel": "Claude Code · Haiku 5.5",
       "setting": "max",
       "settingRank": 6,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 59.726367298448366,
-        "deepSwe": 62.536873156342196,
-        "terminalBench": 54.5454545454545,
-        "sweAtlas": 62.0967741935484
+        "aaIndex": 37.349605072227696,
+        "deepSwe": 47.3697666666667,
+        "terminalBench": 30.808080808080803,
+        "sweAtlas": 33.8709677419355
       },
       "economics": {
-        "costUsd": 10.789154699257413,
-        "durationSeconds": 2515.540235973597
+        "costUsd": 2.67388407176395,
+        "durationSeconds": 4255.92477550559
       },
       "usage": {
-        "totalTokens": 11374850.488998907
+        "totalTokens": 16053233.8058097
       }
     },
     {
-      "id": "ab5074e404be48bbd4ac3c488ad9a3e2",
+      "id": "f8b3c23615b8b60e23364c27e8494d6d",
       "agent": "Claude Code",
       "model": "Opus 5.5",
       "modelLabel": "Opus 5.5 (max)",
@@ -588,21 +1253,21 @@
       "settingRank": 6,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 65.9885802549234,
-        "deepSwe": 68.4365781710915,
+        "aaIndex": 61.6528649505811,
+        "deepSwe": 55.967066666666696,
         "terminalBench": 63.13131313131311,
-        "sweAtlas": 66.3978494623656
+        "sweAtlas": 65.8602150537634
       },
       "economics": {
-        "costUsd": 13.036383418426828,
-        "durationSeconds": 3867.0923410341024
+        "costUsd": 11.4227202144224,
+        "durationSeconds": 3661.21221302161
       },
       "usage": {
-        "totalTokens": 15551383.220022004
+        "totalTokens": 14517552.0207549
       }
     },
     {
-      "id": "cd4c865dc2f539b650d741fd2ebf7f2d",
+      "id": "1630d319b5e4dc5183cb88a2b2af1646",
       "agent": "Claude Code",
       "model": "Qwen3.8 Max",
       "modelLabel": "Qwen3.8 Max",
@@ -614,125 +1279,21 @@
       "settingRank": 0,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 43.26529641259874,
-        "deepSwe": 51.0324483775811,
+        "aaIndex": 39.2199207885305,
+        "deepSwe": 44.8103,
         "terminalBench": 16.6666666666667,
-        "sweAtlas": 62.0967741935484
+        "sweAtlas": 56.18279569892481
       },
       "economics": {
-        "costUsd": 3.478965577837015,
-        "durationSeconds": 3784.416073707372
+        "costUsd": 3.79584401482699,
+        "durationSeconds": 4568.4135207125
       },
       "usage": {
-        "totalTokens": 8706893.798112892
+        "totalTokens": 9153421.02933002
       }
     },
     {
-      "id": "e9f9d3ae5b03aa060114dd4b3275d67d",
-      "agent": "Claude Code",
-      "model": "Sonnet 5.5",
-      "modelLabel": "Sonnet 5.5 (low)",
-      "providerId": "anthropic",
-      "providerName": "Anthropic",
-      "seriesId": "Claude Code:private-anthropic_claude-beignet-eap-low",
-      "seriesLabel": "Claude Code · Sonnet 5.5",
-      "setting": "low",
-      "settingRank": 2,
-      "completeIndex": true,
-      "benchmarks": {
-        "aaIndex": 42.0593075103495,
-        "deepSwe": 61.946902654867294,
-        "terminalBench": 25.2525252525253,
-        "sweAtlas": 38.978494623655905
-      },
-      "economics": {
-        "costUsd": 0.48311011474147336,
-        "durationSeconds": 380.85617931793183
-      },
-      "usage": {
-        "totalTokens": 977284.7700770069
-      }
-    },
-    {
-      "id": "4d6aa9e9c8df931d54dba5956d94973c",
-      "agent": "Claude Code",
-      "model": "Sonnet 5.5",
-      "modelLabel": "Sonnet 5.5 (medium)",
-      "providerId": "anthropic",
-      "providerName": "Anthropic",
-      "seriesId": "Claude Code:private-anthropic_claude-beignet-eap-medium",
-      "seriesLabel": "Claude Code · Sonnet 5.5",
-      "setting": "medium",
-      "settingRank": 3,
-      "completeIndex": true,
-      "benchmarks": {
-        "aaIndex": 45.88397535157457,
-        "deepSwe": 65.48672566371681,
-        "terminalBench": 27.2727272727273,
-        "sweAtlas": 44.892473118279604
-      },
-      "economics": {
-        "costUsd": 0.6187507753025301,
-        "durationSeconds": 510.7721826182621
-      },
-      "usage": {
-        "totalTokens": 1253351.4928492843
-      }
-    },
-    {
-      "id": "33e80f383dc644527161435b076798ad",
-      "agent": "Claude Code",
-      "model": "Sonnet 5.5",
-      "modelLabel": "Sonnet 5.5 (high)",
-      "providerId": "anthropic",
-      "providerName": "Anthropic",
-      "seriesId": "Claude Code:private-anthropic_claude-beignet-eap-high",
-      "seriesLabel": "Claude Code · Sonnet 5.5",
-      "setting": "high",
-      "settingRank": 4,
-      "completeIndex": true,
-      "benchmarks": {
-        "aaIndex": 55.01249049636148,
-        "deepSwe": 66.6666666666667,
-        "terminalBench": 41.9191919191919,
-        "sweAtlas": 56.4516129032258
-      },
-      "economics": {
-        "costUsd": 1.235497127172719,
-        "durationSeconds": 735.1809878987912
-      },
-      "usage": {
-        "totalTokens": 2652380.565456549
-      }
-    },
-    {
-      "id": "666605c66ad569c503ce53c01682e285",
-      "agent": "Claude Code",
-      "model": "Sonnet 5.5",
-      "modelLabel": "Sonnet 5.5 (xhigh)",
-      "providerId": "anthropic",
-      "providerName": "Anthropic",
-      "seriesId": "Claude Code:private-anthropic_claude-beignet-eap-xhigh",
-      "seriesLabel": "Claude Code · Sonnet 5.5",
-      "setting": "xhigh",
-      "settingRank": 5,
-      "completeIndex": true,
-      "benchmarks": {
-        "aaIndex": 62.8713868151493,
-        "deepSwe": 68.4365781710914,
-        "terminalBench": 58.0808080808081,
-        "sweAtlas": 62.0967741935484
-      },
-      "economics": {
-        "costUsd": 3.3333865348734886,
-        "durationSeconds": 1619.0134708470846
-      },
-      "usage": {
-        "totalTokens": 7087678.3960396005
-      }
-    },
-    {
-      "id": "a2c87c062f3cef73d8525e7578f14742",
+      "id": "9983e10d68576074ad63407d0ca81e4b",
       "agent": "Claude Code",
       "model": "Sonnet 5.5",
       "modelLabel": "Sonnet 5.5 (max)",
@@ -744,125 +1305,73 @@
       "settingRank": 6,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 68.35783373750832,
-        "deepSwe": 71.97640117994099,
+        "aaIndex": 59.3374426631911,
+        "deepSwe": 47.6034,
         "terminalBench": 66.1616161616162,
-        "sweAtlas": 66.9354838709677
+        "sweAtlas": 64.24731182795699
       },
       "economics": {
-        "costUsd": 14.190800796369649,
-        "durationSeconds": 5244.965372937293
+        "costUsd": 13.3015082635468,
+        "durationSeconds": 4784.64130125774
       },
       "usage": {
-        "totalTokens": 27742337.233773403
+        "totalTokens": 24129277.9119089
       }
     },
     {
-      "id": "28ef65135f08f035dc93a97d324fea73",
+      "id": "06c2cfad6e3aba9000f2dd5e429d4407",
+      "agent": "Claude Code",
+      "model": "Step 5 Preview",
+      "modelLabel": "Step 5 Preview",
+      "providerId": "stepfun",
+      "providerName": "StepFun",
+      "seriesId": "Claude Code:step-5-preview",
+      "seriesLabel": "Claude Code · Step 5 Preview",
+      "setting": "default",
+      "settingRank": 0,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 43.1274491691105,
+        "deepSwe": 40.4771666666667,
+        "terminalBench": 30.303030303030297,
+        "sweAtlas": 58.6021505376344
+      },
+      "economics": {
+        "costUsd": 1.84006320525524,
+        "durationSeconds": 3665.13740781145
+      },
+      "usage": {
+        "totalTokens": 22141655.7546106
+      }
+    },
+    {
+      "id": "ef847aa89b4f0471ffe5275ba2f11771",
       "agent": "Codex",
-      "model": "DeepSeek V4 Flash 0731",
-      "modelLabel": "DeepSeek V4 Flash 0731 (max)",
+      "model": "DeepSeek V4.1 Flash",
+      "modelLabel": "DeepSeek V4.1 Flash",
       "providerId": "deepseek",
       "providerName": "DeepSeek",
-      "seriesId": "Codex:deepseek_deepseek-v4-flash-0731",
-      "seriesLabel": "Codex · DeepSeek V4 Flash 0731",
-      "setting": "max",
-      "settingRank": 6,
+      "seriesId": "Codex:deepseek-v4-1-flash",
+      "seriesLabel": "Codex · DeepSeek V4.1 Flash",
+      "setting": "default",
+      "settingRank": 0,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 38.74247758775307,
-        "deepSwe": 54.2772861356932,
-        "terminalBench": 10.6060606060606,
-        "sweAtlas": 51.3440860215054
+        "aaIndex": 47.3001334419464,
+        "deepSwe": 52.596066666666694,
+        "terminalBench": 28.282828282828298,
+        "sweAtlas": 61.021505376344095
       },
       "economics": {
-        "costUsd": 0.08506419165060494,
-        "durationSeconds": 1097.0404400440034
+        "costUsd": 0.38619359563592,
+        "durationSeconds": 2283.94687962311
       },
       "usage": {
-        "totalTokens": 15350225.299229927
+        "totalTokens": 27235627.5942381
       }
     },
     {
-      "id": "542590ecc1aa12a718d158565d464daa",
-      "agent": "Codex",
-      "model": "DeepSeek V4 Pro 0813",
-      "modelLabel": "DeepSeek V4 Pro 0813 (max)",
-      "providerId": "deepseek",
-      "providerName": "DeepSeek",
-      "seriesId": "Codex:deepseek_deepseek-v4-pro-0813",
-      "seriesLabel": "Codex · DeepSeek V4 Pro 0813",
-      "setting": "max",
-      "settingRank": 6,
-      "completeIndex": true,
-      "benchmarks": {
-        "aaIndex": 43.05203524444174,
-        "deepSwe": 57.227138643067796,
-        "terminalBench": 10.1010101010101,
-        "sweAtlas": 61.8279569892473
-      },
-      "economics": {
-        "costUsd": 0.23804610720792058,
-        "durationSeconds": 2417.5500099009905
-      },
-      "usage": {
-        "totalTokens": 24180108.028052814
-      }
-    },
-    {
-      "id": "b3c56ec69185d544992fd578edb75e8c",
-      "agent": "Codex",
-      "model": "GPT-5.6 Luna",
-      "modelLabel": "GPT-5.6 Luna (max)",
-      "providerId": "openai",
-      "providerName": "OpenAI",
-      "seriesId": "Codex:openai_gpt-5-6-luna",
-      "seriesLabel": "Codex · GPT-5.6 Luna",
-      "setting": "max",
-      "settingRank": 6,
-      "completeIndex": true,
-      "benchmarks": {
-        "aaIndex": 43.22468668029613,
-        "deepSwe": 66.3716814159292,
-        "terminalBench": 14.6464646464646,
-        "sweAtlas": 48.6559139784946
-      },
-      "economics": {
-        "costUsd": 0.43802256393839384,
-        "durationSeconds": 1412.260883388339
-      },
-      "usage": {
-        "totalTokens": 14854524.539053895
-      }
-    },
-    {
-      "id": "709f801275dedae5675b1f56e97c9df3",
-      "agent": "Codex",
-      "model": "GPT-5.6 Sol",
-      "modelLabel": "GPT-5.6 Sol (max)",
-      "providerId": "openai",
-      "providerName": "OpenAI",
-      "seriesId": "Codex:openai_kindle-alpha-api",
-      "seriesLabel": "Codex · GPT-5.6 Sol",
-      "setting": "max",
-      "settingRank": 6,
-      "completeIndex": true,
-      "benchmarks": {
-        "aaIndex": 54.559127289644,
-        "deepSwe": 72.27138643067849,
-        "terminalBench": 37.3737373737374,
-        "sweAtlas": 54.0322580645161
-      },
-      "economics": {
-        "costUsd": 6.353318230693071,
-        "durationSeconds": 1237.696445544555
-      },
-      "usage": {
-        "totalTokens": 10170136.632563243
-      }
-    },
-    {
-      "id": "9e810ff3c6cce5ebaaff7c744c687a47",
+      "id": "34e0f78892fac8fd39aff6595d04610e",
       "agent": "Codex",
       "model": "GPT-6 Astra",
       "modelLabel": "GPT-6 Astra (max)",
@@ -874,21 +1383,21 @@
       "settingRank": 6,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 61.64504498789397,
-        "deepSwe": 67.55162241887909,
+        "aaIndex": 54.66356905615291,
+        "deepSwe": 49.2953666666667,
         "terminalBench": 55.5555555555555,
-        "sweAtlas": 61.8279569892473
+        "sweAtlas": 59.139784946236595
       },
       "economics": {
-        "costUsd": 7.46709735138597,
-        "durationSeconds": 1762.0330264026397
+        "costUsd": 7.03615822479963,
+        "durationSeconds": 1486.68747959053
       },
       "usage": {
-        "totalTokens": 3346611.012209417
+        "totalTokens": 3228511.32437048
       }
     },
     {
-      "id": "ac8276cd5d15ac2daacb9956ad44c132",
+      "id": "c54a3c8e7e89d5a784e98211605eaa53",
       "agent": "Codex",
       "model": "GPT-6 Luna",
       "modelLabel": "GPT-6 Luna (max)",
@@ -900,151 +1409,21 @@
       "settingRank": 6,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 41.07438934016153,
-        "deepSwe": 63.716814159292,
-        "terminalBench": 15.151515151515198,
-        "sweAtlas": 44.3548387096774
+        "aaIndex": 31.1260251113284,
+        "deepSwe": 39.5494666666667,
+        "terminalBench": 15.656565656565698,
+        "sweAtlas": 38.1720430107527
       },
       "economics": {
-        "costUsd": 0.17591172304455457,
-        "durationSeconds": 1285.9268514851478
+        "costUsd": 0.159155559086193,
+        "durationSeconds": 1275.79489619203
       },
       "usage": {
-        "totalTokens": 10218069.248074815
+        "totalTokens": 8885939.03237863
       }
     },
     {
-      "id": "7a0dfd2a7a9d93056f860d4675586d66",
-      "agent": "Codex",
-      "model": "GPT-6 Sol",
-      "modelLabel": "GPT-6 Sol (max)",
-      "providerId": "openai",
-      "providerName": "OpenAI",
-      "seriesId": "Codex:openai_gpt-6-sol",
-      "seriesLabel": "Codex · GPT-6 Sol",
-      "setting": "max",
-      "settingRank": 6,
-      "completeIndex": true,
-      "benchmarks": {
-        "aaIndex": 56.662591275779974,
-        "deepSwe": 69.0265486725664,
-        "terminalBench": 43.4343434343434,
-        "sweAtlas": 57.5268817204301
-      },
-      "economics": {
-        "costUsd": 2.989729004180416,
-        "durationSeconds": 1338.0527051705185
-      },
-      "usage": {
-        "totalTokens": 9840777.763476355
-      }
-    },
-    {
-      "id": "fa589dad83ffcdd6cce72a467e552063",
-      "agent": "Codex",
-      "model": "GPT-6.1 Sol",
-      "modelLabel": "GPT-6.1 Sol (low)",
-      "providerId": "openai",
-      "providerName": "OpenAI",
-      "seriesId": "Codex:openai_quasar-alpha",
-      "seriesLabel": "Codex · GPT-6.1 Sol",
-      "setting": "low",
-      "settingRank": 2,
-      "completeIndex": true,
-      "benchmarks": {
-        "aaIndex": 57.21634943016617,
-        "deepSwe": 67.55162241887909,
-        "terminalBench": 48.989898989899,
-        "sweAtlas": 55.1075268817204
-      },
-      "economics": {
-        "costUsd": 0.49880364510270725,
-        "durationSeconds": 517.8138943894386
-      },
-      "usage": {
-        "totalTokens": 1713818.9181950986
-      }
-    },
-    {
-      "id": "93acd59f31f8e5478686d650aa650f79",
-      "agent": "Codex",
-      "model": "GPT-6.1 Sol",
-      "modelLabel": "GPT-6.1 Sol (medium)",
-      "providerId": "openai",
-      "providerName": "OpenAI",
-      "seriesId": "Codex:openai_quasar-alpha",
-      "seriesLabel": "Codex · GPT-6.1 Sol",
-      "setting": "medium",
-      "settingRank": 3,
-      "completeIndex": true,
-      "benchmarks": {
-        "aaIndex": 61.41474695571183,
-        "deepSwe": 71.97640117994099,
-        "terminalBench": 51.5151515151515,
-        "sweAtlas": 60.752688172043
-      },
-      "economics": {
-        "costUsd": 0.7046746644898908,
-        "durationSeconds": 651.3228668866898
-      },
-      "usage": {
-        "totalTokens": 2298278.745423723
-      }
-    },
-    {
-      "id": "4aee8aa2d4a0bad6068644f40edae235",
-      "agent": "Codex",
-      "model": "GPT-6.1 Sol",
-      "modelLabel": "GPT-6.1 Sol (high)",
-      "providerId": "openai",
-      "providerName": "OpenAI",
-      "seriesId": "Codex:openai_quasar-alpha",
-      "seriesLabel": "Codex · GPT-6.1 Sol",
-      "setting": "high",
-      "settingRank": 4,
-      "completeIndex": true,
-      "benchmarks": {
-        "aaIndex": 60.14923716179784,
-        "deepSwe": 70.5014749262537,
-        "terminalBench": 50,
-        "sweAtlas": 59.9462365591398
-      },
-      "economics": {
-        "costUsd": 0.8892413135295484,
-        "durationSeconds": 799.7652123212325
-      },
-      "usage": {
-        "totalTokens": 2819911.9903514963
-      }
-    },
-    {
-      "id": "ed8c1d0b0a2fe4560bbfa0a9f47e8941",
-      "agent": "Codex",
-      "model": "GPT-6.1 Sol",
-      "modelLabel": "GPT-6.1 Sol (xhigh)",
-      "providerId": "openai",
-      "providerName": "OpenAI",
-      "seriesId": "Codex:openai_quasar-alpha",
-      "seriesLabel": "Codex · GPT-6.1 Sol",
-      "setting": "xhigh",
-      "settingRank": 5,
-      "completeIndex": true,
-      "benchmarks": {
-        "aaIndex": 62.90776736822983,
-        "deepSwe": 73.1563421828909,
-        "terminalBench": 54.5454545454545,
-        "sweAtlas": 61.021505376344095
-      },
-      "economics": {
-        "costUsd": 1.0397081014409635,
-        "durationSeconds": 931.3823091309132
-      },
-      "usage": {
-        "totalTokens": 3212528.1094519314
-      }
-    },
-    {
-      "id": "ea296ce785422d3b97cfff4427f2e0d2",
+      "id": "3897d72a57138fd2e2353367570b4b37",
       "agent": "Codex",
       "model": "GPT-6.1 Sol",
       "modelLabel": "GPT-6.1 Sol (max)",
@@ -1056,21 +1435,203 @@
       "settingRank": 6,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 60.14750704302517,
-        "deepSwe": 69.6165191740413,
+        "aaIndex": 54.1279798631476,
+        "deepSwe": 49.4074,
         "terminalBench": 53.030303030303,
-        "sweAtlas": 57.7956989247312
+        "sweAtlas": 59.9462365591398
       },
       "economics": {
-        "costUsd": 1.554119528390054,
-        "durationSeconds": 1463.0464224422437
+        "costUsd": 1.5046389983744,
+        "durationSeconds": 1421.42885321603
       },
       "usage": {
-        "totalTokens": 3999501.6107955067
+        "totalTokens": 3944222.64509301
       }
     },
     {
-      "id": "34970c963bdfd318e46205514d46ea4f",
+      "id": "ee13e548b65eeee544cd5b0c6068a4f5",
+      "agent": "Codex",
+      "model": "GPT-6.1 Terra",
+      "modelLabel": "GPT-6.1 Terra (none)",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "seriesId": "Codex:gpt-6-1-terra",
+      "seriesLabel": "Codex · GPT-6.1 Terra",
+      "setting": "none",
+      "settingRank": 1,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 39.215161464103396,
+        "deepSwe": 46.1564,
+        "terminalBench": 25.2525252525252,
+        "sweAtlas": 46.2365591397849
+      },
+      "economics": {
+        "costUsd": 0.454255643441512,
+        "durationSeconds": 572.437023079179
+      },
+      "usage": {
+        "totalTokens": 5776354.240164
+      }
+    },
+    {
+      "id": "b54e883be1cff7a6a43a737ee106011c",
+      "agent": "Codex",
+      "model": "GPT-6.1 Terra",
+      "modelLabel": "GPT-6.1 Terra (low)",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "seriesId": "Codex:gpt-6-1-terra",
+      "seriesLabel": "Codex · GPT-6.1 Terra",
+      "setting": "low",
+      "settingRank": 2,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 34.85683422396,
+        "deepSwe": 40.6083,
+        "terminalBench": 25.2525252525253,
+        "sweAtlas": 38.7096774193548
+      },
+      "economics": {
+        "costUsd": 0.198820047696481,
+        "durationSeconds": 379.469317133703
+      },
+      "usage": {
+        "totalTokens": 1886086.8732888
+      }
+    },
+    {
+      "id": "a3eeef492929228973b8da75e051291d",
+      "agent": "Codex",
+      "model": "GPT-6.1 Terra",
+      "modelLabel": "GPT-6.1 Terra (medium)",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "seriesId": "Codex:gpt-6-1-terra",
+      "seriesLabel": "Codex · GPT-6.1 Terra",
+      "setting": "medium",
+      "settingRank": 3,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 42.0492375909634,
+        "deepSwe": 43.751166666666705,
+        "terminalBench": 35.3535353535354,
+        "sweAtlas": 47.043010752688204
+      },
+      "economics": {
+        "costUsd": 0.394994482142174,
+        "durationSeconds": 610.752293823178
+      },
+      "usage": {
+        "totalTokens": 4075423.19637776
+      }
+    },
+    {
+      "id": "41bcc9881ff1465f62e417e5a7535e20",
+      "agent": "Codex",
+      "model": "GPT-6.1 Terra",
+      "modelLabel": "GPT-6.1 Terra (high)",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "seriesId": "Codex:gpt-6-1-terra",
+      "seriesLabel": "Codex · GPT-6.1 Terra",
+      "setting": "high",
+      "settingRank": 4,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 46.2787772238514,
+        "deepSwe": 43.4551,
+        "terminalBench": 42.4242424242424,
+        "sweAtlas": 52.9569892473118
+      },
+      "economics": {
+        "costUsd": 0.544031579042956,
+        "durationSeconds": 759.266290102096
+      },
+      "usage": {
+        "totalTokens": 5600133.87243293
+      }
+    },
+    {
+      "id": "9b52f0eb016964fb4421a352b9c9518c",
+      "agent": "Codex",
+      "model": "GPT-6.1 Terra",
+      "modelLabel": "GPT-6.1 Terra (xhigh)",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "seriesId": "Codex:gpt-6-1-terra",
+      "seriesLabel": "Codex · GPT-6.1 Terra",
+      "setting": "xhigh",
+      "settingRank": 5,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 48.223834495492504,
+        "deepSwe": 44.9484666666666,
+        "terminalBench": 45.959595959596,
+        "sweAtlas": 53.76344086021499
+      },
+      "economics": {
+        "costUsd": 0.690844449567775,
+        "durationSeconds": 981.713951073096
+      },
+      "usage": {
+        "totalTokens": 6886239.03807863
+      }
+    },
+    {
+      "id": "5bc9ed9064c8cd589bfd3aaad4bbebf8",
+      "agent": "Codex",
+      "model": "GPT-6.1 Terra",
+      "modelLabel": "GPT-6.1 Terra (max)",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "seriesId": "Codex:gpt-6-1-terra",
+      "seriesLabel": "Codex · GPT-6.1 Terra",
+      "setting": "max",
+      "settingRank": 6,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 48.1004244053438,
+        "deepSwe": 41.7841666666667,
+        "terminalBench": 48.4848484848485,
+        "sweAtlas": 54.0322580645161
+      },
+      "economics": {
+        "costUsd": 1.24038465572461,
+        "durationSeconds": 1568.79046882589
+      },
+      "usage": {
+        "totalTokens": 12280717.4101086
+      }
+    },
+    {
+      "id": "24c98f188d41522a849006ac453fdebe",
+      "agent": "DeepSeek Harness",
+      "model": "DeepSeek V4.1 Flash 1017",
+      "modelLabel": "DeepSeek V4.1 Flash 1017",
+      "providerId": "deepseek",
+      "providerName": "DeepSeek",
+      "seriesId": "DeepSeek Harness:deepseek-v4-1-flash-1017",
+      "seriesLabel": "DeepSeek Harness · DeepSeek V4.1 Flash 1017",
+      "setting": "default",
+      "settingRank": 0,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 46.305195753231196,
+        "deepSwe": 46.5483666666667,
+        "terminalBench": 30.808080808080803,
+        "sweAtlas": 61.559139784946204
+      },
+      "economics": {
+        "costUsd": 0.29627468390668,
+        "durationSeconds": 1284.94041000543
+      },
+      "usage": {
+        "totalTokens": 16739365.2564321
+      }
+    },
+    {
+      "id": "fe6df4d0f0b5360790e73d6d8830d7a0",
       "agent": "Devin Fusion CLI",
       "model": "Claude Fable 5.1 XHigh + SWE-2 Medium",
       "modelLabel": "Claude Fable 5.1 XHigh + SWE-2 Medium",
@@ -1082,21 +1643,47 @@
       "settingRank": 0,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 61.68255492406223,
-        "deepSwe": 63.1268436578171,
+        "aaIndex": 58.661903095470805,
+        "deepSwe": 51.645533333333304,
         "terminalBench": 56.0606060606061,
-        "sweAtlas": 65.86021505376351
+        "sweAtlas": 68.2795698924731
       },
       "economics": {
-        "costUsd": 7.897126985217273,
-        "durationSeconds": 2146.9920896589642
+        "costUsd": 8.19825160322711,
+        "durationSeconds": 2253.66843252199
       },
       "usage": {
-        "totalTokens": 9691548.173817372
+        "totalTokens": 9809458.18526447
       }
     },
     {
-      "id": "fa2595093fa640e73d072e7d1aa7df82",
+      "id": "736e1c6006fd243c9cc384b61c478e97",
+      "agent": "Devin Fusion CLI",
+      "model": "Claude Opus 5.5 Max + GPT-6 Luna High",
+      "modelLabel": "Claude Opus 5.5 Max + GPT-6 Luna High",
+      "providerId": "cognition",
+      "providerName": "Cognition",
+      "seriesId": "Devin Fusion CLI:claude-opus-5-5-max-gpt-6-luna-high",
+      "seriesLabel": "Devin Fusion CLI · Claude Opus 5.5 Max + GPT-6 Luna High",
+      "setting": "default",
+      "settingRank": 0,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 61.511721950689704,
+        "deepSwe": 53.62933333333329,
+        "terminalBench": 62.626262626262594,
+        "sweAtlas": 68.2795698924731
+      },
+      "economics": {
+        "costUsd": 7.99768820548534,
+        "durationSeconds": 3067.08119502552
+      },
+      "usage": {
+        "totalTokens": 10463266.3479852
+      }
+    },
+    {
+      "id": "dabb064c01568bc018ba730cc39c4a96",
       "agent": "Devin Fusion CLI",
       "model": "GPT-6 Astra XHigh + SWE-2 Medium",
       "modelLabel": "GPT-6 Astra XHigh + SWE-2 Medium",
@@ -1108,47 +1695,21 @@
       "settingRank": 0,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 58.8884131062264,
-        "deepSwe": 67.2566371681416,
+        "aaIndex": 53.076973476702506,
+        "deepSwe": 49.0158666666667,
         "terminalBench": 50,
-        "sweAtlas": 59.408602150537604
+        "sweAtlas": 60.21505376344089
       },
       "economics": {
-        "costUsd": 4.536492777821779,
-        "durationSeconds": 1481.89598019802
+        "costUsd": 4.33822148437056,
+        "durationSeconds": 1270.3477207201
       },
       "usage": {
-        "totalTokens": 6074134.4950494915
+        "totalTokens": 3625399.81721408
       }
     },
     {
-      "id": "70a5d300021b9986f77d4198272ef1a5",
-      "agent": "Grok Build",
-      "model": "Grok 4.6",
-      "modelLabel": "Grok 4.6 (xhigh)",
-      "providerId": "xai",
-      "providerName": "xAI",
-      "seriesId": "Grok Build:xai_grok-4-6-xhigh",
-      "seriesLabel": "Grok Build · Grok 4.6",
-      "setting": "xhigh",
-      "settingRank": 5,
-      "completeIndex": true,
-      "benchmarks": {
-        "aaIndex": 46.96895205744764,
-        "deepSwe": 64.8967551622419,
-        "terminalBench": 17.6767676767677,
-        "sweAtlas": 58.3333333333333
-      },
-      "economics": {
-        "costUsd": 3.5701432805280535,
-        "durationSeconds": 1167.3387480748086
-      },
-      "usage": {
-        "totalTokens": 5543624.597359739
-      }
-    },
-    {
-      "id": "f927d9c41b5c3021996eb14c3dd1341e",
+      "id": "a92c8b68f37df782f0e978e0e302b023",
       "agent": "Grok Build",
       "model": "Grok 4.7",
       "modelLabel": "Grok 4.7 (xhigh)",
@@ -1160,21 +1721,21 @@
       "settingRank": 5,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 56.26764360706693,
-        "deepSwe": 72.5663716814159,
+        "aaIndex": 46.5968752688172,
+        "deepSwe": 43.5540666666667,
         "terminalBench": 33.3333333333333,
         "sweAtlas": 62.9032258064516
       },
       "economics": {
-        "costUsd": 8.817468730473037,
-        "durationSeconds": 2354.367686468646
+        "costUsd": 9.47935653344195,
+        "durationSeconds": 2146.05576560009
       },
       "usage": {
-        "totalTokens": 14324724.283828393
+        "totalTokens": 15914547.7950299
       }
     },
     {
-      "id": "55b029d6971b4d378335bb168eb98b3b",
+      "id": "88c83705811535bca8ee000bfd3a256c",
       "agent": "Kimi Code CLI",
       "model": "Kimi K3",
       "modelLabel": "Kimi K3",
@@ -1186,47 +1747,47 @@
       "settingRank": 0,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 51.9259105470924,
-        "deepSwe": 68.4365781710915,
+        "aaIndex": 41.417319257087,
+        "deepSwe": 43.093599999999995,
         "terminalBench": 21.2121212121212,
-        "sweAtlas": 66.1290322580645
+        "sweAtlas": 59.9462365591398
       },
       "economics": {
-        "costUsd": 5.047195443300332,
-        "durationSeconds": 3689.3441947194724
+        "costUsd": 5.16526976917945,
+        "durationSeconds": 3772.73379345389
       },
       "usage": {
-        "totalTokens": 8481121.533553353
+        "totalTokens": 9010345.58218855
       }
     },
     {
-      "id": "cd60470c35fd626a116af80fd5915dfa",
-      "agent": "Muse Code",
-      "model": "Muse Spark 1.3",
-      "modelLabel": "Muse Spark 1.3 (xhigh)",
-      "providerId": "meta",
-      "providerName": "Meta",
-      "seriesId": "Muse Code 1.0.2 RC:meta_joyful-jello138",
-      "seriesLabel": "Muse Code · Muse Spark 1.3",
-      "setting": "xhigh",
-      "settingRank": 5,
+      "id": "accfbb12d349c0f2c93547ce814534b2",
+      "agent": "Mirror",
+      "model": "Beam 1.0",
+      "modelLabel": "Beam 1.0",
+      "providerId": "reflection",
+      "providerName": "Reflection",
+      "seriesId": "Mirror:beam-1-0",
+      "seriesLabel": "Mirror · Beam 1.0",
+      "setting": "default",
+      "settingRank": 0,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 48.2993172759088,
-        "deepSwe": 73.1563421828909,
-        "terminalBench": 17.171717171717198,
-        "sweAtlas": 54.5698924731183
+        "aaIndex": 20.478987379168,
+        "deepSwe": 20.2672,
+        "terminalBench": 3.53535353535354,
+        "sweAtlas": 37.6344086021506
       },
       "economics": {
-        "costUsd": 3.467754041474145,
-        "durationSeconds": 1098.202911991198
+        "costUsd": 0.319490234063365,
+        "durationSeconds": 2321.25393509395
       },
       "usage": {
-        "totalTokens": 16237094.352035202
+        "totalTokens": 4890063.07487998
       }
     },
     {
-      "id": "f2de07373c3626f1b9269a6ecad7804c",
+      "id": "f09fd629724ff1b103982a6158d00183",
       "agent": "Muse Code",
       "model": "Muse Spark 1.3",
       "modelLabel": "Muse Spark 1.3 (max)",
@@ -1238,21 +1799,99 @@
       "settingRank": 6,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 54.30273329930766,
-        "deepSwe": 71.6814159292036,
+        "aaIndex": 45.7077885630498,
+        "deepSwe": 46.7030333333333,
         "terminalBench": 31.818181818181802,
-        "sweAtlas": 59.408602150537604
+        "sweAtlas": 58.6021505376344
       },
       "economics": {
-        "costUsd": 3.977504096947204,
-        "durationSeconds": 1106.8533531353135
+        "costUsd": 3.91029139020419,
+        "durationSeconds": 1398.49826969262
       },
       "usage": {
-        "totalTokens": 16709444.57370737
+        "totalTokens": 17824340.6533789
       }
     },
     {
-      "id": "45493c2782f1bd94f6d30d4911f317a0",
+      "id": "d843fce803ff4f84ababc47040306116",
+      "agent": "Muse Code",
+      "model": "Muse Spark Open",
+      "modelLabel": "Muse Spark Open (xhigh)",
+      "providerId": "meta",
+      "providerName": "Meta",
+      "seriesId": "Muse Code:muse-spark-open",
+      "seriesLabel": "Muse Code · Muse Spark Open",
+      "setting": "xhigh",
+      "settingRank": 5,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 26.300702389486304,
+        "deepSwe": 22.5401,
+        "terminalBench": 5.55555555555556,
+        "sweAtlas": 50.8064516129032
+      },
+      "economics": {
+        "costUsd": 3.54324946048794,
+        "durationSeconds": 1558.86632482568
+      },
+      "usage": {
+        "totalTokens": 13336678.8257109
+      }
+    },
+    {
+      "id": "52f72f7f3393c5edf92b32326e7a678d",
+      "agent": "Muse Code",
+      "model": "Muse Wonder",
+      "modelLabel": "Muse Wonder (max)",
+      "providerId": "meta",
+      "providerName": "Meta",
+      "seriesId": "Muse Code:muse-wonder",
+      "seriesLabel": "Muse Code · Muse Wonder",
+      "setting": "max",
+      "settingRank": 6,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 51.9768236993592,
+        "deepSwe": 46.3915333333333,
+        "terminalBench": 47.979797979798,
+        "sweAtlas": 61.559139784946204
+      },
+      "economics": {
+        "costUsd": 8.04811220428196,
+        "durationSeconds": 1472.5084254817
+      },
+      "usage": {
+        "totalTokens": 14479705.3019539
+      }
+    },
+    {
+      "id": "047ef12b001416f72e30e1ad633988e2",
+      "agent": "Muse Code",
+      "model": "Muse Wonder Full",
+      "modelLabel": "Muse Wonder Full (max)",
+      "providerId": "meta",
+      "providerName": "Meta",
+      "seriesId": "Muse Code:muse-wonder-full",
+      "seriesLabel": "Muse Code · Muse Wonder Full",
+      "setting": "max",
+      "settingRank": 6,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 58.8804489084392,
+        "deepSwe": 48.733233333333295,
+        "terminalBench": 59.09090909090911,
+        "sweAtlas": 68.8172043010753
+      },
+      "economics": {
+        "costUsd": null,
+        "durationSeconds": 2096.2841057163
+      },
+      "usage": {
+        "totalTokens": 14497965.3172412
+      }
+    },
+    {
+      "id": "96d7404e06194027474a6cc3bb31c068",
       "agent": "Opencode",
       "model": "GLM-5.3",
       "modelLabel": "GLM-5.3",
@@ -1264,17 +1903,17 @@
       "settingRank": 0,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 53.55484140097326,
-        "deepSwe": 61.35693215339229,
+        "aaIndex": 48.916169034430304,
+        "deepSwe": 48.2473666666667,
         "terminalBench": 39.8989898989899,
-        "sweAtlas": 59.408602150537604
+        "sweAtlas": 58.6021505376344
       },
       "economics": {
-        "costUsd": 4.241385833751375,
-        "durationSeconds": 2887.9556523652373
+        "costUsd": 5.23102713863476,
+        "durationSeconds": 3369.69557528728
       },
       "usage": {
-        "totalTokens": 14276424.426842693
+        "totalTokens": 15908435.1191376
       }
     }
   ]

@@ -6,6 +6,7 @@ import { CodingConfigurationsTable } from "@/components/coding-configurations-ta
 import codingAgentData from "@/data/coding-agents.json";
 import { parseCodingAgentSnapshot, type CodingAgentSnapshot } from "./coding-agent-data";
 import {
+  CODING_CONFIGURATION_COLUMNS,
   codingConfigurationRows,
   codingConfigurationsMarkdownTable,
 } from "./coding-configurations-table";
@@ -32,9 +33,13 @@ function withMissingValues(): CodingAgentSnapshot {
 
 describe("coding configurations table", () => {
   test("shows a missing value as a labeled en dash, never as zero", () => {
+    const existingMissing = snapshot.records.reduce((count, record) => (
+      count + CODING_CONFIGURATION_COLUMNS.filter(column => column.value(record) === null).length
+    ), 0);
     const missing = withMissingValues();
     const html = renderToStaticMarkup(createElement(CodingConfigurationsTable, { snapshot: missing }));
-    expect(html.match(/<span aria-hidden="true">–<\/span><span class="sr-only">Not reported<\/span>/gu)).toHaveLength(5);
+    expect(html.match(/<span aria-hidden="true">–<\/span><span class="sr-only">Not reported<\/span>/gu))
+      .toHaveLength(existingMissing + 5);
     const markdown = codingConfigurationsMarkdownTable(missing.records);
     const lastRow = markdown.split("\n").at(-1)!;
     expect(lastRow).toContain("| – | – |");

@@ -17,11 +17,11 @@ import {
 /**
  * Claude Opus 5.5 bindings of the shared snapshot placement helpers. The
  * Intelligence Index stores one row per effort level of the release and the
- * max row is its headline configuration. The coding-agent chart stores both
- * Claude Code · Opus 5 and Claude Code · Opus 5.5; `opus55CodingAgentRows`
- * lists every harness that runs the newer model, and
- * `opus55CodingAgentPlacement` places the Claude Code row with what the
- * chart’s cost frontier gives up below it.
+ * max row is its headline configuration. The coding-agent chart stores the
+ * Claude Code · Opus 5.5 row and, when Artificial Analysis still publishes
+ * it, Claude Code · Opus 5; `opus55CodingAgentRows` lists every harness that
+ * runs the newer model, and `opus55CodingAgentPlacement` places the Claude
+ * Code row with what the chart’s cost frontier gives up below it.
  */
 
 export const CLAUDE_OPUS_55_INTELLIGENCE_SLUG = "claude-opus-5-5" as const;

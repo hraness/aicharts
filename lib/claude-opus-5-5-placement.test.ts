@@ -225,8 +225,13 @@ describe("Claude Opus 5 coding-agent contrast", () => {
     const parsed = parseCodingAgentSnapshot(codingAgentData);
     if (!parsed.ok) throw parsed.error;
     const placement = opus5CodingAgentPlacement(parsed.value.records);
-    expect(placement).toBeDefined();
-    if (placement === undefined) return;
+    if (placement === undefined) {
+      expect(parsed.value.records.some(record => (
+        record.agent === CLAUDE_OPUS_5_CODING_CONFIGURATION.agent
+        && record.model === CLAUDE_OPUS_5_CODING_CONFIGURATION.model
+      ))).toBeFalse();
+      return;
+    }
     expect(placement.record.agent).toBe(CLAUDE_OPUS_5_CODING_CONFIGURATION.agent);
     expect(placement.record.model).toBe(CLAUDE_OPUS_5_CODING_CONFIGURATION.model);
     expect(placement.rank).toBe(placement.higher.length + 1);
@@ -351,7 +356,14 @@ describe("Claude Code · Opus 5.5 coding-agent placement", () => {
     expect(placement.record.model).toBe(CLAUDE_OPUS_55_CODING_CONFIGURATION.model);
     expect(placement.record.setting).toBe("max");
     expect(placement.rank).toBe(placement.higher.length + 1);
-    expect(placement.predecessor?.model).toBe(CLAUDE_OPUS_5_CODING_CONFIGURATION.model);
+    expect(placement.predecessor?.model).toBe(
+      parsed.value.records.some(record => (
+        record.agent === CLAUDE_OPUS_5_CODING_CONFIGURATION.agent
+        && record.model === CLAUDE_OPUS_5_CODING_CONFIGURATION.model
+      ))
+        ? CLAUDE_OPUS_5_CODING_CONFIGURATION.model
+        : undefined,
+    );
     const frontier = aaIndexCostFrontier(parsed.value.records).map(point => point.record.id);
     for (const step of placement.frontierBelow) {
       expect(frontier).toContain(step.record.id);
