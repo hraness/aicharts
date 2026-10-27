@@ -302,7 +302,6 @@ describe("model-card catalog boundary", () => {
     )).map(variant => variant.path)).toEqual([
       "/models/anthropic/claude-fable-5.1/max",
       "/models/google/gemini-3.8-flash/high",
-      "/models/meta/muse-spark-1.3/xhigh",
       "/models/meta/muse-spark-1.3/max",
       "/models/openai/gpt-6-astra/max",
     ]);

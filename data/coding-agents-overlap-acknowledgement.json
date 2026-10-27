@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "id": "aa-2026-10-coding-agent-cohort",
+  "fromRetrievedAt": "2026-10-05T14:10:36.287Z",
+  "removed": [
+    "[\"Claude Code:anthropic_claude-hotteok-eap-rerun-2\",\"max\"]",
+    "[\"Claude Code:private-anthropic_claude-beignet-eap-high\",\"high\"]",
+    "[\"Claude Code:private-anthropic_claude-beignet-eap-low\",\"low\"]",
+    "[\"Claude Code:private-anthropic_claude-beignet-eap-medium\",\"medium\"]",
+    "[\"Claude Code:private-anthropic_claude-beignet-eap-xhigh\",\"xhigh\"]",
+    "[\"Codex:deepseek_deepseek-v4-flash-0731\",\"max\"]",
+    "[\"Codex:deepseek_deepseek-v4-pro-0813\",\"max\"]",
+    "[\"Codex:openai_gpt-5-6-luna\",\"max\"]",
+    "[\"Codex:openai_gpt-6-sol\",\"max\"]",
+    "[\"Codex:openai_kindle-alpha-api\",\"max\"]",
+    "[\"Codex:openai_quasar-alpha\",\"high\"]",
+    "[\"Codex:openai_quasar-alpha\",\"low\"]",
+    "[\"Codex:openai_quasar-alpha\",\"medium\"]",
+    "[\"Codex:openai_quasar-alpha\",\"xhigh\"]",
+    "[\"Grok Build:xai_grok-4-6-xhigh\",\"xhigh\"]",
+    "[\"Muse Code 1.0.2 RC:meta_joyful-jello138\",\"xhigh\"]"
+  ],
+  "added": [
+    "[\"Claude Code:haiku-5-5\",\"max\"]",
+    "[\"Claude Code:step-5-preview\",\"default\"]",
+    "[\"Codex:deepseek-v4-1-flash\",\"default\"]",
+    "[\"Codex:gpt-6-1-terra\",\"high\"]",
+    "[\"Codex:gpt-6-1-terra\",\"low\"]",
+    "[\"Codex:gpt-6-1-terra\",\"max\"]",
+    "[\"Codex:gpt-6-1-terra\",\"medium\"]",
+    "[\"Codex:gpt-6-1-terra\",\"none\"]",
+    "[\"Codex:gpt-6-1-terra\",\"xhigh\"]",
+    "[\"DeepSeek Harness:deepseek-v4-1-flash-1017\",\"default\"]",
+    "[\"Devin Fusion CLI:claude-opus-5-5-max-gpt-6-luna-high\",\"default\"]",
+    "[\"Mirror:beam-1-0\",\"default\"]",
+    "[\"Muse Code:muse-spark-open\",\"xhigh\"]",
+    "[\"Muse Code:muse-wonder-full\",\"max\"]",
+    "[\"Muse Code:muse-wonder\",\"max\"]"
+  ]
+}

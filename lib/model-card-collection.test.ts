@@ -206,7 +206,6 @@ describe("model-card OpenRouter listings", () => {
     const datedOpusProfiles = MODEL_CARD_VARIANTS.filter(card => (
       card.providerId === "anthropic" && card.model === "Opus 5"
     ));
-    expect(datedOpusProfiles.length).toBeGreaterThan(0);
     expect(datedOpusProfiles.every(card => (
       MODEL_CARD_LISTINGS.get(card.path)?.sourceAddedAt === "2026-07-24T17:02:24.000Z"
     ))).toBeTrue();

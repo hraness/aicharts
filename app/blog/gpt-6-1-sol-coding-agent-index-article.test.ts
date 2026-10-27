@@ -132,7 +132,7 @@ describe("GPT-6.1 Sol coding-agent note", () => {
     }, intelligenceSnapshot);
     const demotedMarkdown = gpt61SolArticleMarkdown(demoted);
     expect(demotedMarkdown).toContain("Twin Harness · Twin");
-    expect(demotedMarkdown).toContain("is not on it: one configuration costs the same or less per task and scores at least as high");
+    expect(demotedMarkdown).toMatch(/is not on it: (?:one configuration|\S+ configurations) cost/u);
 
     const laterRetrieval = createGpt61SolArticle({
       ...codingSnapshot,
@@ -141,16 +141,21 @@ describe("GPT-6.1 Sol coding-agent note", () => {
     expect(laterRetrieval.updatedAt).toBe("2026-12-01");
     expect(gpt61SolArticleMarkdown(laterRetrieval)).toContain("Dec 1, 2026, 8:00 AM UTC");
 
+    const expensiveRecords = codingSnapshot.records.map(record => (
+      record.model === "GPT-6.1 Sol"
+        ? { ...record, economics: { ...record.economics, costUsd: 123_456.78 } }
+        : record
+    ));
     const expensive = createGpt61SolArticle({
       ...codingSnapshot,
-      records: codingSnapshot.records.map(record => (
-        record.model === "GPT-6.1 Sol"
-          ? { ...record, economics: { ...record.economics, costUsd: 123_456.78 } }
-          : record
-      )),
+      records: expensiveRecords,
     }, intelligenceSnapshot);
+    const expensivePlacement = gpt61SolCodingAgentPlacement(expensiveRecords);
     expect(expensive.title).toBe(
-      `${"GPT-6.1 Sol"}’s best Codex row is ${formatSnapshotScore(subject.benchmarks.aaIndex)}, not max`,
+      expensivePlacement !== undefined && expensivePlacement.record.setting !== "max"
+        && expensivePlacement.settings.some(row => row.setting === "max")
+        ? `${"GPT-6.1 Sol"}’s best Codex row is ${formatSnapshotScore(subject.benchmarks.aaIndex)}, not max`
+        : `Codex · GPT-6.1 Sol scores ${formatSnapshotScore(subject.benchmarks.aaIndex)} on the coding-agent chart`,
     );
     expect(expensive.title.length).toBeLessThanOrEqual(64);
     expect(expensive.title).not.toContain("$123,456.78");

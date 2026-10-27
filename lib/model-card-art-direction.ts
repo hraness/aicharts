@@ -31,6 +31,8 @@ export const modelCardProviderColors = {
   meta: "#b07aa1",
   moonshot_ai: "#4c78d8",
   openai: "#58b3e7",
+  reflection: "#8a5cff",
+  stepfun: "#21c7a8",
   xai: "#918f94",
   z_ai: "#c88759",
 } as const;

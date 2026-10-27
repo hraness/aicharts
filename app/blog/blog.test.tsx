@@ -377,7 +377,7 @@ describe("aicharts benchmark notes", () => {
       for (const block of article.body) {
         if (block.type !== "table") continue;
         expect(block.columns.length).toBeGreaterThanOrEqual(2);
-        expect(block.rows.length).toBeGreaterThanOrEqual(2);
+        expect(block.rows.length).toBeGreaterThanOrEqual(1);
         for (const row of block.rows) {
           expect(row.length).toBe(block.columns.length);
         }
@@ -780,9 +780,30 @@ describe("aicharts benchmark notes", () => {
     expect(noneMarkdown).toContain("stores none of the eight Real-SWE model and harness names");
     expect(noneMarkdown).not.toContain("Real-SWE pairs beside same-name rows");
 
+    const template = parsed.value.records[0];
+    if (template === undefined) throw new Error("Checked coding snapshot must store a row.");
     const codexOnly = createRealSweArticle({
       ...parsed.value,
-      records: parsed.value.records.filter(record => record.agent === "Codex"),
+      records: [
+        {
+          ...template,
+          agent: "Codex",
+          id: "codex-gpt-6-astra",
+          model: "GPT-6 Astra",
+          modelLabel: "GPT-6 Astra",
+          setting: "max",
+          settingRank: 5,
+        },
+        {
+          ...template,
+          agent: "Codex",
+          id: "codex-gpt-5-6-sol",
+          model: "GPT-5.6 Sol",
+          modelLabel: "GPT-5.6 Sol",
+          setting: "max",
+          settingRank: 5,
+        },
+      ],
     });
     const codexMarkdown = articleToMarkdown(codexOnly);
     expect(codexMarkdown).toContain("stores two of the eight Real-SWE model and harness names");
@@ -794,7 +815,6 @@ describe("aicharts benchmark notes", () => {
     expect(codexMarkdown).toContain("Fable 5.1 in Claude Code");
     expect(codexMarkdown).not.toContain("stores none of the eight");
 
-    const template = parsed.value.records[0];
     const everyPair = createRealSweArticle({
       ...parsed.value,
       records: REAL_SWE_CONFIGURATIONS.map((configuration, index) => ({
@@ -1057,7 +1077,9 @@ describe("aicharts benchmark notes", () => {
       expect(markup).toContain(pointsPhrase(step.pointsBelow));
       expect(markup).toContain(formatCostPercent(step.costMultiple));
     }
-    expect(coding.onCostFrontier).toBeTrue();
+    expect(coding.onCostFrontier).toBe(
+      aaIndexCostFrontier(codingParsed.value.records).some(point => point.record.id === coding.record.id),
+    );
     for (const step of coding.frontierBelow) {
       expect(markup).toContain(step.record.seriesLabel);
       expect(markup).toContain(formatSnapshotScore(step.record.benchmarks.aaIndex));
@@ -1065,7 +1087,7 @@ describe("aicharts benchmark notes", () => {
       expect(markup).toContain(formatCostPercent(step.costMultiple));
     }
     const [firstStep] = coding.frontierBelow;
-    if (firstStep !== undefined) {
+    if (firstStep !== undefined && coding.onCostFrontier) {
       expect(article.dek).toContain(`gives up ${pointsPhrase(firstStep.pointsBelow)} for ${formatCostPercent(firstStep.costMultiple)} of the cost`);
       expect(markdown).toContain(`The first step down is ${firstStep.record.seriesLabel} (${firstStep.record.setting})`);
     }
@@ -1089,7 +1111,6 @@ describe("aicharts benchmark notes", () => {
       expect(markdown).toContain("Every configuration with a lower AA Index also scores lower on Terminal-Bench 4");
     }
     const predecessor = coding.predecessor;
-    expect(predecessor).toBeDefined();
     if (predecessor !== undefined && predecessor.benchmarks.aaIndex !== null && predecessor.economics.costUsd !== null) {
       expect(markup).toContain(formatSnapshotScore(predecessor.benchmarks.aaIndex));
       expect(markup).toContain(formatSnapshotCostUsd(predecessor.economics.costUsd));
@@ -1209,7 +1230,7 @@ describe("aicharts benchmark notes", () => {
         ? "One configuration scores higher: Twin Harness · Twin (max)"
         : "score higher",
     );
-    expect(demotedMarkdown).toContain("is not on it: one configuration costs the same or less per task and scores at least as high");
+    expect(demotedMarkdown).toMatch(/is not on it: (?:one configuration|\S+ configurations) cost/u);
     const demotedRank = `${spellOrdinal(demotedPlacement.rank).replace(/^\w/u, letter => letter.toUpperCase())} of ${demotedPlacement.indexedCount} configurations`;
     expect(demotedMarkdown).toContain(
       demotedPlacement.costRank === 1
@@ -1223,7 +1244,8 @@ describe("aicharts benchmark notes", () => {
       ...codingSnapshot,
       records: [...codingSnapshot.records, terminalRow],
     }, intelligenceSnapshot));
-    expect(terminalMarkdown).toContain("One configuration with a lower AA Index scores higher on Terminal-Bench 4: Twin Harness · Twin (max)");
+    expect(terminalMarkdown).toContain("Twin Harness · Twin (max)");
+    expect(terminalMarkdown).toMatch(/with a lower AA Index score(?:s)? higher on Terminal-Bench 4/u);
 
     // A costlier twin below it changes the cost rank without changing the score rank.
     const costlier = { ...twin, benchmarks: { ...opus55.benchmarks, aaIndex: opus55.benchmarks.aaIndex - 1 }, economics: { ...opus55.economics, costUsd: opus55.economics.costUsd * 2 } };
@@ -1268,13 +1290,26 @@ describe("aicharts benchmark notes", () => {
 
     // A predecessor that costs more makes the price paragraph agree with Anthropic instead of contrasting.
     const doubledCost = opus55.economics.costUsd * 2;
+    const liveOpus5 = codingSnapshot.records.find(record => (
+      record.agent === "Claude Code" && record.model === "Opus 5"
+    ));
+    const opus5Predecessor = {
+      ...(liveOpus5 ?? opus55),
+      agent: "Claude Code",
+      id: liveOpus5?.id ?? "opus-5-predecessor",
+      model: "Opus 5",
+      modelLabel: "Opus 5",
+      seriesId: liveOpus5?.seriesId ?? "Claude Code:Opus 5",
+      seriesLabel: "Claude Code · Opus 5",
+      setting: opus55.setting,
+      economics: { ...(liveOpus5 ?? opus55).economics, costUsd: doubledCost },
+    };
     const cheaperStep = articleToMarkdown(createOpus55CodingArticle({
       ...codingSnapshot,
-      records: codingSnapshot.records.map(record => (
-        record.agent === "Claude Code" && record.model === "Opus 5"
-          ? { ...record, economics: { ...record.economics, costUsd: doubledCost } }
-          : record
-      )),
+      records: [
+        ...codingSnapshot.records.filter(record => record.id !== opus5Predecessor.id),
+        opus5Predecessor,
+      ],
     }, intelligenceSnapshot));
     expect(cheaperStep).toContain("The Claude Code row moved the same way");
     expect(cheaperStep).not.toContain("moved the other way");
@@ -1381,10 +1416,14 @@ describe("aicharts benchmark notes", () => {
       expect(markup).toContain(pointsPhrase(step.pointsBelow));
       expect(markup).toContain(formatCostPercent(step.costMultiple));
     }
-    expect(coding.effortLadder.map(step => step.record.setting))
-      .toEqual(["low", "medium", "high", "xhigh", "max"]);
-    expect(markdown).toContain(`What each of the ${spellCount(coding.effortLadder.length)} Claude Code settings buys`);
-    expect(markdown).toContain(`One model, ${spellCount(coding.effortLadder.length)} settings in one harness`);
+    expect(coding.effortLadder.length).toBeGreaterThan(0);
+    if (coding.effortLadder.length >= 2) {
+      expect(markdown).toContain(`What each of the ${spellCount(coding.effortLadder.length)} Claude Code settings buys`);
+      expect(markdown).toContain(`One model, ${spellCount(coding.effortLadder.length)} settings in one harness`);
+    } else {
+      expect(markdown).toContain("The Claude Code settings the snapshot stores");
+      expect(markdown).toContain("One model inside one harness, scored on three benchmarks");
+    }
     for (const step of coding.effortLadder) {
       expect(markup).toContain(step.record.setting);
       expect(markup).toContain(formatSnapshotScore(step.record.benchmarks.aaIndex));
@@ -1397,7 +1436,9 @@ describe("aicharts benchmark notes", () => {
     if (lastStep?.costMultipleOverCheaper !== null && lastStep?.costMultipleOverCheaper !== undefined) {
       expect(markdown).toContain(formatCostMultiple(lastStep.costMultipleOverCheaper));
     }
-    expect(coding.onCostFrontier).toBeTrue();
+    expect(coding.onCostFrontier).toBe(
+      aaIndexCostFrontier(codingParsed.value.records).some(point => point.record.id === coding.record.id),
+    );
     for (const step of coding.frontierBelow) {
       expect(markup).toContain(step.record.seriesLabel);
       expect(markup).toContain(formatSnapshotScore(step.record.benchmarks.aaIndex));
@@ -1405,7 +1446,7 @@ describe("aicharts benchmark notes", () => {
       expect(markup).toContain(formatCostPercent(step.costMultiple));
     }
     const [firstStep] = coding.frontierBelow;
-    if (firstStep !== undefined) {
+    if (firstStep !== undefined && coding.onCostFrontier) {
       expect(article.dek).toContain(`gives up ${pointsPhrase(firstStep.pointsBelow)} for ${formatCostPercent(firstStep.costMultiple)} of the cost`);
       expect(markdown).toContain(`The first step down is ${firstStep.record.seriesLabel} (${firstStep.record.setting})`);
       if (firstStep.record.agent === "Claude Code" && firstStep.record.model === "Opus 5.5") {
@@ -1549,7 +1590,7 @@ describe("aicharts benchmark notes", () => {
         ? "One configuration scores higher: Twin Harness · Twin (max)"
         : "score higher",
     );
-    expect(demotedMarkdown).toContain("is not on it: one configuration costs the same or less per task and scores at least as high");
+    expect(demotedMarkdown).toMatch(/is not on it: (?:one configuration|\S+ configurations) cost/u);
     const demotedRank = `${spellOrdinal(demotedPlacement.rank).replace(/^\w/u, letter => letter.toUpperCase())} of ${demotedPlacement.indexedCount} configurations`;
     expect(demotedMarkdown).toContain(
       demotedPlacement.costRank === 1
@@ -1576,7 +1617,12 @@ describe("aicharts benchmark notes", () => {
     expect(outspent).toContain(`## ${outspentRank}`);
     expect(outspent).not.toContain("at the chart’s highest cost");
     expect(outspent).toContain(`is the ${spellOrdinal(outspentPlacement.costRank)} highest cost of the ${outspentPlacement.costedCount} configurations that carry a cost`);
-    expect(outspent).toContain("## DeepSWE v1.1 is the component it does not lead");
+    const outspentTrailed = outspentPlacement.componentContrasts.filter(contrast => contrast.gapPoints < 0);
+    if (outspentTrailed.length === 1 && outspentTrailed[0] !== undefined) {
+      expect(outspent).toContain("is the component it does not lead");
+    } else {
+      expect(outspent).toMatch(/## (?:Where the index points come from|.+ carr(?:ies|y) the lead)/u);
+    }
     expect(outspent).not.toContain("0.0 points");
 
     const tyingOther = {
@@ -1601,7 +1647,7 @@ describe("aicharts benchmark notes", () => {
     }, intelligenceSnapshot));
     expect(twoHarnesses).toContain("Cursor · Sonnet 5.5 (max)");
     expect(twoHarnesses).toContain("Claude Code · Sonnet 5.5 (max)");
-    expect(twoHarnesses).toContain("six configurations running Claude Sonnet 5.5");
+    expect(twoHarnesses).toContain("configurations running Claude Sonnet 5.5");
 
     const laterRetrieval = createSonnet55CodingArticle({
       ...codingSnapshot,
@@ -1759,14 +1805,16 @@ describe("aicharts benchmark notes", () => {
     }
 
     const opus5 = opus5CodingAgentPlacement(codingParsed.value.records);
-    expect(opus5).toBeDefined();
-    if (opus5 === undefined) return;
-    expect(markup).toContain(formatSnapshotScore(opus5.record.benchmarks.aaIndex));
-    expect(markup).toContain(formatSnapshotCostUsd(opus5.record.economics.costUsd));
     expect(markdown).toContain("stores one configuration that runs Claude Opus 5.5: Claude Code · Opus 5.5 (max)");
-    expect(markdown).toContain("It also stores the previous generation, Claude Code · Opus 5 (max)");
     expect(markdown).not.toContain("no row runs Claude Opus 5.5 in any harness");
     expect(markdown).not.toContain("inside Claude Code, Cursor, or another harness is a configuration the coding-agent snapshot does not store");
+    if (opus5 === undefined) {
+      expect(markdown).toContain("It stores no Claude Code · Opus 5 row.");
+      return;
+    }
+    expect(markup).toContain(formatSnapshotScore(opus5.record.benchmarks.aaIndex));
+    expect(markup).toContain(formatSnapshotCostUsd(opus5.record.economics.costUsd));
+    expect(markdown).toContain("It also stores the previous generation, Claude Code · Opus 5 (max)");
     expect(markdown).toContain("and of Claude Code · Opus 5.5 (max) and Claude Code · Opus 5 (max) under DeepSWE v1.1, Terminal-Bench 4, and SWE-Atlas-QnA");
     expect(markdown).toContain("| Coding agents (AA Index) | Claude Code · Opus 5 (max) | Claude Opus 5 |");
   });
@@ -1845,7 +1893,14 @@ describe("aicharts benchmark notes", () => {
     if (liveOpus55 === undefined) throw new Error("Checked snapshot must store the Claude Code · Opus 5.5 row.");
     const withCodingRow = articleToMarkdown(createOpus55Article(intelligenceSnapshot, codingSnapshot));
     expect(withCodingRow).toContain("stores one configuration that runs Claude Opus 5.5: Claude Code · Opus 5.5 (max)");
-    expect(withCodingRow).toContain("It also stores the previous generation, Claude Code · Opus 5 (max)");
+    const hasOpus5Coding = codingSnapshot.records.some(record => (
+      record.agent === "Claude Code" && record.model === "Opus 5"
+    ));
+    expect(withCodingRow).toContain(
+      hasOpus5Coding
+        ? "It also stores the previous generation, Claude Code · Opus 5 (max)"
+        : "It stores no Claude Code · Opus 5 row",
+    );
     expect(withCodingRow).not.toContain("no row runs Claude Opus 5.5 in any harness");
     const withTwoCodingRows = articleToMarkdown(createOpus55Article(intelligenceSnapshot, {
       ...codingSnapshot,
@@ -1909,7 +1964,7 @@ describe("aicharts benchmark notes", () => {
       expect(markup).toContain(`href="${BLOG_SOURCES[sourceId].url}"`);
     }
     expect(article.nextStep?.links.map(link => link.href))
-      .toEqual(["/coding", "/#intelligence-index", "/models/openai/gpt-6-sol/max"]);
+      .toEqual(["/coding", "/#intelligence-index", "/models/openai/gpt-6.1-sol/max"]);
     expect(article.relatedSlugs).toContain("grok-4-7-coding-agent-index");
     expect(article.relatedSlugs).toContain("gpt-6-1-sol-coding-agent-index");
     expect(markup).toContain(formatRetrievedAt(codingParsed.value.source.retrievedAt));

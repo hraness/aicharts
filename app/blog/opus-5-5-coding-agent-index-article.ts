@@ -414,19 +414,6 @@ function generationBlocks(
       ],
     ),
     paragraph(
-      "Anthropic’s ",
-      { href: BLOG_SOURCES.anthropicClaudeOpus55.url, text: "announcement" },
-      ` prices ${MODEL_NAME} at `,
-      CLAUDE_OPUS_55.anthropic.inputPrice,
-      " per million input tokens and ",
-      CLAUDE_OPUS_55.anthropic.outputPrice,
-      " per million output tokens, against ",
-      CLAUDE_OPUS_55.anthropic.opus5InputPrice,
-      " and ",
-      CLAUDE_OPUS_55.anthropic.opus5OutputPrice,
-      " for Opus 5, and opens with the claim that “",
-      CLAUDE_OPUS_55.anthropic.headlineClaim,
-      ".” ",
       costMultiple !== null && costMultiple > 1 && tokenMultiple !== null && tokenMultiple > 1
         ? `In this Claude Code comparison, mean task cost rose to ${formatCostMultiple(costMultiple)} as much and total tokens to ${formatCostMultiple(tokenMultiple)} as many. Task cost depends on token volume, the input/output mix, and caching as well as listed rates. Anthropic’s 40% figure is its running-cost claim; the quoted input and output prices alone fell by 20%. The separate workloads do not isolate why the measured task costs differ.`
         : costMultiple !== null && costMultiple <= 1
@@ -512,6 +499,21 @@ function intelligenceBlocks(
 function anthropicBlocks(placement: Opus55CodingAgentPlacement | undefined): BlogBlock[] {
   const measured = placement?.record.benchmarks.terminalBench ?? null;
   return [
+    paragraph(
+      "Anthropic’s ",
+      { href: BLOG_SOURCES.anthropicClaudeOpus55.url, text: "announcement" },
+      ` prices ${MODEL_NAME} at `,
+      CLAUDE_OPUS_55.anthropic.inputPrice,
+      " per million input tokens and ",
+      CLAUDE_OPUS_55.anthropic.outputPrice,
+      " per million output tokens, against ",
+      CLAUDE_OPUS_55.anthropic.opus5InputPrice,
+      " and ",
+      CLAUDE_OPUS_55.anthropic.opus5OutputPrice,
+      " for Opus 5, and opens with the claim that “",
+      CLAUDE_OPUS_55.anthropic.headlineClaim,
+      ".”",
+    ),
     paragraph(
       "Anthropic’s announcement reports its own Terminal-Bench 4.0 run at ",
       CLAUDE_OPUS_55.anthropic.vendorTerminalBench,

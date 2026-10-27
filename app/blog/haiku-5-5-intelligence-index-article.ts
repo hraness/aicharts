@@ -677,6 +677,11 @@ function codingBlocks(
         ["Configuration", `Coding agents (${SNAPSHOT_COLUMN_LABELS.aaIndex})`, "Cost per task"],
         haikuRows.map(codingRowCells),
       ),
+      paragraph(
+        "Anthropic’s announcement quotes Cognition saying that “",
+        CLAUDE_HAIKU_55.anthropic.sidekickClaim,
+        ".” A Haiku row on the coding-agent chart is the model inside a named harness; the rows above are those measurements, not a Devin Fusion score.",
+      ),
     );
   }
   return blocks;

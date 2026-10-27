@@ -6,9 +6,17 @@ import { CodingConfigurationsTable } from "@/components/coding-configurations-ta
 import codingAgentData from "@/data/coding-agents.json";
 import { parseCodingAgentSnapshot, type CodingAgentSnapshot } from "./coding-agent-data";
 import {
+  CODING_CONFIGURATION_COLUMNS,
   codingConfigurationRows,
   codingConfigurationsMarkdownTable,
 } from "./coding-configurations-table";
+
+const chartHomeStyles = await Bun.file(new URL("../styles/chart-home.css", import.meta.url)).text();
+
+function firstRule(selector: string): string {
+  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+  return chartHomeStyles.match(new RegExp(`${escaped}\\s*\\{(?<body>[^}]*)\\}`, "u"))?.groups?.body ?? "";
+}
 
 const parsed = parseCodingAgentSnapshot(codingAgentData);
 if (!parsed.ok) throw parsed.error;
@@ -32,9 +40,13 @@ function withMissingValues(): CodingAgentSnapshot {
 
 describe("coding configurations table", () => {
   test("shows a missing value as a labeled en dash, never as zero", () => {
+    const existingMissing = snapshot.records.reduce((count, record) => (
+      count + CODING_CONFIGURATION_COLUMNS.filter(column => column.value(record) === null).length
+    ), 0);
     const missing = withMissingValues();
     const html = renderToStaticMarkup(createElement(CodingConfigurationsTable, { snapshot: missing }));
-    expect(html.match(/<span aria-hidden="true">–<\/span><span class="sr-only">Not reported<\/span>/gu)).toHaveLength(5);
+    expect(html.match(/<span aria-hidden="true">–<\/span><span class="sr-only">Not reported<\/span>/gu))
+      .toHaveLength(existingMissing + 5);
     const markdown = codingConfigurationsMarkdownTable(missing.records);
     const lastRow = markdown.split("\n").at(-1)!;
     expect(lastRow).toContain("| – | – |");
@@ -48,6 +60,19 @@ describe("coding configurations table", () => {
     const present = scores.filter((value): value is number => value !== null);
     expect(present).toEqual([...present].sort((left, right) => right - left));
     expect(rows).toHaveLength(snapshot.records.length);
+  });
+
+  test("keeps the wide nowrap table inside its own horizontal scroll region", () => {
+    const section = firstRule(".coding-configurations");
+    const scroll = firstRule(".coding-configurations__scroll");
+    const cells = firstRule(".coding-configurations__table :is(th, td)");
+    expect(section).toContain("max-width: 100%");
+    expect(section).toContain("min-width: 0");
+    expect(scroll).toContain("contain: paint");
+    expect(scroll).toContain("max-width: 100%");
+    expect(scroll).toContain("min-width: 0");
+    expect(scroll).toContain("overflow-x: auto");
+    expect(cells).toContain("white-space: nowrap");
   });
 
   test("escapes backslashes and pipes so a cell cannot split its Markdown row", () => {

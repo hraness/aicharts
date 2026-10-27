@@ -49,7 +49,7 @@
 - Keep the current chart a static-data Next.js product with a checked snapshot and no runtime dependency on the upstream benchmark page.
 - Treat network, file, URL, and query-string values as `unknown` until an owned schema or predicate narrows them.
 - Prefer explicit `Result` values for recoverable domain failures and reserve throwing for invalid checked-in invariants.
-- Update `data/coding-agents.json` only through `bun run data:refresh`; preserve duplicate, retention, stable-key, metric-coverage, material-change, and bounded-history guards.
+- Update `data/coding-agents.json` only through `bun run data:refresh`; preserve duplicate, retention, stable-key, metric-coverage, material-change, and bounded-history guards. The 80% stable-key overlap rule stays the default. A reviewed `data/coding-agents-overlap-acknowledgement.json` may admit one below-threshold replacement only when its `fromRetrievedAt` matches the current snapshot and its removed/added stable keys match the incoming diff exactly.
 - Update the live pricing sections of `data/calculator-inputs.json` only through `bun run calculator:refresh`; curated hardware, plan, and subsidy sections change through reviewed edits with dated citations per `docs/calculator-data.md`.
 - Regenerate `lib/chart-colors.generated.ts` through the checked iWantHue script. Do not hand-edit generated files.
 - Keep pointer, keyboard, focus, and touch behavior equivalent. Preserve semantic landmarks, accessible names, visible focus, and responsive horizontal chart panning.

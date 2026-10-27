@@ -210,12 +210,23 @@ describe("Claude Haiku 5.5 Intelligence Index note", () => {
       expect(markdown).toContain(`at ${formatFineCostMultiple(lunaTop.costMultiple)} its cost`);
     }
 
-    // No coding-agent score is invented.
-    expect(haiku55CodingAgentRows(codingSnapshot.records)).toEqual([]);
-    expect(markdown).toContain("## No Haiku row on the coding-agent chart yet");
-    expect(markdown).toContain("no row runs Claude Haiku 5.5 in any harness, so this note has no coding-agent score for the model and does not estimate one");
-    expect(markdown).toContain("The coding-agent chart stores no Claude Haiku 5.5 row");
-    expect(markdown).not.toContain("| Coding agents (AA Index) |");
+    // Coding-agent scores come only from stored Haiku rows.
+    const haikuCodingRows = haiku55CodingAgentRows(codingSnapshot.records);
+    if (haikuCodingRows.length === 0) {
+      expect(markdown).toContain("## No Haiku row on the coding-agent chart yet");
+      expect(markdown).toContain("no row runs Claude Haiku 5.5 in any harness, so this note has no coding-agent score for the model and does not estimate one");
+      expect(markdown).toContain("The coding-agent chart stores no Claude Haiku 5.5 row");
+      expect(markdown).not.toContain("| Coding agents (AA Index) |");
+    } else {
+      expect(markdown).toContain("## Claude Haiku 5.5 on the coding-agent chart");
+      expect(markdown).toContain("scored on three coding benchmarks inside a harness rather than on the Intelligence Index");
+      expect(markdown).toContain("| Configuration | Coding agents (AA Index) | Cost per task |");
+      expect(markdown).not.toContain("No Haiku row on the coding-agent chart yet");
+      for (const row of haikuCodingRows) {
+        expect(markdown).toContain(row.seriesLabel);
+        expect(markdown).toContain(formatSnapshotScore(row.benchmarks.aaIndex));
+      }
+    }
 
     // The slug is public, has a complete record, and stays off the curated homepage modules.
     expect(PUBLIC_BLOG_SLUGS as readonly string[]).toContain(HAIKU_55_ARTICLE_SLUG);
@@ -323,6 +334,10 @@ describe("Claude Haiku 5.5 Intelligence Index note", () => {
 
     const [anthropicRow] = codingSnapshot.records.filter(record => record.providerId === "anthropic");
     if (anthropicRow === undefined) throw new Error("Checked coding snapshot must store an Anthropic row.");
+    const withoutHaikuCoding = {
+      ...codingSnapshot,
+      records: codingSnapshot.records.filter(record => !record.model.includes("Haiku 5.5")),
+    };
     const twin = {
       ...anthropicRow,
       id: "haiku-twin",
@@ -332,11 +347,11 @@ describe("Claude Haiku 5.5 Intelligence Index note", () => {
       setting: "max",
     };
     const withCodingRow = createHaiku55Article(intelligenceSnapshot, {
-      ...codingSnapshot,
-      records: [...codingSnapshot.records, twin],
+      ...withoutHaikuCoding,
+      records: [...withoutHaikuCoding.records, twin],
     });
     const withCodingRowMarkdown = articleToMarkdown(withCodingRow);
-    expect(haiku55CodingAgentRows([...codingSnapshot.records, twin]).map(row => row.id)).toEqual(["haiku-twin"]);
+    expect(haiku55CodingAgentRows([...withoutHaikuCoding.records, twin]).map(row => row.id)).toEqual(["haiku-twin"]);
     expect(withCodingRowMarkdown).toContain("## Claude Haiku 5.5 on the coding-agent chart");
     expect(withCodingRowMarkdown).toContain("stores one configuration that runs Claude Haiku 5.5");
     expect(withCodingRowMarkdown).toContain("| Configuration | Coding agents (AA Index) | Cost per task |");

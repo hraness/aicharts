@@ -383,10 +383,10 @@ describe("public model cards", () => {
 
   test.each([
     ["anthropic/claude-opus-5.5", "/models/anthropic/claude-opus-5.5/max", "Claude Code"],
-    ["openai/gpt-6-sol", "/models/openai/gpt-6-sol/max", "Codex"],
+    ["openai/gpt-6-astra", "/models/openai/gpt-6-astra/max", "Codex"],
     ["openai/gpt-6-luna", "/models/openai/gpt-6-luna/max", "Codex"],
     ["spacexai/grok-4.7", "/models/spacexai/grok-4.7/xhigh", "Grok Build"],
-    ["spacexai/grok-4.6", "/models/spacexai/grok-4.6/xhigh", "Grok Build"],
+    ["moonshotai/kimi-k3", "/models/moonshotai/kimi-k3/default", "Kimi Code CLI"],
     ["zai/glm-5.3", "/models/zai/glm-5.3/default", "Opencode"],
   ] as const)("publishes %s on one indexable page with its Index score and coding-agent results", async (
     canonicalModelId,

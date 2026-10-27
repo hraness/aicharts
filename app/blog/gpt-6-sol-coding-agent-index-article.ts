@@ -705,13 +705,13 @@ export function createGpt6SolArticle(
       "aa-index-cost-coding-agents",
     ],
     nextStep: {
-      title: "See where GPT-6 Sol sits today",
+      title: "See the current Sol row",
       description:
-        "Both charts redraw from each day’s snapshot, so the rank and frontier position above can move. The model page lists every GPT-6 Sol row the site holds.",
+        "The live coding-agent chart no longer includes GPT-6 Sol. Codex · GPT-6.1 Sol is the remaining Sol configuration on that chart.",
       links: [
         { href: "/coding", label: "Coding-agent chart" },
         { href: "/#intelligence-index", label: "Capability and cost chart" },
-        { href: "/models/openai/gpt-6-sol/max", label: "GPT-6 Sol model page" },
+        { href: "/models/openai/gpt-6.1-sol/max", label: "GPT-6.1 Sol model page" },
       ],
     },
     body: [

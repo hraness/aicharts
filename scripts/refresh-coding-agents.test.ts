@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import overlapAcknowledgementData from "../data/coding-agents-overlap-acknowledgement.json";
 import { assertProperty, fc } from "../lib/property-test";
 import {
   codingAgentCreatorName,
@@ -6,8 +7,12 @@ import {
   extractSourceRows,
   mergeSnapshotUpdates,
   normalizeSourceRows,
+  overlapAcknowledgementMatches,
+  parseOverlapAcknowledgement,
   reconcileSnapshotSeriesIds,
+  snapshotStableKeyDiff,
   validateSnapshotUpdate,
+  type CodingAgentOverlapAcknowledgement,
   type SourceRow,
 } from "./refresh-coding-agents";
 
@@ -278,6 +283,139 @@ describe("Artificial Analysis Flight extraction", () => {
     if (!replacedResult.ok) expect(replacedResult.error.message).toContain("stable series/setting keys");
   });
 
+  test("admits a reviewed below-threshold cohort replacement only when the acknowledgement matches exactly", () => {
+    const previous = normalizedSnapshot(10);
+    const candidate = normalizedSnapshot(10);
+    candidate.source = { ...candidate.source, retrievedAt: "2026-07-18T16:29:07.106Z" };
+    candidate.records = candidate.records.map((record, index) => (
+      index < 5
+        ? record
+        : { ...record, model: `Replacement ${index}`, seriesId: `replacement-${index}` }
+    ));
+
+    const diff = snapshotStableKeyDiff(previous, candidate);
+    expect(diff.retained).toBe(5);
+    expect(diff.removed).toHaveLength(5);
+    expect(diff.added).toHaveLength(5);
+
+    const acknowledgement: CodingAgentOverlapAcknowledgement = {
+      schemaVersion: 1,
+      id: "test-half-cohort",
+      fromRetrievedAt: previous.source.retrievedAt,
+      removed: diff.removed,
+      added: diff.added,
+    };
+    expect(overlapAcknowledgementMatches(previous, diff, acknowledgement)).toBeTrue();
+    expect(validateSnapshotUpdate(previous, candidate, acknowledgement)).toEqual({
+      ok: true,
+      value: undefined,
+    });
+
+    const wrongClock = { ...acknowledgement, fromRetrievedAt: candidate.source.retrievedAt };
+    expect(validateSnapshotUpdate(previous, candidate, wrongClock).ok).toBeFalse();
+
+    const extraRemoved = {
+      ...acknowledgement,
+      removed: [...acknowledgement.removed, "[\"series-ghost\",\"default\"]"],
+    };
+    const extraResult = validateSnapshotUpdate(previous, candidate, extraRemoved);
+    expect(extraResult.ok).toBeFalse();
+    if (!extraResult.ok) {
+      expect(extraResult.error.message).toContain("does not match this removed/added key set");
+    }
+
+    const swapped = {
+      ...acknowledgement,
+      added: acknowledgement.removed,
+      removed: acknowledgement.added,
+    };
+    expect(validateSnapshotUpdate(previous, candidate, swapped).ok).toBeFalse();
+    expect(validateSnapshotUpdate(previous, candidate).ok).toBeFalse();
+  });
+
+  test("does not let an exact acknowledgement waive row-count, coverage, or duplicate guards", () => {
+    const previous = normalizedSnapshot(10);
+    const truncated = {
+      ...normalizedSnapshot(7),
+      source: previous.source,
+    };
+    const truncatedDiff = snapshotStableKeyDiff(previous, truncated);
+    expect(validateSnapshotUpdate(previous, truncated, {
+      schemaVersion: 1,
+      id: "test-row-count",
+      fromRetrievedAt: previous.source.retrievedAt,
+      removed: truncatedDiff.removed,
+      added: truncatedDiff.added,
+    }).ok).toBeFalse();
+
+    const sparse = normalizedSnapshot(10);
+    sparse.records = sparse.records.map((record, index) => (
+      index >= 3
+        ? record
+        : { ...record, benchmarks: { ...record.benchmarks, deepSwe: null } }
+    ));
+    const sparseDiff = snapshotStableKeyDiff(previous, sparse);
+    const sparseResult = validateSnapshotUpdate(previous, sparse, {
+      schemaVersion: 1,
+      id: "test-coverage",
+      fromRetrievedAt: previous.source.retrievedAt,
+      removed: sparseDiff.removed,
+      added: sparseDiff.added,
+    });
+    expect(sparseResult.ok).toBeFalse();
+    if (!sparseResult.ok) expect(sparseResult.error.message).toContain("deepSwe coverage");
+
+    const duplicate = normalizedSnapshot(10);
+    const first = duplicate.records[0];
+    const second = duplicate.records[1];
+    expect(first).toBeDefined();
+    expect(second).toBeDefined();
+    if (first === undefined || second === undefined) return;
+    duplicate.records[1] = { ...second, seriesId: first.seriesId, setting: first.setting };
+    expect(validateSnapshotUpdate(previous, duplicate, {
+      schemaVersion: 1,
+      id: "test-duplicate",
+      fromRetrievedAt: previous.source.retrievedAt,
+      removed: [],
+      added: [],
+    }).ok).toBeFalse();
+  });
+
+  test("parses the committed overlap acknowledgement as a reviewed stable-key contract", () => {
+    const parsed = parseOverlapAcknowledgement(overlapAcknowledgementData);
+    expect(parsed.ok).toBeTrue();
+    if (!parsed.ok) return;
+    expect(parsed.value.id).toBe("aa-2026-10-coding-agent-cohort");
+    expect(parsed.value.fromRetrievedAt).toBe("2026-10-05T14:10:36.287Z");
+    expect(parsed.value.removed).toHaveLength(16);
+    expect(parsed.value.added).toHaveLength(15);
+  });
+
+  test("rejects an acknowledgement file that is not an exact stable-key contract", () => {
+    expect(parseOverlapAcknowledgement({
+      schemaVersion: 1,
+      id: "bad-key",
+      fromRetrievedAt: "2026-07-17T16:29:07.106Z",
+      removed: ["not-a-stable-key"],
+      added: [],
+    }).ok).toBeFalse();
+    expect(parseOverlapAcknowledgement({
+      schemaVersion: 1,
+      id: "duplicate-key",
+      fromRetrievedAt: "2026-07-17T16:29:07.106Z",
+      removed: ["[\"series-0\",\"default\"]", "[\"series-0\",\"default\"]"],
+      added: [],
+    }).ok).toBeFalse();
+    expect(parseOverlapAcknowledgement({
+      schemaVersion: 1,
+      id: "extra-field",
+      fromRetrievedAt: "2026-07-17T16:29:07.106Z",
+      removed: [],
+      added: [],
+      note: "reviewed",
+    }).ok).toBeFalse();
+  });
+
   test("rejects an otherwise identical source snapshot with a regressed retrieval clock", () => {
     const previous = normalizedSnapshot(10);
     const candidate = normalizedSnapshot(10);
@@ -472,6 +610,41 @@ describe("Artificial Analysis Flight extraction", () => {
     candidate.source = { ...candidate.source, retrievedAt: "2026-07-18T16:29:07.106Z" };
 
     expect(mergeSnapshotUpdates(previous, candidate).updates).toEqual(previous.updates);
+  });
+
+  test("property: only the exact removed/added acknowledgement admits a below-threshold replacement", () => {
+    assertProperty(fc.property(
+      fc.integer({ min: 0, max: 4 }),
+      fc.integer({ min: 0, max: 4 }),
+      (removedMutation, addedMutation) => {
+        const previous = normalizedSnapshot(10);
+        const candidate = normalizedSnapshot(10);
+        candidate.source = { ...candidate.source, retrievedAt: "2026-07-18T16:29:07.106Z" };
+        candidate.records = candidate.records.map((record, index) => (
+          index < 5
+            ? record
+            : { ...record, model: `Replacement ${index}`, seriesId: `replacement-${index}` }
+        ));
+        const diff = snapshotStableKeyDiff(previous, candidate);
+        const acknowledgement: CodingAgentOverlapAcknowledgement = {
+          schemaVersion: 1,
+          id: "property-half-cohort",
+          fromRetrievedAt: previous.source.retrievedAt,
+          removed: removedMutation === 0
+            ? diff.removed
+            : diff.removed.map((key, index) => (
+              index === removedMutation - 1 ? "[\"mutated-removed\",\"default\"]" : key
+            )),
+          added: addedMutation === 0
+            ? diff.added
+            : diff.added.map((key, index) => (
+              index === addedMutation - 1 ? "[\"mutated-added\",\"default\"]" : key
+            )),
+        };
+        const accepted = validateSnapshotUpdate(previous, candidate, acknowledgement);
+        expect(accepted.ok).toBe(removedMutation === 0 && addedMutation === 0);
+      },
+    ));
   });
 
   test("property: upstream row-id churn and ordering never fabricate model updates", () => {

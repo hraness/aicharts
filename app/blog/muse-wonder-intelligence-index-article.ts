@@ -604,6 +604,7 @@ export function createMuseWonderArticle(
   );
   const intelligence = museWonderIntelligencePlacement(intelligenceSnapshot.records);
   const wonderCodingRows = museWonderCodingAgentRows(codingSnapshot.records);
+  const fullCodingRows = wonderCodingRows.filter(row => row.model.includes(FULL_MODEL_NAME));
   const indexVersion = intelligenceSnapshot.benchmark.version;
   const weights = intelligenceSnapshot.benchmark.categoryWeightsPercent;
   const evaluations = intelligenceSnapshot.benchmark.evaluations;
@@ -727,8 +728,12 @@ export function createMuseWonderArticle(
       heading("Meta’s prices and its benchmark table"),
       ...metaBlocks(intelligence, intelligenceSnapshot.records),
       callout(
-        `${FULL_MODEL_NAME} is on no chart here`,
-        `Meta sells ${FULL_MODEL_NAME} only inside Muse Code subscriptions and publishes no per-token price for it. Artificial Analysis costs a row from API prices, so the model has no Intelligence Index row, and nothing in this note scores it. The ${MODEL_NAME} row is the API model, and every number above belongs to it alone.`,
+        fullCodingRows.length === 0
+          ? `${FULL_MODEL_NAME} is on no chart here`
+          : `${FULL_MODEL_NAME} has no Intelligence Index row`,
+        fullCodingRows.length === 0
+          ? `Meta sells ${FULL_MODEL_NAME} only inside Muse Code subscriptions and publishes no per-token price for it. Artificial Analysis costs a row from API prices, so the model has no Intelligence Index row, and nothing in this note scores it. The ${MODEL_NAME} row is the API model, and every number above belongs to it alone.`
+          : `Meta sells ${FULL_MODEL_NAME} only inside Muse Code subscriptions and publishes no per-token price for it. Artificial Analysis costs a row from API prices, so the model has no Intelligence Index row, and none of the Index figures above belong to it. The coding-agent chart stores ${pluralConfigurations(fullCodingRows.length)} for ${FULL_MODEL_NAME}; that score is a harness measurement, not an Index score. The ${MODEL_NAME} row is the API model, and every Index number above belongs to it alone.`,
       ),
       heading(wonderCodingRows.length === 0 ? `No ${MODEL_NAME} row on the coding-agent chart` : `${MODEL_NAME} on the coding-agent chart`),
       ...codingBlocks(wonderCodingRows, codingSnapshot.records, codingRetrievedAt),

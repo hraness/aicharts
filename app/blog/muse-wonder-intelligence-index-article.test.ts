@@ -84,7 +84,13 @@ describe("Muse Wonder Intelligence Index note", () => {
     expect(markdown).toContain("aicharts did not run Muse Wonder");
     expect(markdown).toContain("reports vendor-selected runs that this site does not chart");
     expect(markdown).toContain("a reader should quote the rank with its cohort");
-    expect(markdown).toContain("Muse Wonder Full is on no chart here");
+    const wonderCodingRows = museWonderCodingAgentRows(codingSnapshot.records);
+    const fullCodingRows = wonderCodingRows.filter(row => row.model.includes("Muse Wonder Full"));
+    expect(markdown).toContain(
+      fullCodingRows.length === 0
+        ? "Muse Wonder Full is on no chart here"
+        : "Muse Wonder Full has no Intelligence Index row",
+    );
     expect(markdown).toContain("is not derived here from a list price");
 
     // Every quotation is verbatim from the fetched primary pages.
@@ -225,13 +231,22 @@ describe("Muse Wonder Intelligence Index note", () => {
     expect(String(Math.round(record.intelligenceIndex))).toBe(MUSE_WONDER.meta.indexWonder);
     expect(markdown).toContain("Each rounds to the whole number in Meta’s row, so on the Intelligence Index line Meta’s table and this chart agree.");
 
-    // No coding-agent score is invented.
-    expect(museWonderCodingAgentRows(codingSnapshot.records)).toEqual([]);
-    expect(markdown).toContain("## No Muse Wonder row on the coding-agent chart");
-    expect(markdown).toContain("no row runs Muse Wonder in any harness, so this note has no coding-agent score for the model and does not estimate one");
-    expect(markdown).toContain("The coding-agent chart stores no Muse Wonder row");
-    expect(markdown).toContain("Muse Code · Muse Spark 1.3 (max) at ");
-    expect(markdown).not.toContain("| Coding agents (AA Index) |");
+    // Coding-agent scores come only from stored Muse Wonder rows.
+    if (wonderCodingRows.length === 0) {
+      expect(markdown).toContain("## No Muse Wonder row on the coding-agent chart");
+      expect(markdown).toContain("no row runs Muse Wonder in any harness, so this note has no coding-agent score for the model and does not estimate one");
+      expect(markdown).toContain("The coding-agent chart stores no Muse Wonder row");
+      expect(markdown).not.toContain("| Coding agents (AA Index) |");
+    } else {
+      expect(markdown).toContain("## Muse Wonder on the coding-agent chart");
+      expect(markdown).toContain("scored on three coding benchmarks inside a harness rather than on the Intelligence Index");
+      expect(markdown).toContain("| Configuration | Coding agents (AA Index) | Cost per task |");
+      expect(markdown).not.toContain("No Muse Wonder row on the coding-agent chart");
+      for (const row of wonderCodingRows) {
+        expect(markdown).toContain(row.seriesLabel);
+        expect(markdown).toContain(formatSnapshotScore(row.benchmarks.aaIndex));
+      }
+    }
 
     // The slug is public, has a complete record, and stays off the curated homepage modules.
     expect(PUBLIC_BLOG_SLUGS as readonly string[]).toContain(MUSE_WONDER_ARTICLE_SLUG);
@@ -338,6 +353,10 @@ describe("Muse Wonder Intelligence Index note", () => {
 
     const [metaRow] = codingSnapshot.records.filter(record => record.providerId === META_CREATOR_SLUG);
     if (metaRow === undefined) throw new Error("Checked coding snapshot must store a Meta row.");
+    const withoutWonderCoding = {
+      ...codingSnapshot,
+      records: codingSnapshot.records.filter(record => !record.model.includes("Muse Wonder")),
+    };
     const twin = {
       ...metaRow,
       id: "wonder-twin",
@@ -347,11 +366,11 @@ describe("Muse Wonder Intelligence Index note", () => {
       setting: "max",
     };
     const withCodingRow = createMuseWonderArticle(intelligenceSnapshot, {
-      ...codingSnapshot,
-      records: [...codingSnapshot.records, twin],
+      ...withoutWonderCoding,
+      records: [...withoutWonderCoding.records, twin],
     });
     const withCodingRowMarkdown = articleToMarkdown(withCodingRow);
-    expect(museWonderCodingAgentRows([...codingSnapshot.records, twin]).map(row => row.id)).toEqual(["wonder-twin"]);
+    expect(museWonderCodingAgentRows([...withoutWonderCoding.records, twin]).map(row => row.id)).toEqual(["wonder-twin"]);
     expect(withCodingRowMarkdown).toContain("## Muse Wonder on the coding-agent chart");
     expect(withCodingRowMarkdown).toContain("stores one configuration that runs Muse Wonder");
     expect(withCodingRowMarkdown).toContain("| Configuration | Coding agents (AA Index) | Cost per task |");

@@ -24,7 +24,7 @@ describe("delegated link classification", () => {
     const model = classifyAnalyticsLink({
       currentUrl,
       download: false,
-      href: "/models/openai/gpt-5.6-sol/max?campaign=private#card",
+      href: "/models/openai/gpt-6.1-sol/max?campaign=private#card",
       surface: "models_gallery",
     });
 
@@ -38,7 +38,7 @@ describe("delegated link classification", () => {
       },
     });
     expect(model?.properties).toEqual({
-      destination_id: "model-card:openai/gpt-5.6-sol/max",
+      destination_id: "model-card:openai/gpt-6.1-sol/max",
       destination_kind: "model_card",
       link_kind: "internal",
       surface: "models_gallery",
