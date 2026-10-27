@@ -3,7 +3,7 @@
   "source": {
     "method": "models-api",
     "name": "OpenRouter",
-    "retrievedAt": "2026-10-26T19:24:01.328Z",
+    "retrievedAt": "2026-10-27T05:14:31.917Z",
     "timestampMeaning": "source-added-at",
     "url": "https://openrouter.ai/api/v1/models?sort=newest"
   },
@@ -28,6 +28,12 @@
     "windowDays": 90
   },
   "observedListings": [
+    {
+      "id": "openai/gpt-6.1-terra-pro",
+      "model": "GPT-6.1 Terra Pro",
+      "providerId": "openai",
+      "sourceAddedAt": "2026-10-26T18:15:56.000Z"
+    },
     {
       "id": "openai/gpt-6.1-terra",
       "model": "GPT-6.1 Terra",
@@ -408,6 +414,27 @@
     }
   ],
   "releases": [
+    {
+      "capabilities": {
+        "inputModalities": [
+          "file",
+          "image",
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "openai/gpt-6.1-terra-pro-20261026",
+      "id": "openai/gpt-6.1-terra-pro",
+      "model": "GPT-6.1 Terra Pro",
+      "modelUrl": "https://openrouter.ai/openai/gpt-6.1-terra-pro",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceAddedAt": "2026-10-26T18:15:56.000Z",
+      "status": "awaiting-benchmark"
+    },
     {
       "capabilities": {
         "inputModalities": [
