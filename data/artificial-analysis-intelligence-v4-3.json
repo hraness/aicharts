@@ -1391,14 +1391,14 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.0463607089702163,
-        "cacheRead": 0.8360583303035378,
-        "cacheWrite": 0.5192588084150722,
-        "input": 1.358299832505546,
+        "answer": 0.046370679742943566,
+        "cacheRead": 0.8360854897243665,
+        "cacheWrite": 0.519283206401838,
+        "input": 1.3583513899131403,
         "nonCacheInput": 0.002982693786935434,
-        "output": 0.13034276426975255,
-        "reasoning": 0.08398205529953624,
-        "total": 1.4886425967752979
+        "output": 0.13036334154247983,
+        "reasoning": 0.08399266179953624,
+        "total": 1.4887147314556197
       },
       "creator": {
         "id": "4df238a9-d4fd-4cf2-ab1e-d12956c41f9b",
@@ -1411,9 +1411,9 @@
       "intelligenceIndex": 43.8973584978265,
       "name": "Ling 3.1 Flash 1019",
       "outputTokensPerTask": {
-        "answer": 51511.89885579588,
-        "reasoning": 93313.39477726251,
-        "total": 144825.29363305838
+        "answer": 51522.97749215951,
+        "reasoning": 93325.17977726251,
+        "total": 144848.15726942202
       },
       "release": {
         "name": "Ling 3.1 Flash 1019",
@@ -1423,9 +1423,9 @@
       "shortName": "Ling 3.1 Flash 1019",
       "slug": "ling-3-1-flash-1019",
       "weights": {
-        "license": null,
-        "open": false,
-        "sourceUrl": null
+        "license": "MIT",
+        "open": true,
+        "sourceUrl": "https://huggingface.co/inclusionAI/Ling-3.1-flash-1019"
       }
     },
     {
@@ -4113,45 +4113,6 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.00650784435958385,
-        "cacheRead": 0.02690775370973946,
-        "cacheWrite": 0.008506283978235912,
-        "input": 0.036627958416775415,
-        "nonCacheInput": 0.0012139207288000354,
-        "output": 0.035036190079511684,
-        "reasoning": 0.02852834571992782,
-        "total": 0.0716641484962871
-      },
-      "creator": {
-        "id": "512ef1e4-e02e-4532-a5f2-d11a40962498",
-        "name": "IBM",
-        "slug": "ibm"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/granite-4-2-30b",
-      "effort": null,
-      "id": "1071dea1-43e7-4fe9-b936-3034bb622b2e",
-      "intelligenceIndex": 12.68315341158,
-      "name": "Granite 4.2 30B",
-      "outputTokensPerTask": {
-        "answer": 10012.068245513614,
-        "reasoning": 43889.7626460428,
-        "total": 53901.83089155641
-      },
-      "release": {
-        "name": "Granite 4.2 30B",
-        "slug": "granite-4-2-30b"
-      },
-      "releaseDate": "2026-08-25",
-      "shortName": "Granite 4.2 30B",
-      "slug": "granite-4-2-30b",
-      "weights": {
-        "license": "Apache 2.0",
-        "open": true,
-        "sourceUrl": "https://huggingface.co/ibm-granite/granite-4.2-30b"
-      }
-    },
-    {
-      "costUsdPerTask": {
         "answer": 0.0004950911835168671,
         "cacheRead": 0.007237180032643276,
         "cacheWrite": 0.08342501735684668,
@@ -4884,8 +4845,8 @@
   ],
   "schemaVersion": 1,
   "selection": {
-    "measuredCompleteRecordCount": 119,
-    "positiveCostRecordCount": 114,
+    "measuredCompleteRecordCount": 118,
+    "positiveCostRecordCount": 113,
     "rule": "current, non-estimated model configurations with a finite 0–100 Intelligence Index, finite positive per-task output-token total, and a complete finite nonnegative per-task cost breakdown; source cost totals at or below zero normalize to null",
     "sourceRecordCount": 715
   },
@@ -4894,7 +4855,7 @@
     "method": "public-next-flight",
     "methodologyUrl": "https://artificialanalysis.ai/methodology/intelligence-benchmarking",
     "name": "Artificial Analysis",
-    "retrievedAt": "2026-10-27T06:55:01.119Z",
+    "retrievedAt": "2026-10-27T14:30:45.117Z",
     "sourceClass": "benchmark-publisher",
     "termsUrl": "https://artificialanalysis.ai/docs/legal/Terms-of-Use.pdf",
     "url": "https://artificialanalysis.ai/models"
