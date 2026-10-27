@@ -4,8 +4,9 @@ import { parseResult, z } from "./schema";
 
 const PROVIDER_IDS = [
   "ai2", "ai21", "alibaba_cloud", "amazon", "anthropic", "baidu", "bytedance", "cognition",
-  "cohere", "deepseek", "google", "ibm", "meta", "microsoft", "minimax", "mistral",
-  "moonshot_ai", "nvidia", "openai", "stepfun", "tencent", "xai", "xiaomi", "z_ai",
+  "cohere", "deepseek", "google", "ibm", "meta", "microsoft", "minimax", "mirendil", "mistral",
+  "moonshot_ai", "nvidia", "openai", "reflection", "stepfun", "tencent", "thinking_machines",
+  "xai", "xiaomi", "z_ai",
 ] as const;
 
 export type FirstPartyReleaseProviderId = (typeof PROVIDER_IDS)[number];
@@ -17,6 +18,7 @@ type SourceContract = Readonly<{
   format:
     | "html-cognition-blog-index"
     | "html-deepseek-updates"
+    | "html-mirendil-news-index"
     | "markdown-meta-index"
     | "markdown-minimax-releases"
     | "markdown-openai-catalog"
@@ -224,6 +226,24 @@ export const FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS = [
     minimumEntryCount: 75, providerId: "cognition", providerName: "Cognition",
     url: "https://cognition.com/blog",
   },
+  {
+    allowRelativeUrls: true, canonicalHost: "mirendil.com", datePolicy: "ignore",
+    format: "html-mirendil-news-index", id: "mirendil-news-index", minimumCandidateCount: 1,
+    minimumEntryCount: 4, providerId: "mirendil", providerName: "Mirendil",
+    url: "https://mirendil.com/news/",
+  },
+  {
+    allowRelativeUrls: false, canonicalHost: "reflection.ai", datePolicy: "all",
+    format: "sitemap-urlset", id: "reflection-sitemap", minimumCandidateCount: 1,
+    minimumEntryCount: 20, providerId: "reflection", providerName: "Reflection",
+    url: "https://reflection.ai/sitemap.xml",
+  },
+  {
+    allowRelativeUrls: false, canonicalHost: "thinkingmachines.ai", datePolicy: "candidates",
+    format: "sitemap-urlset", id: "thinking-machines-sitemap", minimumCandidateCount: 1,
+    minimumEntryCount: 20, providerId: "thinking_machines", providerName: "Thinking Machines",
+    url: "https://thinkingmachines.ai/sitemap.xml",
+  },
 ] as const satisfies readonly SourceContract[];
 
 /**
@@ -336,6 +356,7 @@ function sourceDefinitionForId(id: FirstPartyReleaseSourceId): FirstPartyRelease
 
 function sourceRootElement(definition: FirstPartyReleaseSourceDefinition) {
   if (definition.format === "html-cognition-blog-index") return "html-index" as const;
+  if (definition.format === "html-mirendil-news-index") return "html-index" as const;
   if (definition.format === "html-deepseek-updates") return "html-release-notes" as const;
   if (definition.format === "rss") return "rss" as const;
   if (definition.format === "sitemap-index") return "sitemapindex" as const;
@@ -765,6 +786,27 @@ function parseCognitionBlogIndex(definition: FirstPartyReleaseSourceDefinition, 
   return finalizedMarkdownEntries(definition, rawEntries, 0);
 }
 
+function parseMirendilNewsIndex(definition: FirstPartyReleaseSourceDefinition, html: string): Result<ParsedProviderSitemap, Error> {
+  if (!/^<!doctype html>/iu.test(html) || !/<html(?:\s|>)/iu.test(html) || !/<\/html>/iu.test(html)) {
+    return err(new Error(`${definition.id} is no longer an HTML document.`));
+  }
+  const anchors = [...html.matchAll(/<a\b[^>]*\bhref="([^"]*)"/gu)];
+  if (anchors.length === 0) return err(new Error(`${definition.id} contains no links.`));
+  const rawEntries: SitemapEntry[] = [];
+  for (const anchor of anchors) {
+    const href = anchor[1];
+    if (href === undefined) return err(new Error(`${definition.id} contains an empty link target.`));
+    const slug = decodeXmlText(href).match(/^(?:https:\/\/mirendil\.com)?\/news\/([a-z0-9-]+)\/?$/u)?.[1];
+    if (slug === undefined) continue;
+    rawEntries.push({
+      candidateDateMeaning: "first-observed",
+      lastModifiedAt: null,
+      url: `https://${definition.canonicalHost}/news/${slug}/`,
+    });
+  }
+  return finalizedMarkdownEntries(definition, rawEntries, 0);
+}
+
 function stableFragment(value: string): string {
   return value.normalize("NFKD").toLowerCase().replace(/[^a-z0-9]+/gu, "-").replace(/^-+|-+$/gu, "").slice(0, 120);
 }
@@ -1009,6 +1051,7 @@ function parseXaiReleases(definition: FirstPartyReleaseSourceDefinition, markdow
 /** Parses the strict provider-owned source subset used by the discovery ledger. */
 export function parseProviderSitemap(definition: FirstPartyReleaseSourceDefinition, source: string): Result<ParsedProviderSitemap, Error> {
   if (definition.format === "html-cognition-blog-index") return parseCognitionBlogIndex(definition, source);
+  if (definition.format === "html-mirendil-news-index") return parseMirendilNewsIndex(definition, source);
   if (definition.format === "html-deepseek-updates") return parseDeepSeekUpdates(definition, source);
   if (definition.format === "rss") return parseRss(definition, source);
   if (definition.format === "markdown-openai-catalog") return parseOpenAiCatalog(definition, source);
@@ -1423,6 +1466,27 @@ function xiaomiModels(url: URL): string[] {
   return slug === undefined ? [] : [`MiMo ${displaySlug(slug).replace(/^V(?=\d)/u, "v")}`];
 }
 
+function mirendilModels(url: URL): string[] {
+  const slug = url.pathname.match(/^\/news\/([^/]+)\/?$/u)?.[1]?.toLowerCase();
+  return slug === "introducing-fern" ? ["Fern"] : [];
+}
+
+function reflectionModels(url: URL): string[] {
+  const blog = url.pathname.match(/^\/blog\/([^/]+)\/?$/u)?.[1]?.toLowerCase();
+  if (blog === "introducing-beam") return ["Beam"];
+  return url.pathname.replace(/\/$/u, "") === "/beam-model-card" ? ["Beam"] : [];
+}
+
+function thinkingMachinesModels(url: URL): string[] {
+  const news = url.pathname.match(/^\/news\/([^/]+)\/?$/u)?.[1]?.toLowerCase();
+  if (news === "introducing-inkling") return ["Inkling"];
+  if (news === "inkling-small") return ["Inkling Small"];
+  const card = url.pathname.match(/^\/model-card\/([^/]+)\/?$/u)?.[1]?.toLowerCase();
+  if (card === "inkling") return ["Inkling"];
+  if (card === "inkling-small") return ["Inkling Small"];
+  return [];
+}
+
 function stepfunModels(url: URL): string[] {
   const slug = url.pathname.match(/^\/docs\/(?:en|zh)\/guides\/models\/([^/]+)\/?$/u)?.[1]?.toLowerCase();
   if (
@@ -1465,9 +1529,11 @@ const providerModelExtractors = {
   alibaba_cloud: qwenModels, amazon: amazonModels, anthropic: anthropicModels, baidu: baiduModels,
   bytedance: bytedanceModels, cognition: cognitionModels, cohere: cohereModels,
   deepseek: deepSeekModels, google: googleModels,
-  ibm: ibmModels, meta: metaModels, microsoft: microsoftModels, minimax: minimaxModels, mistral: mistralModels,
-  moonshot_ai: kimiModels, nvidia: nvidiaModels, openai: openAiModels, stepfun: stepfunModels,
-  tencent: tencentModels,
+  ibm: ibmModels, meta: metaModels, microsoft: microsoftModels, minimax: minimaxModels,
+  mirendil: mirendilModels, mistral: mistralModels,
+  moonshot_ai: kimiModels, nvidia: nvidiaModels, openai: openAiModels, reflection: reflectionModels,
+  stepfun: stepfunModels,
+  tencent: tencentModels, thinking_machines: thinkingMachinesModels,
   xai: xaiModels, xiaomi: xiaomiModels, z_ai: zaiModels,
 } satisfies Readonly<Record<FirstPartyReleaseProviderId, (url: URL) => string[]>>;
 
@@ -1635,6 +1701,27 @@ function unresolvedAnnouncementNameForSource(
       return blogSlug !== null && /^swe-/u.test(blogSlug) && /\d/u.test(blogSlug)
         && !cognitionNonModelSwePattern.test(blogSlug)
         ? unresolvedName(blogSlug)
+        : null;
+    }
+    case "mirendil-news-index": {
+      const newsSlug = url.pathname.match(/^\/news\/([^/]+)\/?$/u)?.[1];
+      return newsSlug !== undefined && /\d/u.test(newsSlug)
+        && /^(?:announcing|introducing)-/u.test(newsSlug)
+        ? unresolvedName(newsSlug)
+        : null;
+    }
+    case "reflection-sitemap": {
+      const blogSlug = url.pathname.match(/^\/blog\/([^/]+)\/?$/u)?.[1];
+      return blogSlug !== undefined && /\d/u.test(blogSlug)
+        && /^(?:announcing|introducing)-/u.test(blogSlug)
+        ? unresolvedName(blogSlug)
+        : null;
+    }
+    case "thinking-machines-sitemap": {
+      const newsSlug = url.pathname.match(/^\/news\/([^/]+)\/?$/u)?.[1];
+      return newsSlug !== undefined && /\d/u.test(newsSlug)
+        && /^(?:announcing|introducing)-/u.test(newsSlug)
+        ? unresolvedName(newsSlug)
         : null;
     }
   }

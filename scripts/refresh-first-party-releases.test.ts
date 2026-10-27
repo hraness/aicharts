@@ -316,6 +316,17 @@ function metaNewsroomMarkdown(): string {
   ].join("\n");
 }
 
+function mirendilNewsIndexHtml(): string {
+  return [
+    "<!DOCTYPE html><html><body><main>",
+    '<a class="job" href="/news/introducing-fern/"><span class="job__title">Introducing Fern</span></a>',
+    '<a class="job" href="/news/pretraining-at-scale-without-a-pretraining-team/"><span>Pretraining</span></a>',
+    '<a class="job" href="/news/scaling-self-accelerating-ai-with-google/"><span>Scaling</span></a>',
+    '<a class="job" href="/news/announcing-mirendil/"><span>Announcing Mirendil</span></a>',
+    "</main></body></html>",
+  ].join("\n");
+}
+
 function cognitionBlogIndexHtml(): string {
   const definition = sourceDefinition("cognition-blog-index");
   const posts = [
@@ -503,6 +514,23 @@ function fixtureFor(definition: FirstPartyReleaseSourceDefinition): SourceFixtur
       contentType: "text/html",
       text: cognitionBlogIndexHtml(),
     };
+    case "mirendil-news-index": return {
+      contentType: "text/html",
+      text: mirendilNewsIndexHtml(),
+    };
+    case "reflection-sitemap": return {
+      contentType: "application/xml",
+      text: standardSitemapFixture(definition, [
+        "https://reflection.ai/blog/introducing-beam",
+      ]),
+    };
+    case "thinking-machines-sitemap": return {
+      contentType: "application/xml",
+      text: standardSitemapFixture(definition, [
+        "https://thinkingmachines.ai/news/introducing-inkling/",
+        "https://thinkingmachines.ai/news/inkling-small/",
+      ]),
+    };
   }
 }
 
@@ -543,9 +571,9 @@ function configuredObservations(): readonly FirstPartyReleaseSourceObservation[]
 
 describe("first-party release URL recognition", () => {
   test("keeps the tracked lab registry broad and its legacy source prefix stable", () => {
-    expect(FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS).toHaveLength(30);
+    expect(FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS).toHaveLength(33);
     expect(new Set(FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS.map(source => source.providerId)).size)
-      .toBe(24);
+      .toBe(27);
     expect(FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS.slice(0, 3).map(source => source.id)).toEqual([
       "anthropic-sitemap",
       "openai-release-sitemap",
@@ -594,6 +622,21 @@ describe("first-party release URL recognition", () => {
         expectedIdentity: /^SWE-1\.7$/u,
         providerId: "cognition",
         url: "https://cognition.com/blog/swe-1-7",
+      },
+      {
+        expectedIdentity: /^Fern$/u,
+        providerId: "mirendil",
+        url: "https://mirendil.com/news/introducing-fern/",
+      },
+      {
+        expectedIdentity: /^Beam$/u,
+        providerId: "reflection",
+        url: "https://reflection.ai/blog/introducing-beam",
+      },
+      {
+        expectedIdentity: /^Inkling$/u,
+        providerId: "thinking_machines",
+        url: "https://thinkingmachines.ai/news/introducing-inkling/",
       },
       {
         expectedIdentity: /Command A Vision/u,
@@ -751,6 +794,22 @@ describe("first-party release URL recognition", () => {
       "stepfun",
       "https://platform.stepfun.com/docs/zh/guides/models/stepaudio-3.1-asr",
     )).toEqual(["StepAudio 3.1 ASR"]);
+    expect(namedModelsForProviderUrl(
+      "mirendil",
+      "https://mirendil.com/news/introducing-fern/",
+    )).toEqual(["Fern"]);
+    expect(namedModelsForProviderUrl(
+      "reflection",
+      "https://reflection.ai/blog/introducing-beam",
+    )).toEqual(["Beam"]);
+    expect(namedModelsForProviderUrl(
+      "thinking_machines",
+      "https://thinkingmachines.ai/news/introducing-inkling/",
+    )).toEqual(["Inkling"]);
+    expect(namedModelsForProviderUrl(
+      "thinking_machines",
+      "https://thinkingmachines.ai/news/inkling-small/",
+    )).toEqual(["Inkling Small"]);
   });
 
   test("uses reviewed exact identities for irregular Anthropic model-release routes", () => {
@@ -957,9 +1016,12 @@ describe("first-party release URL recognition", () => {
       ["xai-release-notes", "https://docs.x.ai/developers/release-notes#aurora-1-is-live"],
       ["xiaomi-mimo-sitemap", "https://mimo.mi.com/docs/en-US/news/latest/aurora-1-release"],
       ["zai-release-notes", "https://docs.z.ai/release-notes/new-released#2026-09-03-aurora-1"],
+      ["mirendil-news-index", "https://mirendil.com/news/introducing-aurora-1/"],
+      ["reflection-sitemap", "https://reflection.ai/blog/introducing-aurora-1"],
+      ["thinking-machines-sitemap", "https://thinkingmachines.ai/news/introducing-aurora-1/"],
     ] as const;
 
-    expect(new Set(cases.map(([sourceId]) => sourceDefinition(sourceId).providerId)).size).toBe(24);
+    expect(new Set(cases.map(([sourceId]) => sourceDefinition(sourceId).providerId)).size).toBe(27);
     for (const [sourceId, url] of cases) {
       expect(releaseCandidateNamesForSourceUrl(sourceId, url), `${sourceId} silently dropped ${url}`)
         .toHaveLength(1);
@@ -1035,6 +1097,12 @@ describe("first-party release URL recognition", () => {
       ["stepfun-china-model-sitemap", "https://platform.stepfun.com/docs/zh/guides/models/overview"],
       ["amazon-nova-rss", "https://aws.amazon.com/blogs/aws/aws-weekly-review-amazon-nova-sonic-and-more/"],
       ["xai-release-notes", "https://docs.x.ai/developers/release-notes#agent-tools-adapt-to-grok-4-1-fast-models-and-tool-prices-dropped"],
+      ["mirendil-news-index", "https://mirendil.com/news/announcing-mirendil/"],
+      ["mirendil-news-index", "https://mirendil.com/news/pretraining-at-scale-without-a-pretraining-team/"],
+      ["reflection-sitemap", "https://reflection.ai/about"],
+      ["reflection-sitemap", "https://reflection.ai/blog/building-frontier-open-intelligencence"],
+      ["thinking-machines-sitemap", "https://thinkingmachines.ai/news/announcing-tinker/"],
+      ["thinking-machines-sitemap", "https://thinkingmachines.ai/blog/lora/"],
     ] as const;
     for (const [sourceId, url] of nonReleaseUrls) {
       expect(releaseCandidateNamesForSourceUrl(sourceId, url), `${url} should stay outside the release queue`)

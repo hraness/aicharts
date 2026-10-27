@@ -78,6 +78,16 @@ const costUsdPerTaskSchema = z.object({
   total: z.number().finite().positive(),
 }).strict();
 
+/**
+ * Artificial Analysis `isOpenWeights` / `licenseName` / `modelWeightsSourceUrl`.
+ * Optional until a refresh writes it onto a committed snapshot.
+ */
+export const artificialAnalysisWeightsSchema = z.object({
+  license: z.string().min(1).nullable(),
+  open: z.boolean(),
+  sourceUrl: credentialFreeHttpsUrlSchema.nullable(),
+}).strict();
+
 export const artificialAnalysisIntelligenceRecordSchema = z.object({
   costUsdPerTask: costUsdPerTaskSchema.nullable(),
   creator: creatorSchema,
@@ -95,6 +105,7 @@ export const artificialAnalysisIntelligenceRecordSchema = z.object({
   releaseDate: isoCalendarDateSchema,
   shortName: z.string().min(1),
   slug: semanticSlugSchema,
+  weights: artificialAnalysisWeightsSchema.optional(),
 }).strict().superRefine((record, context) => {
   if (!approximatelyEqual(
     record.outputTokensPerTask.answer + record.outputTokensPerTask.reasoning,

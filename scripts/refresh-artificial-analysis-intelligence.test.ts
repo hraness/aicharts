@@ -72,6 +72,11 @@ function sourceModel(index: number): Record<string, unknown> {
     },
     intelligenceIndexIsEstimated: false,
     intelligenceIndexOutputTokensPerTask: { answer: 10, output: 30, reasoning: 20 },
+    isOpenWeights: index % 3 === 0,
+    licenseName: index % 3 === 0 ? "Apache-2.0" : null,
+    modelWeightsSourceUrl: index % 3 === 0
+      ? "https://huggingface.co/example/model"
+      : null,
     name: `Example Model ${index}`,
     release: { name: `Example Release ${index}`, slug: `example-release-${index}` },
     releaseDate: "2026-09-01",
@@ -246,6 +251,14 @@ describe("Artificial Analysis Intelligence refresh", () => {
     });
     expect(snapshot.records.find(record => record.slug === "example-model-0")?.costUsdPerTask)
       .toBeNull();
+    expect(snapshot.records.find(record => record.slug === "example-model-0")?.weights)
+      .toEqual({
+        license: "Apache-2.0",
+        open: true,
+        sourceUrl: "https://huggingface.co/example/model",
+      });
+    expect(snapshot.records.find(record => record.slug === "example-model-1")?.weights)
+      .toEqual({ license: null, open: false, sourceUrl: null });
   });
 
   test("rejects inconsistent component sums and duplicate retained ids", () => {

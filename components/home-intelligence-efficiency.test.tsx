@@ -359,6 +359,7 @@ describe("homepage Intelligence efficiency view", () => {
       outputTokensPerTask: item.outputTokensPerTask.total,
       releaseDate: item.releaseDate,
       slug: item.slug,
+      weights: null,
     }));
     const mobile = projectIntelligenceExplorerGeometry(
       chartData,

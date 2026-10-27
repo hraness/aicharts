@@ -10,11 +10,16 @@ export const MODEL_RELEASE_LIMIT = 48 as const;
 export const modelReleaseProviderIds = [
   "alibaba_cloud",
   "anthropic",
+  "arcee_ai",
   "deepseek",
   "google",
   "meta",
+  "mistral",
   "moonshot_ai",
+  "nvidia",
   "openai",
+  "reflection",
+  "thinking_machines",
   "xai",
   "z_ai",
 ] as const;
@@ -265,13 +270,18 @@ export type ModelReleaseProvider = Readonly<{
 
 const providerByOpenRouterAuthor: Readonly<Record<string, ModelReleaseProvider>> = {
   anthropic: { providerId: "anthropic", providerName: "Anthropic" },
+  "arcee-ai": { providerId: "arcee_ai", providerName: "Arcee AI" },
   deepseek: { providerId: "deepseek", providerName: "DeepSeek" },
   google: { providerId: "google", providerName: "Google" },
   meta: { providerId: "meta", providerName: "Meta" },
   "meta-llama": { providerId: "meta", providerName: "Meta" },
+  mistralai: { providerId: "mistral", providerName: "Mistral AI" },
   moonshotai: { providerId: "moonshot_ai", providerName: "Moonshot AI" },
+  nvidia: { providerId: "nvidia", providerName: "NVIDIA" },
   openai: { providerId: "openai", providerName: "OpenAI" },
   qwen: { providerId: "alibaba_cloud", providerName: "Alibaba Cloud" },
+  reflection: { providerId: "reflection", providerName: "Reflection" },
+  thinkingmachines: { providerId: "thinking_machines", providerName: "Thinking Machines" },
   "x-ai": { providerId: "xai", providerName: "xAI" },
   "z-ai": { providerId: "z_ai", providerName: "Z.ai" },
 };

@@ -16,6 +16,11 @@ const providerIds = [
   "openai",
   "xai",
   "z_ai",
+  "arcee_ai",
+  "mirendil",
+  "mistral",
+  "reflection",
+  "thinking_machines",
 ] as const;
 
 // Provider colors are durable visual identities. New providers are reviewed and
@@ -34,6 +39,12 @@ const pinnedProviderColors = {
   openai: "#3b9cff",
   xai: "#e58b69",
   z_ai: "#e58d32",
+  // Appended identities for labs that now appear on the chart and release radar.
+  arcee_ai: "#4aa3c7",
+  mirendil: "#2f8f6b",
+  mistral: "#f7a400",
+  reflection: "#6b5cff",
+  thinking_machines: "#c45c8a",
 } as const;
 
 const providerEntries = providerIds.map((providerId) => {

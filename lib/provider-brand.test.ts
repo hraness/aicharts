@@ -51,10 +51,21 @@ describe("provider brand resolution", () => {
   });
 
   test("unknown providers get the neutral chip and a name monogram", () => {
-    const brand = providerBrand("Thinking Machines");
+    const brand = providerBrand("Uncharted Lab");
     expect(brand.chipColor).toBe("#6f6962");
     expect(brand.iconUrl).toBeNull();
-    expect(brand.monogram).toBe("TM");
+    expect(brand.monogram).toBe("UL");
+  });
+
+  test("new labs resolve to their reviewed chart colors", () => {
+    expect(providerBrand("Thinking Machines").chipColor).toBe(providerColors.thinking_machines);
+    expect(providerBrand("thinkingmachines").chipColor).toBe(providerColors.thinking_machines);
+    expect(providerBrand("Reflection").chipColor).toBe(providerColors.reflection);
+    expect(providerBrand("Mirendil").chipColor).toBe(providerColors.mirendil);
+    expect(providerBrand("Mistral AI").chipColor).toBe(providerColors.mistral);
+    expect(providerBrand("mistralai").chipColor).toBe(providerColors.mistral);
+    expect(providerBrand("Arcee AI").chipColor).toBe(providerColors.arcee_ai);
+    expect(providerBrand("Thinking Machines").monogram).toBe("TM");
   });
 
   test("monograms survive punctuation and empty names", () => {

@@ -79,6 +79,9 @@ const sourceModelSchema = z.object({
   intelligenceIndexCostPerTask: z.object({ cost: sourceCostSchema }).nullable().optional(),
   intelligenceIndexIsEstimated: z.boolean(),
   intelligenceIndexOutputTokensPerTask: sourceOutputTokensSchema.nullable().optional(),
+  isOpenWeights: z.boolean(),
+  licenseName: z.string().min(1).nullable().optional(),
+  modelWeightsSourceUrl: z.string().nullable().optional(),
   name: z.string().min(1),
   release: z.object({
     name: z.string().min(1),
@@ -553,6 +556,24 @@ function normalizeCost(cost: CompleteSourceCost): ArtificialAnalysisIntelligence
   };
 }
 
+function normalizeWeightsSourceUrl(value: string | null | undefined): string | null {
+  if (value === undefined || value === null || value === "") return null;
+  return isCredentialFreeHttpsUrl(value) ? value : null;
+}
+
+function normalizeWeights(
+  model: SourceModel,
+): NonNullable<ArtificialAnalysisIntelligenceRecord["weights"]> {
+  const license = model.licenseName === undefined || model.licenseName === ""
+    ? null
+    : model.licenseName;
+  return {
+    license,
+    open: model.isOpenWeights,
+    sourceUrl: normalizeWeightsSourceUrl(model.modelWeightsSourceUrl),
+  };
+}
+
 function normalizeModel(model: SourceModel): ArtificialAnalysisIntelligenceRecord {
   const tokens = model.intelligenceIndexOutputTokensPerTask;
   const sourceCost = model.intelligenceIndexCostPerTask;
@@ -593,6 +614,7 @@ function normalizeModel(model: SourceModel): ArtificialAnalysisIntelligenceRecor
     releaseDate: model.releaseDate,
     shortName: model.shortName,
     slug: model.slug,
+    weights: normalizeWeights(model),
   };
 }
 

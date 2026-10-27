@@ -134,12 +134,61 @@ describe("Artificial Analysis Flight extraction", () => {
     })).toBe("Cognition");
     expect(codingAgentCreatorName({
       display,
+      modelCreators: [
+        { slug: "anthropic", name: "Anthropic" },
+        { slug: "openai", name: "OpenAI" },
+      ],
+      provider: "cognition",
+    })).toBe("Cognition");
+    expect(codingAgentCreatorName({
+      display,
       modelCreators: [{ slug: "unknown-lab", name: "Unknown Lab" }],
       provider: "unknown-lab",
     })).toBeUndefined();
+    expect(codingAgentCreatorName({
+      display,
+      modelCreators: [{ slug: "reflection", name: "Reflection" }],
+      provider: "reflection",
+    })).toBe("Reflection");
+    expect(codingAgentCreatorName({
+      display,
+      modelCreators: [{ slug: "stepfun", name: "StepFun" }],
+      provider: "stepfun",
+    })).toBe("StepFun");
 
     rows[0] = { ...rows[0]!, modelCreators: [{ slug: "unknown-lab", name: "Unknown Lab" }] };
     expect(extractSourceRows(flightScript(`0:{"benchmarkRows":${JSON.stringify(rows)}}`)).ok).toBeFalse();
+  });
+
+  test("derives a series slug from the display model when hostModelSlug is omitted", () => {
+    const rows = Array.from({ length: 10 }, (_, index) => {
+      const row = sourceRow(index, index === 0 ? "Beam 1.0 501B A23B" : `Model ${index}`);
+      const { hostModelSlug: _omitted, ...withoutHost } = row;
+      return withoutHost as SourceRow;
+    });
+    const extracted = extractSourceRows(flightScript(`0:{"benchmarkRows":${JSON.stringify(rows)}}`));
+    expect(extracted.ok).toBeTrue();
+    if (!extracted.ok) return;
+    const snapshot = normalizeSourceRows(extracted.value, "2026-10-27T00:00:00.000Z");
+    expect(snapshot.records[0]?.seriesId).toBe("codex:beam-1-0-501b-a23b");
+    expect(snapshot.records[0]?.model).toBe("Beam 1.0 501B A23B");
+  });
+
+  test("reads FrontierCode into the owned DeepSWE slot when the source renamed the eval", () => {
+    const rows = Array.from({ length: 10 }, (_, index) => sourceRow(index));
+    rows[0] = {
+      ...rows[0]!,
+      evals: [
+        { datasetIndexName: "frontiercode-v1.1-main", mean: { reward: 0.55 } },
+        { datasetIndexName: "terminal-bench-v4", mean: { reward: 0.81 } },
+        { datasetIndexName: "swe-atlas-qna", mean: { reward: 0.7 } },
+      ],
+    };
+    const extracted = extractSourceRows(flightScript(`0:{"benchmarkRows":${JSON.stringify(rows)}}`));
+    expect(extracted.ok).toBeTrue();
+    if (!extracted.ok) return;
+    expect(normalizeSourceRows(extracted.value, "2026-10-27T00:00:00.000Z").records[0]?.benchmarks.deepSwe)
+      .toBe(55);
   });
 
   test("normalizes benchmark percentages, total tokens, effort settings, completeness, and source metadata", () => {
