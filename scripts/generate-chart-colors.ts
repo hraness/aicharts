@@ -20,6 +20,7 @@ const providerIds = [
   "mirendil",
   "mistral",
   "reflection",
+  "stepfun",
   "thinking_machines",
 ] as const;
 
@@ -44,6 +45,7 @@ const pinnedProviderColors = {
   mirendil: "#2f8f6b",
   mistral: "#f7a400",
   reflection: "#6b5cff",
+  stepfun: "#21c7a8",
   thinking_machines: "#c45c8a",
 } as const;
 

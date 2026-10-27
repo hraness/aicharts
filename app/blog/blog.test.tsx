@@ -1964,7 +1964,7 @@ describe("aicharts benchmark notes", () => {
       expect(markup).toContain(`href="${BLOG_SOURCES[sourceId].url}"`);
     }
     expect(article.nextStep?.links.map(link => link.href))
-      .toEqual(["/coding", "/#intelligence-index", "/models/openai/gpt-6-sol/max"]);
+      .toEqual(["/coding", "/#intelligence-index", "/models/openai/gpt-6.1-sol/max"]);
     expect(article.relatedSlugs).toContain("grok-4-7-coding-agent-index");
     expect(article.relatedSlugs).toContain("gpt-6-1-sol-coding-agent-index");
     expect(markup).toContain(formatRetrievedAt(codingParsed.value.source.retrievedAt));

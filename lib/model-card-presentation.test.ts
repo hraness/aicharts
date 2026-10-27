@@ -19,6 +19,7 @@ import {
   modelCardReleaseAccessibleLabel,
   modelCardReleaseLabel,
 } from "./model-card-presentation";
+import { modelReleaseDateForCanonicalId } from "./model-release-date-data";
 import { assertProperty, fc } from "./property-test";
 
 describe("model card presentation", () => {
@@ -114,14 +115,12 @@ describe("model card presentation", () => {
   });
 
   test("discloses when a verified date applies to the base model", () => {
-    const deepSeek = MODEL_CARD_PRESENTATIONS.find(card => (
-      card.canonicalModelId === "deepseek/deepseek-v4-pro-0813"
-    ));
-    if (deepSeek?.release.status !== "verified") {
+    const deepSeek = modelReleaseDateForCanonicalId("deepseek/deepseek-v4-pro-0813");
+    if (deepSeek?.status !== "verified" || deepSeek.appliesTo?.kind !== "base-model") {
       throw new Error("Expected checked DeepSeek base-model release metadata.");
     }
-    expect(modelCardReleaseLabel(deepSeek.release)).toBe("Base released");
-    expect(modelCardReleaseAccessibleLabel(deepSeek.release)).toBe(
+    expect(modelCardReleaseLabel(deepSeek)).toBe("Base released");
+    expect(modelCardReleaseAccessibleLabel(deepSeek)).toBe(
       "Official base-model release date for DeepSeek-V4-Pro: Aug 13, 2026. Verified from DeepSeek-V4-Pro GA Release.",
     );
   });
@@ -168,8 +167,8 @@ describe("model card presentation", () => {
       "Model Prime X-high",
     );
     expect(MODEL_CARD_PRESENTATIONS.find(card => card.visualClass === "fast")).toMatchObject({
-      displayTitle: "DeepSeek V4 Flash 0731 Max",
-      model: "DeepSeek V4 Flash 0731",
+      displayTitle: "Gemini 3.8 Flash High",
+      model: "Gemini 3.8 Flash",
     });
   });
 

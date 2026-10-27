@@ -81,14 +81,14 @@ describe("page analytics context", () => {
       content_id: "models:index",
       page_kind: "model_cards",
     });
-    const detail = pageAnalyticsContext("/models/openai/gpt-5.6-sol/max?source=private");
+    const detail = pageAnalyticsContext("/models/openai/gpt-6.1-sol/max?source=private");
     expect(detail).toMatchObject({
       canonical_path: "/models/[creator]/[model]/[profile]",
       content_group: "ai_comparison",
-      content_id: "model-card:openai/gpt-5.6-sol/max",
+      content_id: "model-card:openai/gpt-6.1-sol/max",
       page_kind: "model_card",
     });
-    expect(detail.canonical_path).not.toContain("gpt-5.6-sol");
+    expect(detail.canonical_path).not.toContain("gpt-6.1-sol");
   });
 
   test("maps foreign and unknown routes to one controlled fallback", () => {
@@ -163,8 +163,8 @@ describe("page analytics property normalization", () => {
         $current_url: "https://aicharts.io/blog/terminal-bench-science?email=private@example.com#results",
         $host: "www.aicharts.io",
         $pathname: "/blog/terminal-bench-science",
-        $prev_pageview_pathname: "/models/openai/gpt-5.6-sol/max",
-        $session_entry_url: "https://aicharts.io/models/openai/gpt-5.6-sol/max?provider=private",
+        $prev_pageview_pathname: "/models/openai/gpt-6.1-sol/max",
+        $session_entry_url: "https://aicharts.io/models/openai/gpt-6.1-sol/max?provider=private",
         event_schema_version: 2,
       },
     );

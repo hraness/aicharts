@@ -51,6 +51,8 @@ const providerIdsByAlias: Readonly<Record<string, keyof typeof providerColors>> 
   openai: "openai",
   reflection: "reflection",
   spacexai: "xai",
+  step: "stepfun",
+  stepfun: "stepfun",
   thinkingmachines: "thinking_machines",
   thinkingmachinesai: "thinking_machines",
   xai: "xai",
