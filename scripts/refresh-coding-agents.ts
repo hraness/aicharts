@@ -15,6 +15,12 @@ import {
 
 const SOURCE_URL = "https://artificialanalysis.ai/agents/coding-agents/";
 const OUTPUT_PATH = path.join(import.meta.dir, "..", "data", "coding-agents.json");
+const OVERLAP_ACKNOWLEDGEMENT_PATH = path.join(
+  import.meta.dir,
+  "..",
+  "data",
+  "coding-agents-overlap-acknowledgement.json",
+);
 const FLIGHT_PREFIX = "self.__next_f.push(";
 const minimumRetentionRatio = 0.8;
 const notableBenchmarkDelta = 0.5;
@@ -410,6 +416,51 @@ function refreshSemanticRecordKey(record: CodingAgentRecord): string {
   return JSON.stringify([record.agent, record.providerId, record.model, record.setting]);
 }
 
+const stableKeySchema = z.string().min(1).refine((value) => {
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return Array.isArray(parsed)
+      && parsed.length === 2
+      && parsed.every((item) => typeof item === "string" && item.length > 0);
+  } catch {
+    return false;
+  }
+}, "must be a JSON [seriesId, setting] pair");
+
+function uniqueStableKeys(keys: readonly string[]): boolean {
+  return new Set(keys).size === keys.length;
+}
+
+const overlapAcknowledgementSchema = z.object({
+  schemaVersion: z.literal(1),
+  id: z.string().min(1),
+  fromRetrievedAt: z.string().datetime({ offset: true }),
+  removed: z.array(stableKeySchema).refine(uniqueStableKeys, "removed keys must be unique"),
+  added: z.array(stableKeySchema).refine(uniqueStableKeys, "added keys must be unique"),
+}).strict();
+
+export type CodingAgentOverlapAcknowledgement = z.infer<typeof overlapAcknowledgementSchema>;
+
+export type CodingAgentStableKeyDiff = Readonly<{
+  added: readonly string[];
+  removed: readonly string[];
+  retained: number;
+}>;
+
+function sortedCopy(values: readonly string[]): string[] {
+  return [...values].toSorted((left, right) => left.localeCompare(right));
+}
+
+function sameStringList(left: readonly string[], right: readonly string[]): boolean {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
+}
+
+export function parseOverlapAcknowledgement(
+  value: unknown,
+): Result<CodingAgentOverlapAcknowledgement, z.ZodError> {
+  return parseResult(overlapAcknowledgementSchema, value);
+}
+
 function uniquelyKeyedSemanticRecords(
   records: readonly CodingAgentRecord[],
 ): ReadonlyMap<string, CodingAgentRecord> {
@@ -549,9 +600,57 @@ function minimumRetained(previousCount: number): number {
   return Math.ceil(previousCount * minimumRetentionRatio);
 }
 
+/** Stable keys that the 80% overlap rule treats as removed or added. */
+export function snapshotStableKeyDiff(
+  previous: CodingAgentSnapshot,
+  candidate: CodingAgentSnapshot,
+): CodingAgentStableKeyDiff {
+  const previousStableKeys = new Set(previous.records.map(codingAgentRecordKey));
+  const candidateStableKeys = new Set(candidate.records.map(codingAgentRecordKey));
+  const previousBySemanticKey = uniquelyKeyedSemanticRecords(previous.records);
+  const candidateBySemanticKey = uniquelyKeyedSemanticRecords(candidate.records);
+
+  const retained = candidate.records.filter((record) => (
+    previousStableKeys.has(codingAgentRecordKey(record))
+    || previousBySemanticKey.has(refreshSemanticRecordKey(record))
+  )).length;
+
+  const removed = previous.records
+    .filter((record) => (
+      !candidateStableKeys.has(codingAgentRecordKey(record))
+      && !candidateBySemanticKey.has(refreshSemanticRecordKey(record))
+    ))
+    .map(codingAgentRecordKey);
+
+  const added = candidate.records
+    .filter((record) => (
+      !previousStableKeys.has(codingAgentRecordKey(record))
+      && !previousBySemanticKey.has(refreshSemanticRecordKey(record))
+    ))
+    .map(codingAgentRecordKey);
+
+  return {
+    added: sortedCopy(added),
+    removed: sortedCopy(removed),
+    retained,
+  };
+}
+
+export function overlapAcknowledgementMatches(
+  previous: CodingAgentSnapshot,
+  diff: CodingAgentStableKeyDiff,
+  acknowledgement: CodingAgentOverlapAcknowledgement | null,
+): boolean {
+  if (acknowledgement === null) return false;
+  if (acknowledgement.fromRetrievedAt !== previous.source.retrievedAt) return false;
+  return sameStringList(sortedCopy(acknowledgement.removed), diff.removed)
+    && sameStringList(sortedCopy(acknowledgement.added), diff.added);
+}
+
 export function validateSnapshotUpdate(
   previous: CodingAgentSnapshot,
   candidate: CodingAgentSnapshot,
+  acknowledgement: CodingAgentOverlapAcknowledgement | null = null,
 ): Result<void, Error> {
   if (Date.parse(candidate.source.retrievedAt) < Date.parse(previous.source.retrievedAt)) {
     return err(new Error("Source retrieval time regressed; retain the last validated snapshot."));
@@ -586,16 +685,24 @@ export function validateSnapshotUpdate(
   }
 
   const previousStableKeys = new Set(previous.records.map(codingAgentRecordKey));
-  const previousBySemanticKey = uniquelyKeyedSemanticRecords(previous.records);
-  const retainedStableKeys = candidate.records.filter((record) => (
-    previousStableKeys.has(codingAgentRecordKey(record))
-    || previousBySemanticKey.has(refreshSemanticRecordKey(record))
-  )).length;
+  const stableKeyDiff = snapshotStableKeyDiff(previous, candidate);
   const minimumStableKeyCount = minimumRetained(previousStableKeys.size);
-  if (retainedStableKeys < minimumStableKeyCount) {
-    return err(new Error(
-      `Refreshed snapshot retained ${retainedStableKeys} of ${previousStableKeys.size} stable series/setting keys (including semantic matches); minimum safe overlap is ${minimumStableKeyCount}.`,
-    ));
+  if (stableKeyDiff.retained < minimumStableKeyCount) {
+    if (
+      acknowledgement !== null
+      && overlapAcknowledgementMatches(previous, stableKeyDiff, acknowledgement)
+    ) {
+      console.log(
+        `Accepted overlap acknowledgement ${acknowledgement.id}: removed ${stableKeyDiff.removed.length}, added ${stableKeyDiff.added.length}.`,
+      );
+    } else {
+      const acknowledgementNote = acknowledgement === null
+        ? ""
+        : " The committed overlap acknowledgement does not match this removed/added key set.";
+      return err(new Error(
+        `Refreshed snapshot retained ${stableKeyDiff.retained} of ${previousStableKeys.size} stable series/setting keys (including semantic matches); minimum safe overlap is ${minimumStableKeyCount}.${acknowledgementNote}`,
+      ));
+    }
   }
 
   for (const metric of guardedMetrics) {
@@ -647,18 +754,42 @@ async function validateCommittedSnapshot(
   }
 }
 
+async function loadOverlapAcknowledgement(): Promise<
+  Result<CodingAgentOverlapAcknowledgement | null, Error>
+> {
+  const file = Bun.file(OVERLAP_ACKNOWLEDGEMENT_PATH);
+  if (!await file.exists()) return ok(null);
+  try {
+    const parsed = parseOverlapAcknowledgement(await file.json());
+    return parsed.ok
+      ? ok(parsed.value)
+      : err(new Error(
+        `Invalid ${OVERLAP_ACKNOWLEDGEMENT_PATH}: ${parsed.error.message}`,
+        { cause: parsed.error },
+      ));
+  } catch (cause) {
+    return err(new Error(`Could not read ${OVERLAP_ACKNOWLEDGEMENT_PATH}.`, { cause }));
+  }
+}
+
 async function refresh(): Promise<Result<CodingAgentSnapshot, Error>> {
   const previous = await validateCommittedSnapshot(true);
   if (!previous.ok) return previous;
+  const acknowledgement = await loadOverlapAcknowledgement();
+  if (!acknowledgement.ok) return acknowledgement;
   const source = await fetchSource();
   if (!source.ok) return source;
   const rows = extractSourceRows(source.value);
   if (!rows.ok) return rows;
   const normalized = normalizeSourceRows(rows.value, new Date().toISOString());
-  const safeUpdate = validateSnapshotUpdate(previous.value, normalized);
+  const safeUpdate = validateSnapshotUpdate(previous.value, normalized, acknowledgement.value);
   if (!safeUpdate.ok) return safeUpdate;
   const reconciled = reconcileSnapshotSeriesIds(previous.value, normalized);
-  const safeReconciledUpdate = validateSnapshotUpdate(previous.value, reconciled);
+  const safeReconciledUpdate = validateSnapshotUpdate(
+    previous.value,
+    reconciled,
+    acknowledgement.value,
+  );
   if (!safeReconciledUpdate.ok) return safeReconciledUpdate;
   const reconciledSeriesCount = reconciled.records.filter((record, index) => (
     record.seriesId !== normalized.records[index]?.seriesId
@@ -678,7 +809,15 @@ async function refresh(): Promise<Result<CodingAgentSnapshot, Error>> {
 
 if (import.meta.main) {
   const checkOnly = Bun.argv.includes("--check");
-  const result = checkOnly ? await validateCommittedSnapshot(false) : await refresh();
+  const result = checkOnly
+    ? await (async () => {
+      const snapshot = await validateCommittedSnapshot(false);
+      if (!snapshot.ok) return snapshot;
+      const acknowledgement = await loadOverlapAcknowledgement();
+      if (!acknowledgement.ok) return acknowledgement;
+      return snapshot;
+    })()
+    : await refresh();
   if (!result.ok) {
     console.error(result.error.message);
     process.exitCode = 1;
