@@ -32,6 +32,9 @@ function sourcePayload() {
     intelligenceIndexCostPerTask: { cost: record.costUsdPerTask ?? {
       answer: 0, cacheRead: 0, cacheWrite: 0, input: 0, nonCacheInput: 0, output: 0, reasoning: 0, total: 0,
     } },
+    isOpenWeights: record.weights?.open ?? false,
+    licenseName: record.weights?.license ?? null,
+    modelWeightsSourceUrl: record.weights?.sourceUrl ?? null,
   }));
   for (let index = models.length; index < Math.max(100, current.selection.sourceRecordCount); index += 1) {
     models.push({ ...models[0]!, id: `00000000-0000-4000-8000-${String(index).padStart(12, "0")}`, slug: `excluded-${index}`, deprecated: true });
