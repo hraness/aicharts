@@ -17,6 +17,7 @@ import { createMimoV26Article } from "./mimo-v2-6-pro-cost-frontier-article";
 import { createOpenModelsCodingAgentsArticle } from "./open-models-coding-agents-article";
 import { createOpus55CodingArticle } from "./opus-5-5-coding-agent-index-article";
 import { createHaiku55Article } from "./haiku-5-5-intelligence-index-article";
+import { createKimiK31ProArticle } from "./kimi-k3-1-pro-intelligence-index-article";
 import { createMuseWonderArticle } from "./muse-wonder-intelligence-index-article";
 import { createOpus55Article } from "./opus-5-5-intelligence-index-article";
 import { createSonnet55CodingArticle } from "./sonnet-5-5-coding-agent-index-article";
@@ -422,6 +423,38 @@ export const BLOG_SOURCES = {
     url: "https://artificialanalysis.ai/models/muse-wonder",
     year: 2026,
   },
+  artificialAnalysisKimiK31ProModel: {
+    note:
+      "Cited, from the page captured October 27, 2026 UTC, for the rounded 55 index score and #4 of 221 rank among models of the same price class, the speed, cost, and verbosity ranks, the proprietary label, the October 2026 release date, the $2.00 and $10.00 per million token prices with a 90% cache discount, the $2.11 cost per index task, the 150M output tokens across the index, the 41.4 output tokens per second, the modality sentence, the reasoning-version note, and its summary and verbosity sentences.",
+    publication: "Artificial Analysis",
+    title: "Kimi K3.1 Pro - Intelligence, Performance & Price Analysis",
+    url: "https://artificialanalysis.ai/models/kimi-k3-1-pro",
+    year: 2026,
+  },
+  moonshotKimiK31Pro: {
+    note:
+      "Cited for the introduction of Kimi K3.1 Pro as the first model of the K3.1 series, the open-weight and 1-million-token context claims, the promise of full weights by November 4, 2026, the post-trained-from-Kimi-K3 sentence, the Kimi K3.1 Pro Highspeed speed claim, the vendor-run Terminal-Bench 4.0 figures with their Claude-Code harness and max-effort footnotes, and the kimi-k3.1-pro and kimi-k3.1-pro-highspeed model names.",
+    publication: "Moonshot AI",
+    title: "Kimi K3.1 Pro Tech Blog: Advancing Open Intelligence",
+    url: "https://www.kimi.com/en/blog/kimi-k3-1-pro",
+    year: 2026,
+  },
+  kimiK31ProApiGuide: {
+    note:
+      "Cited for the reasoning_effort request field, its three values of low, high, and max, its default of max, and the kimi-k3.1-pro and kimi-k3.1-pro-highspeed model identifiers.",
+    publication: "Moonshot AI",
+    title: "Kimi K3.1 Pro API guide",
+    url: "https://platform.kimi.ai/docs/guide/kimi-k3-1-pro",
+    year: 2026,
+  },
+  openRouterKimiK31Pro: {
+    note:
+      "The listing captured October 27, 2026 UTC is cited for its description of the model as Moonshot AI’s open-weight multimodal reasoning model, the October 23, 2026 release date, the $2.00 input, $10.00 output, and $0.20 cached-input prices per million tokens on Moonshot AI’s endpoint, the 1,048,576 token context window, and the $4.00 and $20.00 Highspeed prices.",
+    publication: "OpenRouter",
+    title: "MoonshotAI: Kimi K3.1 Pro",
+    url: "https://openrouter.ai/moonshotai/kimi-k3.1-pro",
+    year: 2026,
+  },
   terminalBenchRepository: {
     note:
       "The benchmark owners’ repository publishes Terminal-Bench and its versioned task releases. The version-pinned Terminal-Bench 4.0 cohort in the aicharts benchmarks library comes from the owners, separately from Artificial Analysis’s own Terminal-Bench 4 runs.",
@@ -606,6 +639,7 @@ export const blogArticles = [
   createOpus55Article(),
   createHaiku55Article(),
   createMuseWonderArticle(),
+  createKimiK31ProArticle(),
   createGpt6SolArticle(),
   createGrok47Article(),
   createMimoV26Article(),
