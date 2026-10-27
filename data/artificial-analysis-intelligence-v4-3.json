@@ -328,13 +328,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.2601118539293244,
-        "cacheRead": 0.3193438792795405,
-        "cacheWrite": 0.9754280287099728,
-        "input": 1.3747461172225273,
+        "cacheRead": 0.3388343109616688,
+        "cacheWrite": 0.5856193950674065,
+        "input": 1.0044279152620894,
         "nonCacheInput": 0.0799742092330141,
         "output": 0.6155762620764799,
         "reasoning": 0.3554644081471556,
-        "total": 1.990322379299008
+        "total": 1.6200041773385696
       },
       "creator": {
         "id": "faddc6d9-2c14-445f-9b28-56726f59c793",
@@ -366,13 +366,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.5135323009180983,
-        "cacheRead": 1.4465658923657683,
-        "cacheWrite": 1.932759290810195,
-        "input": 3.450503724237989,
+        "cacheRead": 1.5135647336963933,
+        "cacheWrite": 0.5927824641976935,
+        "input": 2.177525738956112,
         "nonCacheInput": 0.07117854106202538,
         "output": 1.0895309575659375,
         "reasoning": 0.575998656647839,
-        "total": 4.540034681803926
+        "total": 3.2670566965220496
       },
       "creator": {
         "id": "e1694725-0192-4e54-b1b8-c97e816c6cbe",
@@ -783,6 +783,44 @@
     },
     {
       "costUsdPerTask": {
+        "answer": 0.051020987371448064,
+        "cacheRead": 0.11414585829432794,
+        "cacheWrite": 0.09236342110418774,
+        "input": 0.22797416948803867,
+        "nonCacheInput": 0.021464890089522924,
+        "output": 0.17548008750353952,
+        "reasoning": 0.12445910013209147,
+        "total": 0.40345425699157816
+      },
+      "creator": {
+        "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
+        "name": "OpenAI",
+        "slug": "openai"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/gpt-6-1-terra",
+      "effort": {
+        "label": "max",
+        "level": 60,
+        "slug": "max"
+      },
+      "id": "b0c462cf-f2d0-4126-9434-28db9502219f",
+      "intelligenceIndex": 48.1061836463044,
+      "name": "GPT-6.1 Terra (Max)",
+      "outputTokensPerTask": {
+        "answer": 10204.197474289615,
+        "reasoning": 24891.820026418292,
+        "total": 35096.01750070791
+      },
+      "release": {
+        "name": "GPT-6.1 Terra",
+        "slug": "gpt-6-1-terra"
+      },
+      "releaseDate": "2026-10-26",
+      "shortName": "GPT-6.1 Terra (max)",
+      "slug": "gpt-6-1-terra"
+    },
+    {
+      "costUsdPerTask": {
         "answer": 0.05174948477214529,
         "cacheRead": 0.03155924319690711,
         "cacheWrite": 0.058498740865704335,
@@ -898,13 +936,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.13210638952354134,
-        "cacheRead": 1.5328336728452165,
-        "cacheWrite": 1.6893325283251048,
-        "input": 3.254957763735755,
+        "cacheRead": 1.7000294440634212,
+        "cacheWrite": 1.0205494434522866,
+        "input": 2.753370450081141,
         "nonCacheInput": 0.03279156256543316,
         "output": 0.4833681883711849,
         "reasoning": 0.3512617988476435,
-        "total": 3.738325952106939
+        "total": 3.236738638452325
       },
       "creator": {
         "id": "a1e3ddcf-d3e4-44a5-9e8f-029a69850875",
@@ -936,13 +974,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.1156089748390749,
-        "cacheRead": 1.0800845370203476,
-        "cacheWrite": 1.2176866117749017,
-        "input": 2.3306978852971905,
+        "cacheRead": 1.200860782584769,
+        "cacheWrite": 0.7345816295172173,
+        "input": 1.9683691486039272,
         "nonCacheInput": 0.0329267365019411,
         "output": 0.3954088064888365,
         "reasoning": 0.27979983164976163,
-        "total": 2.726106691786027
+        "total": 2.3637779550927633
       },
       "creator": {
         "id": "a1e3ddcf-d3e4-44a5-9e8f-029a69850875",
@@ -1079,6 +1117,44 @@
     },
     {
       "costUsdPerTask": {
+        "answer": 0.032670145249586155,
+        "cacheRead": 0.046819871389757586,
+        "cacheWrite": 0.05267991093704424,
+        "input": 0.12092833565297095,
+        "nonCacheInput": 0.021428553326169143,
+        "output": 0.07275674664210634,
+        "reasoning": 0.04008660139252019,
+        "total": 0.19368508229507728
+      },
+      "creator": {
+        "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
+        "name": "OpenAI",
+        "slug": "openai"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/gpt-6-1-terra-xhigh",
+      "effort": {
+        "label": "xhigh",
+        "level": 50,
+        "slug": "xhigh"
+      },
+      "id": "e8d443ba-8aca-4830-a186-ae869bb9c6fe",
+      "intelligenceIndex": 45.3640518262171,
+      "name": "GPT-6.1 Terra (Xhigh)",
+      "outputTokensPerTask": {
+        "answer": 6534.0290499172315,
+        "reasoning": 8017.320278504038,
+        "total": 14551.34932842127
+      },
+      "release": {
+        "name": "GPT-6.1 Terra",
+        "slug": "gpt-6-1-terra"
+      },
+      "releaseDate": "2026-10-26",
+      "shortName": "GPT-6.1 Terra (xhigh)",
+      "slug": "gpt-6-1-terra-xhigh"
+    },
+    {
+      "costUsdPerTask": {
         "answer": 0.036302448098491355,
         "cacheRead": 0.05591718391623929,
         "cacheWrite": 0.09483602508058153,
@@ -1186,6 +1262,44 @@
       "releaseDate": "2026-10-22",
       "shortName": "Ling 3.1 Flash 1019",
       "slug": "ling-3-1-flash-1019"
+    },
+    {
+      "costUsdPerTask": {
+        "answer": 0.025496012624019432,
+        "cacheRead": 0.029382692267987405,
+        "cacheWrite": 0.03837079221102174,
+        "input": 0.08916369149565448,
+        "nonCacheInput": 0.021410207016645335,
+        "output": 0.045133908274245294,
+        "reasoning": 0.019637895650225858,
+        "total": 0.13429759976989977
+      },
+      "creator": {
+        "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
+        "name": "OpenAI",
+        "slug": "openai"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/gpt-6-1-terra-high",
+      "effort": {
+        "label": "high",
+        "level": 40,
+        "slug": "high"
+      },
+      "id": "ea3e1f50-f62d-41d2-849a-9af0413e4d37",
+      "intelligenceIndex": 43.8688591051329,
+      "name": "GPT-6.1 Terra (High)",
+      "outputTokensPerTask": {
+        "answer": 5099.202524803887,
+        "reasoning": 3927.579130045172,
+        "total": 9026.78165484906
+      },
+      "release": {
+        "name": "GPT-6.1 Terra",
+        "slug": "gpt-6-1-terra"
+      },
+      "releaseDate": "2026-10-26",
+      "shortName": "GPT-6.1 Terra (high)",
+      "slug": "gpt-6-1-terra-high"
     },
     {
       "costUsdPerTask": {
@@ -1334,13 +1448,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.08151304598105377,
-        "cacheRead": 0.48458860135268433,
-        "cacheWrite": 0.5606712131767635,
-        "input": 1.0798951102051795,
+        "cacheRead": 0.5574488017322483,
+        "cacheWrite": 0.26923041165850736,
+        "input": 0.8613145090664875,
         "nonCacheInput": 0.034635295675731495,
         "output": 0.1680712954892183,
         "reasoning": 0.08655824950816454,
-        "total": 1.2479664056943975
+        "total": 1.0293858045557056
       },
       "creator": {
         "id": "a1e3ddcf-d3e4-44a5-9e8f-029a69850875",
@@ -1409,44 +1523,6 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.15424250710464688,
-        "cacheRead": 0.6595491203855293,
-        "cacheWrite": 0.22700782660908353,
-        "input": 0.9319539940852251,
-        "nonCacheInput": 0.04539704709061227,
-        "output": 0.4667695671839262,
-        "reasoning": 0.3125270600792794,
-        "total": 1.3987235612691513
-      },
-      "creator": {
-        "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
-        "name": "OpenAI",
-        "slug": "openai"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/gpt-5-6-terra",
-      "effort": {
-        "label": "max",
-        "level": 60,
-        "slug": "max"
-      },
-      "id": "bcf8db0a-3bb6-4d82-9516-0f57370c85a6",
-      "intelligenceIndex": 42.0829248239494,
-      "name": "GPT-5.6 Terra (Max)",
-      "outputTokensPerTask": {
-        "answer": 12853.54225872057,
-        "reasoning": 26043.92167327328,
-        "total": 38897.46393199385
-      },
-      "release": {
-        "name": "GPT-5.6 Terra",
-        "slug": "gpt-5-6-terra"
-      },
-      "releaseDate": "2026-07-09",
-      "shortName": "GPT-5.6 Terra (max)",
-      "slug": "gpt-5-6-terra"
-    },
-    {
-      "costUsdPerTask": {
         "answer": 0.01101183343601111,
         "cacheRead": 0.22751447084725368,
         "cacheWrite": 0.01844679201070141,
@@ -1482,6 +1558,44 @@
       "releaseDate": "2026-08-26",
       "shortName": "GLM-5.3-Flash",
       "slug": "glm-5-3-flash"
+    },
+    {
+      "costUsdPerTask": {
+        "answer": 0.019473914294977523,
+        "cacheRead": 0.017048074718840487,
+        "cacheWrite": 0.027638922882455126,
+        "input": 0.06608231785206793,
+        "nonCacheInput": 0.02139532025077232,
+        "output": 0.029173837527848048,
+        "reasoning": 0.00969992323287052,
+        "total": 0.09525615537991598
+      },
+      "creator": {
+        "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
+        "name": "OpenAI",
+        "slug": "openai"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/gpt-6-1-terra-medium",
+      "effort": {
+        "label": "medium",
+        "level": 30,
+        "slug": "medium"
+      },
+      "id": "c441e158-a87d-4116-911b-93325e4b4f1c",
+      "intelligenceIndex": 41.318827405477,
+      "name": "GPT-6.1 Terra (Medium)",
+      "outputTokensPerTask": {
+        "answer": 3894.7828589955047,
+        "reasoning": 1939.9846465741039,
+        "total": 5834.767505569609
+      },
+      "release": {
+        "name": "GPT-6.1 Terra",
+        "slug": "gpt-6-1-terra"
+      },
+      "releaseDate": "2026-10-26",
+      "shortName": "GPT-6.1 Terra (medium)",
+      "slug": "gpt-6-1-terra-medium"
     },
     {
       "costUsdPerTask": {
@@ -1558,13 +1672,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.10603284258935376,
-        "cacheRead": 0.40646943883191045,
-        "cacheWrite": 0.5593546443787857,
-        "input": 0.9765351346835661,
+        "cacheRead": 0.15733415278618967,
+        "cacheWrite": 3.050707504835993,
+        "input": 3.2187527090950536,
         "nonCacheInput": 0.010711051472870051,
         "output": 0.2662596260114765,
         "reasoning": 0.16022678342212274,
-        "total": 1.2427947606950427
+        "total": 3.48501233510653
       },
       "creator": {
         "id": "faddc6d9-2c14-445f-9b28-56726f59c793",
@@ -1702,13 +1816,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.09616115100599934,
-        "cacheRead": 0.3012328521578915,
-        "cacheWrite": 0.42142126451743733,
-        "input": 0.733792430681439,
+        "cacheRead": 0.11659970235850517,
+        "cacheWrite": 2.2677527625113005,
+        "input": 2.395490778875916,
         "nonCacheInput": 0.011138314006110156,
         "output": 0.1972455067561916,
         "reasoning": 0.10108435575019221,
-        "total": 0.9310379374376306
+        "total": 2.5927362856321072
       },
       "creator": {
         "id": "faddc6d9-2c14-445f-9b28-56726f59c793",
@@ -1739,14 +1853,14 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.09349645994068351,
-        "cacheRead": 0.39870634154254314,
-        "cacheWrite": 0.2511574062155496,
-        "input": 0.6724897732961768,
+        "answer": 0.09357309130431987,
+        "cacheRead": 0.3987390062993613,
+        "cacheWrite": 0.25120483570418595,
+        "input": 0.6725698675416314,
         "nonCacheInput": 0.022626025538084113,
-        "output": 0.17169559804969095,
-        "reasoning": 0.07819913810900746,
-        "total": 0.8441853713458678
+        "output": 0.17177710725423642,
+        "reasoning": 0.07820401594991655,
+        "total": 0.8443469747958676
       },
       "creator": {
         "id": "e1694725-0192-4e54-b1b8-c97e816c6cbe",
@@ -1763,9 +1877,9 @@
       "intelligenceIndex": 38.8666662997805,
       "name": "Muse Spark Open (Xhigh)",
       "outputTokensPerTask": {
-        "answer": 21999.167044866703,
-        "reasoning": 18399.797202119404,
-        "total": 40398.96424698611
+        "answer": 22017.197953957617,
+        "reasoning": 18400.94492939213,
+        "total": 40418.14288334975
       },
       "release": {
         "name": "Muse Spark Open",
@@ -1778,13 +1892,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.07263619470631495,
-        "cacheRead": 0.5751146979483184,
-        "cacheWrite": 0.24439442696545527,
-        "input": 0.8439478357056972,
+        "cacheRead": 0.5210162158674662,
+        "cacheWrite": 0.7699225386080203,
+        "input": 1.3153774652674097,
         "nonCacheInput": 0.024438710791923564,
         "output": 0.2904913225331666,
         "reasoning": 0.21785512782685162,
-        "total": 1.1344391582388638
+        "total": 1.6058687878005768
       },
       "creator": {
         "id": "b5c0639a-cc9c-443b-a07e-bae6b7088933",
@@ -1846,44 +1960,6 @@
       "releaseDate": "2026-09-22",
       "shortName": "GPT-6 Luna (max)",
       "slug": "gpt-6-luna"
-    },
-    {
-      "costUsdPerTask": {
-        "answer": 0.10626837049480381,
-        "cacheRead": 0.21824574109632405,
-        "cacheWrite": 0.127750771197748,
-        "input": 0.3873829635766309,
-        "nonCacheInput": 0.0413864512825588,
-        "output": 0.24440817111579674,
-        "reasoning": 0.13813980062099288,
-        "total": 0.6317911346924275
-      },
-      "creator": {
-        "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
-        "name": "OpenAI",
-        "slug": "openai"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/gpt-5-6-terra-xhigh",
-      "effort": {
-        "label": "xhigh",
-        "level": 50,
-        "slug": "xhigh"
-      },
-      "id": "9e30696f-16fa-4b4f-ba53-161895a85fed",
-      "intelligenceIndex": 37.9513370742927,
-      "name": "GPT-5.6 Terra (Xhigh)",
-      "outputTokensPerTask": {
-        "answer": 8855.697541233654,
-        "reasoning": 11511.650051749408,
-        "total": 20367.34759298306
-      },
-      "release": {
-        "name": "GPT-5.6 Terra",
-        "slug": "gpt-5-6-terra"
-      },
-      "releaseDate": "2026-07-09",
-      "shortName": "GPT-5.6 Terra (xhigh)",
-      "slug": "gpt-5-6-terra-xhigh"
     },
     {
       "costUsdPerTask": {
@@ -1956,6 +2032,44 @@
       "releaseDate": "2026-10-07",
       "shortName": "Claude Haiku 5.5 (high)",
       "slug": "claude-haiku-5-5-high"
+    },
+    {
+      "costUsdPerTask": {
+        "answer": 0.011043602144279246,
+        "cacheRead": 0.005268712236120285,
+        "cacheWrite": 0.01460078143180418,
+        "input": 0.0412362894345698,
+        "nonCacheInput": 0.021366795766645335,
+        "output": 0.013404239217247321,
+        "reasoning": 0.0023606370729680705,
+        "total": 0.05464052865181712
+      },
+      "creator": {
+        "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
+        "name": "OpenAI",
+        "slug": "openai"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/gpt-6-1-terra-low",
+      "effort": {
+        "label": "low",
+        "level": 20,
+        "slug": "low"
+      },
+      "id": "c955b262-a17f-4f1a-b097-6860b866295b",
+      "intelligenceIndex": 36.2133370409149,
+      "name": "GPT-6.1 Terra (Low)",
+      "outputTokensPerTask": {
+        "answer": 2208.72042885585,
+        "reasoning": 472.1274145936141,
+        "total": 2680.847843449464
+      },
+      "release": {
+        "name": "GPT-6.1 Terra",
+        "slug": "gpt-6-1-terra"
+      },
+      "releaseDate": "2026-10-26",
+      "shortName": "GPT-6.1 Terra (low)",
+      "slug": "gpt-6-1-terra-low"
     },
     {
       "costUsdPerTask": {
@@ -2187,52 +2301,14 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.07022660370371908,
-        "cacheRead": 0.0869347504829282,
-        "cacheWrite": 0.07406484438365833,
-        "input": 0.2023488711662519,
-        "nonCacheInput": 0.041349276299665325,
-        "output": 0.13552392362865825,
-        "reasoning": 0.06529731992493919,
-        "total": 0.3378727947949101
-      },
-      "creator": {
-        "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
-        "name": "OpenAI",
-        "slug": "openai"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/gpt-5-6-terra-high",
-      "effort": {
-        "label": "high",
-        "level": 40,
-        "slug": "high"
-      },
-      "id": "81972fba-1219-477e-bbfb-18c656a63ff7",
-      "intelligenceIndex": 34.2376558067555,
-      "name": "GPT-5.6 Terra (High)",
-      "outputTokensPerTask": {
-        "answer": 5852.216975309924,
-        "reasoning": 5441.443327078267,
-        "total": 11293.66030238819
-      },
-      "release": {
-        "name": "GPT-5.6 Terra",
-        "slug": "gpt-5-6-terra"
-      },
-      "releaseDate": "2026-07-09",
-      "shortName": "GPT-5.6 Terra (high)",
-      "slug": "gpt-5-6-terra-high"
-    },
-    {
-      "costUsdPerTask": {
         "answer": 0.057274850355187125,
-        "cacheRead": 0.3745911160120289,
-        "cacheWrite": 0.4231391110871978,
-        "input": 0.807140002602785,
+        "cacheRead": 0.3398593776633849,
+        "cacheWrite": 0.5967978028304175,
+        "input": 0.9460669559973607,
         "nonCacheInput": 0.009409775503558189,
         "output": 0.20034969155380952,
         "reasoning": 0.14307484119862238,
-        "total": 1.0074896941565943
+        "total": 1.1464166475511701
       },
       "creator": {
         "id": "d874d370-74d3-4fa0-ba00-5272f92f946b",
@@ -2260,6 +2336,40 @@
       "releaseDate": "2026-08-14",
       "shortName": "Qwen3.8 27B (xhigh)",
       "slug": "qwen3-8-27b"
+    },
+    {
+      "costUsdPerTask": {
+        "answer": 0.023683687043429942,
+        "cacheRead": 0.030013472537029066,
+        "cacheWrite": 0.03184674337959717,
+        "input": 0.08325118205033505,
+        "nonCacheInput": 0.021390966133708826,
+        "output": 0.023683687043429942,
+        "reasoning": 0,
+        "total": 0.106934869093765
+      },
+      "creator": {
+        "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
+        "name": "OpenAI",
+        "slug": "openai"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/gpt-6-1-terra-non-reasoning",
+      "effort": null,
+      "id": "0d3c777f-6817-42d7-9bb9-223314bc5a57",
+      "intelligenceIndex": 33.4885115837089,
+      "name": "GPT-6.1 Terra (Non-reasoning)",
+      "outputTokensPerTask": {
+        "answer": 4736.737408685987,
+        "reasoning": 0,
+        "total": 4736.737408685987
+      },
+      "release": {
+        "name": "GPT-6.1 Terra",
+        "slug": "gpt-6-1-terra"
+      },
+      "releaseDate": "2026-10-26",
+      "shortName": "GPT-6.1 Terra (non-reasoning)",
+      "slug": "gpt-6-1-terra-non-reasoning"
     },
     {
       "costUsdPerTask": {
@@ -2327,13 +2437,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.00820448979592221,
-        "cacheRead": 0.07593433303300084,
-        "cacheWrite": 0.11492642784867513,
-        "input": 0.19466364836286285,
+        "cacheRead": 0.07048280892065695,
+        "cacheWrite": 0.017573002906112405,
+        "input": 0.09185869930795623,
         "nonCacheInput": 0.003802887481186872,
         "output": 0.031578044497612645,
         "reasoning": 0.02337355470169044,
-        "total": 0.22624169286047544
+        "total": 0.12343674380556886
       },
       "creator": {
         "id": "90bf1f7e-b589-4f69-8efc-bd04bbd0b494",
@@ -2357,44 +2467,6 @@
       "releaseDate": "2026-10-16",
       "shortName": "Beam 1.0",
       "slug": "reflection-beam"
-    },
-    {
-      "costUsdPerTask": {
-        "answer": 0.043207940512125675,
-        "cacheRead": 0.033143366970953825,
-        "cacheWrite": 0.041433234835378134,
-        "input": 0.11763953367692422,
-        "nonCacheInput": 0.04306293187059226,
-        "output": 0.06573342625276794,
-        "reasoning": 0.02252548574064227,
-        "total": 0.18337295992969213
-      },
-      "creator": {
-        "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
-        "name": "OpenAI",
-        "slug": "openai"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/gpt-5-6-terra-medium",
-      "effort": {
-        "label": "medium",
-        "level": 30,
-        "slug": "medium"
-      },
-      "id": "26e0f83a-ca98-4f34-94ac-7c5e251ee410",
-      "intelligenceIndex": 30.0938023419377,
-      "name": "GPT-5.6 Terra (Medium)",
-      "outputTokensPerTask": {
-        "answer": 3600.6617093438053,
-        "reasoning": 1877.1238117201892,
-        "total": 5477.785521063995
-      },
-      "release": {
-        "name": "GPT-5.6 Terra",
-        "slug": "gpt-5-6-terra"
-      },
-      "releaseDate": "2026-07-09",
-      "shortName": "GPT-5.6 Terra (medium)",
-      "slug": "gpt-5-6-terra-medium"
     },
     {
       "costUsdPerTask": {
@@ -2437,13 +2509,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.06747128715875697,
-        "cacheRead": 0.1431538743289597,
-        "cacheWrite": 0.9097945961612719,
-        "input": 1.0812378991920018,
+        "cacheRead": 0.1279532420493435,
+        "cacheWrite": 1.0618009189574338,
+        "input": 1.2180435897085473,
         "nonCacheInput": 0.028289428701770453,
         "output": 0.21734760942006193,
         "reasoning": 0.14987632226130493,
-        "total": 1.2985855086120641
+        "total": 1.43539119912861
       },
       "creator": {
         "id": "faddc6d9-2c14-445f-9b28-56726f59c793",
@@ -2543,13 +2615,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.0591957152792819,
-        "cacheRead": 0.4592949132553539,
-        "cacheWrite": 0.508704714942818,
-        "input": 0.9772338758981587,
+        "cacheRead": 0.42483310056386103,
+        "cacheWrite": 0.6810137784002819,
+        "input": 1.1150811266641298,
         "nonCacheInput": 0.00923424769998676,
         "output": 0.1558298981323625,
         "reasoning": 0.09663418285308062,
-        "total": 1.133063774030521
+        "total": 1.2709110247964923
       },
       "creator": {
         "id": "d874d370-74d3-4fa0-ba00-5272f92f946b",
@@ -2580,41 +2652,41 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.0341723922096898,
-        "cacheRead": 0.022938415626610687,
-        "cacheWrite": 0.03203556792735608,
-        "input": 0.09800621112672665,
-        "nonCacheInput": 0.0430322275727599,
-        "output": 0.0464555503023554,
-        "reasoning": 0.012283158092665612,
-        "total": 0.1444617614290821
+        "answer": 0.0063172957496475165,
+        "cacheRead": 0.02206299848334624,
+        "cacheWrite": 0.10017199083110034,
+        "input": 0.12416499736730822,
+        "nonCacheInput": 0.001930008052861626,
+        "output": 0.023932409510549667,
+        "reasoning": 0.01761511376090215,
+        "total": 0.14809740687785783
       },
       "creator": {
-        "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
-        "name": "OpenAI",
-        "slug": "openai"
+        "id": "7d59f244-cf07-4d56-8f28-e1f1379f31c8",
+        "name": "Multiverse Computing",
+        "slug": "multiversecomputing"
       },
-      "detailsUrl": "https://artificialanalysis.ai/models/gpt-5-6-terra-low",
+      "detailsUrl": "https://artificialanalysis.ai/models/quasar-438b",
       "effort": {
-        "label": "low",
-        "level": 20,
-        "slug": "low"
+        "label": "max",
+        "level": 60,
+        "slug": "max"
       },
-      "id": "cc4a20cd-09fe-4962-a430-119c815e85fa",
-      "intelligenceIndex": 27.496203401716,
-      "name": "GPT-5.6 Terra (Low)",
+      "id": "f9739750-6d42-450f-ba1e-2f76c869b4fe",
+      "intelligenceIndex": 26.7372536607816,
+      "name": "Quasar 438B (Max, Based on GLM-5.2)",
       "outputTokensPerTask": {
-        "answer": 2847.6993508074834,
-        "reasoning": 1023.5965077221342,
-        "total": 3871.2958585296174
+        "answer": 19143.32045347732,
+        "reasoning": 53379.13260879439,
+        "total": 72522.45306227171
       },
       "release": {
-        "name": "GPT-5.6 Terra",
-        "slug": "gpt-5-6-terra"
+        "name": "Quasar 438B",
+        "slug": "quasar-438b"
       },
-      "releaseDate": "2026-07-09",
-      "shortName": "GPT-5.6 Terra (low)",
-      "slug": "gpt-5-6-terra-low"
+      "releaseDate": "2026-08-10",
+      "shortName": "Quasar 438B (max)",
+      "slug": "quasar-438b"
     },
     {
       "costUsdPerTask": {
@@ -2653,13 +2725,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.007805950700608077,
-        "cacheRead": 0.06514724998170254,
-        "cacheWrite": 0.09159398100242531,
-        "input": 0.1599617056291364,
+        "cacheRead": 0.06605289111034612,
+        "cacheWrite": 0.08751859592352915,
+        "input": 0.15679196167888385,
         "nonCacheInput": 0.0032204746450085232,
         "output": 0.028274953944046156,
         "reasoning": 0.020469003243438078,
-        "total": 0.18823665957318256
+        "total": 0.18506691562292996
       },
       "creator": {
         "id": "0c303112-430d-4367-a484-51defaa2e166",
@@ -2687,13 +2759,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.07578475140227195,
-        "cacheRead": 0.18331205213550056,
-        "cacheWrite": 0.06182463321136626,
-        "input": 0.2494211067471088,
+        "cacheRead": 0.18332079692691047,
+        "cacheWrite": 0.06173718529726695,
+        "input": 0.24934240362441937,
         "nonCacheInput": 0.004284421400241957,
         "output": 0.21430346394573502,
         "reasoning": 0.13851871254346307,
-        "total": 0.4637245706928438
+        "total": 0.4636458675701544
       },
       "creator": {
         "id": "904308e3-2682-4750-b66e-d440865eb05f",
@@ -2721,13 +2793,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.05870202243128136,
-        "cacheRead": 0.4284257557268127,
-        "cacheWrite": 0.4740960884269201,
-        "input": 0.911943136015426,
+        "cacheRead": 0.39793622926327415,
+        "cacheWrite": 0.6265437207446126,
+        "input": 1.0339012418695799,
         "nonCacheInput": 0.00942129186169311,
         "output": 0.13627940050061324,
         "reasoning": 0.07757737806933192,
-        "total": 1.0482225365160391
+        "total": 1.1701806423701933
       },
       "creator": {
         "id": "d874d370-74d3-4fa0-ba00-5272f92f946b",
@@ -2759,13 +2831,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.1149651037864279,
-        "cacheRead": 0.16050451883738082,
-        "cacheWrite": 0.3026137322303595,
-        "input": 0.5402707715752649,
+        "cacheRead": 0.1741222844452322,
+        "cacheWrite": 0.16643607615184547,
+        "input": 0.41771088110460225,
         "nonCacheInput": 0.07715252050752461,
         "output": 0.15121459626868378,
         "reasoning": 0.03624949248225594,
-        "total": 0.6914853678439488
+        "total": 0.5689254773732861
       },
       "creator": {
         "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
@@ -2861,13 +2933,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.00574686246049773,
-        "cacheRead": 0.03501487864599409,
-        "cacheWrite": 0.009944108103308837,
-        "input": 0.04617828135287719,
+        "cacheRead": 0.03480847232965029,
+        "cacheWrite": 0.010769733368684052,
+        "input": 0.0467975003019086,
         "nonCacheInput": 0.0012192946035742562,
         "output": 0.02561934946572233,
         "reasoning": 0.019872487005224603,
-        "total": 0.07179763081859954
+        "total": 0.07241684976763095
       },
       "creator": {
         "id": "a4e5bd55-a6cd-4dcf-8d4a-1d9643cd3826",
@@ -2928,14 +3000,52 @@
     },
     {
       "costUsdPerTask": {
+        "answer": 0.04559012774457057,
+        "cacheRead": 0.3735225988360003,
+        "cacheWrite": 0.06683869924125121,
+        "input": 0.45496989920500797,
+        "nonCacheInput": 0.014608601127756447,
+        "output": 0.14035670581605783,
+        "reasoning": 0.09476657807148725,
+        "total": 0.5953266050210657
+      },
+      "creator": {
+        "id": "8f3f9fdd-e42f-4814-a35e-5da1925b539b",
+        "name": "Thinking Machines",
+        "slug": "thinking-machines"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/inkling",
+      "effort": {
+        "label": "xhigh",
+        "level": 50,
+        "slug": "xhigh"
+      },
+      "id": "0de09623-2b1a-4c8d-86ef-7f5245d4e24b",
+      "intelligenceIndex": 24.9847810999384,
+      "name": "Inkling (Xhigh)",
+      "outputTokensPerTask": {
+        "answer": 11256.82166532607,
+        "reasoning": 23399.155079379572,
+        "total": 34655.976744705644
+      },
+      "release": {
+        "name": "Inkling",
+        "slug": "inkling"
+      },
+      "releaseDate": "2026-07-15",
+      "shortName": "Inkling (xhigh)",
+      "slug": "inkling"
+    },
+    {
+      "costUsdPerTask": {
         "answer": 0.006710864369196082,
-        "cacheRead": 0.027442042566141942,
-        "cacheWrite": 0.30146830987812323,
-        "input": 0.33000413756595665,
+        "cacheRead": 0.010911249961531705,
+        "cacheWrite": 0.4667762359242256,
+        "input": 0.47878127100744877,
         "nonCacheInput": 0.0010937851216913808,
         "output": 0.035581074520379355,
         "reasoning": 0.028870210151183275,
-        "total": 0.3655852120863359
+        "total": 0.5143623455278281
       },
       "creator": {
         "id": "64ff7f06-c6fb-42ea-ba24-9cd103ab2d61",
@@ -2963,13 +3073,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.035952736765492856,
-        "cacheRead": 0.06330826260365105,
-        "cacheWrite": 0.32393044254816916,
-        "input": 0.39310891766016764,
+        "cacheRead": 0.08907115095582852,
+        "cacheWrite": 0.19511600078728186,
+        "input": 0.29005736425145784,
         "nonCacheInput": 0.005870212508347456,
         "output": 0.07658846111690273,
         "reasoning": 0.04063572435140988,
-        "total": 0.4696973787770703
+        "total": 0.36664582536836055
       },
       "creator": {
         "id": "0c303112-430d-4367-a484-51defaa2e166",
@@ -2997,13 +3107,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.017753866403875142,
-        "cacheRead": 0.013398725129293753,
-        "cacheWrite": 0.13115710551405457,
-        "input": 0.14897626532082772,
+        "cacheRead": 0.015618305990653062,
+        "cacheWrite": 0.10896129690046147,
+        "input": 0.1290000375685939,
         "nonCacheInput": 0.004420434677479369,
         "output": 0.04376674782012017,
         "reasoning": 0.026012881416245023,
-        "total": 0.1927430131409478
+        "total": 0.17276678538871407
       },
       "creator": {
         "id": "faddc6d9-2c14-445f-9b28-56726f59c793",
@@ -3069,40 +3179,6 @@
       "releaseDate": "2026-09-22",
       "shortName": "GPT-6 Luna (low)",
       "slug": "gpt-6-luna-low"
-    },
-    {
-      "costUsdPerTask": {
-        "answer": 0.03755273741696287,
-        "cacheRead": 0.02692936191690272,
-        "cacheWrite": 0.03221398185354431,
-        "input": 0.10217123351802342,
-        "nonCacheInput": 0.04302788974757639,
-        "output": 0.03755273741696287,
-        "reasoning": 0,
-        "total": 0.13972397093498629
-      },
-      "creator": {
-        "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
-        "name": "OpenAI",
-        "slug": "openai"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/gpt-5-6-terra-non-reasoning",
-      "effort": null,
-      "id": "9b97a35e-6ac7-44d9-91c6-422fa678963e",
-      "intelligenceIndex": 20.7797013584503,
-      "name": "GPT-5.6 Terra (Non-reasoning)",
-      "outputTokensPerTask": {
-        "answer": 3129.3947847469058,
-        "reasoning": 0,
-        "total": 3129.3947847469058
-      },
-      "release": {
-        "name": "GPT-5.6 Terra",
-        "slug": "gpt-5-6-terra"
-      },
-      "releaseDate": "2026-07-09",
-      "shortName": "GPT-5.6 Terra (non-reasoning)",
-      "slug": "gpt-5-6-terra-non-reasoning"
     },
     {
       "costUsdPerTask": {
@@ -3446,13 +3522,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.09049329237803294,
-        "cacheRead": 0.11810389725819967,
-        "cacheWrite": 0.17208433638825676,
-        "input": 0.3063967704585696,
+        "cacheRead": 0.12626520331305502,
+        "cacheWrite": 0.09047127583970313,
+        "input": 0.2329450159648715,
         "nonCacheInput": 0.01620853681211329,
         "output": 0.19564146903979557,
         "reasoning": 0.10514817666176263,
-        "total": 0.5020382394983653
+        "total": 0.428586485004667
       },
       "creator": {
         "id": "b5c0639a-cc9c-443b-a07e-bae6b7088933",
@@ -3509,13 +3585,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.003963755366554841,
-        "cacheRead": 0.019053421355950256,
-        "cacheWrite": 0.05246758877584137,
-        "input": 0.07212990992232968,
+        "cacheRead": 0.009665796181374774,
+        "cacheWrite": 0.06856066050368506,
+        "input": 0.07883535647559789,
         "nonCacheInput": 0.0006088997905380644,
         "output": 0.007359687570818874,
         "reasoning": 0.003395932204264034,
-        "total": 0.07948959749314857
+        "total": 0.08619504404641677
       },
       "creator": {
         "id": "0c303112-430d-4367-a484-51defaa2e166",
@@ -3577,13 +3653,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.0004950911835168671,
-        "cacheRead": 0.005367068328289299,
-        "cacheWrite": 0.10212613440038645,
-        "input": 0.10986125409525625,
+        "cacheRead": 0.007237180032643276,
+        "cacheWrite": 0.08342501735684668,
+        "input": 0.09303024875607045,
         "nonCacheInput": 0.0023680513665805163,
         "output": 0.00682346626811173,
         "reasoning": 0.006328375084594862,
-        "total": 0.11668472036336801
+        "total": 0.09985371502418221
       },
       "creator": {
         "id": "e8fe48d4-d420-48a5-87db-fcd5f5b14d5c",
@@ -3649,13 +3725,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.0029819980581798134,
-        "cacheRead": 0.0033359298764277503,
-        "cacheWrite": 0.002111520304603388,
-        "input": 0.006412532620252253,
+        "cacheRead": 0.003102620470880029,
+        "cacheWrite": 0.004444614360080605,
+        "input": 0.008512317270181749,
         "nonCacheInput": 0.0009650824392211152,
         "output": 0.008634257745635398,
         "reasoning": 0.005652259687455583,
-        "total": 0.01504679036588765
+        "total": 0.017146575015817147
       },
       "creator": {
         "id": "b5c0639a-cc9c-443b-a07e-bae6b7088933",
@@ -3869,13 +3945,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.015144827849293038,
-        "cacheRead": 0.20626230307677407,
-        "cacheWrite": 0.24512237359629863,
-        "input": 0.4545508257001931,
+        "cacheRead": 0.18395431867156653,
+        "cacheWrite": 0.2693871987388051,
+        "input": 0.4565076664374921,
         "nonCacheInput": 0.0031661490271203867,
         "output": 0.015144827849293038,
         "reasoning": 0,
-        "total": 0.46969565354948617
+        "total": 0.471652494286785
       },
       "creator": {
         "id": "d874d370-74d3-4fa0-ba00-5272f92f946b",
@@ -4213,17 +4289,17 @@
   ],
   "schemaVersion": 1,
   "selection": {
-    "measuredCompleteRecordCount": 117,
-    "positiveCostRecordCount": 112,
+    "measuredCompleteRecordCount": 119,
+    "positiveCostRecordCount": 114,
     "rule": "current, non-estimated model configurations with a finite 0–100 Intelligence Index, finite positive per-task output-token total, and a complete finite nonnegative per-task cost breakdown; source cost totals at or below zero normalize to null",
-    "sourceRecordCount": 709
+    "sourceRecordCount": 715
   },
   "source": {
     "citation": "Artificial Analysis (2025). LLM benchmarks dataset. https://artificialanalysis.ai",
     "method": "public-next-flight",
     "methodologyUrl": "https://artificialanalysis.ai/methodology/intelligence-benchmarking",
     "name": "Artificial Analysis",
-    "retrievedAt": "2026-10-26T15:11:20.470Z",
+    "retrievedAt": "2026-10-27T05:02:03.835Z",
     "sourceClass": "benchmark-publisher",
     "termsUrl": "https://artificialanalysis.ai/docs/legal/Terms-of-Use.pdf",
     "url": "https://artificialanalysis.ai/models"
