@@ -3,7 +3,7 @@ title: Publish the Kimi K3.1 Pro Intelligence Index note
 description: Ship /blog/kimi-k3-1-pro-intelligence-index, a note that places Moonshot AI's Kimi K3.1 Pro on the Intelligence Index against cost per task from the checked snapshot, names the three Anthropic rows above it, walks the frontier step above and below it, measures the best row of each other creator against it, splits its $2.11 into five components and ranks each against the cohort, reads the closed weights flag beside the vendor's open-weights promise, keeps the vendor's Terminal-Bench figures off the chart, and completes its Slopcamera figure through the documented generation path.
 type: plan
 area: blog
-status: blocked
+status: done
 repository_scopes:
   - app/blog
   - lib/kimi-k3-1-pro-placement.ts
