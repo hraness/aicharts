@@ -36,6 +36,91 @@
     },
     {
       "candidateDate": "2026-10-27",
+      "candidateDateMeaning": "provider-published-date",
+      "canonicalUrl": "https://docs.qwencloud.com/changelog/models#october-27-2026-qwen-audio-3-1-realtime-flash",
+      "firstSeenAt": "2026-10-28T06:54:34.105Z",
+      "id": "alibaba_cloud:/changelog/models#october-27-2026-qwen-audio-3-1-realtime-flash",
+      "lastChangedAt": "2026-10-28T06:54:34.105Z",
+      "namedModels": [
+        "qwen-audio-3.1-realtime-flash"
+      ],
+      "providerId": "alibaba_cloud",
+      "providerName": "Alibaba Qwen",
+      "sourceId": "qwen-model-releases",
+      "sourceModifiedAt": "2026-10-27T00:00:00.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-10-27",
+      "candidateDateMeaning": "provider-published-date",
+      "canonicalUrl": "https://docs.qwencloud.com/changelog/models#october-27-2026-qwen3-8-flash",
+      "firstSeenAt": "2026-10-28T06:54:34.105Z",
+      "id": "alibaba_cloud:/changelog/models#october-27-2026-qwen3-8-flash",
+      "lastChangedAt": "2026-10-28T06:54:34.105Z",
+      "namedModels": [
+        "qwen3.8-flash"
+      ],
+      "providerId": "alibaba_cloud",
+      "providerName": "Alibaba Qwen",
+      "sourceId": "qwen-model-releases",
+      "sourceModifiedAt": "2026-10-27T00:00:00.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-10-27",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://www.liquid.ai/blog/introducing-lfm-7b-setting-new-standards-for-efficient-language-models",
+      "firstSeenAt": "2026-10-28T06:54:34.105Z",
+      "id": "liquid:/blog/introducing-lfm-7b-setting-new-standards-for-efficient-language-models",
+      "lastChangedAt": "2026-10-28T06:54:34.105Z",
+      "namedModels": [
+        "Unresolved announcement: Introducing Lfm 7B Setting New Standards For Efficient Language Models"
+      ],
+      "providerId": "liquid",
+      "providerName": "Liquid AI",
+      "sourceId": "liquid-site-sitemap",
+      "sourceModifiedAt": "2026-10-27T00:00:00.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-10-27",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://www.liquid.ai/blog/introducing-lfm2-2-6b-redefining-efficiency-in-language-models",
+      "firstSeenAt": "2026-10-28T06:54:34.105Z",
+      "id": "liquid:/blog/introducing-lfm2-2-6b-redefining-efficiency-in-language-models",
+      "lastChangedAt": "2026-10-28T06:54:34.105Z",
+      "namedModels": [
+        "Unresolved announcement: Introducing Lfm2.2 6B Redefining Efficiency In Language Models"
+      ],
+      "providerId": "liquid",
+      "providerName": "Liquid AI",
+      "sourceId": "liquid-site-sitemap",
+      "sourceModifiedAt": "2026-10-27T00:00:00.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-10-27",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://www.liquid.ai/blog/introducing-lfm2-5-the-next-generation-of-on-device-ai",
+      "firstSeenAt": "2026-10-28T06:54:34.105Z",
+      "id": "liquid:/blog/introducing-lfm2-5-the-next-generation-of-on-device-ai",
+      "lastChangedAt": "2026-10-28T06:54:34.105Z",
+      "namedModels": [
+        "Unresolved announcement: Introducing Lfm2.5 The Next Generation Of On Device AI"
+      ],
+      "providerId": "liquid",
+      "providerName": "Liquid AI",
+      "sourceId": "liquid-site-sitemap",
+      "sourceModifiedAt": "2026-10-27T00:00:00.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-10-27",
       "candidateDateMeaning": "provider-sitemap-lastmod",
       "canonicalUrl": "https://www.liquid.ai/blog/lfm3",
       "firstSeenAt": "2026-10-28T03:48:55.151Z",
@@ -7945,7 +8030,7 @@
       "id": "anthropic-sitemap",
       "providerId": "anthropic",
       "providerName": "Anthropic",
-      "retrievedAt": "2026-10-28T00:34:00.942Z",
+      "retrievedAt": "2026-10-28T06:54:34.105Z",
       "url": "https://www.anthropic.com/sitemap.xml"
     },
     {
@@ -7989,7 +8074,7 @@
       "id": "meta-research-sitemap",
       "providerId": "meta",
       "providerName": "Meta",
-      "retrievedAt": "2026-10-28T00:34:00.942Z",
+      "retrievedAt": "2026-10-28T06:54:34.105Z",
       "url": "https://research.meta.ai/sitemap.xml"
     },
     {
@@ -8011,7 +8096,7 @@
       "id": "openai-safety-sitemap",
       "providerId": "openai",
       "providerName": "OpenAI",
-      "retrievedAt": "2026-10-28T00:34:00.942Z",
+      "retrievedAt": "2026-10-28T06:54:34.105Z",
       "url": "https://openai.com/sitemap.xml/safety/"
     },
     {
@@ -8033,7 +8118,7 @@
       "id": "openai-model-catalog",
       "providerId": "openai",
       "providerName": "OpenAI",
-      "retrievedAt": "2026-10-28T00:34:00.942Z",
+      "retrievedAt": "2026-10-28T06:54:34.105Z",
       "url": "https://developers.openai.com/api/docs/models/all.md"
     },
     {
@@ -8055,7 +8140,7 @@
       "id": "meta-newsroom-index",
       "providerId": "meta",
       "providerName": "Meta",
-      "retrievedAt": "2026-10-28T00:34:00.942Z",
+      "retrievedAt": "2026-10-28T06:54:34.105Z",
       "url": "https://about.fb.com/llms.txt"
     },
     {
@@ -8077,7 +8162,7 @@
       "id": "google-deepmind-sitemap",
       "providerId": "google",
       "providerName": "Google DeepMind",
-      "retrievedAt": "2026-10-28T00:34:00.942Z",
+      "retrievedAt": "2026-10-28T06:54:34.105Z",
       "url": "https://deepmind.google/sitemap.xml"
     },
     {
@@ -8085,21 +8170,21 @@
         "contentType": "text/markdown",
         "httpStatus": 200,
         "shape": {
-          "byteLength": 19081,
+          "byteLength": 19478,
           "candidateCount": 16,
-          "canonicalHostEntryCount": 57,
+          "canonicalHostEntryCount": 58,
           "datedEntryCount": 0,
           "duplicateEntryCount": 0,
-          "entryCount": 57,
+          "entryCount": 58,
           "rootElement": "markdown-release-notes",
-          "uniqueEntryCount": 57
+          "uniqueEntryCount": 58
         },
         "status": "healthy"
       },
       "id": "xai-release-notes",
       "providerId": "xai",
       "providerName": "xAI",
-      "retrievedAt": "2026-10-28T00:34:00.942Z",
+      "retrievedAt": "2026-10-28T06:54:34.105Z",
       "url": "https://docs.x.ai/developers/release-notes.md"
     },
     {
@@ -8121,7 +8206,7 @@
       "id": "mistral-site-sitemap",
       "providerId": "mistral",
       "providerName": "Mistral AI",
-      "retrievedAt": "2026-10-28T00:34:00.942Z",
+      "retrievedAt": "2026-10-28T06:54:34.105Z",
       "url": "https://mistral.ai/sitemap-0.xml"
     },
     {
@@ -8143,7 +8228,7 @@
       "id": "cohere-docs-sitemap",
       "providerId": "cohere",
       "providerName": "Cohere",
-      "retrievedAt": "2026-10-28T00:34:00.942Z",
+      "retrievedAt": "2026-10-28T06:54:34.105Z",
       "url": "https://docs.cohere.com/sitemap.xml"
     },
     {
@@ -8165,7 +8250,7 @@
       "id": "deepseek-site-sitemap",
       "providerId": "deepseek",
       "providerName": "DeepSeek",
-      "retrievedAt": "2026-10-28T00:34:00.942Z",
+      "retrievedAt": "2026-10-28T06:54:34.105Z",
       "url": "https://www.deepseek.com/sitemap.xml"
     },
     {
@@ -8187,7 +8272,7 @@
       "id": "deepseek-api-sitemap",
       "providerId": "deepseek",
       "providerName": "DeepSeek",
-      "retrievedAt": "2026-10-28T00:34:00.942Z",
+      "retrievedAt": "2026-10-28T06:54:34.105Z",
       "url": "https://api-docs.deepseek.com/updates/"
     },
     {
@@ -8217,21 +8302,21 @@
         "contentType": "text/xml",
         "httpStatus": 200,
         "shape": {
-          "byteLength": 38078,
+          "byteLength": 37945,
           "candidateCount": 4,
-          "canonicalHostEntryCount": 262,
-          "datedEntryCount": 262,
+          "canonicalHostEntryCount": 261,
+          "datedEntryCount": 261,
           "duplicateEntryCount": 0,
-          "entryCount": 262,
+          "entryCount": 261,
           "rootElement": "urlset",
-          "uniqueEntryCount": 262
+          "uniqueEntryCount": 261
         },
         "status": "healthy"
       },
       "id": "kimi-docs-sitemap",
       "providerId": "moonshot_ai",
       "providerName": "Moonshot AI",
-      "retrievedAt": "2026-10-28T00:34:00.942Z",
+      "retrievedAt": "2026-10-28T06:54:34.105Z",
       "url": "https://platform.kimi.com/docs/sitemap.xml"
     },
     {
@@ -8239,21 +8324,21 @@
         "contentType": "text/markdown",
         "httpStatus": 200,
         "shape": {
-          "byteLength": 36305,
-          "candidateCount": 46,
-          "canonicalHostEntryCount": 83,
-          "datedEntryCount": 83,
+          "byteLength": 37104,
+          "candidateCount": 48,
+          "canonicalHostEntryCount": 85,
+          "datedEntryCount": 85,
           "duplicateEntryCount": 0,
-          "entryCount": 83,
+          "entryCount": 85,
           "rootElement": "markdown-release-notes",
-          "uniqueEntryCount": 83
+          "uniqueEntryCount": 85
         },
         "status": "healthy"
       },
       "id": "qwen-model-releases",
       "providerId": "alibaba_cloud",
       "providerName": "Alibaba Qwen",
-      "retrievedAt": "2026-10-28T00:34:00.942Z",
+      "retrievedAt": "2026-10-28T06:54:34.105Z",
       "url": "https://docs.qwencloud.com/changelog/models.md"
     },
     {
@@ -8297,7 +8382,7 @@
       "id": "bytedance-seed-sitemap",
       "providerId": "bytedance",
       "providerName": "ByteDance Seed",
-      "retrievedAt": "2026-10-28T00:34:00.942Z",
+      "retrievedAt": "2026-10-28T06:54:34.105Z",
       "url": "https://seed.bytedance.com/sitemap.xml"
     },
     {
@@ -8319,7 +8404,7 @@
       "id": "microsoft-model-sitemap",
       "providerId": "microsoft",
       "providerName": "Microsoft AI",
-      "retrievedAt": "2026-10-28T00:34:00.942Z",
+      "retrievedAt": "2026-10-28T06:54:34.105Z",
       "url": "https://microsoft.ai/model-sitemap.xml"
     },
     {
@@ -8341,7 +8426,7 @@
       "id": "nvidia-nemotron-rss",
       "providerId": "nvidia",
       "providerName": "NVIDIA",
-      "retrievedAt": "2026-10-28T00:34:00.942Z",
+      "retrievedAt": "2026-10-28T06:54:34.105Z",
       "url": "https://blogs.nvidia.com/blog/tag/nemotron/feed/"
     },
     {
@@ -8363,7 +8448,7 @@
       "id": "amazon-nova-rss",
       "providerId": "amazon",
       "providerName": "Amazon",
-      "retrievedAt": "2026-10-28T00:34:00.942Z",
+      "retrievedAt": "2026-10-28T06:54:34.105Z",
       "url": "https://aws.amazon.com/blogs/aws/category/artificial-intelligence/amazon-machine-learning/amazon-bedrock/amazon-nova/feed/"
     },
     {
@@ -8385,7 +8470,7 @@
       "id": "baidu-ernie-sitemap",
       "providerId": "baidu",
       "providerName": "Baidu",
-      "retrievedAt": "2026-10-28T00:34:00.942Z",
+      "retrievedAt": "2026-10-28T06:54:34.105Z",
       "url": "https://ernie.baidu.com/blog/en/sitemap.xml"
     },
     {
@@ -8407,7 +8492,7 @@
       "id": "tencent-post-sitemaps",
       "providerId": "tencent",
       "providerName": "Tencent",
-      "retrievedAt": "2026-10-28T00:34:00.942Z",
+      "retrievedAt": "2026-10-28T06:54:34.105Z",
       "url": "https://www.tencent.com/sitemap_index.xml"
     },
     {
@@ -8429,7 +8514,7 @@
       "id": "xiaomi-mimo-sitemap",
       "providerId": "xiaomi",
       "providerName": "Xiaomi MiMo",
-      "retrievedAt": "2026-10-28T00:34:00.942Z",
+      "retrievedAt": "2026-10-28T06:54:34.105Z",
       "url": "https://mimo.mi.com/sitemap.xml"
     },
     {
@@ -8451,7 +8536,7 @@
       "id": "ai21-post-sitemap",
       "providerId": "ai21",
       "providerName": "AI21 Labs",
-      "retrievedAt": "2026-10-28T00:34:00.942Z",
+      "retrievedAt": "2026-10-28T06:54:34.105Z",
       "url": "https://www.ai21.com/post-sitemap.xml"
     },
     {
@@ -8459,21 +8544,21 @@
         "contentType": "application/xml",
         "httpStatus": 200,
         "shape": {
-          "byteLength": 925973,
+          "byteLength": 926240,
           "candidateCount": 5,
           "canonicalHostEntryCount": 5000,
           "datedEntryCount": 4067,
-          "duplicateEntryCount": 0,
+          "duplicateEntryCount": 1,
           "entryCount": 5000,
           "rootElement": "urlset",
-          "uniqueEntryCount": 5000
+          "uniqueEntryCount": 4999
         },
         "status": "healthy"
       },
       "id": "ibm-granite-sitemap",
       "providerId": "ibm",
       "providerName": "IBM Granite",
-      "retrievedAt": "2026-10-28T00:34:00.942Z",
+      "retrievedAt": "2026-10-28T06:54:34.105Z",
       "url": "https://research.ibm.com/sitemap-0.xml"
     },
     {
@@ -8495,7 +8580,7 @@
       "id": "ai2-model-sitemap",
       "providerId": "ai2",
       "providerName": "Ai2",
-      "retrievedAt": "2026-10-28T00:34:00.942Z",
+      "retrievedAt": "2026-10-28T06:54:34.105Z",
       "url": "https://allenai.org/sitemap.xml"
     },
     {
@@ -8517,7 +8602,7 @@
       "id": "stepfun-model-sitemap",
       "providerId": "stepfun",
       "providerName": "StepFun",
-      "retrievedAt": "2026-10-28T00:34:00.942Z",
+      "retrievedAt": "2026-10-28T06:54:34.105Z",
       "url": "https://platform.stepfun.ai/docs/sitemap.xml"
     },
     {
@@ -8539,7 +8624,7 @@
       "id": "stepfun-china-model-sitemap",
       "providerId": "stepfun",
       "providerName": "StepFun",
-      "retrievedAt": "2026-10-28T00:34:00.942Z",
+      "retrievedAt": "2026-10-28T06:54:34.105Z",
       "url": "https://platform.stepfun.com/docs/sitemap.xml"
     },
     {
@@ -8561,7 +8646,7 @@
       "id": "cognition-sitemap",
       "providerId": "cognition",
       "providerName": "Cognition",
-      "retrievedAt": "2026-10-28T00:34:00.942Z",
+      "retrievedAt": "2026-10-28T06:54:34.105Z",
       "url": "https://cognition.com/sitemap.xml"
     },
     {
@@ -8583,7 +8668,7 @@
       "id": "cognition-blog-index",
       "providerId": "cognition",
       "providerName": "Cognition",
-      "retrievedAt": "2026-10-28T00:34:00.942Z",
+      "retrievedAt": "2026-10-28T06:54:34.105Z",
       "url": "https://cognition.com/blog"
     },
     {
@@ -8605,7 +8690,7 @@
       "id": "mirendil-news-index",
       "providerId": "mirendil",
       "providerName": "Mirendil",
-      "retrievedAt": "2026-10-28T00:34:00.942Z",
+      "retrievedAt": "2026-10-28T06:54:34.105Z",
       "url": "https://mirendil.com/news/"
     },
     {
@@ -8627,7 +8712,7 @@
       "id": "reflection-sitemap",
       "providerId": "reflection",
       "providerName": "Reflection",
-      "retrievedAt": "2026-10-28T00:34:00.942Z",
+      "retrievedAt": "2026-10-28T06:54:34.105Z",
       "url": "https://reflection.ai/sitemap.xml"
     },
     {
@@ -8649,7 +8734,7 @@
       "id": "thinking-machines-sitemap",
       "providerId": "thinking_machines",
       "providerName": "Thinking Machines",
-      "retrievedAt": "2026-10-28T00:34:00.942Z",
+      "retrievedAt": "2026-10-28T06:54:34.105Z",
       "url": "https://thinkingmachines.ai/sitemap.xml"
     },
     {
@@ -8658,7 +8743,7 @@
         "httpStatus": 200,
         "shape": {
           "byteLength": 91154,
-          "candidateCount": 1,
+          "candidateCount": 4,
           "canonicalHostEntryCount": 268,
           "datedEntryCount": 196,
           "duplicateEntryCount": 0,
@@ -8671,7 +8756,7 @@
       "id": "liquid-site-sitemap",
       "providerId": "liquid",
       "providerName": "Liquid AI",
-      "retrievedAt": "2026-10-28T03:48:55.151Z",
+      "retrievedAt": "2026-10-28T06:54:34.105Z",
       "url": "https://www.liquid.ai/sitemap.xml"
     }
   ]
