@@ -3,7 +3,7 @@
   "source": {
     "method": "models-api",
     "name": "OpenRouter",
-    "retrievedAt": "2026-10-27T07:28:36.865Z",
+    "retrievedAt": "2026-10-28T06:54:41.916Z",
     "timestampMeaning": "source-added-at",
     "url": "https://openrouter.ai/api/v1/models?sort=newest"
   },
@@ -75,6 +75,12 @@
       "model": "Nemotron 3.5 Super VL",
       "providerId": "nvidia",
       "sourceAddedAt": "2026-10-15T15:04:22.000Z"
+    },
+    {
+      "id": "liquid/lfm-2.5-24b-a2b",
+      "model": "LFM2.5-24B-A2B",
+      "providerId": "liquid",
+      "sourceAddedAt": "2026-10-13T17:20:25.000Z"
     },
     {
       "id": "google/gemini-4-argon",
@@ -291,6 +297,12 @@
       "model": "Grok 4.6",
       "providerId": "xai",
       "sourceAddedAt": "2026-08-12T15:35:57.000Z"
+    },
+    {
+      "id": "liquid/lfm-2.5-2.6b",
+      "model": "LFM2.5-2.6B",
+      "providerId": "liquid",
+      "sourceAddedAt": "2026-08-11T17:48:39.000Z"
     },
     {
       "id": "nvidia/nemotron-3.5-lightning",
@@ -594,6 +606,25 @@
       "providerId": "nvidia",
       "providerName": "NVIDIA",
       "sourceAddedAt": "2026-10-15T15:04:22.000Z",
+      "status": "awaiting-benchmark"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "liquid/lfm-2.5-24b-a2b-20261012",
+      "id": "liquid/lfm-2.5-24b-a2b",
+      "model": "LFM2.5-24B-A2B",
+      "modelUrl": "https://openrouter.ai/liquid/lfm-2.5-24b-a2b",
+      "providerId": "liquid",
+      "providerName": "Liquid AI",
+      "sourceAddedAt": "2026-10-13T17:20:25.000Z",
       "status": "awaiting-benchmark"
     },
     {
@@ -1363,6 +1394,25 @@
         ],
         "supportsTools": true
       },
+      "canonicalSlug": "liquid/lfm-2.5-2.6b-20260811",
+      "id": "liquid/lfm-2.5-2.6b",
+      "model": "LFM2.5-2.6B",
+      "modelUrl": "https://openrouter.ai/liquid/lfm-2.5-2.6b",
+      "providerId": "liquid",
+      "providerName": "Liquid AI",
+      "sourceAddedAt": "2026-08-11T17:48:39.000Z",
+      "status": "awaiting-benchmark"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
       "canonicalSlug": "nvidia/nemotron-3.5-lightning-20260807",
       "id": "nvidia/nemotron-3.5-lightning",
       "model": "Nemotron 3.5 Lightning",
@@ -1412,46 +1462,6 @@
       "providerId": "meta",
       "providerName": "Meta",
       "sourceAddedAt": "2026-08-05T19:48:07.000Z",
-      "status": "awaiting-benchmark"
-    },
-    {
-      "capabilities": {
-        "inputModalities": [
-          "text"
-        ],
-        "outputModalities": [
-          "text"
-        ],
-        "supportsTools": true
-      },
-      "canonicalSlug": "deepseek/deepseek-v4-flash-20260731",
-      "id": "deepseek/deepseek-v4-flash-0731",
-      "model": "DeepSeek V4 Flash 0731",
-      "modelUrl": "https://openrouter.ai/deepseek/deepseek-v4-flash-0731",
-      "providerId": "deepseek",
-      "providerName": "DeepSeek",
-      "sourceAddedAt": "2026-07-31T06:21:48.000Z",
-      "status": "awaiting-benchmark"
-    },
-    {
-      "capabilities": {
-        "inputModalities": [
-          "audio",
-          "image",
-          "text"
-        ],
-        "outputModalities": [
-          "text"
-        ],
-        "supportsTools": true
-      },
-      "canonicalSlug": "thinkingmachines/inkling-small-20260730",
-      "id": "thinkingmachines/inkling-small",
-      "model": "Inkling Small",
-      "modelUrl": "https://openrouter.ai/thinkingmachines/inkling-small",
-      "providerId": "thinking_machines",
-      "providerName": "Thinking Machines",
-      "sourceAddedAt": "2026-07-30T20:25:17.000Z",
       "status": "awaiting-benchmark"
     }
   ]
