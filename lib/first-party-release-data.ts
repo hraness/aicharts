@@ -5,7 +5,7 @@ import { parseResult, z } from "./schema";
 const PROVIDER_IDS = [
   "ai2", "ai21", "alibaba_cloud", "amazon", "anthropic", "baidu", "bytedance", "cognition",
   "cohere", "deepseek", "google", "ibm", "liquid", "meta", "microsoft", "minimax", "mirendil", "mistral",
-  "moonshot_ai", "nvidia", "openai", "reflection", "stepfun", "tencent", "thinking_machines",
+  "moonshot_ai", "nvidia", "openai", "recursive", "reflection", "stepfun", "tencent", "thinking_machines",
   "xai", "xiaomi", "z_ai",
 ] as const;
 
@@ -249,6 +249,12 @@ export const FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS = [
     format: "sitemap-urlset", id: "liquid-site-sitemap", minimumCandidateCount: 1,
     minimumEntryCount: 100, providerId: "liquid", providerName: "Liquid AI",
     url: "https://www.liquid.ai/sitemap.xml",
+  },
+  {
+    allowRelativeUrls: false, canonicalHost: "recursive.com", datePolicy: "ignore",
+    format: "sitemap-urlset", id: "recursive-site-sitemap", minimumCandidateCount: 1,
+    minimumEntryCount: 10, providerId: "recursive", providerName: "Recursive",
+    url: "https://recursive.com/sitemap.xml",
   },
 ] as const satisfies readonly SourceContract[];
 
@@ -1498,6 +1504,11 @@ function liquidModels(url: URL): string[] {
   return slug === "lfm3" ? ["LFM3"] : [];
 }
 
+function recursiveModels(url: URL): string[] {
+  const slug = url.pathname.match(/^\/updates\/([^/]+)\/?$/u)?.[1]?.toLowerCase();
+  return slug === "introducing-recursive-flint" ? ["Flint"] : [];
+}
+
 function stepfunModels(url: URL): string[] {
   const slug = url.pathname.match(/^\/docs\/(?:en|zh)\/guides\/models\/([^/]+)\/?$/u)?.[1]?.toLowerCase();
   if (
@@ -1542,7 +1553,8 @@ const providerModelExtractors = {
   deepseek: deepSeekModels, google: googleModels,
   ibm: ibmModels, liquid: liquidModels, meta: metaModels, microsoft: microsoftModels,
   minimax: minimaxModels, mirendil: mirendilModels, mistral: mistralModels,
-  moonshot_ai: kimiModels, nvidia: nvidiaModels, openai: openAiModels, reflection: reflectionModels,
+  moonshot_ai: kimiModels, nvidia: nvidiaModels, openai: openAiModels, recursive: recursiveModels,
+  reflection: reflectionModels,
   stepfun: stepfunModels,
   tencent: tencentModels, thinking_machines: thinkingMachinesModels,
   xai: xaiModels, xiaomi: xiaomiModels, z_ai: zaiModels,
@@ -1740,6 +1752,13 @@ function unresolvedAnnouncementNameForSource(
       return blogSlug !== undefined && /\d/u.test(blogSlug)
         && /^(?:announcing|introducing)-/u.test(blogSlug)
         ? unresolvedName(blogSlug)
+        : null;
+    }
+    case "recursive-site-sitemap": {
+      const updateSlug = url.pathname.match(/^\/updates\/([^/]+)\/?$/u)?.[1];
+      return updateSlug !== undefined && /\d/u.test(updateSlug)
+        && /^(?:announcing|introducing)-/u.test(updateSlug)
+        ? unresolvedName(updateSlug)
         : null;
     }
   }

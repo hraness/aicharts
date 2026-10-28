@@ -82,6 +82,10 @@ describe("model-release semantic identity", () => {
       providerId: "liquid",
       providerName: "Liquid AI",
     });
+    expect(modelReleaseProviderForOpenRouterId("recursive/flint-v1.0")).toEqual({
+      providerId: "recursive",
+      providerName: "Recursive",
+    });
   });
 
   test("retains deliberate punctuation, configuration, and Anthropic brand matches", () => {

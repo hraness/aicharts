@@ -1,6 +1,23 @@
 {
   "candidates": [
     {
+      "candidateDate": "2026-10-28",
+      "candidateDateMeaning": "first-observed",
+      "canonicalUrl": "https://recursive.com/updates/introducing-recursive-flint",
+      "firstSeenAt": "2026-10-28T14:30:00.000Z",
+      "id": "recursive:/updates/introducing-recursive-flint",
+      "lastChangedAt": "2026-10-28T14:30:00.000Z",
+      "namedModels": [
+        "Flint"
+      ],
+      "providerId": "recursive",
+      "providerName": "Recursive",
+      "sourceId": "recursive-site-sitemap",
+      "sourceModifiedAt": "2026-10-28T14:30:00.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
       "candidateDate": "2026-10-27",
       "candidateDateMeaning": "provider-sitemap-lastmod",
       "canonicalUrl": "https://microsoft.ai/models/mai-cyber-1-1-flash/",
@@ -8758,6 +8775,28 @@
       "providerName": "Liquid AI",
       "retrievedAt": "2026-10-28T14:05:34.502Z",
       "url": "https://www.liquid.ai/sitemap.xml"
+    },
+    {
+      "health": {
+        "contentType": "text/xml",
+        "httpStatus": 200,
+        "shape": {
+          "byteLength": 1079,
+          "candidateCount": 1,
+          "canonicalHostEntryCount": 12,
+          "datedEntryCount": 0,
+          "duplicateEntryCount": 0,
+          "entryCount": 12,
+          "rootElement": "urlset",
+          "uniqueEntryCount": 12
+        },
+        "status": "healthy"
+      },
+      "id": "recursive-site-sitemap",
+      "providerId": "recursive",
+      "providerName": "Recursive",
+      "retrievedAt": "2026-10-28T14:30:00.000Z",
+      "url": "https://recursive.com/sitemap.xml"
     }
   ]
 }

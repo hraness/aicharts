@@ -537,6 +537,12 @@ function fixtureFor(definition: FirstPartyReleaseSourceDefinition): SourceFixtur
         "https://www.liquid.ai/blog/lfm3",
       ]),
     };
+    case "recursive-site-sitemap": return {
+      contentType: "application/xml",
+      text: standardSitemapFixture(definition, [
+        "https://recursive.com/updates/introducing-recursive-flint",
+      ]),
+    };
   }
 }
 
@@ -577,9 +583,9 @@ function configuredObservations(): readonly FirstPartyReleaseSourceObservation[]
 
 describe("first-party release URL recognition", () => {
   test("keeps the tracked lab registry broad and its legacy source prefix stable", () => {
-    expect(FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS).toHaveLength(34);
+    expect(FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS).toHaveLength(35);
     expect(new Set(FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS.map(source => source.providerId)).size)
-      .toBe(28);
+      .toBe(29);
     expect(FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS.slice(0, 3).map(source => source.id)).toEqual([
       "anthropic-sitemap",
       "openai-release-sitemap",
@@ -648,6 +654,11 @@ describe("first-party release URL recognition", () => {
         expectedIdentity: /^LFM3$/u,
         providerId: "liquid",
         url: "https://www.liquid.ai/blog/lfm3",
+      },
+      {
+        expectedIdentity: /^Flint$/u,
+        providerId: "recursive",
+        url: "https://recursive.com/updates/introducing-recursive-flint",
       },
       {
         expectedIdentity: /Command A Vision/u,
@@ -825,6 +836,10 @@ describe("first-party release URL recognition", () => {
       "liquid",
       "https://www.liquid.ai/blog/lfm3",
     )).toEqual(["LFM3"]);
+    expect(namedModelsForProviderUrl(
+      "recursive",
+      "https://recursive.com/updates/introducing-recursive-flint",
+    )).toEqual(["Flint"]);
   });
 
   test("uses reviewed exact identities for irregular Anthropic model-release routes", () => {
@@ -1035,9 +1050,10 @@ describe("first-party release URL recognition", () => {
       ["reflection-sitemap", "https://reflection.ai/blog/introducing-aurora-1"],
       ["thinking-machines-sitemap", "https://thinkingmachines.ai/news/introducing-aurora-1/"],
       ["liquid-site-sitemap", "https://www.liquid.ai/blog/introducing-aurora-1"],
+      ["recursive-site-sitemap", "https://recursive.com/updates/introducing-aurora-1"],
     ] as const;
 
-    expect(new Set(cases.map(([sourceId]) => sourceDefinition(sourceId).providerId)).size).toBe(28);
+    expect(new Set(cases.map(([sourceId]) => sourceDefinition(sourceId).providerId)).size).toBe(29);
     for (const [sourceId, url] of cases) {
       expect(releaseCandidateNamesForSourceUrl(sourceId, url), `${sourceId} silently dropped ${url}`)
         .toHaveLength(1);
@@ -1122,6 +1138,9 @@ describe("first-party release URL recognition", () => {
       ["liquid-site-sitemap", "https://www.liquid.ai/blog/low-latency"],
       ["liquid-site-sitemap", "https://www.liquid.ai/news/models"],
       ["liquid-site-sitemap", "https://www.liquid.ai/ja/blog/lfm3"],
+      ["recursive-site-sitemap", "https://recursive.com/updates/first-steps-toward-automated-ai-research"],
+      ["recursive-site-sitemap", "https://recursive.com/join-us"],
+      ["recursive-site-sitemap", "https://recursive.com/blog/introducing-recursive-flint"],
     ] as const;
     for (const [sourceId, url] of nonReleaseUrls) {
       expect(releaseCandidateNamesForSourceUrl(sourceId, url), `${url} should stay outside the release queue`)

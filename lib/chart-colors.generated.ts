@@ -17,6 +17,7 @@ export const providerColors = {
   liquid: "#1b7f9a",
   mirendil: "#2f8f6b",
   mistral: "#f7a400",
+  recursive: "#9b5de5",
   reflection: "#6b5cff",
   stepfun: "#21c7a8",
   thinking_machines: "#c45c8a",
