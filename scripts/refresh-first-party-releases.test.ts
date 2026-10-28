@@ -327,6 +327,16 @@ function mirendilNewsIndexHtml(): string {
   ].join("\n");
 }
 
+function particleBlogIndexHtml(): string {
+  return [
+    "<!DOCTYPE html><html><body><main>",
+    '<a class="nav_link" href="/blog/introducing-particle-1">Blog</a>',
+    '<a class="pla11_footer_link" href="/blog/introducing-particle-1">Particle-1</a>',
+    '<a class="pla11_footer_link" href="/about">About</a>',
+    "</main></body></html>",
+  ].join("\n");
+}
+
 function cognitionBlogIndexHtml(): string {
   const definition = sourceDefinition("cognition-blog-index");
   const posts = [
@@ -549,6 +559,10 @@ function fixtureFor(definition: FirstPartyReleaseSourceDefinition): SourceFixtur
         "https://www.cartesia.ai/blog/from-tokens-to-bytes-part-1",
       ]),
     };
+    case "particle-blog-index": return {
+      contentType: "text/html",
+      text: particleBlogIndexHtml(),
+    };
   }
 }
 
@@ -589,9 +603,9 @@ function configuredObservations(): readonly FirstPartyReleaseSourceObservation[]
 
 describe("first-party release URL recognition", () => {
   test("keeps the tracked lab registry broad and its legacy source prefix stable", () => {
-    expect(FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS).toHaveLength(36);
+    expect(FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS).toHaveLength(37);
     expect(new Set(FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS.map(source => source.providerId)).size)
-      .toBe(30);
+      .toBe(31);
     expect(FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS.slice(0, 3).map(source => source.id)).toEqual([
       "anthropic-sitemap",
       "openai-release-sitemap",
@@ -670,6 +684,11 @@ describe("first-party release URL recognition", () => {
         expectedIdentity: /^H-Net$/u,
         providerId: "cartesia",
         url: "https://www.cartesia.ai/blog/from-tokens-to-bytes-part-1",
+      },
+      {
+        expectedIdentity: /^Particle-1$/u,
+        providerId: "particle",
+        url: "https://particle.ai/blog/introducing-particle-1",
       },
       {
         expectedIdentity: /Command A Vision/u,
@@ -855,6 +874,10 @@ describe("first-party release URL recognition", () => {
       "cartesia",
       "https://www.cartesia.ai/blog/from-tokens-to-bytes-part-1",
     )).toEqual(["H-Net"]);
+    expect(namedModelsForProviderUrl(
+      "particle",
+      "https://particle.ai/blog/introducing-particle-1",
+    )).toEqual(["Particle-1"]);
   });
 
   test("uses reviewed exact identities for irregular Anthropic model-release routes", () => {
@@ -1067,9 +1090,10 @@ describe("first-party release URL recognition", () => {
       ["liquid-site-sitemap", "https://www.liquid.ai/blog/introducing-aurora-1"],
       ["recursive-site-sitemap", "https://recursive.com/updates/introducing-aurora-1"],
       ["cartesia-blog-sitemap", "https://www.cartesia.ai/blog/introducing-aurora-1"],
+      ["particle-blog-index", "https://particle.ai/blog/introducing-aurora-1"],
     ] as const;
 
-    expect(new Set(cases.map(([sourceId]) => sourceDefinition(sourceId).providerId)).size).toBe(30);
+    expect(new Set(cases.map(([sourceId]) => sourceDefinition(sourceId).providerId)).size).toBe(31);
     for (const [sourceId, url] of cases) {
       expect(releaseCandidateNamesForSourceUrl(sourceId, url), `${sourceId} silently dropped ${url}`)
         .toHaveLength(1);
@@ -1165,6 +1189,9 @@ describe("first-party release URL recognition", () => {
       ["cartesia-blog-sitemap", "https://www.cartesia.ai/blog/series-a"],
       ["cartesia-blog-sitemap", "https://www.cartesia.ai/authors/karan-goel"],
       ["cartesia-blog-sitemap", "https://www.cartesia.ai/blog"],
+      ["particle-blog-index", "https://particle.ai/about"],
+      ["particle-blog-index", "https://particle.ai/blog"],
+      ["particle-blog-index", "https://docs.particle.ai/models"],
     ] as const;
     for (const [sourceId, url] of nonReleaseUrls) {
       expect(releaseCandidateNamesForSourceUrl(sourceId, url), `${url} should stay outside the release queue`)

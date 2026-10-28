@@ -3,6 +3,23 @@
     {
       "candidateDate": "2026-10-28",
       "candidateDateMeaning": "first-observed",
+      "canonicalUrl": "https://particle.ai/blog/introducing-particle-1",
+      "firstSeenAt": "2026-10-28T20:19:31.008Z",
+      "id": "particle:/blog/introducing-particle-1",
+      "lastChangedAt": "2026-10-28T20:19:31.008Z",
+      "namedModels": [
+        "Particle-1"
+      ],
+      "providerId": "particle",
+      "providerName": "Particle AI",
+      "sourceId": "particle-blog-index",
+      "sourceModifiedAt": "2026-10-28T20:19:31.008Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-10-28",
+      "candidateDateMeaning": "first-observed",
       "canonicalUrl": "https://www.cartesia.ai/blog/from-tokens-to-bytes-part-1",
       "firstSeenAt": "2026-10-28T20:02:55.000Z",
       "id": "cartesia:/blog/from-tokens-to-bytes-part-1",
@@ -8836,6 +8853,28 @@
       "providerName": "Cartesia",
       "retrievedAt": "2026-10-28T20:02:55.000Z",
       "url": "https://www.cartesia.ai/sitemap-blog-0.xml"
+    },
+    {
+      "health": {
+        "contentType": "text/html",
+        "httpStatus": 200,
+        "shape": {
+          "byteLength": 140442,
+          "candidateCount": 1,
+          "canonicalHostEntryCount": 3,
+          "datedEntryCount": 0,
+          "duplicateEntryCount": 2,
+          "entryCount": 3,
+          "rootElement": "html-index",
+          "uniqueEntryCount": 1
+        },
+        "status": "healthy"
+      },
+      "id": "particle-blog-index",
+      "providerId": "particle",
+      "providerName": "Particle AI",
+      "retrievedAt": "2026-10-28T20:19:31.008Z",
+      "url": "https://particle.ai/"
     }
   ]
 }

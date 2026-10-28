@@ -86,6 +86,10 @@ describe("model-release semantic identity", () => {
       providerId: "recursive",
       providerName: "Recursive",
     });
+    expect(modelReleaseProviderForOpenRouterId("particle-ai/particle-1")).toEqual({
+      providerId: "particle",
+      providerName: "Particle AI",
+    });
   });
 
   test("retains deliberate punctuation, configuration, and Anthropic brand matches", () => {
