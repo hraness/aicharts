@@ -151,6 +151,7 @@ import {
   createSonnet55CodingArticle,
 } from "./sonnet-5-5-coding-agent-index-article";
 import { HAIKU_55_ARTICLE_PUBLISHED_AT } from "./haiku-5-5-intelligence-index-article";
+import { KIMI_K3_1_PRO_ARTICLE_PUBLISHED_AT } from "./kimi-k3-1-pro-intelligence-index-article";
 import { MUSE_WONDER_ARTICLE_PUBLISHED_AT } from "./muse-wonder-intelligence-index-article";
 import {
   CLAUDE_OPUS_55,
@@ -312,6 +313,10 @@ describe("aicharts benchmark notes", () => {
         expect(article.publishedAt).toBe(MUSE_WONDER_ARTICLE_PUBLISHED_AT);
         expect(article.updatedAt >= article.publishedAt).toBeTrue();
         expect(articleToMarkdown(article)).toContain("captured October 21, 2026 UTC");
+      } else if (article.slug === "kimi-k3-1-pro-intelligence-index") {
+        expect(article.publishedAt).toBe(KIMI_K3_1_PRO_ARTICLE_PUBLISHED_AT);
+        expect(article.updatedAt >= article.publishedAt).toBeTrue();
+        expect(articleToMarkdown(article)).toContain("captured October 27, 2026 UTC");
       } else if (article.slug === "gpt-6-sol-coding-agent-index") {
         expect(article.publishedAt).toBe(GPT_6_SOL_ARTICLE_PUBLISHED_AT);
         expect(article.updatedAt >= article.publishedAt).toBeTrue();

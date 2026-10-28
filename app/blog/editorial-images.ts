@@ -236,6 +236,15 @@ export const BLOG_EDITORIAL_IMAGES = {
     "20261021T142308157Z-image-3a5d1b88-d11/receipt.json",
     "gateway_76e19177fa924b2c8d59ba2e985aeb97.json",
   ),
+  "kimi-k3-1-pro-intelligence-index": image(
+    "kimi-k3-1-pro-intelligence-index",
+    "Four matte ivory blocks stand on a low charcoal plinth, three stepping down together on the left and one apart on the right above a thin brass line along the plinth’s front edge.",
+    "Kimi K3.1 Pro sits fourth on the Intelligence Index behind three Anthropic rows, the highest-scoring configuration from any other creator.",
+    "9f295501701e869a1c4ecee0031c2bbdd43a80e23024e228d870d6157ebbcc64",
+    "25197b4cfa4d4361a7c9d1d94150610e2d5a5473f9c65ffcec22216c3a33e48d",
+    "20261028T025306746Z-image-bd4b0277-464/receipt.json",
+    "gateway_8c593235d41a4c9189b1b6429a59c49c.json",
+  ),
   "opus-5-5-coding-agent-index": image(
     "opus-5-5-coding-agent-index",
     "A tall matte ivory block stands near the right end of a long low charcoal table, with one thin brass line running left along the table’s edge.",

@@ -362,6 +362,26 @@
       "review": "accepted"
     },
     {
+      "slug": "kimi-k3-1-pro-intelligence-index",
+      "promptSha256": "25197b4cfa4d4361a7c9d1d94150610e2d5a5473f9c65ffcec22216c3a33e48d",
+      "master": {
+        "path": "/images/blog/kimi-k3-1-pro-intelligence-index.webp",
+        "width": 1536,
+        "height": 864,
+        "bytes": 45216,
+        "sha256": "9f295501701e869a1c4ecee0031c2bbdd43a80e23024e228d870d6157ebbcc64"
+      },
+      "receiptPath": "artifacts/slopcamera/generated/gateway/20261028T025306746Z-image-bd4b0277-464/receipt.json",
+      "jobPath": "artifacts/slopcamera/generated/gateway-jobs/gateway_8c593235d41a4c9189b1b6429a59c49c.json",
+      "generator": {
+        "package": "@hraness/slopcamera",
+        "version": "3.2.5",
+        "sourceCommit": "66b4322030f4de24f4d5b6d0c2515c109259f901"
+      },
+      "validation": "decode-passed",
+      "review": "accepted"
+    },
+    {
       "slug": "opus-5-5-coding-agent-index",
       "promptSha256": "89bf0ca0420013ffe9078b787fb535bd633bdd214f074bca7751872cd248d0af",
       "master": {
