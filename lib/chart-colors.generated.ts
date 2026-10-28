@@ -14,6 +14,7 @@ export const providerColors = {
   xai: "#e58b69",
   z_ai: "#e58d32",
   arcee_ai: "#4aa3c7",
+  liquid: "#1b7f9a",
   mirendil: "#2f8f6b",
   mistral: "#f7a400",
   reflection: "#6b5cff",

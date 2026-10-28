@@ -41,6 +41,8 @@ const providerIdsByAlias: Readonly<Record<string, keyof typeof providerColors>> 
   google: "google",
   googledeepmind: "google",
   kimi: "moonshot_ai",
+  liquid: "liquid",
+  liquidai: "liquid",
   meta: "meta",
   mirendil: "mirendil",
   mistral: "mistral",

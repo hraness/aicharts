@@ -35,6 +35,23 @@
       "status": "needs-review"
     },
     {
+      "candidateDate": "2026-10-27",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://www.liquid.ai/blog/lfm3",
+      "firstSeenAt": "2026-10-28T03:48:55.151Z",
+      "id": "liquid:/blog/lfm3",
+      "lastChangedAt": "2026-10-28T03:48:55.151Z",
+      "namedModels": [
+        "LFM3"
+      ],
+      "providerId": "liquid",
+      "providerName": "Liquid AI",
+      "sourceId": "liquid-site-sitemap",
+      "sourceModifiedAt": "2026-10-27T00:00:00.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
       "candidateDate": "2026-10-26",
       "candidateDateMeaning": "first-observed",
       "canonicalUrl": "https://developers.openai.com/api/docs/models/gpt-6.1-terra",
@@ -8634,6 +8651,28 @@
       "providerName": "Thinking Machines",
       "retrievedAt": "2026-10-28T00:34:00.942Z",
       "url": "https://thinkingmachines.ai/sitemap.xml"
+    },
+    {
+      "health": {
+        "contentType": "application/xml",
+        "httpStatus": 200,
+        "shape": {
+          "byteLength": 91154,
+          "candidateCount": 1,
+          "canonicalHostEntryCount": 268,
+          "datedEntryCount": 196,
+          "duplicateEntryCount": 0,
+          "entryCount": 268,
+          "rootElement": "urlset",
+          "uniqueEntryCount": 268
+        },
+        "status": "healthy"
+      },
+      "id": "liquid-site-sitemap",
+      "providerId": "liquid",
+      "providerName": "Liquid AI",
+      "retrievedAt": "2026-10-28T03:48:55.151Z",
+      "url": "https://www.liquid.ai/sitemap.xml"
     }
   ]
 }
