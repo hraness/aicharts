@@ -4,7 +4,7 @@ import { parseResult, z } from "./schema";
 
 const PROVIDER_IDS = [
   "ai2", "ai21", "alibaba_cloud", "amazon", "anthropic", "baidu", "bytedance", "cognition",
-  "cohere", "deepseek", "google", "ibm", "meta", "microsoft", "minimax", "mirendil", "mistral",
+  "cohere", "deepseek", "google", "ibm", "liquid", "meta", "microsoft", "minimax", "mirendil", "mistral",
   "moonshot_ai", "nvidia", "openai", "reflection", "stepfun", "tencent", "thinking_machines",
   "xai", "xiaomi", "z_ai",
 ] as const;
@@ -243,6 +243,12 @@ export const FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS = [
     format: "sitemap-urlset", id: "thinking-machines-sitemap", minimumCandidateCount: 1,
     minimumEntryCount: 20, providerId: "thinking_machines", providerName: "Thinking Machines",
     url: "https://thinkingmachines.ai/sitemap.xml",
+  },
+  {
+    allowRelativeUrls: false, canonicalHost: "www.liquid.ai", datePolicy: "candidates",
+    format: "sitemap-urlset", id: "liquid-site-sitemap", minimumCandidateCount: 1,
+    minimumEntryCount: 100, providerId: "liquid", providerName: "Liquid AI",
+    url: "https://www.liquid.ai/sitemap.xml",
   },
 ] as const satisfies readonly SourceContract[];
 
@@ -1487,6 +1493,11 @@ function thinkingMachinesModels(url: URL): string[] {
   return [];
 }
 
+function liquidModels(url: URL): string[] {
+  const slug = url.pathname.match(/^\/blog\/([^/]+)\/?$/u)?.[1]?.toLowerCase();
+  return slug === "lfm3" ? ["LFM3"] : [];
+}
+
 function stepfunModels(url: URL): string[] {
   const slug = url.pathname.match(/^\/docs\/(?:en|zh)\/guides\/models\/([^/]+)\/?$/u)?.[1]?.toLowerCase();
   if (
@@ -1529,8 +1540,8 @@ const providerModelExtractors = {
   alibaba_cloud: qwenModels, amazon: amazonModels, anthropic: anthropicModels, baidu: baiduModels,
   bytedance: bytedanceModels, cognition: cognitionModels, cohere: cohereModels,
   deepseek: deepSeekModels, google: googleModels,
-  ibm: ibmModels, meta: metaModels, microsoft: microsoftModels, minimax: minimaxModels,
-  mirendil: mirendilModels, mistral: mistralModels,
+  ibm: ibmModels, liquid: liquidModels, meta: metaModels, microsoft: microsoftModels,
+  minimax: minimaxModels, mirendil: mirendilModels, mistral: mistralModels,
   moonshot_ai: kimiModels, nvidia: nvidiaModels, openai: openAiModels, reflection: reflectionModels,
   stepfun: stepfunModels,
   tencent: tencentModels, thinking_machines: thinkingMachinesModels,
@@ -1722,6 +1733,13 @@ function unresolvedAnnouncementNameForSource(
       return newsSlug !== undefined && /\d/u.test(newsSlug)
         && /^(?:announcing|introducing)-/u.test(newsSlug)
         ? unresolvedName(newsSlug)
+        : null;
+    }
+    case "liquid-site-sitemap": {
+      const blogSlug = url.pathname.match(/^\/blog\/([^/]+)\/?$/u)?.[1];
+      return blogSlug !== undefined && /\d/u.test(blogSlug)
+        && /^(?:announcing|introducing)-/u.test(blogSlug)
+        ? unresolvedName(blogSlug)
         : null;
     }
   }

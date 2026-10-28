@@ -65,6 +65,8 @@ describe("provider brand resolution", () => {
     expect(providerBrand("Mistral AI").chipColor).toBe(providerColors.mistral);
     expect(providerBrand("mistralai").chipColor).toBe(providerColors.mistral);
     expect(providerBrand("Arcee AI").chipColor).toBe(providerColors.arcee_ai);
+    expect(providerBrand("Liquid AI").chipColor).toBe(providerColors.liquid);
+    expect(providerBrand("liquidai").chipColor).toBe(providerColors.liquid);
     expect(providerBrand("Thinking Machines").monogram).toBe("TM");
   });
 

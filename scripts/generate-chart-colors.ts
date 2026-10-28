@@ -17,6 +17,7 @@ const providerIds = [
   "xai",
   "z_ai",
   "arcee_ai",
+  "liquid",
   "mirendil",
   "mistral",
   "reflection",
@@ -42,6 +43,7 @@ const pinnedProviderColors = {
   z_ai: "#e58d32",
   // Appended identities for labs that now appear on the chart and release radar.
   arcee_ai: "#4aa3c7",
+  liquid: "#1b7f9a",
   mirendil: "#2f8f6b",
   mistral: "#f7a400",
   reflection: "#6b5cff",

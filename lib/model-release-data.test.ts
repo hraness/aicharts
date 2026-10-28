@@ -78,6 +78,10 @@ describe("model-release semantic identity", () => {
       providerId: "arcee_ai",
       providerName: "Arcee AI",
     });
+    expect(modelReleaseProviderForOpenRouterId("liquid/lfm-2.5-24b-a2b")).toEqual({
+      providerId: "liquid",
+      providerName: "Liquid AI",
+    });
   });
 
   test("retains deliberate punctuation, configuration, and Anthropic brand matches", () => {
