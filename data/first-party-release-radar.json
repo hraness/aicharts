@@ -3,6 +3,23 @@
     {
       "candidateDate": "2026-10-28",
       "candidateDateMeaning": "first-observed",
+      "canonicalUrl": "https://www.cartesia.ai/blog/from-tokens-to-bytes-part-1",
+      "firstSeenAt": "2026-10-28T20:02:55.000Z",
+      "id": "cartesia:/blog/from-tokens-to-bytes-part-1",
+      "lastChangedAt": "2026-10-28T20:02:55.000Z",
+      "namedModels": [
+        "H-Net"
+      ],
+      "providerId": "cartesia",
+      "providerName": "Cartesia",
+      "sourceId": "cartesia-blog-sitemap",
+      "sourceModifiedAt": "2026-10-28T20:02:55.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-10-28",
+      "candidateDateMeaning": "first-observed",
       "canonicalUrl": "https://recursive.com/updates/introducing-recursive-flint",
       "firstSeenAt": "2026-10-28T14:30:00.000Z",
       "id": "recursive:/updates/introducing-recursive-flint",
@@ -8797,6 +8814,28 @@
       "providerName": "Recursive",
       "retrievedAt": "2026-10-28T19:38:38.450Z",
       "url": "https://recursive.com/sitemap.xml"
+    },
+    {
+      "health": {
+        "contentType": "application/xml",
+        "httpStatus": 200,
+        "shape": {
+          "byteLength": 47103,
+          "candidateCount": 1,
+          "canonicalHostEntryCount": 57,
+          "datedEntryCount": 0,
+          "duplicateEntryCount": 0,
+          "entryCount": 57,
+          "rootElement": "urlset",
+          "uniqueEntryCount": 57
+        },
+        "status": "healthy"
+      },
+      "id": "cartesia-blog-sitemap",
+      "providerId": "cartesia",
+      "providerName": "Cartesia",
+      "retrievedAt": "2026-10-28T20:02:55.000Z",
+      "url": "https://www.cartesia.ai/sitemap-blog-0.xml"
     }
   ]
 }

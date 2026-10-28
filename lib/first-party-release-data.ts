@@ -3,7 +3,7 @@ import { err, ok, type Result } from "./result";
 import { parseResult, z } from "./schema";
 
 const PROVIDER_IDS = [
-  "ai2", "ai21", "alibaba_cloud", "amazon", "anthropic", "baidu", "bytedance", "cognition",
+  "ai2", "ai21", "alibaba_cloud", "amazon", "anthropic", "baidu", "bytedance", "cartesia", "cognition",
   "cohere", "deepseek", "google", "ibm", "liquid", "meta", "microsoft", "minimax", "mirendil", "mistral",
   "moonshot_ai", "nvidia", "openai", "recursive", "reflection", "stepfun", "tencent", "thinking_machines",
   "xai", "xiaomi", "z_ai",
@@ -255,6 +255,12 @@ export const FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS = [
     format: "sitemap-urlset", id: "recursive-site-sitemap", minimumCandidateCount: 1,
     minimumEntryCount: 10, providerId: "recursive", providerName: "Recursive",
     url: "https://recursive.com/sitemap.xml",
+  },
+  {
+    allowRelativeUrls: false, canonicalHost: "www.cartesia.ai", datePolicy: "ignore",
+    format: "sitemap-urlset", id: "cartesia-blog-sitemap", minimumCandidateCount: 1,
+    minimumEntryCount: 40, providerId: "cartesia", providerName: "Cartesia",
+    url: "https://www.cartesia.ai/sitemap-blog-0.xml",
   },
 ] as const satisfies readonly SourceContract[];
 
@@ -1509,6 +1515,11 @@ function recursiveModels(url: URL): string[] {
   return slug === "introducing-recursive-flint" ? ["Flint"] : [];
 }
 
+function cartesiaModels(url: URL): string[] {
+  const slug = url.pathname.match(/^\/blog\/([^/]+)\/?$/u)?.[1]?.toLowerCase();
+  return slug === "from-tokens-to-bytes-part-1" ? ["H-Net"] : [];
+}
+
 function stepfunModels(url: URL): string[] {
   const slug = url.pathname.match(/^\/docs\/(?:en|zh)\/guides\/models\/([^/]+)\/?$/u)?.[1]?.toLowerCase();
   if (
@@ -1549,7 +1560,7 @@ function namedModelsForProviderText(providerId: FirstPartyReleaseProviderId, val
 const providerModelExtractors = {
   ai2: ai2Models, ai21: ai21Models,
   alibaba_cloud: qwenModels, amazon: amazonModels, anthropic: anthropicModels, baidu: baiduModels,
-  bytedance: bytedanceModels, cognition: cognitionModels, cohere: cohereModels,
+  bytedance: bytedanceModels, cartesia: cartesiaModels, cognition: cognitionModels, cohere: cohereModels,
   deepseek: deepSeekModels, google: googleModels,
   ibm: ibmModels, liquid: liquidModels, meta: metaModels, microsoft: microsoftModels,
   minimax: minimaxModels, mirendil: mirendilModels, mistral: mistralModels,
@@ -1759,6 +1770,13 @@ function unresolvedAnnouncementNameForSource(
       return updateSlug !== undefined && /\d/u.test(updateSlug)
         && /^(?:announcing|introducing)-/u.test(updateSlug)
         ? unresolvedName(updateSlug)
+        : null;
+    }
+    case "cartesia-blog-sitemap": {
+      const blogSlug = url.pathname.match(/^\/blog\/([^/]+)\/?$/u)?.[1];
+      return blogSlug !== undefined && /\d/u.test(blogSlug)
+        && /^(?:announcing|introducing)-/u.test(blogSlug)
+        ? unresolvedName(blogSlug)
         : null;
     }
   }
