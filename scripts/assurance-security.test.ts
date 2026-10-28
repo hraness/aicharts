@@ -58,6 +58,20 @@ describe("dependency pins", () => {
     expect(checkCargoLock(read("Cargo.lock"), "Cargo.lock")).toEqual([]);
     for (const file of ["ci.yml", "cli-release.yml", "cli-macos.yml", "cli-publish.yml", "auto-tag.yml", "codex-auto-merge.yml", "data-refresh.yml"]) expect(checkWorkflowPins(read(`.github/workflows/${file}`), file)).toEqual([]);
   });
+  test("better-auth and its adapters are overridden to the patched 1.7.14 release (GHSA-965c-763c-88jm, GHSA-r4xp-prcw-77qf, GHSA-q84f-53jg-9ppm, GHSA-44jh-23m7-hpcf)", () => {
+    const overrides = (JSON.parse(read("package.json")) as { overrides?: Record<string, string> }).overrides;
+    expect(overrides?.["better-auth"]).toBe("1.7.14");
+    expect(overrides?.["@better-auth/core"]).toBe("1.7.14");
+    expect(overrides?.["@better-auth/drizzle-adapter"]).toBe("1.7.14");
+    expect(overrides?.["@better-auth/kysely-adapter"]).toBe("1.7.14");
+    expect(lock.packages["better-auth"]?.[0]).toBe("better-auth@1.7.14");
+    expect(lock.packages["@better-auth/core"]?.[0]).toBe("@better-auth/core@1.7.14");
+    expect(lock.packages["@better-auth/drizzle-adapter"]?.[0]).toBe("@better-auth/drizzle-adapter@1.7.14");
+    expect(lock.packages["@better-auth/kysely-adapter"]?.[0]).toBe("@better-auth/kysely-adapter@1.7.14");
+    for (const name of ["@better-auth/memory-adapter", "@better-auth/mongo-adapter", "@better-auth/prisma-adapter", "@better-auth/telemetry"]) {
+      expect(lock.packages[name]?.[0]).toBe(`${name}@1.7.14`);
+    }
+  });
   test("source-map-js is overridden to the patched 1.2.2 release (GHSA-68fv-2mgg-jv7q)", () => {
     expect((JSON.parse(read("package.json")) as { overrides?: Record<string, string> }).overrides?.["source-map-js"]).toBe("1.2.2");
     expect(lock.packages["source-map-js"]?.[0]).toBe("source-map-js@1.2.2");
