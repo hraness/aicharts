@@ -51,6 +51,8 @@ const providerIdsByAlias: Readonly<Record<string, keyof typeof providerColors>> 
   moonshotai: "moonshot_ai",
   nvidia: "nvidia",
   openai: "openai",
+  particle: "particle",
+  particleai: "particle",
   recursive: "recursive",
   recursivesi: "recursive",
   reflection: "reflection",

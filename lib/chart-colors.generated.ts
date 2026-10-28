@@ -21,6 +21,7 @@ export const providerColors = {
   reflection: "#6b5cff",
   stepfun: "#21c7a8",
   thinking_machines: "#c45c8a",
+  particle: "#e4572e",
 } as const;
 
 export const openAiEffortColors = {

@@ -5,7 +5,7 @@ import { parseResult, z } from "./schema";
 const PROVIDER_IDS = [
   "ai2", "ai21", "alibaba_cloud", "amazon", "anthropic", "baidu", "bytedance", "cartesia", "cognition",
   "cohere", "deepseek", "google", "ibm", "liquid", "meta", "microsoft", "minimax", "mirendil", "mistral",
-  "moonshot_ai", "nvidia", "openai", "recursive", "reflection", "stepfun", "tencent", "thinking_machines",
+  "moonshot_ai", "nvidia", "openai", "particle", "recursive", "reflection", "stepfun", "tencent", "thinking_machines",
   "xai", "xiaomi", "z_ai",
 ] as const;
 
@@ -19,6 +19,7 @@ type SourceContract = Readonly<{
     | "html-cognition-blog-index"
     | "html-deepseek-updates"
     | "html-mirendil-news-index"
+    | "html-particle-blog-index"
     | "markdown-meta-index"
     | "markdown-minimax-releases"
     | "markdown-openai-catalog"
@@ -262,6 +263,15 @@ export const FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS = [
     minimumEntryCount: 40, providerId: "cartesia", providerName: "Cartesia",
     url: "https://www.cartesia.ai/sitemap-blog-0.xml",
   },
+  // Particle has no marketing sitemap, and https://particle.ai/blog 404s.
+  // The homepage is the live first-party surface that currently lists /blog/*
+  // posts (including Introducing Particle-1). Discovery dates are first-observed.
+  {
+    allowRelativeUrls: true, canonicalHost: "particle.ai", datePolicy: "ignore",
+    format: "html-particle-blog-index", id: "particle-blog-index", minimumCandidateCount: 1,
+    minimumEntryCount: 1, providerId: "particle", providerName: "Particle AI",
+    url: "https://particle.ai/",
+  },
 ] as const satisfies readonly SourceContract[];
 
 /**
@@ -375,6 +385,7 @@ function sourceDefinitionForId(id: FirstPartyReleaseSourceId): FirstPartyRelease
 function sourceRootElement(definition: FirstPartyReleaseSourceDefinition) {
   if (definition.format === "html-cognition-blog-index") return "html-index" as const;
   if (definition.format === "html-mirendil-news-index") return "html-index" as const;
+  if (definition.format === "html-particle-blog-index") return "html-index" as const;
   if (definition.format === "html-deepseek-updates") return "html-release-notes" as const;
   if (definition.format === "rss") return "rss" as const;
   if (definition.format === "sitemap-index") return "sitemapindex" as const;
@@ -825,6 +836,27 @@ function parseMirendilNewsIndex(definition: FirstPartyReleaseSourceDefinition, h
   return finalizedMarkdownEntries(definition, rawEntries, 0);
 }
 
+function parseParticleBlogIndex(definition: FirstPartyReleaseSourceDefinition, html: string): Result<ParsedProviderSitemap, Error> {
+  if (!/^<!doctype html>/iu.test(html) || !/<html(?:\s|>)/iu.test(html) || !/<\/html>/iu.test(html)) {
+    return err(new Error(`${definition.id} is no longer an HTML document.`));
+  }
+  const anchors = [...html.matchAll(/<a\b[^>]*\bhref="([^"]*)"/gu)];
+  if (anchors.length === 0) return err(new Error(`${definition.id} contains no links.`));
+  const rawEntries: SitemapEntry[] = [];
+  for (const anchor of anchors) {
+    const href = anchor[1];
+    if (href === undefined) return err(new Error(`${definition.id} contains an empty link target.`));
+    const slug = decodeXmlText(href).match(/^(?:https:\/\/particle\.ai)?\/blog\/([a-z0-9-]+)\/?$/u)?.[1];
+    if (slug === undefined) continue;
+    rawEntries.push({
+      candidateDateMeaning: "first-observed",
+      lastModifiedAt: null,
+      url: `https://${definition.canonicalHost}/blog/${slug}`,
+    });
+  }
+  return finalizedMarkdownEntries(definition, rawEntries, 0);
+}
+
 function stableFragment(value: string): string {
   return value.normalize("NFKD").toLowerCase().replace(/[^a-z0-9]+/gu, "-").replace(/^-+|-+$/gu, "").slice(0, 120);
 }
@@ -1070,6 +1102,7 @@ function parseXaiReleases(definition: FirstPartyReleaseSourceDefinition, markdow
 export function parseProviderSitemap(definition: FirstPartyReleaseSourceDefinition, source: string): Result<ParsedProviderSitemap, Error> {
   if (definition.format === "html-cognition-blog-index") return parseCognitionBlogIndex(definition, source);
   if (definition.format === "html-mirendil-news-index") return parseMirendilNewsIndex(definition, source);
+  if (definition.format === "html-particle-blog-index") return parseParticleBlogIndex(definition, source);
   if (definition.format === "html-deepseek-updates") return parseDeepSeekUpdates(definition, source);
   if (definition.format === "rss") return parseRss(definition, source);
   if (definition.format === "markdown-openai-catalog") return parseOpenAiCatalog(definition, source);
@@ -1520,6 +1553,11 @@ function cartesiaModels(url: URL): string[] {
   return slug === "from-tokens-to-bytes-part-1" ? ["H-Net"] : [];
 }
 
+function particleModels(url: URL): string[] {
+  const slug = url.pathname.match(/^\/blog\/([^/]+)\/?$/u)?.[1]?.toLowerCase();
+  return slug === "introducing-particle-1" ? ["Particle-1"] : [];
+}
+
 function stepfunModels(url: URL): string[] {
   const slug = url.pathname.match(/^\/docs\/(?:en|zh)\/guides\/models\/([^/]+)\/?$/u)?.[1]?.toLowerCase();
   if (
@@ -1564,7 +1602,8 @@ const providerModelExtractors = {
   deepseek: deepSeekModels, google: googleModels,
   ibm: ibmModels, liquid: liquidModels, meta: metaModels, microsoft: microsoftModels,
   minimax: minimaxModels, mirendil: mirendilModels, mistral: mistralModels,
-  moonshot_ai: kimiModels, nvidia: nvidiaModels, openai: openAiModels, recursive: recursiveModels,
+  moonshot_ai: kimiModels, nvidia: nvidiaModels, openai: openAiModels, particle: particleModels,
+  recursive: recursiveModels,
   reflection: reflectionModels,
   stepfun: stepfunModels,
   tencent: tencentModels, thinking_machines: thinkingMachinesModels,
@@ -1772,7 +1811,8 @@ function unresolvedAnnouncementNameForSource(
         ? unresolvedName(updateSlug)
         : null;
     }
-    case "cartesia-blog-sitemap": {
+    case "cartesia-blog-sitemap":
+    case "particle-blog-index": {
       const blogSlug = url.pathname.match(/^\/blog\/([^/]+)\/?$/u)?.[1];
       return blogSlug !== undefined && /\d/u.test(blogSlug)
         && /^(?:announcing|introducing)-/u.test(blogSlug)

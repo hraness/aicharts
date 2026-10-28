@@ -69,6 +69,8 @@ describe("provider brand resolution", () => {
     expect(providerBrand("liquidai").chipColor).toBe(providerColors.liquid);
     expect(providerBrand("Recursive").chipColor).toBe(providerColors.recursive);
     expect(providerBrand("recursivesi").chipColor).toBe(providerColors.recursive);
+    expect(providerBrand("Particle AI").chipColor).toBe(providerColors.particle);
+    expect(providerBrand("particleai").chipColor).toBe(providerColors.particle);
     expect(providerBrand("Thinking Machines").monogram).toBe("TM");
   });
 

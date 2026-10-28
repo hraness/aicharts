@@ -24,6 +24,7 @@ const providerIds = [
   "reflection",
   "stepfun",
   "thinking_machines",
+  "particle",
 ] as const;
 
 // Provider colors are durable visual identities. New providers are reviewed and
@@ -51,6 +52,7 @@ const pinnedProviderColors = {
   reflection: "#6b5cff",
   stepfun: "#21c7a8",
   thinking_machines: "#c45c8a",
+  particle: "#e4572e",
 } as const;
 
 const providerEntries = providerIds.map((providerId) => {
