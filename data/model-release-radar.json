@@ -3,7 +3,7 @@
   "source": {
     "method": "models-api",
     "name": "OpenRouter",
-    "retrievedAt": "2026-10-28T06:54:41.916Z",
+    "retrievedAt": "2026-10-29T00:02:39.062Z",
     "timestampMeaning": "source-added-at",
     "url": "https://openrouter.ai/api/v1/models?sort=newest"
   },
@@ -36,6 +36,12 @@
     "windowDays": 90
   },
   "observedListings": [
+    {
+      "id": "particle-ai/particle-1",
+      "model": "Particle-1",
+      "providerId": "particle",
+      "sourceAddedAt": "2026-10-28T17:18:13.000Z"
+    },
     {
       "id": "openai/gpt-6.1-terra-pro",
       "model": "GPT-6.1 Terra Pro",
@@ -464,6 +470,26 @@
     }
   ],
   "releases": [
+    {
+      "capabilities": {
+        "inputModalities": [
+          "image",
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "particle-ai/particle-1-20261027",
+      "id": "particle-ai/particle-1",
+      "model": "Particle-1",
+      "modelUrl": "https://openrouter.ai/particle-ai/particle-1",
+      "providerId": "particle",
+      "providerName": "Particle AI",
+      "sourceAddedAt": "2026-10-28T17:18:13.000Z",
+      "status": "awaiting-benchmark"
+    },
     {
       "capabilities": {
         "inputModalities": [
@@ -1442,28 +1468,6 @@
       "providerId": "meta",
       "providerName": "Meta",
       "sourceAddedAt": "2026-08-09T19:06:34.000Z",
-      "status": "awaiting-benchmark"
-    },
-    {
-      "capabilities": {
-        "inputModalities": [
-          "file",
-          "image",
-          "text",
-          "video"
-        ],
-        "outputModalities": [
-          "text"
-        ],
-        "supportsTools": true
-      },
-      "canonicalSlug": "meta/muse-spark-1.2-20260805",
-      "id": "meta/muse-spark-1.2",
-      "model": "Muse Spark 1.2",
-      "modelUrl": "https://openrouter.ai/meta/muse-spark-1.2",
-      "providerId": "meta",
-      "providerName": "Meta",
-      "sourceAddedAt": "2026-08-05T19:48:07.000Z",
       "status": "awaiting-benchmark"
     }
   ]
