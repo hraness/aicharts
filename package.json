@@ -139,7 +139,7 @@
     "@posthog/nextjs-config": "1.11.3",
     "@posthog/webpack-plugin": "1.7.1",
     "@vercel/oidc": "4.0.1",
-    "jose": "6.2.12",
+    "jose": "6.2.13",
     "next": "16.4.3",
     "posthog-js": "1.438.12",
     "posthog-node": "5.56.2",
