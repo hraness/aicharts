@@ -1,0 +1,33 @@
+--- a/lib/rules/no-internal-modules.js
++++ b/lib/rules/no-internal-modules.js
+@@ -48,8 +48,13 @@
+ 
+   create: function () {function noReachingInside(context) {
+       var options = context.options[0] || {};
+-      var allowRegexps = (options.allow || []).map(function (p) {return _minimatch2['default'].makeRe(p);});
+-      var forbidRegexps = (options.forbid || []).map(function (p) {return _minimatch2['default'].makeRe(p);});
++      // This rule only needs .test; keep matching on the patched matcher.
++      function matcherFor(pattern) {
++        var matcher = new _minimatch.Minimatch(pattern);
++        return { test: function (path) {return matcher.match(path);} };
++      }
++      var allowMatchers = (options.allow || []).map(matcherFor);
++      var forbidMatchers = (options.forbid || []).map(matcherFor);
+ 
+       // minimatch patterns are expected to use / path separators, like import
+       // statements, so normalize paths to use the same
+@@ -71,12 +76,12 @@
+ 
+       // test if reaching to this destination is allowed
+       function reachingAllowed(importPath) {
+-        return allowRegexps.some(function (re) {return re.test(importPath);});
++        return allowMatchers.some(function (matcher) {return matcher.test(importPath);});
+       }
+ 
+       // test if reaching to this destination is forbidden
+       function reachingForbidden(importPath) {
+-        return forbidRegexps.some(function (re) {return re.test(importPath);});
++        return forbidMatchers.some(function (matcher) {return matcher.test(importPath);});
+       }
+ 
+       function isAllowViolation(importPath) {
