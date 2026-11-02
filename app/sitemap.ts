@@ -107,16 +107,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     );
   }
   const navigationUpdatedAt = "2026-09-09T02:50:00Z";
-  // The last authored copy change on /, /coding, and /usage: the About section,
-  // the configurations table, and the published collector release.
+  // Meaningful authored copy changes on each public chart page.
   const pageCopyUpdatedAt = "2026-09-28T00:00:00Z";
-  // /usage alone: the signed Apple silicon download and its status line.
-  const usageCopyUpdatedAt = "2026-10-04T00:00:00Z";
-  const homeModifiedAt = [navigationUpdatedAt, pageCopyUpdatedAt, parsedIntelligence.value.source.retrievedAt]
+  const homeCopyUpdatedAt = "2026-11-02T00:00:00Z";
+  const homeModifiedAt = [navigationUpdatedAt, homeCopyUpdatedAt, parsedIntelligence.value.source.retrievedAt]
     .sort((left, right) => Date.parse(right) - Date.parse(left))[0]!;
   const codingModifiedAt = [navigationUpdatedAt, pageCopyUpdatedAt, datasetModifiedAt]
-    .sort((left, right) => Date.parse(right) - Date.parse(left))[0]!;
-  const usageModifiedAt = [navigationUpdatedAt, pageCopyUpdatedAt, usageCopyUpdatedAt]
     .sort((left, right) => Date.parse(right) - Date.parse(left))[0]!;
   const benchmarkPortfolioModifiedAt = [
     navigationUpdatedAt,
@@ -159,13 +155,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: calculatorInputsModifiedAt(parsedCalculatorInputs.value),
       priority: 0.8,
       url: absolute("/calculator"),
-    },
-    {
-      changeFrequency: "monthly",
-      images: [siteImage],
-      lastModified: usageModifiedAt,
-      priority: 0.7,
-      url: absolute("/usage"),
     },
     {
       changeFrequency: "daily",

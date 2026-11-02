@@ -11,7 +11,6 @@ import {
 } from "@/lib/terminal-bench-data";
 
 import { launchBeats } from "@/app/launch/beats";
-import { LAUNCH_STATUS } from "@/app/launch/facts";
 import { site } from "@/app/site";
 import type { ArticleVideoRecord } from "@hraness/design-kit";
 
@@ -46,8 +45,8 @@ export const INTRODUCING_AI_CHARTS_FILM = {
 
 export const INTRODUCING_AI_CHARTS_SLUG = "introducing-ai-charts" as const;
 export const INTRODUCING_AI_CHARTS_PUBLISHED_AT = "2026-09-24" as const;
-/** Rewritten as launch beats with illustrations; collector status after the cli-v0.2.0 release. */
-export const INTRODUCING_AI_CHARTS_UPDATED_AT = "2026-09-29" as const;
+/** Updated to describe the public benchmark reference after removing usage collection. */
+export const INTRODUCING_AI_CHARTS_UPDATED_AT = "2026-11-02" as const;
 
 /**
  * Links to other notes carry the live title of the note they open, so a
@@ -140,10 +139,10 @@ export function createIntroducingAiChartsArticle(
     showRelatedProducts: true,
     body: [
       paragraph(
-        `Status: the benchmark charts and notes are free and live at aicharts.io. The usage collector is ${LAUNCH_STATUS.toLowerCase()}.`,
+        "The benchmark charts and notes are free and live at aicharts.io. No account is required.",
       ),
       {
-        caption: "The launch film: illustrations of aicharts's charts and usage dashboard, with captions.",
+        caption: "The launch film: aicharts's model and coding-agent benchmark charts, with captions.",
         type: "video",
         video: INTRODUCING_AI_CHARTS_FILM,
       },

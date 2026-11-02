@@ -1,7 +1,6 @@
 /*
- * aicharts launch mockups: the chart, library, data entry, usage dashboard
- * and collector surfaces. They sit on the kit mockups
- * (@hraness/design-kit/mockups.css), which draw the window and terminal.
+ * aicharts launch mockups: the chart, library and data entry. They sit on the kit mockups
+ * (@hraness/design-kit/mockups.css), which draw the browser window.
  * Every selector is under .acm, colours use light-dark() so they follow the
  * kit theme, and the file needs no site tokens, so the film bundle can inline
  * it as is. Load it after the kit stylesheet.
@@ -330,51 +329,6 @@
 
 .acm .acm-entry dd {
   margin: 0;
-}
-
-/* Usage */
-
-.acm .acm-usage {
-  padding: 16px 18px 0;
-}
-
-.acm .acm-usage__stats {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.acm .acm-usage__stats div {
-  display: grid;
-  gap: 2px;
-  padding: 10px 12px;
-  border: 1px solid var(--hkm-line);
-  border-radius: 10px;
-}
-
-.acm .acm-usage__stats span {
-  color: var(--hkm-muted);
-  font-size: 12px;
-}
-
-.acm .acm-usage__stats strong {
-  font-size: 20px;
-  font-variant-numeric: tabular-nums;
-}
-
-.acm .acm-usage__bars {
-  display: block;
-  inline-size: 100%;
-  block-size: auto;
-  margin-block-start: 10px;
-}
-
-.acm .acm-usage__bars rect {
-  fill: var(--acm-c, var(--acm-s5));
-}
-
-.acm .acm-usage .acm-legend {
-  padding-inline: 0;
 }
 
 @container hkm (max-width: 520px) {

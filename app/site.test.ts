@@ -31,20 +31,19 @@ describe("aicharts public positioning", () => {
     expect(site.name).toBe(productMessaging.names.name);
     expect(site.description).toBe(productMessaging.meta);
     expect(homeLede).toBe(productMessaging.hero.summary);
-    // The meta description names the two product halves: published benchmark
-    // charts and the local token collector.
+    // Search and repository descriptions refer to the published benchmark charts.
     expect(site.description.startsWith(`${site.name} `)).toBeTrue();
-    for (const fact of ["benchmark scores", "cost", "tokens per task", "local collector"]) {
+    for (const fact of ["benchmark scores", "cost", "tokens per task"]) {
       expect(site.description).toContain(fact);
     }
-    // The hero names the comparisons; collector context remains in the metadata and usage section.
+    expect(site.description).not.toMatch(/collector|dashboard|sign in/iu);
     for (const fact of ["Benchmark scores", "cost", "tokens per task"]) {
       expect(homeLede).toContain(fact);
     }
     expect(homeLede.length).toBeLessThanOrEqual(240);
     expect(homeLede).not.toMatch(/universal|definitive|best model overall/iu);
     expect(homePrimaryAction.href.startsWith("/")).toBeTrue();
-    expect(homeSecondaryAction.href).toBe("/usage");
+    expect(homeSecondaryAction.href).toBe("/benchmarks");
     expect(searchSite.description).toBe(site.description);
     expect(searchSite.origin).toBe("https://aicharts.io");
     expect(site.description.length).toBeLessThanOrEqual(160);

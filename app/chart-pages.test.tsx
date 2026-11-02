@@ -1,4 +1,4 @@
-import { describe, expect, mock, test } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import BenchmarksPage, { metadata as benchmarksMetadata } from "./benchmarks/page";
@@ -15,14 +15,6 @@ import {
 } from "@/lib/coding-configurations-table";
 import { markdownForPath } from "@/lib/site-markdown";
 import { CALCULATOR_INPUTS } from "@/lib/calculator-inputs-collection";
-import { LeaderboardView } from "@/components/usage/leaderboard-view";
-import type { LeaderboardEntryV1 } from "@/lib/usage/leaderboard-contract";
-
-// The request-time page imports the server-only read boundary; only its static
-// metadata is asserted here. View states are rendered directly below.
-mock.module("server-only", () => ({}));
-const { metadata: leaderboardMetadata } = await import("./leaderboard/page");
-const { default: LeaderboardLoading } = await import("./leaderboard/loading");
 
 describe("focused chart destinations", () => {
   test("the benchmark page owns the complete library and one initial chart", () => {
@@ -115,54 +107,5 @@ describe("focused chart destinations", () => {
     expect(html).not.toContain('class="intelligence-efficiency"');
     expect(html.match(/<h1(?:\s|>)/gu)).toHaveLength(1);
     expect(calculatorMetadata.alternates?.canonical).toBe("https://aicharts.io/calculator");
-  });
-  // Usage now needs a real Next request scope. Its copy, current navigation and
-  // canonical metadata assertions live in scripts/usage-browser.ts instead of
-  // depending on another Bun test's global server-only mock.
-  test("the leaderboard page renders paused, unavailable, empty, and ranked states honestly", () => {
-    const paused = renderToStaticMarkup(createElement(LeaderboardView, { available: false, snapshot: null }));
-    expect(paused).toContain("Public usage leaderboard");
-    expect(paused).toContain("Not live yet");
-    expect(paused).toContain("No public rankings yet");
-    expect(paused).not.toContain("Reload rankings");
-    const unavailable = renderToStaticMarkup(createElement(LeaderboardView, { available: true, snapshot: null }));
-    expect(unavailable).toContain("Rankings could not be loaded");
-    expect(unavailable).toContain("Reload rankings");
-    expect(unavailable).not.toContain("Not live yet");
-    expect(unavailable).not.toContain("No published entries yet");
-    const empty = renderToStaticMarkup(createElement(LeaderboardView, { available: true,
-      snapshot: { schemaVersion: 1, ranking: "observed-tokens-30d-v1", computedAtMs: 1_800_000_000_000, entries: [] } }));
-    expect(empty).toContain("Opt-in publishing");
-    expect(empty).toContain("0 entries");
-    expect(empty).toContain("No published entries yet");
-    expect(empty).not.toContain("Not live yet");
-    const entries: LeaderboardEntryV1[] = [
-      { rank: 1, publicHandle: "alpha-coder", observedTokens: "9007199254740993", usageRecords: 42,
-        consentedAtMs: 1_799_000_000_000, refreshedAtMs: 1_800_000_000_000, windowFirstUtcDay: 20_900, windowUtcDays: 30 },
-      { rank: 2, publicHandle: "beta-agent", observedTokens: "1234567", usageRecords: 9,
-        consentedAtMs: 1_799_500_000_000, refreshedAtMs: 1_800_000_000_000, windowFirstUtcDay: 20_900, windowUtcDays: 30 },
-    ];
-    const board = renderToStaticMarkup(createElement(LeaderboardView, { available: true,
-      snapshot: { schemaVersion: 1, ranking: "observed-tokens-30d-v1", computedAtMs: 1_800_000_000_000, entries } }));
-    expect(board).toContain("Published rankings");
-    expect(board).toContain("alpha-coder");
-    expect(board).toContain("beta-agent");
-    expect(board).toContain("9,007,199,254,740,993");
-    expect(board).toContain("Last refreshed");
-    expect(board).toContain("Coverage (UTC)");
-    expect(board).toContain("not independently verified or a provider billing record");
-    // The ranked snapshot carries handles and numerics only; page copy may
-    // describe the excluded fields but the data never contains them.
-    const serialized = JSON.stringify(entries);
-    for (const marker of ["acct_", "deviceId", "email", "sessionSecret"]) {
-      expect(serialized.includes(marker)).toBe(false);
-    }
-    expect(leaderboardMetadata.alternates?.canonical).toBe("https://aicharts.io/leaderboard");
-    expect(leaderboardMetadata.robots).toEqual({ index: false, follow: true });
-    // The streamed loading shell must not add a second h1 to the page.
-    const loading = renderToStaticMarkup(createElement(LeaderboardLoading));
-    expect(loading).not.toMatch(/<h1(?:\s|>)/u);
-    expect(loading).toContain('aria-labelledby="leaderboard-loading-title"');
-    expect(loading).toContain('id="leaderboard-loading-title"');
   });
 });

@@ -17,7 +17,6 @@ const NEGOTIABLE_PAGE_PATHS = new Set([
   "/coding",
   "/data",
   "/models",
-  "/usage",
 ]);
 
 function isNextDataRequest(request: NextRequest): boolean {

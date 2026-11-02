@@ -48,8 +48,8 @@ describe("public search discovery", () => {
     if (!intelligence.ok) throw intelligence.error;
     const navigationUpdatedAt = "2026-09-09T02:50:00Z";
     const pageCopyUpdatedAt = "2026-09-28T00:00:00Z";
-    const usageCopyUpdatedAt = "2026-10-04T00:00:00Z";
-    const homeModifiedAt = [navigationUpdatedAt, pageCopyUpdatedAt, intelligence.value.source.retrievedAt]
+    const homeCopyUpdatedAt = "2026-11-02T00:00:00Z";
+    const homeModifiedAt = [navigationUpdatedAt, homeCopyUpdatedAt, intelligence.value.source.retrievedAt]
       .sort((left, right) => Date.parse(right) - Date.parse(left))[0];
     const codingModifiedAt = [navigationUpdatedAt, pageCopyUpdatedAt, datasetModifiedAt]
       .sort((left, right) => Date.parse(right) - Date.parse(left))[0];
@@ -88,8 +88,8 @@ describe("public search discovery", () => {
     if (!calculatorInputs.ok) throw calculatorInputs.error;
     expect(entries.find(entry => entry.url === "https://aicharts.io/calculator")?.lastModified)
       .toBe(calculatorInputsModifiedAt(calculatorInputs.value));
-    expect(entries.find(entry => entry.url === "https://aicharts.io/usage")?.lastModified)
-      .toBe(usageCopyUpdatedAt);
+    expect(urls).not.toContain("https://aicharts.io/usage");
+    expect(urls).not.toContain("https://aicharts.io/dashboard");
     expect(urls).not.toContain("https://aicharts.io/leaderboard");
     expect(urls.every(url => !url.includes("?") && !url.includes("#"))).toBeTrue();
     expect(entries.find(entry => entry.url.endsWith(CODING_AGENT_DATASET_PATH))?.lastModified)

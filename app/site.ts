@@ -30,7 +30,7 @@ export const homeEyebrow = site.category;
 export const homeHeading = productMessaging.hero.heading;
 export const homeLede = productMessaging.hero.summary;
 export const homePrimaryAction = { href: "/#intelligence-index", label: productMessaging.hero.primaryAction } as const;
-export const homeSecondaryAction = { href: "/usage", label: productMessaging.hero.secondaryAction } as const;
+export const homeSecondaryAction = { href: "/benchmarks", label: productMessaging.hero.secondaryAction } as const;
 export const homeTaskLinks = [
   { task: "coding", name: "Coding", description: "Build, debug, and work in a terminal." },
   { task: "reasoning", name: "Reasoning", description: "Solve unfamiliar problems." },
@@ -39,7 +39,6 @@ export const homeTaskLinks = [
   { task: "video", name: "Video", description: "Create video from text or images." },
   { task: "audio", name: "Audio", description: "Transcribe and understand speech." },
 ] as const;
-export { usageReleaseUrl } from "@/lib/usage-cli-release";
 
 export const homeAboutHeading = productMessaging.headings["home-about"];
 /** The date the comparison facts below were last checked against each product's own pages. */

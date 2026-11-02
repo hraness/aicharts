@@ -1,21 +1,14 @@
 import {
-  assertLaunchKit,
-  buildSocialKit,
+  assertLaunchBeats,
   resolveLaunchBeats,
   type LaunchBeat,
-  type LaunchKitOptions,
-  type LaunchMessaging,
-  type LaunchRelease,
-  type SocialKit,
 } from "@hraness/design-kit/launch";
 
-import { site } from "@/app/site";
-
-import { LAUNCH_STATUS, launchFacts } from "./facts";
+import { launchFacts } from "./facts";
 
 /**
- * The beats of "Introducing aicharts". Each one is a short section of the
- * launch post and one post in the launch threads, so each reads on its own.
+ * The illustrated sections of "Introducing aicharts". Each one describes
+ * one part of the benchmark reference.
  * Numbers are {placeholders} filled from ./facts; the design kit rejects a
  * beat that types a digit. Every visual is a mockup id from
  * components/launch-mockups, drawn from the same checked data the site uses.
@@ -61,31 +54,19 @@ const authoredBeats: readonly LaunchBeat[] = [
     detailHref: "/benchmarks",
   },
   {
-    id: "usage",
-    part: "does",
-    headline: "Count the tokens your own agents use",
-    post: "The aicharts collector reads the usage files your coding agents already keep, from {usageSources} supported sources, and adds up tokens, cost and speed per model and day. Prompts and transcripts stay on your machine.",
-    visual: { kind: "mockup", id: "usage", state: {} },
-    alt: "The usage dashboard, in an illustration with made-up numbers: tokens per day, stacked by agent, with totals.",
-    facts: ["usageSources"],
-    detailHref: "/usage",
-  },
-  {
     id: "how",
     part: "how",
-    headline: "Numbers leave your machine, words never do",
-    post: "A local report is a file you open in your browser tab. On a Mac you can also sync daily totals to your dashboard: token counts, cost and time per agent and model. Prompts, transcripts, file paths and keys stay on your machine.",
-    visual: { kind: "mockup", id: "collector", state: {} },
-    alt: "A terminal, in an illustration: the collector writes a local report, then an enrolled Mac syncs daily number totals.",
-    detailHref: "/usage",
+    headline: "Each chart keeps its source and scale",
+    post: "Every chart links to the published results it plots. The data page names each source, benchmark version, date and cost unit, so results from different tests and setups stay apart.",
+    visual: { kind: "mockup", id: "data", state: {} },
+    alt: "A data page entry, in an illustration: source, benchmark version, date, cost unit and comparison limits.",
+    detailHref: "/data",
   },
   {
     id: "who",
     part: "who",
     headline: "For picking a model on cost, not for one overall rank",
     post: "aicharts is for choosing a model or coding agent by weighing score against cost, time or tokens. If you want one overall ranking of every model, look elsewhere: aicharts builds no score of its own, and it cannot test your codebase.",
-    socialPost:
-      "aicharts is for choosing a model or coding agent by weighing score against cost, time or tokens. Switch the chart to time or tokens per task and the fast or concise picks stand out.",
     visual: { kind: "mockup", id: "chart", state: { view: "tokens" } },
     alt: "The models chart switched to output tokens per task, in an illustration, so wordier models sit further right.",
     detailHref: "/blog/aa-index-cost-coding-agents",
@@ -95,8 +76,6 @@ const authoredBeats: readonly LaunchBeat[] = [
     part: "vision",
     headline: "Every published result, with its setup and date",
     post: "The goal is a catalog where any benchmark result you might use to pick a model shows its setup, version, cost and date. Tests that have only a source guide today are meant to become charts once their data can be checked.",
-    socialPost:
-      "The goal is a catalog where any benchmark result you might use to pick a model shows its setup, version, cost and date, all in one place.",
     visual: { kind: "mockup", id: "data", state: {} },
     alt: "One data page entry, in an illustration: the question, what it measures, source, version, valid comparisons, limits.",
     detailHref: "/data",
@@ -113,14 +92,11 @@ const authoredBeats: readonly LaunchBeat[] = [
   {
     id: "status",
     part: "status",
-    headline: "The charts are free and live; the collector is early",
-    post: "The charts and notes are free at aicharts.io. Usage collector status: {status}. Version {cliVersion} for Linux is on GitHub Releases; on a Mac you build it from source.",
-    socialPost:
-      "The charts and notes are free at aicharts.io. Usage collector status: {status}. Version {cliVersion} for Linux is on GitHub Releases.",
-    visual: { kind: "mockup", id: "status", state: {} },
-    alt: "The collector's terminal status view, in an illustration: collecting, last pass and last sync, and its outputs.",
-    facts: ["status", "cliVersion"],
-    detailHref: "/usage",
+    headline: "Free benchmark charts, with no account required",
+    post: "The charts, benchmark library, source data and notes are free at aicharts.io. Open them in your browser; no account or install is required.",
+    visual: { kind: "mockup", id: "library", state: {} },
+    alt: "The public benchmark library, in an illustration, with charted results and source guides grouped by task.",
+    detailHref: "/benchmarks",
   },
 ];
 
@@ -129,38 +105,4 @@ export const launchBeats: readonly LaunchBeat[] = resolveLaunchBeats(
   launchFacts,
 );
 
-export const LAUNCH_POST_PATH = "/blog/introducing-ai-charts" as const;
-export const LAUNCH_POST_URL = `${site.origin}${LAUNCH_POST_PATH}`;
-
-/** The portfolio messaging record: the tagline and description in app/site.ts. */
-export const launchMessaging: LaunchMessaging = {
-  names: { name: site.name },
-  tagline: site.tagline,
-  meta: site.description,
-};
-
-export const launchRelease: LaunchRelease = {
-  status: LAUNCH_STATUS,
-  tags: ["Artificial Intelligence", "Developer Tools", "Data Visualization"],
-};
-
-/**
- * The charts need no install. The collector's Linux build is a public
- * GitHub release, but the collector is In development, so the posts never
- * ask readers to install it.
- */
-export const launchKitOptions: LaunchKitOptions = {
-  status: LAUNCH_STATUS,
-  publicInstall: false,
-  tagline: launchMessaging.tagline,
-  canonicalUrl: LAUNCH_POST_URL,
-  forbiddenNames: ["ccusage", "Tokscale"],
-};
-
-export const socialKit: SocialKit = buildSocialKit(
-  launchBeats,
-  launchMessaging,
-  launchRelease,
-  LAUNCH_POST_URL,
-);
-assertLaunchKit(launchBeats, socialKit, launchKitOptions);
+assertLaunchBeats(launchBeats);

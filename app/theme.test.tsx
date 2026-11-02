@@ -57,7 +57,8 @@ test("fallback documents remain control-free", () => {
   expect(notFound).toContain('href="/#intelligence-index"');
   expect(notFound).toContain("Browse the charts");
   expect(notFound).toContain('href="/models"');
-  expect(notFound).toContain('href="/usage"');
+  expect(notFound).toContain('href="/benchmarks"');
+  expect(notFound).not.toContain('href="/usage"');
   expect(notFound).toContain('href="/llms.txt"');
   expect(notFound).toContain("data-hraness-status-routes");
   expect(notFound).not.toContain('href="/sitemap.xml"');
