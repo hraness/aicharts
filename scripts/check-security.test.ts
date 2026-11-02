@@ -69,11 +69,32 @@ describe("dependency pins", () => {
     expect((JSON.parse(read("package.json")) as { overrides?: Record<string, string> }).overrides?.["source-map-js"]).toBe("1.2.2");
     expect(lock.packages["source-map-js"]?.[0]).toBe("source-map-js@1.2.2");
   });
-  test("vite is overridden to the patched 8.3.3 release (GHSA-587h-7wmj-h5pm, GHSA-r825-w8mm-5pxw, GHSA-698v-4r3x-3vcv)", () => {
-    expect((JSON.parse(read("package.json")) as { overrides?: Record<string, string> }).overrides?.vite).toBe("8.3.3");
-    expect(lock.packages.vite?.[0]).toBe("vite@8.3.3");
-    expect(read("video/bun.lock")).not.toContain("launch-editor");
-    expect(read("video/story/bun.lock")).not.toContain("launch-editor");
+  test("the root benchmark site omits the unused Vite dependency", () => {
+    for (const section of ["dependencies", "devDependencies", "optionalDependencies"] as const) {
+      expect(manifest[section]?.vite).toBeUndefined();
+    }
+    expect(Object.values(lock.packages).filter(entry => typeof entry[0] === "string" && entry[0].startsWith("vite@"))).toEqual([]);
+  });
+  test("any retained video Vite stays on patched 8.3.3 (GHSA-587h-7wmj-h5pm, GHSA-r825-w8mm-5pxw, GHSA-698v-4r3x-3vcv)", () => {
+    for (const directory of ["video", "video/story"]) {
+      const videoManifest = JSON.parse(read(`${directory}/package.json`)) as { overrides?: Record<string, string> };
+      const lockText = read(`${directory}/bun.lock`);
+      const entries = Object.values(parseBunLock(lockText).packages).filter(entry => typeof entry[0] === "string" && entry[0].startsWith("vite@"));
+      if (entries.length > 0) expect(videoManifest.overrides?.vite).toBe("8.3.3");
+      for (const entry of entries) expect(entry[0]).toBe("vite@8.3.3");
+      expect(lockText).not.toContain("launch-editor");
+    }
+  });
+  test("minimatch uses patched 11.0.1 with the registered compatibility patch (GHSA-g3hv-75wg-m249)", () => {
+    const pkg = JSON.parse(read("package.json")) as {
+      overrides?: Record<string, string>;
+      patchedDependencies?: Record<string, string>;
+    };
+    expect(pkg.overrides?.minimatch).toBe("11.0.1");
+    expect(pkg.patchedDependencies?.["minimatch@11.0.1"]).toBe("patches/minimatch@11.0.1.patch");
+    const entries = Object.values(lock.packages).filter(entry => typeof entry[0] === "string" && entry[0].startsWith("minimatch@"));
+    expect(entries.length).toBeGreaterThan(0);
+    for (const entry of entries) expect(entry[0]).toBe("minimatch@11.0.1");
   });
   test("dompurify is overridden to the patched 3.4.17 release (GHSA-cg2g-xh64-v4q7, GHSA-mrv2-3pqr-j5jr, GHSA-c6gr-qvv4-5v3f)", () => {
     expect((JSON.parse(read("package.json")) as { overrides?: Record<string, string> }).overrides?.dompurify).toBe("3.4.17");
