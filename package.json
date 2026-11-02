@@ -130,17 +130,16 @@
     "@hraness/support-foundation": "github:hraness/support-foundation#ed89e584c2c420e3e0547bbe8f32baf8e3a2ae4d"
   },
   "overrides": {
-    "@better-auth/core": "1.7.14",
-    "@better-auth/drizzle-adapter": "1.7.14",
-    "@better-auth/kysely-adapter": "1.7.14",
-    "better-auth": "1.7.14",
     "dompurify": "3.4.17",
     "fast-glob": "npm:tinyglobby@0.2.17",
     "fast-uri": "3.1.9",
     "sharp": "0.35.5",
     "source-map-js": "1.2.2",
     "undici": "7.30.1",
-    "vite": "8.3.3",
-    "zod": "4.6.7"
+    "zod": "4.6.7",
+    "minimatch": "11.0.1"
+  },
+  "patchedDependencies": {
+    "minimatch@11.0.1": "patches/minimatch@11.0.1.patch"
   }
 }
