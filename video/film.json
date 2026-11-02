@@ -35,18 +35,18 @@
         "highlight": "coding-tooltip"
       },
       {
-        "heading": "Your own token use",
-        "body": "The collector adds up your agents' tokens, cost and time per model and day.",
-        "focus": "usage",
-        "target": "usage-stats",
-        "highlight": "usage-stats"
+        "heading": "Benchmarks, each on its own scale",
+        "body": "{{libraryEntries}} benchmarks cover reasoning, coding, research, memory and media. Charted results stay separate from source guides.",
+        "focus": "library",
+        "target": "library-cards",
+        "highlight": "library-cards"
       },
       {
-        "heading": "Numbers leave, words never do",
-        "body": "Prompts, transcripts, file paths and keys stay on your machine.",
-        "focus": "collector",
-        "target": "collector-enroll",
-        "highlight": "collector"
+        "heading": "Follow each result to its source",
+        "body": "The data page names the source, version, comparison rules and limits for every benchmark.",
+        "focus": "data",
+        "target": "data-entry",
+        "highlight": "data-entry"
       }
     ],
     "proof": {
@@ -62,7 +62,7 @@
       "body": "It does not rerun benchmarks. It plots the published results, and every point names its source and date."
     },
     "end": {
-      "line": "Benchmark charts free and live. Usage collector {{status}}."
+      "line": "Free benchmark charts. No account or install required."
     }
   }
 }

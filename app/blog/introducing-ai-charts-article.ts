@@ -12,7 +12,6 @@ import {
 
 import { launchBeats } from "@/app/launch/beats";
 import { site } from "@/app/site";
-import type { ArticleVideoRecord } from "@hraness/design-kit";
 
 import {
   BLOG_SOURCE_NOTE,
@@ -21,27 +20,6 @@ import {
   paragraph,
   type BlogArticle,
 } from "./articles";
-
-/**
- * The launch film, built in video/story (story.config.ts) with the story-film
- * engine and delivered to public/media. Its charts are captured from
- * aicharts.io (video/story/shots.sh). It feeds the page's VideoObject too.
- */
-export const INTRODUCING_AI_CHARTS_FILM = {
-  name: "Introducing aicharts",
-  description:
-    "A 29-second film with captions and no narration. Benchmark scores and prices sit on different pages; aicharts puts score and cost per task on one chart, shown with the live model and coding-agent charts, the counts behind them, and where each point comes from.",
-  sources: [
-    { src: "/media/aicharts-launch.webm", type: "video/webm" },
-    { src: "/media/aicharts-launch.mp4", type: "video/mp4" },
-  ],
-  poster: "/media/aicharts-launch-poster.jpg",
-  captions: "/media/aicharts-launch.vtt",
-  width: 1920,
-  height: 1080,
-  duration: "PT29.3S",
-  uploadDate: "2026-09-29",
-} as const satisfies ArticleVideoRecord;
 
 export const INTRODUCING_AI_CHARTS_SLUG = "introducing-ai-charts" as const;
 export const INTRODUCING_AI_CHARTS_PUBLISHED_AT = "2026-09-24" as const;
@@ -141,11 +119,6 @@ export function createIntroducingAiChartsArticle(
       paragraph(
         "The benchmark charts and notes are free and live at aicharts.io. No account is required.",
       ),
-      {
-        caption: "The launch film: aicharts's model and coding-agent benchmark charts, with captions.",
-        type: "video",
-        video: INTRODUCING_AI_CHARTS_FILM,
-      },
       { beats: launchBeats, type: "launch-beats" },
       heading("Go deeper"),
       list(

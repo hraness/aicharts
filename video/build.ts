@@ -20,7 +20,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { captionsFromTimeline } from "@hraness/slopcamera/local/html-film";
 import { HtmlSceneInputSchema } from "@hraness/slopcamera/local/html-overlay";
 
-import { LAUNCH_STATUS, launchFacts } from "../app/launch/facts.ts";
+import { launchFacts } from "../app/launch/facts.ts";
 import { OpenCard, productBoard } from "./mockups.tsx";
 import { filmTimeline, type FilmCopy } from "./timeline.ts";
 
@@ -55,13 +55,12 @@ mkdirSync(join(out, "fonts"), { recursive: true });
 const source = JSON.parse(readFileSync(join(here, "film.json"), "utf8")) as FilmConfig;
 
 /**
- * Every number and the status come from the site's launch facts module
- * (app/launch/facts.ts), the same one the launch post and social kit read.
+ * Every number comes from the site's benchmark facts module
+ * (app/launch/facts.ts), the same one the introducing article reads.
  * `{{fact}}` in a string becomes that fact's value.
  */
 function fillFacts(text: string): string {
   return text.replace(/\{\{([a-zA-Z]+)\}\}/gu, (_, key: string) => {
-    if (key === "status") return LAUNCH_STATUS.toLowerCase();
     const fact = (launchFacts as Record<string, { value: string } | undefined>)[key];
     if (fact === undefined) throw new Error(`film.json names an unknown fact {{${key}}}.`);
     return fact.value;

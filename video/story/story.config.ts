@@ -52,7 +52,7 @@ export default () => defineStory({
       items: [
         { tag: "Sourced", title: "Each point names its source and the day it was checked" },
         { tag: "Free", title: "The charts and notes are free to read" },
-        { tag: "Your usage", title: `See your own usage from ${launchFacts.usageSources.value} sources, on your machine` },
+        { tag: "Methodology", title: "Each benchmark keeps its source, version and comparison limits" },
       ],
     },
   ],

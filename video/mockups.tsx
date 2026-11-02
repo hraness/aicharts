@@ -1,14 +1,14 @@
 /**
  * The film's product surface: the site's own launch mockups
- * (components/launch-mockups), the same components the homepage and the
- * launch post render, stacked on one board the camera moves across.
+ * (components/launch-mockups), shared with the introducing article and
+ * stacked on one board the camera moves across.
  *
- * Illustration only: chart points come from the site's checked snapshots;
- * usage numbers are the site's made-up example.
+ * Illustration only: chart points and benchmark entries come from the
+ * site's checked snapshots.
  */
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { ChartMockup, CollectorMockup, UsageMockup } from "../components/launch-mockups/index.tsx";
+import { ChartMockup, DataEntryMockup, LibraryMockup } from "../components/launch-mockups/index.tsx";
 
 /**
  * Adds `data-film="name"` to the first element whose class list contains
@@ -40,13 +40,13 @@ export function productBoard(): string {
     "acm-tooltip",
     "coding-tooltip",
   );
-  const usage = tag(renderToStaticMarkup(<UsageMockup theme="light" />), "acm-usage__stats", "usage-stats");
-  const collector = tag(renderToStaticMarkup(<CollectorMockup theme="dark" />), "hkm-terminal-line", "collector-enroll", 3);
+  const library = tag(renderToStaticMarkup(<LibraryMockup theme="light" />), "acm-library__cards", "library-cards");
+  const data = tag(renderToStaticMarkup(<DataEntryMockup theme="light" />), "acm-entry", "data-entry");
   return `<div class="film-board">${[
     panel("chart", chart),
     panel("coding", coding),
-    panel("usage", usage),
-    panel("collector", collector),
+    panel("library", library),
+    panel("data", data),
   ].join("")}</div>`;
 }
 
