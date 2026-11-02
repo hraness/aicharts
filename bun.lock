@@ -41,6 +41,7 @@
   },
   "patchedDependencies": {
     "minimatch@11.0.1": "patches/minimatch@11.0.1.patch",
+    "eslint-plugin-import@2.32.0": "patches/eslint-plugin-import@2.32.0.patch",
   },
   "overrides": {
     "dompurify": "3.4.17",

@@ -140,6 +140,7 @@
     "minimatch": "11.0.1"
   },
   "patchedDependencies": {
-    "minimatch@11.0.1": "patches/minimatch@11.0.1.patch"
+    "minimatch@11.0.1": "patches/minimatch@11.0.1.patch",
+    "eslint-plugin-import@2.32.0": "patches/eslint-plugin-import@2.32.0.patch"
   }
 }
