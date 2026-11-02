@@ -76,8 +76,8 @@ const authoredBeats: readonly LaunchBeat[] = [
     part: "vision",
     headline: "Every published result, with its setup and date",
     post: "The goal is a catalog where any benchmark result you might use to pick a model shows its setup, version, cost and date. Tests that have only a source guide today are meant to become charts once their data can be checked.",
-    visual: { kind: "mockup", id: "data", state: {} },
-    alt: "One data page entry, in an illustration: the question, what it measures, source, version, valid comparisons, limits.",
+    visual: { kind: "mockup", id: "data", state: { category: "reasoning" } },
+    alt: "A reasoning benchmark's data entry, in an illustration: the question, source, version, valid comparisons and limits.",
     detailHref: "/data",
   },
   {
@@ -94,8 +94,8 @@ const authoredBeats: readonly LaunchBeat[] = [
     part: "status",
     headline: "Free benchmark charts, with no account required",
     post: "The charts, benchmark library, source data and notes are free at aicharts.io. Open them in your browser; no account or install is required.",
-    visual: { kind: "mockup", id: "library", state: {} },
-    alt: "The public benchmark library, in an illustration, with charted results and source guides grouped by task.",
+    visual: { kind: "mockup", id: "library", state: { coverage: "charted" } },
+    alt: "The public benchmark library, in an illustration, showing charted results grouped by task.",
     detailHref: "/benchmarks",
   },
 ];

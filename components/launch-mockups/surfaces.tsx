@@ -1,6 +1,5 @@
 import { BrowserFrame } from "@hraness/design-kit/mockups";
 
-
 import {
   LIBRARY_CATEGORY_LABELS,
   LIBRARY_COVERAGE_LABELS,
@@ -8,6 +7,7 @@ import {
 } from "./data";
 
 type Themed = Readonly<{ theme?: "light" | "dark" }>;
+type DataEntryCategory = "coding" | "reasoning";
 
 function themeProps(theme: Themed["theme"]) {
   return theme === undefined ? {} : { theme };
@@ -18,34 +18,37 @@ function themeProps(theme: Themed["theme"]) {
 /* ------------------------------------------------------------------ */
 
 /** Categories in the order the library lists them, with how many entries each holds. */
-function libraryCategories() {
+function libraryCategories(entries: typeof LIBRARY_ENTRIES) {
   const counts = new Map<string, number>();
-  for (const entry of LIBRARY_ENTRIES) counts.set(entry.category, (counts.get(entry.category) ?? 0) + 1);
+  for (const entry of entries) counts.set(entry.category, (counts.get(entry.category) ?? 0) + 1);
   return [...counts.entries()];
 }
 
 /** One entry of each coverage level, so the card grid shows all three labels. */
-function libraryCards() {
+function libraryCards(entries: typeof LIBRARY_ENTRIES) {
   const picks = [
-    LIBRARY_ENTRIES.find((entry) => entry.coverage === "charted" && entry.category === "coding"),
-    LIBRARY_ENTRIES.find((entry) => entry.coverage === "charted" && entry.category === "reasoning"),
-    LIBRARY_ENTRIES.find((entry) => entry.coverage === "source-only"),
-    LIBRARY_ENTRIES.find((entry) => entry.coverage === "watchlist"),
+    entries.find((entry) => entry.coverage === "charted" && entry.category === "coding"),
+    entries.find((entry) => entry.coverage === "charted" && entry.category === "reasoning"),
+    entries.find((entry) => entry.coverage === "source-only"),
+    entries.find((entry) => entry.coverage === "watchlist"),
   ];
   return picks.filter((entry) => entry !== undefined);
 }
 
-export function LibraryMockup({ theme }: Themed) {
+export function LibraryMockup({ chartedOnly = false, theme }: Themed & Readonly<{ chartedOnly?: boolean }>) {
+  const entries = chartedOnly ? LIBRARY_ENTRIES.filter(entry => entry.coverage === "charted") : LIBRARY_ENTRIES;
   return (
     <BrowserFrame
       {...themeProps(theme)}
       className="acm"
-      describe="Illustration of the aicharts benchmarks library: topics down the side, and entries tagged charted, source guide or emerging."
+      describe={chartedOnly
+        ? "Illustration of charted results in the aicharts benchmarks library, grouped by topic."
+        : "Illustration of the aicharts benchmarks library: topics down the side, and entries tagged charted, source guide or emerging."}
       url="aicharts.example/benchmarks"
     >
       <div className="acm-library">
         <ul aria-hidden="true" className="acm-library__topics">
-          {libraryCategories().map(([category, count], index) => (
+          {libraryCategories(entries).map(([category, count], index) => (
             <li data-acm-active={index === 0 ? "" : undefined} key={category}>
               <span>{LIBRARY_CATEGORY_LABELS[category] ?? category}</span>
               <b>{count}</b>
@@ -53,7 +56,7 @@ export function LibraryMockup({ theme }: Themed) {
           ))}
         </ul>
         <div aria-hidden="true" className="acm-library__cards">
-          {libraryCards().map((entry) => (
+          {libraryCards(entries).map((entry) => (
             <article className="acm-card" data-acm-coverage={entry.coverage} key={entry.id}>
               <span className="acm-badge">{LIBRARY_COVERAGE_LABELS[entry.coverage]}</span>
               <strong>{entry.name}</strong>
@@ -71,8 +74,8 @@ export function LibraryMockup({ theme }: Themed) {
 /* Data page entry                                                      */
 /* ------------------------------------------------------------------ */
 
-export function DataEntryMockup({ theme }: Themed) {
-  const entry = LIBRARY_ENTRIES.find((candidate) => candidate.coverage === "charted" && candidate.category === "coding") ?? LIBRARY_ENTRIES[0];
+export function DataEntryMockup({ category = "coding", theme }: Themed & Readonly<{ category?: DataEntryCategory }>) {
+  const entry = LIBRARY_ENTRIES.find((candidate) => candidate.coverage === "charted" && candidate.category === category) ?? LIBRARY_ENTRIES[0];
   if (entry === undefined) throw new Error("The benchmarks library is empty.");
   const rows: readonly (readonly [string, string])[] = [
     ["Question", entry.question],

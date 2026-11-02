@@ -39,11 +39,16 @@ describe("launch facts match their records", () => {
 
 describe("benchmark introduction", () => {
   test("every beat shows a public benchmark view this site draws", () => {
+    const illustrations = new Set<string>();
     for (const beat of launchBeats) {
       expect(beat.visual.kind).toBe("mockup");
-      if (beat.visual.kind === "mockup") expect(MOCKUP_IDS).toContain(beat.visual.id as never);
+      if (beat.visual.kind === "mockup") {
+        expect(MOCKUP_IDS).toContain(beat.visual.id as never);
+        illustrations.add(renderToStaticMarkup(renderLaunchMockup(beat.visual.id, beat.visual.state) as never));
+      }
       expect(beat.detailHref).not.toMatch(/^\/(?:usage|dashboard|leaderboard)(?:\/|$)/u);
     }
+    expect(illustrations.size).toBe(launchBeats.length);
   });
 });
 

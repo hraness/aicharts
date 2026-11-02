@@ -36,9 +36,15 @@ export function renderLaunchMockup(
       if (!isChartView(view)) throw new RangeError(`No chart view is named ${JSON.stringify(view)}.`);
       return <ChartMockup {...themed} view={view} />;
     }
-    case "library":
-      return <LibraryMockup {...themed} />;
-    case "data":
-      return <DataEntryMockup {...themed} />;
+    case "library": {
+      const coverage = state["coverage"];
+      if (coverage !== undefined && coverage !== "charted") throw new RangeError(`No library coverage is named ${JSON.stringify(coverage)}.`);
+      return <LibraryMockup {...themed} chartedOnly={coverage === "charted"} />;
+    }
+    case "data": {
+      const category = state["category"] ?? "coding";
+      if (category !== "coding" && category !== "reasoning") throw new RangeError(`No data entry category is named ${JSON.stringify(category)}.`);
+      return <DataEntryMockup {...themed} category={category} />;
+    }
   }
 }
