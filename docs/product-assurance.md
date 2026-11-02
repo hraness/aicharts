@@ -1,6 +1,6 @@
-# Benchmark, calculator and companion assurance
+# Benchmark and calculator assurance
 
-The public comparison product keeps source evidence separate from private usage. Its checks establish admission, transformation, and publication properties; they cannot establish the scientific validity of an external benchmark or the applicability of a hardware throughput estimate.
+The public comparison product keeps source evidence and analysis boundaries explicit. Its checks establish admission, transformation, and publication properties; they cannot establish the scientific validity of an external benchmark or the applicability of a hardware throughput estimate.
 
 | Boundary | Maintained evidence | Limit |
 | --- | --- | --- |
@@ -10,8 +10,7 @@ The public comparison product keeps source evidence separate from private usage.
 | Calculator inputs and arithmetic | `lib/calculator-inputs-data.test.ts`, `lib/calculator-math.property.test.ts`, `scripts/refresh-calculator-inputs.test.ts`: dated source admission, source/policy custody, rate-change bounds, no write on failed refresh, dimensional integer oracles, token conservation, monotonic costs | Binary64 scenario arithmetic and sampled bounded properties are not an unbounded arithmetic proof. Curated measurements remain assumptions. |
 | Published data and discovery | `app/data/benchmark-atlas-json.test.ts`, `lib/benchmark-atlas-view.test.ts`, the existing browser suite: checked snapshot, native units and version in JSON/structured data, admitted URL state, visible chart/table/export journeys | Browser evidence must be collected against the integrated build. Pure data tests alone do not qualify rendered exports. |
 | Analytics privacy | `lib/analytics.test.ts`: allowlisted public IDs/actions, discarded calculator values, rejected free-form IDs and raw URL data | This checks the owned capture boundary, not arbitrary third-party browser behavior. |
-| Status commands | `crates/aicharts-cli/src/control/tests.rs`, `tests/cli_ux.rs`: envelope shape, Status/Outputs goldens, every retired menu action mapped to a verb, fixed open targets, `doctor retire` renames only our owner-owned login items and refuses to overwrite | Read-only apart from `open` and `doctor retire`; no product authority. Filesystem checks assume the user's own processes do not maliciously replace files between checks. |
 
 Run the narrow tests when changing a boundary, `bun run check:generated` for offline snapshot admission, and `bun run test:property` for the shared laws. The integration owner runs `bun run check`, including the browser checks, after concurrent lanes converge.
 
-Automated refresh remains the only path for live snapshot values. These assurance changes perform no external source refresh, mutate no user usage data, and add no analytics fields. See [calculator data](calculator-data.md), [analytics instrumentation](analytics-instrumentation.md), and [status commands](cli-parity.md) for the corresponding maintained contracts.
+Automated refresh remains the only path for live snapshot values. Offline checks perform no external source refresh and add no analytics fields. See [calculator data](calculator-data.md) and [analytics instrumentation](analytics-instrumentation.md) for the corresponding maintained contracts.

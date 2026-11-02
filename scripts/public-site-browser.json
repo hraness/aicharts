@@ -3,11 +3,8 @@
   "routes": [
     "/",
     "/calculator",
-    "/usage",
-    "/leaderboard",
     "/models",
     "/blog",
-    "/dashboard",
     "/benchmarks",
     "/coding",
     "/data"

@@ -34,16 +34,8 @@ jobs:
           restore-keys: bun-${{ runner.os }}-
       - name: Install frozen dependencies
         run: bun install --frozen-lockfile
-      - name: Install pinned Rust toolchain
-        run: rustup show active-toolchain
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-        with:
-          cache-on-failure: true
-          save-if: ${{ github.ref == 'refs/heads/main' }}
-      - name: Install pinned cargo-audit
-        run: cargo audit --version || cargo install cargo-audit --locked --version 0.22.2
       - name: Check the security gate's own regressions
-        run: bun test scripts/assurance-security.test.ts
+        run: bun test scripts/check-security.test.ts
       - name: Run the supply-chain, secret and privacy gate
         run: bun run security:check
       - name: Retain security receipts
