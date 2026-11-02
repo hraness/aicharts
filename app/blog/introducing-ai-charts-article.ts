@@ -11,9 +11,7 @@ import {
 } from "@/lib/terminal-bench-data";
 
 import { launchBeats } from "@/app/launch/beats";
-import { LAUNCH_STATUS } from "@/app/launch/facts";
 import { site } from "@/app/site";
-import type { ArticleVideoRecord } from "@hraness/design-kit";
 
 import {
   BLOG_SOURCE_NOTE,
@@ -23,31 +21,10 @@ import {
   type BlogArticle,
 } from "./articles";
 
-/**
- * The launch film, built in video/story (story.config.ts) with the story-film
- * engine and delivered to public/media. Its charts are captured from
- * aicharts.io (video/story/shots.sh). It feeds the page's VideoObject too.
- */
-export const INTRODUCING_AI_CHARTS_FILM = {
-  name: "Introducing aicharts",
-  description:
-    "A 29-second film with captions and no narration. Benchmark scores and prices sit on different pages; aicharts puts score and cost per task on one chart, shown with the live model and coding-agent charts, the counts behind them, and where each point comes from.",
-  sources: [
-    { src: "/media/aicharts-launch.webm", type: "video/webm" },
-    { src: "/media/aicharts-launch.mp4", type: "video/mp4" },
-  ],
-  poster: "/media/aicharts-launch-poster.jpg",
-  captions: "/media/aicharts-launch.vtt",
-  width: 1920,
-  height: 1080,
-  duration: "PT29.3S",
-  uploadDate: "2026-09-29",
-} as const satisfies ArticleVideoRecord;
-
 export const INTRODUCING_AI_CHARTS_SLUG = "introducing-ai-charts" as const;
 export const INTRODUCING_AI_CHARTS_PUBLISHED_AT = "2026-09-24" as const;
-/** Rewritten as launch beats with illustrations; collector status after the cli-v0.2.0 release. */
-export const INTRODUCING_AI_CHARTS_UPDATED_AT = "2026-09-29" as const;
+/** Updated to describe the public benchmark reference after removing usage collection. */
+export const INTRODUCING_AI_CHARTS_UPDATED_AT = "2026-11-02" as const;
 
 /**
  * Links to other notes carry the live title of the note they open, so a
@@ -140,13 +117,8 @@ export function createIntroducingAiChartsArticle(
     showRelatedProducts: true,
     body: [
       paragraph(
-        `Status: the benchmark charts and notes are free and live at aicharts.io. The usage collector is ${LAUNCH_STATUS.toLowerCase()}.`,
+        "The benchmark charts and notes are free and live at aicharts.io. No account is required.",
       ),
-      {
-        caption: "The launch film: illustrations of aicharts's charts and usage dashboard, with captions.",
-        type: "video",
-        video: INTRODUCING_AI_CHARTS_FILM,
-      },
       { beats: launchBeats, type: "launch-beats" },
       heading("Go deeper"),
       list(

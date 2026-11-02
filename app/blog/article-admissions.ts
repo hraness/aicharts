@@ -109,13 +109,14 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     canonicalOwner: blogArticlePath("introducing-ai-charts"),
     // Rewritten as launch beats on 2026-09-29 and rescored that day by an
     // AI reviewer independent of the drafting run: every number traced to
-    // app/launch/facts.ts and its pinned tests, status to the cli-v0.2.0 release.
+    // app/launch/facts.ts and its pinned tests. Usage collection was removed
+    // from the product introduction on 2026-11-02.
     decision: "keep",
     drafting: "ai-from-source",
     evidenceOwner: EVIDENCE_OWNER,
     evidenceType: "primary-source-synthesis",
     harmIfWrong:
-      "A reader could treat AI Charts as a composite ranking, read Artificial Analysis’s Terminal-Bench 4 scores as the owners’ Terminal-Bench 4.0 results, compare costs that use different denominators, or expect a packaged usage collector that does not exist yet.",
+      "A reader could treat AI Charts as a composite ranking, read Artificial Analysis’s Terminal-Bench 4 scores as the owners’ Terminal-Bench 4.0 results, or compare costs that use different denominators.",
     hostFit:
       "AI Charts owns the charts, benchmarks library, data page, and notes this post describes, and every product claim was checked against the product’s own source, checked snapshots, and refresh schedule.",
     humanReviewedOn: null,
@@ -160,7 +161,6 @@ export const BLOG_ARTICLE_ADMISSIONS = {
       "A change to the coding chart’s hover fields, pinning, or axes, or to the library labels (charted, source guide, emerging evaluation)",
       "A change to the data-refresh schedule",
       "Rename, retitle, or removal of any of the four linked notes",
-      "The local token-use collector gets a packaged release or its status changes in the portfolio facts",
       "An AI Charts rename or portfolio one-liner change in the design kit",
     ],
     reviewedBy: REVIEWED_BY,
@@ -186,11 +186,6 @@ export const BLOG_ARTICLE_ADMISSIONS = {
         checkedOn: INTRODUCING_REVIEWED_ON,
         title: "AI Charts data-refresh workflow",
         url: "https://github.com/hraness/aicharts/blob/644dc2d/.github/workflows/data-refresh.yml",
-      },
-      {
-        checkedOn: INTRODUCING_REVIEWED_ON,
-        title: "AI Charts CLI 0.2.0 (Linux x86-64) release",
-        url: "https://github.com/hraness/aicharts/releases/tag/cli-v0.2.0",
       },
     ],
     scores: {

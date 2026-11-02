@@ -38,7 +38,7 @@ export const CONTENT_SECURITY_POLICY = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  "connect-src 'self' https://us.i.posthog.com https://eu.i.posthog.com https://account.hraness.com https://usage.aicharts.io https://challenges.cloudflare.com",
+  "connect-src 'self' https://us.i.posthog.com https://eu.i.posthog.com https://account.hraness.com https://challenges.cloudflare.com",
   "frame-src https://challenges.cloudflare.com",
   "base-uri 'self'",
   "object-src 'none'",
@@ -52,29 +52,10 @@ export const SECURITY_HEADERS = [
   { key: "Strict-Transport-Security", value: "max-age=63072000" },
 ] as const;
 
-/**
- * Signed-in and authenticated surfaces refuse framing: the private usage
- * dashboard, terminal pairing and the usage detail pages, the usage and
- * suite-auth API responses. Public pages and the preview routes keep their own
- * framing rules.
- */
-export const ACCOUNT_FRAME_SOURCES = [
-  "/dashboard/:path*",
-  "/usage/:path+",
-  "/api/usage/:path*",
-  "/api/suite-auth/:path*",
-] as const;
-
-export const ACCOUNT_FRAME_HEADERS = [
-  { key: "Content-Security-Policy", value: `${CONTENT_SECURITY_POLICY}; frame-ancestors 'none'` },
-  { key: "X-Frame-Options", value: "DENY" },
-] as const;
-
 const nextConfig: NextConfig = {
   async headers() {
     return [
       { headers: [...SECURITY_HEADERS], source: "/:path*" },
-      ...ACCOUNT_FRAME_SOURCES.map(source => ({ headers: [...ACCOUNT_FRAME_HEADERS], source })),
     ];
   },
   async redirects() {

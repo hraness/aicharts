@@ -1,12 +1,14 @@
 # aicharts launch film
 
-The 42-second film embedded in `/blog/introducing-ai-charts`. It is built from the Slopcamera `launch-film` template. The product surfaces are the site's own launch mockups (`components/launch-mockups`), stacked on one board in `mockups.tsx`, so the film and the post show the same illustrations. Every number and the status come from `app/launch/facts.ts` through `{{fact}}` slots in `film.json`; no number is typed by hand.
+The benchmark film source lives in `story/story.config.ts` and uses the story-film engine documented in `story/ENGINE.md`. Its model and coding-agent chart shots come from aicharts.io. The previously published movie advertised usage collection and has been removed from the introducing article and public media. The article retains its benchmark illustrations.
+
+An illustration-based version is also maintained here with the Slopcamera `launch-film` template. Its product surfaces are the site's benchmark mockups (`components/launch-mockups`), stacked on one board in `mockups.tsx`. Every snapshot count comes from `app/launch/facts.ts` through `{{fact}}` slots in `film.json`. The commands below build this version into `out/`; they do not publish media.
 
 The film has six acts:
 
 1. Cold open: two lines on the problem.
 2. Title: the name and its one-line promise.
-3. Product walk: four steps across the score and cost chart, the coding-agent chart, the usage dashboard and the collector terminal, with a camera, a cursor and a drawn highlight.
+3. Product walk: four steps across the score and cost chart, the coding-agent chart, the benchmarks library and its source data, with a camera, a cursor and a drawn highlight.
 4. Proof: the snapshot counts, counted up from the facts module.
 5. Limits: what aicharts does not do.
 6. End card: name and address.
@@ -36,14 +38,14 @@ bun run render:portrait       # native 9:16 layout, out/portrait/export.json
 bun run deliver:portrait      # out/deliver-vertical
 ```
 
-Copy the delivered files the site serves into `public/media/`:
+Before publishing a new benchmark film, inspect its delivered files and captions, and add matching article video metadata. The delivery names are:
 
 - `aicharts-launch.{mp4,webm}`, `aicharts-launch-poster.jpg` and `captions.vtt` as `aicharts-launch.vtt` (embedded in the post)
 - `aicharts-launch-1x1.mp4` (square cut for feeds)
 - `aicharts-launch-vertical.{mp4,webm}` (native 9:16 for Reels, Shorts and TikTok-style feeds)
-- `aicharts-launch-<act>.mp4` and `aicharts-launch-vertical-<act>.mp4` (one clip per act, to attach to the matching post in the social kit)
+- `aicharts-launch-<act>.mp4` and `aicharts-launch-vertical-<act>.mp4` (one clip per act)
 
-`app/blog/introducing-ai-charts-film.test.ts` checks that every file the post references is committed and that the captions run the film's full length.
+`video/film-config.test.ts` checks fact references and the camera targets in the benchmark-only film sources.
 
 ## Rules for the copy
 

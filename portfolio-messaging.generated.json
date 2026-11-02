@@ -5,14 +5,13 @@
   "portfolio": {
     "contract": "hraness.portfolio-public/v1",
     "url": "https://hraness.com/portfolio.json",
-    "digest": "sha256:3d3a303e32a0c39eb32054df7f5537e0caa1d0db7d5f3bc2abc6f935eea31d9a"
+    "digest": "sha256:f2b09b8321e38937091bb7ac0cfc271da4bbaca79ff53b56eadf45d96a63937b"
   },
   "messaging": {
     "formatVersion": 1,
     "product": "aicharts",
     "names": {
       "name": "aicharts",
-      "command": "aicharts",
       "formerly": [
         "CodingChart"
       ]
@@ -20,14 +19,22 @@
     "category": "AI model comparison charts",
     "tagline": "Model benchmarks at a glance",
     "short": "Model benchmark scores plotted against cost and tokens per task",
-    "meta": "aicharts plots published AI benchmark scores against cost and tokens per task, and a local collector measures your own agents' token use.",
-    "medium": "aicharts plots published AI benchmark scores against cost and tokens per task, marking the best score at every budget. A local collector measures your own agents' token use.",
-    "long": "Picking a model means guessing at a tradeoff between quality and price, because benchmark scores and prices live in different places. aicharts plots published benchmark scores against cost and tokens per task on one chart, so the strongest option at each budget is visible instead of implied. A local collector measures your own agents' token use, so the cost question covers your work, not only the models. aicharts is free and open source.",
+    "meta": "aicharts plots published AI benchmark scores against cost and tokens per task. Each chart links its source data and methodology.",
+    "medium": "aicharts plots published AI benchmark scores against cost and tokens per task, marking the best score at every budget.",
+    "long": "Picking a model means guessing at a tradeoff between quality and price, because benchmark scores and prices live in different places. aicharts plots published benchmark scores against cost and tokens per task on one chart, so the strongest option at each budget is visible instead of implied. aicharts is free and open source.",
     "hero": {
       "heading": "See which model wins at each price.",
-      "summary": "Benchmark scores plotted against cost and tokens per task, plus a local collector for your own agents' token use. Compare models on the work your agents actually do.",
+      "summary": "Benchmark scores plotted against cost and tokens per task. Compare models and coding agents using sourced results, with each benchmark on its own scale.",
       "primaryAction": "Browse the charts",
-      "secondaryAction": "Measure your agent"
+      "secondaryAction": "Browse benchmarks"
+    },
+    "blurb": {
+      "emoji": "📈",
+      "text": "aicharts plots published AI benchmark scores against cost and tokens per task, and marks the best score at every budget. Compare models and coding agents using sourced results, with each benchmark on its own scale.",
+      "cta": {
+        "label": "See the charts",
+        "url": "https://aicharts.io"
+      }
     },
     "headings": {
       "home-calculator": "Subscription vs API vs GPUs",
@@ -40,13 +47,13 @@
     "status": {
       "default": "proposed"
     },
-    "reviewedOn": "2026-10-06"
+    "reviewedOn": "2026-11-02"
   },
   "projects": [
     {
       "id": "gobstopper",
       "name": "Gobstopper",
-      "description": "compacts long agent sessions into smaller copies, keeping every byte",
+      "description": "local compaction proxy that cuts claude code and codex token spend by 29%",
       "canonicalUrl": "https://gobstopper.sh",
       "surface": {
         "actionLabel": "explore Gobstopper",
@@ -54,42 +61,15 @@
           "CLI",
           "MCP"
         ],
-        "proof": "automatic context compaction that snapshots each transcript before changing it"
+        "proof": "a local proxy that compacts more often than built-in compaction, using 29% fewer tokens on Terminal-Bench 2.1"
       },
       "messaging": {
         "names": {
           "name": "Gobstopper",
           "command": "gobstopper"
         },
-        "short": "Compacts long agent sessions into smaller copies, keeping every byte",
-        "tagline": "Reversible context compaction"
-      }
-    },
-    {
-      "id": "xcb",
-      "name": "Excalibur (xcb)",
-      "description": "routes coding tasks across the claude, codex, and devin plans you have",
-      "canonicalUrl": "https://xcb.sh",
-      "surface": {
-        "actionLabel": "explore Excalibur (xcb)",
-        "interfaces": [
-          "CLI",
-          "SDK"
-        ],
-        "proof": "a customizable terminal workspace, provider account management, and token usage tracking"
-      },
-      "messaging": {
-        "names": {
-          "name": "Excalibur (xcb)",
-          "command": "xcb",
-          "formerly": [
-            "AgentMixer",
-            "OOMPA",
-            "HRA"
-          ]
-        },
-        "short": "Routes coding tasks across the Claude, Codex, and Devin plans you have",
-        "tagline": "One plan across your coding agents"
+        "short": "Local compaction proxy that cuts Claude Code and Codex token spend by 29%",
+        "tagline": "Smarter compaction, 29% fewer tokens"
       }
     },
     {
@@ -107,7 +87,6 @@
       "messaging": {
         "names": {
           "name": "aicharts",
-          "command": "aicharts",
           "formerly": [
             "CodingChart"
           ]
@@ -145,7 +124,7 @@
     {
       "id": "oh-computer",
       "name": "Oh",
-      "description": "memory for agents that stores each fact with its sources and history",
+      "description": "memory framework that organizes what agents learn into a traceable ontology",
       "canonicalUrl": "https://oh.computer",
       "surface": {
         "actionLabel": "research with Oh",
@@ -161,36 +140,14 @@
           "name": "Oh",
           "command": "oh"
         },
-        "short": "Memory for agents that stores each fact with its sources and history",
-        "tagline": "Evidence-backed memory for agents"
-      }
-    },
-    {
-      "id": "sponge",
-      "name": "Sponge",
-      "description": "local research service that keeps its sources and writes cited reports",
-      "canonicalUrl": "https://sponge.computer",
-      "surface": {
-        "actionLabel": "Explore Sponge",
-        "interfaces": [
-          "CLI",
-          "terminal UI"
-        ],
-        "proof": "cited reports from saved sources, with strategy changes tested in a sealed evaluation before you adopt them"
-      },
-      "messaging": {
-        "names": {
-          "name": "Sponge",
-          "command": "spongev2"
-        },
-        "short": "Local research service that keeps its sources and writes cited reports",
-        "tagline": "Deep research on your machine"
+        "short": "Memory framework that organizes what agents learn into a traceable ontology",
+        "tagline": "Ontology-driven memory for agents"
       }
     },
     {
       "id": "algal",
       "name": "ALGAL",
-      "description": "language and vm for agent programs that wait for approval and resume",
+      "description": "durable agent programs that pause for approval, resume after restart, and replay",
       "canonicalUrl": "https://algal.computer",
       "surface": {
         "actionLabel": "explore ALGAL",
@@ -208,14 +165,14 @@
             "Morphogen"
           ]
         },
-        "short": "Language and VM for agent programs that wait for approval and resume",
-        "tagline": "Programs for agents that wait and resume"
+        "short": "Durable agent programs that pause for approval, resume after restart, and replay",
+        "tagline": "A programming language for agents that run for weeks"
       }
     },
     {
       "id": "valhalla",
       "name": "Valhalla",
-      "description": "peer-to-peer rooms where agents and their owners share signed work",
+      "description": "chat rooms for agents and their people, with identity and hosts you choose",
       "canonicalUrl": "https://vhalla.com",
       "surface": {
         "actionLabel": "explore Valhalla",
@@ -230,14 +187,14 @@
           "name": "Valhalla",
           "command": "vhalla"
         },
-        "short": "Peer-to-peer rooms where agents and their owners share signed work",
-        "tagline": "Shared workspaces for agents and their people"
+        "short": "Chat rooms for agents and their people, with identity and hosts you choose",
+        "tagline": "Rooms where agents and people meet, run by you"
       }
     },
     {
       "id": "peopleblade",
       "name": "PeopleBlade",
-      "description": "the contact book you own, built for your agent",
+      "description": "local personal crm that your agent runs from the command line",
       "canonicalUrl": "https://peopleblade.com",
       "surface": {
         "actionLabel": "open PeopleBlade",
@@ -252,8 +209,8 @@
           "name": "PeopleBlade",
           "command": "peopleblade"
         },
-        "short": "The contact book you own, built for your agent",
-        "tagline": "A local personal CRM for everyone you know."
+        "short": "Local personal CRM that your agent runs from the command line",
+        "tagline": "The contact book you own, built for your agent"
       }
     },
     {
@@ -280,7 +237,7 @@
     {
       "id": "wrench",
       "name": "GhostGet",
-      "description": "named web actions for ai agents: read pages, save media, use connected accounts",
+      "description": "lets agents drive websites fast through named actions, holding no password",
       "canonicalUrl": "https://ghostget.com",
       "surface": {
         "actionLabel": "open GhostGet",
@@ -299,8 +256,8 @@
             "Wrench"
           ]
         },
-        "short": "Named web actions for AI agents: read pages, save media, use connected accounts",
-        "tagline": "Your agent calls web actions by name and holds no password."
+        "short": "Lets agents drive websites fast through named actions, holding no password",
+        "tagline": "Drive websites fast, by name, with no password"
       }
     },
     {
@@ -328,23 +285,25 @@
       }
     },
     {
-      "id": "iconplace",
-      "name": "icon.place",
-      "description": "editable vector icons and illustrations, with an editor in your browser",
-      "canonicalUrl": "https://icon.place",
+      "id": "dawg",
+      "name": "dawg",
+      "description": "terminal music workstation where you and an agent shape loops on a piano roll",
+      "canonicalUrl": "https://dawg.sh",
       "surface": {
-        "actionLabel": "open icon.place",
+        "actionLabel": "Explore dawg",
         "interfaces": [
-          "web app"
+          "terminal UI",
+          "CLI"
         ],
-        "proof": "9,518 concept pages and 8,965 drawn icons that export as SVG, PNG, or a recipe"
+        "proof": "a shared local session where notes stream down a piano roll while an agent writes the next loop"
       },
       "messaging": {
         "names": {
-          "name": "icon.place"
+          "name": "dawg",
+          "command": "dawg"
         },
-        "short": "Editable vector icons and illustrations, with an editor in your browser",
-        "tagline": "Icons and illustrations you can edit as vectors."
+        "short": "Terminal music workstation where you and an agent shape loops on a piano roll",
+        "tagline": "Make music in your terminal, dawg."
       }
     },
     {
@@ -480,26 +439,6 @@
       }
     },
     {
-      "id": "swft",
-      "name": "SWFT",
-      "description": "free publication about how companies put ai agents to work",
-      "canonicalUrl": "https://swft.io",
-      "surface": {
-        "actionLabel": "read SWFT",
-        "interfaces": [
-          "publication"
-        ],
-        "proof": "reported software-factory stories with source notes"
-      },
-      "messaging": {
-        "names": {
-          "name": "SWFT"
-        },
-        "short": "Free publication about how companies put AI agents to work",
-        "tagline": "Reported cases of companies using AI agents"
-      }
-    },
-    {
       "id": "textmock",
       "name": "Textmock",
       "description": "fictional text message screenshots and animations, made in your browser",
@@ -537,50 +476,6 @@
         },
         "short": "Tests whether Alexander-inspired patterns help agents write better code",
         "tagline": "Alexander's notes, sketched as runnable ALGAL form."
-      }
-    },
-    {
-      "id": "system-one-skills",
-      "name": "System One Skills",
-      "description": "runs a check once, returns a short result, and keeps the full log",
-      "canonicalUrl": "https://sys1.io/skills",
-      "surface": {
-        "actionLabel": "install the skill",
-        "interfaces": [
-          "Agent Skill",
-          "CLI"
-        ],
-        "proof": "one deterministic skill that cut validation-log text 35.20 percent across 563 replayed outputs"
-      },
-      "messaging": {
-        "names": {
-          "name": "System One Skills",
-          "command": "system-one-skills"
-        },
-        "short": "Runs a check once, returns a short result, and keeps the full log",
-        "tagline": "Cut noisy validation logs without a model call."
-      }
-    },
-    {
-      "id": "ghostget-skills",
-      "name": "GhostGet Skills",
-      "description": "packages provider reads and plan checks as programs with no model calls",
-      "canonicalUrl": "https://github.com/hraness/ghostget-skills",
-      "surface": {
-        "actionLabel": "install the skills",
-        "interfaces": [
-          "Agent Skill",
-          "CLI"
-        ],
-        "proof": "ALGAL programs for GhostGet reads, plan checks, and drift watch, with zero model calls"
-      },
-      "messaging": {
-        "names": {
-          "name": "GhostGet Skills",
-          "command": "ghostget-skills"
-        },
-        "short": "Packages provider reads and plan checks as programs with no model calls",
-        "tagline": "GhostGet workflows as programs you can replay."
       }
     }
   ],
@@ -643,20 +538,6 @@
     },
     {
       "source": "aicharts",
-      "target": "web-discovery",
-      "kind": "runtime",
-      "label": "uses",
-      "direction": "forward"
-    },
-    {
-      "source": "swft",
-      "target": "vercel-delivery",
-      "kind": "runtime",
-      "label": "uses",
-      "direction": "forward"
-    },
-    {
-      "source": "swft",
       "target": "web-discovery",
       "kind": "runtime",
       "label": "uses",
@@ -808,44 +689,6 @@
       "direction": "forward"
     },
     {
-      "source": "gobstopper",
-      "target": "aicharts",
-      "kind": "runtime",
-      "label": "installs",
-      "direction": "forward",
-      "detail": "The Gobstopper installer adds aicharts and turns on its local usage history, which stays on your computer and never uploads."
-    },
-    {
-      "source": "gobstopper",
-      "target": "xcb",
-      "kind": "runtime",
-      "label": "compacts sessions for",
-      "direction": "forward",
-      "detail": "Excalibur (xcb) uses Gobstopper's elision policy to drop stale tool output from Claude Code and Codex prompts once context passes a threshold, and keeps the original output in local history. It is on by default."
-    },
-    {
-      "source": "xcb",
-      "target": "ui",
-      "kind": "runtime",
-      "label": "uses",
-      "direction": "forward"
-    },
-    {
-      "source": "xcb",
-      "target": "design-kit",
-      "kind": "runtime",
-      "label": "uses",
-      "direction": "forward"
-    },
-    {
-      "source": "xcb",
-      "target": "aicharts",
-      "kind": "runtime",
-      "label": "installs",
-      "direction": "forward",
-      "detail": "The Excalibur (xcb) installer adds aicharts and turns on its local usage history, which stays on your computer. With exports on, xcb also writes session files in the aicharts format; automatic upload is not available."
-    },
-    {
       "source": "soulscrape",
       "target": "ui",
       "kind": "runtime",
@@ -912,55 +755,6 @@
     {
       "source": "peopleblade",
       "target": "posthog-sdk",
-      "kind": "runtime",
-      "label": "uses",
-      "direction": "forward"
-    },
-    {
-      "source": "sponge",
-      "target": "ui",
-      "kind": "runtime",
-      "label": "uses",
-      "direction": "forward"
-    },
-    {
-      "source": "sponge",
-      "target": "design-kit",
-      "kind": "runtime",
-      "label": "uses",
-      "direction": "forward"
-    },
-    {
-      "source": "sponge",
-      "target": "convex-toolkit",
-      "kind": "runtime",
-      "label": "uses",
-      "direction": "forward"
-    },
-    {
-      "source": "sponge",
-      "target": "posthog-sdk",
-      "kind": "runtime",
-      "label": "uses",
-      "direction": "forward"
-    },
-    {
-      "source": "sponge",
-      "target": "suite-accounts",
-      "kind": "runtime",
-      "label": "uses",
-      "direction": "forward"
-    },
-    {
-      "source": "sponge",
-      "target": "vercel-delivery",
-      "kind": "runtime",
-      "label": "uses",
-      "direction": "forward"
-    },
-    {
-      "source": "sponge",
-      "target": "web-discovery",
       "kind": "runtime",
       "label": "uses",
       "direction": "forward"
@@ -1048,27 +842,11 @@
     },
     {
       "source": "message-like-me",
-      "target": "xcb",
-      "kind": "runtime",
-      "label": "drafts replies through",
-      "direction": "forward",
-      "detail": "TextButler can classify messages and draft replies through Excalibur (xcb) on the Claude Code or Codex subscription you already pay for, with xcb holding the sign-in; a separately billed API route also exists."
-    },
-    {
-      "source": "message-like-me",
       "target": "algal",
       "kind": "runtime",
       "label": "runs reply habitats on",
       "direction": "forward",
       "detail": "TextButler's opt-in per-contact habitats run as ALGAL programs: a candidate reply plan replaces the current one only after a blind replay shows no regression, and no plan can change the recipient, provider, or permissions."
-    },
-    {
-      "source": "sponge",
-      "target": "oh-computer",
-      "kind": "runtime",
-      "label": "keeps its hosted library's agent working memory in",
-      "direction": "forward",
-      "detail": "Sponge's hosted library at sponge.computer keeps its research agents' working memory in a server-side Oh store, separate from the reviewed knowledge in its product database."
     },
     {
       "source": "kb",
@@ -1079,46 +857,6 @@
       "detail": "Wordcell rebuilds a disposable Oh graph from your Markdown to answer named graph queries with source proofs; Markdown and Git stay the record, and search does not use Oh's memory retrieval."
     },
     {
-      "source": "xcb",
-      "target": "algal",
-      "kind": "runtime",
-      "label": "replays task history with",
-      "direction": "forward",
-      "detail": "Excalibur (xcb) embeds the ALGAL runtime for task transitions, route and settle reflexes, and resumable controllers, and its task verifier replays a task's recorded history offline; the managed harness is experimental."
-    },
-    {
-      "source": "xcb",
-      "target": "kb",
-      "kind": "runtime",
-      "label": "searches project notes with",
-      "direction": "forward",
-      "detail": "Excalibur (xcb) can bind one explicit Wordcell vault through a hash-pinned CLI, giving workers a read-only memory search with citations; saving a note back to the vault is always an explicit step."
-    },
-    {
-      "source": "sponge",
-      "target": "wrench",
-      "kind": "runtime",
-      "label": "captures signed-in pages through",
-      "direction": "forward",
-      "detail": "Sponge captures signed-in pages through GhostGet, storing only a login name, and the hosted library at sponge.computer imports GhostGet's text-only capture bundles offline."
-    },
-    {
-      "source": "sponge",
-      "target": "soulscrape",
-      "kind": "contract",
-      "label": "imports research exchanges into its hosted library from",
-      "direction": "forward",
-      "detail": "Sponge's hosted library at sponge.computer converts a public Soulscrape research exchange offline into an Oh research packet that it does not treat as established fact."
-    },
-    {
-      "source": "xcb",
-      "target": "relay",
-      "kind": "runtime",
-      "label": "uses",
-      "direction": "forward",
-      "detail": "Excalibur (xcb) depends on @hraness/relay and instantiates its Convex relay modules for devices, commands, envelopes, invites, projections, and maintenance."
-    },
-    {
       "source": "pattern-language",
       "target": "algal",
       "kind": "development",
@@ -1127,76 +865,12 @@
       "detail": "Pattern Language uses ALGAL so its design experiments stay inspectable: content-addressed manifests and records you can replay."
     },
     {
-      "source": "ghostget-skills",
-      "target": "wrench",
-      "kind": "runtime",
-      "label": "uses",
-      "direction": "forward",
-      "detail": "GhostGet Skills wraps the GhostGet CLI for catalog, plan check, invoke, read, doctor, and auth list, and pins @hraness/ghostget."
-    },
-    {
-      "source": "ghostget-skills",
-      "target": "algal",
-      "kind": "runtime",
-      "label": "runs programs on",
-      "direction": "forward",
-      "detail": "Each GhostGet Skills workflow is an ALGAL program the ALGAL runtime executes; the package pins @hraness/algal."
-    },
-    {
       "source": "message-like-me",
       "target": "wrench",
       "kind": "runtime",
       "label": "reads and sends messages through",
       "direction": "forward",
       "detail": "Messages reach TextButler through GhostGet, a separate Mac tool you install first for messaging sign-in and permissions, and TextButler's marked replies go back the same way."
-    },
-    {
-      "source": "sponge",
-      "target": "kb",
-      "kind": "runtime",
-      "label": "keeps documents in",
-      "direction": "forward",
-      "detail": "Sponge uses Wordcell for documents and PDF text, renders a static Wordcell edition when you publish, and can put selected documents on a wordcell.io site."
-    },
-    {
-      "source": "sponge",
-      "target": "algal",
-      "kind": "runtime",
-      "label": "evolves research strategies with",
-      "direction": "forward",
-      "detail": "Sponge runs on ALGAL, and a candidate strategy for brief research must pass a sealed evaluation that ALGAL replays; nothing changes until you adopt it or restore the previous one."
-    },
-    {
-      "source": "sponge",
-      "target": "xcb",
-      "kind": "runtime",
-      "label": "reaches models through",
-      "direction": "forward",
-      "detail": "Sponge reaches every model through a hash-pinned Excalibur (xcb) executable, so provider sign-ins stay in xcb."
-    },
-    {
-      "source": "algal",
-      "target": "xcb",
-      "kind": "runtime",
-      "label": "delegates coding tasks to",
-      "direction": "forward",
-      "detail": "ALGAL's xcb executor hands coding tasks to Excalibur (xcb) through its JSON run command, and ALGAL never copies credentials or reimplements account switching."
-    },
-    {
-      "source": "aicharts",
-      "target": "gobstopper",
-      "kind": "runtime",
-      "label": "reads compaction telemetry from",
-      "direction": "forward",
-      "detail": "The aicharts collector parses Gobstopper's numeric compaction telemetry and never reads transcript content."
-    },
-    {
-      "source": "iconplace",
-      "target": "algal",
-      "kind": "runtime",
-      "label": "records drawing runs with",
-      "direction": "forward",
-      "detail": "The icon.place drawing lab runs each experiment as an ALGAL program in the browser and records the proposal, candidates, and selection as receipts it can replay; the live site does not use ALGAL yet."
     },
     {
       "source": "peopleblade",
@@ -1223,23 +897,7 @@
       "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
     },
     {
-      "source": "sponge",
-      "target": "cli-update",
-      "kind": "runtime",
-      "label": "updates installed CLI",
-      "direction": "forward",
-      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
-    },
-    {
       "source": "algal",
-      "target": "cli-update",
-      "kind": "runtime",
-      "label": "updates installed CLI",
-      "direction": "forward",
-      "detail": "The installed CLI verifies release files and installation ownership before updating, preserving saved preferences and version pins."
-    },
-    {
-      "source": "xcb",
       "target": "cli-update",
       "kind": "runtime",
       "label": "updates installed CLI",

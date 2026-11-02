@@ -42,9 +42,9 @@ export default function NotFound() {
               description: "Compare coding-agent setups by score, cost, time, and tokens per task.",
             },
             {
-              href: "/usage",
-              label: "Measure your agent",
-              description: "Count your own agents’ tokens, models, and cost on your machine.",
+              href: "/benchmarks",
+              label: "Benchmarks",
+              description: "Browse sourced model and agent evaluations by the work they measure.",
             },
           ]}
           primaryAction={homePrimaryAction}

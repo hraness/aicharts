@@ -39,6 +39,17 @@ if (!parsed.ok) throw parsed.error;
 const snapshot = parsed.value;
 
 describe("homepage canonical content", () => {
+  test("keeps the benchmark reference free of usage and account entry points", () => {
+    const markup = renderToStaticMarkup(createElement(Home));
+    for (const href of ["/usage", "/dashboard", "/leaderboard", "/api/suite-auth/"]) {
+      expect(markup).not.toContain(`href="${href}`);
+    }
+    expect(markup).not.toContain('id="home-usage-title"');
+    expect(markup).not.toContain('class="acm-usage"');
+    expect(markup).toContain('href="/benchmarks"');
+    expect(markup).toContain('class="intelligence-efficiency"');
+  });
+
   test("server-renders the accessible leaders table without a duplicate marketing heading", () => {
     const markup = renderToStaticMarkup(createElement(HomeLeaders, { snapshot }));
     const leaders = currentCodingAgentBenchmarkLeaders(snapshot);

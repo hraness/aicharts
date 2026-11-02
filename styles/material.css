@@ -1,5 +1,5 @@
-/* Shared enclosure paint only. Benchmark hues, plot geometry, local exports,
- * and private usage surfaces retain their own semantics and behavior. */
+/* Shared enclosure paint only. Benchmark hues, plot geometry and local exports
+ * retain their own semantics and behavior. */
 [data-hraness-material="lantern"] .site-header.hraness-material-chrome {
   --hraness-marketing-header-background: var(--background);
   --hraness-marketing-header-backdrop: none;
@@ -89,62 +89,4 @@
 
 @media (forced-colors: active) {
   [data-hraness-material="lantern"] :is(.home-calculator, .home-activity__list a, .home-index-strip__row .model-logo-card, .home-calculator__cta) { border-color: CanvasText; }
-}
-
-/* Reading and form roles share the foundation; plots and table encodings stay local. */
-.usage-home { --text-body: 1rem; --text-caption: .875rem; }
-[data-hraness-material="lantern"] :is(
-  .usage-hero__lede, .usage-status div span, .usage-metric-row p,
-  .usage-daily__privacy, .usage-daily__coverage, .usage-daily__hint, .usage-daily__error,
-  .usage-sessions__privacy, .usage-sessions__source, .usage-sessions__aggregate p,
-  .usage-sessions__detail header p, .usage-sessions__notice,
-  .usage-board__hint, .usage-consent__copy, .usage-consent__form > span, .usage-publishing-notice,
-  .usage-totals > p, p.usage-totals__muted, .usage-totals__notice
-) {
-  font-size: var(--text-body);
-  line-height: 1.65;
-  text-wrap: pretty;
-}
-[data-hraness-material="lantern"] :is(
-  .usage-daily__controls label, .usage-daily__controls > span, .usage-daily__range,
-  .usage-daily__overview h2, .usage-daily__totals dt, .usage-daily__figure figcaption span,
-  .usage-daily__details summary span, .usage-daily table caption,
-  .usage-sessions__aggregate dt, .usage-sessions__detail header > span,
-  .usage-sessions__select span, .usage-sessions__model-basis,
-  .usage-board table caption, .usage-consent__handle-field,
-  .usage-totals h2, .usage-totals__table caption
-) { font-size: var(--text-caption); line-height: 1.5; }
-[data-hraness-material="lantern"] .usage-totals__table :is(th, td) { border-block-start: 1px solid var(--grid); }
-[data-hraness-material="lantern"] :is(
-  .usage-daily__controls input, .usage-consent__handle-field input, .usage-sessions__scope select,
-  .usage-stats input, .usage-stats select
-) {
-  background: var(--surface);
-  border-color: var(--line);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--hraness-material-inset);
-  caret-color: var(--hraness-material-focus);
-  font-size: var(--text-body);
-  font-weight: 400;
-  line-height: 1.5;
-}
-[data-hraness-material="lantern"] :is(
-  .usage-status, .usage-daily__controls, .usage-sessions__aggregate, .usage-consent__form,
-  .usage-stats__toolbar, .usage-stats__custom, .usage-stats__notice, .usage-stats__day-detail,
-  .usage-totals
-) {
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
-  box-shadow: var(--hraness-material-lift);
-  padding: clamp(1rem, 3vw, 1.5rem);
-}
-@media (forced-colors: active) {
-  [data-hraness-material="lantern"] :is(
-    .usage-daily__controls input, .usage-consent__handle-field input, .usage-sessions__scope select,
-    .usage-stats input, .usage-stats select,
-    .usage-status, .usage-daily__controls, .usage-sessions__aggregate, .usage-consent__form,
-    .usage-stats__toolbar, .usage-stats__custom, .usage-stats__notice, .usage-stats__day-detail,
-    .usage-totals
-  ) { border-color: CanvasText; box-shadow: none; }
 }

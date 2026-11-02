@@ -1,0 +1,28 @@
+--- a/dist/commonjs/index.js
++++ b/dist/commonjs/index.js
+@@ -1509,4 +1509,6 @@
+ exports.minimatch.Minimatch = Minimatch;
+ exports.minimatch.escape = escape_js_1.escape;
+ exports.minimatch.unescape = unescape_js_1.unescape;
++// Keep legacy CommonJS callers on the patched matcher and its named exports.
++module.exports = Object.assign(exports.minimatch, exports);
+ //# sourceMappingURL=index.js.map
+\ No newline at end of file
+--- a/dist/esm/index.js
++++ b/dist/esm/index.js
+@@ -1498,4 +1498,5 @@
+ minimatch.Minimatch = Minimatch;
+ minimatch.escape = escape;
+ minimatch.unescape = unescape;
++export default minimatch;
+ //# sourceMappingURL=index.js.map
+\ No newline at end of file
+--- a/dist/esm/index.d.ts
++++ b/dist/esm/index.d.ts
+@@ -182,4 +182,5 @@
+ export { escape } from './escape.js';
+ export { unescape } from './unescape.js';
+ export type { Form };
++export default minimatch;
+ //# sourceMappingURL=index.d.ts.map
+\ No newline at end of file

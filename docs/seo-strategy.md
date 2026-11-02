@@ -6,7 +6,7 @@ AI Charts leads with capability-versus-resource Pareto charts: readers can see t
 
 The canonical public repository description is:
 
-> aicharts plots published AI benchmark scores against cost and tokens per task, and a local collector measures your own agents' token use.
+> aicharts plots published AI benchmark scores against cost and tokens per task. Each chart links its source data and methodology.
 
 Distinguish charted results, source guides, and emerging evaluations. A benchmark guide is useful coverage, but is not a claim that AI Charts has imported its scores. Name historical cohorts and selected samples. Do not describe every chart as current or every modality as exhaustively covered. The product adds selection guidance, approachable charts, and explicit comparison boundaries to the evidence supplied by benchmark publishers and aggregators.
 
@@ -24,7 +24,7 @@ Distinguish charted results, source guides, and emerging evaluations. A benchmar
 | `/blog` | Research collection | AI model benchmarks, AI agent benchmarks, benchmark analysis | Introduce the broader editorial method and state that the first collection focuses on coding agents. |
 | `/blog/[slug]` | Evidence page | Named benchmark, method, result, limitation, or model question | Stay specific to the source. Preserve the benchmark name, observation date, configuration, limits, and primary citations. |
 
-`/leaderboard` stays noindex and out of the sitemap until it has enough opt-in entries to be useful to a visitor. Reassess on 2026-11-28.
+Retired personal usage, dashboard, leaderboard, installation, and product sign-in routes return 404 and stay out of discovery surfaces.
 
 Atlas filters use shareable query state on canonical `/benchmarks`; coding chart state uses `/coding`. They do not create separate indexable keyword pages. Legacy root query and hash links forward to the corresponding workspace, while new links use its canonical path. The full benchmark definitions are crawlable on `/data`. Create a dedicated chart or analysis route only when it answers a distinct reader task with enough evidence to justify its own canonical page. Do not publish several routes that answer the same intent with lightly varied copy.
 
@@ -62,7 +62,7 @@ Update a page when its underlying result changes materially. Do not change a pub
 
 A model release gets its score, cost, and frontier position on its model page. Write a standalone note only when the release raises a new reader question, and name that question in the title.
 
-Competitor facts on the home page, `/usage`, and the README were checked on 2026-09-28. Reassess them by 2027-01-28.
+Check changing product comparisons against their primary sources when publishing or revising them. Retired usage comparisons are no longer part of the product positioning.
 
 ## Answer-engine discovery
 
@@ -72,7 +72,7 @@ Do not add `llms.txt` as a search shortcut, keyword variant, or substitute for v
 
 The `/data` page is the citable boundary for checked benchmark snapshots. It must show each dataset name, exact version, publisher role, upstream source URL, retrieval time, covered metrics, comparison rules, important limits, license or notice boundary, and JSON distribution. Source observation dates and historical paper dates remain distinct from retrieval time. Cost labels retain the denominator: per task, full evaluation, or another source-defined basis. For Artificial Analysis Intelligence, name the version-specific evaluations and weights, distinguish output-only tokens from coding-agent total tokens, explain unavailable costs, and label the frontier as AI Charts analysis. `DataCatalog` and `Dataset` structured data must match visible descriptions. AI Charts publishes and visualizes source measurements; it does not claim to have produced them.
 
-Homepage Markdown describes the primary Pareto chart; `/coding` describes its source-specific comparison; `/benchmarks` includes the default library chart and compact catalog navigation; `/usage` renders the same copy module as its HTML page, without the illustrative dashboard; `/data` exposes all definitions and distribution links. Query-specific browser state does not change the canonical Markdown document. `/llms.txt` describes these existing resources and protocols, not an invented realtime API. Sitemap modification dates follow each page’s own content: the current Intelligence snapshot for home, coding-agent changes for `/coding`, and checked catalog content and cohort dates for `/benchmarks`. Authored page changes also count; build clocks and timestamp-only source polls do not.
+Homepage Markdown describes the primary Pareto chart; `/coding` describes its source-specific comparison; `/benchmarks` includes the default library chart and compact catalog navigation; `/data` exposes all definitions and distribution links. Query-specific browser state does not change the canonical Markdown document. `/llms.txt` describes these existing resources and protocols, not an invented realtime API. Sitemap modification dates follow each page’s own content: the current Intelligence snapshot for home, coding-agent changes for `/coding`, and checked catalog content and cohort dates for `/benchmarks`. Authored page changes also count; build clocks and timestamp-only source polls do not.
 
 These rules follow Google's [AI search optimization guide](https://developers.google.com/search/docs/fundamentals/ai-optimization-guide), [people-first content](https://developers.google.com/search/docs/fundamentals/creating-helpful-content), and [structured data](https://developers.google.com/search/docs/appearance/structured-data/sd-policies) guidance, plus OpenAI's [publisher and developer FAQ](https://help.openai.com/en/articles/12627856-publishers-and-developers-faq).
 
@@ -116,7 +116,7 @@ Import the verified Search Console property into [Bing Webmaster Tools](https://
 
 The canonical source repository is `https://github.com/hraness/aicharts`. Keep its public metadata aligned with the product:
 
-- description: `aicharts plots published AI benchmark scores against cost and tokens per task, and a local collector measures your own agents' token use.`;
+- description: `aicharts plots published AI benchmark scores against cost and tokens per task. Each chart links its source data and methodology.`;
 - homepage: `https://aicharts.io`;
 - focused topics that name the technology, data form, and current benchmark domain without exhausting GitHub's topic limit;
 - a readable README that links the live chart, `/data`, `/blog`, source, notice, contribution, and security information;

@@ -128,6 +128,8 @@ describe("Node production config load", () => {
     expect(result.status, result.stderr).toBe(0);
   });
 
+  // Let the child's bounded startup deadline report its status and
+  // diagnostics when the full suite competes for host resources.
   test("Next.js loadConfig under Node admits production source maps without throwing", () => {
     const result = spawnSync("node", ["--input-type=module", "--eval", `
       import { createRequire } from "node:module";
@@ -155,10 +157,10 @@ describe("Node production config load", () => {
         VERCEL_PROJECT_ID: "prj_AiChartsProject123",
       },
     });
-    expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
+    expect(result.status, `${result.error?.message ?? ""}\n${result.stdout}\n${result.stderr}`).toBe(0);
     expect(result.stderr).not.toContain("Failed to load next.config.ts");
     expect(result.stdout).toContain("production-config-ok");
-  });
+  }, nodeSpawnOptions.timeout + 5_000);
 
   test("ownedPosthogCliBinaryPath resolves the public nextjs-config entry under Node", () => {
     const result = spawnSync("node", ["--input-type=module", "--eval", `

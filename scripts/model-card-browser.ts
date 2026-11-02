@@ -1,8 +1,6 @@
 import { access } from "node:fs/promises";
 import { join } from "node:path";
 import { ATLAS_DATASETS } from "../lib/benchmark-atlas-catalog";
-import { verifyUsageDashboard } from "./usage-browser";
-import { verifyUsageSessions } from "./usage-sessions-browser";
 import { ownedChromiumOptions } from "./owned-chromium.mjs";
 
 import {
@@ -62,22 +60,37 @@ async function launchFirstAvailableBrowser(paths: readonly string[]): Promise<Br
 }
 
 async function reservePort(): Promise<number> {
-  const firstPort = 45_000 + (process.pid % 1_000);
-  for (let offset = 0; offset < 20; offset += 1) {
-    try {
-      const port = firstPort + offset;
-      const reservation = Bun.serve({
-        fetch: () => new Response(null, { status: 204 }),
-        hostname,
-        port,
-      });
-      await reservation.stop(true);
-      return port;
-    } catch (error: unknown) {
-      if (offset === 19) throw error;
+  const reservation = Bun.serve({
+    fetch: () => new Response(null, { status: 204 }),
+    hostname,
+    port: 0,
+  });
+  const port = reservation.port;
+  await reservation.stop(true);
+  invariant(port !== undefined, "The server did not reserve a local port.");
+  return port;
+}
+
+async function verifyBenchmarkOnlySurface(browser: Browser, baseUrl: string): Promise<void> {
+  const context = await browser.newContext();
+  await stubAccountBoundary(context);
+  try {
+    const page = await context.newPage();
+    const response = await page.goto(baseUrl);
+    invariant(response?.status() === 200, "The benchmark homepage is unavailable.");
+    for (const link of await page.locator("header a").all()) {
+      const href = await link.getAttribute("href");
+      invariant(!href || !/^\/(?:usage|dashboard|leaderboard|login|account|install\.sh)(?:[/?#]|$)/u.test(href),
+        `Retired product navigation remains: ${href}`);
     }
+    for (const path of ["/usage", "/dashboard", "/leaderboard", "/login", "/install.sh", "/api/usage", "/api/suite-auth/session"]) {
+      const retired = await context.request.get(`${baseUrl}${path}`, { maxRedirects: 0 });
+      invariant(retired.status() === 404 || retired.status() === 410,
+        `${path}: retired route returned ${String(retired.status())}`);
+    }
+  } finally {
+    await context.close();
   }
-  throw new Error("No local port was available for the model-card browser contract.");
 }
 
 async function verifyFooterShell(browser: Browser, baseUrl: string): Promise<void> {
@@ -86,7 +99,7 @@ async function verifyFooterShell(browser: Browser, baseUrl: string): Promise<voi
     await stubAccountBoundary(context);
     const page = await context.newPage();
     try {
-      for (const route of ["/missing-footer-layout", "/blog", "/data", "/usage"]) {
+      for (const route of ["/missing-footer-layout", "/blog", "/data", "/benchmarks"]) {
         await page.goto(`${baseUrl}${route}`);
         await settle(page);
         const geometry = await page.evaluate(() => {
@@ -597,7 +610,7 @@ const server = Bun.spawn([
   String(port),
 ], {
   cwd: repository,
-  env: { ...process.env, NODE_ENV: "production", AICHARTS_USAGE_AUTH_ENABLED: "0", AICHARTS_USAGE_PRIVATE_READ_ENABLED: "0" },
+  env: { ...process.env, NODE_ENV: "production" },
   stderr: "inherit",
   stdout: "inherit",
 });
@@ -606,12 +619,11 @@ try {
   await waitForServer(`${baseUrl}/models`, server);
   const browser = await launchFirstAvailableBrowser(executablePaths);
   try {
+    await verifyBenchmarkOnlySurface(browser, baseUrl);
     await verifyFooterShell(browser, baseUrl);
     await verifyBenchmarkAtlas(browser, baseUrl);
     await verifyChartExport(browser, baseUrl);
     await verifyModelLogoCards(browser, baseUrl);
-    await verifyUsageDashboard(browser, baseUrl, repository, hostname, await reservePort());
-    await verifyUsageSessions(browser, baseUrl);
   } finally {
     await browser.close();
   }

@@ -24,3 +24,12 @@ test("publishes the design-kit sticky offset from the in-flow marketing header",
   expect(source).not.toContain("data-position=\"fixed\"");
   expect(source).not.toContain("--hraness-marketing-main-offset");
 });
+
+test("navigation contains public benchmark reference pages without account actions", () => {
+  const markup = renderToStaticMarkup(createElement(SiteHeader, { current: "/" }));
+  for (const href of ["/usage", "/dashboard", "/leaderboard", "/api/suite-auth/"]) {
+    expect(markup).not.toContain(`href="${href}`);
+  }
+  expect(markup).toContain('href="/benchmarks"');
+  expect(markup).toContain('href="/blog"');
+});

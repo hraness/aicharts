@@ -1,12 +1,11 @@
 import { portfolioRelatedGroups } from "@hraness/design-kit/portfolio";
 import { createPublicSiteMetadata } from "@hraness/web-discovery";
-import { ArticleFigure, MarketingAccount, MarketingAccountActions, MarketingRelated } from "@hraness/design-kit/react/server";
+import { MarketingRelated } from "@hraness/design-kit/react/server";
 import Link from "next/link";
 import artificialAnalysisIntelligenceData from "@/data/artificial-analysis-intelligence-v4-3.json";
 import { ChartNavigation, HomeExploreFooter } from "@/components/chart-navigation";
 import { HomeActivityFeed } from "@/components/home-activity-feed";
 import { HomeIndexStrip } from "@/components/home-index-strip";
-import { UsageMockup } from "@/components/launch-mockups";
 import { HomeIntelligenceEfficiency } from "@/components/home-intelligence-efficiency";
 import { LegacyChartNavigation } from "@/components/legacy-chart-navigation";
 import { ProjectAskAiAboutThis } from "@/components/project-ask-ai-about-this";
@@ -60,13 +59,6 @@ export default function Home() {
           {" "}{homeAlternativesClosing} {homeAlternativesCheckedLabel}
         </p>
       </section>
-      <section aria-labelledby="home-usage-title" className="home-about home-usage">
-        <h2 id="home-usage-title">Measure your own agents</h2>
-        <p>The aicharts collector adds up the tokens, cost and time your coding agents use, per model and day. Prompts and transcripts stay on your machine. In development. <Link href="/usage">How it works <span aria-hidden="true">→</span></Link></p>
-        <ArticleFigure caption="The usage dashboard, with made-up numbers." kind="illustration" width="wide">
-          <UsageMockup />
-        </ArticleFigure>
-      </section>
       <HomeIndexStrip />
       <ModelReleaseRadars />
       <HomeActivityFeed />
@@ -77,14 +69,8 @@ export default function Home() {
         </div>
         <Link className="home-calculator__cta" href="/calculator">Open the calculator <span aria-hidden="true">↗</span></Link>
       </section>
-      <MarketingAccount summary="Keep your agent usage in a private dashboard. Public charts and local reports work without an account.">
-        <MarketingAccountActions
-          primary={{ href: "/api/suite-auth/start?return_to=%2Fdashboard", label: "Create account" }}
-          signIn={{ href: "/api/suite-auth/start?return_to=%2Fdashboard" }}
-        />
-      </MarketingAccount>
       <MarketingRelated
-        groups={portfolioRelatedGroups(["xcb", "gobstopper", "wrench", "peopleblade", "soulscrape", "message-like-me", "kb"])}
+        groups={portfolioRelatedGroups(["gobstopper", "wrench", "peopleblade", "soulscrape", "message-like-me", "kb"])}
         heading="Other tools from our studio"
         headingId="related-title"
       />

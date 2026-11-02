@@ -1,6 +1,4 @@
 import { describe, expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
@@ -11,26 +9,19 @@ import {
   renderMatrix,
 } from "@hraness/design-kit/testing";
 
-import { usageDashboard, usageLocalReport, usageSetup } from "@/app/usage/content";
 import codingAgentData from "@/data/coding-agents.json";
 import intelligenceData from "@/data/artificial-analysis-intelligence-v4-3.json";
 import {
   CHART_VIEWS,
-  COLLECTOR_ENROLL_COMMAND,
-  COLLECTOR_REPORT_COMMAND,
   ChartMockup,
   MOCKUP_IDS,
-  STATUS_SNAPSHOT_LINES,
   renderLaunchMockup,
 } from "@/components/launch-mockups";
 import { ATLAS_ENTRIES } from "@/lib/benchmark-atlas-catalog";
 import { comparableIntelligenceRecords } from "@/lib/intelligence-efficiency";
 
-import { LAUNCH_POST_URL, launchBeats, socialKit } from "./beats";
-import { LAUNCH_CLI_VERSION, LAUNCH_STATUS, LAUNCH_USAGE_SOURCES, launchFacts } from "./facts";
-
-const ROOT = join(import.meta.dir, "..", "..");
-const read = (path: string) => readFileSync(join(ROOT, path), "utf8");
+import { launchBeats } from "./beats";
+import { launchFacts } from "./facts";
 
 describe("launch facts match their records", () => {
   test("chart counts come from the checked snapshots the charts plot", () => {
@@ -44,55 +35,20 @@ describe("launch facts match their records", () => {
     expect(launchFacts.codingConfigs.value).toBe(String(codingAgentData.records.length));
     expect(launchFacts.libraryEntries.value).toBe(String(ATLAS_ENTRIES.length));
   });
-
-  test("the CLI version is the workspace version", () => {
-    const match = /\[workspace\.package\][^[]*?\nversion = "([^"]+)"/u.exec(read("Cargo.toml"));
-    expect(match?.[1]).toBe(LAUNCH_CLI_VERSION);
-  });
-
-  test("the usage source count is the one the README and /usage state", () => {
-    expect(read("README.md")).toContain(`the ${LAUNCH_USAGE_SOURCES} sources in the pinned Tokscale parser registry`);
-    expect(usageDashboard.metrics.map(metric => metric.title)).toContain(`${LAUNCH_USAGE_SOURCES} sources`);
-  });
-
-  test("the status is the collector's label on /usage and in the README", () => {
-    expect(LAUNCH_STATUS).toBe("In development");
-    expect(read("README.md")).toContain("The collector is in development.");
-  });
-
-  test("the collector commands are the ones /usage prints", () => {
-    expect(usageSetup.enroll.command).toBe(COLLECTOR_ENROLL_COMMAND);
-    expect(usageLocalReport.report.command).toBe(COLLECTOR_REPORT_COMMAND);
-  });
-
-  test("the status mockup copies the CLI golden", () => {
-    const golden = read("crates/aicharts-cli/tests/fixtures/status/running.w80.txt");
-    expect(golden.startsWith(`${STATUS_SNAPSHOT_LINES.join("\n")}\n`)).toBe(true);
-  });
 });
 
-describe("launch beats and social kit", () => {
-  test("every beat shows a mockup this site draws, and the status beat carries the status", () => {
+describe("benchmark introduction", () => {
+  test("every beat shows a public benchmark view this site draws", () => {
+    const illustrations = new Set<string>();
     for (const beat of launchBeats) {
       expect(beat.visual.kind).toBe("mockup");
-      if (beat.visual.kind === "mockup") expect(MOCKUP_IDS).toContain(beat.visual.id as never);
+      if (beat.visual.kind === "mockup") {
+        expect(MOCKUP_IDS).toContain(beat.visual.id as never);
+        illustrations.add(renderToStaticMarkup(renderLaunchMockup(beat.visual.id, beat.visual.state) as never));
+      }
+      expect(beat.detailHref).not.toMatch(/^\/(?:usage|dashboard|leaderboard)(?:\/|$)/u);
     }
-    expect(launchBeats.at(-1)?.post).toContain(LAUNCH_STATUS);
-  });
-
-  test("the social kit covers X, Bluesky, Threads and LinkedIn plus the launch fact sheet", () => {
-    expect(Object.keys(socialKit).sort()).toEqual(
-      ["bluesky", "linkedin", "productHunt", "showHnFacts", "sources", "threads", "x"].sort(),
-    );
-    // The limits beat stays in the post; every other beat is one social post.
-    expect(socialKit.x).toHaveLength(launchBeats.filter((beat) => beat.part !== "limits").length);
-    const limits = launchBeats.find((beat) => beat.part === "limits");
-    expect(limits).toBeDefined();
-    for (const post of [...socialKit.x, ...socialKit.bluesky, ...socialKit.threads, socialKit.linkedin]) {
-      expect(post).not.toContain(limits?.post ?? "");
-    }
-    expect(socialKit.x.at(-1)).toContain(LAUNCH_POST_URL);
-    expect(JSON.stringify(socialKit)).not.toMatch(/mastodon/iu);
+    expect(illustrations.size).toBe(launchBeats.length);
   });
 });
 
@@ -116,13 +72,5 @@ describe("launch mockups", () => {
 
   test("an unknown mockup id fails loudly", () => {
     expect(() => renderLaunchMockup("menubar", {})).toThrow();
-  });
-});
-
-describe("social kit file", () => {
-  test("kb/launch/social-kit.md matches the beats and facts (run bun run launch:kit)", async () => {
-    const { renderSocialKitMarkdown } = await import("./social-kit-markdown");
-    const onDisk = readFileSync(join(import.meta.dir, "../../kb/launch/social-kit.md"), "utf8");
-    expect(onDisk).toBe(renderSocialKitMarkdown());
   });
 });
