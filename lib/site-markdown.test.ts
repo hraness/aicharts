@@ -13,7 +13,6 @@ import {
   notFoundRecoveryLinks,
   site,
 } from "@/app/site";
-import { usageHero } from "@/app/usage/content";
 import artificialAnalysisIntelligenceData from "@/data/artificial-analysis-intelligence.json";
 import currentIntelligenceData from "@/data/artificial-analysis-intelligence-v4-3.json";
 import codingAgentData from "@/data/coding-agents.json";
@@ -38,7 +37,6 @@ import {
 import { modelReleaseRadarHighlightsExcluding } from "./model-release-collection";
 import { parseTerminalBenchSnapshot } from "./terminal-bench-data";
 import { parseTerminalBenchScienceSnapshot } from "./terminal-bench-science-data";
-import { usageCliRelease } from "./usage-cli-release";
 import {
   AGENT_GUIDE_CONTENT_TYPE,
   MARKDOWN_CONTENT_TYPE,
@@ -47,7 +45,6 @@ import {
   homeDocumentText,
   markdownForPath,
   notFoundMarkdown,
-  usageCopyMarkdown,
 } from "./site-markdown";
 
 const parsed = parseCodingAgentSnapshot(codingAgentData);
@@ -302,6 +299,15 @@ describe("markdown representations", () => {
     }
   });
 
+  test("does not publish Markdown for retired usage or account routes", () => {
+    for (const path of [
+      "/usage", "/usage/details", "/usage/sessions", "/usage/stats",
+      "/dashboard", "/leaderboard", "/account", "/login",
+    ]) {
+      expect(markdownForPath(path).found).toBeFalse();
+    }
+  });
+
   test("returns a 404 markdown recovery document for unknown paths", () => {
     const missing = markdownForPath("/this-path-does-not-exist-agentic");
     expect(missing).toEqual({
@@ -330,16 +336,10 @@ describe("agent instruction file", () => {
     expect(guide).toContain(
       `the same ${currentIntelligenceData.selection.positiveCostRecordCount} configurations, the ones that report a task cost above zero`,
     );
-    // The guide names the usage page with its current status.
-    expect(guide).toContain("/usage");
-    expect(guide).toContain(`[GitHub Releases](https://github.com/hraness/aicharts/releases/tag/cli-v${usageCliRelease.version})`);
-    expect(guide).not.toContain("no packaged release yet");
-    // The usage line repeats the page's own status, and the guide offers its Markdown.
-    expect(guide).toContain(usageCopyMarkdown(usageHero.status));
-    expect(guide).toContain("calculator, usage, data, model, and blog page URLs");
-    expect(guide).not.toContain("Usage and account pages are HTML only");
-    expect(markdownForPath("/usage")).toMatchObject({ found: true, contentType: MARKDOWN_CONTENT_TYPE });
-    expect(markdownForPath("/usage/details").found).toBeFalse();
+    expect(guide).not.toContain(`${site.origin}/usage`);
+    expect(guide).not.toContain(`${site.origin}/dashboard`);
+    expect(guide).not.toContain(`${site.origin}/account`);
+    expect(guide).not.toContain("releases/tag/cli-v");
     expect(guide).toContain("answer plus reasoning tokens");
     expect(guide).toContain("Accept: text/markdown");
     expect(guide).toContain("the benchmark owners create the measurements");
