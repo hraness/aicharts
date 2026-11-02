@@ -8,50 +8,44 @@ web
 
 ## Users
 
-Developers who use Codex and Claude Code and want a trustworthy, privacy-preserving view of their own AI work, plus an optional public comparison with other consenting users.
+People choosing AI models or coding agents who need to compare published benchmark results, evaluation conditions, and costs.
 
 ## Product Purpose
 
-AI Charts turns local numeric usage measurements into personal analytics and, only with explicit consent, public leaderboard measurements. The product must make it easy to understand activity, throughput, turn shape, subscriptions, and coverage without uploading chat logs or transcripts.
+aicharts plots published AI benchmark scores against cost and tokens per task. Each chart links its source data and methodology.
 
 ## Positioning
 
-Trust is a product feature: collection is open source, numeric-only by construction, bounded before allocation, and visibly separated into local collection, account enrollment, remote admission, and public publishing. Unknown or partial measurements stay unknown instead of becoming confident-looking guesses.
+Compare results within a named benchmark and version. Show the model, provider, harness, effort, and reported cost or token basis behind each point. Keep separate benchmarks on their own scales and leave missing measurements unknown.
 
 ## Operating Context
 
-The primary workflow begins on a developer machine with Codex and Claude Code session stores. A reviewed CLI/daemon may read only the provider fields needed for numeric metrics, maintain a local ledger, and optionally synchronize accepted measurements. The web app presents personal analytics first; the public leaderboard is a separate consented projection.
+The public website reads committed benchmark snapshots. Refresh scripts validate upstream data before a reviewed snapshot update; a request to the production site does not depend on a live upstream leaderboard. Visitors can browse charts, tables, model pages, benchmark explanations, and source data.
 
 ## Capabilities and Constraints
 
-- The v1 `usage`, `collect`, and `sync` commands read Codex and Claude Code JSONL and Devin ATIF exports. The `stats` report reads the 55 sources in the pinned Tokscale parser registry (`aicharts stats --list-clients`), including Cursor after a refresh, and `autosubmit` publishes up to 54 of them.
-- Metrics include tokens, prompts, activity at 15-minute granularity, throughput, hourly message counts, concurrent agents, and daily average turn runtime, tokens, and tool calls.
-- No transcript, prompt, tool input, model response, path, credential, or raw session object may enter remote storage.
-- Hraness Accounts are the intended sign-in authority; profile projection may include X, GitHub, LinkedIn, website, and an R2-backed avatar.
-- Subscription/account observations remain explicit, dated, and coverage-aware; retail-equivalent API pricing is not a bill.
-- Authentication, enrollment, upload, private reads, scheduled collection, and public publishing have separate qualification gates. See `docs/usage-activation.md` for current production evidence; source defaults do not describe deployed activation.
+- Interactive charts compare benchmark scores with reported cost, tokens, or duration where the dataset supplies them.
+- Benchmark pages distinguish charted results, source-only guides, and evaluations being watched for future coverage.
+- Each result preserves its benchmark version, configuration, source, retrieval date, units, and available uncertainty.
+- Sharing and image exports preserve the selected public benchmark view.
+- Model comparisons, published analysis, and data downloads are public. Newsletter subscriptions are optional and separate from product use.
+- Reported evaluation costs and calculator estimates do not establish a visitor’s bill or predict performance on their own tasks.
 
 ## Brand Commitments
 
-The product is AI Charts, on aicharts.io, and should extend the existing AI Charts visual system rather than introduce a separate brand.
+The product is aicharts at aicharts.io. Extend its existing chart and publication design rather than introduce a separate brand.
 
 ## Evidence on Hand
 
-The repository contains local numeric collectors, turn rollups, bounded wire/admission contracts, Hraness/Worker coordination, release-source custody, and public benchmark data. A historical bounded native upload succeeded. Current deployment configuration and authenticated refusal behavior are verified separately from collector custody, scheduled operation, private data readback, and public activation.
+Committed benchmark datasets, source links, retrieval metadata, import checks, comparison rules, and published methodology support the displayed results. Source-only guides have no invented measurements. Historical benchmark versions keep their original labels.
 
 ## Product Principles
 
-1. Never trade privacy for a prettier metric.
-2. Show coverage, evidence, freshness, and unknowns alongside every number.
-3. Make local-only use useful before account enrollment.
-4. Separate personal analytics from public consent and moderation.
-5. Prefer reversible, additive, inspectable delivery over hidden activation.
+1. Keep every comparison tied to its benchmark, version, and evaluation conditions.
+2. Show coverage, freshness, and unknowns alongside the relevant results.
+3. Preserve source-reported units, cost bases, and uncertainty.
+4. Make public data available for readers and agents to inspect.
 
 ## Accessibility & Inclusion
 
-Usage analytics must work with keyboard and screen-reader navigation, preserve readable tabular numerals, expose empty/partial/stale/error states, and remain usable on narrow mobile viewports.
-
-## Open Decisions
-
-- Inferred default: personal analytics is the first signed-in screen; the user has not explicitly confirmed this choice.
-- Existing Cloudflare and Hraness production bindings must be preserved during upgrades. Public publishing and replacement of an existing collector require the acceptance evidence in the activation runbook.
+Charts and tables must support keyboard, pointer, touch, and screen-reader use. Preserve visible focus, readable tabular numerals, narrow-screen chart panning, and meaningful empty and error states.

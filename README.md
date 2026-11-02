@@ -1,55 +1,22 @@
 # aicharts
 
 > 📈 aicharts plots published AI benchmark scores against cost and tokens per
-> task on one chart, and marks the best score at every budget. A local collector
-> measures your own agents' token use, so the chart covers your work too.
+> task, and marks the best score at every budget. Compare models and coding
+> agents using sourced results, with each benchmark on its own scale.
 >
 > See the charts: https://aicharts.io
 >
-> — Ben Guo
+> Ben Guo
 
-[aicharts](https://aicharts.io) plots published AI benchmark scores against
-cost and tokens per task, marking the best score at every budget. A local
-collector measures your own agents' token use.
-
-The collector is in development. Linux x86-64 and Apple silicon Mac builds for
-local reports are on [GitHub Releases](https://github.com/hraness/aicharts/releases/latest);
-the Mac build is signed and notarized. On an Intel Mac, [build it from source](docs/usage-local.md#build-and-run). Reports you open on the site stay in your browser tab.
-Account sync needs a collector enrolled on a Mac and works only while the site's
-account service is enabled.
-
-The collector can also keep a daily history of your token use on your computer,
-and your agents can read it through a read-only MCP server to answer questions
-or draw charts. Nothing leaves your computer unless you set up publishing. See
-[usage history and agent queries](docs/usage-history.md). The
-[xcb](https://xcb.sh) and [Gobstopper](https://gobstopper.sh) installers add
-aicharts and turn this history on.
+aicharts plots published AI benchmark scores against cost and tokens per task. Each chart links its source data and methodology.
 
 The homepage leads with an interactive Pareto frontier: compare model capability against output tokens or cost, then inspect the configuration behind each point. The original coding-agent charts have a focused home at [`/coding`](https://aicharts.io/coding). The separate [`/benchmarks`](https://aicharts.io/benchmarks) library covers coding, reasoning, research, memory, images, video, audio, and world models. Charted results, source guides, and emerging evaluations are labeled separately, and older research cohorts are labeled with their dates.
 
-The site header links Charts (`/`), Benchmarks (`/benchmarks`), Usage (`/usage`), Dashboard (`/dashboard`), Leaderboard (`/leaderboard`), and Notes (`/blog`). Coding comparisons, model pages, and source data are linked where relevant. Legacy root chart and atlas links resolve to the matching workspace; new shares use that workspace’s URL. The charts, benchmarks, calculator, usage, data, model, and blog pages also have Markdown representations through `Accept: text/markdown`. The dashboard, leaderboard, and usage report pages do not.
-
-## Measure your coding-agent usage
-
-Choose the guide for the report you need:
-
-| Task | Guide |
-| --- | --- |
-| Create a local report by client and model | [Detailed usage reports](docs/usage-details.md#create-a-local-report) |
-| Inspect one session's tokens and time coverage | [Session usage and time](docs/usage-sessions.md#export-a-historical-session) |
-| Build on a Mac or read selected Codex, Claude Code, and Devin files | [Local usage](docs/usage-local.md#build-and-run) |
-
-Start with a local report if you only want to inspect usage. Opening a numeric
-report in the usage viewer does not upload it. Account enrollment and publishing
-are separate steps. Token totals describe what the selected sources report,
-not a provider billing statement; check the guide's source-coverage limits before
-comparing totals.
+The site header links Charts (`/`), Benchmarks (`/benchmarks`), and Notes (`/blog`). Coding comparisons, model pages, the calculator, and source data are linked where relevant. Legacy root chart and atlas links resolve to the matching workspace; new shares use that workspace’s URL. The charts, benchmarks, calculator, data, model, and blog pages also have Markdown representations through `Accept: text/markdown`.
 
 ## Compared with
 
 Other places to compare models: [Artificial Analysis](https://artificialanalysis.ai/leaderboards/models) runs the Intelligence Index and Coding Agent Index charted here, and its own leaderboards cover more than 250 models with speed and latency. [Arena](https://arena.ai) (formerly LMArena) ranks models by people's votes in blind side-by-side chats. [Epoch AI](https://epoch.ai/benchmarks) runs its own benchmarks and tracks how capabilities change over time. [OpenRouter](https://openrouter.ai/rankings) lists live API prices and which models its users send the most tokens to. aicharts puts published scores against cost per task, draws the best score at each budget, and keeps each benchmark on its own scale.
-
-For measuring your own usage, [ccusage](https://ccusage.com) and [Tokscale](https://tokscale.ai) also read coding agents' local logs. ccusage runs without an install and prints daily, weekly, monthly, and session reports. Tokscale adds a web dashboard and a public leaderboard, and the aicharts collector builds on its open-source parsers. aicharts shows which sources each total covers, and on a Mac it can sync daily totals to your dashboard.
 
 Checked Sep 28, 2026.
 
@@ -94,75 +61,15 @@ Run the complete local gate before opening a pull request:
 bun run check
 ```
 
-The complete gate also requires Rust 1.97.1 with rustfmt and Clippy, pinned in `rust-toolchain.toml`. It validates generated files and the checked data contract, checks the local usage workspace and aicharts skill helper, runs strict TypeScript and ESLint, executes example and property tests, and verifies the production build in a browser. The website's ordinary development/build commands do not invoke Rust.
-
-## Local usage tools
-
-The [detailed usage dashboard](https://aicharts.io/usage/details) adds UTC trends,
-client/provider/model drilldowns, token composition, separate cost bases, source
-coverage, and exact numeric exports. The `aicharts stats` command imports the
-known local formats of the 55 sources in the pinned Tokscale parser registry.
-`--all` reads 54 of them; it leaves out the 9router selector because Gajae-Code
-already includes that channel. Run `aicharts stats --list-clients` for the list.
-See [detailed usage reports](docs/usage-details.md) for commands, acquisition
-requirements, and what parser support does and does not cover. The [scheduled publisher guide](docs/usage-autosubmit.md) covers
-native refresh profiles, dry runs, failure recovery and a reversible macOS cutover.
-
-To install the CLI on a Mac with Apple silicon or on Linux x86_64, run `curl -fsSL https://aicharts.io/install.sh | sh`. The [script](scripts/install.sh) checks the release archive against its pinned SHA-256 and, on a Mac, Apple's Developer ID signature, installs `~/.local/bin/aicharts`, and on a first install turns on local history and a daily self-update check; `AICHARTS_USAGE_HISTORY=no` leaves history off and `AICHARTS_AUTO_UPDATE=no` leaves updates off.
-
-`aicharts update` installs the newest `cli-v*` release: the downloaded archive must match the SHA-256 the release published, the macOS build must carry the Hraness Developer ID signature, and the new binary must report the release's version before it replaces the running one. `aicharts update status`, `enable`, and `disable` inspect and control the daily check, and `--check` reports without installing.
-
-`aicharts history enable` (or `aicharts setup` with no options) keeps a daily record of the same report rows on this computer. Four times a day, a launchd agent on a Mac or a systemd user timer on Linux reads the sources `stats` reads, and a day in the record never goes down when an agent deletes its old session files. `aicharts history report` reads only that record and prints text, the `stats --json` format or CSV. `aicharts mcp` gives agents five read-only tools over the same data. Publishing stays a separate step: `aicharts help publish`. See [usage history and agent queries](docs/usage-history.md).
-
-The Rust workspace contains a local-only Codex/Claude Code usage reader, a closed numeric wire format, a private numeric SQLite ledger and matching TypeScript validation/rollups. Explicit collection can retain measurements across restarts with atomic source checkpoints and a pending-queue preview. The separate `inspect` command reads retained numeric totals without source scanning, writes or SQLite recovery. The `inspect` command does not enable sign-in, uploads, a public leaderboard or background collection. See [the local usage guide](docs/usage-local.md) for explicit source selection, private namespace keys and current measurement/recovery limitations.
-
-The [session usage view](https://aicharts.io/usage/sessions) opens local numeric reports for session totals, model mix, and time breakdowns with their source coverage. Reports stay in the browser tab. See [session collection and timing](docs/usage-sessions.md) for the command, concurrent-work denominators and source coverage.
-
-The website includes Hraness Accounts sign-in and device enrollment, each
-switched on separately in production. The [identity design](docs/usage-identity.md)
-and [activation runbook](docs/usage-activation.md) record dated production
-evidence, the exact-deployment health check (`bun run usage:deployment:verify`)
-and what still needs testing against real providers. The
-[claim inventory](docs/usage-claims.md) lists every support, platform and
-live-status statement in this README and the usage guides with its evidence.
-
-## Collection status from the terminal
-
-`aicharts status` shows whether usage collection is working: when the last
-pass ran, when your usage last synced, and any failures in plain words, with
-the next command to run. `aicharts tui` shows the same in the terminal, and
-`--snapshot` or `--json` print it without one.
-
-```sh
-aicharts status
-aicharts open dashboard      # or setup-guide, support, error-log, outputs
-aicharts outputs             # your newest outputs; outputs open NAME opens one
-aicharts diagnostics         # error codes to paste into a support request
-aicharts commands --json     # every command, for agents
-```
-
-Every command takes `--json` and prints one object with `ok`, `schema` and
-either `data` or `error`. These commands read two files from `~/.aicharts` (or
-`AICHARTS_HOME`): `collector-status.json`, which `aicharts daemon
---status-file ~/.aicharts/collector-status.json` writes after each pass, and
-`autosubmit-runtime/last-cycle.json`, which each publishing cycle writes. Both
-hold times, results and fixed error codes, never account IDs, paths or session
-content. `aicharts status --state-dir DIR --key-file KEY` still reads the local
-ledger. [Commands for status, outputs and support](docs/cli-parity.md) maps
-every item of the retired menu bar to its command. If the menu bar still
-opens at login, `aicharts doctor retire` sets its login item aside.
+The complete check validates generated files, benchmark snapshots, and the aicharts skill helper, runs strict TypeScript and ESLint, executes example and property tests, and verifies the production build in a browser.
 
 ## aicharts agent skill
 
-The portable [aicharts skill](skills/aicharts/SKILL.md) retrieves one public benchmark cohort at a time with its version, units, configuration, source and coverage intact. Its dependency-free Node.js helper makes anonymous requests only to `aicharts.io`, bounds response sizes and pagination, and never opens local usage data. A separate local mode can explain a supplied numeric summary or use an already available reviewed `aicharts inspect` binary for an explicitly selected ledger. It never collects source logs or uploads usage.
+The portable [aicharts skill](skills/aicharts/SKILL.md) retrieves one public benchmark cohort at a time with its version, units, configuration, source, and coverage intact. Its dependency-free Node.js helper makes anonymous requests to `aicharts.io` and limits response sizes and pagination.
 
-The skill lives at `skills/aicharts`; load or install that directory through your agent's supported skill workflow. The source command is documented in the local usage guide; this repository does not yet distribute a signed native installer. The skill does not install a runtime, obtain keys or enable background collection.
+Load or install the `skills/aicharts` directory through your agent’s supported skill workflow. The helper requires Node.js 22 or newer and supports catalog searches and dataset downloads; see the [benchmark reference](skills/aicharts/references/benchmarks.md).
 
-### Optional updates and support
-
-The standalone benchmark helper and native CLI source offer free aicharts product updates and optional paid development support after useful completed reads. These use the shared Hraness invitation preferences; they never change benchmark or numeric JSON stdout, send usage data, or open checkout automatically. Imported benchmark calls, CI, background collection, authentication, uploads and control commands stay quiet. The native change is source support, not a claim that an installed binary has been released.
-
-Use `node skills/aicharts/scripts/atlas.mjs support protocol --json` for the local machine-readable handoff, or `aicharts support protocol --json` with a verified build exposing that command. The Node helper includes its reviewed shared runtime and needs no dependency installation. An agent presents a due invitation once at task closeout and records it only after persistent human-visible output. Git email is an optional unverified suggestion; signup requires explicit authorization and inbox confirmation, and payment requires human checkout approval. See the [skill handoff contract](skills/aicharts/references/support.md). Set `HRANESS_SUPPORT_AUDIENCE=off` for a delegated child, `HRANESS_SUPPORT=off` to suppress incidental invitations, or use `support dismiss` to save the suite preference.
+The helper also offers optional aicharts updates and paid development support after a completed read. These invitations respect shared Hraness preferences and never change benchmark output or open a browser automatically; see [updates and support](skills/aicharts/references/support.md).
 
 ## Data refresh
 
@@ -263,6 +170,10 @@ Production source maps are injected and uploaded only when all private build set
 ## License and data notice
 
 The application code is available under the [MIT License](LICENSE). The repository also contains normalized public facts sourced from [Harbor Framework's Terminal-Bench](https://github.com/harbor-framework/terminal-bench), [Terminal-Bench-Science](https://www.terminal-bench-science.ai/announcement), [Artificial Analysis model](https://artificialanalysis.ai/models) and [coding-agent](https://artificialanalysis.ai/agents/coding-agents/) leaderboards, the [OpenRouter Models API](https://openrouter.ai/docs/api/api-reference/models/get-models), the [DataCurve DeepSWE leaderboard](https://deepswe.datacurve.ai/), and provider-owned release sources. The MIT license does not grant rights to third-party data, names, logos, or trademarks; see [NOTICE.md](NOTICE.md).
+
+## Retired usage tools
+
+The CLI and personal usage features were retired on 2 November 2026. [Historical releases](https://github.com/hraness/aicharts/releases) remain available. Updating this website does not uninstall an existing collector or change its locally stored records.
 
 ## Citation
 

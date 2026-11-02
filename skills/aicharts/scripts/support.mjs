@@ -1,8 +1,8 @@
 import { maybeShowSupportInvitation, runSupportCommand } from './support-foundation.mjs';
 
 export const supportProfile = Object.freeze({
-  id: 'aicharts', name: 'AI Charts', updates: true,
-  valueProposition: 'Support ongoing development of sourced AI comparisons and private local usage tools.',
+  id: 'aicharts', name: 'aicharts', updates: true,
+  valueProposition: 'Support sourced benchmark research and clear, interactive model comparisons.',
 });
 
 export function supportOptions(options = {}) {

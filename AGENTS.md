@@ -9,9 +9,7 @@
 
 - `app/` – Next.js App Router comparison chart, sourced benchmark analysis, metadata, error states, product stylesheet, and fail-closed product-scoped mailing footer configuration.
 - `components/` – interactive scatter chart, update timeline, linked summaries, sharing, export, and UI primitives.
-- `lib/` – strict data and update boundaries, chart math, layout, analytics, usage wire/rollup contracts, and property tests.
-- `crates/` and `fixtures/usage/` – local-only Rust usage measurement, bounded binary protocol, and synthetic cross-language fixtures.
-- `services/usage-worker/` – pairing, account enrollment, numeric admission, private reads and an independently gated public leaderboard, with local Cloudflare runtime tests. `docs/usage-activation.md` records verified deployment state and cutover requirements.
+- `lib/` – strict data and update boundaries, chart math, layout, analytics, and property tests.
 - `data/` – deterministic checked-in benchmark snapshot.
 - `scripts/` – guarded snapshot refresh and generated color workflows.
 - `styles/` – portable plain-site and publication styling for the benchmark notes.
@@ -36,7 +34,7 @@
 - Keep Nebula Sans from the immutable design-kit release as the ordinary proportional face across the chart, publication, exports, and social images. Preserve the explicit monospace role for code and compact benchmark data.
 - Freeze shared interfaces before parallel lanes begin. Give checked data, generated colors, manifests, lockfiles, and other convergence surfaces one owner while lanes edit disjoint paths.
 - Keep mandatory rules in the closest `AGENTS.md`, current procedures in `docs/`, executable contracts in types and tests, and pull-based rationale, evidence, synthesis, and plans in `kb/`.
-- Keep AI Charts the general product for sourced AI model and agent comparison charts. Describe coding agents as the first published chart, not the limit of the brand or a claim of broader current coverage.
+- Keep aicharts a public reference for sourced AI model and agent benchmarks. Do not restore personal usage collection, product sign-in, dashboards, or usage uploads. Newsletter subscriptions remain an optional public opt-in.
 - Treat `https://aicharts.io` as the only canonical public origin. Keep retired `codingchart.com` URLs on matching permanent redirects and follow `docs/seo-strategy.md` for migration, discovery, page roles, internal links, analytics properties, and review cadence.
 - Treat Production as the only durable Vercel environment. Pull requests may use Vercel's built-in disposable Preview target, but do not create a custom environment, persistent Preview domain, provider-authoritative Preview branch, or separate Preview backend.
 - Build answer-engine visibility through people-first technical SEO and source-backed, citable content. Make every public article self-contained for a first-time reader, cite primary sources directly, define necessary terms, and organize the explanation around one reader question. Keep repository structures, data plumbing, editorial reasoning, citation mechanics, and search strategy out of public copy. Keep important copy, provenance, dates, and links in server-rendered or static HTML. Do not add `llms.txt`, duplicate answer pages, keyword variants, or unsupported schema as search shortcuts. A truthful `/llms.txt` agent guide may describe existing public pages and Markdown negotiation.
@@ -58,7 +56,7 @@
 - Keep analytics cookieless and production-only, and follow `docs/analytics-instrumentation.md`. Route capture through the typed `lib/analytics.ts` allowlist; do not import PostHog from feature code or send raw URLs, query strings, hashes, referrer paths, free-form text, visitor identities, or persistent identifiers. Bounded public content, provider, benchmark, model, profile, and source IDs are allowed.
 - Bind the shared footer to the `aicharts` audience, require the checked public Turnstile widget key, and keep newsletter consent separate from product use and every other Hraness audience.
 - Never expose `POSTHOG_API_KEY`, commit credentials, or provider secrets in browser variables, source, logs, fixtures, or documentation.
-- Run narrow tests while iterating and `bun run check:changed` before handoff: it runs `bun run check` minus the Rust and Worker gates whose CI change filters report no touched input (`--dry-run` shows the plan). Run the complete `bun run check` when you cannot tell, and CI's `Required` always runs every applicable gate.
+- Run narrow tests while iterating. The integration owner runs the complete `bun run check` after the tree converges; CI’s `Required` closes the applicable gates.
 
 <!-- hraness-public-copy:start -->
 - Public copy (websites, READMEs, docs, package and GitHub descriptions, CLI help, `llms.txt`, generated pages) follows `STYLE.md`, synced from hraness/.github. Text a model writes for publication also follows `GENERATION_STYLE.md`.
@@ -117,9 +115,6 @@
 - Analytics and metering events come from a checked allowlist with a byte ceiling per event.
 - Content bytes live in the content store; the control plane keeps references and metadata only.
 - Run `bun run check:cost-surfaces` before handoff whenever a data surface changes.
-- Every keychain dialog lands on the owner's screen. Never set `AICHARTS_CUSTODY_INTERACTION=allow` in a loop, schedule, or background script, and never inspect the login keychain with `security dump-keychain -d`. Grant a newly built binary once in one attended command, then verify it with the override unset (see `docs/usage-local.md`). A rebuilt binary at the same path needs a fresh grant: macOS binds "Always Allow" to the build's cdhash, and a denied custody read surfaces as `attempt_recovery_required`, not a custody error — check the securityd log (`CSSMERR_CSP_OPERATION_AUTH_DENIED`) before suspecting enrollment state.
-- Keep aggregate snapshot and V1 publishing open for every client and collector version whatever the contribution profile's phase: the private reads, lifetime totals and leaderboard read those stores (`docs/usage-autosubmit.md`).
-- The per-day aggregate (`stats-sync` snapshots) is the system of record for every client. V3 contributions are parked (owner-delegated decision, 2026-09-28): no schedule, loop or agent runs `contribution-sync` sends, migrations or activations, and no change extends V3 until a product surface needs per-call data.
 
 <!-- algal-skills:start -->
 - Prefer the globally installed `algal-*` skills for bounded git state, diffs, repository survey/search, test and release gates, CI polling, and web fetches instead of repeated raw tool output.
