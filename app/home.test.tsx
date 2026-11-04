@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import { describe, expect, test } from "bun:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import { product } from "@hraness/design-kit/portfolio";
 
 import { HomeLeaders } from "@/components/home-leaders";
 import { BenchmarkAtlasExplorer } from "@/components/benchmark-atlas-explorer";
@@ -11,6 +12,7 @@ import {
 } from "@/components/home-editorial-resources";
 import { BLOG_ARTICLE_ADMISSIONS } from "@/app/blog/article-admissions";
 import { getBlogArticle } from "@/app/blog/articles";
+import { BlogArticlePage } from "@/app/blog/blog-article-page";
 import { blogEditorialImage } from "@/app/blog/editorial-images";
 import codingAgentData from "@/data/coding-agents.json";
 import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
@@ -39,6 +41,31 @@ if (!parsed.ok) throw parsed.error;
 const snapshot = parsed.value;
 
 describe("homepage canonical content", () => {
+  test("keeps active homepage and article recommendations without retired destinations", async () => {
+    const pages = [
+      { page: createElement(Home), active: ["gobstopper", "wrench", "peopleblade", "kb"] as const },
+      {
+        page: await BlogArticlePage({ params: Promise.resolve({ slug: "introducing-ai-charts" }) }),
+        active: ["gobstopper"] as const,
+      },
+    ];
+    const retiredDomains = ["xcb.sh", "vhalla.com", "textbutler.app", "soulscrape.com"];
+    for (const { page, active } of pages) {
+      const links: string[] = [];
+      new HTMLRewriter().on('section[data-hraness-marketing="related"] a[href]', {
+        element(element) {
+          const href = element.getAttribute("href");
+          if (href !== null) links.push(new URL(href, "https://aicharts.io").href);
+        },
+      }).transform(renderToStaticMarkup(page));
+      expect(links.filter((href) => retiredDomains.some((domain) =>
+        new URL(href).hostname === domain || new URL(href).hostname.endsWith(`.${domain}`)))).toEqual([]);
+      for (const id of active) {
+        expect(links).toContain(new URL(product(id).canonicalUrl).href);
+      }
+    }
+  });
+
   test("keeps the benchmark reference free of usage and account entry points", () => {
     const markup = renderToStaticMarkup(createElement(Home));
     for (const href of ["/usage", "/dashboard", "/leaderboard", "/api/suite-auth/"]) {

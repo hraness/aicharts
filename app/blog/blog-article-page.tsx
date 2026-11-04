@@ -51,7 +51,7 @@ export async function BlogArticlePage({
       ? [{ text: block.text }]
       : []);
   const path = blogArticlePath(article.slug);
-  const relatedProducts = relatedFor("aicharts");
+  const relatedProducts = relatedFor("aicharts").filter(item => item.productId !== "xcb");
   const editorialImage = imageForSlug(article.slug);
 
   return (
