@@ -70,7 +70,7 @@ export default function Home() {
         <Link className="home-calculator__cta" href="/calculator">Open the calculator <span aria-hidden="true">↗</span></Link>
       </section>
       <MarketingRelated
-        groups={portfolioRelatedGroups(["gobstopper", "wrench", "peopleblade", "soulscrape", "message-like-me", "kb"])}
+        groups={portfolioRelatedGroups(["gobstopper", "wrench", "peopleblade", "kb"])}
         heading="Other tools from our studio"
         headingId="related-title"
       />
