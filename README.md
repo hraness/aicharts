@@ -1,5 +1,7 @@
 # aicharts
 
+> **Retired.** AI Charts is no longer maintained, and aicharts.io is discontinued. The source and benchmark snapshots are preserved under their existing licenses. The documentation below describes the archived project.
+
 > 📈 aicharts plots published AI benchmark scores against cost and tokens per
 > task, and marks the best score at every budget. Compare models and coding
 > agents using sourced results, with each benchmark on its own scale.

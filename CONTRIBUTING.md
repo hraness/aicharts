@@ -1,5 +1,7 @@
 # Contributing
 
+> This project is retired. The contribution guide below is preserved for historical reference.
+
 Thanks for helping improve aicharts.
 
 ## Development
