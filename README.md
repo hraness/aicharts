@@ -13,11 +13,21 @@ Minimal AI coding model release monitor and effort-level Pareto frontier explore
 - **FrontierCode** — Multi-file software engineering benchmark pass rate (`0–100%`).
 - **Intelligence** — Full 9-evaluation Artificial Analysis Intelligence Index v5.0.1 (`0–100`).
 
-### Comparison Context & Frontier Badge
+### Comparison Context & Frontier Stars
 
 - **At release** — Compares the selected release against the frontier of models active on its launch date, showing how the release moved the Pareto curve when announced.
 - **Live** — Compares the selected release against all currently active models.
-- **✦ Frontier** — Awarded only to releases that sit on the current **live** Pareto frontier within the upper capability tier (`>= 75%` of peak frontier score).
+- **✦ Frontier stars** — One star for each effort setting that sits on the current **live** Pareto frontier within the upper capability tier (`>= 75%` of peak frontier score). A release on the frontier at Medium, High and Max shows three stars.
+
+## Pages
+
+- [`/`](https://aicharts.io) — The explorer: release feed, effort curves and frontier stars.
+- [`/models`](https://aicharts.io/models) and `/models/<slug>` — A page per release with scores, cost per task and output tokens at every effort setting, frontier stars by benchmark, results inside the lab's own coding agent, pricing and links to its comparisons.
+- [`/compare`](https://aicharts.io/compare) and `/compare/<newer>-vs-<older>` — A head-to-head page for every two releases that were current at the same time, plus each release against the one it replaced. The reverse order redirects to the canonical page.
+- [`/effort`](https://aicharts.io/effort) and `/effort/<higher>-vs-<lower>` — What each step up in effort adds and costs, model by model. A step gets a page once three releases are measured at both settings.
+- [`/llms.txt`](https://aicharts.io/llms.txt), [`/sitemap.xml`](https://aicharts.io/sitemap.xml) and [`/api/releases`](https://aicharts.io/api/releases) — Entry points for agents and crawlers.
+
+Every page is generated from `data/releases.json` at build time, so each data refresh updates them. Pairs, successors and effort steps come from `lib/catalog.ts`; page copy comes from `lib/copy.ts`. Addresses from the earlier aicharts.io redirect to their nearest page (`next.config.ts`).
 
 ## Automated Updates
 
@@ -34,7 +44,8 @@ bun run dev
 
 - `bun run data:refresh` — Pulls the latest public upstream benchmark snapshots, normalizes effort curves, and updates `data/releases.json` only when releases or scores change.
 - `bun run data:check` — Validates `data/releases.json` schema, ordering, and score/cost invariants.
-- `bun run check` — Runs `data:check`, TypeScript typecheck, Pareto & refresh unit tests, and a production Next.js build.
+- `bun run check` — Runs `data:check`, TypeScript typecheck, Pareto, catalog & refresh unit tests, and a production Next.js build.
+- `bun run check:journal:browser` — Serves the production build and checks the guide, changelog filters, model, comparison and effort pages, redirects and the site footer in Chromium at phone and desktop widths and with JavaScript off.
 
 ## Data & Attribution
 

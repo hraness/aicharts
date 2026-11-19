@@ -37,6 +37,7 @@ function boxesOverlap(a: Box, b: Box): boolean {
 export function ParetoChart({
   releases,
   selectedRelease,
+  compareRelease = null,
   activeEffortSlug,
   benchmark,
   axis,
@@ -45,6 +46,8 @@ export function ParetoChart({
 }: Readonly<{
   releases: readonly ModelRelease[];
   selectedRelease: ModelRelease;
+  /** A second release drawn as an emphasized dashed curve, for head-to-head pages. */
+  compareRelease?: ModelRelease | null;
   activeEffortSlug: EffortSlug;
   benchmark: BenchmarkMeta;
   axis: BudgetAxis;
@@ -174,24 +177,35 @@ export function ParetoChart({
   }, [releases, axis, benchmark.id, logMin, logMax, yMin, yMax, plotW, plotH, isCompact]);
 
   const selectedSeries = seriesList.find((s) => s.release.slug === selectedRelease.slug);
-  const peerSeries = seriesList.filter((s) => s.release.slug !== selectedRelease.slug);
+  const compareSlug = compareRelease?.slug ?? null;
+  const compareSeries = compareSlug
+    ? seriesList.find((s) => s.release.slug === compareSlug)
+    : undefined;
+  const peerSeries = seriesList.filter(
+    (s) => s.release.slug !== selectedRelease.slug && s.release.slug !== compareSlug,
+  );
 
-  // Collision-free effort labels for the selected curve only
+  // Collision-free effort labels for the emphasized curves only
   const effortTagPositions = useMemo(() => {
     const occupied: Box[] = [];
     const tagMap = new Map<string, { x: number; y: number }>();
-
-    if (selectedSeries && selectedSeries.pts.length > 0) {
-      for (const p of selectedSeries.pts) {
+    const labelled = [selectedSeries, compareSeries].filter(
+      (series): series is NonNullable<typeof series> => !!series && series.pts.length > 0,
+    );
+    for (const series of labelled) {
+      for (const p of series.pts) {
         occupied.push({ x1: p.x - 7, y1: p.y - 7, x2: p.x + 7, y2: p.y + 7 });
       }
+    }
 
-      const pts = selectedSeries.pts;
+    for (const series of labelled) {
+      const isSelected = series === selectedSeries;
+      const pts = series.pts;
       const firstKey = pts[0]!.key;
       const lastKey = pts[pts.length - 1]!.key;
       const ordered = [...pts].sort((a, b) => {
         const prio = (pt: (typeof pts)[number]) => {
-          if (pt.effort.effortSlug === activeEffortSlug) return 0;
+          if (isSelected && pt.effort.effortSlug === activeEffortSlug) return 0;
           if (pt.key === lastKey || pt.key === firstKey) return 1;
           return 2;
         };
@@ -207,7 +221,7 @@ export function ParetoChart({
           { x: p.x - 15, y: p.y - 8 },
           { x: p.x + 15, y: p.y + 15 },
         ];
-        const mustShow = p.effort.effortSlug === activeEffortSlug;
+        const mustShow = isSelected && p.effort.effortSlug === activeEffortSlug;
         let chosen: { x: number; y: number } | null = null;
         for (const c of candidates) {
           const box: Box = {
@@ -243,7 +257,7 @@ export function ParetoChart({
     }
 
     return tagMap;
-  }, [selectedSeries, activeEffortSlug, pad.left, pad.top, plotW, plotH]);
+  }, [selectedSeries, compareSeries, activeEffortSlug, pad.left, pad.top, plotW, plotH]);
 
   function findNearestPoint(clientX: number, clientY: number): PlottedPoint | null {
     const el = containerRef.current;
@@ -257,7 +271,9 @@ export function ParetoChart({
       const dx = toX(pt.budget) - mx;
       const dy = toY(pt.score) - my;
       const d2 = dx * dx + dy * dy;
-      const weighted = pt.release.slug === selectedRelease.slug ? d2 * 0.75 : d2;
+      const emphasized =
+        pt.release.slug === selectedRelease.slug || pt.release.slug === compareSlug;
+      const weighted = emphasized ? d2 * 0.75 : d2;
       if (weighted < bestDist) {
         bestDist = weighted;
         best = pt;
@@ -326,7 +342,7 @@ export function ParetoChart({
         height={height}
         viewBox={`0 0 ${width} ${height}`}
         role="img"
-        aria-label={`Pareto curve for ${selectedRelease.name} comparing ${benchmark.fullLabel} against ${axis === "cost" ? "USD cost per task" : "output tokens per task"}`}
+        aria-label={`Pareto curve${compareRelease ? "s" : ""} for ${selectedRelease.name}${compareRelease ? ` and ${compareRelease.name}` : ""} comparing ${benchmark.fullLabel} against ${axis === "cost" ? "USD cost per task" : "output tokens per task"}`}
         className="pareto-svg"
       >
         {/* Horizontal Y Gridlines & Labels */}
@@ -423,6 +439,39 @@ export function ParetoChart({
             </g>
           );
         })}
+
+        {/* Head-to-head release: dashed curve, hollow dots */}
+        {compareSeries && compareRelease && (
+          <g
+            className={`hero-series hero-series--${compareRelease.provider} hero-series--compare`}
+          >
+            {compareSeries.pts.length > 1 && (
+              <path
+                d={compareSeries.pts
+                  .map((p, idx) => `${idx === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`)
+                  .join(" ")}
+                fill="none"
+                className="hero-curve"
+              />
+            )}
+            {compareSeries.pts.map((p) => {
+              const tagPos = effortTagPositions.get(p.key);
+              return (
+                <g key={p.key}>
+                  {qualifiedFrontierSet.has(p.key) && (
+                    <circle cx={p.x} cy={p.y} r={7.5} className="hero-dot-frontier-ring" />
+                  )}
+                  <circle cx={p.x} cy={p.y} r={4.4} className="hero-dot" />
+                  {tagPos && (
+                    <text x={tagPos.x} y={tagPos.y} textAnchor="middle" className="hero-effort-tag">
+                      {p.effort.shortTag}
+                    </text>
+                  )}
+                </g>
+              );
+            })}
+          </g>
+        )}
 
         {/* Selected Release Hero Effort Curve */}
         {selectedSeries && (

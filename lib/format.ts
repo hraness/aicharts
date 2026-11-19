@@ -70,3 +70,28 @@ export function shortModelName(name: string): string {
     .replace(/^Gemini\s+/, "Gem ")
     .replace(/^GPT-/, "GPT-");
 }
+
+/** A signed score change with a true minus sign, such as +3.1 or −0.4. */
+export function formatDelta(value: number): string {
+  const rounded = Math.round(value * 10) / 10;
+  if (rounded === 0) return "0.0";
+  return `${rounded > 0 ? "+" : "−"}${Math.abs(rounded).toFixed(1)}`;
+}
+
+/** A cost or token multiple, such as 1.32×, 2.4× or 12×. */
+export function formatRatio(value: number): string {
+  if (value >= 10) return `${Math.round(value)}×`;
+  return `${value.toFixed(value >= 2 ? 1 : 2)}×`;
+}
+
+/** A per-million-token price: $3, $0.10, $1.25 or $0.075. */
+export function formatPrice(perMillion: number): string {
+  if (Number.isInteger(perMillion)) return `$${perMillion}`;
+  const cents = perMillion.toFixed(2);
+  return `$${Number(cents) === perMillion ? cents : Number(perMillion.toFixed(3))}`;
+}
+
+export function formatContext(tokens: number): string {
+  if (tokens >= 1_000_000) return `${Number((tokens / 1_000_000).toFixed(2))}M`;
+  return `${Math.round(tokens / 1000)}k`;
+}

@@ -1,16 +1,17 @@
 .journal-shell {
   max-width: 880px;
   margin: auto;
-  padding: 14px 20px 5rem;
+  padding: 14px 20px 0;
 }
 .journal-main {
   max-width: 690px;
-  margin: clamp(3rem, 8vw, 6rem) auto 0;
+  margin: clamp(3rem, 8vw, 6rem) auto 5rem;
   font-size: 16px;
   line-height: 1.6;
 }
 .journal-main h1,
 .journal-main h2 {
+  font-family: var(--font-display);
   text-wrap: balance;
   letter-spacing: -0.035em;
   line-height: 1.14;

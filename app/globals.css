@@ -1,3 +1,12 @@
+/* Hraness display face for headings and the footer wordmark (hraness/brand). */
+@font-face {
+  font-family: "Funnel Display";
+  src: url("/fonts/FunnelDisplay.a18ddd52.woff2") format("woff2");
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   color-scheme: light dark;
   --bg: #f8f8f9;
@@ -36,6 +45,7 @@
   --font-sans: -apple-system, BlinkMacSystemFont, "Inter", "SF Pro Text", "Segoe UI", Roboto,
     sans-serif;
   --font-mono: "SF Mono", ui-monospace, "JetBrains Mono", Menlo, Consolas, monospace;
+  --font-display: "Funnel Display", var(--font-sans);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -173,28 +183,6 @@ a:focus-visible {
 }
 .provider-icon--google {
   color: var(--brand-google);
-}
-
-/* Semantic Frontier Badge */
-.frontier-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 3.5px;
-  font-size: 10.5px;
-  font-weight: 600;
-  line-height: 1.3;
-  padding: 1.5px 6.5px;
-  border-radius: 999px;
-  color: var(--award);
-  background: var(--award-soft);
-  border: 1px solid var(--award-border);
-  flex-shrink: 0;
-}
-
-.frontier-badge--sm {
-  font-size: 10px;
-  padding: 1px 5.5px;
-  gap: 3px;
 }
 
 /* App Shell */
@@ -1078,36 +1066,7 @@ a:focus-visible {
   text-align: right;
 }
 
-/* Footer */
-.footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 6px 12px;
-  padding: 2px 4px;
-  font-size: 11px;
-  color: var(--fg-faint);
-}
-
-.footer a {
-  color: var(--fg-muted);
-  text-decoration: underline;
-  text-decoration-color: var(--border-strong);
-  text-underline-offset: 2px;
-}
-
-.footer a:hover {
-  color: var(--fg);
-}
-
-.footer__links {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.journal-nav { display: flex; align-items: center; gap: 10px; font-size: 12.5px; margin-right: 4px; }
+.journal-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 0 10px; font-size: 12.5px; margin-right: 4px; }
 .journal-nav a { display: inline-flex; align-items: center; min-height: 28px; color: var(--fg-muted); }
 .journal-nav a:hover, .journal-nav a[aria-current="page"] { color: var(--fg); text-decoration: underline; text-underline-offset: 4px; }
 @media (max-width: 400px) {
@@ -1119,4 +1078,145 @@ a:focus-visible {
     gap: 6px;
     padding-inline: 8px;
   }
+}
+
+/* Display face on headings */
+.topbar__title,
+.release-head__name,
+.feed-header__title {
+  font-family: var(--font-display);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Frontier stars: one per effort setting on the live cost frontier */
+.frontier-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  color: var(--award);
+  line-height: 1;
+  position: relative;
+}
+
+.frontier-stars__icons {
+  display: inline-flex;
+  align-items: center;
+  gap: 1.5px;
+}
+
+.frontier-stars--labelled {
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  padding: 1.5px 7px 1.5px 6px;
+  border-radius: 999px;
+  background: var(--award-soft);
+  border: 1px solid var(--award-border);
+}
+
+/* Data attribution, inside main */
+.data-note {
+  margin: 0;
+  padding: 0 4px;
+  font-size: 11px;
+  color: var(--fg-faint);
+}
+
+.data-note a {
+  color: var(--fg-muted);
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 2px;
+}
+
+/* Hraness product footer (hraness/brand web/FOOTER.md). The root size here
+   is 14px, so sizes are in px rather than rem. */
+.aicharts-footer {
+  margin-top: 24px;
+  padding: 16px 0 max(20px, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border);
+}
+
+.aicharts-footer__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 24px;
+}
+
+.aicharts-footer__links,
+.aicharts-footer__end {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 20px;
+}
+
+.aicharts-footer a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 13px;
+  color: var(--fg-muted);
+  text-decoration: none;
+}
+
+.aicharts-footer a:hover {
+  color: var(--fg);
+}
+
+.aicharts-footer .aicharts-footer__wordmark {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 450;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg);
+}
+
+@media (forced-colors: active) {
+  .aicharts-footer a {
+    color: CanvasText;
+  }
+}
+
+/* Second emphasized curve on comparison charts */
+.hero-series--compare .hero-curve {
+  stroke-dasharray: 6 4;
+  stroke-width: 2.25;
+}
+
+.hero-series--compare .hero-dot {
+  fill: var(--surface);
+  stroke: var(--hero-color);
+  stroke-width: 2;
+}
+
+.release-head__meta {
+  flex-wrap: wrap;
+}
+
+.release-head__page {
+  color: var(--fg-muted);
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 2px;
+}
+
+.release-head__page:hover {
+  color: var(--fg);
 }
