@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-19T16:00:00Z",
+  "updatedAt": "2026-11-19T17:46:07Z",
   "snapshotDate": "2026-11-19",
   "sources": [
     {
@@ -2591,7 +2591,13 @@
       "summary": "Early-September adaptive-thinking flagship succeeded by Opus 5.5 and Fable 5.2.",
       "announcementUrl": "https://www.anthropic.com/claude-fable-and-mythos-5-1",
       "benchmarkUrl": "https://artificialanalysis.ai/models/claude-fable-5-1-low",
-      "harborEval": null,
+      "harborEval": {
+        "agent": "Claude Code",
+        "effort": "max",
+        "accuracy": 57.88,
+        "totalCostUsd": 6243.5,
+        "costPerTrialUsd": 18.92
+      },
       "efforts": [
         {
           "id": "05776db7-f5c0-40f7-b824-079160f8cfa8",
@@ -2763,7 +2769,13 @@
       "summary": "Mid-summer Anthropic flagship (49.0% Terminal-Bench 4.0 at Max) preceding the 5.5 generation.",
       "announcementUrl": "https://www.anthropic.com/news/claude-opus-5",
       "benchmarkUrl": "https://artificialanalysis.ai/models/claude-opus-5",
-      "harborEval": null,
+      "harborEval": {
+        "agent": "Claude Code",
+        "effort": "max",
+        "accuracy": 51.82,
+        "totalCostUsd": 5969.11,
+        "costPerTrialUsd": 18.09
+      },
       "efforts": [
         {
           "id": "b8fc61f7-5e9a-49e6-8547-6ac56db24627",
@@ -2861,7 +2873,13 @@
       "summary": "Final GPT-5.x coding and multimodal tier before the transition to the GPT-6 architecture.",
       "announcementUrl": "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
       "benchmarkUrl": "https://artificialanalysis.ai/models/gpt-5-6-terra",
-      "harborEval": null,
+      "harborEval": {
+        "agent": "Codex",
+        "effort": "max",
+        "accuracy": 21.52,
+        "totalCostUsd": 1733.52,
+        "costPerTrialUsd": 5.25
+      },
       "efforts": [
         {
           "id": "bcf8db0a-3bb6-4d82-9516-0f57370c85a6",
@@ -2910,7 +2928,13 @@
       "summary": "Compact GPT-5.6 efficiency tier succeeded by GPT-6 Luna.",
       "announcementUrl": "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
       "benchmarkUrl": "https://artificialanalysis.ai/models/gpt-5-6-luna",
-      "harborEval": null,
+      "harborEval": {
+        "agent": "Codex",
+        "effort": "max",
+        "accuracy": 17.27,
+        "totalCostUsd": 346.67,
+        "costPerTrialUsd": 1.05
+      },
       "efforts": [
         {
           "id": "426d24c8-49ae-482a-b4a8-20f1c53f21c1",
