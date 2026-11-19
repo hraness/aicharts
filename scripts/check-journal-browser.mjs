@@ -232,6 +232,39 @@ try {
     const [first, second] = pair.slice("/compare/".length).split("-vs-");
     await page.goto(url + "/compare/" + second + "-vs-" + first);
     assert.equal(new URL(page.url()).pathname, pair);
+    // Coding agent pages: the benchmark control relabels the readout.
+    await page.goto(url + "/agents");
+    await page.getByLabel("Benchmark").selectOption("terminalBench4");
+    await page.waitForFunction(() =>
+      document.querySelector(".agent-chart .chart-readout").textContent.includes("Terminal-Bench 4.1"),
+    );
+    const agentPairs = await page
+      .locator('.pair-links a[href^="/agents/"]')
+      .evaluateAll((links) => links.map((a) => a.getAttribute("href")));
+    assert.ok(agentPairs.length > 0);
+    for (const path of ["/agents", ...agentPairs]) {
+      await page.goto(url + path);
+      assert.equal(await page.locator("main h1").count(), 1, path);
+      assert.equal(
+        await page
+          .getByRole("navigation", { name: "Product pages" })
+          .getByRole("link", { name: "Agents" })
+          .getAttribute("href"),
+        "/agents",
+      );
+      assert.equal(await page.locator("table.facts tbody tr").first().locator("td").count(), path === "/agents" ? 3 : 2, path);
+      await checkFooter(page);
+      assert.equal(await noSideScroll(page), true, path + " scrolls sideways");
+    }
+    // The other order, and Gemini CLI's old name, point to the matchup.
+    const [agentA, agentB] = agentPairs[0].slice("/agents/".length).split("-vs-");
+    await page.goto(url + "/agents/" + agentB + "-vs-" + agentA);
+    assert.equal(new URL(page.url()).pathname, agentPairs[0]);
+    const antigravity = agentPairs.find((path) => path.includes("antigravity-cli"));
+    if (antigravity) {
+      await page.goto(url + antigravity.replace("antigravity-cli", "gemini-cli"));
+      assert.equal(new URL(page.url()).pathname, antigravity);
+    }
     await context.close();
   }
   const plain = await browser.newContext({ javaScriptEnabled: false });
@@ -245,11 +278,16 @@ try {
   assert.ok(await page.locator(".catalog-chart .pareto-svg").isVisible());
   assert.equal(await page.locator(".catalog-chart .chart-controls").isVisible(), false);
   assert.ok(await page.locator("table.data-table").first().isVisible());
+  // The agent chart also draws without JavaScript.
+  await page.goto(url + "/agents");
+  assert.ok(await page.locator(".agent-chart .pareto-svg").isVisible());
+  assert.equal(await page.locator(".agent-chart .chart-controls").isVisible(), false);
   // Addresses from the earlier aicharts.io keep working.
   for (const [from, to] of [
     ["/models/lab/" + model.slug + "/profile", "/models/" + model.slug],
     ["/models/lab/retired-model/profile", "/models"],
     ["/blog/introducing-ai-charts", "/blog/introducing-aicharts"],
+    ["/blog/harnesstax-coding-agent-harness", "/agents"],
     ["/calculator", "/models"],
   ]) {
     await page.goto(url + from);
@@ -321,7 +359,7 @@ try {
     await ctx.close();
   }
   console.log(
-    "Verified the guide, comparison controls, closing action, filters, catalog pages, redirects, footer, and mobile layout.",
+    "Verified the guide, comparison controls, closing action, filters, catalog and coding agent pages, redirects, footer, and mobile layout.",
   );
 } finally {
   try {

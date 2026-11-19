@@ -11,6 +11,7 @@ export function SiteHeader() {
         <a href="/">Explorer</a>
         <a href="/models">Models</a>
         <a href="/compare">Compare</a>
+        <a href="/agents">Agents</a>
         <a href="/blog">Blog</a>
         <a href="/changelog">Changelog</a>
       </nav>

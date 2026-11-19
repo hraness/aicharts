@@ -291,6 +291,15 @@
   border-top-style: dashed;
 }
 
+/* Other models' runs sit on the chart as faint curves with dots. */
+.chart-legend__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--legend-color);
+  opacity: 0.7;
+}
+
 .chart-readout,
 .catalog-chart figcaption {
   display: block;
@@ -372,6 +381,14 @@
 .data-table tr.is-drop td:nth-child(4) {
   color: var(--warn);
   font-weight: 600;
+}
+
+/* One tbody per coding agent, headed by the agent's name. */
+.data-table tr.group-row th {
+  padding-top: 14px;
+  border-top: 1px solid var(--border-strong);
+  font-family: var(--font-display);
+  font-size: 14px;
 }
 
 .cell-note {
@@ -456,6 +473,12 @@ a.model-link {
 .facts tbody th {
   font-weight: 500;
   color: var(--fg-muted);
+}
+
+/* Three columns of values leave the row labels a quarter of the width. */
+.facts--3 thead td,
+.facts--3 tbody th {
+  width: 25%;
 }
 
 .fact-value {
@@ -741,5 +764,58 @@ a.model-link {
 
   .facts :is(th, td) {
     padding-right: 8px;
+  }
+
+  /* Three agents side by side: each row's label sits above its values, and the
+     agent names stay in view. Explicit roles keep the table semantics. */
+  .facts--3,
+  .facts--3 :is(thead, tbody) {
+    display: block;
+  }
+
+  .facts--3 thead {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--bg);
+  }
+
+  .facts--3 tr {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: 10px;
+  }
+
+  .facts--3 :is(th, td) {
+    padding: 0 0 10px;
+    border-top: 0;
+    overflow-wrap: break-word;
+  }
+
+  .facts--3 thead tr {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .facts--3 thead th {
+    padding: 8px 0;
+  }
+
+  .facts--3 thead td {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .facts--3 tbody th {
+    grid-column: 1 / -1;
+    width: auto;
+    padding: 10px 0 4px;
+    border-top: 1px solid var(--border);
+  }
+
+  .facts--3 tbody tr:first-child th {
+    border-top: 0;
   }
 }

@@ -18,6 +18,7 @@ import {
   effortName,
   effortsByLevel,
 } from "@/lib/catalog";
+import { agentPairs } from "@/lib/agents";
 import { modelCopy } from "@/lib/copy";
 import { formatContext, formatFullDate, formatPrice, formatScore, formatUsd } from "@/lib/format";
 import { BENCHMARKS, PROVIDERS, type EffortPoint, type EffortSlug } from "@/lib/types";
@@ -66,6 +67,7 @@ export default async function ModelPage({ params }: { params: Params }) {
     name: "Artificial Analysis: Coding Agents",
     url: "https://artificialanalysis.ai/agents/coding-agents/",
   }) : null;
+  const agentPages = agentPairs().filter((p) => p.first.name === lab.harness || p.second.name === lab.harness);
   const harborSource = harbor
     ? sources.push({ name: "Terminal-Bench leaderboard", url: "https://tbench.ai" })
     : null;
@@ -246,7 +248,7 @@ export default async function ModelPage({ params }: { params: Params }) {
                     <th scope="col">Coding Agent Index</th>
                     <th scope="col">FrontierCode 2.0</th>
                     <th scope="col">SWE-Atlas</th>
-                    <th scope="col">Terminal-Bench 4.0</th>
+                    <th scope="col">Terminal-Bench 4.1</th>
                     <th scope="col">Cost per task</th>
                   </tr>
                 </thead>
@@ -272,6 +274,19 @@ export default async function ModelPage({ params }: { params: Params }) {
               {formatScore(harbor.accuracy, "%")} of trials at {formatUsd(harbor.costPerTrialUsd)} per
               trial.
               <Cite n={harborSource} />
+            </p>
+          )}
+          {agentPages.length > 0 && (
+            <p className="onward">
+              Compare {lab.harness} with other coding agents:{" "}
+              {agentPages.map((p, i) => (
+                <span key={p.slug}>
+                  {i > 0 && " · "}
+                  <a href={`/agents/${p.slug}`}>
+                    {p.first.name} vs {p.second.name}
+                  </a>
+                </span>
+              ))}
             </p>
           )}
         </section>

@@ -1,3 +1,4 @@
+import { agentDescription, agentPairs, harnessGroups } from "@/lib/agents";
 import { bestEffort, catalog, defaultEffort, effortName, publishedEffortSteps, SITE_URL } from "@/lib/catalog";
 import { effortStepTitle, orderedEffortSteps } from "@/lib/copy";
 import { formatScore, formatUsd } from "@/lib/format";
@@ -34,6 +35,14 @@ export function GET() {
     ...catalog.pairs
       .filter((p) => p.current)
       .map((p) => `- [${p.first.name} vs ${p.second.name}](${SITE_URL}/compare/${p.slug})`),
+    "",
+    "## Coding agents",
+    "",
+    `- [Best AI coding agent](${SITE_URL}/agents): ${agentDescription(harnessGroups())}`,
+    ...agentPairs().map(
+      (p) =>
+        `- [${p.first.name} vs ${p.second.name}](${SITE_URL}/agents/${p.slug}): ${agentDescription(harnessGroups([p.first.id, p.second.id]))}`,
+    ),
     "",
     "## Data",
     "",

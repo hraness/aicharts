@@ -1,5 +1,17 @@
 [
   {
+    "slug": "coding-agent-pages",
+    "date": "2026-11-19",
+    "category": "New",
+    "surfaces": ["Website"],
+    "title": "Compare Codex, Claude Code and Antigravity CLI",
+    "summary": "New pages put each lab’s coding agent side by side with every model and effort setting measured inside it: Coding Agent Index, cost per task, the three benchmarks behind the index and the official Terminal-Bench leaderboard. They also show how the same model scores alone and inside its agent.",
+    "link": {
+      "href": "/agents",
+      "label": "Compare coding agents"
+    }
+  },
+  {
     "slug": "frontier-stars-follow-context",
     "date": "2026-11-19",
     "category": "Fixed",

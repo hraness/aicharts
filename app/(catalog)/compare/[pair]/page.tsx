@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ProviderLogo } from "@/components/brand-icon";
 import { Breadcrumbs } from "@/components/catalog/breadcrumbs";
 import { CatalogChart } from "@/components/catalog/catalog-chart";
+import { FactCell, type Cell } from "@/components/catalog/fact-cell";
 import { PairList } from "@/components/catalog/pair-list";
 import { Questions } from "@/components/catalog/questions";
 import { Cite, Sources, type Source } from "@/components/catalog/sources";
@@ -15,6 +16,7 @@ import {
   effortName,
   effortsByLevel,
 } from "@/lib/catalog";
+import { agentPairs } from "@/lib/agents";
 import { listNames, pairCopy } from "@/lib/copy";
 import {
   formatContext,
@@ -50,7 +52,6 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   );
 }
 
-type Cell = Readonly<{ value: string; note?: string; win?: string; cite?: number }>;
 type Row = Readonly<{ label: string; a: Cell; b: Cell }>;
 
 const score = (e: EffortPoint, id: BenchmarkId) =>
@@ -86,24 +87,6 @@ function agentCell(release: ModelRelease, cite: number | null): Cell {
     note: `${top.cliEval!.codingAgentScore.toFixed(1)} on the Coding Agent Index at ${effortName(top.effortSlug)}`,
     cite,
   };
-}
-
-function FactCell({ cell, label }: Readonly<{ cell: Cell; label: string }>) {
-  return (
-    <td data-label={label}>
-      <span className="fact-value">
-        {cell.win && (
-          <span className="mark mark--yes" aria-hidden="true">
-            ✓
-          </span>
-        )}
-        <strong>{cell.value}</strong>
-        {cell.win && <span className="mark-label">{cell.win}</span>}
-        {cell.cite && <Cite n={cell.cite} />}
-      </span>
-      {cell.note && <span className="fact-note">{cell.note}</span>}
-    </td>
-  );
 }
 
 export default async function ComparePairPage({ params }: { params: Params }) {
@@ -211,6 +194,11 @@ export default async function ComparePairPage({ params }: { params: Params }) {
     },
   ];
 
+  const agentPage = agentPairs().find(
+    (p) =>
+      a.provider !== b.provider &&
+      [p.first.provider, p.second.provider].sort().join() === [a.provider, b.provider].sort().join(),
+  );
   const levels = [...new Set([...effortsByLevel(a), ...effortsByLevel(b)]
     .sort((x, y) => x.effortLevel - y.effortLevel)
     .map((e) => e.effortSlug))] as EffortSlug[];
@@ -358,6 +346,14 @@ export default async function ComparePairPage({ params }: { params: Params }) {
         <h2 id="related">Related comparisons</h2>
         {related(a).length > 0 && <PairList title={`More with ${a.name}`} pairs={related(a)} from={a} />}
         {related(b).length > 0 && <PairList title={`More with ${b.name}`} pairs={related(b)} from={b} />}
+        {agentPage && (
+          <p className="onward">
+            In each lab&apos;s coding agent:{" "}
+            <a href={`/agents/${agentPage.slug}`}>
+              {agentPage.first.name} vs {agentPage.second.name}
+            </a>
+          </p>
+        )}
       </section>
 
       <Questions items={copy.questions} />

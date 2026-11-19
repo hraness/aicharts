@@ -43,6 +43,8 @@ export function ParetoChart({
   axis,
   onSelectEffort,
   onSelectRelease,
+  showTokens = true,
+  ariaLabel,
 }: Readonly<{
   releases: readonly ModelRelease[];
   selectedRelease: ModelRelease;
@@ -53,6 +55,10 @@ export function ParetoChart({
   axis: BudgetAxis;
   onSelectEffort: (slug: EffortSlug) => void;
   onSelectRelease: (slug: string) => void;
+  /** Hide output tokens in the tooltip, for points whose token counts don't apply. */
+  showTokens?: boolean;
+  /** Replaces the generated description of the chart. */
+  ariaLabel?: string;
 }>) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState<number>(740);
@@ -342,7 +348,10 @@ export function ParetoChart({
         height={height}
         viewBox={`0 0 ${width} ${height}`}
         role="img"
-        aria-label={`Pareto curve${compareRelease ? "s" : ""} for ${selectedRelease.name}${compareRelease ? ` and ${compareRelease.name}` : ""} comparing ${benchmark.fullLabel} against ${axis === "cost" ? "USD cost per task" : "output tokens per task"}`}
+        aria-label={
+          ariaLabel ??
+          `Pareto curve${compareRelease ? "s" : ""} for ${selectedRelease.name}${compareRelease ? ` and ${compareRelease.name}` : ""} comparing ${benchmark.fullLabel} against ${axis === "cost" ? "USD cost per task" : "output tokens per task"}`
+        }
         className="pareto-svg"
       >
         {/* Horizontal Y Gridlines & Labels */}
@@ -551,8 +560,12 @@ export function ParetoChart({
             <strong>{formatScore(inspectedPoint.score, benchmark.unit)}</strong>
             <span>·</span>
             <span>{formatUsd(inspectedPoint.effort.costUsdPerTask.total)}</span>
-            <span>·</span>
-            <span>{formatTokens(inspectedPoint.effort.tokensPerTask.total)} tok</span>
+            {showTokens && (
+              <>
+                <span>·</span>
+                <span>{formatTokens(inspectedPoint.effort.tokensPerTask.total)} tok</span>
+              </>
+            )}
           </div>
           {inspectedPoint.release.slug !== selectedRelease.slug &&
             pinnedPeerKey === inspectedPoint.key && (
