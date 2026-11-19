@@ -1106,3 +1106,17 @@ a:focus-visible {
   align-items: center;
   gap: 6px;
 }
+
+.journal-nav { display: flex; align-items: center; gap: 10px; font-size: 12.5px; margin-right: 4px; }
+.journal-nav a { display: inline-flex; align-items: center; min-height: 28px; color: var(--fg-muted); }
+.journal-nav a:hover, .journal-nav a[aria-current="page"] { color: var(--fg); text-decoration: underline; text-underline-offset: 4px; }
+@media (max-width: 400px) {
+  .topbar { flex-wrap: wrap; }
+  .topbar__actions { flex-wrap: wrap; }
+  .effort-table__head,
+  .effort-row {
+    grid-template-columns: minmax(66px, 1.1fr) auto auto auto;
+    gap: 6px;
+    padding-inline: 8px;
+  }
+}
