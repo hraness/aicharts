@@ -82,6 +82,13 @@ try {
       .getByRole("navigation", { name: "Product pages" })
       .getByRole("link", { name: "Blog" })
       .click();
+    await page
+      .getByRole("button", { name: "Use cookieless analytics" })
+      .click();
+    await page
+      .getByRole("status")
+      .filter({ hasText: "without a cookie" })
+      .waitFor();
     await page.locator("[data-pj-evergreen] a").click();
     await page.locator(".guide-chart").waitFor();
     await page.getByLabel("Budget", { exact: true }).selectOption("tokens");
