@@ -71,6 +71,41 @@ try {
     );
     const page = await context.newPage();
     await page.goto(url);
+    // The favicon and portfolio export must still show the same mark after a redesign.
+    if (width === 960) {
+      const png = (await readFile("showcase/icon.png")).toString("base64");
+      const difference = await page.evaluate(async (encoded) => {
+        const favicon = document.querySelector('link[rel~="icon"]').href;
+        const mark = document.querySelector(".topbar__brand img");
+        if (!mark || new URL(mark.src).pathname !== new URL(favicon).pathname)
+          return 255;
+        const pixels = async (src) => {
+          const image = new Image();
+          image.src = src;
+          await image.decode();
+          const canvas = document.createElement("canvas");
+          canvas.width = canvas.height = 64;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(image, 0, 0, 64, 64);
+          return ctx.getImageData(0, 0, 64, 64).data;
+        };
+        const [svg, raster] = await Promise.all([
+          pixels(favicon),
+          pixels("data:image/png;base64," + encoded),
+        ]);
+        return (
+          svg.reduce(
+            (sum, channel, i) => sum + Math.abs(channel - raster[i]),
+            0,
+          ) / svg.length
+        );
+      }, png);
+      assert.ok(
+        difference < 5,
+        "Regenerate the portfolio PNG from the site favicon",
+      );
+    }
+
     assert.equal(
       await page
         .getByRole("navigation", { name: "Product pages" })
