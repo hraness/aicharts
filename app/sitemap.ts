@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { entries, guide } from "@/journal/content";
+import { agentPairs } from "@/lib/agents";
 import { catalog, publishedEffortSteps, SITE_URL } from "@/lib/catalog";
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -15,6 +16,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     data("/models", 0.9),
     data("/compare", 0.8),
     data("/effort", 0.8),
+    data("/agents", 0.8),
+    ...agentPairs().map((p) => data(`/agents/${p.slug}`, 0.7)),
     ...catalog.current.map((r) => data(`/models/${r.slug}`, 0.8)),
     ...publishedEffortSteps(catalog.releases).map((s) => data(`/effort/${s.slug}`, 0.7)),
     ...catalog.pairs.filter((p) => p.current).map((p) => data(`/compare/${p.slug}`, 0.6)),

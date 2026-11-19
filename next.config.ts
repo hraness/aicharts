@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 // Relative import: the config is compiled before the "@/" path alias exists.
+import { agentPairs } from "./lib/agents";
 import { catalog } from "./lib/catalog";
 
 type Redirect = Readonly<{ source: string; destination: string; permanent: true }>;
@@ -20,15 +21,15 @@ const LEGACY_POSTS: Readonly<Record<string, string>> = {
   "kimi-k3-1-pro-intelligence-index": "/blog",
   "grok-4-7-coding-agent-index": "/blog",
   "mimo-v2-6-pro-cost-frontier": "/blog",
-  "harness-design-coding-agents": "/blog",
-  "harnesstax-coding-agent-harness": "/blog",
+  "harness-design-coding-agents": "/agents",
+  "harnesstax-coding-agent-harness": "/agents",
   "real-swe-private-enterprise-benchmark": "/blog",
   "devin-fusion-cost-saving": "/blog",
   "terminal-bench-science": "/blog",
   "small-models-have-arrived": "/blog",
   "coding-agent-score-holdouts": "/blog",
   "open-models-coding-agent-benchmarks": "/blog",
-  "aa-index-cost-coding-agents": "/blog",
+  "aa-index-cost-coding-agents": "/agents",
   "mirrorcode-coding-agent-benchmark": "/blog",
 };
 
@@ -43,6 +44,10 @@ export function siteRedirects(): Redirect[] {
     // Comparison pages list the newer model first; the other order points there.
     ...catalog.pairs.map((pair) =>
       permanent(`/compare/${pair.reverseSlug}`, `/compare/${pair.slug}`),
+    ),
+    // Coding agent matchups: the other order and Gemini CLI's old name point to one page.
+    ...agentPairs().flatMap((pair) =>
+      pair.aliases.map((alias) => permanent(`/agents/${alias}`, `/agents/${pair.slug}`)),
     ),
     // Legacy model profiles: /models/<lab>/<model>/<profile>.
     ...catalog.releases.map((release) =>

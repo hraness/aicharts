@@ -140,6 +140,46 @@ export const BENCHMARKS: readonly BenchmarkMeta[] = [
   },
 ] as const;
 
+/**
+ * The same four chart slots, filled with runs inside each lab's coding agent
+ * (see chartRelease in lib/agents.ts): Artificial Analysis's Coding Agent
+ * Index and its three parts.
+ */
+export const AGENT_BENCHMARKS: readonly BenchmarkMeta[] = [
+  {
+    id: "coding",
+    label: "Coding Agent Index",
+    shortLabel: "Index",
+    fullLabel: "Artificial Analysis Coding Agent Index",
+    unit: "pts",
+    description: "Equal-weight mean of FrontierCode 2.0, Terminal-Bench 4.1 and SWE-Atlas QnA, run inside each agent.",
+  },
+  {
+    id: "terminalBench4",
+    label: "Terminal-Bench 4.1",
+    shortLabel: "Terminal",
+    fullLabel: "Terminal-Bench 4.1",
+    unit: "%",
+    description: "66 terminal tasks, run inside each agent.",
+  },
+  {
+    id: "frontierCode2",
+    label: "FrontierCode 2.0",
+    shortLabel: "FrontierCode",
+    fullLabel: "FrontierCode-AA 2.0",
+    unit: "%",
+    description: "132 repository coding tasks, run inside each agent.",
+  },
+  {
+    id: "intelligence",
+    label: "SWE-Atlas QnA",
+    shortLabel: "SWE-Atlas",
+    fullLabel: "SWE-Atlas-QnA-AA",
+    unit: "%",
+    description: "124 questions about real codebases, answered inside each agent.",
+  },
+];
+
 export const PROVIDERS: Readonly<
   Record<
     ProviderId,
