@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { gunzipSync } from "node:zlib";
 import type {
@@ -14,7 +14,9 @@ import type {
 const DATA_PATH = path.join(import.meta.dir, "..", "data", "releases.json");
 const TARGET_PROVIDERS = new Set<ProviderId>(["anthropic", "openai", "google"]);
 const MIN_RELEASE_DATE = "2026-07-01";
-const USER_AGENT = "aicharts-refresh/2.0 (+https://aicharts.io)";
+const USER_AGENT = "aicharts-refresh/2.1 (+https://aicharts.io)";
+const HARBOR_PROVIDER_RE =
+  /(anthropic|claude|openai|gpt|codex|google|gemini|antigravity)/i;
 
 const RELEASE_CURATION: Readonly<
   Record<
@@ -187,6 +189,39 @@ function normalizeEffortSlug(rawSlug: string | undefined | null): EffortSlug {
   return "none";
 }
 
+export function resolveSupersededOn(opts: {
+  deprecated: boolean;
+  curatedSupersededOn: string | null | undefined;
+  existingSupersededOn: string | null | undefined;
+  snapshotDate: string;
+}): string | null {
+  if (opts.curatedSupersededOn) return opts.curatedSupersededOn;
+  if (opts.existingSupersededOn) return opts.existingSupersededOn;
+  if (opts.deprecated) return opts.snapshotDate;
+  return null;
+}
+
+export function hasDatasetChanges(
+  existing: ReleaseDataset | null,
+  next: ReleaseDataset,
+): boolean {
+  if (!existing) return true;
+  if (existing.schemaVersion !== next.schemaVersion) return true;
+  return (
+    JSON.stringify(existing.releases) !== JSON.stringify(next.releases) ||
+    JSON.stringify(existing.sources) !== JSON.stringify(next.sources)
+  );
+}
+
+function loadExistingDataset(dataPath: string): ReleaseDataset | null {
+  if (!existsSync(dataPath)) return null;
+  try {
+    return JSON.parse(readFileSync(dataPath, "utf8")) as ReleaseDataset;
+  } catch {
+    return null;
+  }
+}
+
 function parseFlightChunks(html: string): string {
   const chunks: string[] = [];
   new HTMLRewriter()
@@ -321,14 +356,24 @@ function extractCodingAgentMap(caHtml: string): Map<string, CliHarnessEval> {
   return map;
 }
 
-function extractHarborMap(tbRecent: Record<string, string>): Map<string, HarborBenchEval> {
-  const map = new Map<string, HarborBenchEval>();
+interface ParsedHarborEntry {
+  eval: HarborBenchEval;
+  modelUrl: string | null;
+}
+
+function extractHarborMap(tbRecent: Record<string, string>): Map<string, ParsedHarborEntry> {
+  const map = new Map<string, ParsedHarborEntry>();
   // Sort keys ascending so newer 4-1-0 regrades overwrite older 4-0-0 entries
   for (const file of Object.keys(tbRecent).sort()) {
     try {
       const sub = JSON.parse(tbRecent[file]!);
       const agent = sub.metadata?.agent_display?.label as string | undefined;
       const modelLabel = (sub.metadata?.model_display?.label as string | undefined) ?? "";
+      const modelUrl =
+        typeof sub.metadata?.model_display?.url === "string" &&
+        sub.metadata.model_display.url.startsWith("https://")
+          ? (sub.metadata.model_display.url as string)
+          : null;
       const effort = (sub.metadata?.reasoning_effort as string | undefined) ?? "max";
       const acc = sub.metrics?.accuracy as number | undefined;
       const totalCost = sub.metrics?.total_cost_usd as number | undefined;
@@ -341,11 +386,14 @@ function extractHarborMap(tbRecent: Record<string, string>): Map<string, HarborB
         .replace(/^claude\s+/, "")
         .trim();
       map.set(normModel, {
-        agent,
-        effort,
-        accuracy: round2(acc),
-        totalCostUsd: round2(totalCost),
-        costPerTrialUsd: round2(totalCost / nTrials),
+        eval: {
+          agent,
+          effort,
+          accuracy: round2(acc),
+          totalCostUsd: round2(totalCost),
+          costPerTrialUsd: round2(totalCost / nTrials),
+        },
+        modelUrl,
       });
     } catch {
       // ignore malformed
@@ -398,7 +446,9 @@ async function loadUpstreamRaw(fromRawDir: string | null): Promise<{
       break;
     }
   }
-  if (!languageModels) throw new Error("Could not locate Artificial Analysis language-model manifest.");
+  if (!languageModels) {
+    throw new Error("Could not locate Artificial Analysis language-model manifest.");
+  }
 
   const caRes = await fetch("https://artificialanalysis.ai/agents/coding-agents/", {
     headers: { "User-Agent": USER_AGENT },
@@ -406,30 +456,50 @@ async function loadUpstreamRaw(fromRawDir: string | null): Promise<{
   if (!caRes.ok) throw new Error(`AA coding agents HTTP ${caRes.status}`);
   const caHtml = await caRes.text();
 
+  const ghHeaders: Record<string, string> = {
+    "User-Agent": USER_AGENT,
+    Accept: "application/vnd.github+json",
+  };
+  const ghToken = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
+  if (ghToken) {
+    ghHeaders.Authorization = `Bearer ${ghToken}`;
+  }
+
   const tbDirRes = await fetch(
     "https://api.github.com/repos/harbor-framework/terminal-bench/contents/leaderboard/submissions",
-    { headers: { "User-Agent": USER_AGENT, Accept: "application/vnd.github+json" } },
+    { headers: ghHeaders },
   );
   const tbRecent: Record<string, string> = {};
   if (tbDirRes.ok) {
     const items = (await tbDirRes.json()) as Array<{ name: string; download_url: string | null }>;
-    for (const item of items.filter((i) => i.name >= "2026-09-25" && i.download_url)) {
-      const subRes = await fetch(item.download_url!, { headers: { "User-Agent": USER_AGENT } });
-      if (subRes.ok) tbRecent[item.name] = await subRes.text();
-    }
+    const candidates = items.filter(
+      (i) => i.download_url && i.name.endsWith(".json") && HARBOR_PROVIDER_RE.test(i.name),
+    );
+    await Promise.all(
+      candidates.map(async (item) => {
+        const subRes = await fetch(item.download_url!, { headers: { "User-Agent": USER_AGENT } });
+        if (subRes.ok) {
+          tbRecent[item.name] = await subRes.text();
+        }
+      }),
+    );
   }
 
   return { models: languageModels, caHtml, tbRecent };
 }
 
-function buildDataset(
+export function buildDataset(
   models: Array<Record<string, any>>,
   caHtml: string,
   tbRecent: Record<string, string>,
   snapshotDate: string,
+  existingDataset: ReleaseDataset | null = null,
 ): ReleaseDataset {
   const cliMap = extractCodingAgentMap(caHtml);
   const harborMap = extractHarborMap(tbRecent);
+  const existingBySlug = new Map(
+    (existingDataset?.releases ?? []).map((r) => [r.slug, r]),
+  );
 
   const byRelease = new Map<string, Array<Record<string, any>>>();
   for (const m of models) {
@@ -511,7 +581,7 @@ function buildDataset(
         cliEval,
       };
 
-      // Deduplicate if multiple configs share effortSlug (prefer non-deprecated / higher score)
+      // Deduplicate if multiple configs share effortSlug (prefer higher score)
       const prev = seenEfforts.get(effortSlug);
       if (!prev || point.scores.coding > prev.scores.coding) {
         seenEfforts.set(effortSlug, point);
@@ -519,23 +589,30 @@ function buildDataset(
     }
 
     const efforts = [...seenEfforts.values()].sort((a, b) => a.effortLevel - b.effortLevel);
-    // Ensure at least one default effort is marked
     if (!efforts.some((e) => e.isDefaultEffort) && efforts.length > 0) {
       const last = efforts[efforts.length - 1]!;
       efforts[efforts.length - 1] = { ...last, isDefaultEffort: true };
     }
 
     const curation = RELEASE_CURATION[relSlug];
+    const existingRel = existingBySlug.get(relSlug);
     const normHarborKey = relName.toLowerCase().replace(/^claude\s+/, "").trim();
-    const harborEval = harborMap.get(normHarborKey) ?? harborMap.get(relName.toLowerCase()) ?? null;
+    const harborEntry =
+      harborMap.get(normHarborKey) ?? harborMap.get(relName.toLowerCase()) ?? null;
+    const deprecated = Boolean(sample.deprecated);
 
     releases.push({
       slug: relSlug,
       name: relName,
       provider,
       releaseDate: sample.releaseDate as string,
-      deprecated: Boolean(sample.deprecated),
-      supersededOn: curation?.supersededOn ?? null,
+      deprecated,
+      supersededOn: resolveSupersededOn({
+        deprecated,
+        curatedSupersededOn: curation?.supersededOn,
+        existingSupersededOn: existingRel?.supersededOn,
+        snapshotDate,
+      }),
       pricing: {
         inputPer1M: sample.price1mInputTokens as number,
         outputPer1M: sample.price1mOutputTokens as number,
@@ -545,11 +622,15 @@ function buildDataset(
       },
       summary:
         curation?.summary ??
+        existingRel?.summary ??
         `${relName} evaluated across ${efforts.length} effort configuration${efforts.length === 1 ? "" : "s"}.`,
       announcementUrl:
-        curation?.announcementUrl ?? `https://artificialanalysis.ai/models/${sample.slug}`,
+        curation?.announcementUrl ??
+        existingRel?.announcementUrl ??
+        harborEntry?.modelUrl ??
+        `https://artificialanalysis.ai/models/${sample.slug}`,
       benchmarkUrl: `https://artificialanalysis.ai/models/${sample.slug}`,
-      harborEval,
+      harborEval: harborEntry?.eval ?? null,
       efforts,
     });
   }
@@ -558,7 +639,6 @@ function buildDataset(
   releases.sort((a, b) => {
     const d = b.releaseDate.localeCompare(a.releaseDate);
     if (d !== 0) return d;
-    // Higher max coding score first on same release day (e.g. GPT-6.2 Astra above GPT-6.2 Sol)
     const maxA = Math.max(...a.efforts.map((e) => e.scores.coding));
     const maxB = Math.max(...b.efforts.map((e) => e.scores.coding));
     if (Math.abs(maxB - maxA) > 0.01) return maxB - maxA;
@@ -567,7 +647,7 @@ function buildDataset(
 
   return {
     schemaVersion: 1,
-    updatedAt: `${snapshotDate}T16:00:00Z`,
+    updatedAt: new Date().toISOString().replace(/\.\d{3}Z$/, "Z"),
     snapshotDate,
     sources: [
       {
@@ -593,7 +673,7 @@ function buildDataset(
   };
 }
 
-function validateDataset(ds: ReleaseDataset): void {
+export function validateDataset(ds: ReleaseDataset): void {
   if (ds.schemaVersion !== 1) throw new Error("Unexpected schemaVersion");
   if (!Array.isArray(ds.releases) || ds.releases.length < 10) {
     throw new Error(`Expected at least 10 releases, got ${ds.releases?.length}`);
@@ -629,27 +709,39 @@ function validateDataset(ds: ReleaseDataset): void {
   }
 }
 
-const args = process.argv.slice(2);
-if (args.includes("--check")) {
-  const existing = JSON.parse(readFileSync(DATA_PATH, "utf8")) as ReleaseDataset;
-  validateDataset(existing);
-  const totalPoints = existing.releases.reduce((s, r) => s + r.efforts.length, 0);
+if (import.meta.main) {
+  const args = process.argv.slice(2);
+  if (args.includes("--check")) {
+    const existing = JSON.parse(readFileSync(DATA_PATH, "utf8")) as ReleaseDataset;
+    validateDataset(existing);
+    const totalPoints = existing.releases.reduce((s, r) => s + r.efforts.length, 0);
+    console.log(
+      `✓ Checked data/releases.json: ${existing.releases.length} releases, ${totalPoints} effort points, latest ${existing.releases[0]?.name} (${existing.releases[0]?.releaseDate}).`,
+    );
+    process.exit(0);
+  }
+
+  const fromRawIdx = args.indexOf("--from-raw");
+  const fromRawDir = fromRawIdx >= 0 ? (args[fromRawIdx + 1] ?? null) : null;
+  const forceWrite = args.includes("--force");
+  const today = new Date().toISOString().slice(0, 10);
+
+  const existing = loadExistingDataset(DATA_PATH);
+  const raw = await loadUpstreamRaw(fromRawDir);
+  const dataset = buildDataset(raw.models, raw.caHtml, raw.tbRecent, today, existing);
+  validateDataset(dataset);
+
+  const totalPoints = dataset.releases.reduce((s, r) => s + r.efforts.length, 0);
+  if (!forceWrite && !hasDatasetChanges(existing, dataset)) {
+    console.log(
+      `✓ Checked upstream (${dataset.releases.length} releases, ${totalPoints} effort configurations): no release or benchmark updates.`,
+    );
+    process.exit(0);
+  }
+
+  mkdirSync(path.dirname(DATA_PATH), { recursive: true });
+  writeFileSync(DATA_PATH, `${JSON.stringify(dataset, null, 2)}\n`);
   console.log(
-    `✓ Checked data/releases.json: ${existing.releases.length} releases, ${totalPoints} effort points, latest ${existing.releases[0]?.name} (${existing.releases[0]?.releaseDate}).`,
+    `✓ Wrote data/releases.json: ${dataset.releases.length} releases, ${totalPoints} effort configurations (snapshot ${dataset.snapshotDate}).`,
   );
-  process.exit(0);
 }
-
-const fromRawIdx = args.indexOf("--from-raw");
-const fromRawDir = fromRawIdx >= 0 ? (args[fromRawIdx + 1] ?? null) : null;
-const today = new Date().toISOString().slice(0, 10);
-const raw = await loadUpstreamRaw(fromRawDir);
-const dataset = buildDataset(raw.models, raw.caHtml, raw.tbRecent, today);
-validateDataset(dataset);
-
-mkdirSync(path.dirname(DATA_PATH), { recursive: true });
-writeFileSync(DATA_PATH, `${JSON.stringify(dataset, null, 2)}\n`);
-const totalPoints = dataset.releases.reduce((s, r) => s + r.efforts.length, 0);
-console.log(
-  `✓ Wrote data/releases.json: ${dataset.releases.length} releases, ${totalPoints} effort configurations (snapshot ${dataset.snapshotDate}).`,
-);

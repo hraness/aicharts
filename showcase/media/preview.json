@@ -3,11 +3,11 @@
   "product": "aicharts",
   "file": "preview.webp",
   "command": "bun run showcase",
-  "sourceSha": "c8d7256cdbe6624c07743568464668d32d463aeb",
+  "sourceSha": "c71a912ccad15f5a41207fca4cd210153664ff2a",
   "pixelWidth": 480,
   "pixelHeight": 480,
-  "bytes": 18462,
-  "sha256": "0ce51bb3be51020fb5a2c8bbcde0570ac0241e4434520b5745daecaaae0b5ed4",
+  "bytes": 19054,
+  "sha256": "80d502b7bcaeb725eacb85781022ee4096394313755bc0d033f1466d40fe9e7c",
   "inputs": {
     "data/releases.json": "af16caf43f9e966e489a9088e237138b93f64b2427552049ea3fa9322692e875"
   },

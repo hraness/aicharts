@@ -5,6 +5,7 @@ import {
   comparePointToFrontier,
   computeParetoFrontier,
   getContextualReleases,
+  getQualifiedFrontierKeys,
 } from "./pareto";
 import type { ReleaseDataset } from "./types";
 
@@ -90,5 +91,19 @@ describe("Pareto frontier & release context", () => {
       expect(cmp.dominator.budget).toBeLessThanOrEqual(nonFrontier!.budget + 1e-9);
       expect(cmp.dominator.score).toBeGreaterThanOrEqual(nonFrontier!.score);
     }
+  });
+
+  test("getQualifiedFrontierKeys keeps high-capability live frontier models and excludes micro-score points", () => {
+    const live = getContextualReleases(dataset.releases, dataset.releases[0]!, "live");
+    const frontier = computeParetoFrontier(buildPlottedPoints(live, "coding", "cost"));
+    const qualified = getQualifiedFrontierKeys(frontier);
+
+    const slugs = new Set(
+      frontier.filter((f) => qualified.has(f.key)).map((f) => f.release.slug),
+    );
+    expect(slugs.has("gpt-6-2-astra")).toBe(true);
+    expect(slugs.has("gpt-6-2-sol")).toBe(true);
+    expect(slugs.has("gpt-6-luna")).toBe(false);
+    expect(slugs.has("claude-haiku-5-5")).toBe(false);
   });
 });

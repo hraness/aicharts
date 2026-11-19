@@ -1,5 +1,17 @@
 [
   {
+    "slug": "effort-curve-table-and-lab-colors",
+    "date": "2026-11-19",
+    "category": "Improved",
+    "surfaces": ["Web app"],
+    "title": "Read effort curves in one table with distinct lab colors",
+    "summary": "Inspect score, cost per task, and output tokens across every effort setting in a single table, with orange, blue, and green lab curves and live-frontier qualification.",
+    "link": {
+      "href": "/",
+      "label": "Explore the chart"
+    }
+  },
+  {
     "slug": "cookieless-guide-visits",
     "date": "2026-11-19",
     "category": "Improved",

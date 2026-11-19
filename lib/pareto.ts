@@ -154,3 +154,25 @@ export function comparePointToFrontier(
     budgetRatio: point.budget / dominator.budget,
   };
 }
+
+/**
+ * Returns the set of point keys on the Pareto frontier that also clear the
+ * capability floor (>= 75% of the frontier's peak score), filtering out
+ * degenerate near-zero micro-budget points from earning "Frontier" badges.
+ */
+export function getQualifiedFrontierKeys(
+  frontier: readonly PlottedPoint[],
+  minRelativeScore = 0.75,
+): Set<string> {
+  if (frontier.length === 0) return new Set();
+  const topScore = frontier[frontier.length - 1]!.score;
+  const threshold = topScore * minRelativeScore;
+  const keys = new Set<string>();
+  for (const pt of frontier) {
+    if (pt.score + 1e-9 >= threshold) {
+      keys.add(pt.key);
+    }
+  }
+  return keys;
+}
+
