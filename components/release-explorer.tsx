@@ -23,8 +23,8 @@ import {
   buildPlottedPoints,
   comparePointToFrontier,
   computeParetoFrontier,
+  getContextualFrontierEfforts,
   getContextualReleases,
-  getFrontierEffortsByRelease,
   getPointScore,
   getQualifiedFrontierKeys,
 } from "@/lib/pareto";
@@ -265,16 +265,19 @@ export function ReleaseExplorer({
     [activePlottedPoint, frontier],
   );
 
-  // Effort settings on the live qualified frontier (current releases, >= 75% of
-  // peak score), by release: one star each.
-  const liveFrontierEfforts = useMemo(
+  // One star per effort setting on the qualified frontier (>= 75% of the top
+  // score), by release. Each row shows what its effort table shows when
+  // selected, so stars follow At release / Live and the lab filter.
+  const frontierStarEfforts = useMemo(
     () =>
-      getFrontierEffortsByRelease(
-        dataset.releases.filter((r) => !r.deprecated),
+      getContextualFrontierEfforts(
+        dataset.releases,
         benchmark.id,
         axis,
+        contextMode,
+        enabledProvidersSet,
       ),
-    [dataset.releases, benchmark.id, axis],
+    [dataset.releases, benchmark.id, axis, contextMode, enabledProvidersSet],
   );
 
   const globalMaxFeedScore = useMemo(() => {
@@ -356,9 +359,10 @@ export function ReleaseExplorer({
                 <div className="release-head__title-row">
                   <h1 className="release-head__name">{selectedRelease.name}</h1>
                   <FrontierStars
-                    efforts={liveFrontierEfforts.get(selectedRelease.slug) ?? []}
+                    efforts={frontierStarEfforts.get(selectedRelease.slug) ?? []}
                     size={9}
                     labelled
+                    context={contextMode}
                   />
                 </div>
                 <div className="release-head__meta">
@@ -612,7 +616,7 @@ export function ReleaseExplorer({
               const bestScore = Math.max(
                 ...rel.efforts.map((e) => getPointScore(e, benchmark.id)),
               );
-              const frontierEfforts = liveFrontierEfforts.get(rel.slug) ?? [];
+              const frontierEfforts = frontierStarEfforts.get(rel.slug) ?? [];
               const barPct = Math.max(
                 2,
                 Math.min(100, (bestScore / globalMaxFeedScore) * 100),
@@ -632,7 +636,7 @@ export function ReleaseExplorer({
                   <span className="feed-row__main">
                     <ProviderLogo provider={rel.provider} size={18} />
                     <span className="feed-row__name">{rel.name}</span>
-                    <FrontierStars efforts={frontierEfforts} size={8} />
+                    <FrontierStars efforts={frontierEfforts} size={8} context={contextMode} />
                   </span>
 
                   <span className="feed-row__right">

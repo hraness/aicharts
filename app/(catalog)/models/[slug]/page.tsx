@@ -170,35 +170,37 @@ export default async function ModelPage({ params }: { params: Params }) {
         />
       </section>
 
-      {!release.deprecated && (
-        <section aria-labelledby="stars">
-          <h2 id="stars">Frontier stars by benchmark</h2>
-          <p>
-            A star marks an effort setting on the live cost frontier: for that spend per task, no
-            current model scores higher. Settings under 75% of the top score do not earn one.
-          </p>
-          <dl className="star-list">
-            {BENCHMARKS.map((benchmark) => {
-              const efforts = catalog.liveFrontier(benchmark.id).get(release.slug) ?? [];
-              return (
-                <div key={benchmark.id}>
-                  <dt>{benchmark.fullLabel}</dt>
-                  <dd>
-                    {efforts.length > 0 ? (
-                      <>
-                        <FrontierStars efforts={efforts} size={10} />
-                        <span>{efforts.map((e) => effortName(e.effortSlug)).join(", ")}</span>
-                      </>
-                    ) : (
-                      <span className="muted">No star</span>
-                    )}
-                  </dd>
-                </div>
-              );
-            })}
-          </dl>
-        </section>
-      )}
+      <section aria-labelledby="stars">
+        <h2 id="stars">Frontier stars by benchmark</h2>
+        <p>
+          A star marks an effort setting on the cost frontier: for that spend per task, no other
+          model scores higher. {release.deprecated ? "" : "Today counts the current models; "}At
+          release counts the models out on {formatFullDate(release.releaseDate)}. Settings under 75%
+          of the top score do not earn one.
+        </p>
+        <dl className="star-list">
+          {BENCHMARKS.map((benchmark) => (
+            <div key={benchmark.id}>
+              <dt>{benchmark.fullLabel}</dt>
+              {!release.deprecated && (
+                <dd>
+                  <StarLine
+                    label="Today"
+                    efforts={catalog.liveFrontier(benchmark.id).get(release.slug) ?? []}
+                  />
+                </dd>
+              )}
+              <dd>
+                <StarLine
+                  label="At release"
+                  context="release"
+                  efforts={catalog.releaseDayFrontier(benchmark.id).get(release.slug) ?? []}
+                />
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </section>
 
       {copy.steps.length > 0 && (
         <section aria-labelledby="steps">
@@ -350,5 +352,25 @@ export default async function ModelPage({ params }: { params: Params }) {
         <a href={`/?release=${release.slug}`}>Open {release.name} in the explorer</a>
       </p>
     </article>
+  );
+}
+
+function StarLine({
+  label,
+  efforts,
+  context = "live",
+}: Readonly<{ label: string; efforts: readonly EffortPoint[]; context?: "live" | "release" }>) {
+  return (
+    <span className="star-line">
+      <span className="muted">{label}:</span>{" "}
+      {efforts.length > 0 ? (
+        <>
+          <FrontierStars efforts={efforts} size={10} context={context} />{" "}
+          <span>{efforts.map((e) => effortName(e.effortSlug)).join(", ")}</span>
+        </>
+      ) : (
+        <span>no star</span>
+      )}
+    </span>
   );
 }

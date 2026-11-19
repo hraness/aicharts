@@ -17,7 +17,7 @@ Minimal AI coding model release monitor and effort-level Pareto frontier explore
 
 - **At release** — Compares the selected release against the frontier of models active on its launch date, showing how the release moved the Pareto curve when announced.
 - **Live** — Compares the selected release against all currently active models.
-- **✦ Frontier stars** — One star for each effort setting that sits on the current **live** Pareto frontier within the upper capability tier (`>= 75%` of peak frontier score). A release on the frontier at Medium, High and Max shows three stars.
+- **✦ Frontier stars** — One star for each effort setting on the cost Pareto frontier within the upper capability tier (`>= 75%` of peak frontier score). A release on the frontier at Medium, High and Max shows three stars. Stars follow the context: in **At release** each release is measured against the models out on its own release day, in **Live** against today's models, and both respect the lab filter. A release's stars in the feed always match the stars in its effort table. Model pages show both counts.
 
 ## Pages
 

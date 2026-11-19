@@ -107,7 +107,7 @@ export function modelCopy(release: ModelRelease, cat: Catalog = defaultCatalog):
       const comparison = own ? comparePointToFrontier(own, computeParetoFrontier(points)) : null;
       if (comparison && !comparison.onFrontier) {
         const rival = comparison.dominator;
-        standing = `No setting earns a frontier star: ${rival.release.name} at ${level(rival.effort)} effort scores ${pct(rival.effort)} for ${cost(rival.effort)} per task, ${comparison.scoreDeficit > 0.05 ? "above" : "matching"} ${name}'s best for no more.`;
+        standing = `No setting earns a frontier star today: ${rival.release.name} at ${level(rival.effort)} effort scores ${pct(rival.effort)} for ${cost(rival.effort)} per task, ${comparison.scoreDeficit > 0.05 ? "above" : "matching"} ${name}'s best for no more.`;
       } else {
         standing = `Its ${level(best)} setting sits on the live cost frontier, but below the bar for a frontier star: 75% of the top coding score.`;
       }
