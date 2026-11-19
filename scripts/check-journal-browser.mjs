@@ -26,6 +26,10 @@ const noSideScroll = (page) =>
 async function checkFooter(page) {
   const footer = page.getByRole("contentinfo", { name: "Site" });
   assert.equal(
+    await footer.getByRole("link", { name: "Coding agents" }).getAttribute("href"),
+    "/agents",
+  );
+  assert.equal(
     await footer.getByRole("link", { name: "Hraness" }).getAttribute("href"),
     "https://hraness.com",
   );
@@ -138,6 +142,14 @@ try {
         .getByRole("link", { name: "Changelog" })
         .getAttribute("href"),
       "/changelog",
+    );
+    // The explorer has its own header; it links the catalog pages too.
+    assert.equal(
+      await page
+        .getByRole("navigation", { name: "Product pages" })
+        .getByRole("link", { name: "Agents" })
+        .getAttribute("href"),
+      "/agents",
     );
     await checkFooter(page);
     assert.equal(await noSideScroll(page), true);
