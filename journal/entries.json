@@ -6,7 +6,22 @@
     "surfaces": ["Web app"],
     "title": "Read effort curves in one table with distinct lab colors",
     "summary": "Inspect score, cost per task, and output tokens across every effort setting in a single table, with orange, blue, and green lab curves and live-frontier qualification.",
-    "link": { "href": "/", "label": "Explore the chart" }
+    "link": {
+      "href": "/",
+      "label": "Explore the chart"
+    }
+  },
+  {
+    "slug": "cookieless-guide-visits",
+    "date": "2026-11-19",
+    "category": "Improved",
+    "surfaces": ["Website"],
+    "title": "Choose cookieless visits for the guide",
+    "summary": "The blog’s privacy control lets you stop the guide from remembering visits on this browser.",
+    "link": {
+      "label": "View privacy choices",
+      "href": "/blog#privacy"
+    }
   },
   {
     "slug": "field-guide-to-the-frontier",
@@ -15,7 +30,10 @@
     "surfaces": ["Website"],
     "title": "A guide to reading the frontier",
     "summary": "Try a real cost-versus-score comparison inside Introducing aicharts, then open the explorer to compare releases for yourself.",
-    "link": { "href": "/blog/introducing-aicharts", "label": "Read the guide" }
+    "link": {
+      "href": "/blog/introducing-aicharts",
+      "label": "Read the guide"
+    }
   },
   {
     "slug": "coding-model-explorer",
@@ -24,7 +42,10 @@
     "surfaces": ["Web app"],
     "title": "Compare the effort settings behind a coding score",
     "summary": "Plot benchmark scores against dollars or output tokens per task. Compare a release with the models available on its launch day, or switch to the live field.",
-    "link": { "href": "/", "label": "Explore the chart" }
+    "link": {
+      "href": "/",
+      "label": "Explore the chart"
+    }
   },
   {
     "slug": "public-release-data",
@@ -33,6 +54,9 @@
     "surfaces": ["API"],
     "title": "Take the release data with you",
     "summary": "The public JSON feed includes the source links, release dates, and effort-level measurements used in the explorer.",
-    "link": { "href": "/api/releases", "label": "Open the data" }
+    "link": {
+      "href": "/api/releases",
+      "label": "Open the data"
+    }
   }
 ]

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createAnalytics, type Analytics } from "@hraness/analytics/browser";
 
 let client: Analytics<"article cta viewed"> | undefined;
@@ -100,12 +100,23 @@ export function ArticleAction({
   );
 }
 export function PrivacyChoices() {
+  const [saved, setSaved] = useState(false);
   return (
-    <button
-      className="privacy-choice"
-      onClick={() => analytics().privacyChoices()}
-    >
-      Privacy choices
-    </button>
+    <>
+      <button
+        className="privacy-choice"
+        onClick={() => {
+          analytics().choose("all", "no");
+          setSaved(true);
+        }}
+      >
+        Use cookieless analytics
+      </button>
+      {saved && (
+        <p role="status">
+          Your visits will be counted without a cookie on this browser.
+        </p>
+      )}
+    </>
   );
 }
