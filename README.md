@@ -38,3 +38,5 @@ Benchmark measurements and per-task token/cost accounting are normalized from [A
 ## License
 
 [MIT](./LICENSE)
+
+Read [Introducing aicharts](https://aicharts.io/blog/introducing-aicharts) to try an effort comparison. The [changelog](https://aicharts.io/changelog) covers updates to the explorer, website and API.

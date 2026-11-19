@@ -310,12 +310,13 @@ export function ReleaseExplorer({
       {/* Minimal Single-Line Header */}
       <header className="topbar">
         <div className="topbar__brand">
-          <AiChartsMark size={17} />
+          <AiChartsMark size={23} />
           <span className="topbar__title">aicharts</span>
           <span className="topbar__tag">coding pareto</span>
         </div>
 
         <div className="topbar__actions">
+          <nav className="journal-nav" aria-label="Product pages"><a href="/blog">Blog</a><a href="/changelog">Changelog</a></nav>
           <div className="brand-legend" aria-label="Tracked labs">
             {(["anthropic", "openai", "google"] as const).map((pid) => (
               <span key={pid} className={`legend-item legend-item--${pid}`}>

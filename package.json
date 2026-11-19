@@ -21,9 +21,12 @@
     "test": "bun test",
     "data:refresh": "bun run scripts/refresh-data.ts",
     "data:check": "bun run scripts/refresh-data.ts --check",
-    "check": "bun run data:check && bun run typecheck && bun run test && bun run build"
+    "check": "bun run data:check && bun run typecheck && bun run test && bun run build",
+    "check:journal:browser": "node scripts/check-journal-browser.mjs",
+    "showcase": "node scripts/check-journal-browser.mjs --preview"
   },
   "dependencies": {
+    "@hraness/analytics": "https://github.com/hraness/posthog/releases/download/v1.1.0/hraness-analytics-1.1.0.tgz",
     "next": "16.4.6",
     "react": "19.3.1",
     "react-dom": "19.3.1"
