@@ -54,7 +54,7 @@ jobs:
     if: always()
     needs:
       - checks
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
       - name: Require all blocking jobs
