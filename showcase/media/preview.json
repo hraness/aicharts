@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "product": "aicharts",
+  "file": "preview.webp",
+  "command": "bun run showcase",
+  "sourceSha": "c8d7256cdbe6624c07743568464668d32d463aeb",
+  "pixelWidth": 480,
+  "pixelHeight": 480,
+  "bytes": 18462,
+  "sha256": "0ce51bb3be51020fb5a2c8bbcde0570ac0241e4434520b5745daecaaae0b5ed4",
+  "inputs": {
+    "data/releases.json": "af16caf43f9e966e489a9088e237138b93f64b2427552049ea3fa9322692e875"
+  },
+  "browser": "153.0.8010.12",
+  "encoder": "1.6.0\nlibsharpyuv: 0.4.2",
+  "alt": "aicharts comparing coding benchmark scores with cost per task at several reasoning effort settings."
+}
