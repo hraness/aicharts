@@ -1,0 +1,72 @@
+export function formatUsd(value: number): string {
+  if (value < 0.01) return `$${value.toFixed(3)}`;
+  if (value < 100) return `$${value.toFixed(2)}`;
+  return `$${Math.round(value)}`;
+}
+
+export function formatUsdTick(value: number): string {
+  if (value < 0.01) return `$${value}`;
+  if (value < 1) return `$${Number(value.toFixed(2))}`;
+  return `$${Math.round(value)}`;
+}
+
+export function formatTokens(value: number): string {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(2)}M`;
+  if (value >= 100_000) return `${Math.round(value / 1_000)}k`;
+  if (value >= 10_000) return `${(value / 1_000).toFixed(1)}k`;
+  if (value >= 1_000) return `${(value / 1_000).toFixed(1)}k`;
+  return `${Math.round(value)}`;
+}
+
+export function formatTokensTick(value: number): string {
+  if (value >= 1_000_000) return `${value / 1_000_000}M`;
+  if (value >= 1_000) return `${Math.round(value / 1_000)}k`;
+  return `${value}`;
+}
+
+export function formatScore(value: number, unit: "%" | "pts"): string {
+  return unit === "%" ? `${value.toFixed(1)}%` : value.toFixed(1);
+}
+
+const MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+] as const;
+
+export function formatShortDate(isoDate: string): string {
+  const [y, m, d] = isoDate.split("-");
+  const monthIdx = Number(m) - 1;
+  const month = MONTHS[monthIdx] ?? m;
+  const day = Number(d);
+  return y === "2026" ? `${month} ${day}` : `${month} ${day}, '${(y ?? "").slice(2)}`;
+}
+
+export function formatFullDate(isoDate: string): string {
+  const [y, m, d] = isoDate.split("-");
+  const monthIdx = Number(m) - 1;
+  const month = MONTHS[monthIdx] ?? m;
+  return `${month} ${Number(d)}, ${y}`;
+}
+
+export function formatPricePair(inputPer1M: number, outputPer1M: number): string {
+  const fmt = (n: number) => (Number.isInteger(n) ? `${n}` : `${n}`);
+  return `$${fmt(inputPer1M)}/$${fmt(outputPer1M)}`;
+}
+
+export function shortModelName(name: string): string {
+  return name
+    .replace(/^Claude\s+/, "")
+    .replace(/^Gemini\s+4\s+/, "G4 ")
+    .replace(/^Gemini\s+/, "Gem ")
+    .replace(/^GPT-/, "GPT-");
+}
