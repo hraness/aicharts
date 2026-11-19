@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ParetoChart } from "./pareto-chart";
 import { formatScore, formatUsd, formatTokens } from "@/lib/format";
 import { BENCHMARKS, type BudgetAxis, type ModelRelease } from "@/lib/types";
@@ -11,6 +11,8 @@ export function GuideChart({
   releases: ModelRelease[];
   initialSlug: string;
 }) {
+  const [interactive, setInteractive] = useState(false);
+  useEffect(() => setInteractive(true), []);
   const [slug, setSlug] = useState(initialSlug);
   const release = releases.find((r) => r.slug === slug)!;
   const [effortSlug, setEffort] = useState(release.efforts[0]!.effortSlug);
@@ -32,6 +34,7 @@ export function GuideChart({
           <label>
             Release
             <select
+              disabled={!interactive}
               aria-label="Release"
               value={slug}
               onChange={(e) => selectRelease(e.target.value)}
@@ -46,6 +49,7 @@ export function GuideChart({
           <label>
             Effort
             <select
+              disabled={!interactive}
               aria-label="Effort"
               value={effort.effortSlug}
               onChange={(e) =>
@@ -65,6 +69,7 @@ export function GuideChart({
           <label>
             Budget
             <select
+              disabled={!interactive}
               aria-label="Budget"
               value={axis}
               onChange={(e) =>
