@@ -1,5 +1,17 @@
 [
   {
+    "slug": "frontier-stars-follow-context",
+    "date": "2026-11-19",
+    "category": "Fixed",
+    "surfaces": ["Web app", "Website"],
+    "title": "Frontier stars follow At release and Live",
+    "summary": "Stars in the release feed now follow the At release and Live switch and the lab filter, so a model’s row shows the same stars as its effort table. At release measures each model against the models out on its launch day. Model pages now list both: today’s stars and the stars a model earned on its release day.",
+    "link": {
+      "href": "/?release=gemini-4-carbon&ctx=release",
+      "label": "See Gemini 4 Carbon at release"
+    }
+  },
+  {
     "slug": "model-and-comparison-pages",
     "date": "2026-11-19",
     "category": "New",

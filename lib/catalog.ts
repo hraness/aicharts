@@ -2,6 +2,7 @@ import rawDataset from "../data/releases.json";
 import {
   buildPlottedPoints,
   computeParetoFrontier,
+  getContextualFrontierEfforts,
   getFrontierEffortsByRelease,
 } from "./pareto";
 import type {
@@ -124,6 +125,11 @@ export type Catalog = Readonly<{
   pairsFor: (release: ModelRelease) => ReleasePair[];
   /** Live frontier efforts by release slug for a benchmark, on the cost axis. */
   liveFrontier: (benchmark: BenchmarkId) => ReadonlyMap<string, EffortPoint[]>;
+  /**
+   * Efforts each release had on the frontier of the models out on its release
+   * day, all labs, on the cost axis: the explorer's At release stars.
+   */
+  releaseDayFrontier: (benchmark: BenchmarkId) => ReadonlyMap<string, EffortPoint[]>;
 }>;
 
 /**
@@ -174,6 +180,7 @@ export function buildCatalog(source: ReleaseDataset): Catalog {
 
   const current = releases.filter((r) => !r.deprecated);
   const frontierCache = new Map<BenchmarkId, Map<string, EffortPoint[]>>();
+  const releaseDayCache = new Map<BenchmarkId, Map<string, EffortPoint[]>>();
 
   return {
     dataset: source,
@@ -204,6 +211,14 @@ export function buildCatalog(source: ReleaseDataset): Catalog {
       if (!cached) {
         cached = getFrontierEffortsByRelease(current, benchmark, "cost");
         frontierCache.set(benchmark, cached);
+      }
+      return cached;
+    },
+    releaseDayFrontier(benchmark) {
+      let cached = releaseDayCache.get(benchmark);
+      if (!cached) {
+        cached = getContextualFrontierEfforts(releases, benchmark, "cost", "release");
+        releaseDayCache.set(benchmark, cached);
       }
       return cached;
     },

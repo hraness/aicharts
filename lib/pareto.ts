@@ -201,3 +201,31 @@ export function getFrontierEffortsByRelease(
   }
   return byRelease;
 }
+
+/**
+ * Each release's stars as its own effort table shows them when it is selected:
+ * its settings on the qualified frontier of the field the chart plots for it.
+ * In release mode that field is what existed on its release day, so a model
+ * keeps the stars it launched with; in live mode it is today's models. Both
+ * respect the lab filter, as the chart does.
+ */
+export function getContextualFrontierEfforts(
+  allReleases: readonly ModelRelease[],
+  benchmark: BenchmarkId,
+  axis: BudgetAxis,
+  mode: ContextMode,
+  enabledProviders?: ReadonlySet<ProviderId>,
+): Map<string, EffortPoint[]> {
+  const byRelease = new Map<string, EffortPoint[]>();
+  for (const release of allReleases) {
+    const field = getContextualReleases(allReleases, release, mode, enabledProviders);
+    const frontier = computeParetoFrontier(buildPlottedPoints(field, benchmark, axis));
+    const qualified = getQualifiedFrontierKeys(frontier);
+    const efforts = frontier
+      .filter((p) => p.release.slug === release.slug && qualified.has(p.key))
+      .map((p) => p.effort)
+      .sort((a, b) => a.effortLevel - b.effortLevel);
+    if (efforts.length > 0) byRelease.set(release.slug, efforts);
+  }
+  return byRelease;
+}

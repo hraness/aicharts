@@ -11,7 +11,7 @@ export function GET() {
     "",
     "> Coding scores, cost per task and output tokens for AI model releases from OpenAI, Anthropic and Google, measured at every effort setting each model offers. Data from Artificial Analysis and Terminal-Bench, refreshed several times a day. Made by Hraness (https://hraness.com).",
     "",
-    "The coding composite is the mean of FrontierCode 2.0 and Terminal-Bench 4.0. A frontier star marks an effort setting on the live cost frontier: for that spend per task, no current model scores higher.",
+    "The coding composite is the mean of FrontierCode 2.0 and Terminal-Bench 4.0. A frontier star marks an effort setting on the live cost frontier: for that spend per task, no current model scores higher. Model pages also list release-day stars, measured against the models out on that release's launch day.",
     "",
     "## Models",
     "",

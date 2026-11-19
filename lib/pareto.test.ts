@@ -4,11 +4,13 @@ import {
   buildPlottedPoints,
   comparePointToFrontier,
   computeParetoFrontier,
+  getContextualFrontierEfforts,
   getContextualReleases,
   getFrontierEffortsByRelease,
   getQualifiedFrontierKeys,
 } from "./pareto";
-import type { ReleaseDataset } from "./types";
+import { release } from "./test-fixtures";
+import type { ProviderId, ReleaseDataset } from "./types";
 
 const dataset = rawDataset as unknown as ReleaseDataset;
 
@@ -124,6 +126,60 @@ describe("Pareto frontier & release context", () => {
       for (const effort of efforts) {
         expect(qualified.has(`${slug}:${effort.effortSlug}`)).toBe(true);
       }
+    }
+  });
+
+  test("each release's stars match what its effort table shows when selected", () => {
+    const slugs = (efforts: readonly { effortSlug: string }[]) => efforts.map((e) => e.effortSlug);
+    for (const mode of ["release", "live"] as const) {
+      for (const providers of [undefined, new Set<ProviderId>(["google"])]) {
+        const stars = getContextualFrontierEfforts(dataset.releases, "coding", "cost", mode, providers);
+        for (const rel of dataset.releases) {
+          const field = getContextualReleases(dataset.releases, rel, mode, providers);
+          const qualified = getQualifiedFrontierKeys(
+            computeParetoFrontier(buildPlottedPoints(field, "coding", "cost")),
+          );
+          const expected = [...rel.efforts]
+            .filter((e) => qualified.has(`${rel.slug}:${e.effortSlug}`))
+            .sort((a, b) => a.effortLevel - b.effortLevel);
+          expect(slugs(stars.get(rel.slug) ?? [])).toEqual(slugs(expected));
+        }
+      }
+    }
+  });
+
+  test("a model keeps its release-day stars after a newer model beats it", () => {
+    const older = release("model-a", "Model A", "google", "2027-01-01", null, [
+      ["low", 40, 1],
+      ["high", 50, 2],
+    ]);
+    const newer = release("model-b", "Model B", "openai", "2027-02-01", null, [
+      ["low", 45, 0.5],
+      ["high", 60, 1],
+    ]);
+    const field = [newer, older];
+    const starred = (mode: "release" | "live", providers?: ReadonlySet<ProviderId>) =>
+      Object.fromEntries(
+        [...getContextualFrontierEfforts(field, "coding", "cost", mode, providers)].map(
+          ([slug, efforts]) => [slug, efforts.map((e) => e.effortSlug)],
+        ),
+      );
+
+    expect(starred("release")).toEqual({ "model-a": ["low", "high"], "model-b": ["low", "high"] });
+    expect(starred("live")).toEqual({ "model-b": ["low", "high"] });
+    // With only Google shown, Model A leads its live field again. (Model B's own
+    // row is hidden by that filter; selecting it would still plot it.)
+    expect(starred("live", new Set<ProviderId>(["google"]))["model-a"]).toEqual(["low", "high"]);
+  });
+
+  test("live stars across all labs match the static pages' stars", () => {
+    const current = dataset.releases.filter((r) => !r.deprecated);
+    const explorer = getContextualFrontierEfforts(dataset.releases, "coding", "cost", "live");
+    const pages = getFrontierEffortsByRelease(current, "coding", "cost");
+    for (const rel of current) {
+      expect((explorer.get(rel.slug) ?? []).map((e) => e.effortSlug)).toEqual(
+        (pages.get(rel.slug) ?? []).map((e) => e.effortSlug),
+      );
     }
   });
 });
