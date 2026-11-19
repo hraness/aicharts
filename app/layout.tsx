@@ -3,25 +3,25 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://aicharts.io"),
-  title: "aicharts — Coding Model Releases & Effort Pareto Curves",
+  title: "AI model comparison chart for coding: score vs cost — aicharts",
   description:
-    "Track AI coding model releases from Anthropic, OpenAI, and Google with normalized benchmarks and cost-vs-performance effort-level Pareto curves.",
+    "Compare AI models for coding on one chart: score against cost per task at every effort level. Find the best AI model for coding at your budget.",
   alternates: {
     canonical: "/",
   },
   openGraph: {
-    title: "aicharts — Coding Model Effort Pareto Curves",
+    title: "AI model comparison chart for coding — aicharts",
     description:
-      "Minimal release feed and normalized cost-vs-performance Pareto curves across Anthropic, OpenAI, and Google coding models.",
+      "Every Anthropic, OpenAI and Google coding model on one chart: score against cost per task at each effort level.",
     url: "https://aicharts.io",
     siteName: "aicharts",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "aicharts — Coding Model Effort Pareto Curves",
+    title: "AI model comparison chart for coding — aicharts",
     description:
-      "Normalized coding benchmarks and effort-level Pareto frontiers for Anthropic, OpenAI, and Google.",
+      "Every Anthropic, OpenAI and Google coding model on one chart: score against cost per task at each effort level.",
   },
 };
 
