@@ -1,0 +1,29 @@
+[
+  {
+    "slug": "field-guide-to-the-frontier",
+    "date": "2026-11-19",
+    "category": "Docs",
+    "surfaces": ["Website"],
+    "title": "A guide to reading the frontier",
+    "summary": "Try a real cost-versus-score comparison inside Introducing aicharts, then open the explorer to compare releases for yourself.",
+    "link": { "href": "/blog/introducing-aicharts", "label": "Read the guide" }
+  },
+  {
+    "slug": "coding-model-explorer",
+    "date": "2026-11-19",
+    "category": "New",
+    "surfaces": ["Web app"],
+    "title": "Compare the effort settings behind a coding score",
+    "summary": "Plot benchmark scores against dollars or output tokens per task. Compare a release with the models available on its launch day, or switch to the live field.",
+    "link": { "href": "/", "label": "Explore the chart" }
+  },
+  {
+    "slug": "public-release-data",
+    "date": "2026-11-19",
+    "category": "New",
+    "surfaces": ["API"],
+    "title": "Take the release data with you",
+    "summary": "The public JSON feed includes the source links, release dates, and effort-level measurements used in the explorer.",
+    "link": { "href": "/api/releases", "label": "Open the data" }
+  }
+]

@@ -1289,3 +1289,9 @@ a:focus-visible {
   align-items: center;
   gap: 6px;
 }
+
+.journal-nav { display: flex; align-items: center; gap: 12px; font-size: 13px; }
+.journal-nav a { display: inline-flex; align-items: center; min-height: 32px; color: var(--fg-muted); }
+.journal-nav a:hover, .journal-nav a[aria-current="page"] { color: var(--fg); text-decoration: underline; text-underline-offset: 4px; }
+@media (max-width: 580px) { .topbar__tag { display: none; } }
+@media (max-width: 400px) { .topbar { flex-wrap: wrap; } .topbar__actions { flex-wrap: wrap; } }

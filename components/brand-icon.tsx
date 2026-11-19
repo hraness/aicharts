@@ -72,30 +72,7 @@ export function ProviderBadge({
 }
 
 export function AiChartsMark({ size = 18 }: Readonly<{ size?: number }>) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <rect
-        x="1.5"
-        y="1.5"
-        width="17"
-        height="17"
-        rx="4.5"
-        stroke="currentColor"
-        strokeOpacity="0.22"
-        strokeWidth="1.25"
-      />
-      <path
-        d="M5 14.5L7.8 9.2L11.4 7.1L15 5"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <circle cx="5" cy="14.5" r="1.5" fill="currentColor" fillOpacity="0.55" />
-      <circle cx="7.8" cy="9.2" r="1.6" fill="currentColor" fillOpacity="0.8" />
-      <circle cx="15" cy="5" r="1.9" fill="currentColor" />
-    </svg>
-  );
+  return <img src="/icon.svg" alt="" width={size} height={size} />;
 }
 
 export function ExternalArrowIcon({ size = 11 }: Readonly<{ size?: number }>) {
