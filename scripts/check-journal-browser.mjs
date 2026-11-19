@@ -8,6 +8,32 @@ import { createHash } from "node:crypto";
 import { chromium } from "playwright-core";
 
 const capture = process.argv.includes("--preview");
+const entries = JSON.parse(await readFile("journal/entries.json", "utf8"));
+const { releases } = JSON.parse(await readFile("data/releases.json", "utf8"));
+const model = releases.find((r) => !r.deprecated);
+// The changelog filter matches title, summary, category and surfaces.
+const frontierWebsite = entries.filter(
+  (e) =>
+    e.surfaces.includes("Website") &&
+    [e.title, e.summary, e.category, ...e.surfaces]
+      .join(" ")
+      .toLowerCase()
+      .includes("frontier"),
+).length;
+assert.ok(frontierWebsite > 0, "Keep a Website changelog entry about the frontier");
+const noSideScroll = (page) =>
+  page.evaluate(() => document.documentElement.scrollWidth <= innerWidth);
+async function checkFooter(page) {
+  const footer = page.getByRole("contentinfo", { name: "Site" });
+  assert.equal(
+    await footer.getByRole("link", { name: "Hraness" }).getAttribute("href"),
+    "https://hraness.com",
+  );
+  assert.equal(
+    await footer.getByRole("link", { name: "Your Privacy Choices" }).count(),
+    1,
+  );
+}
 const server = spawn(
   process.execPath,
   [
@@ -113,6 +139,8 @@ try {
         .getAttribute("href"),
       "/changelog",
     );
+    await checkFooter(page);
+    assert.equal(await noSideScroll(page), true);
     await page
       .getByRole("navigation", { name: "Product pages" })
       .getByRole("link", { name: "Blog" })
@@ -149,7 +177,8 @@ try {
     await page.locator(".pareto-chart-wrap").waitFor();
     await page.goto(url + "/changelog?q=frontier&surface=Website");
     await page.waitForFunction(
-      () => document.querySelectorAll("[data-pj-entry]").length === 1,
+      (count) => document.querySelectorAll("[data-pj-entry]").length === count,
+      frontierWebsite,
     );
     await page.getByRole("button", { name: "Clear filters" }).click();
     await page.getByRole("searchbox").fill("nonesuch");
@@ -157,6 +186,52 @@ try {
     await page.getByRole("button", { name: "Clear filters" }).click();
     assert.ok((await page.locator("[data-pj-entry]").count()) >= 3);
     assert.equal(new URL(page.url()).search, "");
+
+    // Model, comparison and effort pages share the header and footer and never
+    // scroll sideways, even with wide tables on a phone.
+    await page.goto(url + "/models");
+    await page
+      .getByRole("link", { name: model.name, exact: true })
+      .first()
+      .click();
+    await page.waitForURL(url + "/models/" + model.slug);
+    await page.locator(".catalog-chart .pareto-svg").waitFor();
+    await page.getByLabel("Cost axis").selectOption("tokens");
+    await page.waitForFunction(() =>
+      document.querySelector(".chart-readout").textContent.includes("output tokens"),
+    );
+    const pair = await page
+      .locator('a[href^="/compare/"]')
+      .first()
+      .getAttribute("href");
+    const effortStep = await page
+      .locator('.steps a[href^="/effort/"]')
+      .first()
+      .getAttribute("href");
+    for (const path of [
+      "/models",
+      "/models/" + model.slug,
+      "/compare",
+      pair,
+      "/effort",
+      effortStep ?? "/effort",
+    ]) {
+      await page.goto(url + path);
+      assert.equal(await page.locator("main h1").count(), 1, path);
+      assert.equal(
+        await page
+          .getByRole("navigation", { name: "Product pages" })
+          .getByRole("link", { name: "Models" })
+          .getAttribute("href"),
+        "/models",
+      );
+      await checkFooter(page);
+      assert.equal(await noSideScroll(page), true, path + " scrolls sideways");
+    }
+    // The reverse order of a comparison redirects to the canonical page.
+    const [first, second] = pair.slice("/compare/".length).split("-vs-");
+    await page.goto(url + "/compare/" + second + "-vs-" + first);
+    assert.equal(new URL(page.url()).pathname, pair);
     await context.close();
   }
   const plain = await browser.newContext({ javaScriptEnabled: false });
@@ -165,6 +240,21 @@ try {
   assert.ok(
     await page.getByRole("link", { name: "Compare models" }).isVisible(),
   );
+  // Without JavaScript, a model page still draws its chart and hides the controls.
+  await page.goto(url + "/models/" + model.slug);
+  assert.ok(await page.locator(".catalog-chart .pareto-svg").isVisible());
+  assert.equal(await page.locator(".catalog-chart .chart-controls").isVisible(), false);
+  assert.ok(await page.locator("table.data-table").first().isVisible());
+  // Addresses from the earlier aicharts.io keep working.
+  for (const [from, to] of [
+    ["/models/lab/" + model.slug + "/profile", "/models/" + model.slug],
+    ["/models/lab/retired-model/profile", "/models"],
+    ["/blog/introducing-ai-charts", "/blog/introducing-aicharts"],
+    ["/calculator", "/models"],
+  ]) {
+    await page.goto(url + from);
+    assert.equal(new URL(page.url()).pathname, to, from);
+  }
   await plain.close();
   if (capture) {
     const ctx = await browser.newContext({
@@ -231,7 +321,7 @@ try {
     await ctx.close();
   }
   console.log(
-    "Verified the guide, comparison controls, closing action, filters, and mobile layout.",
+    "Verified the guide, comparison controls, closing action, filters, catalog pages, redirects, footer, and mobile layout.",
   );
 } finally {
   try {

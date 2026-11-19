@@ -1,4 +1,5 @@
-import { AiChartsMark } from "@/components/brand-icon";
+import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
 import "./journal.css";
 
 export default function JournalLayout({
@@ -8,18 +9,9 @@ export default function JournalLayout({
 }) {
   return (
     <div className="journal-shell">
-      <header className="topbar">
-        <a className="topbar__brand" href="/">
-          <AiChartsMark size={25} />
-          <span className="topbar__title">aicharts</span>
-        </a>
-        <nav aria-label="Product pages" className="journal-nav">
-          <a href="/">Explorer</a>
-          <a href="/blog">Blog</a>
-          <a href="/changelog">Changelog</a>
-        </nav>
-      </header>
+      <SiteHeader />
       <main className="journal-main">{children}</main>
+      <SiteFooter />
     </div>
   );
 }

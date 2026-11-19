@@ -5,6 +5,7 @@ import {
   comparePointToFrontier,
   computeParetoFrontier,
   getContextualReleases,
+  getFrontierEffortsByRelease,
   getQualifiedFrontierKeys,
 } from "./pareto";
 import type { ReleaseDataset } from "./types";
@@ -21,7 +22,6 @@ describe("Pareto frontier & release context", () => {
     for (let i = 1; i < dataset.releases.length; i++) {
       expect(dataset.releases[i - 1]!.releaseDate >= dataset.releases[i]!.releaseDate).toBe(true);
     }
-    expect(dataset.releases[0]!.slug).toBe("gemini-4-neon");
   });
 
   test("computeParetoFrontier yields strictly increasing budget and score", () => {
@@ -63,14 +63,14 @@ describe("Pareto frontier & release context", () => {
     // GPT-6 Astra (Sep 3) was active on Sep 22 (not superseded until Nov 17)
     expect(atOpusLaunch.some((r) => r.slug === "gpt-6-astra")).toBe(true);
 
-    // In live mode, deprecated GPT-6 Astra is excluded unless selected
-    const liveFromNeon = getContextualReleases(
-      dataset.releases,
-      dataset.releases[0]!,
-      "live",
-    );
-    expect(liveFromNeon.some((r) => r.slug === "gpt-6-astra")).toBe(false);
-    expect(liveFromNeon.some((r) => r.slug === "gpt-6-2-astra")).toBe(true);
+    // Live mode holds exactly the current releases, plus a superseded selection.
+    const current = dataset.releases.filter((r) => !r.deprecated);
+    const liveFromNewest = getContextualReleases(dataset.releases, current[0]!, "live");
+    expect(liveFromNewest.map((r) => r.slug)).toEqual(current.map((r) => r.slug));
+    const superseded = dataset.releases.find((r) => r.deprecated)!;
+    const liveFromOld = getContextualReleases(dataset.releases, superseded, "live");
+    expect(liveFromOld.some((r) => r.slug === superseded.slug)).toBe(true);
+    expect(liveFromOld.filter((r) => r.deprecated)).toHaveLength(1);
   });
 
   test("comparePointToFrontier identifies frontier points and dominating points", () => {
@@ -93,17 +93,37 @@ describe("Pareto frontier & release context", () => {
     }
   });
 
-  test("getQualifiedFrontierKeys keeps high-capability live frontier models and excludes micro-score points", () => {
-    const live = getContextualReleases(dataset.releases, dataset.releases[0]!, "live");
-    const frontier = computeParetoFrontier(buildPlottedPoints(live, "coding", "cost"));
-    const qualified = getQualifiedFrontierKeys(frontier);
+  test("getQualifiedFrontierKeys keeps frontier points within 75% of the top score", () => {
+    const live = dataset.releases.filter((r) => !r.deprecated);
+    for (const metric of ["coding", "terminalBench4", "frontierCode2", "intelligence"] as const) {
+      const frontier = computeParetoFrontier(buildPlottedPoints(live, metric, "cost"));
+      const qualified = getQualifiedFrontierKeys(frontier);
+      const top = frontier[frontier.length - 1]!;
+      expect(qualified.has(top.key)).toBe(true);
+      for (const point of frontier) {
+        expect(qualified.has(point.key)).toBe(point.score + 1e-9 >= top.score * 0.75);
+      }
+    }
+    expect(getQualifiedFrontierKeys([]).size).toBe(0);
+  });
 
-    const slugs = new Set(
-      frontier.filter((f) => qualified.has(f.key)).map((f) => f.release.slug),
+  test("getFrontierEffortsByRelease groups the qualified frontier by release, lowest effort first", () => {
+    const live = dataset.releases.filter((r) => !r.deprecated);
+    const qualified = getQualifiedFrontierKeys(
+      computeParetoFrontier(buildPlottedPoints(live, "coding", "cost")),
     );
-    expect(slugs.has("gpt-6-2-astra")).toBe(true);
-    expect(slugs.has("gpt-6-2-sol")).toBe(true);
-    expect(slugs.has("gpt-6-luna")).toBe(false);
-    expect(slugs.has("claude-haiku-5-5")).toBe(false);
+    const byRelease = getFrontierEffortsByRelease(live, "coding", "cost");
+
+    const stars = [...byRelease.values()].reduce((n, efforts) => n + efforts.length, 0);
+    expect(stars).toBe(qualified.size);
+    for (const [slug, efforts] of byRelease) {
+      expect(efforts.length).toBeGreaterThan(0);
+      for (let i = 1; i < efforts.length; i++) {
+        expect(efforts[i]!.effortLevel).toBeGreaterThan(efforts[i - 1]!.effortLevel);
+      }
+      for (const effort of efforts) {
+        expect(qualified.has(`${slug}:${effort.effortSlug}`)).toBe(true);
+      }
+    }
   });
 });

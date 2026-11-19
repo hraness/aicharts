@@ -176,3 +176,28 @@ export function getQualifiedFrontierKeys(
   return keys;
 }
 
+
+/**
+ * Groups the qualified frontier of `field` by release: each release maps to
+ * the effort settings (lowest effort first) that sit on that frontier. The
+ * count drives the frontier stars, one star per effort setting.
+ */
+export function getFrontierEffortsByRelease(
+  field: readonly ModelRelease[],
+  benchmark: BenchmarkId,
+  axis: BudgetAxis,
+): Map<string, EffortPoint[]> {
+  const frontier = computeParetoFrontier(buildPlottedPoints(field, benchmark, axis));
+  const qualified = getQualifiedFrontierKeys(frontier);
+  const byRelease = new Map<string, EffortPoint[]>();
+  for (const point of frontier) {
+    if (!qualified.has(point.key)) continue;
+    const efforts = byRelease.get(point.release.slug) ?? [];
+    efforts.push(point.effort);
+    byRelease.set(point.release.slug, efforts);
+  }
+  for (const efforts of byRelease.values()) {
+    efforts.sort((a, b) => a.effortLevel - b.effortLevel);
+  }
+  return byRelease;
+}

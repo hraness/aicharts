@@ -9,7 +9,9 @@ import {
   ProviderLogo,
   ThemeIcon,
 } from "./brand-icon";
+import { FrontierStars } from "./frontier-stars";
 import { ParetoChart } from "./pareto-chart";
+import { SiteFooter } from "./site-footer";
 import {
   formatFullDate,
   formatScore,
@@ -22,6 +24,7 @@ import {
   comparePointToFrontier,
   computeParetoFrontier,
   getContextualReleases,
+  getFrontierEffortsByRelease,
   getPointScore,
   getQualifiedFrontierKeys,
 } from "@/lib/pareto";
@@ -262,20 +265,17 @@ export function ReleaseExplorer({
     [activePlottedPoint, frontier],
   );
 
-  // Live qualified Pareto-frontier releases (current active frontier, >= 75% of peak score)
-  const liveFrontierReleaseSlugs = useMemo(() => {
-    const activeReleases = dataset.releases.filter((r) => !r.deprecated);
-    const pts = buildPlottedPoints(activeReleases, benchmark.id, axis);
-    const liveFront = computeParetoFrontier(pts);
-    const qualified = getQualifiedFrontierKeys(liveFront);
-    const slugs = new Set<string>();
-    for (const f of liveFront) {
-      if (qualified.has(f.key)) {
-        slugs.add(f.release.slug);
-      }
-    }
-    return slugs;
-  }, [dataset.releases, benchmark.id, axis]);
+  // Effort settings on the live qualified frontier (current releases, >= 75% of
+  // peak score), by release: one star each.
+  const liveFrontierEfforts = useMemo(
+    () =>
+      getFrontierEffortsByRelease(
+        dataset.releases.filter((r) => !r.deprecated),
+        benchmark.id,
+        axis,
+      ),
+    [dataset.releases, benchmark.id, axis],
+  );
 
   const globalMaxFeedScore = useMemo(() => {
     let max = 65;
@@ -298,7 +298,12 @@ export function ReleaseExplorer({
         </div>
 
         <div className="topbar__actions">
-          <nav className="journal-nav" aria-label="Product pages"><a href="/blog">Blog</a><a href="/changelog">Changelog</a></nav>
+          <nav className="journal-nav" aria-label="Product pages">
+            <a href="/models">Models</a>
+            <a href="/compare">Compare</a>
+            <a href="/blog">Blog</a>
+            <a href="/changelog">Changelog</a>
+          </nav>
           <div className="brand-legend" aria-label="Tracked labs">
             {(["anthropic", "openai", "google"] as const).map((pid) => (
               <span key={pid} className="legend-item">
@@ -350,12 +355,11 @@ export function ReleaseExplorer({
               <div className="release-head__titles">
                 <div className="release-head__title-row">
                   <h1 className="release-head__name">{selectedRelease.name}</h1>
-                  {liveFrontierReleaseSlugs.has(selectedRelease.slug) && (
-                    <span className="frontier-badge">
-                      <FrontierStarIcon size={9} />
-                      <span>Frontier</span>
-                    </span>
-                  )}
+                  <FrontierStars
+                    efforts={liveFrontierEfforts.get(selectedRelease.slug) ?? []}
+                    size={9}
+                    labelled
+                  />
                 </div>
                 <div className="release-head__meta">
                   <span>{PROVIDERS[selectedRelease.provider].name}</span>
@@ -363,6 +367,10 @@ export function ReleaseExplorer({
                   <time dateTime={selectedRelease.releaseDate}>
                     {formatFullDate(selectedRelease.releaseDate)}
                   </time>
+                  <span className="dot-sep">·</span>
+                  <a className="release-head__page" href={`/models/${selectedRelease.slug}`}>
+                    Model page
+                  </a>
                 </div>
               </div>
             </div>
@@ -604,7 +612,7 @@ export function ReleaseExplorer({
               const bestScore = Math.max(
                 ...rel.efforts.map((e) => getPointScore(e, benchmark.id)),
               );
-              const isLiveFrontier = liveFrontierReleaseSlugs.has(rel.slug);
+              const frontierEfforts = liveFrontierEfforts.get(rel.slug) ?? [];
               const barPct = Math.max(
                 2,
                 Math.min(100, (bestScore / globalMaxFeedScore) * 100),
@@ -624,15 +632,7 @@ export function ReleaseExplorer({
                   <span className="feed-row__main">
                     <ProviderLogo provider={rel.provider} size={18} />
                     <span className="feed-row__name">{rel.name}</span>
-                    {isLiveFrontier && (
-                      <span
-                        className="frontier-badge frontier-badge--sm"
-                        title="On the live Pareto frontier"
-                      >
-                        <FrontierStarIcon size={8} />
-                        <span>Frontier</span>
-                      </span>
-                    )}
+                    <FrontierStars efforts={frontierEfforts} size={8} />
                   </span>
 
                   <span className="feed-row__right">
@@ -651,10 +651,7 @@ export function ReleaseExplorer({
             })}
           </div>
         </section>
-      </main>
-
-      <footer className="footer">
-        <span>
+        <p className="data-note">
           Normalized from{" "}
           <a href="https://artificialanalysis.ai/models" target="_blank" rel="noopener noreferrer">
             Artificial Analysis v5.0
@@ -664,19 +661,10 @@ export function ReleaseExplorer({
             Terminal-Bench
           </a>{" "}
           · Updated {dataset.snapshotDate}
-        </span>
-        <span className="footer__links">
-          <a href="/api/releases">API</a>
-          <span>·</span>
-          <a
-            href="https://github.com/hraness/aicharts"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            GitHub
-          </a>
-        </span>
-      </footer>
+        </p>
+      </main>
+
+      <SiteFooter />
     </div>
   );
 }

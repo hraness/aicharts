@@ -1,5 +1,29 @@
 [
   {
+    "slug": "model-and-comparison-pages",
+    "date": "2026-11-19",
+    "category": "New",
+    "surfaces": ["Website"],
+    "title": "Read a page for every model, matchup and effort step",
+    "summary": "Each model now has its own page with scores and cost per task at every effort setting. Every two models that were current together get a head-to-head comparison, and each step up in effort, such as XHigh vs High, gets a page measured across models.",
+    "link": {
+      "href": "/models",
+      "label": "Browse the models"
+    }
+  },
+  {
+    "slug": "frontier-stars",
+    "date": "2026-11-19",
+    "category": "Improved",
+    "surfaces": ["Web app", "Website"],
+    "title": "Count a model’s frontier settings in stars",
+    "summary": "The Frontier badge is now a row of stars, one for each effort setting on the live cost frontier, so a model that leads at three budgets shows three stars.",
+    "link": {
+      "href": "/effort",
+      "label": "Compare effort levels"
+    }
+  },
+  {
     "slug": "effort-curve-table-and-lab-colors",
     "date": "2026-11-19",
     "category": "Improved",

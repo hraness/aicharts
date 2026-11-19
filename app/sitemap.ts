@@ -1,19 +1,29 @@
 import type { MetadataRoute } from "next";
 import { entries, guide } from "@/journal/content";
-import rawDataset from "@/data/releases.json";
+import { catalog, publishedEffortSteps, SITE_URL } from "@/lib/catalog";
 
 export default function sitemap(): MetadataRoute.Sitemap {
+  const updated = new Date(catalog.dataset.updatedAt);
+  const data = (path: string, priority: number): MetadataRoute.Sitemap[number] => ({
+    url: SITE_URL + path,
+    lastModified: updated,
+    changeFrequency: "daily",
+    priority,
+  });
   return [
-    {
-      url: "https://aicharts.io",
-      lastModified: new Date(rawDataset.updatedAt),
-      changeFrequency: "daily",
-      priority: 1,
-    },
+    data("", 1),
+    data("/models", 0.9),
+    data("/compare", 0.8),
+    data("/effort", 0.8),
+    ...catalog.current.map((r) => data(`/models/${r.slug}`, 0.8)),
+    ...publishedEffortSteps(catalog.releases).map((s) => data(`/effort/${s.slug}`, 0.7)),
+    ...catalog.pairs.filter((p) => p.current).map((p) => data(`/compare/${p.slug}`, 0.6)),
+    ...catalog.superseded.map((r) => data(`/models/${r.slug}`, 0.5)),
+    ...catalog.pairs.filter((p) => !p.current).map((p) => data(`/compare/${p.slug}`, 0.4)),
     ...["/changelog", "/blog"].map((path) => ({
-      url: "https://aicharts.io" + path,
+      url: SITE_URL + path,
       lastModified: entries[0]!.date,
     })),
-    { url: "https://aicharts.io" + guide.href, lastModified: guide.published },
+    { url: SITE_URL + guide.href, lastModified: guide.published },
   ];
 }
