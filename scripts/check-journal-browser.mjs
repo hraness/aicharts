@@ -119,6 +119,7 @@ try {
         : route.abort(),
     );
     const page = await context.newPage();
+    page.on("pageerror", (error) => console.error("Browser error:", error.message));
     await page.goto(url);
     // The favicon and portfolio export must still show the same mark after a redesign.
     if (width === 960) {
@@ -347,10 +348,12 @@ try {
     await page
       .getByRole("button", { name: "Use cookieless analytics" })
       .click();
-    await page
-      .getByRole("status")
-      .filter({ hasText: "without a cookie" })
-      .waitFor();
+    try {
+      await page.getByRole("status").filter({ hasText: "without a cookie" }).waitFor();
+    } catch (error) {
+      console.error("Privacy choice status:", await page.getByRole("status").allTextContents());
+      throw error;
+    }
     await page.locator("[data-pj-evergreen] a").click();
     await page.locator(".guide-chart").waitFor();
     await pickCompact(page,"Budget","Output tokens","tokens");
