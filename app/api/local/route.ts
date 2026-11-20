@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { NextResponse } from "next/server";
+import {visionExperiments} from "@/lib/vision-bench";
 import measurements from "@/data/local-benchmarks.json";
 import { RELEASES_HEADERS } from "@/lib/api";
 
@@ -14,5 +15,5 @@ export async function GET() {
     JSON.parse(await readFile(join(process.cwd(), "data", file), "utf8"))
   ));
   const deviceBenchmarks = { ...base, suites: [...base.suites, ...supplements.flatMap(snapshot => snapshot.suites)] };
-  return NextResponse.json({ ...measurements, deviceBenchmarks }, { headers: RELEASES_HEADERS });
+  return NextResponse.json({ ...measurements, deviceBenchmarks, visionBenchmarks:{columns:["architecture","imageSize","parametersMillions","imagesPerSecond","batchSize","batchMs","checkpoint","top1Percent"],experiments:visionExperiments} }, { headers: RELEASES_HEADERS });
 }

@@ -2042,5 +2042,760 @@
       "source": "https://huggingface.co/prism-ml/bonsai-image-ternary-4B-mlx-2bit/blob/2c24c81b934a658ba5590cf39088ba929985b4a8/README.md"
     }
   ]
+},
+{
+  "id": "mlperf-mobile-4.0-image_classification",
+  "task": "Image classification",
+  "title": "MLPerf Mobile 4.0 \u00b7 image classification",
+  "source": "https://github.com/mlcommons/mobile_results_v4.0/tree/5a937a58465ebf4b38201fdf68ede35e99c29852/closed",
+  "description": "MLCommons closed-division performance submission. Single-stream logs report the 90th percentile query latency. Offline logs report samples processed per second.",
+  "metrics": [
+    "queryP90Ms"
+  ],
+  "runs": [
+    {
+      "device": "Exynos 2400 \u00b7 MLPerf system",
+      "platform": "Android",
+      "model": "image classification",
+      "config": "SingleStream",
+      "source": "https://github.com/mlcommons/mobile_results_v4.0/blob/5a937a58465ebf4b38201fdf68ede35e99c29852/closed/Samsung/results/exynos2400/image_classification-performance/mlperf_log_summary.txt",
+      "values": {
+        "queryP90Ms": 0.229102
+      }
+    }
+  ]
+},
+{
+  "id": "mlperf-mobile-4.0-image_classification_offline",
+  "task": "Image classification",
+  "title": "MLPerf Mobile 4.0 \u00b7 image classification offline",
+  "source": "https://github.com/mlcommons/mobile_results_v4.0/tree/5a937a58465ebf4b38201fdf68ede35e99c29852/closed",
+  "description": "MLCommons closed-division performance submission. Single-stream logs report the 90th percentile query latency. Offline logs report samples processed per second.",
+  "metrics": [
+    "sampleRate"
+  ],
+  "runs": [
+    {
+      "device": "Exynos 2400 \u00b7 MLPerf system",
+      "platform": "Android",
+      "model": "image classification offline",
+      "config": "Offline",
+      "source": "https://github.com/mlcommons/mobile_results_v4.0/blob/5a937a58465ebf4b38201fdf68ede35e99c29852/closed/Samsung/results/exynos2400/image_classification_offline-performance/mlperf_log_summary.txt",
+      "values": {
+        "sampleRate": 6246.8
+      }
+    }
+  ]
+},
+{
+  "id": "mlperf-mobile-4.0-image_classification_v2",
+  "task": "Image classification",
+  "title": "MLPerf Mobile 4.0 \u00b7 image classification v2",
+  "source": "https://github.com/mlcommons/mobile_results_v4.0/tree/5a937a58465ebf4b38201fdf68ede35e99c29852/closed",
+  "description": "MLCommons closed-division performance submission. Single-stream logs report the 90th percentile query latency. Offline logs report samples processed per second.",
+  "metrics": [
+    "queryP90Ms"
+  ],
+  "runs": [
+    {
+      "device": "Exynos 2400 \u00b7 MLPerf system",
+      "platform": "Android",
+      "model": "image classification v2",
+      "config": "SingleStream",
+      "source": "https://github.com/mlcommons/mobile_results_v4.0/blob/5a937a58465ebf4b38201fdf68ede35e99c29852/closed/Samsung/results/exynos2400/image_classification_v2-performance/mlperf_log_summary.txt",
+      "values": {
+        "queryP90Ms": 1.03707
+      }
+    }
+  ]
+},
+{
+  "id": "mlperf-mobile-4.0-image_segmentation_v2",
+  "task": "Image segmentation",
+  "title": "MLPerf Mobile 4.0 \u00b7 image segmentation v2",
+  "source": "https://github.com/mlcommons/mobile_results_v4.0/tree/5a937a58465ebf4b38201fdf68ede35e99c29852/closed",
+  "description": "MLCommons closed-division performance submission. Single-stream logs report the 90th percentile query latency. Offline logs report samples processed per second.",
+  "metrics": [
+    "queryP90Ms"
+  ],
+  "runs": [
+    {
+      "device": "Exynos 2400 \u00b7 MLPerf system",
+      "platform": "Android",
+      "model": "image segmentation v2",
+      "config": "SingleStream",
+      "source": "https://github.com/mlcommons/mobile_results_v4.0/blob/5a937a58465ebf4b38201fdf68ede35e99c29852/closed/Samsung/results/exynos2400/image_segmentation_v2-performance/mlperf_log_summary.txt",
+      "values": {
+        "queryP90Ms": 0.704023
+      }
+    }
+  ]
+},
+{
+  "id": "mlperf-mobile-4.0-natural_language_processing",
+  "task": "Language",
+  "title": "MLPerf Mobile 4.0 \u00b7 natural language processing",
+  "source": "https://github.com/mlcommons/mobile_results_v4.0/tree/5a937a58465ebf4b38201fdf68ede35e99c29852/closed",
+  "description": "MLCommons closed-division performance submission. Single-stream logs report the 90th percentile query latency. Offline logs report samples processed per second.",
+  "metrics": [
+    "queryP90Ms"
+  ],
+  "runs": [
+    {
+      "device": "Exynos 2400 \u00b7 MLPerf system",
+      "platform": "Android",
+      "model": "MobileBERT",
+      "config": "SingleStream",
+      "source": "https://github.com/mlcommons/mobile_results_v4.0/blob/5a937a58465ebf4b38201fdf68ede35e99c29852/closed/Samsung/results/exynos2400/natural_language_processing-performance/mlperf_log_summary.txt",
+      "values": {
+        "queryP90Ms": 3.153477
+      }
+    }
+  ]
+},
+{
+  "id": "mlperf-mobile-4.0-object_detection",
+  "task": "Object detection",
+  "title": "MLPerf Mobile 4.0 \u00b7 object detection",
+  "source": "https://github.com/mlcommons/mobile_results_v4.0/tree/5a937a58465ebf4b38201fdf68ede35e99c29852/closed",
+  "description": "MLCommons closed-division performance submission. Single-stream logs report the 90th percentile query latency. Offline logs report samples processed per second.",
+  "metrics": [
+    "queryP90Ms"
+  ],
+  "runs": [
+    {
+      "device": "Exynos 2400 \u00b7 MLPerf system",
+      "platform": "Android",
+      "model": "object detection",
+      "config": "SingleStream",
+      "source": "https://github.com/mlcommons/mobile_results_v4.0/blob/5a937a58465ebf4b38201fdf68ede35e99c29852/closed/Samsung/results/exynos2400/object_detection-performance/mlperf_log_summary.txt",
+      "values": {
+        "queryP90Ms": 0.453086
+      }
+    }
+  ]
+},
+{
+  "id": "mlperf-mobile-4.0-super_resolution",
+  "task": "Image super-resolution",
+  "title": "MLPerf Mobile 4.0 \u00b7 super resolution",
+  "source": "https://github.com/mlcommons/mobile_results_v4.0/tree/5a937a58465ebf4b38201fdf68ede35e99c29852/closed",
+  "description": "MLCommons closed-division performance submission. Single-stream logs report the 90th percentile query latency. Offline logs report samples processed per second.",
+  "metrics": [
+    "queryP90Ms"
+  ],
+  "runs": [
+    {
+      "device": "Exynos 2400 \u00b7 MLPerf system",
+      "platform": "Android",
+      "model": "super resolution",
+      "config": "SingleStream",
+      "source": "https://github.com/mlcommons/mobile_results_v4.0/blob/5a937a58465ebf4b38201fdf68ede35e99c29852/closed/Samsung/results/exynos2400/super_resolution-performance/mlperf_log_summary.txt",
+      "values": {
+        "queryP90Ms": 7.150625
+      }
+    }
+  ]
+},
+{
+  "id": "mlperf-mobile-5.0-image_classification_offline_v2",
+  "task": "Image classification",
+  "title": "MLPerf Mobile 5.0 \u00b7 image classification offline v2",
+  "source": "https://github.com/mlcommons/mobile_results_v5.0/tree/d943061bd409da1c0536c10258d300e83db2a73b/closed",
+  "description": "MLCommons closed-division performance submission. Single-stream logs report the 90th percentile query latency. Offline logs report samples processed per second.",
+  "metrics": [
+    "sampleRate"
+  ],
+  "runs": [
+    {
+      "device": "Redmi Note 14 Pro+",
+      "platform": "Android",
+      "model": "image classification offline v2",
+      "config": "Offline",
+      "source": "https://github.com/mlcommons/mobile_results_v5.0/blob/d943061bd409da1c0536c10258d300e83db2a73b/closed/Qualcomm_Innovation_Center/results/SD7SG3/image_classification_offline_v2-performance/mlperf_log_summary.txt",
+      "values": {
+        "sampleRate": 192.826
+      }
+    },
+    {
+      "device": "OnePlus 13",
+      "platform": "Android",
+      "model": "image classification offline v2",
+      "config": "Offline",
+      "source": "https://github.com/mlcommons/mobile_results_v5.0/blob/d943061bd409da1c0536c10258d300e83db2a73b/closed/Qualcomm_Innovation_Center/results/SD8Elite/image_classification_offline_v2-performance/mlperf_log_summary.txt",
+      "values": {
+        "sampleRate": 1992.95
+      }
+    },
+    {
+      "device": "Snapdragon 8 Elite QRD",
+      "platform": "Snapdragon reference phones",
+      "model": "image classification offline v2",
+      "config": "Offline",
+      "source": "https://github.com/mlcommons/mobile_results_v5.0/blob/d943061bd409da1c0536c10258d300e83db2a73b/closed/Qualcomm_Innovation_Center/results/SD8Elite_RDI/image_classification_offline_v2-performance/mlperf_log_summary.txt",
+      "values": {
+        "sampleRate": 2024.69
+      }
+    },
+    {
+      "device": "Exynos 2600 reference device",
+      "platform": "Android",
+      "model": "image classification offline v2",
+      "config": "Offline",
+      "source": "https://github.com/mlcommons/mobile_results_v5.0/blob/d943061bd409da1c0536c10258d300e83db2a73b/closed/Samsung/results/exynos2600/2025-11-16T15-50-55.588359/image_classification_offline_v2-performance/mlperf_log_summary.txt",
+      "values": {
+        "sampleRate": 2717.19
+      }
+    }
+  ]
+},
+{
+  "id": "mlperf-mobile-5.0-image_classification_v2",
+  "task": "Image classification",
+  "title": "MLPerf Mobile 5.0 \u00b7 image classification v2",
+  "source": "https://github.com/mlcommons/mobile_results_v5.0/tree/d943061bd409da1c0536c10258d300e83db2a73b/closed",
+  "description": "MLCommons closed-division performance submission. Single-stream logs report the 90th percentile query latency. Offline logs report samples processed per second.",
+  "metrics": [
+    "queryP90Ms"
+  ],
+  "runs": [
+    {
+      "device": "Redmi Note 14 Pro+",
+      "platform": "Android",
+      "model": "image classification v2",
+      "config": "SingleStream",
+      "source": "https://github.com/mlcommons/mobile_results_v5.0/blob/d943061bd409da1c0536c10258d300e83db2a73b/closed/Qualcomm_Innovation_Center/results/SD7SG3/image_classification_v2-performance/mlperf_log_summary.txt",
+      "values": {
+        "queryP90Ms": 5.79
+      }
+    },
+    {
+      "device": "OnePlus 13",
+      "platform": "Android",
+      "model": "image classification v2",
+      "config": "SingleStream",
+      "source": "https://github.com/mlcommons/mobile_results_v5.0/blob/d943061bd409da1c0536c10258d300e83db2a73b/closed/Qualcomm_Innovation_Center/results/SD8Elite/image_classification_v2-performance/mlperf_log_summary.txt",
+      "values": {
+        "queryP90Ms": 0.783021
+      }
+    },
+    {
+      "device": "Snapdragon 8 Elite QRD",
+      "platform": "Snapdragon reference phones",
+      "model": "image classification v2",
+      "config": "SingleStream",
+      "source": "https://github.com/mlcommons/mobile_results_v5.0/blob/d943061bd409da1c0536c10258d300e83db2a73b/closed/Qualcomm_Innovation_Center/results/SD8Elite_RDI/image_classification_v2-performance/mlperf_log_summary.txt",
+      "values": {
+        "queryP90Ms": 0.667865
+      }
+    },
+    {
+      "device": "Exynos 2600 reference device",
+      "platform": "Android",
+      "model": "image classification v2",
+      "config": "SingleStream",
+      "source": "https://github.com/mlcommons/mobile_results_v5.0/blob/d943061bd409da1c0536c10258d300e83db2a73b/closed/Samsung/results/exynos2600/2025-11-16T15-50-55.588359/image_classification_v2-performance/mlperf_log_summary.txt",
+      "values": {
+        "queryP90Ms": 0.542461
+      }
+    }
+  ]
+},
+{
+  "id": "mlperf-mobile-5.0-image_segmentation_v2",
+  "task": "Image segmentation",
+  "title": "MLPerf Mobile 5.0 \u00b7 image segmentation v2",
+  "source": "https://github.com/mlcommons/mobile_results_v5.0/tree/d943061bd409da1c0536c10258d300e83db2a73b/closed",
+  "description": "MLCommons closed-division performance submission. Single-stream logs report the 90th percentile query latency. Offline logs report samples processed per second.",
+  "metrics": [
+    "queryP90Ms"
+  ],
+  "runs": [
+    {
+      "device": "Redmi Note 14 Pro+",
+      "platform": "Android",
+      "model": "image segmentation v2",
+      "config": "SingleStream",
+      "source": "https://github.com/mlcommons/mobile_results_v5.0/blob/d943061bd409da1c0536c10258d300e83db2a73b/closed/Qualcomm_Innovation_Center/results/SD7SG3/image_segmentation_v2-performance/mlperf_log_summary.txt",
+      "values": {
+        "queryP90Ms": 2.664479
+      }
+    },
+    {
+      "device": "OnePlus 13",
+      "platform": "Android",
+      "model": "image segmentation v2",
+      "config": "SingleStream",
+      "source": "https://github.com/mlcommons/mobile_results_v5.0/blob/d943061bd409da1c0536c10258d300e83db2a73b/closed/Qualcomm_Innovation_Center/results/SD8Elite/image_segmentation_v2-performance/mlperf_log_summary.txt",
+      "values": {
+        "queryP90Ms": 0.536875
+      }
+    },
+    {
+      "device": "Snapdragon 8 Elite QRD",
+      "platform": "Snapdragon reference phones",
+      "model": "image segmentation v2",
+      "config": "SingleStream",
+      "source": "https://github.com/mlcommons/mobile_results_v5.0/blob/d943061bd409da1c0536c10258d300e83db2a73b/closed/Qualcomm_Innovation_Center/results/SD8Elite_RDI/image_segmentation_v2-performance/mlperf_log_summary.txt",
+      "values": {
+        "queryP90Ms": 0.503437
+      }
+    },
+    {
+      "device": "Exynos 2600 reference device",
+      "platform": "Android",
+      "model": "image segmentation v2",
+      "config": "SingleStream",
+      "source": "https://github.com/mlcommons/mobile_results_v5.0/blob/d943061bd409da1c0536c10258d300e83db2a73b/closed/Samsung/results/exynos2600/2025-11-16T15-50-55.588359/image_segmentation_v2-performance/mlperf_log_summary.txt",
+      "values": {
+        "queryP90Ms": 0.344375
+      }
+    }
+  ]
+},
+{
+  "id": "mlperf-mobile-5.0-natural_language_processing",
+  "task": "Language",
+  "title": "MLPerf Mobile 5.0 \u00b7 natural language processing",
+  "source": "https://github.com/mlcommons/mobile_results_v5.0/tree/d943061bd409da1c0536c10258d300e83db2a73b/closed",
+  "description": "MLCommons closed-division performance submission. Single-stream logs report the 90th percentile query latency. Offline logs report samples processed per second.",
+  "metrics": [
+    "queryP90Ms"
+  ],
+  "runs": [
+    {
+      "device": "Redmi Note 14 Pro+",
+      "platform": "Android",
+      "model": "MobileBERT",
+      "config": "SingleStream",
+      "source": "https://github.com/mlcommons/mobile_results_v5.0/blob/d943061bd409da1c0536c10258d300e83db2a73b/closed/Qualcomm_Innovation_Center/results/SD7SG3/natural_language_processing-performance/mlperf_log_summary.txt",
+      "values": {
+        "queryP90Ms": 6.796666
+      }
+    },
+    {
+      "device": "OnePlus 13",
+      "platform": "Android",
+      "model": "MobileBERT",
+      "config": "SingleStream",
+      "source": "https://github.com/mlcommons/mobile_results_v5.0/blob/d943061bd409da1c0536c10258d300e83db2a73b/closed/Qualcomm_Innovation_Center/results/SD8Elite/natural_language_processing-performance/mlperf_log_summary.txt",
+      "values": {
+        "queryP90Ms": 1.558958
+      }
+    },
+    {
+      "device": "Snapdragon 8 Elite QRD",
+      "platform": "Snapdragon reference phones",
+      "model": "MobileBERT",
+      "config": "SingleStream",
+      "source": "https://github.com/mlcommons/mobile_results_v5.0/blob/d943061bd409da1c0536c10258d300e83db2a73b/closed/Qualcomm_Innovation_Center/results/SD8Elite_RDI/natural_language_processing-performance/mlperf_log_summary.txt",
+      "values": {
+        "queryP90Ms": 1.51
+      }
+    },
+    {
+      "device": "Exynos 2600 reference device",
+      "platform": "Android",
+      "model": "MobileBERT",
+      "config": "SingleStream",
+      "source": "https://github.com/mlcommons/mobile_results_v5.0/blob/d943061bd409da1c0536c10258d300e83db2a73b/closed/Samsung/results/exynos2600/2025-11-16T15-50-55.588359/natural_language_processing-performance/mlperf_log_summary.txt",
+      "values": {
+        "queryP90Ms": 0.844336
+      }
+    }
+  ]
+},
+{
+  "id": "mlperf-mobile-5.0-object_detection",
+  "task": "Object detection",
+  "title": "MLPerf Mobile 5.0 \u00b7 object detection",
+  "source": "https://github.com/mlcommons/mobile_results_v5.0/tree/d943061bd409da1c0536c10258d300e83db2a73b/closed",
+  "description": "MLCommons closed-division performance submission. Single-stream logs report the 90th percentile query latency. Offline logs report samples processed per second.",
+  "metrics": [
+    "queryP90Ms"
+  ],
+  "runs": [
+    {
+      "device": "Redmi Note 14 Pro+",
+      "platform": "Android",
+      "model": "object detection",
+      "config": "SingleStream",
+      "source": "https://github.com/mlcommons/mobile_results_v5.0/blob/d943061bd409da1c0536c10258d300e83db2a73b/closed/Qualcomm_Innovation_Center/results/SD7SG3/object_detection-performance/mlperf_log_summary.txt",
+      "values": {
+        "queryP90Ms": 1.825573
+      }
+    },
+    {
+      "device": "OnePlus 13",
+      "platform": "Android",
+      "model": "object detection",
+      "config": "SingleStream",
+      "source": "https://github.com/mlcommons/mobile_results_v5.0/blob/d943061bd409da1c0536c10258d300e83db2a73b/closed/Qualcomm_Innovation_Center/results/SD8Elite/object_detection-performance/mlperf_log_summary.txt",
+      "values": {
+        "queryP90Ms": 0.371146
+      }
+    },
+    {
+      "device": "Snapdragon 8 Elite QRD",
+      "platform": "Snapdragon reference phones",
+      "model": "object detection",
+      "config": "SingleStream",
+      "source": "https://github.com/mlcommons/mobile_results_v5.0/blob/d943061bd409da1c0536c10258d300e83db2a73b/closed/Qualcomm_Innovation_Center/results/SD8Elite_RDI/object_detection-performance/mlperf_log_summary.txt",
+      "values": {
+        "queryP90Ms": 0.330156
+      }
+    },
+    {
+      "device": "Exynos 2600 reference device",
+      "platform": "Android",
+      "model": "object detection",
+      "config": "SingleStream",
+      "source": "https://github.com/mlcommons/mobile_results_v5.0/blob/d943061bd409da1c0536c10258d300e83db2a73b/closed/Samsung/results/exynos2600/2025-11-16T15-50-55.588359/object_detection-performance/mlperf_log_summary.txt",
+      "values": {
+        "queryP90Ms": 0.214531
+      }
+    }
+  ]
+},
+{
+  "id": "mlperf-mobile-5.0-super_resolution",
+  "task": "Image super-resolution",
+  "title": "MLPerf Mobile 5.0 \u00b7 super resolution",
+  "source": "https://github.com/mlcommons/mobile_results_v5.0/tree/d943061bd409da1c0536c10258d300e83db2a73b/closed",
+  "description": "MLCommons closed-division performance submission. Single-stream logs report the 90th percentile query latency. Offline logs report samples processed per second.",
+  "metrics": [
+    "queryP90Ms"
+  ],
+  "runs": [
+    {
+      "device": "Redmi Note 14 Pro+",
+      "platform": "Android",
+      "model": "super resolution",
+      "config": "SingleStream",
+      "source": "https://github.com/mlcommons/mobile_results_v5.0/blob/d943061bd409da1c0536c10258d300e83db2a73b/closed/Qualcomm_Innovation_Center/results/SD7SG3/super_resolution-performance/mlperf_log_summary.txt",
+      "values": {
+        "queryP90Ms": 35.398021
+      }
+    },
+    {
+      "device": "OnePlus 13",
+      "platform": "Android",
+      "model": "super resolution",
+      "config": "SingleStream",
+      "source": "https://github.com/mlcommons/mobile_results_v5.0/blob/d943061bd409da1c0536c10258d300e83db2a73b/closed/Qualcomm_Innovation_Center/results/SD8Elite/super_resolution-performance/mlperf_log_summary.txt",
+      "values": {
+        "queryP90Ms": 3.178646
+      }
+    },
+    {
+      "device": "Snapdragon 8 Elite QRD",
+      "platform": "Snapdragon reference phones",
+      "model": "super resolution",
+      "config": "SingleStream",
+      "source": "https://github.com/mlcommons/mobile_results_v5.0/blob/d943061bd409da1c0536c10258d300e83db2a73b/closed/Qualcomm_Innovation_Center/results/SD8Elite_RDI/super_resolution-performance/mlperf_log_summary.txt",
+      "values": {
+        "queryP90Ms": 3.147813
+      }
+    },
+    {
+      "device": "Exynos 2600 reference device",
+      "platform": "Android",
+      "model": "super resolution",
+      "config": "SingleStream",
+      "source": "https://github.com/mlcommons/mobile_results_v5.0/blob/d943061bd409da1c0536c10258d300e83db2a73b/closed/Samsung/results/exynos2600/2025-11-16T15-50-55.588359/super_resolution-performance/mlperf_log_summary.txt",
+      "values": {
+        "queryP90Ms": 2.6175
+      }
+    }
+  ]
+},
+{
+  "id": "mlperf-mobile-5.0-stable_diffusion",
+  "task": "Image generation",
+  "title": "MLPerf Mobile 5.0 \u00b7 stable diffusion",
+  "source": "https://github.com/mlcommons/mobile_results_v5.0/tree/d943061bd409da1c0536c10258d300e83db2a73b/closed",
+  "description": "MLCommons closed-division performance submission. Single-stream logs report the 90th percentile query latency. Offline logs report samples processed per second.",
+  "metrics": [
+    "queryP90Ms"
+  ],
+  "runs": [
+    {
+      "device": "OnePlus 13",
+      "platform": "Android",
+      "model": "stable diffusion",
+      "config": "SingleStream",
+      "source": "https://github.com/mlcommons/mobile_results_v5.0/blob/d943061bd409da1c0536c10258d300e83db2a73b/closed/Qualcomm_Innovation_Center/results/SD8Elite/stable_diffusion-performance/mlperf_log_summary.txt",
+      "values": {
+        "queryP90Ms": 3780.948072
+      }
+    },
+    {
+      "device": "Snapdragon 8 Elite QRD",
+      "platform": "Snapdragon reference phones",
+      "model": "stable diffusion",
+      "config": "SingleStream",
+      "source": "https://github.com/mlcommons/mobile_results_v5.0/blob/d943061bd409da1c0536c10258d300e83db2a73b/closed/Qualcomm_Innovation_Center/results/SD8Elite_RDI/stable_diffusion-performance/mlperf_log_summary.txt",
+      "values": {
+        "queryP90Ms": 3214.840467
+      }
+    },
+    {
+      "device": "Exynos 2600 reference device",
+      "platform": "Android",
+      "model": "stable diffusion",
+      "config": "SingleStream",
+      "source": "https://github.com/mlcommons/mobile_results_v5.0/blob/d943061bd409da1c0536c10258d300e83db2a73b/closed/Samsung/results/exynos2600/2025-11-16T15-50-55.588359/stable_diffusion-performance/mlperf_log_summary.txt",
+      "values": {
+        "queryP90Ms": 2205.233711
+      }
+    }
+  ]
+},
+{
+  "id": "mlperf-mobile-6.0-image_classification_offline_v2",
+  "task": "Image classification",
+  "title": "MLPerf Mobile 6.0 \u00b7 image classification offline v2",
+  "source": "https://github.com/mlcommons/mobile_results_v6.0/tree/7c0c9cd64aa9742e9bb1d707cc38dd62de1665cf/closed",
+  "description": "MLCommons closed-division performance submission. Single-stream logs report the 90th percentile query latency. Offline logs report samples processed per second.",
+  "metrics": [
+    "sampleRate"
+  ],
+  "runs": [
+    {
+      "device": "Samsung Galaxy S26 (SM-S942N)",
+      "platform": "Android",
+      "model": "image classification offline v2",
+      "config": "Offline",
+      "source": "https://github.com/mlcommons/mobile_results_v6.0/blob/7c0c9cd64aa9742e9bb1d707cc38dd62de1665cf/closed/Samsung/results/exynos2600/logs/2026-04-29T17-18-47.168664/image_classification_offline_v2-performance/mlperf_log_summary.txt",
+      "values": {
+        "sampleRate": 2754.53
+      }
+    }
+  ]
+},
+{
+  "id": "mlperf-mobile-6.0-image_classification_v2",
+  "task": "Image classification",
+  "title": "MLPerf Mobile 6.0 \u00b7 image classification v2",
+  "source": "https://github.com/mlcommons/mobile_results_v6.0/tree/7c0c9cd64aa9742e9bb1d707cc38dd62de1665cf/closed",
+  "description": "MLCommons closed-division performance submission. Single-stream logs report the 90th percentile query latency. Offline logs report samples processed per second.",
+  "metrics": [
+    "queryP90Ms"
+  ],
+  "runs": [
+    {
+      "device": "Samsung Galaxy S26 (SM-S942N)",
+      "platform": "Android",
+      "model": "image classification v2",
+      "config": "SingleStream",
+      "source": "https://github.com/mlcommons/mobile_results_v6.0/blob/7c0c9cd64aa9742e9bb1d707cc38dd62de1665cf/closed/Samsung/results/exynos2600/logs/2026-04-29T17-18-47.168664/image_classification_v2-performance/mlperf_log_summary.txt",
+      "values": {
+        "queryP90Ms": 0.557109
+      }
+    }
+  ]
+},
+{
+  "id": "mlperf-mobile-6.0-image_segmentation_v2",
+  "task": "Image segmentation",
+  "title": "MLPerf Mobile 6.0 \u00b7 image segmentation v2",
+  "source": "https://github.com/mlcommons/mobile_results_v6.0/tree/7c0c9cd64aa9742e9bb1d707cc38dd62de1665cf/closed",
+  "description": "MLCommons closed-division performance submission. Single-stream logs report the 90th percentile query latency. Offline logs report samples processed per second.",
+  "metrics": [
+    "queryP90Ms"
+  ],
+  "runs": [
+    {
+      "device": "Samsung Galaxy S26 (SM-S942N)",
+      "platform": "Android",
+      "model": "image segmentation v2",
+      "config": "SingleStream",
+      "source": "https://github.com/mlcommons/mobile_results_v6.0/blob/7c0c9cd64aa9742e9bb1d707cc38dd62de1665cf/closed/Samsung/results/exynos2600/logs/2026-04-29T17-18-47.168664/image_segmentation_v2-performance/mlperf_log_summary.txt",
+      "values": {
+        "queryP90Ms": 0.356054
+      }
+    }
+  ]
+},
+{
+  "id": "mlperf-mobile-6.0-natural_language_processing",
+  "task": "Language",
+  "title": "MLPerf Mobile 6.0 \u00b7 natural language processing",
+  "source": "https://github.com/mlcommons/mobile_results_v6.0/tree/7c0c9cd64aa9742e9bb1d707cc38dd62de1665cf/closed",
+  "description": "MLCommons closed-division performance submission. Single-stream logs report the 90th percentile query latency. Offline logs report samples processed per second.",
+  "metrics": [
+    "queryP90Ms"
+  ],
+  "runs": [
+    {
+      "device": "Samsung Galaxy S26 (SM-S942N)",
+      "platform": "Android",
+      "model": "MobileBERT",
+      "config": "SingleStream",
+      "source": "https://github.com/mlcommons/mobile_results_v6.0/blob/7c0c9cd64aa9742e9bb1d707cc38dd62de1665cf/closed/Samsung/results/exynos2600/logs/2026-04-29T17-18-47.168664/natural_language_processing-performance/mlperf_log_summary.txt",
+      "values": {
+        "queryP90Ms": 0.833632
+      }
+    }
+  ]
+},
+{
+  "id": "mlperf-mobile-6.0-object_detection",
+  "task": "Object detection",
+  "title": "MLPerf Mobile 6.0 \u00b7 object detection",
+  "source": "https://github.com/mlcommons/mobile_results_v6.0/tree/7c0c9cd64aa9742e9bb1d707cc38dd62de1665cf/closed",
+  "description": "MLCommons closed-division performance submission. Single-stream logs report the 90th percentile query latency. Offline logs report samples processed per second.",
+  "metrics": [
+    "queryP90Ms"
+  ],
+  "runs": [
+    {
+      "device": "Samsung Galaxy S26 (SM-S942N)",
+      "platform": "Android",
+      "model": "object detection",
+      "config": "SingleStream",
+      "source": "https://github.com/mlcommons/mobile_results_v6.0/blob/7c0c9cd64aa9742e9bb1d707cc38dd62de1665cf/closed/Samsung/results/exynos2600/logs/2026-04-29T17-18-47.168664/object_detection-performance/mlperf_log_summary.txt",
+      "values": {
+        "queryP90Ms": 0.21707
+      }
+    }
+  ]
+},
+{
+  "id": "mlperf-mobile-6.0-super_resolution",
+  "task": "Image super-resolution",
+  "title": "MLPerf Mobile 6.0 \u00b7 super resolution",
+  "source": "https://github.com/mlcommons/mobile_results_v6.0/tree/7c0c9cd64aa9742e9bb1d707cc38dd62de1665cf/closed",
+  "description": "MLCommons closed-division performance submission. Single-stream logs report the 90th percentile query latency. Offline logs report samples processed per second.",
+  "metrics": [
+    "queryP90Ms"
+  ],
+  "runs": [
+    {
+      "device": "Samsung Galaxy S26 (SM-S942N)",
+      "platform": "Android",
+      "model": "super resolution",
+      "config": "SingleStream",
+      "source": "https://github.com/mlcommons/mobile_results_v6.0/blob/7c0c9cd64aa9742e9bb1d707cc38dd62de1665cf/closed/Samsung/results/exynos2600/logs/2026-04-29T17-18-47.168664/super_resolution-performance/mlperf_log_summary.txt",
+      "values": {
+        "queryP90Ms": 2.524649
+      }
+    }
+  ]
+},
+{
+  "id": "mlperf-mobile-6.0-stable_diffusion",
+  "task": "Image generation",
+  "title": "MLPerf Mobile 6.0 \u00b7 stable diffusion",
+  "source": "https://github.com/mlcommons/mobile_results_v6.0/tree/7c0c9cd64aa9742e9bb1d707cc38dd62de1665cf/closed",
+  "description": "MLCommons closed-division performance submission. Single-stream logs report the 90th percentile query latency. Offline logs report samples processed per second.",
+  "metrics": [
+    "queryP90Ms"
+  ],
+  "runs": [
+    {
+      "device": "Samsung Galaxy S26 (SM-S942N)",
+      "platform": "Android",
+      "model": "stable diffusion",
+      "config": "SingleStream",
+      "source": "https://github.com/mlcommons/mobile_results_v6.0/blob/7c0c9cd64aa9742e9bb1d707cc38dd62de1665cf/closed/Samsung/results/exynos2600/logs/2026-04-30T11-47-56.522814/stable_diffusion-performance/mlperf_log_summary.txt",
+      "values": {
+        "queryP90Ms": 1872.667734
+      }
+    }
+  ]
+},
+{
+  "id": "meta-oneplus12-llama32",
+  "task": "Language",
+  "title": "Llama 3.2 on OnePlus 12",
+  "source": "https://huggingface.co/meta-llama/Llama-3.2-1B-Instruct/blob/9213176726f574b556790deb65791e0c5aa438b6/README.md",
+  "description": "Meta measured ExecuTorch on the ARM CPU using an adb binary. First-token timing uses a 64-token prompt. Memory is resident set size and storage is the PTE file.",
+  "metrics": [
+    "generation",
+    "firstToken",
+    "prompt",
+    "residentMB"
+  ],
+  "runs": [
+    {
+      "device": "OnePlus 12",
+      "platform": "Android",
+      "model": "Llama 3.2 1B",
+      "config": "BF16 (baseline) \u00b7 ExecuTorch ARM CPU",
+      "storageMiB": 2248.7640380859375,
+      "values": {
+        "generation": 19.2,
+        "prompt": 60.3,
+        "firstToken": 1000.0,
+        "residentMB": 3185.0
+      }
+    },
+    {
+      "device": "OnePlus 12",
+      "platform": "Android",
+      "model": "Llama 3.2 1B",
+      "config": "SpinQuant \u00b7 ExecuTorch ARM CPU",
+      "storageMiB": 1032.8292846679688,
+      "values": {
+        "generation": 50.2,
+        "prompt": 260.5,
+        "firstToken": 300.0,
+        "residentMB": 1921.0
+      }
+    },
+    {
+      "device": "OnePlus 12",
+      "platform": "Android",
+      "model": "Llama 3.2 1B",
+      "config": "QLoRA \u00b7 ExecuTorch ARM CPU",
+      "storageMiB": 1074.7909545898438,
+      "values": {
+        "generation": 45.8,
+        "prompt": 252.0,
+        "firstToken": 300.0,
+        "residentMB": 2255.0
+      }
+    },
+    {
+      "device": "OnePlus 12",
+      "platform": "Android",
+      "model": "Llama 3.2 3B",
+      "config": "BF16 (baseline) \u00b7 ExecuTorch ARM CPU",
+      "storageMiB": 5845.069885253906,
+      "values": {
+        "generation": 7.6,
+        "prompt": 21.2,
+        "firstToken": 3000.0,
+        "residentMB": 7419.0
+      }
+    },
+    {
+      "device": "OnePlus 12",
+      "platform": "Android",
+      "model": "Llama 3.2 3B",
+      "config": "SpinQuant \u00b7 ExecuTorch ARM CPU",
+      "storageMiB": 2322.1969604492188,
+      "values": {
+        "generation": 19.7,
+        "prompt": 89.7,
+        "firstToken": 700.0,
+        "residentMB": 3726.0
+      }
+    },
+    {
+      "device": "OnePlus 12",
+      "platform": "Android",
+      "model": "Llama 3.2 3B",
+      "config": "QLoRA \u00b7 ExecuTorch ARM CPU",
+      "storageMiB": 2411.8423461914062,
+      "values": {
+        "generation": 18.5,
+        "prompt": 88.8,
+        "firstToken": 700.0,
+        "residentMB": 4060.0
+      }
+    }
+  ]
 }
 ]}

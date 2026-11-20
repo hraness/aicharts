@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
+import { DeviceIcon } from "./device-icon";
 import { searchBenchmarks, type BenchmarkChoice } from "@/lib/benchmark-search";
 import type { BenchmarkId } from "@/lib/benchmarks";
 
@@ -44,6 +45,8 @@ export function SearchPicker({ choices, value, onSelect, compactLabel, disabled 
 }) {
   const label = compactLabel ?? "Benchmark";
   const [group, setGroup] = useState("");
+  const [panelLeft,setPanelLeft] = useState(0);
+  const wide = Boolean(compactLabel && choices.length >= 9);
   const [alignEnd, setAlignEnd] = useState(false);
   const id = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -58,9 +61,9 @@ export function SearchPicker({ choices, value, onSelect, compactLabel, disabled 
   const layers = groups.length > 1 && choices.length > 7;
   const browsingGroups = layers && !group && !query.trim();
   const groupPrefix = "group:";
-  const results = browsingGroups ? [
+  const results: readonly BenchmarkChoice[] = browsingGroups ? [
     ...choices.filter(c => !c.group),
-    ...groups.map(g => ({ id: groupPrefix + g, label: g, summary: choices.filter(c => c.group === g).length + " choices" })),
+    ...groups.map(g => ({ id: groupPrefix + g, label: g, summary: new Intl.NumberFormat("en").format(choices.filter(c => c.group === g).length) + (choices.filter(c => c.group === g).length===1 ? " choice" : " choices"), icon:choices.find(c => c.group === g)?.icon })),
   ] : searchBenchmarks(group && !query.trim() ? choices.filter(c => c.group === group) : choices, query);
   const active = results.find((choice) => choice.id === highlighted) ?? results[0];
 
@@ -69,14 +72,22 @@ export function SearchPicker({ choices, value, onSelect, compactLabel, disabled 
   useEffect(() => {
     if (!open) return;
     inputRef.current?.focus();
-
+    function positionPanel() {
+      const bounds = rootRef.current?.getBoundingClientRect();
+      if (bounds) {
+        const width = Math.min(window.innerWidth-24, choices.length >= 24 ? 680 : 464);
+        setPanelLeft(Math.min(0,window.innerWidth - 12 - width - bounds.left));
+      }
+    }
+    positionPanel();
+    window.addEventListener("resize",positionPanel);
     function dismissOutside(event: PointerEvent) {
       if (event.target instanceof Node && !rootRef.current?.contains(event.target)) setOpen(false);
     }
 
     document.addEventListener("pointerdown", dismissOutside);
-    return () => document.removeEventListener("pointerdown", dismissOutside);
-  }, [open]);
+    return () => {window.removeEventListener("resize",positionPanel);document.removeEventListener("pointerdown", dismissOutside);};
+  }, [open,choices.length]);
 
   function openPicker() {
     const bounds = triggerRef.current?.getBoundingClientRect();
@@ -112,13 +123,15 @@ export function SearchPicker({ choices, value, onSelect, compactLabel, disabled 
   function moveHighlight(event: KeyboardEvent<HTMLInputElement>) {
     if (event.nativeEvent.isComposing) return;
     const { key } = event;
-    if (key === "ArrowLeft" && group && !query) {
+    const columns = listRef.current ? getComputedStyle(listRef.current).gridTemplateColumns.split(" ").length : 1;
+    const atStart = active === results[0];
+    if (key === "ArrowLeft" && group && !query && (columns===1 || atStart)) {
       event.preventDefault();
       setGroup("");
       setHighlighted(groupPrefix + group);
       return;
     }
-    if (key === "ArrowRight" && browsingGroups && active?.id.startsWith(groupPrefix) && !query) {
+    if (key === "ArrowRight" && browsingGroups && active?.id.startsWith(groupPrefix) && !query && columns===1) {
       event.preventDefault();
       choose(active.id);
       return;
@@ -128,11 +141,12 @@ export function SearchPicker({ choices, value, onSelect, compactLabel, disabled 
       if (active) choose(active.id);
       return;
     }
-    if (key !== "ArrowDown" && key !== "ArrowUp") return;
+    const horizontal = key === "ArrowLeft" || key === "ArrowRight";
+    if (horizontal ? columns===1 || !!query : key!=="ArrowDown" && key!=="ArrowUp") return;
     event.preventDefault();
     if (!active) return;
-    const direction = key === "ArrowDown" ? 1 : -1;
-    const next = results[(results.indexOf(active) + direction + results.length) % results.length]!;
+    const direction = horizontal ? key==="ArrowRight"?1:-1 : key==="ArrowDown"?columns:-columns;
+    const next = results[((results.indexOf(active) + direction) % results.length + results.length) % results.length]!;
     setHighlighted(next.id);
     document.getElementById(optionId(next.id))?.scrollIntoView({ block: "nearest" });
   }
@@ -140,6 +154,8 @@ export function SearchPicker({ choices, value, onSelect, compactLabel, disabled 
   return (
     <div
       ref={rootRef}
+      data-grid={wide ? choices.length >= 24 ? "large" : "medium" : undefined}
+      style={{"--panel-offset":panelLeft+"px"} as React.CSSProperties}
       data-align-end={alignEnd || undefined}
       className={compactLabel ? "benchmark-picker compact-picker" : "benchmark-picker"}
       onBlur={(event) => {
@@ -171,7 +187,7 @@ export function SearchPicker({ choices, value, onSelect, compactLabel, disabled 
         <span className="benchmark-picker__symbol"><PickerIcon name="chart" /></span>
         <span className="benchmark-picker__selection">
           <span className="benchmark-picker__label">{label}</span>
-          <strong id={`${id}-value`}>{selected?.label ?? "Choose a benchmark"}</strong>
+          <strong id={`${id}-value`}>{selected?.icon && <DeviceIcon kind={selected.icon}/>} {selected?.label ?? "Choose a benchmark"}</strong>
           <span id={`${id}-selection-summary`} className="benchmark-picker__summary">{selected?.summary}</span>
         </span>
         <span className="benchmark-picker__chevron"><PickerIcon name="chevron" /></span>
@@ -231,7 +247,7 @@ export function SearchPicker({ choices, value, onSelect, compactLabel, disabled 
                   onClick={() => choose(choice.id)}
                 >
                   <span className="benchmark-picker__option-copy">
-                    <strong id={`${row}-name`}>{choice.label}</strong>
+                    <strong id={`${row}-name`}>{choice.icon && <DeviceIcon kind={choice.icon}/>} {choice.label}</strong>
                     <span id={`${row}-summary`} className="benchmark-picker__summary">{choice.summary}</span>
                   </span>
                   {choice.id === value && <span className="benchmark-picker__check"><PickerIcon name="check" /></span>}

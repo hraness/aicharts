@@ -179,7 +179,7 @@ export function primaryPoint(
  * Computes the strict Pareto-optimal frontier (minimize budget x, maximize score y).
  * Returned points are strictly increasing in both budget and score.
  */
-export function computeParetoFrontier<T extends Point>(points: readonly T[]): T[] {
+export function computeParetoFrontier<T extends Pick<Point,"key"|"budget"|"score">>(points: readonly T[]): T[] {
   const EPS = 1e-9;
   const sorted = [...points].sort((a, b) => {
     if (Math.abs(a.budget - b.budget) > EPS) return a.budget - b.budget;

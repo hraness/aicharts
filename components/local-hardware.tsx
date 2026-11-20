@@ -3,91 +3,17 @@
 import { useEffect, useRef, useState } from "react";
 import { CompactPicker } from "@/components/compact-picker";
 import { browserSignals, matchDevice, type DeviceMatch } from "@/lib/device-match";
+import { deviceKind, deviceTerms } from "@/lib/device-kind";
+import { TradeoffPlot,frontierOf } from "@/components/tradeoff-plot";
+import { hardwareSlug,visionExperiments } from "@/lib/vision-bench";
+import { DeviceIcon } from "@/components/device-icon";
 import { protocolKey } from "@/lib/hardware-protocol";
 import { deviceBenchmarks } from "@/lib/local-hardware-data";
 import "./local-hardware.css";
 
-type Run = {
-  platform: string;
-  device: string;
-  model: string;
-  config: string;
-  values: Partial<Record<string, number>>;
-  capacity?: string;
-  source?: string;
-  storageMiB?: number;
-  protocol?: string;
-  note?: string;
-};
-
-type Suite = {
-  id: string;
-  title: string;
-  source: string;
-  modelSources?: Record<string,string>;
-  task?: string;
-  description: string;
-  metrics: string[];
-  runs: Run[];
-};
-
+import { measuredMemory, metrics, tasks, speedKeys, number, sortNames, type Run, type Suite } from "@/lib/local-hardware-format";
 const suites: Suite[] = deviceBenchmarks.suites;
-const metrics: Record<string, { label: string; unit: string; lower: boolean }> = {
-  pipelineMedianMs: {label:"Median pipeline time",unit:"ms",lower:true},
-  pipelineMeanMs: {label:"Mean pipeline time",unit:"ms",lower:true},
-  executionMs: {label:"Forward execution",unit:"ms",lower:true},
-  coldLoadMs: {label:"Cold load",unit:"ms",lower:true},
-  forwardRate: {label:"Forward passes",unit:"passes/s",lower:false},
-  audioTimeRatio: {label:"Processing / audio",unit:"s/s",lower:true},
-  forwardMeanMs: {label:"Mean forward",unit:"ms",lower:true},
-  forwardMinMs: {label:"Fastest forward",unit:"ms",lower:true},
-  forwardMaxMs: {label:"Slowest forward",unit:"ms",lower:true},
-  combinedTokens: {label:"Prompt + output",unit:"tok/s",lower:false},
-  peakResidentMiB: {label:"Peak resident memory",unit:"MiB",lower:true},
-  stepSeconds: { label: "Denoising step", unit: "s/step", lower: true },
-  peakGpuGB: { label: "Peak GPU memory", unit: "GB", lower: true },
-  gpuMemoryMB: { label: "Peak GPU memory", unit: "MB", lower: true },
-  visionEncoderMs: { label: "Visual encoder time", unit: "ms", lower: true },
-  graphMs: { label: "Component latency", unit: "ms", lower: true },
-  inferencePeakLowMB: { label: "Estimated inference memory · low", unit: "MB", lower: true },
-  inferencePeakHighMB: { label: "Estimated inference memory · high", unit: "MB", lower: true },
-  whisperEncodeMs: { label: "Audio encoder call", unit: "ms/call", lower: true },
-  whisperDecodeMs: { label: "Single-token decode", unit: "ms/token", lower: true },
-  whisperBatchMs: { label: "Batched decode", unit: "ms/token", lower: true },
-  whisperPromptMs: { label: "Prompt processing", unit: "ms/token", lower: true },
-  prompt: { label: "Read a prompt", unit: "tok/s", lower: false },
-  generation: { label: "Generate text", unit: "tok/s", lower: false },
-  audio: { label: "Transcribe audio", unit: "× real time", lower: false },
-  wer: { label: "Word error rate", unit: "%", lower: true },
-  embeddings: { label: "Embed queries", unit: "queries/s", lower: false },
-  rerank: { label: "Rerank documents", unit: "documents/s", lower: false },
-  retrieval: { label: "Retrieval quality", unit: "NDCG@10", lower: false },
-  synthesis: { label: "Generate speech", unit: "× real time", lower: false },
-  firstAudio: { label: "Time to first audio", unit: "ms", lower: true },
-  tokenLatency: { label: "Time per decoded token", unit: "ms/token", lower: true },
-  firstToken: { label: "Time to first token", unit: "ms", lower: true },
-  requestMs: { label: "Request latency", unit: "ms", lower: true },
-  meanRss: { label: "Mean resident memory", unit: "MB", lower: true },
-  latency: { label: "Elapsed time", unit: "s", lower: true },
-  peak: { label: "Peak app memory", unit: "MiB", lower: true },
-  storage: { label: "Model storage", unit: "MiB", lower: true },
-  vramGiB: { label: "Peak GPU allocation", unit: "GiB", lower: true },
-  memoryMB: { label: "Reported memory usage", unit: "MB", lower: true },
-};
-const number = new Intl.NumberFormat("en", { maximumFractionDigits: 2 });
-const sortNames = (a: string, b: string) => a.localeCompare(b, "en", { numeric: true });
-const tasks: Record<string, string> = {
-  "4167": "Language", "4508": "Language", "15013": "Language", "15021": "Language", "10879": "Language",
-  "webllm-m3": "Language", "webgpu-decode": "Language", "webgpu-request": "Language", "pi-llama": "Language",
-  "pi-asr": "Transcription", "wk-earnings22": "Transcription", "wk-librispeech": "Transcription",
-  "faster-whisper": "Transcription", moi: "Image generation", coreml: "Image generation",
-  sana: "Image generation", video: "Video generation", ace: "Music generation",
-  "fluid-tts": "Speech synthesis", "hf-gooaq": "Embeddings", "msmarco-v100": "Reranking",
-  "qwen-vl-a100": "Vision and language",
-};
-
 const workloadNames = [...new Set(suites.map(suite => suite.task ?? tasks[suite.id]!))];
-const speedKeys = ["generation", "tokenLatency", "requestMs", "firstToken", "audio", "synthesis", "latency", "embeddings", "rerank", "graphMs", "whisperEncodeMs", "prompt", "pipelineMedianMs", "pipelineMeanMs", "forwardMeanMs", "executionMs", "forwardRate", "audioTimeRatio", "combinedTokens", "coldLoadMs"];
 // Keep the source order within each suite. The overview picks the first shared protocol
 // in this order, so a faster measurement never wins selection just for being faster.
 const samples = suites.flatMap(suite => suite.runs.flatMap(run => {
@@ -116,28 +42,28 @@ for (const sample of samples) {
   if (!devicesByTask.has(task)) devicesByTask.set(task, new Set());
   devicesByTask.get(task)!.add(deviceId);
 }
+const visionByDevice=new Map<string,number>();
+for(const test of visionExperiments) {
+  const id=JSON.stringify([test.platform,test.device]);
+  if(!byDevice.has(id))byDevice.set(id,[]);
+  devicesByTask.get("Image classification")!.add(id);
+  visionByDevice.set(id,(visionByDevice.get(id)??0)+test.count);
+}
 const entries = [...byDevice].map(([value, rows]) => {
-  const {platform, device} = rows[0]!.run;
-  const coverage = new Set(rows.map(row => row.task)).size;
-  return {value, label:device, group:platform, platform, device, coverage,
-    description: coverage + (coverage === 1 ? " workload" : " workloads") + " · " + rows.length + " configurations"};
+  const [platform,device] = JSON.parse(value) as [string,string];
+  const coveredTasks=new Set(rows.map(row=>row.task));
+  const visions=visionByDevice.get(value)??0;
+  if(visions)coveredTasks.add("Image classification");
+  const coverage=coveredTasks.size;
+  const icon = deviceKind(device,platform);
+  return {value, icon, keywords:[deviceTerms[icon], ...coveredTasks], label:device, group:platform, platform, device, coverage,
+    description: coverage + (coverage === 1 ? " workload" : " workloads") + " · " + (rows.length+visions).toLocaleString() + " configurations"};
 }).sort((a,b) => sortNames(a.platform,b.platform) || sortNames(a.device,b.device));
 const detectionEntries = [...entries].sort((a,b) => b.coverage - a.coverage ||
   (byDevice.get(b.value)!.length - byDevice.get(a.value)!.length));
 function rankProtocols(a: Sample, b: Sample) {
   const stageMetric = (sample: Sample) => sample.key === "graphMs" || sample.key.startsWith("whisper");
   return Number(stageMetric(a)) - Number(stageMetric(b)) || (breadth.get(b.protocol) ?? 0) - (breadth.get(a.protocol) ?? 0);
-}
-
-function measuredMemory(run: Run, suite?: string) {
-  if (run.values.peakResidentMiB !== undefined) return { gib: run.values.peakResidentMiB / 1024, kind: "Peak resident memory" };
-  if (run.values.peakGpuGB !== undefined) return { gib: run.values.peakGpuGB * 1e9 / 2 ** 30, kind: "Peak GPU memory" };
-  if (run.values.gpuMemoryMB !== undefined) return { gib: run.values.gpuMemoryMB * 1e6 / 2 ** 30, kind: "Peak GPU memory" };
-  if (run.values.meanRss !== undefined) return { gib: run.values.meanRss * 1e6 / 2 ** 30, kind: "Mean resident RAM" };
-  if (run.values.vramGiB !== undefined) return { gib: run.values.vramGiB, kind: "Peak GPU allocation" };
-  if (run.values.peak !== undefined) return { gib: run.values.peak / 1024, kind: suite === "moi" || suite?.startsWith("rne-") ? (run.platform === "Android" ? "Peak process PSS" : "Peak physical footprint") : suite?.startsWith("edge-llm-") ? "Peak physical footprint" : "Peak app memory" };
-  if (run.values.memoryMB !== undefined) return { gib: run.values.memoryMB * 1e6 / 2 ** 30, kind: run.platform === "NVIDIA GPUs" ? "Reported VRAM" : "Reported RAM" };
-  return null;
 }
 
 function storage(run: Run) {
@@ -165,7 +91,7 @@ function rates(value: number, key: string) {
   return null;
 }
 
-const memoryKeys = new Set(["peakResidentMiB","peakGpuGB","gpuMemoryMB","vramGiB","peak","memoryMB","meanRss","inferencePeakLowMB","inferencePeakHighMB"]);
+const memoryKeys = new Set(["residentMB","peakResidentMiB","peakGpuGB","gpuMemoryMB","vramGiB","peak","memoryMB","meanRss","inferencePeakLowMB","inferencePeakHighMB"]);
 const timingLabels: Record<string,string> = {
   prompt:"Prompt speed", generation:"Output speed", firstToken:"First token", latency:"Elapsed time",
   graphMs:"Graph time", audio:"Transcription", synthesis:"Speech speed", tokenLatency:"Token time",
@@ -265,6 +191,34 @@ function TestTable({suite, items, device, peer, inspect}: {
   </div>;
 }
 
+function MemoryFrontier({samples}:{samples:Sample[]}) {
+  const groups = new Map<string,{label:string; key:string; kind:string; samples:Sample[]}>();
+  for (const sample of samples) {
+    const memory = measuredMemory(sample.run,sample.suite.id);
+    if (!memory || memory.gib<=0) continue;
+    const id = JSON.stringify([sample.suite.id,sample.key,memory.kind]);
+    if (!groups.has(id)) groups.set(id,{label:sample.suite.title,key:sample.key,kind:memory.kind,samples:[]});
+    groups.get(id)!.samples.push(sample);
+  }
+  const options=[...groups].filter(([,g])=>new Set(g.samples.map(s=>measuredMemory(s.run,s.suite.id)!.gib)).size>1);
+  const [choice,setChoice]=useState(""),[picked,setPicked]=useState("");
+  const active=options.find(([id])=>id===choice) ?? options[0];
+  if(!active)return null;
+  const [id,g]=active,metric=metrics[g.key]!;
+  const points=g.samples.map(sample=>({key:sample.protocol,label:runName(sample.run),x:measuredMemory(sample.run,sample.suite.id)!.gib,y:sample.run.values[g.key]!}));
+  const frontier=frontierOf(points,true,metric.lower);
+  const selected=points.find(p=>p.key===picked) ?? frontier[Math.floor(frontier.length/2)]!;
+  return <section className="vision-explorer memory-frontier"><h4>Speed and memory frontier</h4>
+    {options.length>1 && <CompactPicker label="Speed and memory test" value={id} options={options.map(([value,test])=>({value,label:test.label,description:metrics[test.key]!.label+" · "+test.kind}))} onChange={value=>{setChoice(value);setPicked("");}}/>}
+    <p><strong>{g.label}</strong> · {points.length} configurations · {frontier.length} on the frontier</p>
+    <strong className="vision-axis">{metric.label} ({metric.unit}) · {metric.lower?"lower":"higher"} is better</strong>
+    <TradeoffPlot points={points} lowerX lowerY={metric.lower} selected={selected.key} onSelect={setPicked} xLabel={g.kind+" (GiB)"} yLabel={metric.label}/>
+    <div className="vision-tools"><button type="button" onClick={()=>setPicked(frontier[0]!.key)}>Least memory on frontier</button><button type="button" onClick={()=>setPicked(frontier.at(-1)!.key)}>Fastest on frontier</button></div>
+    <p className="vision-readout"><strong>{selected.label}</strong> · {number.format(selected.x)} GiB · {number.format(selected.y)} {metric.unit}</p>
+    <a href={g.samples[0]!.suite.source}>Source and test conditions</a>
+  </section>;
+}
+
 function WorkloadResults({left,right,device,peer,inspect}:{
   left:Sample[]; right:Sample[]; device:string; peer?:string; inspect:(s:Sample)=>void;
 }) {
@@ -295,6 +249,7 @@ function WorkloadResults({left,right,device,peer,inspect}:{
     <nav className="timing-tasks" aria-label="Filter measured workloads">
       {["",...availableTasks].map(name => <button key={name} type="button" aria-pressed={task === name} onClick={() => setTask(name)}>{name || "All workloads"}</button>)}
     </nav>
+    {!peer && !words.length && <MemoryFrontier samples={task?left.filter(s=>s.task===task):left}/>}
     {grouped.size === 0 && <p role="status">No published timings match this filter. <button type="button" onClick={() => {setQuery("");setTask("");}}>Clear filters</button></p>}
     {availableTasks.filter(name => grouped.has(name)).map(name => <section className="timing-workload" key={name} id={"workload-" + encodeURIComponent(name)}>
       <h4>{name}</h4>{[...grouped.get(name)!].slice(0, words.length || task || allSources.includes(name) ? undefined : 2).map(([suite,pairs]) => {
@@ -417,7 +372,7 @@ export function LocalHardware() {
   };
   const peer = entries.find(e => e.value === peerId && peerId !== deviceId);
   const right = (peer && byDevice.get(peer.value)) || [];
-  const coverage = (task: string) => Number(left.some(s => s.task === task)) + Number(right.some(s => s.task === task));
+  const coverage = (task: string) => Number(devicesByTask.get(task)?.has(deviceId) ?? false) + Number(peer && devicesByTask.get(task)?.has(peer.value) ? 1 : 0);
   const covered = workloadNames.filter(task => coverage(task) > 0);
   const absent = workloadNames.filter(task => coverage(task) === 0);
   const protocols = protocolsByDevice.get(deviceId) ?? new Set<string>();
@@ -439,7 +394,13 @@ export function LocalHardware() {
   }
   function viewWorkload(id: string, task: string) {
     const sample = byDevice.get(id)?.filter(s => s.task === task).sort(rankProtocols)[0];
-    if (!sample) return;
+    if (!sample) {
+      if(task==="Image classification" && visionByDevice.has(id)) {
+        const selected=entries.find(e=>e.value===id)!;
+        window.location.assign("/local/devices/"+hardwareSlug(selected.platform,selected.device)+"#vision-frontier");
+      }
+      return;
+    }
     pickDevice(id);
     setWorkloadVisit(previous => previous + 1);
     setSelection(sample.suite.id + "/" + sample.key);
@@ -483,8 +444,12 @@ export function LocalHardware() {
         }}>Remember {device} on this browser</button>}
       </div>}
       {suggestions.length > 0 && <div className="hardware-shortcuts"><span>Compare on shared tests</span>{suggestions.map(({entry,workloads,tests}) =>
-        <button key={entry.value} type="button" title={workloads+" workloads · "+tests+" matching configurations"} onClick={() => { manual.current = true; setPeerId(entry.value); }}>{entry.device}</button>)}</div>}
-      <WorkloadResults key={JSON.stringify([deviceId,peerId,workloadVisit])} left={left} right={right} device={device} peer={peer?.device} inspect={inspect}/>
+        <button key={entry.value} type="button" title={workloads+" workloads · "+tests+" matching configurations"} onClick={() => { manual.current = true; setPeerId(entry.value); }}><DeviceIcon kind={entry.icon}/> {entry.device}</button>)}</div>}
+      {[deviceId,...(peer?[peer.value]:[])].filter(id=>visionByDevice.has(id)).map(id=>{
+        const target=entries.find(e=>e.value===id)!;
+        return <p key={id}><a href={"/local/devices/"+hardwareSlug(target.platform,target.device)+"#vision-frontier"}>{target.device} image classification frontier</a> · {visionByDevice.get(id)!.toLocaleString()} timm timings</p>;
+      })}
+      {(left.length>0 || right.length>0) && <WorkloadResults key={JSON.stringify([deviceId,peerId,workloadVisit])} left={left} right={right} device={device} peer={peer?.device} inspect={inspect}/>}
       <div className="hardware-coverage">
         <h3>Browse by workload</h3>
         {[{label:"Measured on your selection",items:covered},{label:"Measured on other hardware",items:absent}].filter(group => group.items.length).map(group =>
@@ -493,12 +458,13 @@ export function LocalHardware() {
         </button>)}</div></div>)}
         {browseTask && <div className="hardware-browse-results">
           <div className="hardware-shortcuts"><span>{browseTask} measurements</span>{detectionEntries.filter(e => devicesByTask.get(browseTask)?.has(e.value)).slice(0,3).map(e =>
-            <button type="button" key={e.value} onClick={() => viewWorkload(e.value,browseTask)}>{e.device}</button>)}</div>
+            <button type="button" key={e.value} onClick={() => viewWorkload(e.value,browseTask)}><DeviceIcon kind={e.icon}/> {e.device}</button>)}</div>
           <CompactPicker label={"Measured devices for " + browseTask} value={devicesByTask.get(browseTask)?.has(deviceId) ? deviceId : ""} options={[
           {value:"",label:"Choose measured hardware"},...entries.filter(e => devicesByTask.get(browseTask)?.has(e.value))]} onChange={id => viewWorkload(id,browseTask)} /></div>}
       </div>
+      {left.length>=4 && <><a href={"/local/devices/"+hardwareSlug(platform,device)}>{device} benchmark report</a> · </>}
       <a href={"/local?" + new URLSearchParams({platform, device, peer: peer?.value ?? ""}) + "#hardware"}>Share device overview</a>
-      <details className="hardware-drill" id="hardware-detail" open={inspecting} onToggle={e => setInspecting(e.currentTarget.open)}>
+      {active && <details className="hardware-drill" id="hardware-detail" open={inspecting} onToggle={e => setInspecting(e.currentTarget.open)}>
       <summary>Explore all measurements on {device}</summary>
       <div className="hardware-controls">
         {active && available.length > 1 && <CompactPicker label="Measurement" value={active.id} options={
@@ -508,7 +474,7 @@ export function LocalHardware() {
           }))
         } onChange={setMeasurement} />}
       </div>
-      {!active && <p className="hardware-empty">The published sources cover {entries.filter(e => e.platform === platform).length} device configurations on this platform. Choose a listed device to inspect its measurements. Speed and memory for an unlisted device are unknown.</p>}
+
       {active && (
         <div className="hardware-panel">
           <h3>{example ? "Example device · " : ""}{device}</h3>
@@ -566,7 +532,7 @@ export function LocalHardware() {
           <p><a href={"/local?" + share + "#hardware"}>Link to this comparison</a></p>
         </div>
       )}
-      </details>
+      </details>}
       <noscript><p>The initial device measurements are available above. Download the full dataset to inspect other devices.</p></noscript>
     </section>
   );
