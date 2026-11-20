@@ -445,12 +445,13 @@ try {
     assert.ok(await page.locator(".local-score-table tbody tr").count() < localBenchmarks.workloads[0].models.length);
     assert.deepEqual(await page.getByRole("navigation", { name: "Choose a workload" }).getByRole("link").allTextContents(), localBenchmarks.workloads.map(g => g.name));
     await page.getByRole("link", { name: "Music generation", exact: true }).click();
+    await page.getByRole("heading", { name: "Music generation benchmarks", exact: true }).waitFor();
     await page.getByRole("navigation", { name: "Choose an evaluation" }).getByRole("link").nth(1).click();
     const music = localBenchmarks.workloads.find(g => g.name === "Music generation");
     const alternate = music.comparisons[0];
-    assert.equal(await page.locator(".local-quality h4").textContent(), alternate.metric);
+    await page.getByRole("heading", { name: alternate.metric, exact: true }).waitFor();
     await page.getByLabel("Compare with", { exact: true }).selectOption(alternate.models[0].name);
-    assert.equal(await page.locator(".local-score-table thead th").last().textContent(), "Difference");
+    await page.getByRole("columnheader", { name: "Difference", exact: true }).waitFor();
     assert.equal(await noSideScroll(page), true);
     const localData = await page.request.get(url + "/api/local");
     assert.equal(localData.status(), 200);
