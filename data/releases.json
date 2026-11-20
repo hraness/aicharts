@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "updatedAt": "2026-11-20T12:25:32Z",
+  "updatedAt": "2026-11-20T22:42:28Z",
   "snapshotDate": "2026-11-20",
   "sources": [
     {
@@ -55,8 +55,40 @@
         "cachedInputPer1M": 0.15,
         "maxInputTokens": 1048576
       },
-      "terminalBench": null,
-      "epoch": [],
+      "terminalBench": {
+        "version": "4.1",
+        "agent": "Antigravity CLI",
+        "agentVersion": "1.5.12",
+        "agentUrl": "https://antigravity.google/docs/overview?tab=cli",
+        "effort": "xhigh",
+        "accuracy": 61.21,
+        "ci95": 2.85,
+        "trials": 330,
+        "successes": 202,
+        "costPerTaskUsd": 5.825,
+        "tokensPerTask": {
+          "total": 9669451,
+          "output": 173583
+        },
+        "minutesPerTask": 82,
+        "sourceUrl": "https://github.com/harbor-framework/terminal-bench/blob/main/leaderboard/submissions/2026-11-20-4-1-0-gemini-gemini-4-neon-xhigh-antigravity-cli.json"
+      },
+      "epoch": [
+        {
+          "benchmark": "gpqaDiamond",
+          "effort": "xhigh",
+          "score": 96.3,
+          "stderr": 1.3,
+          "runOn": "2026-11-19"
+        },
+        {
+          "benchmark": "frontierMath",
+          "effort": "xhigh",
+          "score": 91.2,
+          "stderr": 1.7,
+          "runOn": "2026-11-19"
+        }
+      ],
       "gameBench": []
     },
     {
