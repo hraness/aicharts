@@ -1,5 +1,29 @@
 [
   {
+    "slug": "lineup-view",
+    "date": "2026-11-19",
+    "category": "New",
+    "surfaces": ["Web app"],
+    "title": "Models grouped by lineup",
+    "summary": "The explorer now opens on a lineup: current and superseded models, each grouped by tier so each lab’s models at the same level sit together, such as Claude Opus 5.5 and GPT-6.2 Sol. The lineup compares each model with today’s models. Releases still lists every model by date, against the models out on its release day.",
+    "link": {
+      "href": "/",
+      "label": "Open the lineup"
+    }
+  },
+  {
+    "slug": "charts-keep-their-axes",
+    "date": "2026-11-19",
+    "category": "Fixed",
+    "surfaces": ["Web app", "Website"],
+    "title": "Charts keep their axes when you switch models",
+    "summary": "Every chart now draws on one scale for all models, so points stay in place when you pick another model, change the order or the comparison, or filter by lab. Before, the explorer fitted its axes to each model’s release-day field, so Claude Opus 5.5 and GPT-6.2 Sol drew on different scales. Model, comparison and coding agent pages share the scale too.",
+    "link": {
+      "href": "/?release=claude-opus-5-5&view=releases",
+      "label": "See Claude Opus 5.5 at release"
+    }
+  },
+  {
     "slug": "coding-agent-pages",
     "date": "2026-11-19",
     "category": "New",

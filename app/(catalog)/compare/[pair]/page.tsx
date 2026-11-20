@@ -253,6 +253,7 @@ export default async function ComparePairPage({ params }: { params: Params }) {
 
       <CatalogChart
         releases={[a, b]}
+        scale={catalog.chartScale}
         selectedSlug={a.slug}
         compareSlug={b.slug}
         caption={`Each point is one effort setting. The dashed grey line is the cost frontier of the two models: whichever owns it at a budget gives the higher score for that spend.`}

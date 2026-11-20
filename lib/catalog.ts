@@ -1,9 +1,12 @@
 import rawDataset from "../data/releases.json";
+import { familyOf } from "./lineup";
 import {
   buildPlottedPoints,
   computeParetoFrontier,
+  getChartScale,
   getContextualFrontierEfforts,
   getFrontierEffortsByRelease,
+  type ChartScale,
 } from "./pareto";
 import type {
   BenchmarkId,
@@ -45,14 +48,7 @@ export function effortName(slug: EffortSlug): string {
   return EFFORT_NAMES[slug];
 }
 
-/** The model line inside a lab: "GPT-6.2 Sol" is "sol", "Claude Opus 5.5" is "opus". */
-export function familyOf(name: string): string {
-  return name
-    .toLowerCase()
-    .split(/\s+/)
-    .filter((word) => !/^(claude|gemini|gpt-[\d.]+|[\d.]+)$/.test(word))
-    .join(" ");
-}
+export { familyOf };
 
 /** The last day a release was current. Releases still current run to the far future. */
 export function activeUntil(release: ModelRelease, snapshotDate: string): string {
@@ -118,6 +114,8 @@ export type Catalog = Readonly<{
   current: readonly ModelRelease[];
   superseded: readonly ModelRelease[];
   pairs: readonly ReleasePair[];
+  /** Axes shared by every model chart, from all releases. */
+  chartScale: ChartScale;
   find: (slug: string) => ModelRelease | undefined;
   findPair: (slug: string) => ReleasePair | undefined;
   successorOf: (release: ModelRelease) => ModelRelease | null;
@@ -188,6 +186,7 @@ export function buildCatalog(source: ReleaseDataset): Catalog {
     current,
     superseded: releases.filter((r) => r.deprecated),
     pairs,
+    chartScale: getChartScale(releases),
     find: (slug) => bySlug.get(slug),
     findPair: (slug) => pairBySlug.get(slug),
     successorOf: (release) => successors.get(release.slug) ?? null,

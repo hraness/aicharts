@@ -4,6 +4,7 @@ import {
   buildPlottedPoints,
   comparePointToFrontier,
   computeParetoFrontier,
+  getChartScale,
   getContextualFrontierEfforts,
   getContextualReleases,
   getFrontierEffortsByRelease,
@@ -181,5 +182,33 @@ describe("Pareto frontier & release context", () => {
         (pages.get(rel.slug) ?? []).map((e) => e.effortSlug),
       );
     }
+  });
+
+  test("one chart scale covers every model, whatever the cohort", () => {
+    const scale = getChartScale(dataset.releases);
+    for (const axis of ["cost", "tokens"] as const) {
+      for (const metric of ["coding", "terminalBench4", "frontierCode2", "intelligence"] as const) {
+        const points = buildPlottedPoints(dataset.releases, metric, axis);
+        const bounds = scale[axis][metric]!;
+        for (const point of points) {
+          expect(point.budget).toBeGreaterThanOrEqual(bounds.budget[0]);
+          expect(point.budget).toBeLessThanOrEqual(bounds.budget[1]);
+          expect(point.score).toBeGreaterThanOrEqual(bounds.score[0]);
+          expect(point.score).toBeLessThanOrEqual(bounds.score[1]);
+        }
+      }
+    }
+    // The case the scale fixes: siblings launched two months apart see
+    // different fields at release, with different top scores.
+    const find = (name: string) => dataset.releases.find((r) => r.name === name)!;
+    const top = (name: string) =>
+      Math.max(
+        ...buildPlottedPoints(
+          getContextualReleases(dataset.releases, find(name), "release"),
+          "coding",
+          "cost",
+        ).map((p) => p.score),
+      );
+    expect(top("Claude Opus 5.5")).not.toBe(top("GPT-6.2 Sol"));
   });
 });

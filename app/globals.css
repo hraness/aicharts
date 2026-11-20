@@ -934,6 +934,55 @@ a:focus-visible {
   flex-direction: column;
 }
 
+/* Lineup view: Current and Superseded bands, tiers inside them */
+.feed-band {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px 5px;
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  background: var(--surface-subtle);
+  border-bottom: 1px solid var(--border);
+}
+
+.feed-band:not(:first-child) {
+  border-top: 1px solid var(--border);
+}
+
+.feed-band__count {
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--fg-faint);
+}
+
+.feed-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.feed-group + .feed-group {
+  border-top: 1px solid var(--border);
+}
+
+.feed-group__label {
+  padding: 7px 12px 1px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--fg-faint);
+}
+
+@media (min-width: 640px) {
+  .feed-band,
+  .feed-group__label {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
 .feed-row {
   display: grid;
   grid-template-columns: 48px minmax(0, 1fr) auto;

@@ -14,7 +14,8 @@ import {
   BUDGETS,
   bestRun,
   bestUnder,
-  chartRelease,
+  agentChartReleases,
+  agentChartScale,
   cheapestRun,
   flagship,
   frontierCodeGap,
@@ -246,10 +247,7 @@ export function AgentComparison({
     .slice(0, 2)
     .sort((x, y) => groups.indexOf(x) - groups.indexOf(y))
     .map((g) => flagship(g.runs));
-  const chartReleases = groups.flatMap((g) => {
-    const slugs = [...new Set(g.runs.map((r) => r.release.slug))];
-    return slugs.map((slug) => chartRelease(catalog.find(slug)!, g.harness)!);
-  });
+  const chartReleases = agentChartReleases(groups);
   const frontier = runFrontier(all);
   const starred = getQualifiedFrontierKeys(
     frontier.map((run) => ({
@@ -323,6 +321,7 @@ export function AgentComparison({
 
       <AgentChart
         releases={chartReleases}
+        scale={agentChartScale()}
         selectedSlug={emphasized[0]!.slug}
         compareSlug={emphasized[1]?.slug}
         legend={legendFor(groups, emphasized)}

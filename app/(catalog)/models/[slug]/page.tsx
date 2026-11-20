@@ -152,6 +152,7 @@ export default async function ModelPage({ params }: { params: Params }) {
 
       <CatalogChart
         releases={field}
+        scale={catalog.chartScale}
         selectedSlug={release.slug}
         caption={`${release.name}'s effort settings against every current model. Gold rings mark frontier points; choose another model's point to open its page.`}
       />
