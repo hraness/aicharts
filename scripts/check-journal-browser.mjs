@@ -11,6 +11,10 @@ const capture = process.argv.includes("--preview");
 const entries = JSON.parse(await readFile("journal/entries.json", "utf8"));
 const { releases } = JSON.parse(await readFile("data/releases.json", "utf8"));
 const localHardware = JSON.parse(await readFile("data/local-hardware.json", "utf8"));
+for (const file of ["local-hardware-language.json","local-hardware-nonlanguage.json"]) {
+  const extra = JSON.parse(await readFile("data/" + file, "utf8"));
+  localHardware.suites.push(...extra.suites);
+}
 const localBenchmarks = JSON.parse(await readFile("data/local-benchmarks.json", "utf8"));
 // A current model with a costed run, so its page draws the chart.
 const model = releases.find((r) => !r.deprecated && r.terminalBench?.costPerTaskUsd != null);
@@ -429,14 +433,29 @@ try {
     }
     assert.equal(await page.locator("main h1").textContent(), "Local AI benchmarks");
     const matrix = page.getByRole("table",{name:"Speed by workload"});
-    assert.equal(await matrix.locator("tbody tr").count(),9);
-    await matrix.getByRole("columnheader",{name:/iPhone 16 Pro/}).waitFor();
-    assert.ok(await matrix.locator(".matrix-reference").count() > 0);
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator,"platform",{configurable:true,value:"Linux armv8l"});
+      Object.defineProperty(navigator,"userAgent",{configurable:true,value:"Mozilla/5.0 (Linux; Android 15) Chrome"});
+      Object.defineProperty(navigator,"userAgentData",{configurable:true,value:{
+        platform:"Android",getHighEntropyValues:async () => ({model:"SM-S931U"})
+      }});
+    });
+    await page.reload();
+    await matrix.getByRole("columnheader",{name:/Samsung Galaxy S25/}).waitFor();
+    assert.match(await page.locator(".hardware-detected").textContent(), /SM-S931U.*reported model/);
+    await page.goto(url + "/local?platform=iPhone+%26+iPad&device=iPhone+17+Pro#hardware");
+    await matrix.getByRole("columnheader",{name:/iPhone 17 Pro/}).waitFor();
+    assert.equal(await matrix.locator("thead th").count(),2);
+    const taskChip = page.locator(".coverage-tasks button").filter({hasText:"Music generation"});
+    await taskChip.click();
+    await page.locator(".hardware-browse-results button").first().waitFor();
+    await taskChip.click();
     const shortcut = page.locator(".hardware-shortcuts button").first();
     const peerName = await shortcut.textContent();
     await shortcut.click();
     assert.ok((await matrix.locator("thead").textContent()).includes(peerName));
     await page.locator("#hardware-detail > summary").click();
+    await pickCompact(page,"Measurement","Mobile","moi/latency");
     await page.getByLabel("Available memory (GiB)", { exact: true }).fill("1");
     assert.ok((await page.locator(".hardware-meta").allTextContents()).some(t => t.includes("over budget")));
     await pickCompact(page,"Device","RTX 4090",JSON.stringify(["NVIDIA GPUs","RTX 4090"]));

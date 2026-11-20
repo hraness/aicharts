@@ -1,10 +1,18 @@
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { NextResponse } from "next/server";
-import deviceBenchmarks from "@/data/local-hardware.json";
 import measurements from "@/data/local-benchmarks.json";
 import { RELEASES_HEADERS } from "@/lib/api";
 
 export const dynamic = "force-static";
 
-export function GET() {
+export async function GET() {
+  // Parse original snapshot bytes so the public export retains source precision.
+  // Bundling numeric literals into JavaScript can round their last decimal place.
+  const filenames = ["local-hardware.json", "local-hardware-language.json", "local-hardware-nonlanguage.json"];
+  const [base, ...supplements] = await Promise.all(filenames.map(async file =>
+    JSON.parse(await readFile(join(process.cwd(), "data", file), "utf8"))
+  ));
+  const deviceBenchmarks = { ...base, suites: [...base.suites, ...supplements.flatMap(snapshot => snapshot.suites)] };
   return NextResponse.json({ ...measurements, deviceBenchmarks }, { headers: RELEASES_HEADERS });
 }
