@@ -37,9 +37,9 @@ async function source(local, url) {
 
 function platform(device) {
   if (device.startsWith("Samsung")) return "Android";
-  if (device.startsWith("Snapdragon X")) return "Snapdragon laptops";
-  if (device.startsWith("SA")) return "Automotive development boards";
-  return "Edge AI boards";
+  if (device.startsWith("Snapdragon X")) return "Windows on Arm";
+  if (device.startsWith("Arduino")) return "ARM Linux boards";
+  return "Qualcomm edge & automotive";
 }
 
 async function qualcomm() {
