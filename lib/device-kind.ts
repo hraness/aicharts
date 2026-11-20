@@ -18,7 +18,7 @@ export function deviceKind(device:string, platform:string):DeviceKind {
   return "desktop";
 }
 
-export function deviceKeywords(device:string, platform:string) {
+export function deviceKeywords(device:string, platform:string, workloads: Iterable<string> = []) {
   const name=device.toLowerCase();
   const words=[deviceTerms[deviceKind(device,platform)],platform];
   if(/iphone|ipad/.test(platform.toLowerCase()))words.push("Apple iOS iPadOS");
@@ -28,5 +28,6 @@ export function deviceKeywords(device:string, platform:string) {
   if(/snapdragon/.test(name))words.push("Qualcomm");
   if(/geforce|rtx|gtx/.test(name))words.push("NVIDIA");
   if(/radeon|ryzen/.test(name))words.push("AMD");
+  if (Array.from(workloads).includes("Language")) words.push("LLM language models text generation chat");
   return words;
 }

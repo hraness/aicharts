@@ -5,7 +5,7 @@ import { CompactPicker } from "@/components/compact-picker";
 import { browserSignals, matchDevice, type DeviceMatch } from "@/lib/device-match";
 import { deviceKind, deviceKeywords } from "@/lib/device-kind";
 import { TradeoffPlot,frontierOf } from "@/components/tradeoff-plot";
-import { hardwareSlug,visionExperiments } from "@/lib/vision-bench";
+import { hardwareSlug } from "@/lib/vision-bench";
 import { DeviceIcon } from "@/components/device-icon";
 import { protocolKey } from "@/lib/hardware-protocol";
 import { deviceBenchmarks } from "@/lib/local-hardware-data";
@@ -42,22 +42,13 @@ for (const sample of samples) {
   if (!devicesByTask.has(task)) devicesByTask.set(task, new Set());
   devicesByTask.get(task)!.add(deviceId);
 }
-const visionByDevice=new Map<string,number>();
-for(const test of visionExperiments) {
-  const id=JSON.stringify([test.platform,test.device]);
-  if(!byDevice.has(id))byDevice.set(id,[]);
-  devicesByTask.get("Image classification")!.add(id);
-  visionByDevice.set(id,(visionByDevice.get(id)??0)+test.count);
-}
 const entries = [...byDevice].map(([value, rows]) => {
   const [platform,device] = JSON.parse(value) as [string,string];
   const coveredTasks=new Set(rows.map(row=>row.task));
-  const visions=visionByDevice.get(value)??0;
-  if(visions)coveredTasks.add("Image classification");
   const coverage=coveredTasks.size;
   const icon = deviceKind(device,platform);
-  return {value, icon, keywords:[...deviceKeywords(device,platform), ...coveredTasks], label:device, group:platform, platform, device, coverage,
-    description: coverage + (coverage === 1 ? " workload" : " workloads") + " · " + (rows.length+visions).toLocaleString() + " configurations"};
+  return {value, icon, keywords:[...deviceKeywords(device,platform,coveredTasks), ...coveredTasks], label:device, group:platform, platform, device, coverage,
+    description: coverage + (coverage === 1 ? " workload" : " workloads") + " · " + rows.length.toLocaleString() + " configurations"};
 }).sort((a,b) => sortNames(a.platform,b.platform) || sortNames(a.device,b.device));
 const detectionEntries = [...entries].sort((a,b) => b.coverage - a.coverage ||
   (byDevice.get(b.value)!.length - byDevice.get(a.value)!.length));
@@ -91,7 +82,7 @@ function rates(value: number, key: string) {
   return null;
 }
 
-const memoryKeys = new Set(["residentMB","peakResidentMiB","peakGpuGB","gpuMemoryMB","vramGiB","peak","memoryMB","meanRss","inferencePeakLowMB","inferencePeakHighMB"]);
+const memoryKeys = new Set(["runtimePeakGiB","residentMB","peakResidentMiB","peakGpuGB","gpuMemoryMB","vramGiB","peak","memoryMB","meanRss","inferencePeakLowMB","inferencePeakHighMB"]);
 const timingLabels: Record<string,string> = {
   prompt:"Prompt speed", generation:"Output speed", firstToken:"First token", latency:"Elapsed time",
   graphMs:"Graph time", audio:"Transcription", synthesis:"Speech speed", tokenLatency:"Token time",
@@ -196,8 +187,9 @@ function MemoryFrontier({samples}:{samples:Sample[]}) {
   for (const sample of samples) {
     const memory = measuredMemory(sample.run,sample.suite.id);
     if (!memory || memory.gib<=0) continue;
-    const id = JSON.stringify([sample.suite.id,sample.key,memory.kind]);
-    if (!groups.has(id)) groups.set(id,{label:sample.suite.title,key:sample.key,kind:memory.kind,samples:[]});
+    const setup = sample.suite.id === "mac-llm-context" ? sample.run.config.split(" · ").slice(0,2).join(" · ") : "";
+    const id = JSON.stringify([sample.suite.id,sample.key,memory.kind,setup]);
+    if (!groups.has(id)) groups.set(id,{label:setup || sample.suite.title,key:sample.key,kind:memory.kind,samples:[]});
     groups.get(id)!.samples.push(sample);
   }
   const options=[...groups].filter(([,g])=>new Set(g.samples.map(s=>measuredMemory(s.run,s.suite.id)!.gib)).size>1);
@@ -287,12 +279,16 @@ export function LocalHardware() {
   useEffect(() => {
     const query = new URLSearchParams(window.location.search);
     const p = query.get("platform");
-    const d = query.get("device");
+    const previousVariants = ["M4 Pro · 16 GPU cores", "M4 Pro · 20 GPU cores"];
+    const sharedName = query.get("device");
+    const d = p === "Apple silicon Macs" && previousVariants.includes(sharedName ?? "") ? "Apple M4 Pro" : sharedName;
+    const upgradeSelection = (id: string | null) => previousVariants.some(name => JSON.stringify(["Apple silicon Macs", name]) === id)
+      ? JSON.stringify(["Apple silicon Macs", "Apple M4 Pro"]) : id;
     const shared = !!(p && d && byDevice.has(JSON.stringify([p,d])));
     let saved: typeof entries[number] | undefined;
     try {
       const preference = window.localStorage.getItem("aicharts.hardware");
-      saved = preference ? entries.find(e => e.value === preference) : undefined;
+      saved = preference ? entries.find(e => e.value === upgradeSelection(preference)) : undefined;
       setRemembered(saved?.value ?? "");
       setStorageAvailable(true);
     } catch { /* Browser storage can be disabled. */ }
@@ -314,7 +310,7 @@ export function LocalHardware() {
       }
     }).catch(() => { if (live) setMatch({detected:"Unavailable",reason:"Choose a measured device below."}); });
     if (!shared || !p || !d) return () => {live = false;};
-    const peer = query.get("peer");
+    const peer = upgradeSelection(query.get("peer"));
     if (peer !== null) setPeerId(entries.some(e => e.value === peer) ? peer : "");
     setInspecting(query.has("measure"));
     setExample(false);
@@ -394,13 +390,7 @@ export function LocalHardware() {
   }
   function viewWorkload(id: string, task: string) {
     const sample = byDevice.get(id)?.filter(s => s.task === task).sort(rankProtocols)[0];
-    if (!sample) {
-      if(task==="Image classification" && visionByDevice.has(id)) {
-        const selected=entries.find(e=>e.value===id)!;
-        window.location.assign("/local/devices/"+hardwareSlug(selected.platform,selected.device)+"#vision-frontier");
-      }
-      return;
-    }
+    if (!sample) return;
     pickDevice(id);
     setWorkloadVisit(previous => previous + 1);
     setSelection(sample.suite.id + "/" + sample.key);
@@ -445,10 +435,6 @@ export function LocalHardware() {
       </div>}
       {suggestions.length > 0 && <div className="hardware-shortcuts"><span>Compare on shared tests</span>{suggestions.map(({entry,workloads,tests}) =>
         <button key={entry.value} type="button" title={workloads+" workloads · "+tests+" matching configurations"} onClick={() => { manual.current = true; setPeerId(entry.value); }}><DeviceIcon kind={entry.icon}/> {entry.device}</button>)}</div>}
-      {[deviceId,...(peer?[peer.value]:[])].filter(id=>visionByDevice.has(id)).map(id=>{
-        const target=entries.find(e=>e.value===id)!;
-        return <p key={id}><a href={"/local/devices/"+hardwareSlug(target.platform,target.device)+"#vision-frontier"}>{target.device} image classification frontier</a> · {visionByDevice.get(id)!.toLocaleString()} timm timings</p>;
-      })}
       {(left.length>0 || right.length>0) && <WorkloadResults key={JSON.stringify([deviceId,peerId,workloadVisit])} left={left} right={right} device={device} peer={peer?.device} inspect={inspect}/>}
       <div className="hardware-coverage">
         <h3>Browse by workload</h3>
