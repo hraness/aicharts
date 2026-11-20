@@ -24,6 +24,14 @@ export type Suite = {
 
 
 export const metrics: Record<string, { label: string; unit: string; lower: boolean }> = {
+  energyJ: {label:"Energy per summary",unit:"J",lower:true},
+  bufferMiB: {label:"Model and runtime buffers",unit:"MiB",lower:true},
+  summaryQuality: {label:"G-Eval summary score",unit:"0–1",lower:false},
+  finalTextMs: {label:"Wait for final transcript",unit:"ms",lower:true},
+  tenSecondPeakMiB: {label:"Peak memory on 10 s of audio",unit:"MiB",lower:true},
+  ttsInputRate: {label:"Text synthesized",unit:"input tokens/s",lower:false},
+  inferenceTokens: {label:"Average inference throughput",unit:"tok/s",lower:false},
+  fid: {label:"Image distribution distance",unit:"FID",lower:true},
   queryP90Ms: {label:"90th percentile query",unit:"ms",lower:true},
   sampleRate: {label:"Offline throughput",unit:"samples/s",lower:false},
   residentMB: {label:"Resident memory",unit:"MB",lower:true},
@@ -81,8 +89,10 @@ export const tasks: Record<string, string> = {
 };
 
 
-export const speedKeys = ["generation", "tokenLatency", "requestMs", "firstToken", "audio", "synthesis", "latency", "embeddings", "rerank", "graphMs", "whisperEncodeMs", "prompt", "pipelineMedianMs", "pipelineMeanMs", "forwardMeanMs", "executionMs", "forwardRate", "audioTimeRatio", "combinedTokens", "coldLoadMs","queryP90Ms","sampleRate"];
+export const speedKeys = ["generation", "tokenLatency", "requestMs", "firstToken", "audio", "synthesis", "latency", "embeddings", "rerank", "graphMs", "whisperEncodeMs", "prompt", "pipelineMedianMs", "pipelineMeanMs", "forwardMeanMs", "executionMs", "forwardRate", "audioTimeRatio", "combinedTokens", "coldLoadMs","queryP90Ms","sampleRate","finalTextMs","firstAudio","ttsInputRate","inferenceTokens"];
 export function measuredMemory(run: Run, suite?: string) {
+  if (run.values.bufferMiB !== undefined) return {gib:run.values.bufferMiB / 1024,kind:"Model and runtime buffers"};
+  if (run.values.tenSecondPeakMiB !== undefined) return {gib:run.values.tenSecondPeakMiB / 1024,kind:"Peak memory on 10 s of audio"};
   if (run.values.residentMB !== undefined) return {gib:run.values.residentMB*1e6 / 2**30,kind:"Resident memory"};
   if (run.values.peakResidentMiB !== undefined) return { gib: run.values.peakResidentMiB / 1024, kind: "Peak resident memory" };
   if (run.values.peakGpuGB !== undefined) return { gib: run.values.peakGpuGB * 1e9 / 2 ** 30, kind: "Peak GPU memory" };

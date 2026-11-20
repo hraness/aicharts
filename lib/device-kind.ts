@@ -8,7 +8,7 @@ export function deviceKind(device:string, platform:string):DeviceKind {
   const text = device.toLowerCase();
   if (/chipsets/i.test(platform)) return "cpu";
   if (/npus/i.test(platform)) return "board";
-  if (/ipad|tablet/.test(text)) return "tablet";
+  if (/ipad|tablet|\btab\b|\bpad \d|lenovo tb\d/.test(text)) return "tablet";
   if (/iphone|android|reference phones/i.test(platform)) return "phone";
   if (/browser/i.test(platform)) return "browser";
   if (/laptop|macbook|notebook|stealth|snapdragon x/.test(text)) return "laptop";

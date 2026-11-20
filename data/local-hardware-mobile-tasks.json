@@ -1,0 +1,1075 @@
+{
+  "suites": [
+    {
+      "id": "galaxy-summary",
+      "task": "Summarization",
+      "title": "Write a 100-token summary",
+      "source": "https://github.com/eziyoo/LLMs-on-Devices/blob/4090c3a3687fa4e3ea6fb1c1bea45dafeb1f704c/data/aggregated/final_results.csv",
+      "description": "Galaxy S25 Ultra, llama.cpp on eight CPU threads. Medians of 30 runs per configuration with a 200-second cooldown. Inference includes reading the prompt and writing 100 tokens. Energy is baseline-subtracted battery telemetry. Memory sums the model, context and compute buffers reported by llama.cpp. G-Eval is the study’s model-judged summary score (0–1).",
+      "metrics": [
+        "latency",
+        "firstToken",
+        "generation",
+        "energyJ",
+        "bufferMiB",
+        "summaryQuality"
+      ],
+      "runs": [
+        {
+          "device": "Samsung Galaxy S25 Ultra",
+          "platform": "Android",
+          "model": "Qwen2-0.5B",
+          "config": "Q4_K_M · CPU · 100 output tokens",
+          "values": {
+            "latency": 2.53,
+            "firstToken": 560,
+            "generation": 50.45,
+            "energyJ": 43.95,
+            "bufferMiB": 678.0,
+            "summaryQuality": 0.52
+          }
+        },
+        {
+          "device": "Samsung Galaxy S25 Ultra",
+          "platform": "Android",
+          "model": "Qwen2.5-1.5B",
+          "config": "Q4_K_M · CPU · 100 output tokens",
+          "values": {
+            "latency": 4.37,
+            "firstToken": 1250,
+            "generation": 31.6,
+            "energyJ": 92.87,
+            "bufferMiB": 1373.0,
+            "summaryQuality": 0.69
+          }
+        },
+        {
+          "device": "Samsung Galaxy S25 Ultra",
+          "platform": "Android",
+          "model": "Phi-2-2.8B",
+          "config": "Q4_K_M · CPU · 100 output tokens",
+          "values": {
+            "latency": 7.15,
+            "firstToken": 2510,
+            "generation": 21.37,
+            "energyJ": 143.78,
+            "bufferMiB": 1969.0,
+            "summaryQuality": 0.68
+          }
+        },
+        {
+          "device": "Samsung Galaxy S25 Ultra",
+          "platform": "Android",
+          "model": "Qwen2.5-3B",
+          "config": "Q4_K_M · CPU · 100 output tokens",
+          "values": {
+            "latency": 7.54,
+            "firstToken": 2550,
+            "generation": 19.84,
+            "energyJ": 151.54,
+            "bufferMiB": 2320.0,
+            "summaryQuality": 0.73
+          }
+        },
+        {
+          "device": "Samsung Galaxy S25 Ultra",
+          "platform": "Android",
+          "model": "OLMoE-6.9B",
+          "config": "Q4_K_M · CPU · 100 output tokens",
+          "values": {
+            "latency": 3.6,
+            "firstToken": 1020,
+            "generation": 38.22,
+            "energyJ": 76.46,
+            "bufferMiB": 4182.0,
+            "summaryQuality": 0.6
+          }
+        },
+        {
+          "device": "Samsung Galaxy S25 Ultra",
+          "platform": "Android",
+          "model": "Qwen2.5-7.6B",
+          "config": "Q4_K_M · CPU · 100 output tokens",
+          "values": {
+            "latency": 14.83,
+            "firstToken": 5380,
+            "generation": 10.5,
+            "energyJ": 242.2,
+            "bufferMiB": 4792.0,
+            "summaryQuality": 0.77
+          }
+        },
+        {
+          "device": "Samsung Galaxy S25 Ultra",
+          "platform": "Android",
+          "model": "Llama3.1-8B",
+          "config": "Q4_K_M · CPU · 100 output tokens",
+          "values": {
+            "latency": 16.13,
+            "firstToken": 6610,
+            "generation": 10.45,
+            "energyJ": 291.69,
+            "bufferMiB": 5007.0,
+            "summaryQuality": 0.73
+          }
+        },
+        {
+          "device": "Samsung Galaxy S25 Ultra",
+          "platform": "Android",
+          "model": "Gemma2-9B",
+          "config": "Q4_K_M · CPU · 100 output tokens",
+          "values": {
+            "latency": 20.15,
+            "firstToken": 6470,
+            "generation": 7.24,
+            "energyJ": 316.32,
+            "bufferMiB": 6163.0,
+            "summaryQuality": 0.92
+          }
+        },
+        {
+          "device": "Samsung Galaxy S25 Ultra",
+          "platform": "Android",
+          "model": "Qwen2-0.5B",
+          "config": "IQ4_XS · CPU · 100 output tokens",
+          "values": {
+            "latency": 2.29,
+            "firstToken": 530,
+            "generation": 56.17,
+            "energyJ": 36.83,
+            "bufferMiB": 632.0,
+            "summaryQuality": 0.5
+          }
+        },
+        {
+          "device": "Samsung Galaxy S25 Ultra",
+          "platform": "Android",
+          "model": "Qwen2.5-1.5B",
+          "config": "IQ4_XS · CPU · 100 output tokens",
+          "values": {
+            "latency": 4.61,
+            "firstToken": 1440,
+            "generation": 31.26,
+            "energyJ": 93.42,
+            "bufferMiB": 1162.0,
+            "summaryQuality": 0.66
+          }
+        },
+        {
+          "device": "Samsung Galaxy S25 Ultra",
+          "platform": "Android",
+          "model": "Phi-2-2.8B",
+          "config": "IQ4_XS · CPU · 100 output tokens",
+          "values": {
+            "latency": 7.35,
+            "firstToken": 2580,
+            "generation": 20.82,
+            "energyJ": 141.96,
+            "bufferMiB": 1712.0,
+            "summaryQuality": 0.64
+          }
+        },
+        {
+          "device": "Samsung Galaxy S25 Ultra",
+          "platform": "Android",
+          "model": "Qwen2.5-3B",
+          "config": "IQ4_XS · CPU · 100 output tokens",
+          "values": {
+            "latency": 7.94,
+            "firstToken": 2930,
+            "generation": 19.79,
+            "energyJ": 157.8,
+            "bufferMiB": 1971.0,
+            "summaryQuality": 0.72
+          }
+        },
+        {
+          "device": "Samsung Galaxy S25 Ultra",
+          "platform": "Android",
+          "model": "OLMoE-6.9B",
+          "config": "IQ4_XS · CPU · 100 output tokens",
+          "values": {
+            "latency": 3.74,
+            "firstToken": 1160,
+            "generation": 38.47,
+            "energyJ": 79.04,
+            "bufferMiB": 3707.0,
+            "summaryQuality": 0.58
+          }
+        },
+        {
+          "device": "Samsung Galaxy S25 Ultra",
+          "platform": "Android",
+          "model": "Qwen2.5-7.6B",
+          "config": "IQ4_XS · CPU · 100 output tokens",
+          "values": {
+            "latency": 16.26,
+            "firstToken": 6900,
+            "generation": 10.65,
+            "energyJ": 251.54,
+            "bufferMiB": 4349.0,
+            "summaryQuality": 0.75
+          }
+        },
+        {
+          "device": "Samsung Galaxy S25 Ultra",
+          "platform": "Android",
+          "model": "Llama3.1-8B",
+          "config": "IQ4_XS · CPU · 100 output tokens",
+          "values": {
+            "latency": 18.68,
+            "firstToken": 7770,
+            "generation": 9.12,
+            "energyJ": 302.5,
+            "bufferMiB": 4556.0,
+            "summaryQuality": 0.71
+          }
+        },
+        {
+          "device": "Samsung Galaxy S25 Ultra",
+          "platform": "Android",
+          "model": "Gemma2-9B",
+          "config": "IQ4_XS · CPU · 100 output tokens",
+          "values": {
+            "latency": 22.06,
+            "firstToken": 7470,
+            "generation": 6.81,
+            "energyJ": 325.21,
+            "bufferMiB": 5612.0,
+            "summaryQuality": 0.91
+          }
+        }
+      ]
+    },
+    {
+      "id": "moonshine-final-transcript",
+      "task": "Transcription",
+      "title": "Finish a live dictation",
+      "source": "https://github.com/moonshine-ai/moonshine/blob/d8d8fa29d05ca67441a7719e70099f9f48917a93/docs/moonshine-vs-whisper.md",
+      "description": "Time from detected end of speech to delivery of the final transcript. Moonshine streams chunks of the same English audiobook sample and averages the wait across completed phrases. Silence detection and prior speech processing precede this interval.",
+      "metrics": [
+        "finalTextMs"
+      ],
+      "runs": [
+        {
+          "device": "Google Pixel 10a",
+          "platform": "Android",
+          "model": "Moonshine Tiny Streaming",
+          "config": "English · two_cities.wav",
+          "values": {
+            "finalTextMs": 92
+          }
+        },
+        {
+          "device": "iPad (A16)",
+          "platform": "iPhone & iPad",
+          "model": "Moonshine Tiny Streaming",
+          "config": "English · two_cities.wav",
+          "values": {
+            "finalTextMs": 37
+          }
+        },
+        {
+          "device": "Google Pixel 10a",
+          "platform": "Android",
+          "model": "Moonshine Small Streaming",
+          "config": "English · two_cities.wav",
+          "values": {
+            "finalTextMs": 234
+          }
+        },
+        {
+          "device": "iPad (A16)",
+          "platform": "iPhone & iPad",
+          "model": "Moonshine Small Streaming",
+          "config": "English · two_cities.wav",
+          "values": {
+            "finalTextMs": 95
+          }
+        },
+        {
+          "device": "Google Pixel 10a",
+          "platform": "Android",
+          "model": "Moonshine Medium Streaming",
+          "config": "English · two_cities.wav",
+          "values": {
+            "finalTextMs": 420
+          }
+        },
+        {
+          "device": "iPad (A16)",
+          "platform": "iPhone & iPad",
+          "model": "Moonshine Medium Streaming",
+          "config": "English · two_cities.wav",
+          "values": {
+            "finalTextMs": 174
+          }
+        }
+      ]
+    },
+    {
+      "id": "qvac-phone-transcript",
+      "task": "Transcription",
+      "title": "Transcribe multilingual speech",
+      "source": "https://huggingface.co/qvac/TranscribePsy-250M-EU-sub-gguf/blob/48e5f605e39061b263d0a783a3c6e0153e7bfead/README.md",
+      "description": "Eight-bit CPU inference on 160 Multilingual LibriSpeech utterances across eight languages (40 minutes total). The publisher averages the best three of five runs. Latency is per utterance. Memory was measured on ten seconds of audio.",
+      "metrics": [
+        "requestMs",
+        "coldLoadMs",
+        "tenSecondPeakMiB"
+      ],
+      "runs": [
+        {
+          "device": "Samsung Galaxy S26 Ultra",
+          "platform": "Android",
+          "model": "TranscribePsy-250M-EU-sub",
+          "config": "GGUF · 8-bit CPU",
+          "values": {
+            "requestMs": 633,
+            "coldLoadMs": 213,
+            "tenSecondPeakMiB": 530
+          }
+        },
+        {
+          "device": "Samsung Galaxy S25 Ultra",
+          "platform": "Android",
+          "model": "TranscribePsy-250M-EU-sub",
+          "config": "GGUF · 8-bit CPU",
+          "values": {
+            "requestMs": 771,
+            "coldLoadMs": 241,
+            "tenSecondPeakMiB": 533
+          }
+        },
+        {
+          "device": "iPhone 17 Pro Max",
+          "platform": "iPhone & iPad",
+          "model": "TranscribePsy-250M-EU-sub",
+          "config": "GGUF · 8-bit CPU",
+          "values": {
+            "requestMs": 1059,
+            "coldLoadMs": 153,
+            "tenSecondPeakMiB": 542
+          }
+        },
+        {
+          "device": "iPhone 15",
+          "platform": "iPhone & iPad",
+          "model": "TranscribePsy-250M-EU-sub",
+          "config": "GGUF · 8-bit CPU",
+          "values": {
+            "requestMs": 854,
+            "coldLoadMs": 221,
+            "tenSecondPeakMiB": 537
+          }
+        },
+        {
+          "device": "Google Pixel 10",
+          "platform": "Android",
+          "model": "TranscribePsy-250M-EU-sub",
+          "config": "GGUF · 8-bit CPU",
+          "values": {
+            "requestMs": 1240,
+            "coldLoadMs": 327,
+            "tenSecondPeakMiB": 530
+          }
+        },
+        {
+          "device": "Google Pixel 9",
+          "platform": "Android",
+          "model": "TranscribePsy-250M-EU-sub",
+          "config": "GGUF · 8-bit CPU",
+          "values": {
+            "requestMs": 1570,
+            "coldLoadMs": 356,
+            "tenSecondPeakMiB": 530
+          }
+        }
+      ]
+    },
+    {
+      "id": "voiceping-s10-recording",
+      "task": "Transcription",
+      "title": "Transcribe a 30-second recording",
+      "source": "https://github.com/voiceping-ai/android-offline-transcribe/blob/d70bc9a45c4764f4cb66ab509a86f9b750becba2/README.md",
+      "description": "Galaxy S10, Android 12. VoicePing timed each engine from file input to transcript after loading. The test repeats one English speech clip to 30 seconds and checks for expected words. Only local engines passing that check with direct file input are shown.",
+      "metrics": [
+        "latency",
+        "audioTimeRatio"
+      ],
+      "runs": [
+        {
+          "device": "Samsung Galaxy S10",
+          "platform": "Android",
+          "model": "Moonshine Tiny",
+          "config": "sherpa-onnx · 30 s English",
+          "values": {
+            "latency": 1.363,
+            "audioTimeRatio": 0.05
+          }
+        },
+        {
+          "device": "Samsung Galaxy S10",
+          "platform": "Android",
+          "model": "SenseVoice Small",
+          "config": "sherpa-onnx · 30 s English",
+          "values": {
+            "latency": 1.725,
+            "audioTimeRatio": 0.06
+          }
+        },
+        {
+          "device": "Samsung Galaxy S10",
+          "platform": "Android",
+          "model": "Whisper Tiny",
+          "config": "sherpa-onnx · 30 s English",
+          "values": {
+            "latency": 2.068,
+            "audioTimeRatio": 0.07
+          }
+        },
+        {
+          "device": "Samsung Galaxy S10",
+          "platform": "Android",
+          "model": "Moonshine Base",
+          "config": "sherpa-onnx · 30 s English",
+          "values": {
+            "latency": 2.251,
+            "audioTimeRatio": 0.08
+          }
+        },
+        {
+          "device": "Samsung Galaxy S10",
+          "platform": "Android",
+          "model": "Parakeet TDT 0.6B v3",
+          "config": "sherpa-onnx · 30 s English",
+          "values": {
+            "latency": 2.841,
+            "audioTimeRatio": 0.09
+          }
+        },
+        {
+          "device": "Samsung Galaxy S10",
+          "platform": "Android",
+          "model": "Zipformer Streaming",
+          "config": "sherpa-onnx streaming · 30 s English",
+          "values": {
+            "latency": 3.568,
+            "audioTimeRatio": 0.12
+          }
+        },
+        {
+          "device": "Samsung Galaxy S10",
+          "platform": "Android",
+          "model": "Whisper Base (.en)",
+          "config": "sherpa-onnx · 30 s English",
+          "values": {
+            "latency": 3.917,
+            "audioTimeRatio": 0.13
+          }
+        },
+        {
+          "device": "Samsung Galaxy S10",
+          "platform": "Android",
+          "model": "Whisper Base",
+          "config": "sherpa-onnx · 30 s English",
+          "values": {
+            "latency": 4.038,
+            "audioTimeRatio": 0.13
+          }
+        },
+        {
+          "device": "Samsung Galaxy S10",
+          "platform": "Android",
+          "model": "Whisper Small",
+          "config": "sherpa-onnx · 30 s English",
+          "values": {
+            "latency": 12.329,
+            "audioTimeRatio": 0.41
+          }
+        },
+        {
+          "device": "Samsung Galaxy S10",
+          "platform": "Android",
+          "model": "Qwen3 ASR 0.6B (ONNX)",
+          "config": "ONNX Runtime INT8 · 30 s English",
+          "values": {
+            "latency": 15.881,
+            "audioTimeRatio": 0.53
+          }
+        },
+        {
+          "device": "Samsung Galaxy S10",
+          "platform": "Android",
+          "model": "Whisper Turbo",
+          "config": "sherpa-onnx · 30 s English",
+          "values": {
+            "latency": 17.93,
+            "audioTimeRatio": 0.6
+          }
+        },
+        {
+          "device": "Samsung Galaxy S10",
+          "platform": "Android",
+          "model": "Whisper Tiny (whisper.cpp)",
+          "config": "whisper.cpp GGML · 30 s English",
+          "values": {
+            "latency": 105.596,
+            "audioTimeRatio": 3.52
+          }
+        },
+        {
+          "device": "Samsung Galaxy S10",
+          "platform": "Android",
+          "model": "Qwen3 ASR 0.6B (CPU)",
+          "config": "Pure C/NEON · 30 s English",
+          "values": {
+            "latency": 338.261,
+            "audioTimeRatio": 11.28
+          }
+        }
+      ]
+    },
+    {
+      "id": "galaxy-read-aloud",
+      "task": "Speech synthesis",
+      "title": "Read English text aloud",
+      "source": "https://github.com/voiceping-ai/android-offline-tts-eval/blob/b0d8f143b9a215f952d15f9e912ff1aa70155c40/README.md",
+      "description": "Galaxy S10 (SM-G973C), four threads, warmed engines. Median input token throughput across 12 English prompts. Seven configurations have numeric results in the published table. Audio quality and playback duration were not scored.",
+      "metrics": [
+        "ttsInputRate"
+      ],
+      "runs": [
+        {
+          "device": "Samsung Galaxy S10",
+          "platform": "Android",
+          "model": "Android system TTS",
+          "config": "English · 12 prompts · warm",
+          "values": {
+            "ttsInputRate": 33.26
+          }
+        },
+        {
+          "device": "Samsung Galaxy S10",
+          "platform": "Android",
+          "model": "Coqui VITS en-LJSpeech",
+          "config": "English · 12 prompts · warm",
+          "values": {
+            "ttsInputRate": 2.97
+          }
+        },
+        {
+          "device": "Samsung Galaxy S10",
+          "platform": "Android",
+          "model": "Matcha LJSpeech Vocos",
+          "config": "English · 12 prompts · warm",
+          "values": {
+            "ttsInputRate": 20.28
+          }
+        },
+        {
+          "device": "Samsung Galaxy S10",
+          "platform": "Android",
+          "model": "Matcha LJSpeech HiFi-GAN",
+          "config": "English · 12 prompts · warm",
+          "values": {
+            "ttsInputRate": 14.08
+          }
+        },
+        {
+          "device": "Samsung Galaxy S10",
+          "platform": "Android",
+          "model": "Kitten Nano en v0.2 FP16",
+          "config": "English · 12 prompts · warm",
+          "values": {
+            "ttsInputRate": 3.42
+          }
+        },
+        {
+          "device": "Samsung Galaxy S10",
+          "platform": "Android",
+          "model": "Kokoro en v0.19",
+          "config": "English · 12 prompts · warm",
+          "values": {
+            "ttsInputRate": 2.2
+          }
+        },
+        {
+          "device": "Samsung Galaxy S10",
+          "platform": "Android",
+          "model": "Kokoro INT8 multilingual v1.1",
+          "config": "English · 12 prompts · warm",
+          "values": {
+            "ttsInputRate": 1.18
+          }
+        }
+      ]
+    },
+    {
+      "id": "pixel-streaming-tts",
+      "task": "Speech synthesis",
+      "title": "Start reading a sentence aloud",
+      "source": "https://github.com/google-ai-edge/litert-samples/blob/e7f17f629a9385e8a4a12b2f3914fa02ee72f6ff/samples/litert/text_to_speech_streaming/README.md",
+      "description": "Google’s streaming KittenTTS sample on Pixel 8a, CPU/XNNPACK with four threads. The publisher reports approximately 370 ms from tap to first audio with a short opening sentence and a synthesis time of 0.22–0.29 seconds per second of audio.",
+      "metrics": [
+        "firstAudio"
+      ],
+      "runs": [
+        {
+          "device": "Google Pixel 8a",
+          "platform": "Android",
+          "model": "KittenTTS nano 0.8",
+          "config": "Short opening sentence · approximate",
+          "values": {
+            "firstAudio": 370
+          }
+        }
+      ]
+    },
+    {
+      "id": "galaxy-litert-chat",
+      "task": "Language",
+      "title": "Generate replies on four Galaxy devices",
+      "source": "https://openaccess.thecvf.com/content/ICCV2025W/AIM/supplemental/Yoon_LiteRT-Optimized_INT8_LLM_ICCVW_2025_supplemental.pdf#page=2",
+      "description": "Yoon et al., supplementary Table 2. Google AI Edge Gallery, CPU, INT8. Authors report average inference throughput across short and long inputs. The table does not separate prompt and decode timings.",
+      "metrics": [
+        "inferenceTokens"
+      ],
+      "runs": [
+        {
+          "device": "Samsung Galaxy S24 Ultra",
+          "platform": "Android",
+          "model": "Llama 3.2 1B",
+          "config": "LiteRT INT8 · CPU",
+          "values": {
+            "inferenceTokens": 25.57
+          }
+        },
+        {
+          "device": "Samsung Galaxy Z Fold4",
+          "platform": "Android",
+          "model": "Llama 3.2 1B",
+          "config": "LiteRT INT8 · CPU",
+          "values": {
+            "inferenceTokens": 17.89
+          }
+        },
+        {
+          "device": "Samsung Galaxy S24",
+          "platform": "Android",
+          "model": "Llama 3.2 1B",
+          "config": "LiteRT INT8 · CPU · Exynos 2400",
+          "values": {
+            "inferenceTokens": 15.7
+          }
+        },
+        {
+          "device": "Samsung Galaxy Tab S7+",
+          "platform": "Android",
+          "model": "Llama 3.2 1B",
+          "config": "LiteRT INT8 · CPU",
+          "values": {
+            "inferenceTokens": 9.91
+          }
+        },
+        {
+          "device": "Samsung Galaxy S24 Ultra",
+          "platform": "Android",
+          "model": "Llama 3.2 3B",
+          "config": "LiteRT INT8 · CPU",
+          "values": {
+            "inferenceTokens": 8.82
+          }
+        },
+        {
+          "device": "Samsung Galaxy Z Fold4",
+          "platform": "Android",
+          "model": "Llama 3.2 3B",
+          "config": "LiteRT INT8 · CPU",
+          "values": {
+            "inferenceTokens": 6.85
+          }
+        },
+        {
+          "device": "Samsung Galaxy S24",
+          "platform": "Android",
+          "model": "Llama 3.2 3B",
+          "config": "LiteRT INT8 · CPU · Exynos 2400",
+          "values": {
+            "inferenceTokens": 0.32
+          }
+        },
+        {
+          "device": "Samsung Galaxy Tab S7+",
+          "platform": "Android",
+          "model": "Llama 3.2 3B",
+          "config": "LiteRT INT8 · CPU",
+          "values": {
+            "inferenceTokens": 2.84
+          }
+        },
+        {
+          "device": "Samsung Galaxy S24 Ultra",
+          "platform": "Android",
+          "model": "Qwen3 0.6B",
+          "config": "LiteRT INT8 · CPU",
+          "values": {
+            "inferenceTokens": 36.83
+          }
+        },
+        {
+          "device": "Samsung Galaxy Z Fold4",
+          "platform": "Android",
+          "model": "Qwen3 0.6B",
+          "config": "LiteRT INT8 · CPU",
+          "values": {
+            "inferenceTokens": 27.79
+          }
+        },
+        {
+          "device": "Samsung Galaxy S24",
+          "platform": "Android",
+          "model": "Qwen3 0.6B",
+          "config": "LiteRT INT8 · CPU · Exynos 2400",
+          "values": {
+            "inferenceTokens": 20.26
+          }
+        },
+        {
+          "device": "Samsung Galaxy Tab S7+",
+          "platform": "Android",
+          "model": "Qwen3 0.6B",
+          "config": "LiteRT INT8 · CPU",
+          "values": {
+            "inferenceTokens": 12.15
+          }
+        },
+        {
+          "device": "Samsung Galaxy S24 Ultra",
+          "platform": "Android",
+          "model": "DeepSeek-R1-Distill-Qwen 1.5B",
+          "config": "LiteRT INT8 · CPU",
+          "values": {
+            "inferenceTokens": 21.28
+          }
+        },
+        {
+          "device": "Samsung Galaxy Z Fold4",
+          "platform": "Android",
+          "model": "DeepSeek-R1-Distill-Qwen 1.5B",
+          "config": "LiteRT INT8 · CPU",
+          "values": {
+            "inferenceTokens": 16.23
+          }
+        },
+        {
+          "device": "Samsung Galaxy S24",
+          "platform": "Android",
+          "model": "DeepSeek-R1-Distill-Qwen 1.5B",
+          "config": "LiteRT INT8 · CPU · Exynos 2400",
+          "values": {
+            "inferenceTokens": 13.48
+          }
+        },
+        {
+          "device": "Samsung Galaxy Tab S7+",
+          "platform": "Android",
+          "model": "DeepSeek-R1-Distill-Qwen 1.5B",
+          "config": "LiteRT INT8 · CPU",
+          "values": {
+            "inferenceTokens": 8.08
+          }
+        },
+        {
+          "device": "Samsung Galaxy S24 Ultra",
+          "platform": "Android",
+          "model": "TinyLlama 1.1B",
+          "config": "LiteRT INT8 · CPU",
+          "values": {
+            "inferenceTokens": 32.14
+          }
+        },
+        {
+          "device": "Samsung Galaxy Z Fold4",
+          "platform": "Android",
+          "model": "TinyLlama 1.1B",
+          "config": "LiteRT INT8 · CPU",
+          "values": {
+            "inferenceTokens": 23.02
+          }
+        },
+        {
+          "device": "Samsung Galaxy S24",
+          "platform": "Android",
+          "model": "TinyLlama 1.1B",
+          "config": "LiteRT INT8 · CPU · Exynos 2400",
+          "values": {
+            "inferenceTokens": 23.52
+          }
+        },
+        {
+          "device": "Samsung Galaxy Tab S7+",
+          "platform": "Android",
+          "model": "TinyLlama 1.1B",
+          "config": "LiteRT INT8 · CPU",
+          "values": {
+            "inferenceTokens": 11
+          }
+        }
+      ]
+    },
+    {
+      "id": "ddimcache-mobile",
+      "task": "Image generation",
+      "title": "Generate a 512 × 512 image",
+      "source": "https://www.kybernetika.cz/content/2024/6/819/paper.pdf#page=8",
+      "description": "Table 1, Samsung Galaxy S23 Ultra (8 GB). Quantized, pruned Stable Diffusion 1.5 on MS-COCO 2017. FID measures the generated image distribution against reference images. Lower scores indicate a closer match in this test. Cache interval 1 disables caching.",
+      "metrics": [
+        "latency",
+        "fid"
+      ],
+      "runs": [
+        {
+          "device": "Samsung Galaxy S23 Ultra",
+          "platform": "Android",
+          "model": "Stable Diffusion 1.5",
+          "config": "20 steps · cache interval 1",
+          "values": {
+            "latency": 9.8,
+            "fid": 29.1
+          }
+        },
+        {
+          "device": "Samsung Galaxy S23 Ultra",
+          "platform": "Android",
+          "model": "Stable Diffusion 1.5",
+          "config": "20 steps · cache interval 2",
+          "values": {
+            "latency": 5.3,
+            "fid": 29.4
+          }
+        },
+        {
+          "device": "Samsung Galaxy S23 Ultra",
+          "platform": "Android",
+          "model": "Stable Diffusion 1.5",
+          "config": "20 steps · cache interval 3",
+          "values": {
+            "latency": 3.8,
+            "fid": 29.8
+          }
+        },
+        {
+          "device": "Samsung Galaxy S23 Ultra",
+          "platform": "Android",
+          "model": "Stable Diffusion 1.5",
+          "config": "20 steps · cache interval 5",
+          "values": {
+            "latency": 2.4,
+            "fid": 30.8
+          }
+        },
+        {
+          "device": "Samsung Galaxy S23 Ultra",
+          "platform": "Android",
+          "model": "Stable Diffusion 1.5",
+          "config": "20 steps · cache interval 6",
+          "values": {
+            "latency": 2.2,
+            "fid": 31.5
+          }
+        },
+        {
+          "device": "Samsung Galaxy S23 Ultra",
+          "platform": "Android",
+          "model": "Stable Diffusion 1.5",
+          "config": "20 steps · cache interval 10",
+          "values": {
+            "latency": 1.7,
+            "fid": 33.9
+          }
+        },
+        {
+          "device": "Samsung Galaxy S23 Ultra",
+          "platform": "Android",
+          "model": "Stable Diffusion 1.5",
+          "config": "50 steps · cache interval 1",
+          "values": {
+            "latency": 24.4,
+            "fid": 18.3
+          }
+        },
+        {
+          "device": "Samsung Galaxy S23 Ultra",
+          "platform": "Android",
+          "model": "Stable Diffusion 1.5",
+          "config": "50 steps · cache interval 2",
+          "values": {
+            "latency": 13,
+            "fid": 18.5
+          }
+        },
+        {
+          "device": "Samsung Galaxy S23 Ultra",
+          "platform": "Android",
+          "model": "Stable Diffusion 1.5",
+          "config": "50 steps · cache interval 3",
+          "values": {
+            "latency": 9.3,
+            "fid": 18.8
+          }
+        },
+        {
+          "device": "Samsung Galaxy S23 Ultra",
+          "platform": "Android",
+          "model": "Stable Diffusion 1.5",
+          "config": "50 steps · cache interval 5",
+          "values": {
+            "latency": 6.2,
+            "fid": 19.8
+          }
+        },
+        {
+          "device": "Samsung Galaxy S23 Ultra",
+          "platform": "Android",
+          "model": "Stable Diffusion 1.5",
+          "config": "50 steps · cache interval 6",
+          "values": {
+            "latency": 5.4,
+            "fid": 20.6
+          }
+        },
+        {
+          "device": "Samsung Galaxy S23 Ultra",
+          "platform": "Android",
+          "model": "Stable Diffusion 1.5",
+          "config": "50 steps · cache interval 10",
+          "values": {
+            "latency": 4.1,
+            "fid": 24.2
+          }
+        },
+        {
+          "device": "Samsung Galaxy S23 Ultra",
+          "platform": "Android",
+          "model": "Stable Diffusion 1.5",
+          "config": "100 steps · cache interval 1",
+          "values": {
+            "latency": 49.4,
+            "fid": 18
+          }
+        },
+        {
+          "device": "Samsung Galaxy S23 Ultra",
+          "platform": "Android",
+          "model": "Stable Diffusion 1.5",
+          "config": "100 steps · cache interval 2",
+          "values": {
+            "latency": 27.3,
+            "fid": 18.2
+          }
+        },
+        {
+          "device": "Samsung Galaxy S23 Ultra",
+          "platform": "Android",
+          "model": "Stable Diffusion 1.5",
+          "config": "100 steps · cache interval 3",
+          "values": {
+            "latency": 19.4,
+            "fid": 18.4
+          }
+        },
+        {
+          "device": "Samsung Galaxy S23 Ultra",
+          "platform": "Android",
+          "model": "Stable Diffusion 1.5",
+          "config": "100 steps · cache interval 5",
+          "values": {
+            "latency": 12.1,
+            "fid": 19.5
+          }
+        },
+        {
+          "device": "Samsung Galaxy S23 Ultra",
+          "platform": "Android",
+          "model": "Stable Diffusion 1.5",
+          "config": "100 steps · cache interval 6",
+          "values": {
+            "latency": 10.8,
+            "fid": 20.1
+          }
+        },
+        {
+          "device": "Samsung Galaxy S23 Ultra",
+          "platform": "Android",
+          "model": "Stable Diffusion 1.5",
+          "config": "100 steps · cache interval 10",
+          "values": {
+            "latency": 8.3,
+            "fid": 23.7
+          }
+        },
+        {
+          "device": "Samsung Galaxy S23 Ultra",
+          "platform": "Android",
+          "model": "Stable Diffusion 1.5",
+          "config": "1000 steps · cache interval 1",
+          "values": {
+            "latency": 487.3,
+            "fid": 17.4
+          }
+        },
+        {
+          "device": "Samsung Galaxy S23 Ultra",
+          "platform": "Android",
+          "model": "Stable Diffusion 1.5",
+          "config": "1000 steps · cache interval 2",
+          "values": {
+            "latency": 271,
+            "fid": 17.6
+          }
+        },
+        {
+          "device": "Samsung Galaxy S23 Ultra",
+          "platform": "Android",
+          "model": "Stable Diffusion 1.5",
+          "config": "1000 steps · cache interval 3",
+          "values": {
+            "latency": 191,
+            "fid": 17.9
+          }
+        },
+        {
+          "device": "Samsung Galaxy S23 Ultra",
+          "platform": "Android",
+          "model": "Stable Diffusion 1.5",
+          "config": "1000 steps · cache interval 5",
+          "values": {
+            "latency": 123.1,
+            "fid": 18.9
+          }
+        },
+        {
+          "device": "Samsung Galaxy S23 Ultra",
+          "platform": "Android",
+          "model": "Stable Diffusion 1.5",
+          "config": "1000 steps · cache interval 6",
+          "values": {
+            "latency": 109.4,
+            "fid": 19.8
+          }
+        },
+        {
+          "device": "Samsung Galaxy S23 Ultra",
+          "platform": "Android",
+          "model": "Stable Diffusion 1.5",
+          "config": "1000 steps · cache interval 10",
+          "values": {
+            "latency": 84.2,
+            "fid": 23.1
+          }
+        }
+      ]
+    }
+  ]
+}
