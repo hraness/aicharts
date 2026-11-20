@@ -96,14 +96,23 @@ export async function browserSignals(): Promise<DeviceSignals> {
     gpu?: {requestAdapter(): Promise<{info?:{description?:string;vendor?:string;isFallbackAdapter?:boolean}} | null>};
   };
   const base = {platform:n.userAgentData?.platform || n.platform, agent:n.userAgent,touch:n.maxTouchPoints};
-  const details = Promise.all([
-    n.userAgentData?.getHighEntropyValues?.(["model"]).catch(() => undefined),
-    n.gpu?.requestAdapter().catch(() => null),
+  async function withinBudget<T>(request: Promise<T> | undefined) {
+    if (!request) return;
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    try {
+      return await Promise.race([request, new Promise<undefined>(resolve => {
+        timeout = setTimeout(() => resolve(undefined), 1200);
+      })]);
+    } catch {
+      return undefined;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+  const [hint, adapter] = await Promise.all([
+    withinBudget(n.userAgentData?.getHighEntropyValues?.(["model"])),
+    withinBudget(n.gpu?.requestAdapter()),
   ]);
-  let timeout: ReturnType<typeof setTimeout> | undefined;
-  const [hint, adapter] = await Promise.race([details, new Promise<readonly [undefined, undefined]>(resolve => {
-    timeout = setTimeout(() => resolve([undefined, undefined]), 1200);
-  })]).finally(() => clearTimeout(timeout));
   const info = adapter?.info;
   return {...base,model:hint?.model,gpu:info && !info.isFallbackAdapter ? [info.vendor,info.description].filter(Boolean).join(" ") : undefined};
 }

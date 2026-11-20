@@ -175,6 +175,8 @@ export function LocalHardware() {
   const [peerId, setPeerId] = useState("");
   const [match, setMatch] = useState<DeviceMatch>();
   const [automatic, setAutomatic] = useState(false);
+  const [remembered, setRemembered] = useState("");
+  const [storageAvailable, setStorageAvailable] = useState(false);
   const [browseTask, setBrowseTask] = useState("");
   const [chosenProtocols, setChosenProtocols] = useState<Record<string, string>>({});
   const manual = useRef(false);
@@ -190,12 +192,24 @@ export function LocalHardware() {
     const p = query.get("platform");
     const d = query.get("device");
     const shared = !!(p && d && byDevice.has(JSON.stringify([p,d])));
+    let saved: typeof entries[number] | undefined;
+    try {
+      const preference = window.localStorage.getItem("aicharts.hardware");
+      saved = preference ? entries.find(e => e.value === preference) : undefined;
+      setRemembered(saved?.value ?? "");
+      setStorageAvailable(true);
+    } catch { /* Browser storage can be disabled. */ }
+    if (!shared && saved) {
+      setPlatform(saved.platform);
+      setDevice(saved.device);
+      setExample(false);
+    }
     let live = true;
     void browserSignals().then(signals => {
       if (!live) return;
       const found = matchDevice(signals, detectionEntries);
       setMatch(found);
-      if (!shared && !manual.current && found.entry) {
+      if (!shared && !saved && !manual.current && found.entry) {
         setPlatform(found.entry.platform);
         setDevice(found.entry.device);
         setExample(false);
@@ -317,6 +331,15 @@ export function LocalHardware() {
         <CompactPicker label="Compare device" value={peer?.value ?? ""} options={[{value:"",label:"One device"}, ...entries.filter(e => e.value !== deviceId)]}
           onChange={value => { manual.current = true; setPeerId(value); }} />
       </div>
+      {storageAvailable && <div className="hardware-preference">
+        {remembered === deviceId ? <><span>Default on this browser</span> <button type="button" onClick={() => {
+          try { window.localStorage.removeItem("aicharts.hardware"); setRemembered(""); } catch { setStorageAvailable(false); }
+        }}>Forget saved device</button></> :
+        <button type="button" onClick={() => {
+          try { window.localStorage.setItem("aicharts.hardware",deviceId); setRemembered(deviceId); manual.current = true; }
+          catch { setStorageAvailable(false); }
+        }}>Remember {device} on this browser</button>}
+      </div>}
       {suggestions.length > 0 && <div className="hardware-shortcuts"><span>Compare on shared tests</span>{suggestions.map(({entry,workloads,tests}) =>
         <button key={entry.value} type="button" title={workloads+" workloads · "+tests+" matching configurations"} onClick={() => { manual.current = true; setPeerId(entry.value); }}>{entry.device}</button>)}</div>}
       <table className="device-matrix" aria-label="Speed by workload"><caption>Speed by workload <small>{covered.length} of {workloadNames.length} workloads have results for this selection</small></caption><thead><tr><th scope="col">Workload</th><th scope="col">{device}<small>{platform}</small></th>{peer && <th scope="col">{peer.device}<small>{peer.platform}</small></th>}</tr></thead>

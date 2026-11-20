@@ -1,0 +1,284 @@
+{
+  "suites": [
+    {
+      "id": "livechat-mobile-translation",
+      "task": "Language",
+      "title": "LiveChatBench mobile translation",
+      "source": "https://aclanthology.org/2026.aacl-short.1.pdf#page=4",
+      "description": "Table 6 reports mean first-token and complete translation times on 1,000 Korean–English live-chat pairs. Each model was fine-tuned for translation. Context 512, two threads, batch 256, microbatch 192, flash attention on, up to 128 output tokens, temperature 0.01 and top-p 0.95.",
+      "metrics": [
+        "firstToken",
+        "latency"
+      ],
+      "runs": [
+        {
+          "device": "iPhone 11 Pro",
+          "platform": "iPhone & iPad",
+          "model": "Gemma-3-270M-IT · LiveChatBench fine-tune",
+          "config": "CPU",
+          "values": {
+            "firstToken": 140.946,
+            "latency": 0.4161
+          }
+        },
+        {
+          "device": "iPhone 14 Pro Max",
+          "platform": "iPhone & iPad",
+          "model": "Gemma-3-270M-IT · LiveChatBench fine-tune",
+          "config": "CPU",
+          "values": {
+            "firstToken": 121.4954,
+            "latency": 0.3412
+          }
+        },
+        {
+          "device": "iPhone 14 Pro Max",
+          "platform": "iPhone & iPad",
+          "model": "Gemma-3-270M-IT · LiveChatBench fine-tune",
+          "config": "Metal GPU",
+          "values": {
+            "firstToken": 74.7435,
+            "latency": 0.1582
+          }
+        },
+        {
+          "device": "iPhone 16 Pro Max",
+          "platform": "iPhone & iPad",
+          "model": "Gemma-3-270M-IT · LiveChatBench fine-tune",
+          "config": "CPU",
+          "values": {
+            "firstToken": 79.3681,
+            "latency": 0.2608
+          }
+        },
+        {
+          "device": "iPhone 16 Pro Max",
+          "platform": "iPhone & iPad",
+          "model": "Gemma-3-270M-IT · LiveChatBench fine-tune",
+          "config": "Metal GPU",
+          "values": {
+            "firstToken": 63.3153,
+            "latency": 0.1598
+          }
+        },
+        {
+          "device": "Samsung Galaxy S24+",
+          "platform": "Android",
+          "model": "Gemma-3-270M-IT · LiveChatBench fine-tune",
+          "config": "CPU",
+          "values": {
+            "firstToken": 48.043,
+            "latency": 0.2868
+          }
+        },
+        {
+          "device": "Samsung Galaxy S25",
+          "platform": "Android",
+          "model": "Gemma-3-270M-IT · LiveChatBench fine-tune",
+          "config": "CPU",
+          "values": {
+            "firstToken": 38.4525,
+            "latency": 0.1769
+          }
+        },
+        {
+          "device": "iPhone 11 Pro",
+          "platform": "iPhone & iPad",
+          "model": "Qwen3-0.6B · LiveChatBench fine-tune",
+          "config": "CPU",
+          "values": {
+            "firstToken": 811.4484,
+            "latency": 1.5294
+          }
+        },
+        {
+          "device": "iPhone 14 Pro Max",
+          "platform": "iPhone & iPad",
+          "model": "Qwen3-0.6B · LiveChatBench fine-tune",
+          "config": "CPU",
+          "values": {
+            "firstToken": 637.4881,
+            "latency": 1.1753
+          }
+        },
+        {
+          "device": "iPhone 14 Pro Max",
+          "platform": "iPhone & iPad",
+          "model": "Qwen3-0.6B · LiveChatBench fine-tune",
+          "config": "Metal GPU",
+          "values": {
+            "firstToken": 158.7082,
+            "latency": 0.3022
+          }
+        },
+        {
+          "device": "iPhone 16 Pro Max",
+          "platform": "iPhone & iPad",
+          "model": "Qwen3-0.6B · LiveChatBench fine-tune",
+          "config": "CPU",
+          "values": {
+            "firstToken": 460.882,
+            "latency": 0.973
+          }
+        },
+        {
+          "device": "iPhone 16 Pro Max",
+          "platform": "iPhone & iPad",
+          "model": "Qwen3-0.6B · LiveChatBench fine-tune",
+          "config": "Metal GPU",
+          "values": {
+            "firstToken": 149.2322,
+            "latency": 0.3104
+          }
+        },
+        {
+          "device": "Samsung Galaxy S24+",
+          "platform": "Android",
+          "model": "Qwen3-0.6B · LiveChatBench fine-tune",
+          "config": "CPU",
+          "values": {
+            "firstToken": 186.331,
+            "latency": 0.6413
+          }
+        },
+        {
+          "device": "Samsung Galaxy S25",
+          "platform": "Android",
+          "model": "Qwen3-0.6B · LiveChatBench fine-tune",
+          "config": "CPU",
+          "values": {
+            "firstToken": 189.935,
+            "latency": 0.5126
+          }
+        },
+        {
+          "device": "iPhone 14 Pro Max",
+          "platform": "iPhone & iPad",
+          "model": "Gemma-3-1B-IT · LiveChatBench fine-tune",
+          "config": "CPU",
+          "values": {
+            "firstToken": 784.0577,
+            "latency": 1.6371
+          }
+        },
+        {
+          "device": "iPhone 14 Pro Max",
+          "platform": "iPhone & iPad",
+          "model": "Gemma-3-1B-IT · LiveChatBench fine-tune",
+          "config": "Metal GPU",
+          "values": {
+            "firstToken": 159.381,
+            "latency": 0.3046
+          }
+        },
+        {
+          "device": "iPhone 16 Pro Max",
+          "platform": "iPhone & iPad",
+          "model": "Gemma-3-1B-IT · LiveChatBench fine-tune",
+          "config": "CPU",
+          "values": {
+            "firstToken": 536.1123,
+            "latency": 1.2821
+          }
+        },
+        {
+          "device": "iPhone 16 Pro Max",
+          "platform": "iPhone & iPad",
+          "model": "Gemma-3-1B-IT · LiveChatBench fine-tune",
+          "config": "Metal GPU",
+          "values": {
+            "firstToken": 151.2176,
+            "latency": 0.3126
+          }
+        },
+        {
+          "device": "Samsung Galaxy S24+",
+          "platform": "Android",
+          "model": "Gemma-3-1B-IT · LiveChatBench fine-tune",
+          "config": "CPU",
+          "values": {
+            "firstToken": 230.349,
+            "latency": 0.9283
+          }
+        },
+        {
+          "device": "Samsung Galaxy S25",
+          "platform": "Android",
+          "model": "Gemma-3-1B-IT · LiveChatBench fine-tune",
+          "config": "CPU",
+          "values": {
+            "firstToken": 240.303,
+            "latency": 0.7219
+          }
+        }
+      ]
+    },
+    {
+      "id": "arm-img2latex",
+      "task": "Vision and language",
+      "title": "Img2LaTeX photo transcription",
+      "source": "https://developer.arm.com/community/arm-community-blogs/b/mobile-graphics-and-gaming-blog/posts/building-img2latex-the-arm-sme2-speedup-already-on-the-phone",
+      "description": "Author measurements for handwritten mathematics to LaTeX. The image encoder used the GPU and the language model used the CPU. Times are medians for greedy decoding. The iPhone memory figure is peak memory in MB as reported by the app benchmark.",
+      "metrics": [
+        "firstToken",
+        "generation",
+        "latency",
+        "memoryMB"
+      ],
+      "runs": [
+        {
+          "device": "iPhone 16 Pro Max",
+          "platform": "iPhone & iPad",
+          "model": "Gemma 3n E2B",
+          "config": "Int4 · Neon · 416 input / 64 output tokens",
+          "values": {
+            "firstToken": 5020,
+            "generation": 10.1,
+            "latency": 11.3,
+            "memoryMB": 1841
+          },
+          "note": "MediaPipe Tasks GenAI 0.10.24, iOS 27 beta, 18 measured runs across six processes per setting on USB power. Phone generally warm."
+        },
+        {
+          "device": "iPhone 16 Pro Max",
+          "platform": "iPhone & iPad",
+          "model": "Gemma 3n E2B",
+          "config": "Int4 · SME2 · 416 input / 64 output tokens",
+          "values": {
+            "firstToken": 2960,
+            "generation": 11,
+            "latency": 8.7,
+            "memoryMB": 1868
+          },
+          "note": "MediaPipe Tasks GenAI 0.10.24, iOS 27 beta, 18 measured runs across six processes per setting on USB power. Phone generally warm."
+        },
+        {
+          "device": "MacBook Air · M4",
+          "platform": "Apple silicon Macs",
+          "model": "Gemma 3n E2B",
+          "config": "Int4 · Neon · 118–130 output tokens",
+          "values": {
+            "firstToken": 6210,
+            "generation": 8.2,
+            "latency": 21.8
+          },
+          "note": "iPad app on macOS 27, bundled matrix photo, nine measured runs across three processes per setting. Other apps open.",
+          "capacity": "32 GB unified memory"
+        },
+        {
+          "device": "MacBook Air · M4",
+          "platform": "Apple silicon Macs",
+          "model": "Gemma 3n E2B",
+          "config": "Int4 · SME2 · 118–130 output tokens",
+          "values": {
+            "firstToken": 3480,
+            "generation": 10.2,
+            "latency": 15.9
+          },
+          "note": "iPad app on macOS 27, bundled matrix photo, nine measured runs across three processes per setting. Other apps open.",
+          "capacity": "32 GB unified memory"
+        }
+      ]
+    }
+  ]
+}

@@ -11,7 +11,7 @@ const capture = process.argv.includes("--preview");
 const entries = JSON.parse(await readFile("journal/entries.json", "utf8"));
 const { releases } = JSON.parse(await readFile("data/releases.json", "utf8"));
 const localHardware = JSON.parse(await readFile("data/local-hardware.json", "utf8"));
-for (const file of ["local-hardware-language.json","local-hardware-nonlanguage.json"]) {
+for (const file of ["local-hardware-language.json","local-hardware-nonlanguage.json", "local-hardware-iphone-studies.json"]) {
   const extra = JSON.parse(await readFile("data/" + file, "utf8"));
   localHardware.suites.push(...extra.suites);
 }
@@ -446,6 +446,10 @@ try {
     await page.goto(url + "/local?platform=iPhone+%26+iPad&device=iPhone+17+Pro#hardware");
     await matrix.getByRole("columnheader",{name:/iPhone 17 Pro/}).waitFor();
     assert.equal(await matrix.locator("thead th").count(),2);
+    await page.getByRole("button",{name:"Remember iPhone 17 Pro on this browser"}).click();
+    await page.goto(url + "/local#hardware");
+    await matrix.getByRole("columnheader",{name:/iPhone 17 Pro/}).waitFor();
+    await page.getByRole("button",{name:"Forget saved device"}).click();
     const taskChip = page.locator(".coverage-tasks button").filter({hasText:"Music generation"});
     await taskChip.click();
     await page.locator(".hardware-browse-results button").first().waitFor();
