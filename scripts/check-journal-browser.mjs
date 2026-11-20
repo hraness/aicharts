@@ -163,16 +163,34 @@ try {
     assert.equal(await header.getByText(/^(Anthropic|OpenAI|Google|JSON)$/).count(), 0);
 
     const benchmark = page.getByLabel("Benchmark", { exact: true });
-    assert.equal(await benchmark.inputValue(), "game-bench");
-    const chart = page.locator('[data-benchmark="game-bench"]');
+    const chart = (id) => page.locator(`[data-benchmark="${id}"]`);
+    const budget = page.getByRole("group", { name: "Budget axis" });
+    const waitForParams = (expected) =>
+      page.waitForURL(({ searchParams }) =>
+        Object.entries(expected).every(([key, value]) => searchParams.get(key) === value),
+      );
+    assert.equal(await benchmark.inputValue(), "argo-bench");
+    const argo = chart("argo-bench");
+    assert.equal(await budget.getByRole("button", { name: "Cost", pressed: true }).count(), 1);
+    assert.equal(
+      await page.locator('.pareto-card a[href="https://arxiv.org/abs/2610.02122"]').count(),
+      1,
+    );
     for (const provider of ["anthropic", "openai", "google"]) {
-      assert.ok(await chart.locator(`.peer-series--${provider} polyline, .hero-series--${provider} polyline`).count());
+      const series = argo.locator(`.peer-series--${provider} polyline, .hero-series--${provider} polyline`);
+      assert.ok(await series.count(), `Argo-Bench draws the ${provider} effort series`);
     }
     const settings = page.getByRole("group", { name: "Reasoning settings" });
+    assert.ok((await settings.getByRole("button").count()) >= 3);
     const firstEffort = settings.getByRole("button").first();
     await firstEffort.click();
     assert.equal(await firstEffort.getAttribute("aria-pressed"), "true");
-    assert.ok(new URL(page.url()).searchParams.get("effort"));
+    await page.waitForURL(({ searchParams }) => searchParams.has("effort"));
+    await budget.getByRole("button", { name: "Tokens" }).click();
+    await waitForParams({ bench: "argo-bench", axis: "tokens" });
+    assert.match(await argo.locator(".pareto-svg").getAttribute("aria-label"), /output tokens/i);
+    await budget.getByRole("button", { name: "Cost" }).click();
+    await waitForParams({ bench: null, axis: null });
 
     // The lineup is the default order. The chart keeps its axes whichever
     // model, order or lab is picked, so siblings compare by position: before
@@ -214,6 +232,34 @@ try {
     await page.getByRole("button", { name: "Lineup", exact: true }).click();
     assert.equal(new URL(page.url()).searchParams.get("view"), null);
     assert.equal(await noSideScroll(page), true);
+
+    const astra = "gpt-6-2-astra";
+    const modelPage = page.getByRole("link", { name: "Model page", exact: true });
+    await page.goto(url + `/?bench=argo-bench&axis=tokens&release=${astra}&effort=medium`);
+    await budget.getByRole("button", { name: "Tokens", pressed: true }).waitFor();
+    await settings.getByRole("button", { name: /^Medium\b/, pressed: true }).waitFor();
+    await waitForParams({ bench: "argo-bench", axis: "tokens", release: astra, effort: "medium" });
+    assert.equal(await modelPage.getAttribute("href"), `/models/${astra}`);
+    for (const [id, minSettings, source] of [
+      ["roboflow", 2, "web/benchmark_summary.json"],
+      ["ironbee", 3, "reports/full-r123/configs.csv"],
+      ["game-bench", 2, "benchmarks.duellab.org/releases/"],
+    ]) {
+      await benchmark.selectOption(id);
+      await chart(id).waitFor();
+      await waitForParams({ bench: id, effort: null });
+      assert.ok((await settings.getByRole("button").count()) >= minSettings, id);
+      assert.equal(await page.locator(`.benchmark-note a[href*="${source}"]`).count(), 1, id);
+      if (id === "ironbee") {
+        // Astra has no IronBee result. The explorer selects a measured model.
+        assert.notEqual(await modelPage.getAttribute("href"), `/models/${astra}`);
+      }
+      assert.equal(await noSideScroll(page), true);
+    }
+    assert.equal(await budget.count(), 0);
+    await benchmark.selectOption("terminal-bench");
+    await chart("terminal-bench").waitFor();
+    await waitForParams({ bench: "terminal-bench" });
 
     for (const [id, name] of [
       ["mirrorCode", "MirrorCode"],
@@ -462,10 +508,11 @@ try {
       sha256: hash(bytes),
       inputs: {
         "data/releases.json": hash(await readFile("data/releases.json")),
+        "data/argo-bench.json": hash(await readFile("data/argo-bench.json")),
       },
       browser: browser.version(),
       encoder: execFileSync("cwebp", ["-version"], { encoding: "utf8" }).trim(),
-      alt: "aicharts plotting GameBench 2 scores and costs across reasoning settings for Anthropic, OpenAI and Google models.",
+      alt: "aicharts plotting Argo-Bench scores against cost per task across reasoning settings for Anthropic, OpenAI and Google models.",
     };
     await writeFile(
       "showcase/media/preview.json",

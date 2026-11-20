@@ -3,25 +3,25 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://aicharts.io"),
-  title: "AI model comparison chart for coding: score vs cost — aicharts",
+  title: "AI model benchmark chart by reasoning effort and cost — aicharts",
   description:
-    "Compare AI models by reasoning effort, score and cost. Explore GameBench 2 coding curves, Terminal-Bench agent runs and Epoch AI benchmark scores.",
+    "Compare AI model scores, API cost and output tokens by reasoning effort. Explore Argo-Bench, visual reasoning, code review and other benchmarks.",
   alternates: {
     canonical: "/",
   },
   openGraph: {
-    title: "AI model comparison chart for coding — aicharts",
+    title: "AI model benchmarks by reasoning effort — aicharts",
     description:
-      "Compare OpenAI, Anthropic and Google models by reasoning effort, coding score and cost.",
+      "Compare OpenAI, Anthropic and Google models by reasoning effort, score, API cost and output tokens.",
     url: "https://aicharts.io",
     siteName: "aicharts",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "AI model comparison chart for coding — aicharts",
+    title: "AI model benchmarks by reasoning effort — aicharts",
     description:
-      "Compare OpenAI, Anthropic and Google models by reasoning effort, coding score and cost.",
+      "Compare OpenAI, Anthropic and Google models by reasoning effort, score, API cost and output tokens.",
   },
 };
 

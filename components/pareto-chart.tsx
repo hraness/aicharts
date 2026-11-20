@@ -19,17 +19,16 @@ import {
   type ChartBenchmark,
   type ChartScale,
 } from "@/lib/pareto";
+import { CHART_BENCHMARKS } from "@/lib/benchmarks";
 import { effortName } from "@/lib/measures";
 import {
-  GAME_BENCH,
-  TERMINAL_BENCH,
   type BudgetAxis,
-  type EffortSlug,
+  type CurveEffort,
   type ModelRelease,
 } from "@/lib/types";
 
-const COST_TICKS = [0.001, 0.002, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10, 25, 50, 100, 250];
-const TOKEN_TICKS = [5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000, 2000000];
+const COST_TICKS = [0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10, 25, 50, 100, 250];
+const TOKEN_TICKS = [20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000, 2000000];
 
 type Box = { x1: number; y1: number; x2: number; y2: number };
 
@@ -39,7 +38,7 @@ function boxesOverlap(a: Box, b: Box): boolean {
 
 /**
  * Score against budget within one benchmark. Terminal-Bench has one dot per
- * model and GameBench 2 connects each model's tested effort settings.
+ * model. Effort benchmarks connect each model’s tested settings in effort order.
  */
 export function ParetoChart({
   releases,
@@ -58,8 +57,8 @@ export function ParetoChart({
   compareRelease?: ModelRelease | null;
   axis: BudgetAxis;
   benchmark?: ChartBenchmark;
-  activeEffort?: EffortSlug | null;
-  onSelectRelease: (slug: string, effort?: EffortSlug) => void;
+  activeEffort?: CurveEffort | null;
+  onSelectRelease: (slug: string, effort?: CurveEffort) => void;
   /** Replaces the generated description of the chart. */
   ariaLabel?: string;
   /**
@@ -176,14 +175,31 @@ export function ParetoChart({
     }
     return groups;
   }, [allPoints]);
-  const isGameBench = benchmark === "game-bench";
-  const scoreUnit = isGameBench ? "pts" : "%";
+  const isEffortChart = benchmark !== "terminal-bench";
+  const meta = CHART_BENCHMARKS[benchmark];
+  const scoreUnit = meta.scoreUnit;
   const selectedPoints = series.get(selectedRelease.slug) ?? [];
   const comparePoints = compareRelease ? series.get(compareRelease.slug) ?? [] : [];
   const selectedPoint = primaryPoint(selectedPoints, activeEffort);
   const peerSeries = [...series.values()].filter((points) => points !== selectedPoints && points !== comparePoints);
+  const labLeaders = useMemo(() => {
+    const leaders = new Map<string, BenchmarkPoint>();
+    if (benchmark !== "argo-bench") return leaders;
+    for (const point of allPoints) {
+      const leader = leaders.get(point.provider);
+      if (!leader || point.score > leader.score || (point.score === leader.score && point.budget < leader.budget)) {
+        leaders.set(point.provider, point);
+      }
+    }
+    for (const [provider, point] of leaders) {
+      if (point.release.slug === selectedRelease.slug) leaders.delete(provider);
+    }
+    return leaders;
+  }, [allPoints, benchmark, selectedRelease.slug]);
   const pointTag = (point: BenchmarkPoint) =>
-    isGameBench ? effortName(point.run.effort) : shortModelName(point.release.name);
+    isEffortChart && labLeaders.get(point.provider) !== point
+      ? effortName(point.run.effort)
+      : shortModelName(point.release.name);
   const curve = (points: readonly BenchmarkPoint[]) =>
     points.map((p) => `${toX(p.budget)},${toY(p.score)}`).join(" ");
 
@@ -198,7 +214,7 @@ export function ParetoChart({
     const emphasized = selectedPoint
       ? [selectedPoint, ...selectedPoints.filter((p) => p !== selectedPoint), ...comparePoints]
       : comparePoints;
-    for (const point of emphasized) {
+    for (const point of [...emphasized, ...labLeaders.values()]) {
       const x = toX(point.budget);
       const y = toY(point.score);
       const w = pointTag(point).length * 6.2 + 8;
@@ -234,7 +250,7 @@ export function ParetoChart({
       if (chosen) tags.set(point.key, chosen);
     }
     return tags;
-  }, [allPoints, selectedPoint, selectedPoints, comparePoints, isGameBench, logMin, logMax, yMin, yMax, plotW, plotH, pad.left, pad.top]);
+  }, [allPoints, selectedPoint, selectedPoints, comparePoints, isEffortChart, labLeaders, logMin, logMax, yMin, yMax, plotW, plotH, pad.left, pad.top]);
 
   function findNearestPoint(clientX: number, clientY: number): BenchmarkPoint | null {
     const el = containerRef.current;
@@ -284,12 +300,12 @@ export function ParetoChart({
     return { left, top };
   }, [inspectedPoint, width, height, logMin, logMax, yMin, yMax]);
 
-  const budgetLabel = isGameBench ? "estimated cost per program" : axis === "cost" ? "cost per task" : "output tokens per task";
-  const axisLabel = budgetLabel[0]!.toUpperCase() + budgetLabel.slice(1);
-  const benchmarkLabel = isGameBench ? GAME_BENCH.label : TERMINAL_BENCH.label;
+  const metric = axis === "cost" ? meta.costLabel : "Output tokens";
+  const axisLabel = `${metric} per ${meta.workload}`;
   const named = [selectedRelease.name, compareRelease?.name].filter(Boolean).join(" and ");
   const inspectedRun = inspectedPoint?.run;
-  const inspectedCost = inspectedRun && ("agent" in inspectedRun ? inspectedRun.costPerTaskUsd : inspectedRun.costPerProgramUsd);
+  const inspectedCost = inspectedRun && ("agent" in inspectedRun ? inspectedRun.costPerTaskUsd : inspectedRun.costUsd);
+  const inspectedTokens = inspectedRun && ("agent" in inspectedRun ? inspectedRun.tokensPerTask.output : inspectedRun.outputTokens);
 
   return (
     <div
@@ -309,10 +325,10 @@ export function ParetoChart({
           setPinnedPeerKey(null);
           return;
         }
-        const effort = isGameBench ? nearest.run.effort ?? undefined : undefined;
+        const effort = isEffortChart ? nearest.run.effort ?? undefined : undefined;
         if (nearest.release.slug === selectedRelease.slug) {
           setPinnedPeerKey(null);
-          if (isGameBench) onSelectRelease(nearest.release.slug, effort);
+          if (isEffortChart) onSelectRelease(nearest.release.slug, effort);
           return;
         }
         const isTouch = window.matchMedia("(pointer: coarse)").matches;
@@ -331,7 +347,7 @@ export function ParetoChart({
         role="img"
         aria-label={
           ariaLabel ??
-          `${benchmarkLabel} score against ${budgetLabel} for ${series.size} models, with ${named} selected`
+          `${meta.label} score against ${axisLabel.toLowerCase()} for ${series.size} models, with ${named} selected`
         }
         className="pareto-svg"
       >
@@ -377,6 +393,11 @@ export function ParetoChart({
             Pareto frontier
           </text>
         </g>
+        {isEffortChart && (
+          <text x={pad.left + plotW} y={pad.top - 8} textAnchor="end" className="chart-axis-hint">
+            {meta.scoreLabel}
+          </text>
+        )}
         <text x={pad.left + plotW} y={height - 2} textAnchor="end" className="chart-axis-hint">
           {axisLabel} (log)
         </text>
@@ -386,10 +407,13 @@ export function ParetoChart({
         {peerSeries.map((points) => {
           const { release, provider } = points[0]!;
           const isInspected = inspectedPoint?.release.slug === release.slug;
+          const leader = labLeaders.get(provider);
+          const isLeader = leader?.release.slug === release.slug;
+          const tag = isLeader ? tagPositions.get(leader.key) : undefined;
           return (
             <g
               key={release.slug}
-              className={`peer-series peer-series--${provider}${isInspected ? " is-hovered" : ""}`}
+              className={`peer-series peer-series--${provider}${isLeader ? " is-leader" : ""}${isInspected ? " is-hovered" : ""}`}
             >
               {points.length > 1 && <polyline points={curve(points)} className="peer-curve" />}
               {points.map((p) => {
@@ -404,6 +428,11 @@ export function ParetoChart({
                   />
                 );
               })}
+              {tag && (
+                <text x={tag.x} y={tag.y} textAnchor="middle" className="peer-tag">
+                  {shortModelName(release.name)}
+                </text>
+              )}
             </g>
           );
         })}
@@ -470,10 +499,10 @@ export function ParetoChart({
                 <span>{formatUsd(inspectedCost)}</span>
               </>
             )}
-            {"agent" in inspectedRun && (
+            {inspectedTokens != null && (
               <>
                 <span>·</span>
-                <span>{formatTokens(inspectedRun.tokensPerTask.output)} out</span>
+                <span>{formatTokens(inspectedTokens)} out</span>
               </>
             )}
           </div>
@@ -484,7 +513,7 @@ export function ParetoChart({
                 className="chart-tooltip__jump"
                 onClick={() => {
                   setPinnedPeerKey(null);
-                  onSelectRelease(inspectedPoint.release.slug, isGameBench ? inspectedRun.effort ?? undefined : undefined);
+                  onSelectRelease(inspectedPoint.release.slug, isEffortChart ? inspectedRun.effort ?? undefined : undefined);
                 }}
               >
                 Select model →

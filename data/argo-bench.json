@@ -1,0 +1,398 @@
+{
+  "snapshotDate": "2026-11-19",
+  "sourceUrl": "https://argo-bench.com/#leaderboard",
+  "runs": {
+    "gemini-4-neon": [
+      {
+        "effort": "low",
+        "score": 50.2701,
+        "costUsd": 0.6437,
+        "outputTokens": 19256
+      },
+      {
+        "effort": "medium",
+        "score": 60.9334,
+        "costUsd": 2.1416,
+        "outputTokens": 61779
+      },
+      {
+        "effort": "high",
+        "score": 64.5512,
+        "costUsd": 5.7934,
+        "outputTokens": 139358
+      }
+    ],
+    "gpt-6-2-astra": [
+      {
+        "effort": "low",
+        "score": 39.0085,
+        "costUsd": 0.4441,
+        "outputTokens": 2636
+      },
+      {
+        "effort": "medium",
+        "score": 55.7872,
+        "costUsd": 0.976,
+        "outputTokens": 5954
+      },
+      {
+        "effort": "high",
+        "score": 64.0249,
+        "costUsd": 1.8357,
+        "outputTokens": 12448
+      },
+      {
+        "effort": "xhigh",
+        "score": 62.8929,
+        "costUsd": 2.1659,
+        "outputTokens": 15819
+      }
+    ],
+    "gpt-6-2-sol": [
+      {
+        "effort": "low",
+        "score": 24.4231,
+        "costUsd": 0.1157,
+        "outputTokens": 2955
+      },
+      {
+        "effort": "medium",
+        "score": 49.586,
+        "costUsd": 0.3115,
+        "outputTokens": 8611
+      },
+      {
+        "effort": "high",
+        "score": 53.0251,
+        "costUsd": 0.4626,
+        "outputTokens": 13824
+      },
+      {
+        "effort": "xhigh",
+        "score": 58.7619,
+        "costUsd": 0.5802,
+        "outputTokens": 18083
+      }
+    ],
+    "claude-fable-5-2": [
+      {
+        "effort": "low",
+        "score": 58.3596,
+        "costUsd": 2.2526,
+        "outputTokens": 21988
+      },
+      {
+        "effort": "medium",
+        "score": 56.2658,
+        "costUsd": 2.8319,
+        "outputTokens": 27898
+      },
+      {
+        "effort": "high",
+        "score": 64.6643,
+        "costUsd": 6.64,
+        "outputTokens": 67805
+      },
+      {
+        "effort": "xhigh",
+        "score": 70.2237,
+        "costUsd": 13.3183,
+        "outputTokens": 136122
+      }
+    ],
+    "gemini-4-carbon": [
+      {
+        "effort": "low",
+        "score": 51.3228,
+        "costUsd": 10.1447,
+        "outputTokens": 85187
+      },
+      {
+        "effort": "medium",
+        "score": 59.9428,
+        "costUsd": 6.3701,
+        "outputTokens": 126799
+      },
+      {
+        "effort": "high",
+        "score": 62.3478,
+        "costUsd": 6.212,
+        "outputTokens": 149608
+      }
+    ],
+    "gpt-6-1-terra": [
+      {
+        "effort": "low",
+        "score": 20.6113,
+        "costUsd": 0.0511,
+        "outputTokens": 2979
+      },
+      {
+        "effort": "medium",
+        "score": 33.1298,
+        "costUsd": 0.1184,
+        "outputTokens": 7153
+      },
+      {
+        "effort": "high",
+        "score": 41.7345,
+        "costUsd": 0.1746,
+        "outputTokens": 11023
+      },
+      {
+        "effort": "xhigh",
+        "score": 44.2081,
+        "costUsd": 0.27,
+        "outputTokens": 18185
+      }
+    ],
+    "claude-haiku-5-5": [
+      {
+        "effort": "low",
+        "score": 12.8055,
+        "costUsd": 0.094,
+        "outputTokens": 28860
+      },
+      {
+        "effort": "medium",
+        "score": 15.6218,
+        "costUsd": 0.2272,
+        "outputTokens": 48566
+      },
+      {
+        "effort": "high",
+        "score": 19.1197,
+        "costUsd": 0.5008,
+        "outputTokens": 82342
+      },
+      {
+        "effort": "xhigh",
+        "score": 23.1874,
+        "costUsd": 1.0188,
+        "outputTokens": 145211
+      }
+    ],
+    "gemini-4-argon": [
+      {
+        "effort": "low",
+        "score": 37.7741,
+        "costUsd": 10.5226,
+        "outputTokens": 73653
+      },
+      {
+        "effort": "medium",
+        "score": 50.715,
+        "costUsd": 7.0092,
+        "outputTokens": 117623
+      },
+      {
+        "effort": "high",
+        "score": 53.8618,
+        "costUsd": 7.5252,
+        "outputTokens": 154926
+      }
+    ],
+    "gpt-6-1-sol": [
+      {
+        "effort": "low",
+        "score": 23.249,
+        "costUsd": 0.1306,
+        "outputTokens": 3367
+      },
+      {
+        "effort": "medium",
+        "score": 34.8708,
+        "costUsd": 0.2546,
+        "outputTokens": 7203
+      },
+      {
+        "effort": "high",
+        "score": 42.0894,
+        "costUsd": 0.412,
+        "outputTokens": 12960
+      },
+      {
+        "effort": "xhigh",
+        "score": 47.8079,
+        "costUsd": 0.5021,
+        "outputTokens": 17371
+      }
+    ],
+    "claude-sonnet-5-5": [
+      {
+        "effort": "low",
+        "score": 17.276,
+        "costUsd": 0.3182,
+        "outputTokens": 9408
+      },
+      {
+        "effort": "medium",
+        "score": 23.4707,
+        "costUsd": 0.578,
+        "outputTokens": 15774
+      },
+      {
+        "effort": "high",
+        "score": 37.0646,
+        "costUsd": 1.5303,
+        "outputTokens": 35155
+      },
+      {
+        "effort": "xhigh",
+        "score": 49.9295,
+        "costUsd": 3.7971,
+        "outputTokens": 86147
+      }
+    ],
+    "claude-opus-5-5": [
+      {
+        "effort": "low",
+        "score": 29.9437,
+        "costUsd": 0.6789,
+        "outputTokens": 11697
+      },
+      {
+        "effort": "medium",
+        "score": 48.22,
+        "costUsd": 1.7064,
+        "outputTokens": 27121
+      },
+      {
+        "effort": "high",
+        "score": 53.2735,
+        "costUsd": 2.3667,
+        "outputTokens": 37292
+      },
+      {
+        "effort": "xhigh",
+        "score": 58.3808,
+        "costUsd": 4.8438,
+        "outputTokens": 74005
+      }
+    ],
+    "gpt-6-sol": [
+      {
+        "effort": "low",
+        "score": 17.176,
+        "costUsd": 0.1075,
+        "outputTokens": 2748
+      },
+      {
+        "effort": "medium",
+        "score": 26.1296,
+        "costUsd": 0.2697,
+        "outputTokens": 6825
+      },
+      {
+        "effort": "high",
+        "score": 28.4522,
+        "costUsd": 0.494,
+        "outputTokens": 12263
+      },
+      {
+        "effort": "xhigh",
+        "score": 34.944,
+        "costUsd": 0.8552,
+        "outputTokens": 20936
+      }
+    ],
+    "gpt-6-luna": [
+      {
+        "effort": "low",
+        "score": 5.074,
+        "costUsd": 0.0028,
+        "outputTokens": 1406
+      },
+      {
+        "effort": "medium",
+        "score": 10.5574,
+        "costUsd": 0.019,
+        "outputTokens": 14807
+      },
+      {
+        "effort": "high",
+        "score": 10.4663,
+        "costUsd": 0.0392,
+        "outputTokens": 30058
+      },
+      {
+        "effort": "xhigh",
+        "score": 12.8855,
+        "costUsd": 0.0571,
+        "outputTokens": 41611
+      }
+    ],
+    "gpt-6-astra": [
+      {
+        "effort": "low",
+        "score": 31.9862,
+        "costUsd": 1.066,
+        "outputTokens": 4212
+      },
+      {
+        "effort": "medium",
+        "score": 44.0798,
+        "costUsd": 1.8069,
+        "outputTokens": 7974
+      },
+      {
+        "effort": "high",
+        "score": 46.831,
+        "costUsd": 2.3978,
+        "outputTokens": 12218
+      },
+      {
+        "effort": "xhigh",
+        "score": 50.692,
+        "costUsd": 2.7604,
+        "outputTokens": 14832
+      }
+    ],
+    "gemini-3-8-flash": [
+      {
+        "effort": "low",
+        "score": 16.1946,
+        "costUsd": 2.2965,
+        "outputTokens": 31105
+      },
+      {
+        "effort": "medium",
+        "score": 25.4187,
+        "costUsd": 2.7988,
+        "outputTokens": 79068
+      },
+      {
+        "effort": "high",
+        "score": 24.5157,
+        "costUsd": 3.9909,
+        "outputTokens": 109478
+      }
+    ],
+    "claude-sonnet-5": [
+      {
+        "effort": "low",
+        "score": 10.2214,
+        "costUsd": 0.4185,
+        "outputTokens": 14645
+      },
+      {
+        "effort": "medium",
+        "score": 10.615,
+        "costUsd": 0.8126,
+        "outputTokens": 27498
+      },
+      {
+        "effort": "high",
+        "score": 12.4679,
+        "costUsd": 1.4737,
+        "outputTokens": 48597
+      },
+      {
+        "effort": "xhigh",
+        "score": 14.4115,
+        "costUsd": 2.1517,
+        "outputTokens": 70601
+      }
+    ]
+  }
+}

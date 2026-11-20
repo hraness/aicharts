@@ -6,6 +6,23 @@ export type ContextMode = "release" | "live";
 
 export type EffortSlug = "none" | "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
 
+export type SnapshotBenchmarkId = "argo-bench" | "roboflow" | "ironbee";
+export type CurveEffort = EffortSlug | "default";
+
+/** One published setting on a benchmark's fixed set of tasks. */
+export type BenchmarkEffortRun = Readonly<{
+  effort: CurveEffort;
+  score: number;
+  costUsd: number;
+  outputTokens: number | null;
+}>;
+
+export type BenchmarkSnapshot = Readonly<{
+  snapshotDate: string;
+  sourceUrl: string;
+  runs: Readonly<Partial<Record<string, readonly BenchmarkEffortRun[]>>>;
+}>;
+
 /** One costed reasoning setting on DuelLab's GameBench 2 leaderboard. */
 export type GameBenchRun = Readonly<{
   effort: EffortSlug;
@@ -82,6 +99,8 @@ export type ModelRelease = Readonly<{
   epoch: readonly EpochScore[];
   /** Published reasoning settings with scores and costs for all eight games. */
   gameBench?: readonly GameBenchRun[];
+  /** Additional snapshots used by the home explorer. */
+  benchmarkRuns?: Readonly<Partial<Record<SnapshotBenchmarkId, readonly BenchmarkEffortRun[]>>>;
 }>;
 
 export type DataSourceId = "terminal-bench" | "epoch-ai" | "litellm" | "gamebench-2";

@@ -1,5 +1,17 @@
 [
   {
+    "slug": "argo-bench-explorer",
+    "date": "2026-11-20",
+    "category": "Improved",
+    "surfaces": ["Web app", "Website"],
+    "title": "Argo-Bench opens the explorer",
+    "summary": "Compare 60 reasoning settings across 16 Anthropic, OpenAI and Google models on 210 enterprise tasks. Plot Argo-Bench scores against model API cost or output tokens per task. The benchmark picker also adds Roboflow Visual Reasoning and IronBee Code Review.",
+    "link": {
+      "href": "/",
+      "label": "Explore the benchmarks"
+    }
+  },
+  {
     "slug": "gamebench-effort-curves",
     "date": "2026-11-20",
     "category": "New",

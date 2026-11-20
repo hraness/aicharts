@@ -9,8 +9,8 @@ import { formatFullDate } from "@/lib/format";
 const { dataset } = catalog;
 
 export const metadata: Metadata = pageMetadata(
-  "Free AI model benchmark API: scores and costs as JSON",
-  "One free JSON endpoint with no key: GameBench 2 effort scores and costs, Terminal-Bench runs, Epoch AI scores and API prices for models from Anthropic, OpenAI and Google.",
+  "Free AI model release API with benchmark scores and costs",
+  "Free JSON for Anthropic, OpenAI and Google model releases, including GameBench 2 settings, Terminal-Bench runs, Epoch AI scores and API prices. No key needed.",
   "/api",
 );
 
@@ -86,10 +86,14 @@ export default function ApiPage() {
         </p>
       </header>
       <p className="lead">
-        One endpoint returns the data behind every chart on aicharts: each Anthropic, OpenAI and
-        Google model with its GameBench 2 scores and costs by reasoning setting, official
-        Terminal-Bench run, Epoch AI scores and list API prices. Every response includes source
-        licenses. The endpoint needs no key or sign-up and answers requests from any website.
+        The release API returns the schema v2 catalog of Anthropic, OpenAI and Google models,
+        including GameBench 2 settings, official Terminal-Bench runs, Epoch AI scores and list API
+        prices. Every response includes source licenses. The endpoint needs no key or sign-up and
+        answers requests from any website.
+      </p>
+      <p>
+        Argo-Bench, Roboflow Visual Reasoning and IronBee Code Review are available as benchmark
+        snapshots in the <a href="/">explorer</a> outside the release API.
       </p>
       <section aria-labelledby="endpoint">
         <h2 id="endpoint">Endpoint</h2>

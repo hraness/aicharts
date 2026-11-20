@@ -1,0 +1,370 @@
+{
+  "snapshotDate": "2026-11-19",
+  "sourceUrl": "https://github.com/roboflow/vlm-exam/blob/7955957ea07ff79616203badd53d851d119f72d9/web/benchmark_summary.json",
+  "runs": {
+    "gemini-4-neon": [
+      {
+        "effort": "low",
+        "score": 92.94,
+        "costUsd": 0.011372,
+        "outputTokens": 524.19
+      },
+      {
+        "effort": "high",
+        "score": 94.04,
+        "costUsd": 0.03849,
+        "outputTokens": 2332.09
+      }
+    ],
+    "gpt-6-2-astra": [
+      {
+        "effort": "low",
+        "score": 92.27,
+        "costUsd": 0.011133,
+        "outputTokens": 22.13
+      },
+      {
+        "effort": "high",
+        "score": 93.38,
+        "costUsd": 0.014575,
+        "outputTokens": 108.2
+      }
+    ],
+    "gpt-6-2-sol": [
+      {
+        "effort": "low",
+        "score": 92.27,
+        "costUsd": 0.002651,
+        "outputTokens": 8.89
+      },
+      {
+        "effort": "high",
+        "score": 93.6,
+        "costUsd": 0.003211,
+        "outputTokens": 64.94
+      }
+    ],
+    "gemini-4-hydrogen": [
+      {
+        "effort": "low",
+        "score": 88.08,
+        "costUsd": 0.004643,
+        "outputTokens": 385.09
+      },
+      {
+        "effort": "high",
+        "score": 91.83,
+        "costUsd": 0.013016,
+        "outputTokens": 1501.49
+      }
+    ],
+    "claude-fable-5-2": [
+      {
+        "effort": "low",
+        "score": 88.08,
+        "costUsd": 0.016089,
+        "outputTokens": 118.38
+      },
+      {
+        "effort": "high",
+        "score": 92.05,
+        "costUsd": 0.024272,
+        "outputTokens": 322.94
+      }
+    ],
+    "gemini-4-carbon": [
+      {
+        "effort": "low",
+        "score": 91.39,
+        "costUsd": 0.002518,
+        "outputTokens": 17.83
+      },
+      {
+        "effort": "high",
+        "score": 92.27,
+        "costUsd": 0.057337,
+        "outputTokens": 5499.79
+      }
+    ],
+    "gpt-6-1-terra": [
+      {
+        "effort": "low",
+        "score": 85.43,
+        "costUsd": 0.001639,
+        "outputTokens": 71.69
+      },
+      {
+        "effort": "high",
+        "score": 86.98,
+        "costUsd": 0.002251,
+        "outputTokens": 193.95
+      }
+    ],
+    "claude-haiku-5-5": [
+      {
+        "effort": "low",
+        "score": 68.87,
+        "costUsd": 0.000407,
+        "outputTokens": 529.45
+      },
+      {
+        "effort": "high",
+        "score": 74.83,
+        "costUsd": 0.00058,
+        "outputTokens": 876.03
+      }
+    ],
+    "gemini-4-argon": [
+      {
+        "effort": "low",
+        "score": 89.4,
+        "costUsd": 0.0024,
+        "outputTokens": 6.12
+      },
+      {
+        "effort": "high",
+        "score": 91.39,
+        "costUsd": 0.012653,
+        "outputTokens": 1031.33
+      }
+    ],
+    "gpt-6-1-sol": [
+      {
+        "effort": "low",
+        "score": 83.66,
+        "costUsd": 0.003294,
+        "outputTokens": 73.18
+      },
+      {
+        "effort": "high",
+        "score": 88.74,
+        "costUsd": 0.004207,
+        "outputTokens": 164.52
+      }
+    ],
+    "claude-sonnet-5-5": [
+      {
+        "effort": "low",
+        "score": 76.38,
+        "costUsd": 0.004869,
+        "outputTokens": 203.05
+      },
+      {
+        "effort": "high",
+        "score": 83.89,
+        "costUsd": 0.006098,
+        "outputTokens": 325.94
+      }
+    ],
+    "claude-opus-5-5": [
+      {
+        "effort": "low",
+        "score": 83.0,
+        "costUsd": 0.008952,
+        "outputTokens": 163.76
+      },
+      {
+        "effort": "high",
+        "score": 85.87,
+        "costUsd": 0.010846,
+        "outputTokens": 258.48
+      }
+    ],
+    "gpt-6-sol": [
+      {
+        "effort": "low",
+        "score": 72.63,
+        "costUsd": 0.00372,
+        "outputTokens": 115.84
+      },
+      {
+        "effort": "high",
+        "score": 77.7,
+        "costUsd": 0.006113,
+        "outputTokens": 355.14
+      }
+    ],
+    "gpt-6-luna": [
+      {
+        "effort": "low",
+        "score": 64.24,
+        "costUsd": 0.000254,
+        "outputTokens": 251.21
+      },
+      {
+        "effort": "high",
+        "score": 71.08,
+        "costUsd": 0.000438,
+        "outputTokens": 620.76
+      }
+    ],
+    "gpt-6-astra": [
+      {
+        "effort": "low",
+        "score": 87.2,
+        "costUsd": 0.01582,
+        "outputTokens": 60.22
+      },
+      {
+        "effort": "high",
+        "score": 91.17,
+        "costUsd": 0.02099,
+        "outputTokens": 163.62
+      }
+    ],
+    "gemini-3-8-flash": [
+      {
+        "effort": "low",
+        "score": 81.24,
+        "costUsd": 0.00344,
+        "outputTokens": 689.74
+      },
+      {
+        "effort": "high",
+        "score": 84.55,
+        "costUsd": 0.020846,
+        "outputTokens": 5331.44
+      }
+    ],
+    "claude-fable-5-1": [
+      {
+        "effort": "low",
+        "score": 71.96,
+        "costUsd": 0.019422,
+        "outputTokens": 104.58
+      },
+      {
+        "effort": "high",
+        "score": 73.07,
+        "costUsd": 0.028499,
+        "outputTokens": 286.13
+      }
+    ],
+    "gemini-3-7-flash": [
+      {
+        "effort": "low",
+        "score": 80.79,
+        "costUsd": 0.002212,
+        "outputTokens": 362.38
+      },
+      {
+        "effort": "high",
+        "score": 81.9,
+        "costUsd": 0.005044,
+        "outputTokens": 1117.52
+      }
+    ],
+    "claude-opus-5": [
+      {
+        "effort": "low",
+        "score": 71.52,
+        "costUsd": 0.010241,
+        "outputTokens": 126.18
+      },
+      {
+        "effort": "high",
+        "score": 74.17,
+        "costUsd": 0.017879,
+        "outputTokens": 431.73
+      }
+    ],
+    "gemini-3-5-flash-lite": [
+      {
+        "effort": "low",
+        "score": 48.34,
+        "costUsd": 0.001216,
+        "outputTokens": 349.87
+      },
+      {
+        "effort": "high",
+        "score": 68.87,
+        "costUsd": 0.004161,
+        "outputTokens": 1527.75
+      }
+    ],
+    "gemini-3-6-flash": [
+      {
+        "effort": "low",
+        "score": 77.7,
+        "costUsd": 0.006261,
+        "outputTokens": 607.24
+      },
+      {
+        "effort": "high",
+        "score": 81.02,
+        "costUsd": 0.018287,
+        "outputTokens": 2210.78
+      }
+    ],
+    "claude-sonnet-5": [
+      {
+        "effort": "low",
+        "score": 43.05,
+        "costUsd": 0.003164,
+        "outputTokens": 32.98
+      },
+      {
+        "effort": "high",
+        "score": 43.05,
+        "costUsd": 0.004347,
+        "outputTokens": 151.21
+      }
+    ],
+    "gpt-5-6-sol": [
+      {
+        "effort": "low",
+        "score": 66.0,
+        "costUsd": 0.011626,
+        "outputTokens": 174.05
+      },
+      {
+        "effort": "high",
+        "score": 71.74,
+        "costUsd": 0.017077,
+        "outputTokens": 355.72
+      }
+    ],
+    "gpt-5-6-terra": [
+      {
+        "effort": "low",
+        "score": 60.93,
+        "costUsd": 0.006394,
+        "outputTokens": 212.79
+      },
+      {
+        "effort": "high",
+        "score": 65.34,
+        "costUsd": 0.008327,
+        "outputTokens": 341.64
+      }
+    ],
+    "gpt-5-6-luna": [
+      {
+        "effort": "low",
+        "score": 60.49,
+        "costUsd": 0.003145,
+        "outputTokens": 310.74
+      },
+      {
+        "effort": "high",
+        "score": 65.56,
+        "costUsd": 0.007638,
+        "outputTokens": 1059.44
+      }
+    ],
+    "claude-fable-5": [
+      {
+        "effort": "low",
+        "score": 66.23,
+        "costUsd": 0.017506,
+        "outputTokens": 66.68
+      },
+      {
+        "effort": "high",
+        "score": 66.23,
+        "costUsd": 0.023815,
+        "outputTokens": 192.85
+      }
+    ]
+  }
+}

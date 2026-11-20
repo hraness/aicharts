@@ -1,28 +1,37 @@
 import { FrontierStarIcon, ProviderLogo } from "./brand-icon";
-import { formatScore, formatUsd, shortModelName } from "@/lib/format";
+import { formatScore, formatTokens, formatUsd, shortModelName } from "@/lib/format";
+import { CHART_BENCHMARKS, type CurveBenchmarkId } from "@/lib/benchmarks";
+import { benchmarkEfforts } from "@/lib/pareto";
 import { bestEpoch, effortName, epochScores } from "@/lib/measures";
-import type { EffortSlug, EpochBenchmarkMeta, ModelRelease } from "@/lib/types";
+import type { BudgetAxis, CurveEffort, EpochBenchmarkMeta, ModelRelease } from "@/lib/types";
 
-export function GameBenchEfforts({
+export function BenchmarkEfforts({
+  benchmark,
+  axis,
   release,
   active,
   frontierKeys,
   onSelect,
 }: Readonly<{
+  benchmark: CurveBenchmarkId;
+  axis: BudgetAxis;
   release: ModelRelease;
-  active: EffortSlug | null;
+  active: CurveEffort | null;
   frontierKeys: ReadonlySet<string>;
-  onSelect: (effort: EffortSlug) => void;
+  onSelect: (effort: CurveEffort) => void;
 }>) {
-  if (!release.gameBench?.length) return null;
+  const runs = benchmarkEfforts(release, benchmark);
+  if (!runs.length) return null;
+  const { scoreLabel, scoreUnit, workload } = CHART_BENCHMARKS[benchmark];
+  const budgetLabel = axis === "cost" ? "Cost" : "Output tokens";
   return (
-    <div className="effort-table gamebench-efforts" role="group" aria-label="Reasoning settings">
+    <div className="effort-table benchmark-efforts" role="group" aria-label="Reasoning settings">
       <div className="effort-table__head" aria-hidden="true">
         <span>Effort</span>
-        <span className="align-right">Score / 100</span>
-        <span className="align-right">Cost / program</span>
+        <span className="align-right">{scoreLabel}</span>
+        <span className="align-right">{budgetLabel} / {workload}</span>
       </div>
-      {release.gameBench.map((run) => (
+      {runs.map((run) => (
         <button
           key={run.effort}
           type="button"
@@ -40,9 +49,9 @@ export function GameBenchEfforts({
               </span>
             )}
           </span>
-          <strong className="effort-row__score mono align-right">{formatScore(run.score, "pts")}</strong>
-          <span className="effort-row__cell mono align-right" title={run.costBasis}>
-            {formatUsd(run.costPerProgramUsd)}
+          <strong className="effort-row__score mono align-right">{formatScore(run.score, scoreUnit)}</strong>
+          <span className="effort-row__cell mono align-right" title={benchmark === "game-bench" ? release.gameBench?.find((game) => game.effort === run.effort)?.costBasis : undefined}>
+            {axis === "cost" ? formatUsd(run.costUsd) : run.outputTokens === null ? "—" : formatTokens(run.outputTokens)}
           </span>
         </button>
       ))}
