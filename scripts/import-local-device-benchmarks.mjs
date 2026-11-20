@@ -43,16 +43,28 @@ function platform(device) {
 }
 
 async function qualcomm() {
+  const aliasPath = "src/qai_hub_models/similar_devices.yaml";
+  const aliases = await source("similar_devices.yaml", `https://raw.githubusercontent.com/${qrepo}/${qpin}/${aliasPath}`);
+  const projections = new Set(Object.keys(Bun.YAML.parse(aliases).devices));
+  const jobs = new Set();
+  const signatures = new Set();
   const suite = {
     id: "qcom-aihub-language", task: "Language", title: "Qualcomm AI Hub language inference",
     source: `https://github.com/${qrepo}/tree/${qpin}/${qpath}`,
-    description: "Qualcomm AI Hub reports prompt and generation rates by configured context limit, compute unit, precision and runtime. Context is the configured limit. Vision-capable model entries measure language tokens only. Input lengths and peak memory are unpublished in these records.",
+    description: "Qualcomm AI Hub reports prompt and generation rates by configured context limit, compute unit, precision and runtime. Context is the configured limit. Vision-capable model entries measure language tokens only. Qualcomm’s projected device aliases are excluded. These records omit input lengths, peak memory and individual job IDs.",
     metrics: ["prompt", "generation"], modelSources: {}, runs: [],
   };
   for (const family of families) {
     const path = `${qpath}/${family}/perf.yaml`;
     const raw = await source(`perf/${family}.yaml`, `https://raw.githubusercontent.com/${qrepo}/${qpin}/${path}`);
     for (const row of Bun.YAML.parse(raw).performance_metrics) {
+      if (!row.llm_metrics?.length || projections.has(row.device) || row.device.includes("(Proxy)")) continue;
+      if (row.profile_job) {
+        if (row.profile_job.status !== "Passed") continue;
+        const id = row.profile_job.id;
+        if (!id || jobs.has(id)) throw new Error(`Invalid or repeated Qualcomm job: ${id}`);
+        jobs.add(id);
+      }
       const versions = Object.entries(row.tool_versions ?? {}).map(([tool, version]) => `${tool} ${version}`).join(", ");
       for (const m of row.llm_metrics ?? []) {
         const values = {};
@@ -65,6 +77,11 @@ async function qualcomm() {
         suite.modelSources[model] = permalink;
         const config = [row.precision.replace("PRECISION_", ""), m.desired_compute_unit.toUpperCase(),
           row.runtime.replace("RUNTIME_", "").replaceAll("_", " "), `${m.context_length} context`, versions].filter(Boolean).join(" · ");
+        // The language snapshot omits job IDs. Identical results for the same
+        // workload across devices require rechecking the vendor projection map.
+        const signature = JSON.stringify([model, config, values]);
+        if (signatures.has(signature)) throw new Error(`Repeated Qualcomm measurement: ${signature}`);
+        signatures.add(signature);
         suite.runs.push({ device: row.device, platform: platform(row.device), model, config, values });
       }
     }
