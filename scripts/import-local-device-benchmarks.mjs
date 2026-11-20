@@ -1,5 +1,5 @@
 // bun scripts/import-local-device-benchmarks.mjs [--check]
-// Set BENCHMARK_CACHE to a directory containing perf/<family>.yaml and nvidia.md
+// Set BENCHMARK_CACHE to a directory containing perf/<family>.yaml and the vendor Markdown snapshots
 // for an offline replay. Absent cache entries are fetched from immutable revisions.
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -102,7 +102,31 @@ async function nvidia() {
   return suites;
 }
 
-const generated = [await qualcomm(), ...await nvidia()];
+async function litert() {
+  const repo = "google-ai-edge/LiteRT-LM";
+  const pin = "449dbb22e21991905b01b0e5e8832100159a1d5d";
+  const raw = await source("litert.md", `https://raw.githubusercontent.com/${repo}/${pin}/README.md`);
+  const table = raw.split("| Model | Device | Backend | Prefill (tokens/sec) |")[1].split("\n\n")[0];
+  const devices = {
+    "MacBook Pro<br>(2023 M3)": "MacBook Pro · M3 (2023)",
+    "Samsung S24<br>(Ultra)": "Samsung Galaxy S24 Ultra",
+    "Samsung S25<br>(Ultra)": "Samsung Galaxy S25 Ultra",
+  };
+  const runs = [];
+  for (const line of table.split("\n").slice(2)) {
+    const [model, reportedDevice, backend, prompt, generation, context] = line.slice(1, -1).split("|").map(x => x.trim());
+    const device = devices[reportedDevice];
+    if (!device) throw new Error(line);
+    runs.push({ device, platform: device.startsWith("MacBook") ? "Apple silicon Macs" : "Android",
+      model, config: `${backend} · ${context} context`, values: { prompt: Number(prompt), generation: Number(generation) } });
+  }
+  return { id: "google-litert-language", task: "Language", title: "Google LiteRT-LM single-stream inference",
+    source: `https://github.com/${repo}/blob/${pin}/README.md#supported-models-and-performance`,
+    description: "Google AI Edge measured 1,024 prompt tokens and 256 generated tokens. Android performance clocks were locked. The table identifies the backend and configured context size for each run.",
+    metrics: ["prompt", "generation"], runs };
+}
+
+const generated = [await qualcomm(), ...await nvidia(), await litert()];
 for (const suite of generated) {
   const seen = new Set();
   if (!suite.runs.length) throw new Error(`No rows for ${suite.id}`);

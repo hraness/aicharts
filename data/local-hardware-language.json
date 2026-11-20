@@ -1591,5 +1591,28 @@
     {"device":"DGX Spark (GB10)","platform":"NVIDIA edge systems","model":"Qwen3.6-35B-A3B","config":"NVFP4 / NVFP4 / FP16 · MTP · 296 input tokens · 265 visual tokens/run","values":{"prompt":2469.1,"generation":96.7,"gpuMemoryMB":1408,"visionEncoderMs":20.7}},
     {"device":"DGX Spark (GB10)","platform":"NVIDIA edge systems","model":"Qwen3.6-35B-A3B","config":"NVFP4 / FP16 · Vanilla · 296 input tokens · 265 visual tokens/run","values":{"prompt":2491.3,"generation":69.1,"gpuMemoryMB":1412,"visionEncoderMs":17.5}}
   ]
+},
+{
+  "id": "google-litert-language",
+  "task": "Language",
+  "title": "Google LiteRT-LM single-stream inference",
+  "source": "https://github.com/google-ai-edge/LiteRT-LM/blob/449dbb22e21991905b01b0e5e8832100159a1d5d/README.md#supported-models-and-performance",
+  "description": "Google AI Edge measured 1,024 prompt tokens and 256 generated tokens. Android performance clocks were locked. The table identifies the backend and configured context size for each run.",
+  "metrics": [
+    "prompt",
+    "generation"
+  ],
+  "runs": [
+    {"device":"MacBook Pro · M3 (2023)","platform":"Apple silicon Macs","model":"Gemma3-1B","config":"CPU · 4096 context","values":{"prompt":422.98,"generation":66.89}},
+    {"device":"Samsung Galaxy S24 Ultra","platform":"Android","model":"Gemma3-1B","config":"CPU · 4096 context","values":{"prompt":243.24,"generation":43.56}},
+    {"device":"Samsung Galaxy S24 Ultra","platform":"Android","model":"Gemma3-1B","config":"GPU · 4096 context","values":{"prompt":1876.5,"generation":44.57}},
+    {"device":"Samsung Galaxy S25 Ultra","platform":"Android","model":"Gemma3-1B","config":"NPU · 1280 context","values":{"prompt":5836.6,"generation":84.8}},
+    {"device":"MacBook Pro · M3 (2023)","platform":"Apple silicon Macs","model":"Gemma-3n-E2B","config":"CPU · 4096 context","values":{"prompt":232.5,"generation":27.6}},
+    {"device":"Samsung Galaxy S24 Ultra","platform":"Android","model":"Gemma-3n-E2B","config":"CPU · 4096 context","values":{"prompt":110.5,"generation":16.1}},
+    {"device":"Samsung Galaxy S24 Ultra","platform":"Android","model":"Gemma-3n-E2B","config":"GPU · 4096 context","values":{"prompt":816.4,"generation":15.6}},
+    {"device":"MacBook Pro · M3 (2023)","platform":"Apple silicon Macs","model":"Gemma-3n-E4B","config":"CPU · 4096 context","values":{"prompt":170.1,"generation":20.1}},
+    {"device":"Samsung Galaxy S24 Ultra","platform":"Android","model":"Gemma-3n-E4B","config":"CPU · 4096 context","values":{"prompt":73.5,"generation":9.2}},
+    {"device":"Samsung Galaxy S24 Ultra","platform":"Android","model":"Gemma-3n-E4B","config":"GPU · 4096 context","values":{"prompt":548,"generation":9.4}}
+  ]
 }
 ]}
