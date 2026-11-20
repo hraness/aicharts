@@ -2,7 +2,7 @@
   {
     "slug": "terminal-bench-leaderboard",
     "date": "2026-11-20",
-    "category": "Added",
+    "category": "New",
     "surfaces": ["Website"],
     "title": "Compare Terminal-Bench scores by version",
     "summary": "See which models scored highest on each Terminal-Bench release and compare their agent, reasoning effort, tokens and cost per task. Open the original submission from any row, or pick two current models to compare their benchmark results side by side.",

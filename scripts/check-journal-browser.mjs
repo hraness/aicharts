@@ -435,9 +435,9 @@ try {
     await page.goto(url + "/compare");
     const matchup = page.locator("#current-pairs a").first();
     const [firstSlug, secondSlug] = (await matchup.getAttribute("href")).slice("/compare/".length).split("-vs-");
-    const [first, second] = [firstSlug, secondSlug].map(slug => releases.find(release => release.slug === slug));
-    await pickCompact(page, "First model", first.name, firstSlug);
-    await pickCompact(page, "Second model", second.name, secondSlug);
+    const [firstModel, secondModel] = [firstSlug, secondSlug].map(slug => releases.find(release => release.slug === slug));
+    await pickCompact(page, "First model", firstModel.name, firstSlug);
+    await pickCompact(page, "Second model", secondModel.name, secondSlug);
     assert.equal(await page.getByRole("link", { name: "Open side-by-side comparison" }).getAttribute("href"),
       await matchup.getAttribute("href"));
     await page.goto(url + "/local");
