@@ -1,5 +1,14 @@
 [
   {
+    "slug": "device-discovery",
+    "date": "2026-11-20",
+    "category": "Improved",
+    "surfaces": ["Website", "API"],
+    "title": "Find benchmarks for your hardware",
+    "summary": "See which device details your browser reports, start with a measured reference, and find hardware by workload. Shared tests show comparable speeds side by side with the settings and source behind each result.",
+    "link": {"href": "/local#hardware", "label": "Find measured hardware"}
+  },
+  {
     "slug": "device-speed-by-workload",
     "date": "2026-11-20",
     "category": "Improved",
