@@ -151,14 +151,14 @@ export function LocalHardware() {
       <h2 id="hardware-heading">Device speeds and memory</h2>
       <p>Choose your hardware to see measured runs, compare model configurations and check memory use.</p>
       <div className="hardware-controls">
-        <label>Platform<select value={platform} onChange={e => {
+        <label>Platform<select aria-label="Platform" value={platform} onChange={e => {
           const p = e.target.value;
           setPlatform(p); changeDevice(defaults[p] ?? devicesByPlatform.get(p)![0]!);
         }}>{platforms.map(p => <option key={p}>{p}</option>)}</select></label>
-        <label>Device<select value={device} onChange={e => changeDevice(e.target.value)}>
+        <label>Device<select aria-label="Device" value={device} onChange={e => changeDevice(e.target.value)}>
           {devices.map(d => <option key={d}>{d}</option>)}<option value="">My device is missing</option>
         </select></label>
-        {active && <label>Measurement<select value={active.id} onChange={e => setMeasurement(e.target.value)}>
+        {active && <label>Measurement<select aria-label="Measurement" value={active.id} onChange={e => setMeasurement(e.target.value)}>
           {available.map(({ suite, id, key }) => <option value={id} key={id}>{suite.title} · {metrics[key]!.label}</option>)}
         </select></label>}
       </div>
@@ -195,7 +195,7 @@ export function LocalHardware() {
             : <p className="hardware-fine">Runtime memory use is unreported for these runs.{hasStorage && " Loading weights also requires working memory."}</p>}
           <div className="hardware-peers">
             <h4>Inspect a configuration</h4>
-            <label>Model and configuration<select value={compare ? runName(compare) : ""} onChange={e => {setSelectedRun(e.target.value);setAllDevices(false);}}>
+            <label>Model and configuration<select aria-label="Model and configuration" value={compare ? runName(compare) : ""} onChange={e => {setSelectedRun(e.target.value);setAllDevices(false);}}>
               {rows.map(r => <option key={runName(r)}>{runName(r)}</option>)}
             </select></label>
             {memoryBars.length > 0 && <div className="hardware-memory-profile">

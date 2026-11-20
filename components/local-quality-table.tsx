@@ -38,10 +38,10 @@ export function LocalQualityTable({ metric }: { metric: ScoreTable }) {
   const scaleMax = Math.max(metric.maximum, ...rows.map(m => m.score));
   return <>
     <div className="local-compare-controls">
-      {hasSize && <label>Order by <select value={sort} onChange={e => setSort(e.target.value)}>
+      {hasSize && <label>Order by <select aria-label="Order by" value={sort} onChange={e => setSort(e.target.value)}>
         <option value="score">Best score</option><option value="size">Fewest stored parameters</option>
       </select></label>}
-      <label>Compare with <select value={reference} onChange={e => setReference(e.target.value)}>
+      <label>Compare with <select aria-label="Compare with" value={reference} onChange={e => setReference(e.target.value)}>
         <option value="">Choose a baseline</option>
         {metric.models.map(m => <option key={m.name}>{m.name}</option>)}
       </select></label>
