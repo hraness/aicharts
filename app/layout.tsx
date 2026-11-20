@@ -1,8 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
+const siteOrigin = "https://aicharts.io";
+const shareVideo = `${siteOrigin}/share/preview.mp4`;
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://aicharts.io"),
+  metadataBase: new URL(siteOrigin),
   title: "LLM benchmarks by score, cost and reasoning effort | aicharts",
   description:
     "Compare Claude, GPT and Gemini across LLM benchmarks. See how task scores change with API cost, output tokens and reasoning effort.",
@@ -13,9 +16,9 @@ export const metadata: Metadata = {
     title: "LLM benchmarks by score, cost and reasoning effort | aicharts",
     description:
       "Compare OpenAI, Anthropic and Google models by reasoning effort, score, API cost and output tokens.",
-    url: "https://aicharts.io",
+    url: siteOrigin,
     images: [{ url: "/share/poster.jpg", width: 1200, height: 630, alt: "aicharts comparing AI model scores against cost in the benchmark explorer." }],
-    videos: [{ url: "/share/preview.mp4", secureUrl: "/share/preview.mp4", width: 1200, height: 630, type: "video/mp4" }],
+    videos: [{ url: shareVideo, secureUrl: shareVideo, width: 1200, height: 630, type: "video/mp4" }],
     siteName: "aicharts",
     type: "website",
   },
