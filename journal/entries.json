@@ -1,5 +1,17 @@
 [
   {
+    "slug": "local-ai-benchmarks",
+    "date": "2026-11-20",
+    "category": "New",
+    "surfaces": ["Website", "API"],
+    "title": "Local AI benchmarks",
+    "summary": "Compare how quickly local models read prompts and generate text on the same Mac. Each result includes the model file, disk size, test settings and downloadable measurements.",
+    "link": {
+      "href": "/local",
+      "label": "Compare local models"
+    }
+  },
+  {
     "slug": "searchable-benchmark-picker",
     "date": "2026-11-20",
     "category": "Improved",

@@ -395,6 +395,7 @@ export function ReleaseExplorer({
           <nav className="journal-nav" aria-label="Product pages">
             <a href="/models">Models</a>
             <a href="/compare">Compare</a>
+            <a href="/local">Local</a>
             <a href="/agents">Agents</a>
             <a href="/blog">Blog</a>
             <a href="/changelog">Changelog</a>
