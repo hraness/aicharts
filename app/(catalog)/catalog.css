@@ -383,6 +383,36 @@
   font-weight: 600;
 }
 
+/* Field reference on /api: names on the left, meanings that wrap. */
+.data-table--fields :is(th, td) {
+  text-align: left;
+  white-space: normal;
+}
+
+/* The same first column in every table, where the screen has room. */
+.data-table--fields thead th:first-child {
+  width: 28%;
+}
+
+.data-table--fields tbody th {
+  font-weight: 400;
+}
+
+.data-table--fields tbody th code {
+  font-weight: 600;
+}
+
+.field-type {
+  display: block;
+  font-size: 12px;
+  color: var(--fg-muted);
+  white-space: nowrap;
+}
+
+.catalog-page section > .table-scroll + .table-scroll {
+  margin-top: 16px;
+}
+
 .data-table tr.is-drop td:nth-child(4) {
   color: var(--warn);
   font-weight: 600;
@@ -694,6 +724,52 @@ a.model-link {
   .faq-list summary::after {
     transition: none;
   }
+}
+
+/* Code on /api */
+.catalog-page :not(pre) > code {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+}
+
+.code-block {
+  max-width: 100%;
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.55;
+  tab-size: 2;
+}
+
+.code-block:focus-visible {
+  outline: 2px solid var(--brand-openai);
+  outline-offset: 2px;
+}
+
+.source-list {
+  display: grid;
+  gap: 12px;
+  max-width: 68ch;
+  margin: 0 0 12px;
+  padding-left: 20px;
+}
+
+.source-list li {
+  overflow-wrap: anywhere;
+}
+
+.source-list span {
+  display: block;
+  color: var(--fg-muted);
+}
+
+.source-list .source-credit {
+  font-size: 13px;
 }
 
 /* Sources and scope */

@@ -19,6 +19,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     data("/compare", 0.8),
     data("/agents", 0.8),
     ...agentPairs().map((p) => data(`/agents/${p.slug}`, 0.7)),
+    data("/api", 0.5),
     ...catalog.current.map((r) => data(`/models/${r.slug}`, 0.8)),
     ...pairs.filter((p) => p.current).map((p) => data(`/compare/${p.slug}`, 0.6)),
     ...catalog.superseded.map((r) => data(`/models/${r.slug}`, 0.5)),

@@ -32,6 +32,10 @@ async function checkFooter(page) {
     "/agents",
   );
   assert.equal(
+    await footer.getByRole("link", { name: "API", exact: true }).getAttribute("href"),
+    "/api",
+  );
+  assert.equal(
     await footer.getByRole("link", { name: "Hraness" }).getAttribute("href"),
     "https://hraness.com",
   );
@@ -284,6 +288,7 @@ try {
       "/models/" + model.slug,
       "/compare",
       pair,
+      "/api",
     ]) {
       await page.goto(url + path);
       assert.equal(await page.locator("main h1").count(), 1, path);
@@ -297,6 +302,11 @@ try {
       await checkFooter(page);
       assert.equal(await noSideScroll(page), true, path + " scrolls sideways");
     }
+    // The API page documents every object, and its example is real data.
+    await page.goto(url + "/api");
+    assert.equal(await page.locator("table.data-table--fields").count(), 6);
+    const example = JSON.parse(await page.locator("#example ~ pre").textContent());
+    assert.ok(releases.some((r) => r.slug === example.slug), "The API example is a release");
     // The reverse order of a comparison redirects to the canonical page.
     const [first, second] = pair.slice("/compare/".length).split("-vs-");
     await page.goto(url + "/compare/" + second + "-vs-" + first);
@@ -365,6 +375,11 @@ try {
     await page.goto(url + from);
     assert.equal(new URL(page.url()).pathname, to, from);
   }
+  // Any website may call the API; the route sends the header itself.
+  const api = await fetch(url + "/api/releases");
+  assert.equal(api.status, 200);
+  assert.equal(api.headers.get("access-control-allow-origin"), "*");
+  assert.equal((await api.json()).releases.length, releases.length);
   await plain.close();
   if (capture) {
     const ctx = await browser.newContext({
