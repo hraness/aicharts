@@ -5,7 +5,7 @@
     {
       "name": "Language",
       "metric": "MMLU-Pro",
-      "description": "Accuracy on multiple-choice reasoning questions. yiii offers Qwen3.5-4B for story narration.",
+      "description": "Accuracy on multiple-choice reasoning questions.",
       "publisher": "Qwen evaluation",
       "source": "https://huggingface.co/Qwen/Qwen3.5-4B#evaluation",
       "maximum": 100,
@@ -14,26 +14,34 @@
       "models": [
         {
           "name": "Qwen3.5-9B",
-          "score": 82.5
+          "score": 82.5,
+          "repository": "Qwen/Qwen3.5-9B",
+          "storedParameters": 9653104368
         },
         {
           "name": "gpt-oss-120b",
-          "score": 80.8
+          "score": 80.8,
+          "repository": "openai/gpt-oss-120b",
+          "storedParameters": 116829156672
         },
         {
           "name": "Qwen3.5-4B",
-          "score": 79.1
+          "score": 79.1,
+          "repository": "Qwen/Qwen3.5-4B",
+          "storedParameters": 4659865088
         },
         {
           "name": "gpt-oss-20b",
-          "score": 74.8
+          "score": 74.8,
+          "repository": "openai/gpt-oss-20b",
+          "storedParameters": 20914757184
         }
       ]
     },
     {
       "name": "Embeddings",
       "metric": "Multilingual MTEB",
-      "description": "Mean task score across multilingual embedding tasks. yiii uses Qwen3-Embedding-0.6B for sentence search.",
+      "description": "Mean task score across multilingual embedding tasks.",
       "publisher": "Qwen’s MTEB results",
       "source": "https://huggingface.co/Qwen/Qwen3-Embedding-0.6B#mteb-multilingual",
       "maximum": 100,
@@ -42,30 +50,39 @@
       "models": [
         {
           "name": "Qwen3-Embedding-8B",
-          "score": 70.58
+          "score": 70.58,
+          "repository": "Qwen/Qwen3-Embedding-8B",
+          "storedParameters": 7567295488
         },
         {
           "name": "Qwen3-Embedding-4B",
-          "score": 69.45
+          "score": 69.45,
+          "repository": "Qwen/Qwen3-Embedding-4B",
+          "storedParameters": 4021774336
         },
         {
           "name": "Qwen3-Embedding-0.6B",
-          "score": 64.33
+          "score": 64.33,
+          "repository": "Qwen/Qwen3-Embedding-0.6B",
+          "storedParameters": 595776512
         },
         {
           "name": "multilingual-e5-large-instruct",
-          "score": 63.22
+          "score": 63.22,
+          "repository": "intfloat/multilingual-e5-large-instruct",
+          "storedParameters": 559890432
         },
         {
           "name": "BGE-M3",
-          "score": 59.56
+          "score": 59.56,
+          "repository": "BAAI/bge-m3"
         }
       ]
     },
     {
       "name": "Image generation",
       "metric": "GenEval",
-      "description": "How well a 1024px image follows instructions about objects, counts, colors and positions. Scores range from 0 to 1.",
+      "description": "How well a 1024px image follows instructions about objects, counts, colors and positions.",
       "publisher": "NVIDIA Sana comparison",
       "source": "https://github.com/NVlabs/Sana#image-generation-1024px",
       "maximum": 1,
@@ -74,22 +91,26 @@
       "models": [
         {
           "name": "Sana-1.6B MultiLing",
-          "score": 0.69
+          "score": 0.69,
+          "repository": "Efficient-Large-Model/Sana_1600M_1024px_MultiLing"
         },
         {
           "name": "Sana-0.6B (1024px)",
-          "score": 0.68
+          "score": 0.68,
+          "repository": "Efficient-Large-Model/Sana_600M_1024px"
         },
         {
           "name": "FLUX.1-dev",
-          "score": 0.67
+          "score": 0.67,
+          "repository": "black-forest-labs/FLUX.1-dev",
+          "storedParameters": 11901408320
         }
       ]
     },
     {
       "name": "Transcription",
       "metric": "LibriSpeech test-clean",
-      "description": "English word error rate on clean read speech. Yaptake transcribes with Parakeet. yiii checks generated speech with Whisper large-v3-turbo.",
+      "description": "English word error rate on clean read speech.",
       "publisher": "Hugging Face Open ASR Leaderboard",
       "source": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard",
       "maximum": 2.5,
@@ -98,26 +119,33 @@
       "models": [
         {
           "name": "Parakeet TDT 0.6B v2",
-          "score": 1.28
+          "score": 1.28,
+          "repository": "nvidia/parakeet-tdt-0.6b-v2"
         },
         {
           "name": "Parakeet TDT 0.6B v3",
-          "score": 1.52
+          "score": 1.52,
+          "repository": "nvidia/parakeet-tdt-0.6b-v3",
+          "storedParameters": 627057286
         },
         {
           "name": "Whisper large-v3",
-          "score": 1.56
+          "score": 1.56,
+          "repository": "openai/whisper-large-v3",
+          "storedParameters": 1543490560
         },
         {
           "name": "Whisper large-v3-turbo",
-          "score": 2.13
+          "score": 2.13,
+          "repository": "openai/whisper-large-v3-turbo",
+          "storedParameters": 808878080
         }
       ]
     },
     {
       "name": "Vision & language",
       "metric": "MMMU-Pro",
-      "description": "Accuracy on questions that require interpreting images across academic subjects. Yaptake offers Gemma 4 for local chat.",
+      "description": "Accuracy on questions that require interpreting images across academic subjects.",
       "publisher": "Google Gemma 4 model card",
       "source": "https://huggingface.co/google/gemma-4-E2B-it",
       "maximum": 100,
@@ -126,30 +154,40 @@
       "models": [
         {
           "name": "Gemma 4 31B",
-          "score": 76.9
+          "score": 76.9,
+          "repository": "google/gemma-4-31B-it",
+          "storedParameters": 31273088876
         },
         {
           "name": "Gemma 4 26B A4B",
-          "score": 73.8
+          "score": 73.8,
+          "repository": "google/gemma-4-26B-A4B-it",
+          "storedParameters": 25805936206
         },
         {
           "name": "Gemma 4 12B Unified",
-          "score": 69.1
+          "score": 69.1,
+          "repository": "google/gemma-4-12B-it",
+          "storedParameters": 11959730224
         },
         {
           "name": "Gemma 4 E4B",
-          "score": 52.6
+          "score": 52.6,
+          "repository": "google/gemma-4-E4B-it",
+          "storedParameters": 7996156490
         },
         {
           "name": "Gemma 4 E2B",
-          "score": 44.2
+          "score": 44.2,
+          "repository": "google/gemma-4-E2B-it",
+          "storedParameters": 5123178051
         }
       ]
     },
     {
       "name": "Speech synthesis",
       "metric": "Seed-TTS test-zh",
-      "description": "Transcript error on synthesized Mandarin speech. yiii uses Kokoro v1.1-zh for Mandarin audio. The cited comparison covers three other local models.",
+      "description": "Transcript error on synthesized Mandarin speech.",
       "publisher": "Qwen speech evaluation",
       "source": "https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice",
       "maximum": 2,
@@ -158,7 +196,8 @@
       "models": [
         {
           "name": "CosyVoice 3",
-          "score": 0.71
+          "score": 0.71,
+          "repository": "FunAudioLLM/Fun-CosyVoice3-0.5B-2512"
         },
         {
           "name": "Qwen3-TTS-25Hz-1.7B-Base",
@@ -166,8 +205,132 @@
         },
         {
           "name": "F5-TTS",
-          "score": 1.56
+          "score": 1.56,
+          "repository": "SWivid/F5-TTS"
         }
+      ]
+    },
+    {
+      "name": "Music generation",
+      "metric": "MusicCaps · Fréchet Audio Distance",
+      "description": "Distance between generated and reference audio distributions on the released instrumental models.",
+      "publisher": "Meta AudioCraft evaluation",
+      "source": "https://github.com/facebookresearch/audiocraft/blob/main/model_cards/MUSICGEN_MODEL_CARD.md",
+      "maximum": 6,
+      "unit": "",
+      "lowerIsBetter": true,
+      "models": [
+        {
+          "name": "MusicGen Small · 300M",
+          "score": 4.88,
+          "repository": "facebook/musicgen-small",
+          "storedParameters": 591087174
+        },
+        {
+          "name": "MusicGen Melody · 1.5B",
+          "score": 4.93,
+          "repository": "facebook/musicgen-melody",
+          "storedParameters": 1557389894
+        },
+        {
+          "name": "MusicGen Medium · 1.5B",
+          "score": 5.14,
+          "repository": "facebook/musicgen-medium"
+        },
+        {
+          "name": "MusicGen Large · 3.3B",
+          "score": 5.48,
+          "repository": "facebook/musicgen-large"
+        }
+      ]
+    },
+    {
+      "name": "Video generation",
+      "metric": "VBench total",
+      "description": "Overall video benchmark score in the 720p comparison.",
+      "publisher": "NVIDIA Sana evaluation",
+      "source": "https://github.com/NVlabs/Sana#performance",
+      "maximum": 100,
+      "unit": "",
+      "lowerIsBetter": false,
+      "models": [
+        {
+          "name": "SANA-Video-2B",
+          "score": 84.05,
+          "repository": "Efficient-Large-Model/SANA-Video_2B_720p"
+        },
+        {
+          "name": "Wan-2.1-14B",
+          "score": 83.73,
+          "repository": "Wan-AI/Wan2.1-T2V-14B",
+          "storedParameters": 14288491584
+        },
+        {
+          "name": "Wan-2.1-1.3B",
+          "score": 83.38,
+          "repository": "Wan-AI/Wan2.1-T2V-1.3B",
+          "storedParameters": 1418996800
+        }
+      ]
+    },
+    {
+      "name": "Reranking",
+      "metric": "MTEB-R",
+      "description": "English MTEB v2 retrieval subset. A reranker scores candidate passages against the query.",
+      "publisher": "Qwen reranking evaluation",
+      "source": "https://huggingface.co/Qwen/Qwen3-Reranker-0.6B",
+      "maximum": 100,
+      "unit": "",
+      "lowerIsBetter": false,
+      "models": [
+        {
+          "name": "Qwen3-Reranker-0.6B",
+          "score": 65.8,
+          "repository": "Qwen/Qwen3-Reranker-0.6B",
+          "storedParameters": 595776512
+        },
+        {
+          "name": "BGE-reranker-v2-m3",
+          "score": 57.03,
+          "repository": "BAAI/bge-reranker-v2-m3",
+          "storedParameters": 567755777
+        }
+      ]
+    }
+  ],
+  "hardware": [
+    {
+      "model": "ACE-Step v1",
+      "work": "60 seconds of music · 27 diffusion steps",
+      "source": "https://github.com/ace-step/ACE-Step#hardware-performance",
+      "runs": [
+        [
+          "RTX 4090",
+          "1.74 s"
+        ],
+        [
+          "A100",
+          "2.20 s"
+        ],
+        [
+          "RTX 3090",
+          "4.70 s"
+        ],
+        [
+          "MacBook M2 Max",
+          "26.43 s"
+        ]
+      ]
+    },
+    {
+      "model": "SANA-Video 2.0 5B",
+      "work": "736 × 1280 · 81 frames · 40 steps",
+      "source": "https://github.com/NVlabs/Sana#performance",
+      "runs": [
+        [
+          "H100",
+          "30.9 s"
+        ]
       ]
     }
   ]

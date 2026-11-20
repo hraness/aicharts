@@ -1,4 +1,5 @@
 [
+  {"slug": "local-model-directory", "date": "2026-11-20", "category": "Improved", "surfaces": ["Website", "API"], "title": "Find model weights and compare music and video models", "summary": "Browse published music, video and reranking results, compare device timings, and search the public Hugging Face catalog by task and format.", "link": {"href": "/local", "label": "Explore local models"}},
   {
     "slug": "local-model-workloads",
     "date": "2026-11-20",
