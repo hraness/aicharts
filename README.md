@@ -42,7 +42,7 @@ bun run dev
 - [`/models`](https://aicharts.io/models) and `/models/<slug>`: a page per release with its Terminal-Bench run, Epoch AI scores, API prices, frontier stars and links to its comparisons.
 - [`/compare`](https://aicharts.io/compare) and `/compare/<newer>-vs-<older>`: a head-to-head page for every two releases that were current at the same time, plus each release against the one it replaced. The reverse order redirects to the canonical page. Pairs with no result in common stay out of search results.
 - [`/agents`](https://aicharts.io/agents) and `/agents/<a>-vs-<b>`: Codex, Claude Code and Antigravity CLI compared through the current models' runs inside each.
-- [`/local`](https://aicharts.io/local): prompt and generation throughput measured on one Mac, with pinned model weights and the benchmark command. The page and [`/api/local`](https://aicharts.io/api/local) read the same measurements in `data/local-benchmarks.json`.
+- [`/local`](https://aicharts.io/local): published model quality scores grouped by workload, with sources. The page and [`/api/local`](https://aicharts.io/api/local) read the same measurements in `data/local-benchmarks.json`.
 - [`/api`](https://aicharts.io/api): the free JSON API, [`/api/releases`](https://aicharts.io/api/releases), field by field, with examples, caching and each source's license. It needs no key and any website may call it.
 - [`/llms.txt`](https://aicharts.io/llms.txt) and [`/sitemap.xml`](https://aicharts.io/sitemap.xml): entry points for agents and crawlers.
 

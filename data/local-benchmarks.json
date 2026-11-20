@@ -1,188 +1,172 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "date": "2026-11-20",
-  "hardware": "Apple M5 Max",
-  "memoryGiB": 36,
-  "os": "macOS 26.5.1",
-  "conditions": "The host scheduler reserved the Mac for the timed runs.",
-  "runtime": {
-    "version": "0.7.0",
-    "build": 11669,
-    "commit": "620d2225cc436ab0b001e3200e590e3b286ef9ab",
-    "ggmlVersion": "0.27.0",
-    "backend": "Metal",
-    "documentation": "https://github.com/ggml-org/llama.cpp/tree/620d2225cc436ab0b001e3200e590e3b286ef9ab/tools/llama-bench"
-  },
-  "quantization": "Q4_K_M",
-  "repetitions": 5,
-  "arguments": [
-    "-p",
-    "512,4096",
-    "-n",
-    "128",
-    "-d",
-    "0",
-    "-r",
-    "5",
-    "-t",
-    "6",
-    "-ngl",
-    "99",
-    "-fa",
-    "on",
-    "-o",
-    "json"
-  ],
-  "tests": [
+  "workloads": [
     {
-      "id": "pp512",
-      "label": "Prompt 512",
-      "promptTokens": 512,
-      "generatedTokens": 0
-    },
-    {
-      "id": "pp4096",
-      "label": "Prompt 4,096",
-      "promptTokens": 4096,
-      "generatedTokens": 0
-    },
-    {
-      "id": "tg128",
-      "label": "Generate 128",
-      "promptTokens": 0,
-      "generatedTokens": 128
-    }
-  ],
-  "models": [
-    {
-      "name": "Qwen3.5 0.8B",
-      "source": "https://huggingface.co/unsloth/Qwen3.5-0.8B-GGUF/blob/6ab461498e2023f6e3c1baea90a8f0fe38ab64d0/Qwen3.5-0.8B-Q4_K_M.gguf",
-      "sha256": "bd258782e35f7f458f8aced1adc053e6e92e89bc735ba3be89d38a06121dc517",
-      "bytes": 532517120,
-      "results": [
+      "name": "Language",
+      "metric": "MMLU-Pro",
+      "description": "Accuracy on multiple-choice reasoning questions. yiii offers Qwen3.5-4B for story narration.",
+      "publisher": "Qwen evaluation",
+      "source": "https://huggingface.co/Qwen/Qwen3.5-4B#evaluation",
+      "maximum": 100,
+      "unit": "%",
+      "lowerIsBetter": false,
+      "models": [
         {
-          "test": "pp512",
-          "meanTokensPerSecond": 13743.031533,
-          "stddevTokensPerSecond": 251.279967,
-          "samplesTokensPerSecond": [
-            14010.7,
-            13910.4,
-            13827.8,
-            13556.1,
-            13410.2
-          ]
+          "name": "Qwen3.5-9B",
+          "score": 82.5
         },
         {
-          "test": "pp4096",
-          "meanTokensPerSecond": 5623.004475,
-          "stddevTokensPerSecond": 2654.494066,
-          "samplesTokensPerSecond": [
-            9588.52,
-            6951.03,
-            3591.86,
-            3201.49,
-            4782.12
-          ]
+          "name": "gpt-oss-120b",
+          "score": 80.8
         },
         {
-          "test": "tg128",
-          "meanTokensPerSecond": 218.518554,
-          "stddevTokensPerSecond": 9.602758,
-          "samplesTokensPerSecond": [
-            202.196,
-            221.314,
-            225.714,
-            225.059,
-            218.31
-          ]
+          "name": "Qwen3.5-4B",
+          "score": 79.1
+        },
+        {
+          "name": "gpt-oss-20b",
+          "score": 74.8
         }
       ]
     },
     {
-      "name": "Qwen3.5 2B",
-      "source": "https://huggingface.co/unsloth/Qwen3.5-2B-GGUF/blob/f6d5376be1edb4d416d56da11e5397a961aca8ae/Qwen3.5-2B-Q4_K_M.gguf",
-      "sha256": "aaf42c8b7c3cab2bf3d69c355048d4a0ee9973d48f16c731c0520ee914699223",
-      "bytes": 1280835840,
-      "results": [
+      "name": "Embeddings",
+      "metric": "Multilingual MTEB",
+      "description": "Mean task score across multilingual embedding tasks. yiii uses Qwen3-Embedding-0.6B for sentence search.",
+      "publisher": "Qwen’s MTEB results",
+      "source": "https://huggingface.co/Qwen/Qwen3-Embedding-0.6B#mteb-multilingual",
+      "maximum": 100,
+      "unit": "",
+      "lowerIsBetter": false,
+      "models": [
         {
-          "test": "pp512",
-          "meanTokensPerSecond": 4063.394553,
-          "stddevTokensPerSecond": 441.30328,
-          "samplesTokensPerSecond": [
-            4664.86,
-            4326.82,
-            4005.46,
-            3757.08,
-            3562.75
-          ]
+          "name": "Qwen3-Embedding-8B",
+          "score": 70.58
         },
         {
-          "test": "pp4096",
-          "meanTokensPerSecond": 3227.675229,
-          "stddevTokensPerSecond": 481.850644,
-          "samplesTokensPerSecond": [
-            2778.59,
-            2747.2,
-            3187.21,
-            3602.97,
-            3822.4
-          ]
+          "name": "Qwen3-Embedding-4B",
+          "score": 69.45
         },
         {
-          "test": "tg128",
-          "meanTokensPerSecond": 105.937136,
-          "stddevTokensPerSecond": 15.925563,
-          "samplesTokensPerSecond": [
-            131.623,
-            92.4842,
-            92.8756,
-            105.167,
-            107.536
-          ]
+          "name": "Qwen3-Embedding-0.6B",
+          "score": 64.33
+        },
+        {
+          "name": "multilingual-e5-large-instruct",
+          "score": 63.22
+        },
+        {
+          "name": "BGE-M3",
+          "score": 59.56
         }
       ]
     },
     {
-      "name": "Qwen3.5 4B",
-      "source": "https://huggingface.co/unsloth/Qwen3.5-4B-GGUF/blob/e87f176479d0855a907a41277aca2f8ee7a09523/Qwen3.5-4B-Q4_K_M.gguf",
-      "sha256": "00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4",
-      "bytes": 2740937888,
-      "results": [
+      "name": "Image generation",
+      "metric": "GenEval",
+      "description": "How well a 1024px image follows instructions about objects, counts, colors and positions. Scores range from 0 to 1.",
+      "publisher": "NVIDIA Sana comparison",
+      "source": "https://github.com/NVlabs/Sana#image-generation-1024px",
+      "maximum": 1,
+      "unit": "",
+      "lowerIsBetter": false,
+      "models": [
         {
-          "test": "pp512",
-          "meanTokensPerSecond": 2044.051284,
-          "stddevTokensPerSecond": 333.195624,
-          "samplesTokensPerSecond": [
-            2494.31,
-            2253.05,
-            1992.74,
-            1811.58,
-            1668.57
-          ]
+          "name": "Sana-1.6B MultiLing",
+          "score": 0.69
         },
         {
-          "test": "pp4096",
-          "meanTokensPerSecond": 1555.839927,
-          "stddevTokensPerSecond": 76.628613,
-          "samplesTokensPerSecond": [
-            1435.03,
-            1615.15,
-            1611.39,
-            1592.51,
-            1525.11
-          ]
+          "name": "Sana-0.6B (1024px)",
+          "score": 0.68
         },
         {
-          "test": "tg128",
-          "meanTokensPerSecond": 58.282092,
-          "stddevTokensPerSecond": 3.681335,
-          "samplesTokensPerSecond": [
-            63.5122,
-            54.5025,
-            58.8064,
-            55.0204,
-            59.5689
-          ]
+          "name": "FLUX.1-dev",
+          "score": 0.67
+        }
+      ]
+    },
+    {
+      "name": "Transcription",
+      "metric": "LibriSpeech test-clean",
+      "description": "English word error rate on clean read speech. Yaptake transcribes with Parakeet. yiii checks generated speech with Whisper large-v3-turbo.",
+      "publisher": "Hugging Face Open ASR Leaderboard",
+      "source": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard",
+      "maximum": 2.5,
+      "unit": "%",
+      "lowerIsBetter": true,
+      "models": [
+        {
+          "name": "Parakeet TDT 0.6B v2",
+          "score": 1.28
+        },
+        {
+          "name": "Parakeet TDT 0.6B v3",
+          "score": 1.52
+        },
+        {
+          "name": "Whisper large-v3",
+          "score": 1.56
+        },
+        {
+          "name": "Whisper large-v3-turbo",
+          "score": 2.13
+        }
+      ]
+    },
+    {
+      "name": "Vision & language",
+      "metric": "MMMU-Pro",
+      "description": "Accuracy on questions that require interpreting images across academic subjects. Yaptake offers Gemma 4 for local chat.",
+      "publisher": "Google Gemma 4 model card",
+      "source": "https://huggingface.co/google/gemma-4-E2B-it",
+      "maximum": 100,
+      "unit": "%",
+      "lowerIsBetter": false,
+      "models": [
+        {
+          "name": "Gemma 4 31B",
+          "score": 76.9
+        },
+        {
+          "name": "Gemma 4 26B A4B",
+          "score": 73.8
+        },
+        {
+          "name": "Gemma 4 12B Unified",
+          "score": 69.1
+        },
+        {
+          "name": "Gemma 4 E4B",
+          "score": 52.6
+        },
+        {
+          "name": "Gemma 4 E2B",
+          "score": 44.2
+        }
+      ]
+    },
+    {
+      "name": "Speech synthesis",
+      "metric": "Seed-TTS test-zh",
+      "description": "Transcript error on synthesized Mandarin speech. yiii uses Kokoro v1.1-zh for Mandarin audio. The cited comparison covers three other local models.",
+      "publisher": "Qwen speech evaluation",
+      "source": "https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice",
+      "maximum": 2,
+      "unit": "%",
+      "lowerIsBetter": true,
+      "models": [
+        {
+          "name": "CosyVoice 3",
+          "score": 0.71
+        },
+        {
+          "name": "Qwen3-TTS-25Hz-1.7B-Base",
+          "score": 1.1
+        },
+        {
+          "name": "F5-TTS",
+          "score": 1.56
         }
       ]
     }

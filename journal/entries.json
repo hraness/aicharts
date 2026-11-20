@@ -1,5 +1,14 @@
 [
   {
+    "slug": "local-model-workloads",
+    "date": "2026-11-20",
+    "category": "Improved",
+    "surfaces": ["Website", "API"],
+    "title": "Compare local models by workload",
+    "summary": "Explore published quality scores for language, embedding, image generation, transcription, speech synthesis and vision models. Each chart links to the evaluation behind its scores.",
+    "link": {"href": "/local", "label": "Compare local models"}
+  },
+  {
     "slug": "local-ai-benchmarks",
     "date": "2026-11-20",
     "category": "New",

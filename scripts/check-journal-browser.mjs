@@ -428,7 +428,7 @@ try {
       assert.equal(await noSideScroll(page), true, path + " scrolls sideways");
     }
     assert.equal(await page.locator("main h1").textContent(), "Local AI benchmarks");
-    assert.deepEqual(await page.locator("main tbody th a").allTextContents(), localBenchmarks.models.map((model) => model.name));
+    assert.deepEqual(await page.locator(".local-charts h2").allTextContents(), localBenchmarks.workloads.map((group) => group.name));
     const localData = await page.request.get(url + "/api/local");
     assert.equal(localData.status(), 200);
     assert.deepEqual(await localData.json(), localBenchmarks);
@@ -492,7 +492,7 @@ try {
   assert.ok(await page.locator(".agent-chart .pareto-svg").isVisible());
   assert.equal(await page.locator(".agent-chart .chart-controls").isVisible(), false);
   await page.goto(url + "/local");
-  assert.equal(await page.locator("main tbody tr").count(), localBenchmarks.models.length);
+  assert.equal(await page.locator(".local-charts li").count(), localBenchmarks.workloads.reduce((n, group) => n + group.models.length, 0));
   // Addresses from the earlier aicharts.io keep working.
   for (const [from, to] of [
     ["/models/lab/" + model.slug + "/profile", "/models/" + model.slug],
