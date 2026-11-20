@@ -1,5 +1,19 @@
 [
   {
+    "slug": "share-benchmark-explorer",
+    "date": "2026-11-20",
+    "title": "Share the benchmark explorer",
+    "summary": "Links to aicharts show the benchmark chart, with a loop that switches between API cost and output tokens.",
+    "category": "Improved",
+    "surfaces": [
+      "Website"
+    ],
+    "link": {
+      "label": "Open website",
+      "href": "/"
+    }
+  },
+  {
     "slug": "terminal-bench-leaderboard",
     "date": "2026-11-20",
     "category": "New",

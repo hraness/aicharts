@@ -27,9 +27,12 @@ export function pageMetadata(
       description,
       url: path,
       siteName: "aicharts",
+      images: [{ url: "/share/poster.jpg", width: 1200, height: 630, alt: "The aicharts benchmark explorer showing model scores and cost." }],
+      ...(!article && { videos: [{ url: "/share/preview.mp4", secureUrl: "/share/preview.mp4", width: 1200, height: 630, type: "video/mp4" }] }),
+
       ...(article && { publishedTime: guide.published }),
     },
-    twitter: { card: "summary", title, description },
+    twitter: { card: "summary_large_image", title, description, images: ["/share/poster.jpg"] },
   };
 }
 export function dateLabel(date: string) {
