@@ -11,7 +11,7 @@ const capture = process.argv.includes("--preview");
 const entries = JSON.parse(await readFile("journal/entries.json", "utf8"));
 const { releases } = JSON.parse(await readFile("data/releases.json", "utf8"));
 const localHardware = JSON.parse(await readFile("data/local-hardware.json", "utf8"));
-for (const file of ["local-hardware-language.json","local-hardware-nonlanguage.json", "local-hardware-iphone-studies.json"]) {
+for (const file of ["local-hardware-language.json","local-hardware-nonlanguage.json", "local-hardware-iphone-studies.json", "local-hardware-llm-extra.json", "local-hardware-model-extra.json"]) {
   const extra = JSON.parse(await readFile("data/" + file, "utf8"));
   localHardware.suites.push(...extra.suites);
 }
@@ -432,7 +432,8 @@ try {
       assert.equal(await noSideScroll(page), true, path + " scrolls sideways");
     }
     assert.equal(await page.locator("main h1").textContent(), "Local AI benchmarks");
-    const matrix = page.getByRole("table",{name:"Speed by workload"});
+    const matrix = page.locator(".timing-results");
+    const chartDevice = matrix.locator(".timing-heading p");
     await page.addInitScript(() => {
       Object.defineProperty(navigator,"platform",{configurable:true,value:"Linux armv8l"});
       Object.defineProperty(navigator,"userAgent",{configurable:true,value:"Mozilla/5.0 (Linux; Android 15) Chrome"});
@@ -441,14 +442,30 @@ try {
       }});
     });
     await page.reload();
-    await matrix.getByRole("columnheader",{name:/Samsung Galaxy S25/}).waitFor();
+    await chartDevice.filter({hasText:"Samsung Galaxy S25"}).waitFor();
     assert.match(await page.locator(".hardware-detected").textContent(), /SM-S931U.*reported model/);
+    await page.goto(url + "/local?platform=Android&device=Samsung+Galaxy+S26+Ultra#hardware");
+    await chartDevice.filter({hasText:"Samsung Galaxy S26 Ultra"}).waitFor();
+    const classification = matrix.getByRole("table",{name:"ExecuTorch mobile · classification",exact:true});
+    await matrix.getByRole("searchbox").fill("efficientnet-v2-s");
+    const classificationRow = classification.locator("tbody tr").filter({hasText:"XNNPACK · FP32"}).first();
+    await classificationRow.waitFor();
+    assert.match(await classificationRow.textContent(),/73.94 ms.*55 ms.*Peak process PSS.*82 MiB/);
+    assert.equal(await noSideScroll(page),true,"memory and storage columns fit");
+    await page.goto(url + "/local?platform=iPhone+%26+iPad&device=iPhone+16+Pro+Max#hardware");
+    const translations = matrix.getByRole("table",{name:"LiveChatBench mobile translation"});
+    await translations.locator("tbody tr").first().waitFor();
+    assert.equal(await translations.locator("tbody tr").count(),6);
+    await matrix.getByRole("searchbox").fill("Qwen3");
+    assert.equal(await translations.locator("tbody tr").count(),2);
+    assert.match(await translations.locator("tbody").textContent(),/CPU.*0.97 s.*Metal GPU.*0.31 s/);
+    assert.equal(await noSideScroll(page),true,"timings should fit the viewport");
     await page.goto(url + "/local?platform=iPhone+%26+iPad&device=iPhone+17+Pro#hardware");
-    await matrix.getByRole("columnheader",{name:/iPhone 17 Pro/}).waitFor();
-    assert.equal(await matrix.locator("thead th").count(),2);
+    await chartDevice.filter({hasText:"iPhone 17 Pro"}).waitFor();
+    assert.equal(await matrix.locator(".timing-device").count(),0);
     await page.getByRole("button",{name:"Remember iPhone 17 Pro on this browser"}).click();
     await page.goto(url + "/local#hardware");
-    await matrix.getByRole("columnheader",{name:/iPhone 17 Pro/}).waitFor();
+    await chartDevice.filter({hasText:"iPhone 17 Pro"}).waitFor();
     await page.getByRole("button",{name:"Forget saved device"}).click();
     const taskChip = page.locator(".coverage-tasks button").filter({hasText:"Music generation"});
     await taskChip.click();
@@ -457,7 +474,8 @@ try {
     const shortcut = page.locator(".hardware-shortcuts button").first();
     const peerName = await shortcut.textContent();
     await shortcut.click();
-    assert.ok((await matrix.locator("thead").textContent()).includes(peerName));
+    assert.ok((await chartDevice.textContent()).includes(peerName));
+    assert.ok(await matrix.locator(".timing-device").count() > 1);
     await page.locator("#hardware-detail > summary").click();
     await pickCompact(page,"Measurement","Mobile","moi/latency");
     await page.getByLabel("Available memory (GiB)", { exact: true }).fill("1");
@@ -471,7 +489,7 @@ try {
     await page.waitForFunction(() => document.querySelector(".hardware-panel h3")?.textContent === "RTX 4090");
     assert.ok((await page.locator(".hardware-plot").textContent()).includes("1.74 s"));
     await pickCompact(page,"Compare device","One device","");
-    assert.equal(await matrix.locator("thead th").count(),2);
+    assert.equal(await matrix.locator(".timing-device").count(),0);
     assert.ok(await page.locator("#quality").evaluate(e => !!(e.compareDocumentPosition(document.querySelector("#hardware")) & Node.DOCUMENT_POSITION_FOLLOWING)));
     assert.ok(await page.locator(".local-score-table tbody tr").count() <= 15);
     const overview = localBenchmarks.workloads[0];

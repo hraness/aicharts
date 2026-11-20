@@ -1702,5 +1702,345 @@
     {"device": "Raspberry Pi 5 · 8 GB","platform": "ARM Linux boards","model": "Vosk base-en-us-0.22","config": "60 seconds of speech","values": {"latency": 43.9,"meanRss": 4994,"wer": 27.5},"capacity": "8 GB RAM"},
     {"device": "Raspberry Pi 4 · 8 GB","platform": "ARM Linux boards","model": "Vosk base-en-us-0.22","config": "60 seconds of speech","values": {"latency": 78.8,"meanRss": 4994,"wer": 27.5},"capacity": "8 GB RAM"}
   ]
+},
+{
+  "id": "prism-bonsai-image",
+  "task": "Image generation",
+  "title": "Bonsai image generation",
+  "source": "https://prismml.com/news/bonsai-image-4b",
+  "description": "PrismML reports four denoising steps per image with fixed prompts and guidance 1. CUDA times are warm wall-clock measurements. Mac figures are means. Each configuration links to the original runtime and precision table.",
+  "metrics": [
+    "latency",
+    "stepSeconds",
+    "vramGiB"
+  ],
+  "runs": [
+    {
+      "device": "A100",
+      "platform": "NVIDIA GPUs",
+      "model": "Bonsai Image 4B · Binary",
+      "config": "512 × 512 · 4 steps · CUDA / Gemlite",
+      "values": {
+        "latency": 1.0
+      },
+      "capacity": "40 GB VRAM",
+      "source": "https://huggingface.co/prism-ml/bonsai-image-binary-4B-gemlite-1bit/blob/121529b06562ff8c5b75aa34c54c371d2655929b/README.md"
+    },
+    {
+      "device": "A100",
+      "platform": "NVIDIA GPUs",
+      "model": "Bonsai Image 4B · Binary",
+      "config": "1024 × 1024 · 4 steps · CUDA / Gemlite",
+      "values": {
+        "latency": 2.7
+      },
+      "capacity": "40 GB VRAM",
+      "source": "https://huggingface.co/prism-ml/bonsai-image-binary-4B-gemlite-1bit/blob/121529b06562ff8c5b75aa34c54c371d2655929b/README.md"
+    },
+    {
+      "device": "RTX PRO 6000 Blackwell",
+      "platform": "NVIDIA GPUs",
+      "model": "Bonsai Image 4B · Binary",
+      "config": "512 × 512 · 4 steps · CUDA / Gemlite",
+      "values": {
+        "latency": 1.0
+      },
+      "capacity": "96 GB VRAM",
+      "source": "https://huggingface.co/prism-ml/bonsai-image-binary-4B-gemlite-1bit/blob/121529b06562ff8c5b75aa34c54c371d2655929b/README.md"
+    },
+    {
+      "device": "RTX PRO 6000 Blackwell",
+      "platform": "NVIDIA GPUs",
+      "model": "Bonsai Image 4B · Binary",
+      "config": "1024 × 1024 · 4 steps · CUDA / Gemlite",
+      "values": {
+        "latency": 1.8
+      },
+      "capacity": "96 GB VRAM",
+      "source": "https://huggingface.co/prism-ml/bonsai-image-binary-4B-gemlite-1bit/blob/121529b06562ff8c5b75aa34c54c371d2655929b/README.md"
+    },
+    {
+      "device": "RTX 3080",
+      "platform": "NVIDIA GPUs",
+      "model": "Bonsai Image 4B · Binary",
+      "config": "512 × 512 · 4 steps · CUDA / Gemlite",
+      "values": {
+        "latency": 1.5
+      },
+      "capacity": "10 GB VRAM",
+      "source": "https://huggingface.co/prism-ml/bonsai-image-binary-4B-gemlite-1bit/blob/121529b06562ff8c5b75aa34c54c371d2655929b/README.md"
+    },
+    {
+      "device": "RTX 3080",
+      "platform": "NVIDIA GPUs",
+      "model": "Bonsai Image 4B · Binary",
+      "config": "1024 × 1024 · 4 steps · CUDA / Gemlite",
+      "values": {
+        "latency": 4.5,
+        "vramGiB": 6.4
+      },
+      "capacity": "10 GB VRAM",
+      "source": "https://huggingface.co/prism-ml/bonsai-image-binary-4B-gemlite-1bit/blob/121529b06562ff8c5b75aa34c54c371d2655929b/README.md"
+    },
+    {
+      "device": "RTX 3060 Laptop",
+      "platform": "NVIDIA GPUs",
+      "model": "Bonsai Image 4B · Binary",
+      "config": "512 × 512 · 4 steps · CUDA / Gemlite",
+      "values": {
+        "latency": 4.4
+      },
+      "capacity": "6 GB VRAM",
+      "source": "https://huggingface.co/prism-ml/bonsai-image-binary-4B-gemlite-1bit/blob/121529b06562ff8c5b75aa34c54c371d2655929b/README.md"
+    },
+    {
+      "device": "RTX 3060 Laptop",
+      "platform": "NVIDIA GPUs",
+      "model": "Bonsai Image 4B · Binary",
+      "config": "1024 × 1024 · 4 steps · CUDA / Gemlite",
+      "values": {
+        "latency": 24.8
+      },
+      "capacity": "6 GB VRAM",
+      "source": "https://huggingface.co/prism-ml/bonsai-image-binary-4B-gemlite-1bit/blob/121529b06562ff8c5b75aa34c54c371d2655929b/README.md"
+    },
+    {
+      "device": "A100",
+      "platform": "NVIDIA GPUs",
+      "model": "Bonsai Image 4B · Ternary",
+      "config": "512 × 512 · 4 steps · CUDA / Gemlite",
+      "values": {
+        "latency": 1.1
+      },
+      "capacity": "40 GB VRAM",
+      "source": "https://huggingface.co/prism-ml/bonsai-image-ternary-4B-gemlite-2bit/blob/bf047aa80569f193d2c4960033af6ba2629988fa/README.md"
+    },
+    {
+      "device": "A100",
+      "platform": "NVIDIA GPUs",
+      "model": "Bonsai Image 4B · Ternary",
+      "config": "1024 × 1024 · 4 steps · CUDA / Gemlite",
+      "values": {
+        "latency": 2.8
+      },
+      "capacity": "40 GB VRAM",
+      "source": "https://huggingface.co/prism-ml/bonsai-image-ternary-4B-gemlite-2bit/blob/bf047aa80569f193d2c4960033af6ba2629988fa/README.md"
+    },
+    {
+      "device": "RTX PRO 6000 Blackwell",
+      "platform": "NVIDIA GPUs",
+      "model": "Bonsai Image 4B · Ternary",
+      "config": "512 × 512 · 4 steps · CUDA / Gemlite",
+      "values": {
+        "latency": 1.0
+      },
+      "capacity": "96 GB VRAM",
+      "source": "https://huggingface.co/prism-ml/bonsai-image-ternary-4B-gemlite-2bit/blob/bf047aa80569f193d2c4960033af6ba2629988fa/README.md"
+    },
+    {
+      "device": "RTX PRO 6000 Blackwell",
+      "platform": "NVIDIA GPUs",
+      "model": "Bonsai Image 4B · Ternary",
+      "config": "1024 × 1024 · 4 steps · CUDA / Gemlite",
+      "values": {
+        "latency": 2.1
+      },
+      "capacity": "96 GB VRAM",
+      "source": "https://huggingface.co/prism-ml/bonsai-image-ternary-4B-gemlite-2bit/blob/bf047aa80569f193d2c4960033af6ba2629988fa/README.md"
+    },
+    {
+      "device": "RTX 3080",
+      "platform": "NVIDIA GPUs",
+      "model": "Bonsai Image 4B · Ternary",
+      "config": "512 × 512 · 4 steps · CUDA / Gemlite",
+      "values": {
+        "latency": 1.4
+      },
+      "capacity": "10 GB VRAM",
+      "source": "https://huggingface.co/prism-ml/bonsai-image-ternary-4B-gemlite-2bit/blob/bf047aa80569f193d2c4960033af6ba2629988fa/README.md"
+    },
+    {
+      "device": "RTX 3080",
+      "platform": "NVIDIA GPUs",
+      "model": "Bonsai Image 4B · Ternary",
+      "config": "1024 × 1024 · 4 steps · CUDA / Gemlite",
+      "values": {
+        "latency": 4.5,
+        "vramGiB": 6.8
+      },
+      "capacity": "10 GB VRAM",
+      "source": "https://huggingface.co/prism-ml/bonsai-image-ternary-4B-gemlite-2bit/blob/bf047aa80569f193d2c4960033af6ba2629988fa/README.md"
+    },
+    {
+      "device": "RTX 3060 Laptop",
+      "platform": "NVIDIA GPUs",
+      "model": "Bonsai Image 4B · Ternary",
+      "config": "512 × 512 · 4 steps · CUDA / Gemlite",
+      "values": {
+        "latency": 3.3
+      },
+      "capacity": "6 GB VRAM",
+      "source": "https://huggingface.co/prism-ml/bonsai-image-ternary-4B-gemlite-2bit/blob/bf047aa80569f193d2c4960033af6ba2629988fa/README.md"
+    },
+    {
+      "device": "RTX 3060 Laptop",
+      "platform": "NVIDIA GPUs",
+      "model": "Bonsai Image 4B · Ternary",
+      "config": "1024 × 1024 · 4 steps · CUDA / Gemlite",
+      "values": {
+        "latency": 17.5
+      },
+      "capacity": "6 GB VRAM",
+      "source": "https://huggingface.co/prism-ml/bonsai-image-ternary-4B-gemlite-2bit/blob/bf047aa80569f193d2c4960033af6ba2629988fa/README.md"
+    },
+    {
+      "device": "Apple M4 Pro",
+      "platform": "Apple silicon Macs",
+      "model": "Bonsai Image 4B · Binary",
+      "config": "512 × 512 · 4 steps · MLX",
+      "values": {
+        "latency": 6.01,
+        "stepSeconds": 1.5
+      },
+      "capacity": "48 GB unified memory",
+      "source": "https://huggingface.co/prism-ml/bonsai-image-binary-4B-mlx-1bit/blob/d1b3ac11a7f1ba61d84b277339daeeed4a98e0e2/README.md",
+      "note": "Image time SD 0.31 s."
+    },
+    {
+      "device": "Apple M4 Pro",
+      "platform": "Apple silicon Macs",
+      "model": "Bonsai Image 4B · Binary",
+      "config": "1024 × 1024 · 4 steps · MLX",
+      "values": {
+        "latency": 24.07,
+        "stepSeconds": 6.02
+      },
+      "capacity": "48 GB unified memory",
+      "source": "https://huggingface.co/prism-ml/bonsai-image-binary-4B-mlx-1bit/blob/d1b3ac11a7f1ba61d84b277339daeeed4a98e0e2/README.md",
+      "note": "Image time SD 0.03 s."
+    },
+    {
+      "device": "iPhone 17 Pro Max",
+      "platform": "iPhone & iPad",
+      "model": "Bonsai Image 4B · Binary",
+      "config": "128 × 128 · 4 steps · MLX Swift",
+      "values": {
+        "latency": 2.7,
+        "stepSeconds": 0.68
+      },
+      "capacity": "12 GB unified memory",
+      "source": "https://huggingface.co/prism-ml/bonsai-image-binary-4B-mlx-1bit/blob/d1b3ac11a7f1ba61d84b277339daeeed4a98e0e2/README.md"
+    },
+    {
+      "device": "iPhone 17 Pro Max",
+      "platform": "iPhone & iPad",
+      "model": "Bonsai Image 4B · Binary",
+      "config": "256 × 256 · 4 steps · MLX Swift",
+      "values": {
+        "latency": 3.8,
+        "stepSeconds": 0.95
+      },
+      "capacity": "12 GB unified memory",
+      "source": "https://huggingface.co/prism-ml/bonsai-image-binary-4B-mlx-1bit/blob/d1b3ac11a7f1ba61d84b277339daeeed4a98e0e2/README.md"
+    },
+    {
+      "device": "iPhone 17 Pro Max",
+      "platform": "iPhone & iPad",
+      "model": "Bonsai Image 4B · Binary",
+      "config": "512 × 512 · 4 steps · MLX Swift",
+      "values": {
+        "latency": 9.4,
+        "stepSeconds": 2.35
+      },
+      "capacity": "12 GB unified memory",
+      "source": "https://huggingface.co/prism-ml/bonsai-image-binary-4B-mlx-1bit/blob/d1b3ac11a7f1ba61d84b277339daeeed4a98e0e2/README.md"
+    },
+    {
+      "device": "iPhone 17 Pro Max",
+      "platform": "iPhone & iPad",
+      "model": "Bonsai Image 4B · Binary",
+      "config": "1024 × 1024 · 4 steps · MLX Swift",
+      "values": {
+        "latency": 32.6,
+        "stepSeconds": 8.15
+      },
+      "capacity": "12 GB unified memory",
+      "source": "https://huggingface.co/prism-ml/bonsai-image-binary-4B-mlx-1bit/blob/d1b3ac11a7f1ba61d84b277339daeeed4a98e0e2/README.md"
+    },
+    {
+      "device": "Apple M4 Pro",
+      "platform": "Apple silicon Macs",
+      "model": "Bonsai Image 4B · Ternary",
+      "config": "512 × 512 · 4 steps · MLX",
+      "values": {
+        "latency": 5.78,
+        "stepSeconds": 1.44
+      },
+      "capacity": "48 GB unified memory",
+      "source": "https://huggingface.co/prism-ml/bonsai-image-ternary-4B-mlx-2bit/blob/2c24c81b934a658ba5590cf39088ba929985b4a8/README.md",
+      "note": "Image time SD 0.08 s."
+    },
+    {
+      "device": "Apple M4 Pro",
+      "platform": "Apple silicon Macs",
+      "model": "Bonsai Image 4B · Ternary",
+      "config": "1024 × 1024 · 4 steps · MLX",
+      "values": {
+        "latency": 24.26,
+        "stepSeconds": 6.06
+      },
+      "capacity": "48 GB unified memory",
+      "source": "https://huggingface.co/prism-ml/bonsai-image-ternary-4B-mlx-2bit/blob/2c24c81b934a658ba5590cf39088ba929985b4a8/README.md",
+      "note": "Image time SD 0.24 s."
+    },
+    {
+      "device": "iPhone 17 Pro Max",
+      "platform": "iPhone & iPad",
+      "model": "Bonsai Image 4B · Ternary",
+      "config": "128 × 128 · 4 steps · MLX Swift",
+      "values": {
+        "latency": 2.7,
+        "stepSeconds": 0.68
+      },
+      "capacity": "12 GB unified memory",
+      "source": "https://huggingface.co/prism-ml/bonsai-image-ternary-4B-mlx-2bit/blob/2c24c81b934a658ba5590cf39088ba929985b4a8/README.md"
+    },
+    {
+      "device": "iPhone 17 Pro Max",
+      "platform": "iPhone & iPad",
+      "model": "Bonsai Image 4B · Ternary",
+      "config": "256 × 256 · 4 steps · MLX Swift",
+      "values": {
+        "latency": 4.0,
+        "stepSeconds": 1.0
+      },
+      "capacity": "12 GB unified memory",
+      "source": "https://huggingface.co/prism-ml/bonsai-image-ternary-4B-mlx-2bit/blob/2c24c81b934a658ba5590cf39088ba929985b4a8/README.md"
+    },
+    {
+      "device": "iPhone 17 Pro Max",
+      "platform": "iPhone & iPad",
+      "model": "Bonsai Image 4B · Ternary",
+      "config": "512 × 512 · 4 steps · MLX Swift",
+      "values": {
+        "latency": 9.4,
+        "stepSeconds": 2.35
+      },
+      "capacity": "12 GB unified memory",
+      "source": "https://huggingface.co/prism-ml/bonsai-image-ternary-4B-mlx-2bit/blob/2c24c81b934a658ba5590cf39088ba929985b4a8/README.md"
+    },
+    {
+      "device": "iPhone 17 Pro Max",
+      "platform": "iPhone & iPad",
+      "model": "Bonsai Image 4B · Ternary",
+      "config": "1024 × 1024 · 4 steps · MLX Swift",
+      "values": {
+        "latency": 34.0,
+        "stepSeconds": 8.5
+      },
+      "capacity": "12 GB unified memory",
+      "source": "https://huggingface.co/prism-ml/bonsai-image-ternary-4B-mlx-2bit/blob/2c24c81b934a658ba5590cf39088ba929985b4a8/README.md"
+    }
+  ]
 }
 ]}
