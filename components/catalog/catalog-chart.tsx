@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { ParetoChart } from "../pareto-chart";
+import type { ChartScale } from "@/lib/pareto";
 import { formatScore, formatTokens, formatUsd } from "@/lib/format";
 import {
   BENCHMARKS,
@@ -20,11 +21,14 @@ export function CatalogChart({
   selectedSlug,
   compareSlug,
   caption,
+  scale,
 }: Readonly<{
   releases: ModelRelease[];
   selectedSlug: string;
   compareSlug?: string;
   caption: string;
+  /** Axes shared with the site's other charts of the same kind. */
+  scale: ChartScale;
 }>) {
   const [interactive, setInteractive] = useState(false);
   useEffect(() => setInteractive(true), []);
@@ -83,6 +87,7 @@ export function CatalogChart({
       )}
       <ParetoChart
         releases={releases}
+        scale={scale}
         selectedRelease={selected}
         compareRelease={compare ?? null}
         activeEffortSlug={effort.effortSlug}

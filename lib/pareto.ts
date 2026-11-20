@@ -37,6 +37,46 @@ export function getPointScore(effort: EffortPoint, benchmark: BenchmarkId): numb
   return effort.scores[benchmark];
 }
 
+/** The lowest and highest budget and score a chart has to show. */
+export type ChartBounds = Readonly<{
+  budget: readonly [number, number];
+  score: readonly [number, number];
+}>;
+
+/**
+ * Chart axes for each budget axis and benchmark, from a fixed set of
+ * releases. A chart given a scale keeps its axes while the selection, the
+ * cohort or the lab filter changes, so models compare by position.
+ */
+export type ChartScale = Readonly<
+  Record<BudgetAxis, Readonly<Partial<Record<BenchmarkId, ChartBounds>>>>
+>;
+
+const BENCHMARK_IDS = Object.keys({
+  coding: 0,
+  terminalBench4: 0,
+  frontierCode2: 0,
+  intelligence: 0,
+} satisfies Record<BenchmarkId, 0>) as BenchmarkId[];
+
+export function getChartScale(releases: readonly ModelRelease[]): ChartScale {
+  const bounds = (axis: BudgetAxis) => {
+    const byBenchmark: Partial<Record<BenchmarkId, ChartBounds>> = {};
+    for (const id of BENCHMARK_IDS) {
+      const points = buildPlottedPoints(releases, id, axis);
+      if (points.length === 0) continue;
+      const budgets = points.map((p) => p.budget);
+      const scores = points.map((p) => p.score);
+      byBenchmark[id] = {
+        budget: [Math.min(...budgets), Math.max(...budgets)],
+        score: [Math.min(...scores), Math.max(...scores)],
+      };
+    }
+    return byBenchmark;
+  };
+  return { cost: bounds("cost"), tokens: bounds("tokens") };
+}
+
 /**
  * Filters releases visible in the chart for a selected release and context mode.
  * - "release": models launched on or before `selected.releaseDate` that were not yet superseded on that date

@@ -4,7 +4,7 @@
 import { catalog as defaultCatalog, EFFORT_NAMES, effortName, median, type Catalog } from "./catalog";
 import { listNames, type QA } from "./copy";
 import { formatDelta, formatRatio, formatScore, formatUsd } from "./format";
-import { computeParetoFrontier } from "./pareto";
+import { computeParetoFrontier, getChartScale, type ChartScale } from "./pareto";
 import {
   PROVIDERS,
   type CliHarnessEval,
@@ -201,6 +201,23 @@ export function chartRelease(release: ModelRelease, h: Harness): ModelRelease | 
     ];
   });
   return efforts.length > 0 ? { ...release, efforts } : null;
+}
+
+/** Each group's models, with their runs inside its agent in the chart's score slots. */
+export function agentChartReleases(
+  groups: readonly HarnessGroup[],
+  cat: Catalog = defaultCatalog,
+): ModelRelease[] {
+  return groups.flatMap((g) =>
+    [...new Set(g.runs.map((r) => r.release.slug))].map(
+      (slug) => chartRelease(cat.find(slug)!, g.harness)!,
+    ),
+  );
+}
+
+/** Axes from every agent's runs, so the hub and each matchup page share them. */
+export function agentChartScale(cat: Catalog = defaultCatalog): ChartScale {
+  return getChartScale(agentChartReleases(harnessGroups(undefined, cat), cat));
 }
 
 export type HarnessGap = Readonly<{ run: AgentRun; alone: number; inAgent: number; change: number }>;

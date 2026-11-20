@@ -13,6 +13,12 @@ Minimal AI coding model release monitor and effort-level Pareto frontier explore
 - **FrontierCode** — Multi-file software engineering benchmark pass rate (`0–100%`).
 - **Intelligence** — Full 9-evaluation Artificial Analysis Intelligence Index v5.0.1 (`0–100`).
 
+### Model list
+
+- **Lineup** *(default)* — Current and superseded models, each grouped by tier so each lab's models at the same level sit together: Claude Fable, GPT Astra and Gemini Carbon; then Claude Opus, GPT Sol and Gemini Neon; and so on down to each lab's smallest models. Opens in **Live**. The tiers are listed in `lib/lineup.ts`; a new model line takes the tier of the current model nearest to it in output price until it is listed there.
+- **Releases** — Every model by release date. Opens in **At release**.
+- Every chart draws on one scale built from all releases, so switching the model, the order, the comparison context or the lab filter never moves the axes. The coding agent pages share one scale across the three agents.
+
 ### Comparison Context & Frontier Stars
 
 - **At release** — Compares the selected release against the frontier of models active on its launch date, showing how the release moved the Pareto curve when announced.
@@ -21,7 +27,7 @@ Minimal AI coding model release monitor and effort-level Pareto frontier explore
 
 ## Pages
 
-- [`/`](https://aicharts.io) — The explorer: release feed, effort curves and frontier stars.
+- [`/`](https://aicharts.io) — The explorer: models by lineup or release date, effort curves and frontier stars.
 - [`/models`](https://aicharts.io/models) and `/models/<slug>` — A page per release with scores, cost per task and output tokens at every effort setting, frontier stars by benchmark, results inside the lab's own coding agent, pricing and links to its comparisons.
 - [`/compare`](https://aicharts.io/compare) and `/compare/<newer>-vs-<older>` — A head-to-head page for every two releases that were current at the same time, plus each release against the one it replaced. The reverse order redirects to the canonical page.
 - [`/effort`](https://aicharts.io/effort) and `/effort/<higher>-vs-<lower>` — What each step up in effort adds and costs, model by model. A step gets a page once three releases are measured at both settings.

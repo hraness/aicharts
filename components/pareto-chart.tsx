@@ -16,6 +16,7 @@ import {
   getPointBudget,
   getPointScore,
   getQualifiedFrontierKeys,
+  type ChartScale,
   type PlottedPoint,
 } from "@/lib/pareto";
 import type {
@@ -45,6 +46,7 @@ export function ParetoChart({
   onSelectRelease,
   showTokens = true,
   ariaLabel,
+  scale,
 }: Readonly<{
   releases: readonly ModelRelease[];
   selectedRelease: ModelRelease;
@@ -59,6 +61,11 @@ export function ParetoChart({
   showTokens?: boolean;
   /** Replaces the generated description of the chart. */
   ariaLabel?: string;
+  /**
+   * Fixed axes, so switching the selection or the field keeps every point in
+   * place. Without it the axes fit the plotted releases.
+   */
+  scale?: ChartScale;
 }>) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState<number>(740);
@@ -104,8 +111,9 @@ export function ParetoChart({
   const qualifiedFrontierSet = useMemo(() => getQualifiedFrontierKeys(frontier), [frontier]);
 
   const { logMin, logMax, yMin, yMax, xTicks, yTicks } = useMemo(() => {
-    const budgets = allPoints.map((p) => p.budget);
-    const scores = allPoints.map((p) => p.score);
+    const fixed = scale?.[axis][benchmark.id];
+    const budgets = [...allPoints.map((p) => p.budget), ...(fixed?.budget ?? [])];
+    const scores = [...allPoints.map((p) => p.score), ...(fixed?.score ?? [])];
     const minB = budgets.length > 0 ? Math.min(...budgets) : 0.01;
     const maxB = budgets.length > 0 ? Math.max(...budgets) : 30;
     const rawLogMin = Math.log10(minB);
@@ -150,7 +158,7 @@ export function ParetoChart({
       xTicks: chosenXTicks,
       yTicks: chosenYTicks,
     };
-  }, [allPoints, axis, isCompact, pad.left, plotW]);
+  }, [allPoints, scale, benchmark.id, axis, isCompact, pad.left, plotW]);
 
   const toX = (budget: number) =>
     pad.left + ((Math.log10(budget) - logMin) / (logMax - logMin)) * plotW;

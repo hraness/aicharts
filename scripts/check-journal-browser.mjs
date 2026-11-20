@@ -153,6 +153,48 @@ try {
     );
     await checkFooter(page);
     assert.equal(await noSideScroll(page), true);
+
+    // The lineup is the default order. The chart keeps its axes whichever
+    // model, order or lab is picked, so siblings compare by position: before
+    // the fix, Claude Opus 5.5 and GPT-6.2 Sol (Tier 2, two months apart)
+    // drew on different axes in the At release view.
+    const ticks = () =>
+      page.locator(".chart-tick").evaluateAll((nodes) => nodes.map((n) => n.textContent));
+    const pick = async (feed, name) => {
+      await feed.getByRole("option", { name }).click();
+      await feed
+        .locator('[role="option"][aria-selected="true"]')
+        .filter({ hasText: name })
+        .waitFor();
+      return ticks();
+    };
+    const lineup = page.getByRole("listbox", { name: "Models by lineup tier" });
+    const tier2 = lineup.getByRole("group", { name: "Current Tier 2" });
+    const siblings = await tier2
+      .getByRole("option")
+      .evaluateAll((rows) =>
+        rows.map((row) => row.querySelector(".feed-row__name").textContent),
+      );
+    assert.ok(siblings.length >= 2, "Keep at least two current Tier 2 models");
+    const axes = await pick(lineup, siblings[0]);
+    assert.ok(axes.length >= 6, "The chart draws its axis ticks");
+    for (const name of siblings.slice(1)) {
+      assert.deepEqual(await pick(lineup, name), axes, `${name} keeps the axes`);
+    }
+    await page.getByRole("button", { name: "Releases", exact: true }).click();
+    assert.equal(new URL(page.url()).searchParams.get("view"), "releases");
+    const byDate = page.getByRole("listbox", { name: "Models by release date" });
+    const dates = [...releases].sort((a, b) => a.releaseDate.localeCompare(b.releaseDate));
+    for (const name of [...siblings, dates[0].name, dates.at(-1).name]) {
+      assert.deepEqual(await pick(byDate, name), axes, `${name} keeps the axes at release`);
+    }
+    await page.getByRole("tab", { name: "Anthropic", exact: true }).click();
+    assert.deepEqual(await ticks(), axes, "The lab filter keeps the axes");
+    await page.getByRole("tab", { name: "All", exact: true }).click();
+    await page.getByRole("button", { name: "Lineup", exact: true }).click();
+    assert.equal(new URL(page.url()).searchParams.get("view"), null);
+    assert.equal(await noSideScroll(page), true);
+
     await page
       .getByRole("navigation", { name: "Product pages" })
       .getByRole("link", { name: "Blog" })

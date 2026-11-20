@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AiChartsMark,
   ExternalArrowIcon,
@@ -19,10 +19,12 @@ import {
   formatTokens,
   formatUsd,
 } from "@/lib/format";
+import { buildLineup } from "@/lib/lineup";
 import {
   buildPlottedPoints,
   comparePointToFrontier,
   computeParetoFrontier,
+  getChartScale,
   getContextualFrontierEfforts,
   getContextualReleases,
   getPointScore,
@@ -40,6 +42,17 @@ import {
   type ProviderId,
   type ReleaseDataset,
 } from "@/lib/types";
+
+/**
+ * The feed's two orders. Lineup groups current and superseded models by tier,
+ * so siblings from each lab sit together, and charts them against today's
+ * field. Releases lists them by date against the field each one launched into.
+ */
+type FeedView = "lineup" | "releases";
+const VIEW_CONTEXT: Readonly<Record<FeedView, ContextMode>> = {
+  lineup: "live",
+  releases: "release",
+};
 
 function pickPreferredEffort(release: ModelRelease, benchmark: BenchmarkId = "coding"): EffortSlug {
   let best = release.efforts[release.efforts.length - 1];
@@ -77,7 +90,10 @@ export function ReleaseExplorer({
   const [selectedSlug, setSelectedSlug] = useState<string>(defaultRelease.slug);
   const [benchmarkId, setBenchmarkId] = useState<BenchmarkId>(initialBenchmark ?? "coding");
   const [axis, setAxis] = useState<BudgetAxis>(initialAxis ?? "cost");
-  const [contextMode, setContextMode] = useState<ContextMode>(initialContext ?? "release");
+  const [view, setView] = useState<FeedView>("lineup");
+  const [contextMode, setContextMode] = useState<ContextMode>(
+    initialContext ?? VIEW_CONTEXT.lineup,
+  );
   const [providerFilter, setProviderFilter] = useState<ProviderId | "all">("all");
   const [activeEffortSlug, setActiveEffortSlug] = useState<EffortSlug>(() =>
     pickPreferredEffort(defaultRelease, initialBenchmark ?? "coding"),
@@ -118,10 +134,12 @@ export function ReleaseExplorer({
     if (axisParam === "cost" || axisParam === "tokens") {
       setAxis(axisParam);
     }
+    const viewParam: FeedView = params.get("view") === "releases" ? "releases" : "lineup";
+    setView(viewParam);
     const ctxParam = params.get("ctx");
-    if (ctxParam === "release" || ctxParam === "live") {
-      setContextMode(ctxParam);
-    }
+    setContextMode(
+      ctxParam === "release" || ctxParam === "live" ? ctxParam : VIEW_CONTEXT[viewParam],
+    );
     setUrlHydrated(true);
   }, [dataset.releases]);
 
@@ -162,11 +180,18 @@ export function ReleaseExplorer({
     }
     if (benchmarkId !== "coding") params.set("metric", benchmarkId);
     if (axis !== "cost") params.set("axis", axis);
-    if (contextMode !== "release") params.set("ctx", contextMode);
+    if (view !== "lineup") params.set("view", view);
+    if (contextMode !== VIEW_CONTEXT[view]) params.set("ctx", contextMode);
     const qs = params.toString();
     const nextUrl = qs ? `${window.location.pathname}?${qs}` : window.location.pathname;
     window.history.replaceState(null, "", nextUrl);
-  }, [urlHydrated, selectedRelease.slug, benchmarkId, axis, contextMode, dataset.releases]);
+  }, [urlHydrated, selectedRelease.slug, benchmarkId, axis, view, contextMode, dataset.releases]);
+
+  // Each order brings its own field: today's for the lineup, launch day's for releases.
+  const selectView = useCallback((next: FeedView) => {
+    setView(next);
+    setContextMode(VIEW_CONTEXT[next]);
+  }, []);
 
   const handleSelectRelease = useCallback(
     (slug: string, scrollIfNeeded = false) => {
@@ -193,6 +218,35 @@ export function ReleaseExplorer({
     return dataset.releases.filter((r) => r.provider === providerFilter);
   }, [dataset.releases, providerFilter]);
 
+  const lineupSections = useMemo(() => {
+    const lineup = buildLineup(dataset.releases);
+    const shown = (groups: typeof lineup.current) =>
+      groups
+        .map((g) => ({
+          ...g,
+          releases: g.releases.filter(
+            (r) => providerFilter === "all" || r.provider === providerFilter,
+          ),
+        }))
+        .filter((g) => g.releases.length > 0);
+    return [
+      { key: "current", title: "Current", groups: shown(lineup.current) },
+      { key: "superseded", title: "Superseded", groups: shown(lineup.superseded) },
+    ].filter((section) => section.groups.length > 0);
+  }, [dataset.releases, providerFilter]);
+
+  // The order on screen, for j/k stepping.
+  const feedOrder = useMemo(
+    () =>
+      view === "lineup"
+        ? lineupSections.flatMap((section) => section.groups.flatMap((g) => g.releases))
+        : filteredFeedReleases,
+    [view, lineupSections, filteredFeedReleases],
+  );
+
+  // One set of axes for every selection, field and lab filter.
+  const chartScale = useMemo(() => getChartScale(dataset.releases), [dataset.releases]);
+
   // Silent keyboard j/k stepping
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -207,19 +261,17 @@ export function ReleaseExplorer({
       }
       if (e.key === "j" || e.key === "k") {
         e.preventDefault();
-        const idx = filteredFeedReleases.findIndex((r) => r.slug === selectedRelease.slug);
+        const idx = feedOrder.findIndex((r) => r.slug === selectedRelease.slug);
         if (idx === -1) return;
         const nextIdx =
-          e.key === "j"
-            ? Math.min(filteredFeedReleases.length - 1, idx + 1)
-            : Math.max(0, idx - 1);
-        const nextRel = filteredFeedReleases[nextIdx];
+          e.key === "j" ? Math.min(feedOrder.length - 1, idx + 1) : Math.max(0, idx - 1);
+        const nextRel = feedOrder[nextIdx];
         if (nextRel) handleSelectRelease(nextRel.slug, false);
       }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [filteredFeedReleases, selectedRelease.slug, handleSelectRelease]);
+  }, [feedOrder, selectedRelease.slug, handleSelectRelease]);
 
   const benchmark = useMemo(
     () => BENCHMARKS.find((b) => b.id === benchmarkId) ?? BENCHMARKS[0]!,
@@ -290,6 +342,45 @@ export function ReleaseExplorer({
     }
     return Math.ceil(max / 5) * 5;
   }, [dataset.releases, benchmark.id]);
+
+  // One feed row; both orders list the same rows.
+  const renderFeedRow = (rel: ModelRelease) => {
+    const isSelected = rel.slug === selectedRelease.slug;
+    const bestScore = Math.max(...rel.efforts.map((e) => getPointScore(e, benchmark.id)));
+    const frontierEfforts = frontierStarEfforts.get(rel.slug) ?? [];
+    const barPct = Math.max(2, Math.min(100, (bestScore / globalMaxFeedScore) * 100));
+
+    return (
+      <button
+        key={rel.slug}
+        type="button"
+        role="option"
+        aria-selected={isSelected}
+        className={`feed-row feed-row--${rel.provider}${isSelected ? " is-selected" : ""}${rel.deprecated ? " is-deprecated" : ""}`}
+        onClick={() => handleSelectRelease(rel.slug, true)}
+      >
+        <span className="feed-row__date mono">{formatShortDate(rel.releaseDate)}</span>
+
+        <span className="feed-row__main">
+          <ProviderLogo provider={rel.provider} size={18} />
+          <span className="feed-row__name">{rel.name}</span>
+          <FrontierStars efforts={frontierEfforts} size={8} context={contextMode} />
+        </span>
+
+        <span className="feed-row__right">
+          <span className="score-track" aria-hidden="true">
+            <span
+              className={`score-fill score-fill--${rel.provider}`}
+              style={{ width: `${barPct}%` }}
+            />
+          </span>
+          <strong className="feed-row__score mono">
+            {formatScore(bestScore, benchmark.unit)}
+          </strong>
+        </span>
+      </button>
+    );
+  };
 
   return (
     <div className="shell">
@@ -452,6 +543,7 @@ export function ReleaseExplorer({
           {/* Interactive SVG Pareto Curve */}
           <ParetoChart
             releases={contextualReleases}
+            scale={chartScale}
             selectedRelease={selectedRelease}
             activeEffortSlug={activeEffort.effortSlug}
             benchmark={benchmark}
@@ -577,12 +669,32 @@ export function ReleaseExplorer({
           </div>
         </section>
 
-        {/* Chronological Release Feed */}
-        <section className="feed-section" aria-label="Coding model releases">
+        {/* Model feed: lineup tiers or release dates */}
+        <section className="feed-section" aria-label="Coding models">
           <div className="feed-header">
             <div className="feed-header__left">
-              <h2 className="feed-header__title">Releases</h2>
+              <h2 className="feed-header__title">Models</h2>
               <span className="feed-header__count mono">{filteredFeedReleases.length}</span>
+              <div className="seg-group" role="group" aria-label="Order models by">
+                <button
+                  type="button"
+                  aria-pressed={view === "lineup"}
+                  className={`seg-btn${view === "lineup" ? " is-active" : ""}`}
+                  onClick={() => selectView("lineup")}
+                  title="Current and superseded models, each lab's flagships together, against today's models"
+                >
+                  Lineup
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={view === "releases"}
+                  className={`seg-btn${view === "releases" ? " is-active" : ""}`}
+                  onClick={() => selectView("releases")}
+                  title="Every model by release date, against the models out on its release day"
+                >
+                  Releases
+                </button>
+              </div>
             </div>
 
             <div className="provider-filters" role="tablist" aria-label="Filter by lab">
@@ -611,50 +723,40 @@ export function ReleaseExplorer({
             </div>
           </div>
 
-          <div className="feed-list" role="listbox" aria-label="Model release feed">
-            {filteredFeedReleases.map((rel) => {
-              const isSelected = rel.slug === selectedRelease.slug;
-              const bestScore = Math.max(
-                ...rel.efforts.map((e) => getPointScore(e, benchmark.id)),
-              );
-              const frontierEfforts = frontierStarEfforts.get(rel.slug) ?? [];
-              const barPct = Math.max(
-                2,
-                Math.min(100, (bestScore / globalMaxFeedScore) * 100),
-              );
-
-              return (
-                <button
-                  key={rel.slug}
-                  type="button"
-                  role="option"
-                  aria-selected={isSelected}
-                  className={`feed-row feed-row--${rel.provider}${isSelected ? " is-selected" : ""}${rel.deprecated ? " is-deprecated" : ""}`}
-                  onClick={() => handleSelectRelease(rel.slug, true)}
-                >
-                  <span className="feed-row__date mono">{formatShortDate(rel.releaseDate)}</span>
-
-                  <span className="feed-row__main">
-                    <ProviderLogo provider={rel.provider} size={18} />
-                    <span className="feed-row__name">{rel.name}</span>
-                    <FrontierStars efforts={frontierEfforts} size={8} context={contextMode} />
-                  </span>
-
-                  <span className="feed-row__right">
-                    <span className="score-track" aria-hidden="true">
-                      <span
-                        className={`score-fill score-fill--${rel.provider}`}
-                        style={{ width: `${barPct}%` }}
-                      />
+          {view === "lineup" ? (
+            <div className="feed-list" role="listbox" aria-label="Models by lineup tier">
+              {lineupSections.map((section) => (
+                <Fragment key={section.key}>
+                  <div className="feed-band" aria-hidden="true">
+                    <span id={`lineup-${section.key}`}>{section.title}</span>
+                    <span className="feed-band__count mono">
+                      {section.groups.reduce((n, g) => n + g.releases.length, 0)}
                     </span>
-                    <strong className="feed-row__score mono">
-                      {formatScore(bestScore, benchmark.unit)}
-                    </strong>
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+                  </div>
+                  {section.groups.map((g) => {
+                    const labelId = `lineup-${section.key}-${g.tier}`;
+                    return (
+                      <div
+                        key={labelId}
+                        className="feed-group"
+                        role="group"
+                        aria-labelledby={`lineup-${section.key} ${labelId}`}
+                      >
+                        <div id={labelId} className="feed-group__label" role="presentation">
+                          {g.label}
+                        </div>
+                        {g.releases.map(renderFeedRow)}
+                      </div>
+                    );
+                  })}
+                </Fragment>
+              ))}
+            </div>
+          ) : (
+            <div className="feed-list" role="listbox" aria-label="Models by release date">
+              {filteredFeedReleases.map(renderFeedRow)}
+            </div>
+          )}
         </section>
         <p className="data-note">
           Normalized from{" "}
