@@ -1,5 +1,17 @@
 [
   {
+    "slug": "open-benchmark-data",
+    "date": "2026-11-19",
+    "category": "Improved",
+    "surfaces": ["Web app", "Website", "API"],
+    "title": "Scores from the official Terminal-Bench leaderboard",
+    "summary": "Each model is now one point on the chart: its run on the official Terminal-Bench leaderboard, in the coding agent it was submitted with, against what that run cost per task or the output tokens it used. Model pages add Epoch AI’s MirrorCode, GPQA Diamond and FrontierMath scores and API prices from LiteLLM, and the release data lists each source’s license. Effort curves and the effort pages are gone, since no open source measures every setting; their addresses open Models.",
+    "link": {
+      "href": "/models",
+      "label": "Browse the models"
+    }
+  },
+  {
     "slug": "lineup-view",
     "date": "2026-11-19",
     "category": "New",

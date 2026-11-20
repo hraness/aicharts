@@ -10,7 +10,9 @@ import { chromium } from "playwright-core";
 const capture = process.argv.includes("--preview");
 const entries = JSON.parse(await readFile("journal/entries.json", "utf8"));
 const { releases } = JSON.parse(await readFile("data/releases.json", "utf8"));
-const model = releases.find((r) => !r.deprecated);
+// A current model with a costed run, so its page draws the chart.
+const model = releases.find((r) => !r.deprecated && r.terminalBench?.costPerTaskUsd != null);
+assert.ok(model, "Keep a current model with a costed Terminal-Bench run");
 // The changelog filter matches title, summary, category and surfaces.
 const frontierWebsite = entries.filter(
   (e) =>
@@ -160,11 +162,14 @@ try {
     // drew on different axes in the At release view.
     const ticks = () =>
       page.locator(".chart-tick").evaluateAll((nodes) => nodes.map((n) => n.textContent));
+    // "Claude Fable 5" must not match Claude Fable 5.1 or 5.2.
+    const whole = (name) =>
+      new RegExp(name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "(?![.\\d])");
     const pick = async (feed, name) => {
-      await feed.getByRole("option", { name }).click();
+      await feed.getByRole("option", { name: whole(name) }).click();
       await feed
         .locator('[role="option"][aria-selected="true"]')
-        .filter({ hasText: name })
+        .filter({ hasText: whole(name) })
         .waitFor();
       return ticks();
     };
@@ -212,7 +217,23 @@ try {
     await page.waitForFunction(() =>
       document.querySelector("output").textContent.includes("output tokens"),
     );
-    await page.getByLabel("Effort", { exact: true }).selectOption({ index: 1 });
+    // Picking another model moves the readout to it.
+    const guideModel = page.getByLabel("Model", { exact: true });
+    const shown = await guideModel.inputValue();
+    const [otherSlug, otherName] = await guideModel
+      .locator("option")
+      .evaluateAll(
+        (options, current) =>
+          options
+            .filter((o) => o.value !== current)
+            .map((o) => [o.value, o.textContent])[0],
+        shown,
+      );
+    await guideModel.selectOption(otherSlug);
+    await page.waitForFunction(
+      (name) => document.querySelector(".guide-chart output").textContent.startsWith(name),
+      otherName,
+    );
     assert.equal(
       await page.locator("figure[data-pj-article-figure] figcaption").count(),
       1,
@@ -241,7 +262,7 @@ try {
     assert.ok((await page.locator("[data-pj-entry]").count()) >= 3);
     assert.equal(new URL(page.url()).search, "");
 
-    // Model, comparison and effort pages share the header and footer and never
+    // Model and comparison pages share the header and footer and never
     // scroll sideways, even with wide tables on a phone.
     await page.goto(url + "/models");
     await page
@@ -250,7 +271,7 @@ try {
       .click();
     await page.waitForURL(url + "/models/" + model.slug);
     await page.locator(".catalog-chart .pareto-svg").waitFor();
-    await page.getByLabel("Cost axis").selectOption("tokens");
+    await page.getByLabel("Budget", { exact: true }).selectOption("tokens");
     await page.waitForFunction(() =>
       document.querySelector(".chart-readout").textContent.includes("output tokens"),
     );
@@ -258,17 +279,11 @@ try {
       .locator('a[href^="/compare/"]')
       .first()
       .getAttribute("href");
-    const effortStep = await page
-      .locator('.steps a[href^="/effort/"]')
-      .first()
-      .getAttribute("href");
     for (const path of [
       "/models",
       "/models/" + model.slug,
       "/compare",
       pair,
-      "/effort",
-      effortStep ?? "/effort",
     ]) {
       await page.goto(url + path);
       assert.equal(await page.locator("main h1").count(), 1, path);
@@ -286,11 +301,11 @@ try {
     const [first, second] = pair.slice("/compare/".length).split("-vs-");
     await page.goto(url + "/compare/" + second + "-vs-" + first);
     assert.equal(new URL(page.url()).pathname, pair);
-    // Coding agent pages: the benchmark control relabels the readout.
+    // Coding agent pages: the budget control relabels the readout.
     await page.goto(url + "/agents");
-    await page.getByLabel("Benchmark").selectOption("terminalBench4");
+    await page.getByLabel("Budget", { exact: true }).selectOption("tokens");
     await page.waitForFunction(() =>
-      document.querySelector(".agent-chart .chart-readout").textContent.includes("Terminal-Bench 4.1"),
+      document.querySelector(".agent-chart .chart-readout").textContent.includes("output tokens"),
     );
     const agentPairs = await page
       .locator('.pair-links a[href^="/agents/"]')
@@ -343,6 +358,9 @@ try {
     ["/blog/introducing-ai-charts", "/blog/introducing-aicharts"],
     ["/blog/harnesstax-coding-agent-harness", "/agents"],
     ["/calculator", "/models"],
+    // The effort pages were retired with the data they compared.
+    ["/effort", "/models"],
+    ["/effort/xhigh-vs-high", "/models"],
   ]) {
     await page.goto(url + from);
     assert.equal(new URL(page.url()).pathname, to, from);
@@ -355,7 +373,7 @@ try {
       reducedMotion: "reduce",
     });
     const page = await ctx.newPage();
-    await page.goto(url + "/?release=gemini-4-neon");
+    await page.goto(url + "/?release=" + model.slug);
     await page.locator(".pareto-svg").waitFor();
     await page.waitForFunction(
       () => document.querySelector(".pareto-svg").width.baseVal.value < 480,
@@ -404,7 +422,7 @@ try {
       },
       browser: browser.version(),
       encoder: execFileSync("cwebp", ["-version"], { encoding: "utf8" }).trim(),
-      alt: "aicharts comparing coding benchmark scores with cost per task at several reasoning effort settings.",
+      alt: "aicharts plotting Terminal-Bench scores against cost per task for Anthropic, OpenAI and Google models.",
     };
     await writeFile(
       "showcase/media/preview.json",

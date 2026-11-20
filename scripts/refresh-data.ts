@@ -1,210 +1,603 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+// Builds data/releases.json from three openly licensed sources:
+// - Terminal-Bench leaderboard submissions (Apache-2.0): one agent run per model,
+//   with accuracy, cost and tokens per trial.
+// - Epoch AI's benchmark data (CC BY 4.0): GPQA Diamond, MirrorCode and
+//   FrontierMath Tiers 1–3 scores, and release dates.
+// - LiteLLM's model price list (MIT): list API prices and input limits.
+//
+//   bun run scripts/refresh-data.ts            fetch, and write if anything changed
+//   bun run scripts/refresh-data.ts --force    fetch and write
+//   bun run scripts/refresh-data.ts --check    validate the committed file only
+//   bun run scripts/refresh-data.ts --from-raw <dir>
+//       read <dir>/tb/*.json, <dir>/epoch/benchmark_data.zip and
+//       <dir>/litellm/prices.json instead of fetching
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { gunzipSync } from "node:zlib";
+import { inflateRawSync } from "node:zlib";
 import type {
-  CliHarnessEval,
-  EffortPoint,
+  DataSource,
   EffortSlug,
-  HarborBenchEval,
+  EpochBenchmarkId,
+  EpochScore,
+  ModelPricing,
   ModelRelease,
   ProviderId,
   ReleaseDataset,
+  TerminalBenchRun,
 } from "../lib/types";
 
 const DATA_PATH = path.join(import.meta.dir, "..", "data", "releases.json");
 const TARGET_PROVIDERS = new Set<ProviderId>(["anthropic", "openai", "google"]);
-const MIN_RELEASE_DATE = "2026-07-01";
-const USER_AGENT = "aicharts-refresh/2.1 (+https://aicharts.io)";
-const HARBOR_PROVIDER_RE =
-  /(anthropic|claude|openai|gpt|codex|google|gemini|antigravity)/i;
+const MIN_RELEASE_DATE = "2026-06-01";
+const USER_AGENT = "aicharts-refresh/3.0 (+https://aicharts.io)";
 
-const RELEASE_CURATION: Readonly<
-  Record<
-    string,
-    Readonly<{
-      announcementUrl: string;
-      summary: string;
-      supersededOn: string | null;
-    }>
-  >
-> = {
-  "gemini-4-neon": {
-    announcementUrl: "https://deepmind.google/models/gemini/",
-    summary:
-      "Adapted from Carbon for lean token usage and rapid software engineering; leads AA Coding Agents in Antigravity CLI.",
-    supersededOn: null,
+const TB_LISTING_URL =
+  "https://api.github.com/repos/harbor-framework/terminal-bench/contents/leaderboard/submissions";
+const TB_FILE_URL = "https://github.com/harbor-framework/terminal-bench/blob/main/leaderboard/submissions/";
+const EPOCH_ZIP_URL = "https://epoch.ai/data/benchmark_data.zip";
+const LITELLM_URL =
+  "https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json";
+
+export const SOURCES: readonly DataSource[] = [
+  {
+    id: "terminal-bench",
+    name: "Terminal-Bench leaderboard",
+    url: "https://github.com/harbor-framework/terminal-bench/tree/main/leaderboard",
+    license: "Apache-2.0",
+    licenseUrl: "https://github.com/harbor-framework/terminal-bench/blob/main/LICENSE",
+    attribution: "Terminal-Bench leaderboard submissions, harbor-framework/terminal-bench, Apache License 2.0.",
+    covers:
+      "Each model's agent run: accuracy, confidence interval, trials, cost, tokens and minutes per trial, agent and effort.",
   },
-  "gpt-6-2-astra": {
-    announcementUrl: "https://developers.openai.com/api/docs/models/gpt-6.2-astra",
-    summary:
-      "OpenAI's frontier reasoning and coding model; commands the $1.60–$4.00/task Pareto frontier with tight token discipline.",
-    supersededOn: null,
+  {
+    id: "epoch-ai",
+    name: "Epoch AI, Capabilities & benchmarking",
+    url: "https://epoch.ai/benchmarks",
+    license: "CC-BY-4.0",
+    licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
+    attribution:
+      "Epoch AI, ‘Capabilities & benchmarking’. Published online at epoch.ai. Retrieved from ‘https://epoch.ai/benchmarks’ [online resource].",
+    covers: "GPQA Diamond, MirrorCode and FrontierMath Tiers 1–3 scores, and release dates.",
   },
-  "gpt-6-2-sol": {
-    announcementUrl: "https://developers.openai.com/api/docs/models/gpt-6.2-sol",
-    summary:
-      "High-efficiency coding tier capturing near-frontier SWE and CLI pass rates at $0.18–$1.01/task.",
-    supersededOn: null,
+  {
+    id: "litellm",
+    name: "LiteLLM model prices",
+    url: "https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json",
+    license: "MIT",
+    licenseUrl: "https://github.com/BerriAI/litellm/blob/main/LICENSE",
+    attribution: "LiteLLM model_prices_and_context_window.json, Copyright (c) 2023 Berri AI, MIT License.",
+    covers: "List API prices per million tokens and maximum input tokens.",
   },
+];
+
+/**
+ * Hand-kept facts the sources lack: launch pages, a release date for a model
+ * no source has scored yet, and supersessions the family rule cannot see.
+ */
+type Curation = Readonly<{
+  announcementUrl?: string;
+  releaseDate?: string;
+  /** Overrides the family rule; null keeps a release current. */
+  supersededOn?: string | null;
+}>;
+
+const CURATION: Readonly<Record<string, Curation>> = {
+  "gemini-4-neon": { announcementUrl: "https://deepmind.google/models/gemini/", releaseDate: "2026-11-18" },
+  "gpt-6-2-astra": { announcementUrl: "https://developers.openai.com/api/docs/models/gpt-6.2-astra" },
+  "gpt-6-2-sol": { announcementUrl: "https://developers.openai.com/api/docs/models/gpt-6.2-sol" },
   "gemini-4-hydrogen": {
     announcementUrl:
       "https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-4-hydrogen/",
-    summary:
-      "Fast, flat-priced 1M-context coding and execution workhorse scaling from $0.29 to $3.16/task.",
-    supersededOn: null,
   },
-  "claude-fable-5-2": {
-    announcementUrl: "https://www.anthropic.com/claude-fable-and-mythos-5-2",
-    summary:
-      "Anthropic's highest-capability model; sets the overall ceiling on FrontierCode 2.0, Harbor Terminal-Bench, and Intelligence v5.",
-    supersededOn: null,
-  },
+  "claude-fable-5-2": { announcementUrl: "https://www.anthropic.com/claude-fable-and-mythos-5-2" },
   "gemini-4-carbon": {
     announcementUrl:
       "https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-4-carbon/",
-    summary:
-      "Deep sustained-reasoning Gemini 4 flagship; hits 65.2% on Terminal-Bench 4.0 at High effort.",
-    supersededOn: null,
   },
-  "gpt-6-1-terra": {
-    announcementUrl: "https://developers.openai.com/api/docs/models/gpt-6.1-terra",
-    summary:
-      "Compact coding and UI-capable reasoning tier spanning six effort settings under $1/task.",
-    supersededOn: null,
-  },
-  "claude-haiku-5-5": {
-    announcementUrl: "https://www.anthropic.com/claude-haiku-5-5",
-    summary:
-      "High-throughput sub-$0.45/task tier rounding out the Claude 5.5 lineup across five thinking depths.",
-    supersededOn: null,
-  },
+  "gpt-6-1-terra": { announcementUrl: "https://developers.openai.com/api/docs/models/gpt-6.1-terra" },
+  "claude-haiku-5-5": { announcementUrl: "https://www.anthropic.com/claude-haiku-5-5" },
   "gemini-4-argon": {
-    announcementUrl:
-      "https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-4-argon/",
-    summary:
-      "Initial Gemini 4 frontier release introducing Google's element-series developer lineup.",
-    supersededOn: null,
+    announcementUrl: "https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-4-argon/",
   },
-  "gpt-6-1-sol": {
-    announcementUrl: "https://developers.openai.com/api/docs/models/gpt-6.1-sol",
-    summary:
-      "Late-September efficiency leader that established the sub-$0.60/task coding frontier before GPT-6.2 Sol.",
-    supersededOn: "2026-11-17",
-  },
-  "claude-sonnet-5-5": {
-    announcementUrl: "https://www.anthropic.com/claude-sonnet-5-5",
-    summary:
-      "Everyday Claude Code workhorse reaching 63.6% on Terminal-Bench 4.0 at Max effort.",
-    supersededOn: null,
-  },
-  "claude-opus-5-5": {
-    announcementUrl: "https://www.anthropic.com/claude-opus-5-5",
-    summary:
-      "September coding frontier leader (53.0% Coding composite, 64.9% Harbor Terminal-Bench in Claude Code).",
-    supersededOn: null,
-  },
-  "gpt-6-sol": {
-    announcementUrl: "https://developers.openai.com/api/docs/models/gpt-6-sol",
-    summary:
-      "Initial GPT-6 mid-tier coding model released alongside Luna, quickly succeeded by GPT-6.1 Sol.",
-    supersededOn: "2026-09-29",
-  },
-  "gpt-6-luna": {
-    announcementUrl: "https://developers.openai.com/api/docs/models/gpt-6-luna",
-    summary:
-      "Micro-budget reasoning model ($0.005–$0.15/task) anchoring the ultra-low-cost end of the frontier.",
-    supersededOn: null,
-  },
-  "gpt-6-astra": {
-    announcementUrl: "https://openai.com/index/gpt-6-astra/",
-    summary:
-      "First-generation GPT-6 flagship; led coding efficiency at $6.24/task prior to Opus 5.5 and GPT-6.2 Astra.",
-    supersededOn: "2026-11-17",
-  },
+  "gpt-6-1-sol": { announcementUrl: "https://developers.openai.com/api/docs/models/gpt-6.1-sol" },
+  "claude-sonnet-5-5": { announcementUrl: "https://www.anthropic.com/claude-sonnet-5-5" },
+  "claude-opus-5-5": { announcementUrl: "https://www.anthropic.com/claude-opus-5-5" },
+  "gpt-6-sol": { announcementUrl: "https://developers.openai.com/api/docs/models/gpt-6-sol" },
+  "gpt-6-luna": { announcementUrl: "https://developers.openai.com/api/docs/models/gpt-6-luna" },
+  "gpt-6-astra": { announcementUrl: "https://openai.com/index/gpt-6-astra/" },
+  // Gemini 4 Hydrogen took over the Flash line's place in Google's lineup.
   "gemini-3-8-flash": {
     announcementUrl: "https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash",
-    summary:
-      "Late Gemini 3.x fast reasoning release preceding the Gemini 4 element family.",
     supersededOn: "2026-11-12",
   },
-  "claude-fable-5-1": {
-    announcementUrl: "https://www.anthropic.com/claude-fable-and-mythos-5-1",
-    summary:
-      "Early-September adaptive-thinking flagship succeeded by Opus 5.5 and Fable 5.2.",
-    supersededOn: "2026-11-09",
-  },
-  "claude-opus-5": {
-    announcementUrl: "https://www.anthropic.com/news/claude-opus-5",
-    summary:
-      "Mid-summer Anthropic flagship (49.0% Terminal-Bench 4.0 at Max) preceding the 5.5 generation.",
-    supersededOn: "2026-09-22",
-  },
+  "claude-fable-5-1": { announcementUrl: "https://www.anthropic.com/claude-fable-and-mythos-5-1" },
+  "claude-opus-5": { announcementUrl: "https://www.anthropic.com/news/claude-opus-5" },
   "gemini-3-5-flash-lite": {
     announcementUrl:
       "https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-6-flash-3-5-flash-lite-3-5-flash-cyber/",
-    summary:
-      "Lightweight high-throughput summer baseline retained for historical cost comparison.",
-    supersededOn: null,
   },
-  "gpt-5-6-terra": {
-    announcementUrl: "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
-    summary:
-      "Final GPT-5.x coding and multimodal tier before the transition to the GPT-6 architecture.",
-    supersededOn: "2026-10-26",
+  "gemini-3-6-flash": {
+    announcementUrl:
+      "https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-6-flash-3-5-flash-lite-3-5-flash-cyber/",
   },
-  "gpt-5-6-luna": {
-    announcementUrl: "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
-    summary:
-      "Compact GPT-5.6 efficiency tier succeeded by GPT-6 Luna.",
-    supersededOn: "2026-09-22",
-  },
+  "gpt-5-6-terra": { announcementUrl: "https://developers.openai.com/api/docs/models/gpt-5.6-terra" },
+  "gpt-5-6-luna": { announcementUrl: "https://developers.openai.com/api/docs/models/gpt-5.6-luna" },
 };
 
-const EFFORT_META: Readonly<
-  Record<EffortSlug, Readonly<{ label: string; shortTag: string; order: number }>>
-> = {
-  none: { label: "None", shortTag: "0", order: 0 },
-  low: { label: "Low", shortTag: "L", order: 20 },
-  medium: { label: "Med", shortTag: "M", order: 30 },
-  high: { label: "High", shortTag: "H", order: 40 },
-  xhigh: { label: "XHigh", shortTag: "XH", order: 50 },
-  max: { label: "Max", shortTag: "MAX", order: 60 },
+/** Epoch model groups that are not separate API releases. */
+const EXCLUDED_EPOCH_GROUPS = new Set(["GPT-6 Luna Decisions"]);
+
+const EPOCH_FILES: Readonly<Record<string, EpochBenchmarkId>> = {
+  "mirrorcode.csv": "mirrorCode",
+  "gpqa_diamond.csv": "gpqaDiamond",
+  "frontiermath_tiers_1_3_v2.csv": "frontierMath",
+};
+const EPOCH_ORDER: readonly EpochBenchmarkId[] = ["mirrorCode", "gpqaDiamond", "frontierMath"];
+
+const EFFORTS: readonly EffortSlug[] = ["none", "minimal", "low", "medium", "high", "xhigh", "max"];
+const PROVIDER_ORDER: Readonly<Record<ProviderId, number>> = { google: 0, openai: 1, anthropic: 2 };
+
+const round = (n: number, places: number) => Number(n.toFixed(places));
+const isDate = (s: unknown): s is string => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
+const httpsOrNull = (s: unknown) => (typeof s === "string" && s.startsWith("https://") ? s : null);
+
+export function slugify(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[.\s/]+/g, "-")
+    .replace(/[^a-z0-9-]/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function effortSlug(raw: unknown): EffortSlug | null {
+  const s = typeof raw === "string" ? raw.toLowerCase() : "";
+  return (EFFORTS as readonly string[]).includes(s) ? (s as EffortSlug) : null;
+}
+
+// ---------------------------------------------------------------- ZIP and CSV
+
+/**
+ * Reads the named files out of a ZIP archive (stored or deflated entries,
+ * matched by base name). Enough for Epoch's download; no ZIP64.
+ */
+export function readZipEntries(zip: Uint8Array, wanted: ReadonlySet<string>): Map<string, string> {
+  const view = new DataView(zip.buffer, zip.byteOffset, zip.byteLength);
+  const decoder = new TextDecoder();
+  let end = -1;
+  for (let i = zip.length - 22; i >= Math.max(0, zip.length - 22 - 0xffff); i--) {
+    if (view.getUint32(i, true) === 0x06054b50) {
+      end = i;
+      break;
+    }
+  }
+  if (end < 0) throw new Error("Not a ZIP archive");
+  const count = view.getUint16(end + 10, true);
+  let p = view.getUint32(end + 16, true);
+  const out = new Map<string, string>();
+  for (let n = 0; n < count; n++) {
+    if (view.getUint32(p, true) !== 0x02014b50) throw new Error("Bad ZIP central directory");
+    const method = view.getUint16(p + 10, true);
+    const compressedSize = view.getUint32(p + 20, true);
+    const nameLength = view.getUint16(p + 28, true);
+    const extraLength = view.getUint16(p + 30, true);
+    const commentLength = view.getUint16(p + 32, true);
+    const local = view.getUint32(p + 42, true);
+    const name = decoder.decode(zip.subarray(p + 46, p + 46 + nameLength));
+    p += 46 + nameLength + extraLength + commentLength;
+    const base = name.split("/").pop() ?? name;
+    if (!wanted.has(base) || out.has(base)) continue;
+    if (view.getUint32(local, true) !== 0x04034b50) throw new Error(`Bad ZIP entry ${name}`);
+    const start = local + 30 + view.getUint16(local + 26, true) + view.getUint16(local + 28, true);
+    const data = zip.subarray(start, start + compressedSize);
+    if (method === 0) out.set(base, decoder.decode(data));
+    else if (method === 8) out.set(base, decoder.decode(inflateRawSync(data, { maxOutputLength: 64 << 20 })));
+    else throw new Error(`Unsupported ZIP compression ${method} on ${name}`);
+  }
+  return out;
+}
+
+/** RFC 4180 CSV: quoted fields may hold commas, doubled quotes and line breaks. */
+export function parseCsv(text: string): Record<string, string>[] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let field = "";
+  let quoted = false;
+  const source = text.replace(/^﻿/, "");
+  for (let i = 0; i < source.length; i++) {
+    const c = source[i]!;
+    if (quoted) {
+      if (c !== '"') field += c;
+      else if (source[i + 1] === '"') {
+        field += '"';
+        i++;
+      } else quoted = false;
+    } else if (c === '"') quoted = true;
+    else if (c === ",") {
+      row.push(field);
+      field = "";
+    } else if (c === "\n" || c === "\r") {
+      if (c === "\r" && source[i + 1] === "\n") i++;
+      row.push(field);
+      rows.push(row);
+      row = [];
+      field = "";
+    } else field += c;
+  }
+  if (field !== "" || row.length > 0) {
+    row.push(field);
+    rows.push(row);
+  }
+  const [header, ...body] = rows;
+  if (!header) return [];
+  return body
+    .filter((r) => r.some((f) => f !== ""))
+    .map((r) => Object.fromEntries(header.map((h, i) => [h, r[i] ?? ""])));
+}
+
+// ---------------------------------------------------------- Terminal-Bench
+
+type TbFile = Readonly<{ name: string; text: string }>;
+
+type TbCandidate = Readonly<{
+  file: string;
+  slug: string;
+  name: string;
+  provider: ProviderId;
+  modelUrl: string | null;
+  releaseDate: string | null;
+  regrade: boolean;
+  /** Same trials, same bill: a regrade shares these with the run it regraded. */
+  fingerprint: string;
+  durationSec: number | null;
+  run: TerminalBenchRun;
+}>;
+
+const TB_ORGS: Readonly<Record<string, ProviderId>> = {
+  Anthropic: "anthropic",
+  OpenAI: "openai",
+  Google: "google",
 };
 
-function round2(n: number): number {
-  return Math.round(n * 100) / 100;
+function tbVersion(leaderboard: unknown): string {
+  const match = typeof leaderboard === "string" ? /^(\d+)-(\d+)-\d+$/.exec(leaderboard) : null;
+  return match ? `${match[1]}.${match[2]}` : "4.0";
 }
 
-function round3(n: number): number {
-  return Math.round(n * 1000) / 1000;
+function parseTbFile(file: TbFile): TbCandidate | null {
+  // biome-ignore lint/suspicious/noExplicitAny: upstream JSON, checked field by field below
+  let j: any;
+  try {
+    j = JSON.parse(file.text);
+  } catch {
+    console.warn(`! Skipped ${file.name}: not JSON`);
+    return null;
+  }
+  const meta = j?.metadata ?? {};
+  const filter = j?.source_filter ?? {};
+  const m = j?.metrics ?? {};
+  const provider = TB_ORGS[meta?.model_org?.label];
+  const modelKey = typeof filter.model_name === "string" ? filter.model_name : "";
+  if (!provider || !modelKey) return null;
+  const trials = Number(m.n_trials);
+  const accuracy = Number(m.accuracy);
+  if (!(trials > 0) || !Number.isFinite(accuracy)) {
+    console.warn(`! Skipped ${file.name}: no trials or accuracy`);
+    return null;
+  }
+  const label = String(meta?.model_display?.label ?? "").trim();
+  const name = provider === "anthropic" && label && !/^claude\b/i.test(label) ? `Claude ${label}` : label;
+  const cost = Number(m.total_cost_usd);
+  const output = Number(m.output_tokens);
+  const total = Number(m.total_tokens);
+  const duration = Number(m.avg_trial_duration_sec);
+  const agentVersion = typeof filter.agent_version === "string" ? filter.agent_version : null;
+  const effort = effortSlug(meta.reasoning_effort ?? filter.reasoning_effort);
+  return {
+    file: file.name,
+    slug: slugify(modelKey.replace(/^[a-z]+\//, "")),
+    name,
+    provider,
+    modelUrl: httpsOrNull(meta?.model_display?.url),
+    releaseDate: isDate(meta.date) ? meta.date : null,
+    regrade: /regrade/i.test(file.name),
+    fingerprint: [modelKey, agentVersion, effort, trials, m.output_tokens, m.total_cost_usd].join("|"),
+    durationSec: duration > 0 ? duration : null,
+    run: {
+      version: tbVersion(j.leaderboard),
+      agent: String(meta?.agent_display?.label ?? filter.agent ?? "Unknown agent"),
+      agentVersion,
+      agentUrl: httpsOrNull(meta?.agent_display?.url),
+      effort,
+      accuracy: round(accuracy, 2),
+      ci95: Number.isFinite(Number(m.accuracy_ci95_half_width)) ? round(Number(m.accuracy_ci95_half_width), 2) : null,
+      trials,
+      successes: Number.isFinite(Number(m.successes)) ? Number(m.successes) : Math.round((accuracy / 100) * trials),
+      costPerTaskUsd: cost > 0 ? round(cost / trials, 4) : null,
+      tokensPerTask: {
+        total: total > 0 ? Math.round(total / trials) : 0,
+        output: output > 0 ? Math.round(output / trials) : 0,
+      },
+      minutesPerTask: null,
+      sourceUrl: `${TB_FILE_URL}${encodeURIComponent(file.name)}`,
+    },
+  };
 }
 
-function normalizeEffortSlug(rawSlug: string | undefined | null): EffortSlug {
-  const s = (rawSlug ?? "").toLowerCase();
-  if (s === "low" || s === "minimal") return "low";
-  if (s === "medium") return "medium";
-  if (s === "high") return "high";
-  if (s === "xhigh") return "xhigh";
-  if (s === "max") return "max";
-  return "none";
+/**
+ * One run per model: the newest dataset version, then the lab's own agent,
+ * then the newest submission. A regrade reports the regrade job's duration,
+ * so it borrows the minutes of the run it regraded.
+ */
+export function pickTerminalBenchRuns(files: readonly TbFile[]): Map<string, TbCandidate> {
+  const candidates = files.map(parseTbFile).filter((c): c is TbCandidate => c !== null);
+  const ownAgent: Readonly<Record<ProviderId, string>> = {
+    anthropic: "Claude Code",
+    openai: "Codex",
+    google: "Antigravity CLI",
+  };
+  const versionNumber = (v: string) => {
+    const [major = 0, minor = 0] = v.split(".").map(Number);
+    return major * 1000 + minor;
+  };
+  const bySlug = new Map<string, TbCandidate[]>();
+  for (const c of candidates) bySlug.set(c.slug, [...(bySlug.get(c.slug) ?? []), c]);
+  const picked = new Map<string, TbCandidate>();
+  for (const [slug, list] of bySlug) {
+    const sorted = [...list].sort(
+      (a, b) =>
+        versionNumber(b.run.version) - versionNumber(a.run.version) ||
+        Number(b.run.agent === ownAgent[b.provider]) - Number(a.run.agent === ownAgent[a.provider]) ||
+        b.file.localeCompare(a.file),
+    );
+    const best = sorted[0]!;
+    const original = best.regrade
+      ? list.find((c) => !c.regrade && c.fingerprint === best.fingerprint)
+      : best;
+    const seconds = original?.durationSec ?? null;
+    picked.set(slug, {
+      ...best,
+      run: { ...best.run, minutesPerTask: seconds === null ? null : round(seconds / 60, 1) },
+    });
+  }
+  return picked;
 }
 
-export function resolveSupersededOn(opts: {
-  deprecated: boolean;
-  curatedSupersededOn: string | null | undefined;
-  existingSupersededOn: string | null | undefined;
-  snapshotDate: string;
-}): string | null {
-  if (opts.curatedSupersededOn) return opts.curatedSupersededOn;
-  if (opts.existingSupersededOn) return opts.existingSupersededOn;
-  if (opts.deprecated) return opts.snapshotDate;
+// ------------------------------------------------------------------- Epoch AI
+
+type EpochGroup = {
+  name: string;
+  provider: ProviderId;
+  releaseDate: string | null;
+  scores: Map<string, EpochScore>;
+};
+
+const EPOCH_ORGS: Readonly<Record<string, ProviderId>> = {
+  Anthropic: "anthropic",
+  OpenAI: "openai",
+  Google: "google",
+  "Google DeepMind": "google",
+};
+
+/**
+ * Splits an Epoch model version such as "claude-opus-5-5_max" into its
+ * setting. Fallback reruns, Pro modes and short-context variants are not
+ * the release's own runs and are left out.
+ */
+export function epochEffort(version: string): { effort: EffortSlug | null } | null {
+  const cut = version.lastIndexOf("_");
+  const base = cut === -1 ? version : version.slice(0, cut);
+  const suffix = cut === -1 ? "" : version.slice(cut + 1).toLowerCase();
+  if (base.includes("-fallback")) return null;
+  if (suffix === "" || suffix === "unknown") return { effort: null };
+  const effort = effortSlug(suffix);
+  return effort ? { effort } : null;
+}
+
+export function readEpoch(files: ReadonlyMap<string, string>): Map<string, EpochGroup> {
+  const metadata = files.get("model_metadata.csv");
+  if (!metadata) throw new Error("Epoch download has no model_metadata.csv");
+  const versions = new Map<string, Readonly<{ group: string; provider: ProviderId; date: string | null }>>();
+  for (const row of parseCsv(metadata)) {
+    const provider = EPOCH_ORGS[row.organization ?? ""];
+    const group = (row.model_group ?? "").trim();
+    if (!row.model_version || !provider || !group || EXCLUDED_EPOCH_GROUPS.has(group)) continue;
+    versions.set(row.model_version, { group, provider, date: isDate(row.date) ? row.date : null });
+  }
+
+  const groups = new Map<string, EpochGroup>();
+  const groupFor = (name: string, provider: ProviderId, date: string | null) => {
+    const slug = slugify(name);
+    const group = groups.get(slug) ?? { name, provider, releaseDate: null, scores: new Map() };
+    if (date && (!group.releaseDate || date < group.releaseDate)) group.releaseDate = date;
+    groups.set(slug, group);
+    return group;
+  };
+  for (const v of versions.values()) groupFor(v.group, v.provider, v.date);
+
+  for (const [file, benchmark] of Object.entries(EPOCH_FILES)) {
+    const text = files.get(file);
+    if (!text) throw new Error(`Epoch download has no ${file}`);
+    for (const row of parseCsv(text)) {
+      const version = row["Model version"] ?? "";
+      const known = versions.get(version);
+      const setting = epochEffort(version);
+      if (!known || !setting) continue;
+      const best = Number.parseFloat(row["Best score (across scorers)"] ?? "");
+      const mean = Number.parseFloat(row.mean_score ?? "");
+      const value = Number.isFinite(best) ? best : mean;
+      if (!Number.isFinite(value) || value < 0 || value > 1) continue;
+      const stderr = Number.parseFloat(row.stderr ?? "");
+      const runOn = isDate((row["Started at"] ?? "").slice(0, 10)) ? row["Started at"]!.slice(0, 10) : null;
+      const score: EpochScore = {
+        benchmark,
+        effort: setting.effort,
+        score: round(value * 100, 1),
+        stderr: Number.isFinite(stderr) ? round(stderr * 100, 1) : null,
+        runOn,
+      };
+      const group = groupFor(known.group, known.provider, known.date);
+      const key = `${benchmark}:${setting.effort ?? "default"}`;
+      const held = group.scores.get(key);
+      // A rerun of the same setting replaces the older run.
+      if (!held || (score.runOn ?? "") > (held.runOn ?? "")) group.scores.set(key, score);
+    }
+  }
+  return groups;
+}
+
+function sortedScores(scores: Iterable<EpochScore>): EpochScore[] {
+  const level = (e: EffortSlug | null) => (e === null ? -1 : EFFORTS.indexOf(e));
+  return [...scores].sort(
+    (a, b) => EPOCH_ORDER.indexOf(a.benchmark) - EPOCH_ORDER.indexOf(b.benchmark) || level(a.effort) - level(b.effort),
+  );
+}
+
+// -------------------------------------------------------------------- LiteLLM
+
+/** LiteLLM's keys: claude-opus-5-5, gpt-6.2-sol, gemini/gemini-4-carbon. */
+function litellmKeys(provider: ProviderId, name: string): string[] {
+  const dashed = name.toLowerCase().trim().replace(/\s+/g, "-");
+  if (provider === "anthropic") return [dashed.replace(/\./g, "-"), dashed];
+  if (provider === "openai") return [dashed, `openai/${dashed}`];
+  return [`gemini/${dashed}`, dashed];
+}
+
+export function readPricing(prices: Record<string, unknown>, provider: ProviderId, name: string): ModelPricing | null {
+  for (const key of litellmKeys(provider, name)) {
+    // biome-ignore lint/suspicious/noExplicitAny: upstream JSON, checked below
+    const entry = prices[key] as any;
+    const input = Number(entry?.input_cost_per_token);
+    const output = Number(entry?.output_cost_per_token);
+    if (!(input > 0) || !(output > 0)) continue;
+    const cached = Number(entry.cache_read_input_token_cost);
+    const maxInput = Number(entry.max_input_tokens);
+    return {
+      inputPer1M: round(input * 1e6, 4),
+      outputPer1M: round(output * 1e6, 4),
+      cachedInputPer1M: cached > 0 ? round(cached * 1e6, 4) : null,
+      maxInputTokens: maxInput > 0 ? maxInput : null,
+    };
+  }
   return null;
 }
 
-export function hasDatasetChanges(
-  existing: ReleaseDataset | null,
-  next: ReleaseDataset,
-): boolean {
+// ------------------------------------------------------------------- Releases
+
+/** A lab's model line: "claude-opus", "gpt-sol", "gemini-flash-lite". */
+export function familyKey(slug: string): string {
+  return slug
+    .split("-")
+    .filter((part) => !/^\d+$/.test(part))
+    .join("-");
+}
+
+/**
+ * Each release is superseded on the day the next release of its line came
+ * out, unless curation says otherwise.
+ */
+export function supersessionDates(
+  releases: readonly Readonly<{ slug: string; provider: ProviderId; releaseDate: string }>[],
+  curation: Readonly<Record<string, Curation>> = CURATION,
+): Map<string, string | null> {
+  const out = new Map<string, string | null>();
+  for (const r of releases) {
+    const curated = curation[r.slug];
+    if (curated && "supersededOn" in curated) {
+      out.set(r.slug, curated.supersededOn ?? null);
+      continue;
+    }
+    const next = releases
+      .filter(
+        (o) => o.provider === r.provider && familyKey(o.slug) === familyKey(r.slug) && o.releaseDate > r.releaseDate,
+      )
+      .map((o) => o.releaseDate)
+      .sort()[0];
+    out.set(r.slug, next ?? null);
+  }
+  return out;
+}
+
+export type RawInputs = Readonly<{
+  tb: readonly TbFile[];
+  epoch: ReadonlyMap<string, string>;
+  prices: Record<string, unknown>;
+}>;
+
+export function buildDataset(raw: RawInputs, snapshotDate: string): ReleaseDataset {
+  const tb = pickTerminalBenchRuns(raw.tb);
+  const epoch = readEpoch(raw.epoch);
+
+  const slugs = new Set<string>([
+    ...tb.keys(),
+    ...[...epoch].filter(([, g]) => g.scores.size > 0).map(([slug]) => slug),
+    ...Object.keys(CURATION).filter((slug) => epoch.has(slug) || CURATION[slug]?.releaseDate),
+  ]);
+
+  type Draft = Omit<ModelRelease, "deprecated" | "supersededOn">;
+  const drafts: Draft[] = [];
+  for (const slug of slugs) {
+    const run = tb.get(slug);
+    const group = epoch.get(slug);
+    const curated = CURATION[slug] ?? {};
+    const provider = run?.provider ?? group?.provider;
+    const name = group?.name ?? run?.name;
+    const dates = [run?.releaseDate, group?.releaseDate].filter(isDate).sort();
+    const releaseDate = curated.releaseDate ?? dates[0];
+    if (!provider || !name || !releaseDate) {
+      console.warn(`! Skipped ${slug}: no ${!provider ? "lab" : !name ? "name" : "release date"}`);
+      continue;
+    }
+    if (releaseDate < MIN_RELEASE_DATE) continue;
+    if (run && group && run.name && slugify(run.name) !== slug) {
+      console.warn(`! ${slug}: Terminal-Bench calls it "${run.name}", Epoch "${group.name}"`);
+    }
+    drafts.push({
+      slug,
+      name,
+      provider,
+      releaseDate,
+      announcementUrl: curated.announcementUrl ?? run?.modelUrl ?? null,
+      pricing: readPricing(raw.prices, provider, name),
+      terminalBench: run?.run ?? null,
+      epoch: sortedScores(group?.scores.values() ?? []),
+    });
+  }
+
+  const superseded = supersessionDates(drafts);
+  const releases: ModelRelease[] = drafts.map((d) => {
+    const supersededOn = superseded.get(d.slug) ?? null;
+    return {
+      slug: d.slug,
+      name: d.name,
+      provider: d.provider,
+      releaseDate: d.releaseDate,
+      deprecated: supersededOn !== null,
+      supersededOn,
+      announcementUrl: d.announcementUrl,
+      pricing: d.pricing,
+      terminalBench: d.terminalBench,
+      epoch: d.epoch,
+    };
+  });
+  releases.sort(
+    (a, b) =>
+      b.releaseDate.localeCompare(a.releaseDate) ||
+      (b.terminalBench?.accuracy ?? -1) - (a.terminalBench?.accuracy ?? -1) ||
+      PROVIDER_ORDER[a.provider] - PROVIDER_ORDER[b.provider] ||
+      a.slug.localeCompare(b.slug),
+  );
+
+  return {
+    schemaVersion: 2,
+    updatedAt: new Date().toISOString().replace(/\.\d{3}Z$/, "Z"),
+    snapshotDate,
+    sources: SOURCES,
+    releases,
+  };
+}
+
+export function hasDatasetChanges(existing: ReleaseDataset | null, next: ReleaseDataset): boolean {
   if (!existing) return true;
   if (existing.schemaVersion !== next.schemaVersion) return true;
   return (
@@ -212,6 +605,59 @@ export function hasDatasetChanges(
     JSON.stringify(existing.sources) !== JSON.stringify(next.sources)
   );
 }
+
+export function validateDataset(ds: ReleaseDataset): void {
+  if (ds.schemaVersion !== 2) throw new Error("Unexpected schemaVersion");
+  if (!Array.isArray(ds.releases) || ds.releases.length < 10) {
+    throw new Error(`Expected at least 10 releases, got ${ds.releases?.length}`);
+  }
+  const ids = new Set(ds.sources.map((s) => s.id));
+  for (const id of ["terminal-bench", "epoch-ai", "litellm"] as const) {
+    if (!ids.has(id)) throw new Error(`Missing source ${id}`);
+  }
+  const withRuns = ds.releases.filter((r) => r.terminalBench).length;
+  if (withRuns < 10) throw new Error(`Expected at least 10 Terminal-Bench runs, got ${withRuns}`);
+  const seen = new Set<string>();
+  ds.releases.forEach((r, i) => {
+    const at = `on ${r.slug}`;
+    if (seen.has(r.slug)) throw new Error(`Duplicate release slug: ${r.slug}`);
+    seen.add(r.slug);
+    if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(r.slug)) throw new Error(`Bad slug ${at}`);
+    if (i > 0 && ds.releases[i - 1]!.releaseDate < r.releaseDate) {
+      throw new Error(`Releases out of chronological order at ${r.slug}`);
+    }
+    if (!TARGET_PROVIDERS.has(r.provider)) throw new Error(`Unexpected provider ${r.provider} ${at}`);
+    if (!isDate(r.releaseDate)) throw new Error(`Bad release date ${at}`);
+    if (r.deprecated !== (r.supersededOn !== null)) throw new Error(`deprecated and supersededOn disagree ${at}`);
+    if (r.supersededOn !== null && !(isDate(r.supersededOn) && r.supersededOn > r.releaseDate)) {
+      throw new Error(`Bad supersededOn ${at}`);
+    }
+    if (r.announcementUrl !== null && !r.announcementUrl.startsWith("https://")) {
+      throw new Error(`Bad announcement URL ${at}`);
+    }
+    if (r.pricing && !(r.pricing.inputPer1M > 0 && r.pricing.outputPer1M > 0)) {
+      throw new Error(`Bad pricing ${at}`);
+    }
+    const run = r.terminalBench;
+    if (run) {
+      if (!(run.accuracy >= 0 && run.accuracy <= 100)) throw new Error(`Bad accuracy ${at}`);
+      if (!(run.trials > 0 && run.successes >= 0 && run.successes <= run.trials)) {
+        throw new Error(`Bad trial counts ${at}`);
+      }
+      if (run.costPerTaskUsd !== null && !(run.costPerTaskUsd > 0)) throw new Error(`Bad cost ${at}`);
+      if (!(run.tokensPerTask.output >= 0 && run.tokensPerTask.total >= run.tokensPerTask.output)) {
+        throw new Error(`Bad token counts ${at}`);
+      }
+      if (!run.sourceUrl.startsWith("https://github.com/")) throw new Error(`Bad run source ${at}`);
+    }
+    for (const s of r.epoch) {
+      if (!EPOCH_ORDER.includes(s.benchmark)) throw new Error(`Unknown Epoch benchmark ${at}`);
+      if (!(s.score >= 0 && s.score <= 100)) throw new Error(`Bad ${s.benchmark} score ${at}`);
+    }
+  });
+}
+
+// ---------------------------------------------------------------------- Input
 
 function loadExistingDataset(dataPath: string): ReleaseDataset | null {
   if (!existsSync(dataPath)) return null;
@@ -222,491 +668,60 @@ function loadExistingDataset(dataPath: string): ReleaseDataset | null {
   }
 }
 
-function parseFlightChunks(html: string): string {
-  const chunks: string[] = [];
-  new HTMLRewriter()
-    .on("script", {
-      element(el) {
-        let body = "";
-        el.onEndTag(() => {
-          const s = body
-            .trim()
-            .replaceAll("&quot;", '"')
-            .replaceAll("&#x27;", "'")
-            .replaceAll("&lt;", "<")
-            .replaceAll("&gt;", ">")
-            .replaceAll("&amp;", "&");
-          if (s.startsWith("self.__next_f.push(") && s.endsWith(")")) {
-            try {
-              const arr = JSON.parse(s.slice("self.__next_f.push(".length, -1));
-              if (Array.isArray(arr) && typeof arr[1] === "string") {
-                chunks.push(arr[1]);
-              }
-            } catch {
-              // ignore non-JSON flight pushes
-            }
-          }
-        });
-        (this as { _onText?: (t: string) => void })._onText = (t: string) => {
-          body += t;
-        };
-      },
-      text(c) {
-        const fn = (this as { _onText?: (t: string) => void })._onText;
-        if (fn) fn(c.text);
-      },
-    })
-    .transform(html);
-  return chunks.join("\n");
+async function fetchOk(url: string, headers: Record<string, string> = {}): Promise<Response> {
+  const res = await fetch(url, { headers: { "User-Agent": USER_AGENT, ...headers } });
+  if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
+  return res;
 }
 
-async function decodeManifest(encrypted: Uint8Array, keyHex: string): Promise<unknown> {
-  const pairs = keyHex.match(/.{2}/gu) ?? [];
-  const keyBytes = new Uint8Array(new ArrayBuffer(pairs.length));
-  pairs.forEach((p, i) => {
-    keyBytes[i] = Number.parseInt(p, 16);
-  });
-  const digest = await crypto.subtle.digest("SHA-256", keyBytes.buffer);
-  const iv = new Uint8Array(digest).slice(0, 12);
-  const key = await crypto.subtle.importKey("raw", keyBytes.buffer, { name: "AES-GCM" }, false, [
-    "decrypt",
-  ]);
-  const copy = new Uint8Array(new ArrayBuffer(encrypted.byteLength));
-  copy.set(encrypted);
-  const decrypted = await crypto.subtle.decrypt(
-    { iv, name: "AES-GCM", tagLength: 128 },
-    key,
-    copy.buffer,
-  );
-  const json = gunzipSync(new Uint8Array(decrypted)).toString("utf8");
-  return JSON.parse(json);
-}
-
-interface RawCodingAgentRow {
-  displayLabel?: string;
-  agentName?: string;
-  model?: {
-    release?: { shortName?: string };
-    effort?: { slug?: string };
-  };
-  modelCreators?: Array<{ slug?: string }>;
-  indexScore?: number | null;
-  mean?: { costUsd?: number | null };
-  evals?: Array<{ datasetIndexName?: string; mean?: { reward?: number | null } }>;
-}
-
-function extractCodingAgentMap(caHtml: string): Map<string, CliHarnessEval> {
-  const map = new Map<string, CliHarnessEval>();
-  const joined = parseFlightChunks(caHtml);
-
-  function visit(v: unknown): void {
-    if (Array.isArray(v)) {
-      if (
-        v.length > 0 &&
-        v[0] &&
-        typeof v[0] === "object" &&
-        "agentName" in v[0] &&
-        "indexScore" in v[0]
-      ) {
-        for (const item of v as RawCodingAgentRow[]) {
-          const creators = (item.modelCreators ?? []).map((c) => c.slug).filter(Boolean);
-          // Single-provider native CLI runs only (exclude composite routers like Devin Fusion)
-          if (creators.length !== 1) continue;
-          const harness = item.agentName ?? "";
-          if (!["Claude Code", "Codex", "Antigravity CLI"].includes(harness)) continue;
-          const relName = item.model?.release?.shortName;
-          const effortSlug = normalizeEffortSlug(item.model?.effort?.slug);
-          if (!relName || typeof item.indexScore !== "number" || !item.mean?.costUsd) continue;
-          const fc =
-            item.evals?.find((e) => e.datasetIndexName?.startsWith("frontiercode"))?.mean?.reward ??
-            0;
-          const sa =
-            item.evals?.find((e) => e.datasetIndexName?.startsWith("swe-atlas"))?.mean?.reward ?? 0;
-          const tb =
-            item.evals?.find((e) => e.datasetIndexName?.startsWith("terminal-bench"))?.mean
-              ?.reward ?? 0;
-          const key = `${relName.toLowerCase()}:${effortSlug}`;
-          map.set(key, {
-            harness,
-            codingAgentScore: round2(item.indexScore * 100),
-            costUsdPerTask: round2(item.mean.costUsd),
-            frontierCode2: round2(fc * 100),
-            sweAtlas: round2(sa * 100),
-            terminalBench4: round2(tb * 100),
-          });
-        }
-      }
-      for (const child of v) visit(child);
-    } else if (v && typeof v === "object") {
-      for (const val of Object.values(v)) visit(val);
-    }
-  }
-
-  for (const line of joined.split("\n")) {
-    const sep = line.indexOf(":");
-    if (sep <= 0) continue;
-    const body = line.slice(sep + 1);
-    if (!body.includes("agentName") || !body.includes("indexScore")) continue;
-    try {
-      visit(JSON.parse(body));
-    } catch {
-      // ignore unparseable flight lines
-    }
-  }
-  return map;
-}
-
-interface ParsedHarborEntry {
-  eval: HarborBenchEval;
-  modelUrl: string | null;
-}
-
-function extractHarborMap(tbRecent: Record<string, string>): Map<string, ParsedHarborEntry> {
-  const map = new Map<string, ParsedHarborEntry>();
-  // Sort keys ascending so newer 4-1-0 regrades overwrite older 4-0-0 entries
-  for (const file of Object.keys(tbRecent).sort()) {
-    try {
-      const sub = JSON.parse(tbRecent[file]!);
-      const agent = sub.metadata?.agent_display?.label as string | undefined;
-      const modelLabel = (sub.metadata?.model_display?.label as string | undefined) ?? "";
-      const modelUrl =
-        typeof sub.metadata?.model_display?.url === "string" &&
-        sub.metadata.model_display.url.startsWith("https://")
-          ? (sub.metadata.model_display.url as string)
-          : null;
-      const effort = (sub.metadata?.reasoning_effort as string | undefined) ?? "max";
-      const acc = sub.metrics?.accuracy as number | undefined;
-      const totalCost = sub.metrics?.total_cost_usd as number | undefined;
-      const nTrials = (sub.metrics?.n_trials as number | undefined) ?? 330;
-      if (!agent || typeof acc !== "number" || typeof totalCost !== "number") continue;
-      if (!["Claude Code", "Codex", "Antigravity CLI"].includes(agent)) continue;
-
-      const normModel = modelLabel
-        .toLowerCase()
-        .replace(/^claude\s+/, "")
-        .trim();
-      map.set(normModel, {
-        eval: {
-          agent,
-          effort,
-          accuracy: round2(acc),
-          totalCostUsd: round2(totalCost),
-          costPerTrialUsd: round2(totalCost / nTrials),
-        },
-        modelUrl,
-      });
-    } catch {
-      // ignore malformed
-    }
-  }
-  return map;
-}
-
-async function loadUpstreamRaw(fromRawDir: string | null): Promise<{
-  models: Array<Record<string, any>>;
-  caHtml: string;
-  tbRecent: Record<string, string>;
-}> {
-  if (fromRawDir) {
-    const parsed = JSON.parse(
-      readFileSync(path.join(fromRawDir, "aa-intelligence-models.json"), "utf8"),
+async function fetchInputs(): Promise<RawInputs> {
+  const github: Record<string, string> = { Accept: "application/vnd.github+json" };
+  const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
+  if (token) github.Authorization = `Bearer ${token}`;
+  const listing = (await (await fetchOk(TB_LISTING_URL, github)).json()) as Array<{
+    name: string;
+    download_url: string | null;
+  }>;
+  const wanted = listing.filter((i) => i.download_url && i.name.endsWith(".json"));
+  const tb: TbFile[] = [];
+  // A few at a time: the files are small and raw.githubusercontent.com is shared.
+  for (let i = 0; i < wanted.length; i += 8) {
+    const batch = await Promise.all(
+      wanted.slice(i, i + 8).map(async (item) => ({
+        name: item.name,
+        text: await (await fetchOk(item.download_url!)).text(),
+      })),
     );
-    const caHtml = readFileSync(path.join(fromRawDir, "aa-coding-agents.html"), "utf8");
-    const tbRecent = JSON.parse(
-      readFileSync(path.join(fromRawDir, "terminal-bench-recent.json"), "utf8"),
-    );
-    return { models: parsed.models, caHtml, tbRecent };
+    tb.push(...batch);
   }
-
-  // Live fetch from public endpoints
-  const modelsRes = await fetch("https://artificialanalysis.ai/models", {
-    headers: { "User-Agent": USER_AGENT },
-  });
-  if (!modelsRes.ok) throw new Error(`AA models HTTP ${modelsRes.status}`);
-  const modelsHtml = await modelsRes.text();
-  const joined = parseFlightChunks(modelsHtml);
-  const manifests = [
-    ...joined.matchAll(
-      /"key":"([a-f0-9]{64})","path":"(\/data\/[a-f0-9]+\.txt)"|"path":"(\/data\/[a-f0-9]+\.txt)","key":"([a-f0-9]{64})"/gu,
-    ),
-  ].map((m) => ({ key: (m[1] || m[4])!, path: (m[2] || m[3])! }));
-
-  let languageModels: Array<Record<string, any>> | null = null;
-  for (const mf of manifests) {
-    const r = await fetch(`https://artificialanalysis.ai${mf.path}`, {
-      headers: { "User-Agent": USER_AGENT },
-    });
-    if (!r.ok) continue;
-    const decoded = (await decodeManifest(new Uint8Array(await r.arrayBuffer()), mf.key)) as Record<
-      string,
-      any
-    >;
-    if (decoded && !Array.isArray(decoded) && Array.isArray(decoded.models)) {
-      languageModels = decoded.models;
-      break;
-    }
-  }
-  if (!languageModels) {
-    throw new Error("Could not locate Artificial Analysis language-model manifest.");
-  }
-
-  const caRes = await fetch("https://artificialanalysis.ai/agents/coding-agents/", {
-    headers: { "User-Agent": USER_AGENT },
-  });
-  if (!caRes.ok) throw new Error(`AA coding agents HTTP ${caRes.status}`);
-  const caHtml = await caRes.text();
-
-  const ghHeaders: Record<string, string> = {
-    "User-Agent": USER_AGENT,
-    Accept: "application/vnd.github+json",
-  };
-  const ghToken = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
-  if (ghToken) {
-    ghHeaders.Authorization = `Bearer ${ghToken}`;
-  }
-
-  const tbDirRes = await fetch(
-    "https://api.github.com/repos/harbor-framework/terminal-bench/contents/leaderboard/submissions",
-    { headers: ghHeaders },
-  );
-  const tbRecent: Record<string, string> = {};
-  if (tbDirRes.ok) {
-    const items = (await tbDirRes.json()) as Array<{ name: string; download_url: string | null }>;
-    const candidates = items.filter(
-      (i) => i.download_url && i.name.endsWith(".json") && HARBOR_PROVIDER_RE.test(i.name),
-    );
-    await Promise.all(
-      candidates.map(async (item) => {
-        const subRes = await fetch(item.download_url!, { headers: { "User-Agent": USER_AGENT } });
-        if (subRes.ok) {
-          tbRecent[item.name] = await subRes.text();
-        }
-      }),
-    );
-  }
-
-  return { models: languageModels, caHtml, tbRecent };
+  const zip = new Uint8Array(await (await fetchOk(EPOCH_ZIP_URL)).arrayBuffer());
+  const prices = (await (await fetchOk(LITELLM_URL)).json()) as Record<string, unknown>;
+  return { tb, epoch: readZipEntries(zip, epochFileNames()), prices };
 }
 
-export function buildDataset(
-  models: Array<Record<string, any>>,
-  caHtml: string,
-  tbRecent: Record<string, string>,
-  snapshotDate: string,
-  existingDataset: ReleaseDataset | null = null,
-): ReleaseDataset {
-  const cliMap = extractCodingAgentMap(caHtml);
-  const harborMap = extractHarborMap(tbRecent);
-  const existingBySlug = new Map(
-    (existingDataset?.releases ?? []).map((r) => [r.slug, r]),
-  );
-
-  const byRelease = new Map<string, Array<Record<string, any>>>();
-  for (const m of models) {
-    const creatorSlug = m.creator?.slug as string | undefined;
-    if (!creatorSlug || !TARGET_PROVIDERS.has(creatorSlug as ProviderId)) continue;
-    if (typeof m.releaseDate !== "string" || m.releaseDate < MIN_RELEASE_DATE) continue;
-    if (m.intelligenceIndexIsEstimated === true) continue;
-    if (
-      typeof m.intelligenceIndex !== "number" ||
-      typeof m.terminalBench40 !== "number" ||
-      typeof m.frontierCode20 !== "number"
-    ) {
-      continue;
-    }
-    const totalCost = m.intelligenceIndexCostPerTask?.cost?.total;
-    const outTokens = m.intelligenceIndexOutputTokensPerTask?.output;
-    if (typeof totalCost !== "number" || totalCost <= 0) continue;
-    if (typeof outTokens !== "number" || outTokens <= 0) continue;
-
-    const relSlug = (m.release?.slug as string | undefined) ?? (m.slug as string);
-    // Skip niche vertical fine-tunes like astra-for-law
-    if (relSlug.includes("for-law")) continue;
-
-    const bucket = byRelease.get(relSlug) ?? [];
-    bucket.push(m);
-    byRelease.set(relSlug, bucket);
-  }
-
-  const releases: ModelRelease[] = [];
-
-  for (const [relSlug, rawConfigs] of byRelease.entries()) {
-    const sample = rawConfigs[0]!;
-    const provider = sample.creator.slug as ProviderId;
-    const relName = (sample.release?.name as string | undefined) ?? (sample.name as string);
-    const defaultEffortSlug = normalizeEffortSlug(sample.release?.defaultEffort?.slug ?? "high");
-
-    const seenEfforts = new Map<EffortSlug, EffortPoint>();
-    for (const cfg of rawConfigs) {
-      const effortSlug = normalizeEffortSlug(cfg.effort?.slug);
-      const meta = EFFORT_META[effortSlug];
-      const tb4 = cfg.terminalBench40 * 100;
-      const fc2 = cfg.frontierCode20 * 100;
-      const coding = (tb4 + fc2) / 2;
-      const costObj = cfg.intelligenceIndexCostPerTask.cost;
-      const tokObj = cfg.intelligenceIndexOutputTokensPerTask;
-      const cliKey = `${relName.toLowerCase()}:${effortSlug}`;
-      const cliEval = cliMap.get(cliKey) ?? null;
-
-      const point: EffortPoint = {
-        id: cfg.id as string,
-        slug: cfg.slug as string,
-        effortSlug,
-        effortLabel: meta.label,
-        shortTag: meta.shortTag,
-        effortLevel: meta.order,
-        isDefaultEffort: effortSlug === defaultEffortSlug,
-        scores: {
-          coding: round2(coding),
-          terminalBench4: round2(tb4),
-          frontierCode2: round2(fc2),
-          intelligence: round2(cfg.intelligenceIndex as number),
-        },
-        costUsdPerTask: {
-          total: round3(costObj.total as number),
-          input: round3(costObj.input as number),
-          output: round3(costObj.output as number),
-          reasoning: round3(costObj.reasoning as number),
-          cacheRead: round3(costObj.cacheRead as number),
-        },
-        tokensPerTask: {
-          total: Math.round(tokObj.output as number),
-          reasoning: Math.round(tokObj.reasoning as number),
-          answer: Math.round(tokObj.answer as number),
-        },
-        speedTokPerSec:
-          typeof cfg.headline?.outputSpeed === "number"
-            ? round2(cfg.headline.outputSpeed)
-            : null,
-        cliEval,
-      };
-
-      // Deduplicate if multiple configs share effortSlug (prefer higher score)
-      const prev = seenEfforts.get(effortSlug);
-      if (!prev || point.scores.coding > prev.scores.coding) {
-        seenEfforts.set(effortSlug, point);
-      }
-    }
-
-    const efforts = [...seenEfforts.values()].sort((a, b) => a.effortLevel - b.effortLevel);
-    if (!efforts.some((e) => e.isDefaultEffort) && efforts.length > 0) {
-      const last = efforts[efforts.length - 1]!;
-      efforts[efforts.length - 1] = { ...last, isDefaultEffort: true };
-    }
-
-    const curation = RELEASE_CURATION[relSlug];
-    const existingRel = existingBySlug.get(relSlug);
-    const normHarborKey = relName.toLowerCase().replace(/^claude\s+/, "").trim();
-    const harborEntry =
-      harborMap.get(normHarborKey) ?? harborMap.get(relName.toLowerCase()) ?? null;
-    const deprecated = Boolean(sample.deprecated);
-
-    releases.push({
-      slug: relSlug,
-      name: relName,
-      provider,
-      releaseDate: sample.releaseDate as string,
-      deprecated,
-      supersededOn: resolveSupersededOn({
-        deprecated,
-        curatedSupersededOn: curation?.supersededOn,
-        existingSupersededOn: existingRel?.supersededOn,
-        snapshotDate,
-      }),
-      pricing: {
-        inputPer1M: sample.price1mInputTokens as number,
-        outputPer1M: sample.price1mOutputTokens as number,
-        cachedInputPer1M:
-          typeof sample.cacheHitPrice === "number" ? sample.cacheHitPrice : null,
-        contextWindowTokens: (sample.contextWindowTokens as number) ?? 200000,
-      },
-      summary:
-        curation?.summary ??
-        existingRel?.summary ??
-        `${relName} evaluated across ${efforts.length} effort configuration${efforts.length === 1 ? "" : "s"}.`,
-      announcementUrl:
-        curation?.announcementUrl ??
-        existingRel?.announcementUrl ??
-        harborEntry?.modelUrl ??
-        `https://artificialanalysis.ai/models/${sample.slug}`,
-      benchmarkUrl: `https://artificialanalysis.ai/models/${sample.slug}`,
-      harborEval: harborEntry?.eval ?? null,
-      efforts,
-    });
-  }
-
-  const providerOrder: Record<ProviderId, number> = { google: 0, openai: 1, anthropic: 2 };
-  releases.sort((a, b) => {
-    const d = b.releaseDate.localeCompare(a.releaseDate);
-    if (d !== 0) return d;
-    const maxA = Math.max(...a.efforts.map((e) => e.scores.coding));
-    const maxB = Math.max(...b.efforts.map((e) => e.scores.coding));
-    if (Math.abs(maxB - maxA) > 0.01) return maxB - maxA;
-    return providerOrder[a.provider] - providerOrder[b.provider];
-  });
-
-  return {
-    schemaVersion: 1,
-    updatedAt: new Date().toISOString().replace(/\.\d{3}Z$/, "Z"),
-    snapshotDate,
-    sources: [
-      {
-        id: "artificial-analysis-v5",
-        name: "Artificial Analysis v5.0.1",
-        url: "https://artificialanalysis.ai/models",
-        note: "Standardized multi-effort evaluations for FrontierCode 2.0, Terminal-Bench 4.0, Intelligence Index v5.0.1, per-task USD cost, and output tokens.",
-      },
-      {
-        id: "aa-coding-agents",
-        name: "Artificial Analysis Coding Agents",
-        url: "https://artificialanalysis.ai/agents/coding-agents/",
-        note: "Native CLI harness evaluations across Claude Code, OpenAI Codex, and Google Antigravity CLI.",
-      },
-      {
-        id: "harbor-terminal-bench",
-        name: "Harbor Terminal-Bench",
-        url: "https://tbench.ai",
-        note: "Official 330-trial autonomous terminal engineering submissions.",
-      },
-    ],
-    releases,
-  };
+function epochFileNames(): Set<string> {
+  return new Set(["model_metadata.csv", ...Object.keys(EPOCH_FILES)]);
 }
 
-export function validateDataset(ds: ReleaseDataset): void {
-  if (ds.schemaVersion !== 1) throw new Error("Unexpected schemaVersion");
-  if (!Array.isArray(ds.releases) || ds.releases.length < 10) {
-    throw new Error(`Expected at least 10 releases, got ${ds.releases?.length}`);
-  }
-  const seenSlugs = new Set<string>();
-  for (let i = 0; i < ds.releases.length; i++) {
-    const r = ds.releases[i]!;
-    if (seenSlugs.has(r.slug)) throw new Error(`Duplicate release slug: ${r.slug}`);
-    seenSlugs.add(r.slug);
-    if (i > 0 && ds.releases[i - 1]!.releaseDate < r.releaseDate) {
-      throw new Error(`Releases out of chronological order at ${r.slug}`);
-    }
-    if (!TARGET_PROVIDERS.has(r.provider)) {
-      throw new Error(`Unexpected provider ${r.provider} on ${r.slug}`);
-    }
-    if (r.efforts.length === 0) {
-      throw new Error(`Release ${r.slug} has 0 effort configurations`);
-    }
-    for (let j = 0; j < r.efforts.length; j++) {
-      const e = r.efforts[j]!;
-      if (j > 0 && r.efforts[j - 1]!.effortLevel >= e.effortLevel) {
-        throw new Error(`Efforts not strictly ordered on ${r.slug}`);
-      }
-      for (const [k, v] of Object.entries(e.scores)) {
-        if (typeof v !== "number" || !Number.isFinite(v) || v < 0 || v > 100) {
-          throw new Error(`Invalid score ${k}=${v} on ${r.slug}:${e.effortSlug}`);
-        }
-      }
-      if (e.costUsdPerTask.total <= 0 || e.tokensPerTask.total <= 0) {
-        throw new Error(`Non-positive cost or tokens on ${r.slug}:${e.effortSlug}`);
-      }
-    }
-  }
+function readInputs(dir: string): RawInputs {
+  const tbDir = path.join(dir, "tb");
+  const tb = readdirSync(tbDir)
+    .filter((name) => name.endsWith(".json"))
+    .sort()
+    .map((name) => ({ name, text: readFileSync(path.join(tbDir, name), "utf8") }));
+  const zip = new Uint8Array(readFileSync(path.join(dir, "epoch", "benchmark_data.zip")));
+  const prices = JSON.parse(readFileSync(path.join(dir, "litellm", "prices.json"), "utf8")) as Record<
+    string,
+    unknown
+  >;
+  return { tb, epoch: readZipEntries(zip, epochFileNames()), prices };
+}
+
+function describe(ds: ReleaseDataset): string {
+  const runs = ds.releases.filter((r) => r.terminalBench).length;
+  const scores = ds.releases.reduce((n, r) => n + r.epoch.length, 0);
+  const priced = ds.releases.filter((r) => r.pricing).length;
+  return `${ds.releases.length} releases, ${runs} Terminal-Bench runs, ${scores} Epoch scores, ${priced} priced`;
 }
 
 if (import.meta.main) {
@@ -714,9 +729,8 @@ if (import.meta.main) {
   if (args.includes("--check")) {
     const existing = JSON.parse(readFileSync(DATA_PATH, "utf8")) as ReleaseDataset;
     validateDataset(existing);
-    const totalPoints = existing.releases.reduce((s, r) => s + r.efforts.length, 0);
     console.log(
-      `✓ Checked data/releases.json: ${existing.releases.length} releases, ${totalPoints} effort points, latest ${existing.releases[0]?.name} (${existing.releases[0]?.releaseDate}).`,
+      `✓ Checked data/releases.json: ${describe(existing)}; latest ${existing.releases[0]?.name} (${existing.releases[0]?.releaseDate}).`,
     );
     process.exit(0);
   }
@@ -727,21 +741,16 @@ if (import.meta.main) {
   const today = new Date().toISOString().slice(0, 10);
 
   const existing = loadExistingDataset(DATA_PATH);
-  const raw = await loadUpstreamRaw(fromRawDir);
-  const dataset = buildDataset(raw.models, raw.caHtml, raw.tbRecent, today, existing);
+  const raw = fromRawDir ? readInputs(fromRawDir) : await fetchInputs();
+  const dataset = buildDataset(raw, today);
   validateDataset(dataset);
 
-  const totalPoints = dataset.releases.reduce((s, r) => s + r.efforts.length, 0);
   if (!forceWrite && !hasDatasetChanges(existing, dataset)) {
-    console.log(
-      `✓ Checked upstream (${dataset.releases.length} releases, ${totalPoints} effort configurations): no release or benchmark updates.`,
-    );
+    console.log(`✓ Checked upstream (${describe(dataset)}): no release or benchmark updates.`);
     process.exit(0);
   }
 
   mkdirSync(path.dirname(DATA_PATH), { recursive: true });
   writeFileSync(DATA_PATH, `${JSON.stringify(dataset, null, 2)}\n`);
-  console.log(
-    `✓ Wrote data/releases.json: ${dataset.releases.length} releases, ${totalPoints} effort configurations (snapshot ${dataset.snapshotDate}).`,
-  );
+  console.log(`✓ Wrote data/releases.json: ${describe(dataset)} (snapshot ${dataset.snapshotDate}).`);
 }

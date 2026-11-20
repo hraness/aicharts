@@ -521,13 +521,6 @@ a:focus-visible {
   --peer-color: var(--brand-google);
 }
 
-.peer-curve {
-  stroke: var(--peer-color);
-  stroke-width: 1.25;
-  stroke-opacity: 0.25;
-  transition: stroke-opacity 120ms ease, stroke-width 120ms ease;
-}
-
 .peer-dot {
   fill: var(--peer-color);
   fill-opacity: 0.36;
@@ -540,16 +533,11 @@ a:focus-visible {
   stroke-width: 1;
 }
 
-.peer-series.is-hovered .peer-curve {
-  stroke-opacity: 0.88;
-  stroke-width: 2;
-}
-
 .peer-series.is-hovered .peer-dot {
   fill-opacity: 1;
 }
 
-/* Hero Selected Curve */
+/* Selected model */
 .hero-series--anthropic {
   --hero-color: var(--brand-anthropic);
 }
@@ -558,21 +546,6 @@ a:focus-visible {
 }
 .hero-series--google {
   --hero-color: var(--brand-google);
-}
-
-.hero-curve-glow {
-  stroke: var(--hero-color);
-  stroke-width: 7;
-  stroke-opacity: 0.14;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.hero-curve {
-  stroke: var(--hero-color);
-  stroke-width: 2.5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 .hero-dot-active-halo {
@@ -596,7 +569,7 @@ a:focus-visible {
   stroke-width: 1.75;
 }
 
-.hero-effort-tag {
+.hero-tag {
   font-family: var(--font-mono);
   font-size: 9.5px;
   font-weight: 600;
@@ -608,7 +581,7 @@ a:focus-visible {
   pointer-events: none;
 }
 
-.hero-effort-tag.is-active {
+.hero-tag.is-active {
   fill: var(--hero-color);
   font-weight: 700;
 }
@@ -640,7 +613,7 @@ a:focus-visible {
   text-overflow: ellipsis;
 }
 
-.chart-tooltip__effort {
+.chart-tooltip__agent {
   font-family: var(--font-mono);
   font-size: 10px;
   color: var(--fg-muted);
@@ -748,7 +721,7 @@ a:focus-visible {
   padding-left: 4px;
 }
 
-/* Effort Table */
+/* Score table: the model's benchmarks, one row each */
 .effort-table {
   display: flex;
   flex-direction: column;
@@ -833,6 +806,29 @@ a:focus-visible {
 .effort-row__cell {
   color: var(--fg-muted);
   font-size: 11.5px;
+}
+
+.measure-table .effort-table__head,
+.measure-table .effort-row {
+  grid-template-columns: minmax(0, 1.4fr) minmax(52px, 0.6fr) minmax(0, 1.3fr);
+}
+
+.measure-table .effort-row:hover {
+  background: none;
+}
+
+.measure-facts {
+  margin: 0;
+  padding: 0 2px;
+  font-size: 11px;
+  color: var(--fg-muted);
+}
+
+.chart-controls__title {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--fg);
 }
 
 /* Release Feed */
@@ -1123,7 +1119,6 @@ a:focus-visible {
   .topbar__actions { flex-wrap: wrap; }
   .effort-table__head,
   .effort-row {
-    grid-template-columns: minmax(66px, 1.1fr) auto auto auto;
     gap: 6px;
     padding-inline: 8px;
   }
@@ -1149,7 +1144,7 @@ a:focus-visible {
   border: 0;
 }
 
-/* Frontier stars: one per effort setting on the live cost frontier */
+/* Frontier star: the run is on the cost frontier and clears the 75% bar */
 .frontier-stars {
   display: inline-flex;
   align-items: center;
@@ -1241,12 +1236,6 @@ a:focus-visible {
   .aicharts-footer a {
     color: CanvasText;
   }
-}
-
-/* Second emphasized curve on comparison charts */
-.hero-series--compare .hero-curve {
-  stroke-dasharray: 6 4;
-  stroke-width: 2.25;
 }
 
 .hero-series--compare .hero-dot {

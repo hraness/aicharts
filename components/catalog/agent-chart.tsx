@@ -1,30 +1,21 @@
 "use client";
 import { useEffect, useState } from "react";
 import { ParetoChart } from "../pareto-chart";
+import { chartReadout } from "@/lib/format";
 import type { ChartScale } from "@/lib/pareto";
-import { formatScore, formatUsd } from "@/lib/format";
-import {
-  AGENT_BENCHMARKS,
-  PROVIDERS,
-  type BenchmarkId,
-  type EffortSlug,
-  type ModelRelease,
-  type ProviderId,
-} from "@/lib/types";
+import type { BudgetAxis, ModelRelease, ProviderId } from "@/lib/types";
 
 export type AgentLegendItem = Readonly<{
   provider: ProviderId;
   label: string;
-  /** Solid and dashed lines are the two emphasized models; dots are the rest. */
-  mark: "solid" | "dashed" | "dot";
+  /** The selected run is the filled dot, its rival the hollow one; the rest are small dots. */
+  mark: "hero" | "hollow" | "dot";
 }>;
 
 /**
- * Runs inside each lab's coding agent on the cost chart. `releases` carry
- * their agent runs in the chart's score slots (chartRelease in lib/agents.ts),
- * so this only relabels the benchmarks. Choosing a point on another model
- * opens that model's page at its agent section. Without JavaScript the
- * Coding Agent Index chart still renders and the control hides.
+ * Terminal-Bench runs inside the coding agents being compared, one dot per
+ * model. Choosing another dot opens that model's page. Without JavaScript the
+ * cost chart still renders and the control hides.
  */
 export function AgentChart({
   releases,
@@ -46,28 +37,22 @@ export function AgentChart({
   useEffect(() => setInteractive(true), []);
   const selected = releases.find((r) => r.slug === selectedSlug)!;
   const compare = compareSlug ? releases.find((r) => r.slug === compareSlug) : undefined;
-  const [benchmarkId, setBenchmarkId] = useState<BenchmarkId>("coding");
-  const top = selected.efforts.reduce((a, b) => (b.scores.coding > a.scores.coding ? b : a));
-  const [effortSlug, setEffortSlug] = useState<EffortSlug>(top.effortSlug);
-  const benchmark = AGENT_BENCHMARKS.find((b) => b.id === benchmarkId) ?? AGENT_BENCHMARKS[0]!;
-  const effort = selected.efforts.find((e) => e.effortSlug === effortSlug) ?? top;
-  const agent = PROVIDERS[selected.provider].harness;
+  const [axis, setAxis] = useState<BudgetAxis>("cost");
+  const agents = [...new Set(releases.flatMap((r) => (r.terminalBench ? [r.terminalBench.agent] : [])))];
 
   return (
     <figure className="catalog-chart agent-chart">
       <div className="chart-controls">
         <label>
-          Benchmark
+          Budget
           <select
             disabled={!interactive}
-            value={benchmarkId}
-            onChange={(e) => setBenchmarkId(e.target.value as BenchmarkId)}
+            aria-label="Budget"
+            value={axis}
+            onChange={(e) => setAxis(e.target.value === "tokens" ? "tokens" : "cost")}
           >
-            {AGENT_BENCHMARKS.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.label}
-              </option>
-            ))}
+            <option value="cost">Cost per task</option>
+            <option value="tokens">Output tokens</option>
           </select>
         </label>
       </div>
@@ -75,12 +60,9 @@ export function AgentChart({
         {legend.map((item) => (
           <span
             key={item.label}
-            className={`chart-legend__item chart-legend__item--${item.provider}${item.mark === "dashed" ? " chart-legend__item--dashed" : ""}`}
+            className={`chart-legend__item chart-legend__item--${item.provider}${item.mark === "dot" ? "" : ` chart-legend__item--${item.mark}`}`}
           >
-            <span
-              className={item.mark === "dot" ? "chart-legend__dot" : "chart-legend__line"}
-              aria-hidden="true"
-            />
+            <span className="chart-legend__dot" aria-hidden="true" />
             {item.label}
           </span>
         ))}
@@ -90,21 +72,12 @@ export function AgentChart({
         scale={scale}
         selectedRelease={selected}
         compareRelease={compare ?? null}
-        activeEffortSlug={effort.effortSlug}
-        benchmark={benchmark}
-        axis="cost"
-        showTokens={false}
-        ariaLabel={`${benchmark.fullLabel} against cost per task for every model run inside ${[
-          ...new Set(releases.map((r) => PROVIDERS[r.provider].harness)),
-        ].join(", ")}`}
-        onSelectEffort={setEffortSlug}
-        onSelectRelease={(slug) => window.location.assign(`/models/${slug}#agent`)}
+        axis={axis}
+        ariaLabel={`Terminal-Bench score against ${axis === "cost" ? "cost" : "output tokens"} per task for every current model run in ${agents.join(", ")}`}
+        onSelectRelease={(slug) => window.location.assign(`/models/${slug}`)}
       />
-      <output className="chart-readout">
-        {selected.name} in {agent} · {effort.effortLabel} effort ·{" "}
-        {formatScore(effort.scores[benchmark.id], benchmark.unit)} {benchmark.label} ·{" "}
-        {formatUsd(effort.costUsdPerTask.total)} per task
-      </output>
+      <output className="chart-readout">{chartReadout(selected, axis)}</output>
+      {compare && <output className="chart-readout">{chartReadout(compare, axis)}</output>}
       <figcaption>{caption}</figcaption>
     </figure>
   );

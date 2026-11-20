@@ -1,16 +1,17 @@
 import type {
-  BenchmarkId,
   BudgetAxis,
   ContextMode,
-  EffortPoint,
   ModelRelease,
   ProviderId,
+  TerminalBenchRun,
 } from "./types";
 
+/** One release's Terminal-Bench run on the chart. */
 export type PlottedPoint = Readonly<{
+  /** The release slug: each release has one point. */
   key: string;
   release: ModelRelease;
-  effort: EffortPoint;
+  run: TerminalBenchRun;
   provider: ProviderId;
   budget: number;
   score: number;
@@ -29,12 +30,13 @@ export type FrontierComparison =
       budgetRatio: number;
     }>;
 
-export function getPointBudget(effort: EffortPoint, axis: BudgetAxis): number {
-  return axis === "cost" ? effort.costUsdPerTask.total : effort.tokensPerTask.total;
-}
-
-export function getPointScore(effort: EffortPoint, benchmark: BenchmarkId): number {
-  return effort.scores[benchmark];
+/**
+ * What a run spent per task: dollars on the cost axis, output tokens on the
+ * tokens axis. Null when the run did not report it.
+ */
+export function getRunBudget(run: TerminalBenchRun, axis: BudgetAxis): number | null {
+  const value = axis === "cost" ? run.costPerTaskUsd : run.tokensPerTask.output;
+  return value !== null && Number.isFinite(value) && value > 0 ? value : null;
 }
 
 /** The lowest and highest budget and score a chart has to show. */
@@ -44,35 +46,22 @@ export type ChartBounds = Readonly<{
 }>;
 
 /**
- * Chart axes for each budget axis and benchmark, from a fixed set of
- * releases. A chart given a scale keeps its axes while the selection, the
- * cohort or the lab filter changes, so models compare by position.
+ * Chart axes for each budget axis, from a fixed set of releases. A chart
+ * given a scale keeps its axes while the selection, the cohort or the lab
+ * filter changes, so models compare by position.
  */
-export type ChartScale = Readonly<
-  Record<BudgetAxis, Readonly<Partial<Record<BenchmarkId, ChartBounds>>>>
->;
-
-const BENCHMARK_IDS = Object.keys({
-  coding: 0,
-  terminalBench4: 0,
-  frontierCode2: 0,
-  intelligence: 0,
-} satisfies Record<BenchmarkId, 0>) as BenchmarkId[];
+export type ChartScale = Readonly<Record<BudgetAxis, ChartBounds | null>>;
 
 export function getChartScale(releases: readonly ModelRelease[]): ChartScale {
-  const bounds = (axis: BudgetAxis) => {
-    const byBenchmark: Partial<Record<BenchmarkId, ChartBounds>> = {};
-    for (const id of BENCHMARK_IDS) {
-      const points = buildPlottedPoints(releases, id, axis);
-      if (points.length === 0) continue;
-      const budgets = points.map((p) => p.budget);
-      const scores = points.map((p) => p.score);
-      byBenchmark[id] = {
-        budget: [Math.min(...budgets), Math.max(...budgets)],
-        score: [Math.min(...scores), Math.max(...scores)],
-      };
-    }
-    return byBenchmark;
+  const bounds = (axis: BudgetAxis): ChartBounds | null => {
+    const points = buildPlottedPoints(releases, axis);
+    if (points.length === 0) return null;
+    const budgets = points.map((p) => p.budget);
+    const scores = points.map((p) => p.score);
+    return {
+      budget: [Math.min(...budgets), Math.max(...budgets)],
+      score: [Math.min(...scores), Math.max(...scores)],
+    };
   };
   return { cost: bounds("cost"), tokens: bounds("tokens") };
 }
@@ -104,27 +93,25 @@ export function getContextualReleases(
   });
 }
 
+/** One point per release with a Terminal-Bench run that reported the budget. */
 export function buildPlottedPoints(
   releases: readonly ModelRelease[],
-  benchmark: BenchmarkId,
   axis: BudgetAxis,
 ): PlottedPoint[] {
   const points: PlottedPoint[] = [];
   for (const release of releases) {
-    for (const effort of release.efforts) {
-      const budget = getPointBudget(effort, axis);
-      const score = getPointScore(effort, benchmark);
-      if (Number.isFinite(budget) && budget > 0 && Number.isFinite(score)) {
-        points.push({
-          key: `${release.slug}:${effort.effortSlug}`,
-          release,
-          effort,
-          provider: release.provider,
-          budget,
-          score,
-        });
-      }
-    }
+    const run = release.terminalBench;
+    if (!run || !Number.isFinite(run.accuracy)) continue;
+    const budget = getRunBudget(run, axis);
+    if (budget === null) continue;
+    points.push({
+      key: release.slug,
+      release,
+      run,
+      provider: release.provider,
+      budget,
+      score: run.accuracy,
+    });
   }
   return points;
 }
@@ -216,56 +203,32 @@ export function getQualifiedFrontierKeys(
   return keys;
 }
 
-
-/**
- * Groups the qualified frontier of `field` by release: each release maps to
- * the effort settings (lowest effort first) that sit on that frontier. The
- * count drives the frontier stars, one star per effort setting.
- */
-export function getFrontierEffortsByRelease(
+/** Slugs of the releases on the qualified frontier of `field`: the starred ones. */
+export function getFrontierReleases(
   field: readonly ModelRelease[],
-  benchmark: BenchmarkId,
   axis: BudgetAxis,
-): Map<string, EffortPoint[]> {
-  const frontier = computeParetoFrontier(buildPlottedPoints(field, benchmark, axis));
-  const qualified = getQualifiedFrontierKeys(frontier);
-  const byRelease = new Map<string, EffortPoint[]>();
-  for (const point of frontier) {
-    if (!qualified.has(point.key)) continue;
-    const efforts = byRelease.get(point.release.slug) ?? [];
-    efforts.push(point.effort);
-    byRelease.set(point.release.slug, efforts);
-  }
-  for (const efforts of byRelease.values()) {
-    efforts.sort((a, b) => a.effortLevel - b.effortLevel);
-  }
-  return byRelease;
+): Set<string> {
+  return getQualifiedFrontierKeys(computeParetoFrontier(buildPlottedPoints(field, axis)));
 }
 
 /**
- * Each release's stars as its own effort table shows them when it is selected:
- * its settings on the qualified frontier of the field the chart plots for it.
- * In release mode that field is what existed on its release day, so a model
- * keeps the stars it launched with; in live mode it is today's models. Both
- * respect the lab filter, as the chart does.
+ * Each release's star as the chart shows it when that release is selected:
+ * whether it sits on the qualified frontier of the field the chart plots for
+ * it. In release mode that field is what existed on its release day, so a
+ * model keeps the star it launched with; in live mode it is today's models.
+ * Both respect the lab filter, as the chart does.
  */
-export function getContextualFrontierEfforts(
+export function getContextualFrontierReleases(
   allReleases: readonly ModelRelease[],
-  benchmark: BenchmarkId,
   axis: BudgetAxis,
   mode: ContextMode,
   enabledProviders?: ReadonlySet<ProviderId>,
-): Map<string, EffortPoint[]> {
-  const byRelease = new Map<string, EffortPoint[]>();
+): Set<string> {
+  const starred = new Set<string>();
   for (const release of allReleases) {
+    if (!release.terminalBench) continue;
     const field = getContextualReleases(allReleases, release, mode, enabledProviders);
-    const frontier = computeParetoFrontier(buildPlottedPoints(field, benchmark, axis));
-    const qualified = getQualifiedFrontierKeys(frontier);
-    const efforts = frontier
-      .filter((p) => p.release.slug === release.slug && qualified.has(p.key))
-      .map((p) => p.effort)
-      .sort((a, b) => a.effortLevel - b.effortLevel);
-    if (efforts.length > 0) byRelease.set(release.slug, efforts);
+    if (getFrontierReleases(field, axis).has(release.slug)) starred.add(release.slug);
   }
-  return byRelease;
+  return starred;
 }

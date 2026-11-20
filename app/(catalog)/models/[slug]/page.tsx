@@ -3,25 +3,23 @@ import { notFound } from "next/navigation";
 import { ProviderLogo } from "@/components/brand-icon";
 import { Breadcrumbs } from "@/components/catalog/breadcrumbs";
 import { CatalogChart } from "@/components/catalog/catalog-chart";
-import { EffortTable } from "@/components/catalog/effort-table";
 import { PairList } from "@/components/catalog/pair-list";
 import { Questions } from "@/components/catalog/questions";
 import { Cite, Sources, type Source } from "@/components/catalog/sources";
-import { FrontierStars } from "@/components/frontier-stars";
+import { FrontierStar } from "@/components/frontier-stars";
 import { pageMetadata } from "@/journal/content";
-import {
-  bestEffort,
-  catalog,
-  cheapestEffort,
-  defaultEffort,
-  EFFORT_NAMES,
-  effortName,
-  effortsByLevel,
-} from "@/lib/catalog";
 import { agentPairs } from "@/lib/agents";
-import { modelCopy } from "@/lib/copy";
-import { formatContext, formatFullDate, formatPrice, formatScore, formatUsd } from "@/lib/format";
-import { BENCHMARKS, PROVIDERS, type EffortPoint, type EffortSlug } from "@/lib/types";
+import { bestEpoch, catalog, effortName, isComparable } from "@/lib/catalog";
+import { agentLabel, modelCopy } from "@/lib/copy";
+import {
+  formatContext,
+  formatFullDate,
+  formatPrice,
+  formatScore,
+  formatTokens,
+  formatUsd,
+} from "@/lib/format";
+import { EPOCH_BENCHMARKS, EPOCH_BENCHMARKS_URL, PROVIDERS, TERMINAL_BENCH } from "@/lib/types";
 
 type Params = Promise<{ slug: string }>;
 
@@ -35,42 +33,58 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const release = catalog.find((await params).slug);
   if (!release) return {};
   return pageMetadata(
-    `${release.name} benchmarks, pricing and effort levels`,
+    `${release.name} benchmarks, pricing and cost per task`,
     modelCopy(release).description,
     `/models/${release.slug}`,
   );
 }
 
-const pct = (e: EffortPoint) => formatScore(e.scores.coding, "%");
-const cost = (e: EffortPoint) => formatUsd(e.costUsdPerTask.total);
+const pct = (value: number) => formatScore(value, "%");
+const EFFORT_ORDER = ["minimal", "low", "medium", "high", "xhigh", "max"];
 
 export default async function ModelPage({ params }: { params: Params }) {
   const release = catalog.find((await params).slug);
   if (!release) notFound();
   const copy = modelCopy(release);
   const lab = PROVIDERS[release.provider];
-  const best = bestEffort(release);
-  const preset = defaultEffort(release);
-  const cheapest = cheapestEffort(release);
-  const stars = release.deprecated ? [] : (catalog.liveFrontier("coding").get(release.slug) ?? []);
+  const run = release.terminalBench;
+  const pricing = release.pricing;
+  const mirror = bestEpoch(release, "mirrorCode");
+  const starredToday = !release.deprecated && catalog.liveFrontier.has(release.slug);
+  const starredAtRelease = catalog.releaseDayFrontier.has(release.slug);
   const field = release.deprecated ? [...catalog.current, release] : [...catalog.current];
-  const pairs = catalog.pairsFor(release);
-  const agentRuns = effortsByLevel(release).filter((e) => e.cliEval);
-  const harbor = release.harborEval;
+  const pairs = catalog.pairsFor(release).filter(isComparable);
+  const agentPages = run
+    ? agentPairs().filter((p) => p.first.name === run.agent || p.second.name === run.agent)
+    : [];
+  const prices = catalog.dataset.sources.find((s) => s.id === "litellm")!;
+  const epochRows = [...release.epoch].sort(
+    (a, b) =>
+      EPOCH_BENCHMARKS.findIndex((m) => m.id === a.benchmark) -
+        EPOCH_BENCHMARKS.findIndex((m) => m.id === b.benchmark) ||
+      EFFORT_ORDER.indexOf(a.effort ?? "") - EFFORT_ORDER.indexOf(b.effort ?? ""),
+  );
 
   const sources: Source[] = [
-    { name: `Artificial Analysis: ${release.name} evaluations`, url: release.benchmarkUrl },
-    { name: `${lab.name}: ${release.name}`, url: release.announcementUrl },
+    run
+      ? {
+          name: `Terminal-Bench leaderboard: ${run.agent} with ${release.name}`,
+          url: run.sourceUrl,
+        }
+      : { name: "Terminal-Bench leaderboard", url: TERMINAL_BENCH.url },
+    {
+      name: "Epoch AI, Capabilities & benchmarking (CC BY 4.0)",
+      url: EPOCH_BENCHMARKS_URL,
+    },
+    { name: `${prices.name} (MIT)`, url: prices.url },
   ];
-  // push() returns the new length, which is the 1-based citation number.
-  const agentSource = agentRuns.length > 0 ? sources.push({
-    name: "Artificial Analysis: Coding Agents",
-    url: "https://artificialanalysis.ai/agents/coding-agents/",
-  }) : null;
-  const agentPages = agentPairs().filter((p) => p.first.name === lab.harness || p.second.name === lab.harness);
-  const harborSource = harbor
-    ? sources.push({ name: "Terminal-Bench leaderboard", url: "https://tbench.ai" })
-    : null;
+  const cite = { tb: 1, epoch: 2, prices: 3 };
+  if (release.announcementUrl) {
+    sources.push({
+      name: `${lab.name}: ${release.name}`,
+      url: release.announcementUrl,
+    });
+  }
 
   const upgrades = pairs.filter((p) => p.relation === "upgrade");
   const rivals = pairs.filter((p) => p.relation !== "upgrade" && p.current);
@@ -92,7 +106,8 @@ export default async function ModelPage({ params }: { params: Params }) {
         <p className="page-meta">
           <span>{lab.name}</span>
           <span>
-            Released <time dateTime={release.releaseDate}>{formatFullDate(release.releaseDate)}</time>
+            Released{" "}
+            <time dateTime={release.releaseDate}>{formatFullDate(release.releaseDate)}</time>
           </span>
           <span>
             {release.supersededOn ? (
@@ -104,234 +119,271 @@ export default async function ModelPage({ params }: { params: Params }) {
               "Current"
             )}
           </span>
-          {stars.length > 0 && <FrontierStars efforts={stars} size={9} labelled />}
+          {starredToday && <FrontierStar size={9} labelled />}
         </p>
       </header>
 
       <p className="lead">
         {copy.lead}
-        <Cite n={1} /> {copy.standing}
+        {run && <Cite n={cite.tb} />}
+        {release.epoch.length > 0 && <Cite n={cite.epoch} />} {copy.standing}
       </p>
 
       <dl className="stats">
         <div>
-          <dt>Best coding score</dt>
+          <dt>Terminal-Bench</dt>
           <dd>
-            {pct(best)}
+            {run ? pct(run.accuracy) : "No run yet"}
             <span>
-              {effortName(best.effortSlug)} · {cost(best)}
+              {run ? `${run.agent} · ${effortName(run.effort)}` : "Not on the leaderboard"}
             </span>
           </dd>
         </div>
         <div>
-          <dt>Default effort</dt>
+          <dt>Cost per task</dt>
           <dd>
-            {effortName(preset.effortSlug)}
+            {run?.costPerTaskUsd != null ? formatUsd(run.costPerTaskUsd) : "—"}
             <span>
-              {pct(preset)} · {cost(preset)}
+              {run
+                ? `${formatTokens(run.tokensPerTask.output)} output tokens`
+                : "Needs a Terminal-Bench run"}
             </span>
           </dd>
         </div>
         <div>
-          <dt>Cheapest setting</dt>
+          <dt>MirrorCode</dt>
           <dd>
-            {cost(cheapest)}
+            {mirror ? pct(mirror.score) : "—"}
             <span>
-              {effortName(cheapest.effortSlug)} · {pct(cheapest)}
+              {mirror ? `Epoch AI · ${effortName(mirror.effort)}` : "Not run by Epoch AI"}
             </span>
           </dd>
         </div>
         <div>
           <dt>API price</dt>
           <dd>
-            {formatPrice(release.pricing.inputPer1M)}/{formatPrice(release.pricing.outputPer1M)}
-            <span>per 1M input/output tokens</span>
+            {pricing
+              ? `${formatPrice(pricing.inputPer1M)}/${formatPrice(pricing.outputPer1M)}`
+              : "—"}
+            <span>{pricing ? "per 1M input/output tokens" : "Not listed yet"}</span>
           </dd>
         </div>
       </dl>
 
-      <CatalogChart
-        releases={field}
-        scale={catalog.chartScale}
-        selectedSlug={release.slug}
-        caption={`${release.name}'s effort settings against every current model. Gold rings mark frontier points; choose another model's point to open its page.`}
-      />
-
-      <section aria-labelledby="efforts">
-        <h2 id="efforts">Benchmarks at each effort level</h2>
-        <EffortTable
-          release={release}
-          frontier={stars}
-          captionId="efforts-caption"
-          caption={
-            <>
-              Coding is the mean of FrontierCode 2.0 and Terminal-Bench 4.0. A star marks a setting on
-              the live cost frontier.
-              <Cite n={1} />
-            </>
-          }
+      {run && (
+        <CatalogChart
+          releases={field}
+          scale={catalog.chartScale}
+          selectedSlug={release.slug}
+          caption={`${release.name}'s Terminal-Bench run against every current model. The dashed line is the cost frontier: no model scores higher for less. Choose another model's dot to open its page.`}
         />
-      </section>
+      )}
 
-      <section aria-labelledby="stars">
-        <h2 id="stars">Frontier stars by benchmark</h2>
-        <p>
-          A star marks an effort setting on the cost frontier: for that spend per task, no other
-          model scores higher. {release.deprecated ? "" : "Today counts the current models; "}At
-          release counts the models out on {formatFullDate(release.releaseDate)}. Settings under 75%
-          of the top score do not earn one.
-        </p>
-        <dl className="star-list">
-          {BENCHMARKS.map((benchmark) => (
-            <div key={benchmark.id}>
-              <dt>{benchmark.fullLabel}</dt>
-              {!release.deprecated && (
+      <section aria-labelledby="terminal-bench">
+        <h2 id="terminal-bench">On Terminal-Bench</h2>
+        {run ? (
+          <>
+            <p>
+              {TERMINAL_BENCH.label} has {TERMINAL_BENCH.tasks} tasks done in a terminal, from
+              building software to fixing systems. This run drove {release.name} through{" "}
+              {run.agentUrl ? <a href={run.agentUrl}>{agentLabel(run)}</a> : agentLabel(run)} and
+              was graded on version {run.version} of the tasks.
+              <Cite n={cite.tb} />
+            </p>
+            <dl className="facts-list">
+              <div>
+                <dt>Trials passed</dt>
                 <dd>
-                  <StarLine
-                    label="Today"
-                    efforts={catalog.liveFrontier(benchmark.id).get(release.slug) ?? []}
-                  />
+                  {run.successes} of {run.trials}, {pct(run.accuracy)}
+                  {run.ci95 !== null && ` ±${run.ci95.toFixed(1)}`}
                 </dd>
+              </div>
+              <div>
+                <dt>Setting</dt>
+                <dd>{effortName(run.effort)}</dd>
+              </div>
+              <div>
+                <dt>Cost per task</dt>
+                <dd>
+                  {run.costPerTaskUsd !== null ? formatUsd(run.costPerTaskUsd) : "Not reported"}
+                </dd>
+              </div>
+              <div>
+                <dt>Output tokens per task</dt>
+                <dd>{formatTokens(run.tokensPerTask.output)}</dd>
+              </div>
+              <div>
+                <dt>All tokens per task</dt>
+                <dd>{formatTokens(run.tokensPerTask.total)}</dd>
+              </div>
+              {run.minutesPerTask !== null && (
+                <div>
+                  <dt>Minutes per task</dt>
+                  <dd>{Math.round(run.minutesPerTask)}</dd>
+                </div>
               )}
-              <dd>
-                <StarLine
-                  label="At release"
-                  context="release"
-                  efforts={catalog.releaseDayFrontier(benchmark.id).get(release.slug) ?? []}
-                />
-              </dd>
-            </div>
-          ))}
-        </dl>
+            </dl>
+            <p className="legend">
+              ± is the 95% confidence interval the run reported. All tokens include input and cached
+              input, which an agent rereads on every turn.
+            </p>
+          </>
+        ) : (
+          <p>
+            {release.name} has no run on the official Terminal-Bench leaderboard yet, so it has no
+            cost per task and no place on the chart. This page adds one when a run is published.
+            <Cite n={cite.tb} />
+          </p>
+        )}
+        {run?.costPerTaskUsd != null && (
+          <>
+            <dl className="star-list">
+              <div>
+                <dt>Frontier star</dt>
+                {!release.deprecated && (
+                  <dd>
+                    <StarLine label="Today" starred={starredToday} />
+                  </dd>
+                )}
+                <dd>
+                  <StarLine label="At release" starred={starredAtRelease} context="release" />
+                </dd>
+              </div>
+            </dl>
+            <p className="legend">
+              A star marks a model on the cost frontier: for its cost per task, no other model
+              scores higher on Terminal-Bench.{" "}
+              {release.deprecated ? "" : "Today counts the current models; "}At release counts the
+              models out on {formatFullDate(release.releaseDate)}. Models under 75% of the top score
+              do not earn one.
+            </p>
+          </>
+        )}
+        {agentPages.length > 0 && run && (
+          <p className="onward">
+            Compare {run.agent} with other coding agents:{" "}
+            {agentPages.map((p, i) => (
+              <span key={p.slug}>
+                {i > 0 && " · "}
+                <a href={`/agents/${p.slug}`}>
+                  {p.first.name} vs {p.second.name}
+                </a>
+              </span>
+            ))}
+          </p>
+        )}
       </section>
 
-      {copy.steps.length > 0 && (
-        <section aria-labelledby="steps">
-          <h2 id="steps">Is the next effort level worth it?</h2>
-          <ul className="steps">
-            {copy.steps.map((step) => (
-              <li key={step.text} className={step.drop ? "is-drop" : undefined}>
-                {step.text}
-                {step.stepSlug && (
-                  <>
-                    {" "}
-                    <a href={`/effort/${step.stepSlug}`}>Compare across models</a>
-                  </>
-                )}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {(agentRuns.length > 0 || harbor) && (
-        <section aria-labelledby="agent">
-          <h2 id="agent">In {lab.harness}</h2>
-          {agentRuns.length === 1 && agentSource && (
-            <p>
-              Artificial Analysis also ran {release.name} inside {lab.harness}, {lab.name}&apos;s
-              coding agent. At {effortName(agentRuns[0]!.effortSlug)} effort it scored{" "}
-              {agentRuns[0]!.cliEval!.codingAgentScore.toFixed(1)} on the Coding Agent Index for{" "}
-              {formatUsd(agentRuns[0]!.cliEval!.costUsdPerTask)} per task.
-              <Cite n={agentSource} />
-            </p>
-          )}
-          {agentRuns.length > 1 && agentSource && (
-            <div className="table-scroll" role="region" aria-labelledby="agent-caption" tabIndex={0}>
-              <table className="data-table">
-                <caption id="agent-caption">
-                  {release.name} inside {lab.harness}, by effort setting.
-                  <Cite n={agentSource} />
-                </caption>
-                <thead>
-                  <tr>
-                    <th scope="col">Effort</th>
-                    <th scope="col">Coding Agent Index</th>
-                    <th scope="col">FrontierCode 2.0</th>
-                    <th scope="col">SWE-Atlas</th>
-                    <th scope="col">Terminal-Bench 4.1</th>
-                    <th scope="col">Cost per task</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {agentRuns.map((e) => (
-                    <tr key={e.effortSlug}>
-                      <th scope="row">{effortName(e.effortSlug)}</th>
-                      <td>{e.cliEval!.codingAgentScore.toFixed(1)}</td>
-                      <td>{formatScore(e.cliEval!.frontierCode2, "%")}</td>
-                      <td>{formatScore(e.cliEval!.sweAtlas, "%")}</td>
-                      <td>{formatScore(e.cliEval!.terminalBench4, "%")}</td>
-                      <td>{formatUsd(e.cliEval!.costUsdPerTask)}</td>
+      <section aria-labelledby="epoch">
+        <h2 id="epoch">Epoch AI scores</h2>
+        {epochRows.length > 0 ? (
+          <div className="table-scroll" role="region" aria-labelledby="epoch-caption" tabIndex={0}>
+            <table className="data-table">
+              <caption id="epoch-caption">
+                {release.name} alone, without an agent, at each setting Epoch AI ran. ± is one
+                standard error.
+                <Cite n={cite.epoch} />
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Benchmark</th>
+                  <th scope="col">Setting</th>
+                  <th scope="col">Score</th>
+                  <th scope="col">Run on</th>
+                </tr>
+              </thead>
+              <tbody>
+                {epochRows.map((score) => {
+                  const meta = EPOCH_BENCHMARKS.find((m) => m.id === score.benchmark)!;
+                  return (
+                    <tr key={`${score.benchmark}:${score.effort ?? "default"}`}>
+                      <th scope="row">
+                        <a href={meta.url}>{meta.label}</a>
+                      </th>
+                      <td>{effortName(score.effort)}</td>
+                      <td>
+                        {pct(score.score)}
+                        {score.stderr !== null && (
+                          <span className="cell-note">±{score.stderr.toFixed(1)}</span>
+                        )}
+                      </td>
+                      <td>
+                        {score.runOn ? (
+                          <time dateTime={score.runOn}>{formatFullDate(score.runOn)}</time>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p>
+            Epoch AI hasn&apos;t published scores for {release.name} yet.
+            <Cite n={cite.epoch} />
+          </p>
+        )}
+        {epochRows.length > 0 &&
+          EPOCH_BENCHMARKS.filter((meta) => epochRows.some((s) => s.benchmark === meta.id)).map(
+            (meta) => (
+              <p key={meta.id} className="legend">
+                <strong>{meta.label}</strong>: {meta.description}
+              </p>
+            ),
           )}
-          {harbor && harborSource && (
-            <p>
-              On the official Terminal-Bench leaderboard, {harbor.agent} with {release.name} at{" "}
-              {EFFORT_NAMES[harbor.effort as EffortSlug] ?? harbor.effort} effort passed{" "}
-              {formatScore(harbor.accuracy, "%")} of trials at {formatUsd(harbor.costPerTrialUsd)} per
-              trial.
-              <Cite n={harborSource} />
-            </p>
-          )}
-          {agentPages.length > 0 && (
-            <p className="onward">
-              Compare {lab.harness} with other coding agents:{" "}
-              {agentPages.map((p, i) => (
-                <span key={p.slug}>
-                  {i > 0 && " · "}
-                  <a href={`/agents/${p.slug}`}>
-                    {p.first.name} vs {p.second.name}
-                  </a>
-                </span>
-              ))}
-            </p>
-          )}
-        </section>
-      )}
+      </section>
 
       <section aria-labelledby="pricing">
         <h2 id="pricing">Pricing</h2>
-        <dl className="facts-list">
-          <div>
-            <dt>Input</dt>
-            <dd>{formatPrice(release.pricing.inputPer1M)} per million tokens</dd>
-          </div>
-          {release.pricing.cachedInputPer1M !== null && (
-            <div>
-              <dt>Cached input</dt>
-              <dd>{formatPrice(release.pricing.cachedInputPer1M)} per million tokens</dd>
-            </div>
-          )}
-          <div>
-            <dt>Output</dt>
-            <dd>{formatPrice(release.pricing.outputPer1M)} per million tokens</dd>
-          </div>
-          <div>
-            <dt>Context window</dt>
-            <dd>{formatContext(release.pricing.contextWindowTokens)} tokens</dd>
-          </div>
-        </dl>
-        <p>
-          Token prices set the rate; the effort setting sets how many tokens a task spends. That is
-          why the same model costs {cost(cheapest)} per task at {effortName(cheapest.effortSlug)}
-          {release.efforts.length > 1 ? (
-            <>
-              {" "}
-              and{" "}
-              {cost(
-                release.efforts.reduce((a, b) =>
-                  b.costUsdPerTask.total > a.costUsdPerTask.total ? b : a,
-                ),
-              )}{" "}
-              at its most expensive setting
-            </>
-          ) : null}
-          .<Cite n={1} />
-        </p>
+        {pricing ? (
+          <>
+            <dl className="facts-list">
+              <div>
+                <dt>Input</dt>
+                <dd>{formatPrice(pricing.inputPer1M)} per million tokens</dd>
+              </div>
+              {pricing.cachedInputPer1M !== null && (
+                <div>
+                  <dt>Cached input</dt>
+                  <dd>{formatPrice(pricing.cachedInputPer1M)} per million tokens</dd>
+                </div>
+              )}
+              <div>
+                <dt>Output</dt>
+                <dd>{formatPrice(pricing.outputPer1M)} per million tokens</dd>
+              </div>
+              {pricing.maxInputTokens !== null && (
+                <div>
+                  <dt>Longest input</dt>
+                  <dd>{formatContext(pricing.maxInputTokens)} tokens</dd>
+                </div>
+              )}
+            </dl>
+            <p>
+              Token prices set the rate; how many tokens a task spends sets the bill.
+              <Cite n={cite.prices} />
+              {run && (
+                <>
+                  {" "}
+                  In its Terminal-Bench run, {release.name} wrote{" "}
+                  {formatTokens(run.tokensPerTask.output)} output tokens per task
+                  {run.costPerTaskUsd !== null
+                    ? ` and reported ${formatUsd(run.costPerTaskUsd)} per task`
+                    : ""}
+                  .<Cite n={cite.tb} />
+                </>
+              )}
+            </p>
+          </>
+        ) : (
+          <p>
+            LiteLLM&apos;s price list has no entry for {release.name} yet.
+            <Cite n={cite.prices} />
+          </p>
+        )}
       </section>
 
       {pairs.length > 0 && (
@@ -354,11 +406,13 @@ export default async function ModelPage({ params }: { params: Params }) {
       <Sources
         scope={
           <>
-            Scores, cost per task and output tokens come from Artificial Analysis&apos;s runs at each
-            effort setting; the coding composite is the mean of FrontierCode 2.0 and Terminal-Bench
-            4.0. Frontier stars compare current models only. Written by aicharts from data checked{" "}
-            {formatFullDate(catalog.dataset.snapshotDate)}. Prices and scores change as labs update
-            their models.
+            The Terminal-Bench result is this model&apos;s run on the official leaderboard: the
+            agent attempts all {TERMINAL_BENCH.tasks} tasks at least five times, errored trials
+            count as failures, and passing trials are checked for reward hacking. Cost per task is
+            what the run reported. Epoch AI&apos;s scores test the model alone, under CC BY 4.0. API
+            prices come from LiteLLM&apos;s price list. Frontier stars compare current models only.
+            Written by aicharts from data checked {formatFullDate(catalog.dataset.snapshotDate)}.
+            Prices and scores change as labs update their models.
           </>
         }
         sources={sources}
@@ -373,20 +427,17 @@ export default async function ModelPage({ params }: { params: Params }) {
 
 function StarLine({
   label,
-  efforts,
+  starred,
   context = "live",
-}: Readonly<{ label: string; efforts: readonly EffortPoint[]; context?: "live" | "release" }>) {
+}: Readonly<{
+  label: string;
+  starred: boolean;
+  context?: "live" | "release";
+}>) {
   return (
     <span className="star-line">
       <span className="muted">{label}:</span>{" "}
-      {efforts.length > 0 ? (
-        <>
-          <FrontierStars efforts={efforts} size={10} context={context} />{" "}
-          <span>{efforts.map((e) => effortName(e.effortSlug)).join(", ")}</span>
-        </>
-      ) : (
-        <span>no star</span>
-      )}
+      {starred ? <FrontierStar size={10} context={context} labelled /> : <span>no star</span>}
     </span>
   );
 }

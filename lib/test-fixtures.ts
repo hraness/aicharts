@@ -1,37 +1,51 @@
 // Builders for small hand-made datasets in tests.
-import type { EffortPoint, EffortSlug, ModelRelease, ProviderId } from "./types";
+import type {
+  EpochScore,
+  ModelPricing,
+  ModelRelease,
+  ProviderId,
+  TerminalBenchRun,
+} from "./types";
 
-const LEVELS: Readonly<Record<EffortSlug, number>> = {
-  none: 0,
-  low: 1,
-  medium: 2,
-  high: 3,
-  xhigh: 4,
-  max: 5,
-};
-
-export function effort(
-  slug: string,
-  effortSlug: EffortSlug,
+/** A Terminal-Bench run scoring `score`% for `cost` dollars per task. */
+export function run(
   score: number,
-  cost: number,
-  isDefaultEffort = false,
-): EffortPoint {
+  cost: number | null,
+  overrides: Partial<TerminalBenchRun> = {},
+): TerminalBenchRun {
+  const output = overrides.tokensPerTask?.output ?? Math.round((cost ?? 1) * 20_000);
   return {
-    id: `${slug}-${effortSlug}`,
-    slug: `${slug}-${effortSlug}`,
-    effortSlug,
-    effortLabel: effortSlug,
-    shortTag: effortSlug,
-    effortLevel: LEVELS[effortSlug],
-    isDefaultEffort,
-    scores: { coding: score, terminalBench4: score, frontierCode2: score, intelligence: score },
-    costUsdPerTask: { total: cost, input: cost / 2, output: cost / 2, reasoning: 0, cacheRead: 0 },
-    tokensPerTask: { total: cost * 10_000, reasoning: 0, answer: cost * 10_000 },
-    speedTokPerSec: null,
-    cliEval: null,
+    version: "4.1",
+    agent: "Test Agent",
+    agentVersion: "1.0.0",
+    agentUrl: null,
+    effort: "high",
+    accuracy: score,
+    ci95: 3,
+    trials: 330,
+    successes: Math.round((score / 100) * 330),
+    costPerTaskUsd: cost,
+    tokensPerTask: { total: output * 20, output },
+    minutesPerTask: 30,
+    sourceUrl: "https://github.com/harbor-framework/terminal-bench/blob/main/leaderboard/submissions/test.json",
+    ...overrides,
   };
 }
+
+export function epoch(
+  benchmark: EpochScore["benchmark"],
+  score: number,
+  effort: EpochScore["effort"] = "high",
+): EpochScore {
+  return { benchmark, effort, score, stderr: 2, runOn: "2026-11-01" };
+}
+
+export const PRICING: ModelPricing = {
+  inputPer1M: 2,
+  outputPer1M: 10,
+  cachedInputPer1M: 0.2,
+  maxInputTokens: 1_000_000,
+};
 
 export function release(
   slug: string,
@@ -39,7 +53,8 @@ export function release(
   provider: ProviderId,
   releaseDate: string,
   supersededOn: string | null,
-  efforts: [EffortSlug, number, number][],
+  terminalBench: TerminalBenchRun | null = null,
+  extra: Partial<Pick<ModelRelease, "epoch" | "pricing" | "announcementUrl">> = {},
 ): ModelRelease {
   return {
     slug,
@@ -48,11 +63,10 @@ export function release(
     releaseDate,
     deprecated: supersededOn !== null,
     supersededOn,
-    pricing: { inputPer1M: 2, outputPer1M: 10, cachedInputPer1M: 0.2, contextWindowTokens: 400_000 },
-    summary: "",
     announcementUrl: "https://example.com",
-    benchmarkUrl: "https://example.com",
-    harborEval: null,
-    efforts: efforts.map(([level, score, cost], i) => effort(slug, level, score, cost, i === 1)),
+    pricing: PRICING,
+    terminalBench,
+    epoch: [],
+    ...extra,
   };
 }

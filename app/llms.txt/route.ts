@@ -1,38 +1,40 @@
 import { agentDescription, agentPairs, harnessGroups } from "@/lib/agents";
-import { bestEffort, catalog, defaultEffort, effortName, publishedEffortSteps, SITE_URL } from "@/lib/catalog";
-import { effortStepTitle, orderedEffortSteps } from "@/lib/copy";
+import { bestEpoch, catalog, isComparable, SITE_URL } from "@/lib/catalog";
+import { agentLabel } from "@/lib/copy";
 import { formatScore, formatUsd } from "@/lib/format";
 
 export const dynamic = "force-static";
 
 export function GET() {
   const model = (slug: string) => `${SITE_URL}/models/${slug}`;
+  const pct = (value: number) => formatScore(value, "%");
+  const comparable = catalog.pairs.filter(isComparable);
   const lines = [
     "# aicharts",
     "",
-    "> Coding scores, cost per task and output tokens for AI model releases from OpenAI, Anthropic and Google, measured at every effort setting each model offers. Data from Artificial Analysis and Terminal-Bench, refreshed several times a day. Made by Hraness (https://hraness.com).",
+    "> Terminal-Bench scores, cost per task and output tokens for AI model releases from OpenAI, Anthropic and Google, with Epoch AI scores and API prices. Data from the official Terminal-Bench leaderboard (Apache-2.0), Epoch AI (CC BY 4.0) and LiteLLM's price list (MIT), refreshed several times a day. Made by Hraness (https://hraness.com).",
     "",
-    "The coding composite is the mean of FrontierCode 2.0 and Terminal-Bench 4.0. A frontier star marks an effort setting on the live cost frontier: for that spend per task, no current model scores higher. Model pages also list release-day stars, measured against the models out on that release's launch day.",
+    "Each model is one point: its run on the Terminal-Bench leaderboard, in the coding agent and setting it was submitted with. A frontier star marks a model on the live cost frontier: for its cost per task, no current model scores higher. Model pages also list release-day stars, measured against the models out on that release's launch day.",
     "",
     "## Models",
     "",
     ...catalog.current.map((r) => {
-      const best = bestEffort(r);
-      const preset = defaultEffort(r);
-      return `- [${r.name}](${model(r.slug)}): ${formatScore(best.scores.coding, "%")} coding at ${effortName(best.effortSlug)} effort for ${formatUsd(best.costUsdPerTask.total)} per task; default ${effortName(preset.effortSlug)}.`;
+      const run = r.terminalBench;
+      const mirror = bestEpoch(r, "mirrorCode");
+      const parts: string[] = [];
+      if (run) {
+        parts.push(
+          `${pct(run.accuracy)} on Terminal-Bench in ${agentLabel(run)}${run.costPerTaskUsd !== null ? ` for ${formatUsd(run.costPerTaskUsd)} per task` : ""}`,
+        );
+      }
+      if (mirror) parts.push(`${pct(mirror.score)} on MirrorCode (Epoch AI)`);
+      return `- [${r.name}](${model(r.slug)}): ${parts.length > 0 ? parts.join("; ") : "no results published yet"}.`;
     }),
-    "",
-    "## Effort levels",
-    "",
-    `- [Effort levels compared](${SITE_URL}/effort): what each step from Low to Max adds and costs.`,
-    ...orderedEffortSteps(publishedEffortSteps(catalog.releases)).map(
-      (step) => `- [${effortStepTitle(step)}](${SITE_URL}/effort/${step.slug})`,
-    ),
     "",
     "## Comparisons",
     "",
-    `- [All comparisons](${SITE_URL}/compare): ${catalog.pairs.length} head-to-head pages.`,
-    ...catalog.pairs
+    `- [All comparisons](${SITE_URL}/compare): ${comparable.length} head-to-head pages.`,
+    ...comparable
       .filter((p) => p.current)
       .map((p) => `- [${p.first.name} vs ${p.second.name}](${SITE_URL}/compare/${p.slug})`),
     "",
@@ -46,7 +48,7 @@ export function GET() {
     "",
     "## Data",
     "",
-    `- [Release dataset (JSON)](${SITE_URL}/api/releases): every release and effort setting.`,
+    `- [Release dataset (JSON)](${SITE_URL}/api/releases): every release with its Terminal-Bench run, Epoch AI scores and API prices, plus each source's license and attribution.`,
     "",
     "## Optional",
     "",

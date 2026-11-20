@@ -1,25 +1,34 @@
 {
-  "schemaVersion": 1,
-  "updatedAt": "2026-11-19T17:46:07Z",
-  "snapshotDate": "2026-11-19",
+  "schemaVersion": 2,
+  "updatedAt": "2026-11-20T00:56:54Z",
+  "snapshotDate": "2026-11-20",
   "sources": [
     {
-      "id": "artificial-analysis-v5",
-      "name": "Artificial Analysis v5.0.1",
-      "url": "https://artificialanalysis.ai/models",
-      "note": "Standardized multi-effort evaluations for FrontierCode 2.0, Terminal-Bench 4.0, Intelligence Index v5.0.1, per-task USD cost, and output tokens."
+      "id": "terminal-bench",
+      "name": "Terminal-Bench leaderboard",
+      "url": "https://github.com/harbor-framework/terminal-bench/tree/main/leaderboard",
+      "license": "Apache-2.0",
+      "licenseUrl": "https://github.com/harbor-framework/terminal-bench/blob/main/LICENSE",
+      "attribution": "Terminal-Bench leaderboard submissions, harbor-framework/terminal-bench, Apache License 2.0.",
+      "covers": "Each model's agent run: accuracy, confidence interval, trials, cost, tokens and minutes per trial, agent and effort."
     },
     {
-      "id": "aa-coding-agents",
-      "name": "Artificial Analysis Coding Agents",
-      "url": "https://artificialanalysis.ai/agents/coding-agents/",
-      "note": "Native CLI harness evaluations across Claude Code, OpenAI Codex, and Google Antigravity CLI."
+      "id": "epoch-ai",
+      "name": "Epoch AI, Capabilities & benchmarking",
+      "url": "https://epoch.ai/benchmarks",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Epoch AI, ‘Capabilities & benchmarking’. Published online at epoch.ai. Retrieved from ‘https://epoch.ai/benchmarks’ [online resource].",
+      "covers": "GPQA Diamond, MirrorCode and FrontierMath Tiers 1–3 scores, and release dates."
     },
     {
-      "id": "harbor-terminal-bench",
-      "name": "Harbor Terminal-Bench",
-      "url": "https://tbench.ai",
-      "note": "Official 330-trial autonomous terminal engineering submissions."
+      "id": "litellm",
+      "name": "LiteLLM model prices",
+      "url": "https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json",
+      "license": "MIT",
+      "licenseUrl": "https://github.com/BerriAI/litellm/blob/main/LICENSE",
+      "attribution": "LiteLLM model_prices_and_context_window.json, Copyright (c) 2023 Berri AI, MIT License.",
+      "covers": "List API prices per million tokens and maximum input tokens."
     }
   ],
   "releases": [
@@ -30,141 +39,15 @@
       "releaseDate": "2026-11-18",
       "deprecated": false,
       "supersededOn": null,
+      "announcementUrl": "https://deepmind.google/models/gemini/",
       "pricing": {
         "inputPer1M": 3,
         "outputPer1M": 15,
         "cachedInputPer1M": 0.15,
-        "contextWindowTokens": 1000000
+        "maxInputTokens": 1048576
       },
-      "summary": "Adapted from Carbon for lean token usage and rapid software engineering; leads AA Coding Agents in Antigravity CLI.",
-      "announcementUrl": "https://deepmind.google/models/gemini/",
-      "benchmarkUrl": "https://artificialanalysis.ai/models/gemini-4-neon-low",
-      "harborEval": null,
-      "efforts": [
-        {
-          "id": "09fea5f5-7217-452d-b693-fcca01e07bdf",
-          "slug": "gemini-4-neon-low",
-          "effortSlug": "low",
-          "effortLabel": "Low",
-          "shortTag": "L",
-          "effortLevel": 20,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 29.89,
-            "terminalBench4": 32.83,
-            "frontierCode2": 26.95,
-            "intelligence": 44.08
-          },
-          "costUsdPerTask": {
-            "total": 0.745,
-            "input": 0.419,
-            "output": 0.326,
-            "reasoning": 0.134,
-            "cacheRead": 0.129
-          },
-          "tokensPerTask": {
-            "total": 21726,
-            "reasoning": 8904,
-            "answer": 12822
-          },
-          "speedTokPerSec": 97.11,
-          "cliEval": null
-        },
-        {
-          "id": "2ba1a8f6-e052-4a33-b178-4db1e86157e4",
-          "slug": "gemini-4-neon-medium",
-          "effortSlug": "medium",
-          "effortLabel": "Med",
-          "shortTag": "M",
-          "effortLevel": 30,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 45.74,
-            "terminalBench4": 54.55,
-            "frontierCode2": 36.93,
-            "intelligence": 54.86
-          },
-          "costUsdPerTask": {
-            "total": 1.905,
-            "input": 1.155,
-            "output": 0.75,
-            "reasoning": 0.358,
-            "cacheRead": 0.404
-          },
-          "tokensPerTask": {
-            "total": 50000,
-            "reasoning": 23894,
-            "answer": 26106
-          },
-          "speedTokPerSec": 100.73,
-          "cliEval": null
-        },
-        {
-          "id": "9b696f5b-b5d2-4b1f-9ed5-7c1446ec8421",
-          "slug": "gemini-4-neon-high",
-          "effortSlug": "high",
-          "effortLabel": "High",
-          "shortTag": "H",
-          "effortLevel": 40,
-          "isDefaultEffort": true,
-          "scores": {
-            "coding": 52.45,
-            "terminalBench4": 61.62,
-            "frontierCode2": 43.28,
-            "intelligence": 59.62
-          },
-          "costUsdPerTask": {
-            "total": 3.743,
-            "input": 2.39,
-            "output": 1.353,
-            "reasoning": 0.694,
-            "cacheRead": 0.884
-          },
-          "tokensPerTask": {
-            "total": 90188,
-            "reasoning": 46280,
-            "answer": 43907
-          },
-          "speedTokPerSec": 101.46,
-          "cliEval": null
-        },
-        {
-          "id": "7c667f2d-0149-4eb1-864c-7e66c166ad88",
-          "slug": "gemini-4-neon",
-          "effortSlug": "xhigh",
-          "effortLabel": "XHigh",
-          "shortTag": "XH",
-          "effortLevel": 50,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 54.02,
-            "terminalBench4": 63.64,
-            "frontierCode2": 44.41,
-            "intelligence": 61.4
-          },
-          "costUsdPerTask": {
-            "total": 6.445,
-            "input": 4.32,
-            "output": 2.124,
-            "reasoning": 1.208,
-            "cacheRead": 1.661
-          },
-          "tokensPerTask": {
-            "total": 141631,
-            "reasoning": 80503,
-            "answer": 61127
-          },
-          "speedTokPerSec": 109.86,
-          "cliEval": {
-            "harness": "Antigravity CLI",
-            "codingAgentScore": 58.64,
-            "costUsdPerTask": 6.86,
-            "frontierCode2": 43.03,
-            "sweAtlas": 67.74,
-            "terminalBench4": 65.15
-          }
-        }
-      ]
+      "terminalBench": null,
+      "epoch": []
     },
     {
       "slug": "gpt-6-2-astra",
@@ -173,202 +56,52 @@
       "releaseDate": "2026-11-17",
       "deprecated": false,
       "supersededOn": null,
+      "announcementUrl": "https://developers.openai.com/api/docs/models/gpt-6.2-astra",
       "pricing": {
         "inputPer1M": 8,
         "outputPer1M": 40,
         "cachedInputPer1M": 0.4,
-        "contextWindowTokens": 1000000
+        "maxInputTokens": 922000
       },
-      "summary": "OpenAI's frontier reasoning and coding model; commands the $1.60–$4.00/task Pareto frontier with tight token discipline.",
-      "announcementUrl": "https://developers.openai.com/api/docs/models/gpt-6.2-astra",
-      "benchmarkUrl": "https://artificialanalysis.ai/models/gpt-6-2-astra-xhigh",
-      "harborEval": {
+      "terminalBench": {
+        "version": "4.1",
         "agent": "Codex",
+        "agentVersion": "0.169.0",
+        "agentUrl": "https://openai.com/codex/",
         "effort": "max",
         "accuracy": 62.12,
-        "totalCostUsd": 1409.14,
-        "costPerTrialUsd": 4.27
+        "ci95": 2.3,
+        "trials": 330,
+        "successes": 205,
+        "costPerTaskUsd": 4.2701,
+        "tokensPerTask": {
+          "total": 3379571,
+          "output": 49894
+        },
+        "minutesPerTask": 22.5,
+        "sourceUrl": "https://github.com/harbor-framework/terminal-bench/blob/main/leaderboard/submissions/2026-11-17-4-1-0-gpt-6-2-astra-max-codex.json"
       },
-      "efforts": [
+      "epoch": [
         {
-          "id": "cc93ecfd-845e-455d-9642-6799d7133b7e",
-          "slug": "gpt-6-2-astra-low",
-          "effortSlug": "low",
-          "effortLabel": "Low",
-          "shortTag": "L",
-          "effortLevel": 20,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 41.84,
-            "terminalBench4": 51.01,
-            "frontierCode2": 32.66,
-            "intelligence": 45.65
-          },
-          "costUsdPerTask": {
-            "total": 0.662,
-            "input": 0.453,
-            "output": 0.209,
-            "reasoning": 0.059,
-            "cacheRead": 0.176
-          },
-          "tokensPerTask": {
-            "total": 5216,
-            "reasoning": 1476,
-            "answer": 3741
-          },
-          "speedTokPerSec": 46.69,
-          "cliEval": {
-            "harness": "Codex",
-            "codingAgentScore": 35.58,
-            "costUsdPerTask": 0.7,
-            "frontierCode2": 26.51,
-            "sweAtlas": 36.29,
-            "terminalBench4": 43.94
-          }
+          "benchmark": "mirrorCode",
+          "effort": "max",
+          "score": 67.8,
+          "stderr": 11.7,
+          "runOn": "2026-10-27"
         },
         {
-          "id": "8cec011f-c959-4726-8668-2ee2409a6bca",
-          "slug": "gpt-6-2-astra-medium",
-          "effortSlug": "medium",
-          "effortLabel": "Med",
-          "shortTag": "M",
-          "effortLevel": 30,
-          "isDefaultEffort": true,
-          "scores": {
-            "coding": 52.57,
-            "terminalBench4": 58.59,
-            "frontierCode2": 46.56,
-            "intelligence": 57
-          },
-          "costUsdPerTask": {
-            "total": 1.618,
-            "input": 1.091,
-            "output": 0.527,
-            "reasoning": 0.222,
-            "cacheRead": 0.534
-          },
-          "tokensPerTask": {
-            "total": 13165,
-            "reasoning": 5547,
-            "answer": 7617
-          },
-          "speedTokPerSec": 47.82,
-          "cliEval": {
-            "harness": "Codex",
-            "codingAgentScore": 49.06,
-            "costUsdPerTask": 1.2,
-            "frontierCode2": 39.87,
-            "sweAtlas": 53.76,
-            "terminalBench4": 53.54
-          }
+          "benchmark": "gpqaDiamond",
+          "effort": "max",
+          "score": 96.8,
+          "stderr": 1.2,
+          "runOn": "2026-10-27"
         },
         {
-          "id": "fe959a7a-944c-4ba8-8e41-349712599b39",
-          "slug": "gpt-6-2-astra-high",
-          "effortSlug": "high",
-          "effortLabel": "High",
-          "shortTag": "H",
-          "effortLevel": 40,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 53.62,
-            "terminalBench4": 60.1,
-            "frontierCode2": 47.13,
-            "intelligence": 60.09
-          },
-          "costUsdPerTask": {
-            "total": 2.074,
-            "input": 1.361,
-            "output": 0.713,
-            "reasoning": 0.317,
-            "cacheRead": 0.634
-          },
-          "tokensPerTask": {
-            "total": 17828,
-            "reasoning": 7931,
-            "answer": 9897
-          },
-          "speedTokPerSec": 49.12,
-          "cliEval": {
-            "harness": "Codex",
-            "codingAgentScore": 52.28,
-            "costUsdPerTask": 2.37,
-            "frontierCode2": 42.16,
-            "sweAtlas": 54.57,
-            "terminalBench4": 60.1
-          }
-        },
-        {
-          "id": "592572d5-f789-4106-abbc-fadf2206d10b",
-          "slug": "gpt-6-2-astra-xhigh",
-          "effortSlug": "xhigh",
-          "effortLabel": "XHigh",
-          "shortTag": "XH",
-          "effortLevel": 50,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 56.55,
-            "terminalBench4": 64.14,
-            "frontierCode2": 48.95,
-            "intelligence": 61.56
-          },
-          "costUsdPerTask": {
-            "total": 2.521,
-            "input": 1.632,
-            "output": 0.89,
-            "reasoning": 0.444,
-            "cacheRead": 0.788
-          },
-          "tokensPerTask": {
-            "total": 22238,
-            "reasoning": 11095,
-            "answer": 11143
-          },
-          "speedTokPerSec": 49.01,
-          "cliEval": {
-            "harness": "Codex",
-            "codingAgentScore": 53.12,
-            "costUsdPerTask": 3.2,
-            "frontierCode2": 43.48,
-            "sweAtlas": 53.76,
-            "terminalBench4": 62.12
-          }
-        },
-        {
-          "id": "75c1b0b8-9db3-4c7e-95be-d74e59defee4",
-          "slug": "gpt-6-2-astra",
-          "effortSlug": "max",
-          "effortLabel": "Max",
-          "shortTag": "MAX",
-          "effortLevel": 60,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 54.76,
-            "terminalBench4": 64.14,
-            "frontierCode2": 45.38,
-            "intelligence": 62.14
-          },
-          "costUsdPerTask": {
-            "total": 3.998,
-            "input": 2.357,
-            "output": 1.641,
-            "reasoning": 1.046,
-            "cacheRead": 1.195
-          },
-          "tokensPerTask": {
-            "total": 41029,
-            "reasoning": 26150,
-            "answer": 14880
-          },
-          "speedTokPerSec": 49.66,
-          "cliEval": {
-            "harness": "Codex",
-            "codingAgentScore": 53.47,
-            "costUsdPerTask": 5.12,
-            "frontierCode2": 41.67,
-            "sweAtlas": 55.11,
-            "terminalBench4": 63.64
-          }
+          "benchmark": "frontierMath",
+          "effort": "max",
+          "score": 92.6,
+          "stderr": 1.6,
+          "runOn": "2026-10-27"
         }
       ]
     },
@@ -379,204 +112,32 @@
       "releaseDate": "2026-11-17",
       "deprecated": false,
       "supersededOn": null,
+      "announcementUrl": "https://developers.openai.com/api/docs/models/gpt-6.2-sol",
       "pricing": {
         "inputPer1M": 2,
         "outputPer1M": 10,
         "cachedInputPer1M": 0.1,
-        "contextWindowTokens": 1000000
+        "maxInputTokens": 922000
       },
-      "summary": "High-efficiency coding tier capturing near-frontier SWE and CLI pass rates at $0.18–$1.01/task.",
-      "announcementUrl": "https://developers.openai.com/api/docs/models/gpt-6.2-sol",
-      "benchmarkUrl": "https://artificialanalysis.ai/models/gpt-6-2-sol-xhigh",
-      "harborEval": {
+      "terminalBench": {
+        "version": "4.1",
         "agent": "Codex",
+        "agentVersion": "0.169.0",
+        "agentUrl": "https://openai.com/codex/",
         "effort": "max",
         "accuracy": 61.52,
-        "totalCostUsd": 349.16,
-        "costPerTrialUsd": 1.06
+        "ci95": 2.75,
+        "trials": 330,
+        "successes": 203,
+        "costPerTaskUsd": 1.0581,
+        "tokensPerTask": {
+          "total": 3288638,
+          "output": 48561
+        },
+        "minutesPerTask": 20.2,
+        "sourceUrl": "https://github.com/harbor-framework/terminal-bench/blob/main/leaderboard/submissions/2026-11-17-4-1-0-gpt-6-2-sol-max-codex.json"
       },
-      "efforts": [
-        {
-          "id": "a77965fb-2117-4e2c-bd8b-80b5579a7e7e",
-          "slug": "gpt-6-2-sol-low",
-          "effortSlug": "low",
-          "effortLabel": "Low",
-          "shortTag": "L",
-          "effortLevel": 20,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 34.62,
-            "terminalBench4": 37.88,
-            "frontierCode2": 31.37,
-            "intelligence": 40.55
-          },
-          "costUsdPerTask": {
-            "total": 0.184,
-            "input": 0.124,
-            "output": 0.06,
-            "reasoning": 0.013,
-            "cacheRead": 0.045
-          },
-          "tokensPerTask": {
-            "total": 5980,
-            "reasoning": 1310,
-            "answer": 4670
-          },
-          "speedTokPerSec": 64.18,
-          "cliEval": {
-            "harness": "Codex",
-            "codingAgentScore": 37.16,
-            "costUsdPerTask": 0.33,
-            "frontierCode2": 28.1,
-            "sweAtlas": 42.47,
-            "terminalBench4": 40.91
-          }
-        },
-        {
-          "id": "82b37079-56d9-4451-8a1a-22b0a921f4f8",
-          "slug": "gpt-6-2-sol-medium",
-          "effortSlug": "medium",
-          "effortLabel": "Med",
-          "shortTag": "M",
-          "effortLevel": 30,
-          "isDefaultEffort": true,
-          "scores": {
-            "coding": 48.73,
-            "terminalBench4": 56.06,
-            "frontierCode2": 41.4,
-            "intelligence": 52.68
-          },
-          "costUsdPerTask": {
-            "total": 0.406,
-            "input": 0.27,
-            "output": 0.137,
-            "reasoning": 0.044,
-            "cacheRead": 0.117
-          },
-          "tokensPerTask": {
-            "total": 13651,
-            "reasoning": 4402,
-            "answer": 9249
-          },
-          "speedTokPerSec": 68.43,
-          "cliEval": {
-            "harness": "Codex",
-            "codingAgentScore": 45.35,
-            "costUsdPerTask": 0.57,
-            "frontierCode2": 36.29,
-            "sweAtlas": 50.27,
-            "terminalBench4": 49.49
-          }
-        },
-        {
-          "id": "cd85e412-c43f-4535-bf8e-5ba113d97ca3",
-          "slug": "gpt-6-2-sol-high",
-          "effortSlug": "high",
-          "effortLabel": "High",
-          "shortTag": "H",
-          "effortLevel": 40,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 49.41,
-            "terminalBench4": 58.59,
-            "frontierCode2": 40.22,
-            "intelligence": 54.89
-          },
-          "costUsdPerTask": {
-            "total": 0.564,
-            "input": 0.362,
-            "output": 0.202,
-            "reasoning": 0.081,
-            "cacheRead": 0.164
-          },
-          "tokensPerTask": {
-            "total": 20160,
-            "reasoning": 8116,
-            "answer": 12044
-          },
-          "speedTokPerSec": 70.86,
-          "cliEval": {
-            "harness": "Codex",
-            "codingAgentScore": 47.46,
-            "costUsdPerTask": 0.76,
-            "frontierCode2": 38.29,
-            "sweAtlas": 50.54,
-            "terminalBench4": 53.54
-          }
-        },
-        {
-          "id": "27c326a6-ec9b-415f-a29e-b1f4927484dc",
-          "slug": "gpt-6-2-sol-xhigh",
-          "effortSlug": "xhigh",
-          "effortLabel": "XHigh",
-          "shortTag": "XH",
-          "effortLevel": 50,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 49.41,
-            "terminalBench4": 56.06,
-            "frontierCode2": 42.75,
-            "intelligence": 55.74
-          },
-          "costUsdPerTask": {
-            "total": 0.648,
-            "input": 0.405,
-            "output": 0.243,
-            "reasoning": 0.111,
-            "cacheRead": 0.183
-          },
-          "tokensPerTask": {
-            "total": 24323,
-            "reasoning": 11055,
-            "answer": 13268
-          },
-          "speedTokPerSec": 74.52,
-          "cliEval": {
-            "harness": "Codex",
-            "codingAgentScore": 49.79,
-            "costUsdPerTask": 0.9,
-            "frontierCode2": 40.44,
-            "sweAtlas": 51.34,
-            "terminalBench4": 57.58
-          }
-        },
-        {
-          "id": "a1a84b18-e8c9-48fb-8e04-6003bd9f6ff4",
-          "slug": "gpt-6-2-sol",
-          "effortSlug": "max",
-          "effortLabel": "Max",
-          "shortTag": "MAX",
-          "effortLevel": 60,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 52.24,
-            "terminalBench4": 60.1,
-            "frontierCode2": 44.38,
-            "intelligence": 57.26
-          },
-          "costUsdPerTask": {
-            "total": 1.014,
-            "input": 0.611,
-            "output": 0.404,
-            "reasoning": 0.228,
-            "cacheRead": 0.301
-          },
-          "tokensPerTask": {
-            "total": 40360,
-            "reasoning": 22800,
-            "answer": 17561
-          },
-          "speedTokPerSec": 75.5,
-          "cliEval": {
-            "harness": "Codex",
-            "codingAgentScore": 48.62,
-            "costUsdPerTask": 1.22,
-            "frontierCode2": 41.53,
-            "sweAtlas": 46.24,
-            "terminalBench4": 58.08
-          }
-        }
-      ]
+      "epoch": []
     },
     {
       "slug": "gemini-4-hydrogen",
@@ -585,145 +146,45 @@
       "releaseDate": "2026-11-12",
       "deprecated": false,
       "supersededOn": null,
+      "announcementUrl": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-4-hydrogen/",
       "pricing": {
         "inputPer1M": 1.5,
         "outputPer1M": 7.5,
         "cachedInputPer1M": 0.075,
-        "contextWindowTokens": 1000000
+        "maxInputTokens": 1048576
       },
-      "summary": "Fast, flat-priced 1M-context coding and execution workhorse scaling from $0.29 to $3.16/task.",
-      "announcementUrl": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-4-hydrogen/",
-      "benchmarkUrl": "https://artificialanalysis.ai/models/gemini-4-hydrogen-low",
-      "harborEval": {
+      "terminalBench": {
+        "version": "4.1",
         "agent": "Antigravity CLI",
+        "agentVersion": "1.5.7",
+        "agentUrl": "https://antigravity.google/docs/overview?tab=cli",
         "effort": "high",
         "accuracy": 56.36,
-        "totalCostUsd": 784.24,
-        "costPerTrialUsd": 2.38
+        "ci95": 2.97,
+        "trials": 330,
+        "successes": 186,
+        "costPerTaskUsd": 2.3765,
+        "tokensPerTask": {
+          "total": 10869576,
+          "output": 119482
+        },
+        "minutesPerTask": 32.1,
+        "sourceUrl": "https://github.com/harbor-framework/terminal-bench/blob/main/leaderboard/submissions/2026-11-13-4-1-0-gemini-gemini-4-hydrogen-high-antigravity-cli.json"
       },
-      "efforts": [
+      "epoch": [
         {
-          "id": "88c68c50-03c1-458a-9292-bd398c27adc5",
-          "slug": "gemini-4-hydrogen-low",
-          "effortSlug": "low",
-          "effortLabel": "Low",
-          "shortTag": "L",
-          "effortLevel": 20,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 7.93,
-            "terminalBench4": 6.57,
-            "frontierCode2": 9.29,
-            "intelligence": 26.89
-          },
-          "costUsdPerTask": {
-            "total": 0.292,
-            "input": 0.187,
-            "output": 0.106,
-            "reasoning": 0.046,
-            "cacheRead": 0.049
-          },
-          "tokensPerTask": {
-            "total": 14074,
-            "reasoning": 6103,
-            "answer": 7971
-          },
-          "speedTokPerSec": 158.93,
-          "cliEval": null
+          "benchmark": "gpqaDiamond",
+          "effort": "xhigh",
+          "score": 96.8,
+          "stderr": 1.2,
+          "runOn": "2026-11-13"
         },
         {
-          "id": "f0537484-af30-4a8a-bf34-368c552e5cfd",
-          "slug": "gemini-4-hydrogen-medium",
-          "effortSlug": "medium",
-          "effortLabel": "Med",
-          "shortTag": "M",
-          "effortLevel": 30,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 30.41,
-            "terminalBench4": 29.29,
-            "frontierCode2": 31.52,
-            "intelligence": 41.23
-          },
-          "costUsdPerTask": {
-            "total": 0.798,
-            "input": 0.503,
-            "output": 0.295,
-            "reasoning": 0.154,
-            "cacheRead": 0.215
-          },
-          "tokensPerTask": {
-            "total": 39353,
-            "reasoning": 20590,
-            "answer": 18763
-          },
-          "speedTokPerSec": 157.01,
-          "cliEval": null
-        },
-        {
-          "id": "dae0262d-26a4-44d1-925a-6f2731cbda6a",
-          "slug": "gemini-4-hydrogen-high",
-          "effortSlug": "high",
-          "effortLabel": "High",
-          "shortTag": "H",
-          "effortLevel": 40,
-          "isDefaultEffort": true,
-          "scores": {
-            "coding": 45.18,
-            "terminalBench4": 54.04,
-            "frontierCode2": 36.33,
-            "intelligence": 50.79
-          },
-          "costUsdPerTask": {
-            "total": 1.873,
-            "input": 1.236,
-            "output": 0.637,
-            "reasoning": 0.356,
-            "cacheRead": 0.572
-          },
-          "tokensPerTask": {
-            "total": 84978,
-            "reasoning": 47507,
-            "answer": 37472
-          },
-          "speedTokPerSec": 164.6,
-          "cliEval": null
-        },
-        {
-          "id": "dad0e3b1-e3e7-477a-99f9-c14457a91114",
-          "slug": "gemini-4-hydrogen",
-          "effortSlug": "xhigh",
-          "effortLabel": "XHigh",
-          "shortTag": "XH",
-          "effortLevel": 50,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 46.25,
-            "terminalBench4": 53.54,
-            "frontierCode2": 38.96,
-            "intelligence": 53.92
-          },
-          "costUsdPerTask": {
-            "total": 3.16,
-            "input": 2.002,
-            "output": 1.158,
-            "reasoning": 0.727,
-            "cacheRead": 1.208
-          },
-          "tokensPerTask": {
-            "total": 154406,
-            "reasoning": 96902,
-            "answer": 57504
-          },
-          "speedTokPerSec": 169.51,
-          "cliEval": {
-            "harness": "Antigravity CLI",
-            "codingAgentScore": 52.32,
-            "costUsdPerTask": 4.45,
-            "frontierCode2": 36.63,
-            "sweAtlas": 60.22,
-            "terminalBench4": 60.1
-          }
+          "benchmark": "frontierMath",
+          "effort": "xhigh",
+          "score": 88.1,
+          "stderr": 1.9,
+          "runOn": "2026-11-13"
         }
       ]
     },
@@ -734,202 +195,45 @@
       "releaseDate": "2026-11-09",
       "deprecated": false,
       "supersededOn": null,
+      "announcementUrl": "https://www.anthropic.com/claude-fable-and-mythos-5-2",
       "pricing": {
         "inputPer1M": 8,
         "outputPer1M": 40,
         "cachedInputPer1M": 0.2,
-        "contextWindowTokens": 1000000
+        "maxInputTokens": 1000000
       },
-      "summary": "Anthropic's highest-capability model; sets the overall ceiling on FrontierCode 2.0, Harbor Terminal-Bench, and Intelligence v5.",
-      "announcementUrl": "https://www.anthropic.com/claude-fable-and-mythos-5-2",
-      "benchmarkUrl": "https://artificialanalysis.ai/models/claude-fable-5-2-medium",
-      "harborEval": {
+      "terminalBench": {
+        "version": "4.1",
         "agent": "Claude Code",
+        "agentVersion": "2.1.321",
+        "agentUrl": "https://claude.com/product/claude-code",
         "effort": "max",
         "accuracy": 65.76,
-        "totalCostUsd": 16492.76,
-        "costPerTrialUsd": 49.98
+        "ci95": 2.85,
+        "trials": 330,
+        "successes": 217,
+        "costPerTaskUsd": 49.9781,
+        "tokensPerTask": {
+          "total": 47655770,
+          "output": 491352
+        },
+        "minutesPerTask": 122.2,
+        "sourceUrl": "https://github.com/harbor-framework/terminal-bench/blob/main/leaderboard/submissions/2026-11-10-anthropic-claude-fable-5-2-max-claude-code.json"
       },
-      "efforts": [
+      "epoch": [
         {
-          "id": "cfc7acb1-d903-4858-9b6c-6c7776caf8f9",
-          "slug": "claude-fable-5-2-low",
-          "effortSlug": "low",
-          "effortLabel": "Low",
-          "shortTag": "L",
-          "effortLevel": 20,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 46.49,
-            "terminalBench4": 54.55,
-            "frontierCode2": 38.44,
-            "intelligence": 53.92
-          },
-          "costUsdPerTask": {
-            "total": 3.097,
-            "input": 1.673,
-            "output": 1.424,
-            "reasoning": 0.654,
-            "cacheRead": 0.632
-          },
-          "tokensPerTask": {
-            "total": 35860,
-            "reasoning": 16503,
-            "answer": 19357
-          },
-          "speedTokPerSec": 109.5,
-          "cliEval": {
-            "harness": "Claude Code",
-            "codingAgentScore": 47.96,
-            "costUsdPerTask": 2.49,
-            "frontierCode2": 30.91,
-            "sweAtlas": 59.95,
-            "terminalBench4": 53.03
-          }
+          "benchmark": "gpqaDiamond",
+          "effort": "max",
+          "score": 93.9,
+          "stderr": 1.6,
+          "runOn": "2026-11-06"
         },
         {
-          "id": "0c9b4e05-9259-42cc-b40e-d6acbbeaa7e8",
-          "slug": "claude-fable-5-2-medium",
-          "effortSlug": "medium",
-          "effortLabel": "Med",
-          "shortTag": "M",
-          "effortLevel": 30,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 48.17,
-            "terminalBench4": 55.05,
-            "frontierCode2": 41.3,
-            "intelligence": 56.41
-          },
-          "costUsdPerTask": {
-            "total": 3.803,
-            "input": 2.092,
-            "output": 1.71,
-            "reasoning": 0.817,
-            "cacheRead": 0.864
-          },
-          "tokensPerTask": {
-            "total": 43131,
-            "reasoning": 20675,
-            "answer": 22456
-          },
-          "speedTokPerSec": 110.87,
-          "cliEval": {
-            "harness": "Claude Code",
-            "codingAgentScore": 53.04,
-            "costUsdPerTask": 2.89,
-            "frontierCode2": 35.82,
-            "sweAtlas": 63.71,
-            "terminalBench4": 59.6
-          }
-        },
-        {
-          "id": "fdc1913b-9497-45ef-83f7-17dae756f37e",
-          "slug": "claude-fable-5-2-high",
-          "effortSlug": "high",
-          "effortLabel": "High",
-          "shortTag": "H",
-          "effortLevel": 40,
-          "isDefaultEffort": true,
-          "scores": {
-            "coding": 54.36,
-            "terminalBench4": 59.6,
-            "frontierCode2": 49.13,
-            "intelligence": 61.82
-          },
-          "costUsdPerTask": {
-            "total": 9.078,
-            "input": 5.19,
-            "output": 3.888,
-            "reasoning": 2.315,
-            "cacheRead": 2.597
-          },
-          "tokensPerTask": {
-            "total": 97841,
-            "reasoning": 58241,
-            "answer": 39600
-          },
-          "speedTokPerSec": 107.87,
-          "cliEval": {
-            "harness": "Claude Code",
-            "codingAgentScore": 58.24,
-            "costUsdPerTask": 7.51,
-            "frontierCode2": 48.74,
-            "sweAtlas": 61.83,
-            "terminalBench4": 64.14
-          }
-        },
-        {
-          "id": "76942526-cc96-46b0-bc27-29561c53ed70",
-          "slug": "claude-fable-5-2-xhigh",
-          "effortSlug": "xhigh",
-          "effortLabel": "XHigh",
-          "shortTag": "XH",
-          "effortLevel": 50,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 54.6,
-            "terminalBench4": 61.62,
-            "frontierCode2": 47.58,
-            "intelligence": 62.22
-          },
-          "costUsdPerTask": {
-            "total": 14.829,
-            "input": 8.398,
-            "output": 6.431,
-            "reasoning": 4.223,
-            "cacheRead": 4.383
-          },
-          "tokensPerTask": {
-            "total": 161944,
-            "reasoning": 106356,
-            "answer": 55588
-          },
-          "speedTokPerSec": 110.53,
-          "cliEval": {
-            "harness": "Claude Code",
-            "codingAgentScore": 58.47,
-            "costUsdPerTask": 15.47,
-            "frontierCode2": 49.18,
-            "sweAtlas": 62.1,
-            "terminalBench4": 64.14
-          }
-        },
-        {
-          "id": "593f2d23-247b-41c9-a679-cebd225f0a9a",
-          "slug": "claude-fable-5-2",
-          "effortSlug": "max",
-          "effortLabel": "Max",
-          "shortTag": "MAX",
-          "effortLevel": 60,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 54.18,
-            "terminalBench4": 59.6,
-            "frontierCode2": 48.76,
-            "intelligence": 64.56
-          },
-          "costUsdPerTask": {
-            "total": 26.539,
-            "input": 15.647,
-            "output": 10.892,
-            "reasoning": 7.667,
-            "cacheRead": 8.525
-          },
-          "tokensPerTask": {
-            "total": 273776,
-            "reasoning": 192701,
-            "answer": 81075
-          },
-          "speedTokPerSec": 109.79,
-          "cliEval": {
-            "harness": "Claude Code",
-            "codingAgentScore": 55.74,
-            "costUsdPerTask": 44.22,
-            "frontierCode2": 43.6,
-            "sweAtlas": 60.48,
-            "terminalBench4": 63.13
-          }
+          "benchmark": "frontierMath",
+          "effort": "max",
+          "score": 95.1,
+          "stderr": 1.3,
+          "runOn": "2026-11-06"
         }
       ]
     },
@@ -940,116 +244,45 @@
       "releaseDate": "2026-10-28",
       "deprecated": false,
       "supersededOn": null,
-      "pricing": {
-        "inputPer1M": 4,
-        "outputPer1M": 20,
-        "cachedInputPer1M": 0.2,
-        "contextWindowTokens": 1000000
-      },
-      "summary": "Deep sustained-reasoning Gemini 4 flagship; hits 65.2% on Terminal-Bench 4.0 at High effort.",
       "announcementUrl": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-4-carbon/",
-      "benchmarkUrl": "https://artificialanalysis.ai/models/gemini-4-carbon-medium",
-      "harborEval": {
+      "pricing": {
+        "inputPer1M": 2,
+        "outputPer1M": 10,
+        "cachedInputPer1M": 0.1,
+        "maxInputTokens": 1048576
+      },
+      "terminalBench": {
+        "version": "4.1",
         "agent": "Antigravity CLI",
+        "agentVersion": "1.5.7",
+        "agentUrl": "https://antigravity.google/docs/overview?tab=cli",
         "effort": "high",
         "accuracy": 64.55,
-        "totalCostUsd": 1358.25,
-        "costPerTrialUsd": 4.12
+        "ci95": 3.23,
+        "trials": 330,
+        "successes": 213,
+        "costPerTaskUsd": 4.1159,
+        "tokensPerTask": {
+          "total": 11458164,
+          "output": 166082
+        },
+        "minutesPerTask": 58.3,
+        "sourceUrl": "https://github.com/harbor-framework/terminal-bench/blob/main/leaderboard/submissions/2026-11-14-4-1-0-gemini-gemini-4-carbon-high-antigravity-cli.json"
       },
-      "efforts": [
+      "epoch": [
         {
-          "id": "b3866703-a9f7-4ea2-8f3f-b361c90aaf0e",
-          "slug": "gemini-4-carbon-low",
-          "effortSlug": "low",
-          "effortLabel": "Low",
-          "shortTag": "L",
-          "effortLevel": 20,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 46.12,
-            "terminalBench4": 62.63,
-            "frontierCode2": 29.62,
-            "intelligence": 54.22
-          },
-          "costUsdPerTask": {
-            "total": 7.187,
-            "input": 5.463,
-            "output": 1.723,
-            "reasoning": 0.648,
-            "cacheRead": 2.179
-          },
-          "tokensPerTask": {
-            "total": 86165,
-            "reasoning": 32396,
-            "answer": 53769
-          },
-          "speedTokPerSec": 48.25,
-          "cliEval": null
+          "benchmark": "gpqaDiamond",
+          "effort": "high",
+          "score": 96.5,
+          "stderr": 1.2,
+          "runOn": "2026-11-02"
         },
         {
-          "id": "0d3eaafd-54ed-4f78-bdd7-05a2db883986",
-          "slug": "gemini-4-carbon-medium",
-          "effortSlug": "medium",
-          "effortLabel": "Med",
-          "shortTag": "M",
-          "effortLevel": 30,
-          "isDefaultEffort": true,
-          "scores": {
-            "coding": 50.03,
-            "terminalBench4": 60.61,
-            "frontierCode2": 39.45,
-            "intelligence": 58.26
-          },
-          "costUsdPerTask": {
-            "total": 6.586,
-            "input": 4.526,
-            "output": 2.06,
-            "reasoning": 1.124,
-            "cacheRead": 1.728
-          },
-          "tokensPerTask": {
-            "total": 103012,
-            "reasoning": 56204,
-            "answer": 46808
-          },
-          "speedTokPerSec": 58.52,
-          "cliEval": null
-        },
-        {
-          "id": "909ed0ba-bcc5-4f38-8162-08a4e187a772",
-          "slug": "gemini-4-carbon",
-          "effortSlug": "high",
-          "effortLabel": "High",
-          "shortTag": "H",
-          "effortLevel": 40,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 52.86,
-            "terminalBench4": 65.15,
-            "frontierCode2": 40.56,
-            "intelligence": 60.03
-          },
-          "costUsdPerTask": {
-            "total": 7.756,
-            "input": 5.3,
-            "output": 2.455,
-            "reasoning": 1.444,
-            "cacheRead": 2.039
-          },
-          "tokensPerTask": {
-            "total": 122768,
-            "reasoning": 72178,
-            "answer": 50590
-          },
-          "speedTokPerSec": 55.94,
-          "cliEval": {
-            "harness": "Antigravity CLI",
-            "codingAgentScore": 55.47,
-            "costUsdPerTask": 9.75,
-            "frontierCode2": 38.04,
-            "sweAtlas": 63.71,
-            "terminalBench4": 64.65
-          }
+          "benchmark": "frontierMath",
+          "effort": "high",
+          "score": 90.5,
+          "stderr": 1.7,
+          "runOn": "2026-11-02"
         }
       ]
     },
@@ -1060,203 +293,52 @@
       "releaseDate": "2026-10-26",
       "deprecated": false,
       "supersededOn": null,
+      "announcementUrl": "https://developers.openai.com/api/docs/models/gpt-6.1-terra",
       "pricing": {
         "inputPer1M": 1,
         "outputPer1M": 5,
         "cachedInputPer1M": 0.05,
-        "contextWindowTokens": 1000000
+        "maxInputTokens": 922000
       },
-      "summary": "Compact coding and UI-capable reasoning tier spanning six effort settings under $1/task.",
-      "announcementUrl": "https://developers.openai.com/api/docs/models/gpt-6.1-terra",
-      "benchmarkUrl": "https://artificialanalysis.ai/models/gpt-6-1-terra-non-reasoning",
-      "harborEval": {
+      "terminalBench": {
+        "version": "4.1",
         "agent": "Codex",
+        "agentVersion": "0.164.0",
+        "agentUrl": "https://openai.com/codex/",
         "effort": "max",
         "accuracy": 53.33,
-        "totalCostUsd": 874.44,
-        "costPerTrialUsd": 2.65
+        "ci95": 3.09,
+        "trials": 330,
+        "successes": 176,
+        "costPerTaskUsd": 2.6498,
+        "tokensPerTask": {
+          "total": 25702420,
+          "output": 100138
+        },
+        "minutesPerTask": 38.2,
+        "sourceUrl": "https://github.com/harbor-framework/terminal-bench/blob/main/leaderboard/submissions/2026-11-12-4-1-0-gpt-6-1-terra-max-codex-regrade.json"
       },
-      "efforts": [
+      "epoch": [
         {
-          "id": "0d3c777f-6817-42d7-9bb9-223314bc5a57",
-          "slug": "gpt-6-1-terra-non-reasoning",
-          "effortSlug": "none",
-          "effortLabel": "None",
-          "shortTag": "0",
-          "effortLevel": 0,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 30.06,
-            "terminalBench4": 26.77,
-            "frontierCode2": 33.35,
-            "intelligence": 30.52
-          },
-          "costUsdPerTask": {
-            "total": 0.226,
-            "input": 0.178,
-            "output": 0.047,
-            "reasoning": 0,
-            "cacheRead": 0.098
-          },
-          "tokensPerTask": {
-            "total": 9488,
-            "reasoning": 0,
-            "answer": 9488
-          },
-          "speedTokPerSec": 59.19,
-          "cliEval": null
+          "benchmark": "mirrorCode",
+          "effort": "max",
+          "score": 76.7,
+          "stderr": 9.3,
+          "runOn": "2026-10-30"
         },
         {
-          "id": "c955b262-a17f-4f1a-b097-6860b866295b",
-          "slug": "gpt-6-1-terra-low",
-          "effortSlug": "low",
-          "effortLabel": "Low",
-          "shortTag": "L",
-          "effortLevel": 20,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 19.82,
-            "terminalBench4": 15.15,
-            "frontierCode2": 24.49,
-            "intelligence": 29.42
-          },
-          "costUsdPerTask": {
-            "total": 0.071,
-            "input": 0.049,
-            "output": 0.022,
-            "reasoning": 0.005,
-            "cacheRead": 0.015
-          },
-          "tokensPerTask": {
-            "total": 4422,
-            "reasoning": 950,
-            "answer": 3472
-          },
-          "speedTokPerSec": 56.92,
-          "cliEval": null
+          "benchmark": "gpqaDiamond",
+          "effort": "max",
+          "score": 94.3,
+          "stderr": 1.5,
+          "runOn": "2026-10-26"
         },
         {
-          "id": "c441e158-a87d-4116-911b-93325e4b4f1c",
-          "slug": "gpt-6-1-terra-medium",
-          "effortSlug": "medium",
-          "effortLabel": "Med",
-          "shortTag": "M",
-          "effortLevel": 30,
-          "isDefaultEffort": true,
-          "scores": {
-            "coding": 33.43,
-            "terminalBench4": 32.32,
-            "frontierCode2": 34.54,
-            "intelligence": 38.17
-          },
-          "costUsdPerTask": {
-            "total": 0.169,
-            "input": 0.114,
-            "output": 0.054,
-            "reasoning": 0.02,
-            "cacheRead": 0.051
-          },
-          "tokensPerTask": {
-            "total": 10875,
-            "reasoning": 4055,
-            "answer": 6821
-          },
-          "speedTokPerSec": 60.43,
-          "cliEval": null
-        },
-        {
-          "id": "ea3e1f50-f62d-41d2-849a-9af0413e4d37",
-          "slug": "gpt-6-1-terra-high",
-          "effortSlug": "high",
-          "effortLabel": "High",
-          "shortTag": "H",
-          "effortLevel": 40,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 39.69,
-            "terminalBench4": 41.92,
-            "frontierCode2": 37.46,
-            "intelligence": 42.43
-          },
-          "costUsdPerTask": {
-            "total": 0.259,
-            "input": 0.176,
-            "output": 0.084,
-            "reasoning": 0.038,
-            "cacheRead": 0.088
-          },
-          "tokensPerTask": {
-            "total": 16746,
-            "reasoning": 7618,
-            "answer": 9129
-          },
-          "speedTokPerSec": 63.03,
-          "cliEval": null
-        },
-        {
-          "id": "e8d443ba-8aca-4830-a186-ae869bb9c6fe",
-          "slug": "gpt-6-1-terra-xhigh",
-          "effortSlug": "xhigh",
-          "effortLabel": "XHigh",
-          "shortTag": "XH",
-          "effortLevel": 50,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 41.66,
-            "terminalBench4": 46.46,
-            "frontierCode2": 36.86,
-            "intelligence": 45.25
-          },
-          "costUsdPerTask": {
-            "total": 0.401,
-            "input": 0.27,
-            "output": 0.131,
-            "reasoning": 0.071,
-            "cacheRead": 0.149
-          },
-          "tokensPerTask": {
-            "total": 26200,
-            "reasoning": 14193,
-            "answer": 12006
-          },
-          "speedTokPerSec": 62.09,
-          "cliEval": null
-        },
-        {
-          "id": "b0c462cf-f2d0-4126-9434-28db9502219f",
-          "slug": "gpt-6-1-terra",
-          "effortSlug": "max",
-          "effortLabel": "Max",
-          "shortTag": "MAX",
-          "effortLevel": 60,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 48.94,
-            "terminalBench4": 55.56,
-            "frontierCode2": 42.32,
-            "intelligence": 51.33
-          },
-          "costUsdPerTask": {
-            "total": 0.961,
-            "input": 0.662,
-            "output": 0.299,
-            "reasoning": 0.197,
-            "cacheRead": 0.426
-          },
-          "tokensPerTask": {
-            "total": 59883,
-            "reasoning": 39362,
-            "answer": 20521
-          },
-          "speedTokPerSec": 65.65,
-          "cliEval": {
-            "harness": "Codex",
-            "codingAgentScore": 48.65,
-            "costUsdPerTask": 1.53,
-            "frontierCode2": 41.41,
-            "sweAtlas": 54.03,
-            "terminalBench4": 50.51
-          }
+          "benchmark": "frontierMath",
+          "effort": "max",
+          "score": 90.9,
+          "stderr": 1.7,
+          "runOn": "2026-10-26"
         }
       ]
     },
@@ -1267,174 +349,52 @@
       "releaseDate": "2026-10-07",
       "deprecated": false,
       "supersededOn": null,
+      "announcementUrl": "https://www.anthropic.com/claude-haiku-5-5",
       "pricing": {
         "inputPer1M": 0.1,
         "outputPer1M": 0.5,
         "cachedInputPer1M": 0.01,
-        "contextWindowTokens": 1000000
+        "maxInputTokens": 1000000
       },
-      "summary": "High-throughput sub-$0.45/task tier rounding out the Claude 5.5 lineup across five thinking depths.",
-      "announcementUrl": "https://www.anthropic.com/claude-haiku-5-5",
-      "benchmarkUrl": "https://artificialanalysis.ai/models/claude-haiku-5-5-high",
-      "harborEval": {
+      "terminalBench": {
+        "version": "4.1",
         "agent": "Claude Code",
+        "agentVersion": "2.1.311",
+        "agentUrl": "https://claude.com/product/claude-code",
         "effort": "max",
         "accuracy": 40,
-        "totalCostUsd": 952.47,
-        "costPerTrialUsd": 2.89
+        "ci95": 3.61,
+        "trials": 330,
+        "successes": 132,
+        "costPerTaskUsd": 2.8863,
+        "tokensPerTask": {
+          "total": 36595608,
+          "output": 386483
+        },
+        "minutesPerTask": 67.7,
+        "sourceUrl": "https://github.com/harbor-framework/terminal-bench/blob/main/leaderboard/submissions/2026-11-12-4-1-0-haiku-5-5-max-claude-code-regrade.json"
       },
-      "efforts": [
+      "epoch": [
         {
-          "id": "42908ae3-d3bd-4934-be19-fbff93d3fde8",
-          "slug": "claude-haiku-5-5-low",
-          "effortSlug": "low",
-          "effortLabel": "Low",
-          "shortTag": "L",
-          "effortLevel": 20,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 10.33,
-            "terminalBench4": 12.63,
-            "frontierCode2": 8.04,
-            "intelligence": 18.62
-          },
-          "costUsdPerTask": {
-            "total": 0.044,
-            "input": 0.03,
-            "output": 0.014,
-            "reasoning": 0.008,
-            "cacheRead": 0.02
-          },
-          "tokensPerTask": {
-            "total": 28161,
-            "reasoning": 15280,
-            "answer": 12881
-          },
-          "speedTokPerSec": 213.64,
-          "cliEval": null
+          "benchmark": "mirrorCode",
+          "effort": "max",
+          "score": 78.9,
+          "stderr": 8,
+          "runOn": "2026-10-21"
         },
         {
-          "id": "af26fff4-8120-41be-a5f0-86aaea023f20",
-          "slug": "claude-haiku-5-5-medium",
-          "effortSlug": "medium",
-          "effortLabel": "Med",
-          "shortTag": "M",
-          "effortLevel": 30,
-          "isDefaultEffort": true,
-          "scores": {
-            "coding": 15.62,
-            "terminalBench4": 15.15,
-            "frontierCode2": 16.09,
-            "intelligence": 24.6
-          },
-          "costUsdPerTask": {
-            "total": 0.092,
-            "input": 0.065,
-            "output": 0.027,
-            "reasoning": 0.016,
-            "cacheRead": 0.047
-          },
-          "tokensPerTask": {
-            "total": 53335,
-            "reasoning": 32091,
-            "answer": 21244
-          },
-          "speedTokPerSec": 221.95,
-          "cliEval": null
+          "benchmark": "gpqaDiamond",
+          "effort": "max",
+          "score": 89.6,
+          "stderr": 2,
+          "runOn": "2026-10-09"
         },
         {
-          "id": "20829974-af06-497e-9f42-77fb958d43b9",
-          "slug": "claude-haiku-5-5-high",
-          "effortSlug": "high",
-          "effortLabel": "High",
-          "shortTag": "H",
-          "effortLevel": 40,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 22.46,
-            "terminalBench4": 21.72,
-            "frontierCode2": 23.2,
-            "intelligence": 29.87
-          },
-          "costUsdPerTask": {
-            "total": 0.159,
-            "input": 0.115,
-            "output": 0.044,
-            "reasoning": 0.029,
-            "cacheRead": 0.086
-          },
-          "tokensPerTask": {
-            "total": 88064,
-            "reasoning": 57529,
-            "answer": 30535
-          },
-          "speedTokPerSec": 226.92,
-          "cliEval": null
-        },
-        {
-          "id": "41b5bf5e-daf6-42d9-b8d1-60e340a3028d",
-          "slug": "claude-haiku-5-5-xhigh",
-          "effortSlug": "xhigh",
-          "effortLabel": "XHigh",
-          "shortTag": "XH",
-          "effortLevel": 50,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 29.61,
-            "terminalBench4": 29.29,
-            "frontierCode2": 29.93,
-            "intelligence": 34.64
-          },
-          "costUsdPerTask": {
-            "total": 0.248,
-            "input": 0.18,
-            "output": 0.068,
-            "reasoning": 0.049,
-            "cacheRead": 0.139
-          },
-          "tokensPerTask": {
-            "total": 136177,
-            "reasoning": 97261,
-            "answer": 38916
-          },
-          "speedTokPerSec": 237.72,
-          "cliEval": null
-        },
-        {
-          "id": "7d064a11-6e78-4030-b535-cdf940615041",
-          "slug": "claude-haiku-5-5",
-          "effortSlug": "max",
-          "effortLabel": "Max",
-          "shortTag": "MAX",
-          "effortLevel": 60,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 33.88,
-            "terminalBench4": 32.83,
-            "frontierCode2": 34.93,
-            "intelligence": 36.48
-          },
-          "costUsdPerTask": {
-            "total": 0.411,
-            "input": 0.298,
-            "output": 0.113,
-            "reasoning": 0.086,
-            "cacheRead": 0.233
-          },
-          "tokensPerTask": {
-            "total": 225966,
-            "reasoning": 172814,
-            "answer": 53151
-          },
-          "speedTokPerSec": 253.73,
-          "cliEval": {
-            "harness": "Claude Code",
-            "codingAgentScore": 29.59,
-            "costUsdPerTask": 2.25,
-            "frontierCode2": 23.08,
-            "sweAtlas": 33.87,
-            "terminalBench4": 31.82
-          }
+          "benchmark": "frontierMath",
+          "effort": "max",
+          "score": 75.1,
+          "stderr": 2.6,
+          "runOn": "2026-10-07"
         }
       ]
     },
@@ -1445,87 +405,52 @@
       "releaseDate": "2026-09-30",
       "deprecated": false,
       "supersededOn": null,
+      "announcementUrl": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-4-argon/",
       "pricing": {
         "inputPer1M": 2,
         "outputPer1M": 10,
         "cachedInputPer1M": 0.1,
-        "contextWindowTokens": 1000000
+        "maxInputTokens": 1048576
       },
-      "summary": "Initial Gemini 4 frontier release introducing Google's element-series developer lineup.",
-      "announcementUrl": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-4-argon/",
-      "benchmarkUrl": "https://artificialanalysis.ai/models/gemini-4-argon-medium",
-      "harborEval": {
+      "terminalBench": {
+        "version": "4.1",
         "agent": "Antigravity CLI",
+        "agentVersion": "1.5.2",
+        "agentUrl": "https://antigravity.google/cli",
         "effort": "high",
         "accuracy": 55.45,
-        "totalCostUsd": 1108.98,
-        "costPerTrialUsd": 3.36
+        "ci95": 2.85,
+        "trials": 330,
+        "successes": 183,
+        "costPerTaskUsd": 3.3605,
+        "tokensPerTask": {
+          "total": 8423350,
+          "output": 162988
+        },
+        "minutesPerTask": 64.9,
+        "sourceUrl": "https://github.com/harbor-framework/terminal-bench/blob/main/leaderboard/submissions/2026-11-13-4-1-0-gemini-4-argon-high-antigravity-cli-regrade.json"
       },
-      "efforts": [
+      "epoch": [
         {
-          "id": "48e6f735-f2bc-418f-b99f-3dc5a0ddda77",
-          "slug": "gemini-4-argon-medium",
-          "effortSlug": "medium",
-          "effortLabel": "Med",
-          "shortTag": "M",
-          "effortLevel": 30,
-          "isDefaultEffort": true,
-          "scores": {
-            "coding": 40.03,
-            "terminalBench4": 55.05,
-            "frontierCode2": 25.02,
-            "intelligence": 47.6
-          },
-          "costUsdPerTask": {
-            "total": 4.315,
-            "input": 3.311,
-            "output": 1.004,
-            "reasoning": 0.551,
-            "cacheRead": 0.844
-          },
-          "tokensPerTask": {
-            "total": 100407,
-            "reasoning": 55065,
-            "answer": 45342
-          },
-          "speedTokPerSec": 57.85,
-          "cliEval": null
+          "benchmark": "mirrorCode",
+          "effort": "high",
+          "score": 58.9,
+          "stderr": 11.7,
+          "runOn": "2026-10-14"
         },
         {
-          "id": "d366dfa1-d940-4788-aa73-d298c45699b3",
-          "slug": "gemini-4-argon",
-          "effortSlug": "high",
-          "effortLabel": "High",
-          "shortTag": "H",
-          "effortLevel": 40,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 41.39,
-            "terminalBench4": 57.07,
-            "frontierCode2": 25.71,
-            "intelligence": 50.41
-          },
-          "costUsdPerTask": {
-            "total": 4.973,
-            "input": 3.81,
-            "output": 1.164,
-            "reasoning": 0.683,
-            "cacheRead": 0.976
-          },
-          "tokensPerTask": {
-            "total": 116368,
-            "reasoning": 68301,
-            "answer": 48067
-          },
-          "speedTokPerSec": 65.85,
-          "cliEval": {
-            "harness": "Antigravity CLI",
-            "codingAgentScore": 45.5,
-            "costUsdPerTask": 6.84,
-            "frontierCode2": 24.82,
-            "sweAtlas": 55.11,
-            "terminalBench4": 56.57
-          }
+          "benchmark": "gpqaDiamond",
+          "effort": "high",
+          "score": 96.4,
+          "stderr": 1.2,
+          "runOn": "2026-10-13"
+        },
+        {
+          "benchmark": "frontierMath",
+          "effort": "high",
+          "score": 86,
+          "stderr": 2.1,
+          "runOn": "2026-10-13"
         }
       ]
     },
@@ -1536,174 +461,52 @@
       "releaseDate": "2026-09-29",
       "deprecated": true,
       "supersededOn": "2026-11-17",
+      "announcementUrl": "https://developers.openai.com/api/docs/models/gpt-6.1-sol",
       "pricing": {
         "inputPer1M": 2,
         "outputPer1M": 10,
         "cachedInputPer1M": 0.1,
-        "contextWindowTokens": 1000000
+        "maxInputTokens": 922000
       },
-      "summary": "Late-September efficiency leader that established the sub-$0.60/task coding frontier before GPT-6.2 Sol.",
-      "announcementUrl": "https://developers.openai.com/api/docs/models/gpt-6.1-sol",
-      "benchmarkUrl": "https://artificialanalysis.ai/models/gpt-6-1-sol-xhigh",
-      "harborEval": {
+      "terminalBench": {
+        "version": "4.0",
         "agent": "Codex",
+        "agentVersion": "0.159.0",
+        "agentUrl": "https://openai.com/codex/",
         "effort": "max",
         "accuracy": 58.18,
-        "totalCostUsd": 634.24,
-        "costPerTrialUsd": 1.92
+        "ci95": 3.11,
+        "trials": 330,
+        "successes": 192,
+        "costPerTaskUsd": 1.9219,
+        "tokensPerTask": {
+          "total": 4424050,
+          "output": 94892
+        },
+        "minutesPerTask": 52.9,
+        "sourceUrl": "https://github.com/harbor-framework/terminal-bench/blob/main/leaderboard/submissions/2026-09-30-openai-gpt-6-1-sol-max-codex.json"
       },
-      "efforts": [
+      "epoch": [
         {
-          "id": "e76e0fe5-93ca-4272-9359-2eb1740467d1",
-          "slug": "gpt-6-1-sol-low",
-          "effortSlug": "low",
-          "effortLabel": "Low",
-          "shortTag": "L",
-          "effortLevel": 20,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 25.48,
-            "terminalBench4": 30.81,
-            "frontierCode2": 20.16,
-            "intelligence": 34.8
-          },
-          "costUsdPerTask": {
-            "total": 0.161,
-            "input": 0.103,
-            "output": 0.058,
-            "reasoning": 0.016,
-            "cacheRead": 0.033
-          },
-          "tokensPerTask": {
-            "total": 5838,
-            "reasoning": 1585,
-            "answer": 4253
-          },
-          "speedTokPerSec": 51.42,
-          "cliEval": null
+          "benchmark": "mirrorCode",
+          "effort": "max",
+          "score": 61.1,
+          "stderr": 11.3,
+          "runOn": "2026-10-05"
         },
         {
-          "id": "a2e51d62-ea4e-4f15-8be0-be9dc1fb489d",
-          "slug": "gpt-6-1-sol-medium",
-          "effortSlug": "medium",
-          "effortLabel": "Med",
-          "shortTag": "M",
-          "effortLevel": 30,
-          "isDefaultEffort": true,
-          "scores": {
-            "coding": 40.68,
-            "terminalBench4": 47.98,
-            "frontierCode2": 33.39,
-            "intelligence": 46.35
-          },
-          "costUsdPerTask": {
-            "total": 0.359,
-            "input": 0.224,
-            "output": 0.135,
-            "reasoning": 0.048,
-            "cacheRead": 0.097
-          },
-          "tokensPerTask": {
-            "total": 13518,
-            "reasoning": 4805,
-            "answer": 8714
-          },
-          "speedTokPerSec": 53.14,
-          "cliEval": null
+          "benchmark": "gpqaDiamond",
+          "effort": "max",
+          "score": 95.4,
+          "stderr": 1.4,
+          "runOn": "2026-09-29"
         },
         {
-          "id": "3b84fee3-b70a-41bc-819e-5fbdef9a0042",
-          "slug": "gpt-6-1-sol-high",
-          "effortSlug": "high",
-          "effortLabel": "High",
-          "shortTag": "H",
-          "effortLevel": 40,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 44.13,
-            "terminalBench4": 51.52,
-            "frontierCode2": 36.74,
-            "intelligence": 50.33
-          },
-          "costUsdPerTask": {
-            "total": 0.591,
-            "input": 0.365,
-            "output": 0.226,
-            "reasoning": 0.101,
-            "cacheRead": 0.169
-          },
-          "tokensPerTask": {
-            "total": 22606,
-            "reasoning": 10135,
-            "answer": 12471
-          },
-          "speedTokPerSec": 50.86,
-          "cliEval": null
-        },
-        {
-          "id": "092a3b0e-c5c8-45dc-bf1b-53673c8ff352",
-          "slug": "gpt-6-1-sol-xhigh",
-          "effortSlug": "xhigh",
-          "effortLabel": "XHigh",
-          "shortTag": "XH",
-          "effortLevel": 50,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 46.28,
-            "terminalBench4": 54.04,
-            "frontierCode2": 38.52,
-            "intelligence": 52.46
-          },
-          "costUsdPerTask": {
-            "total": 0.764,
-            "input": 0.462,
-            "output": 0.302,
-            "reasoning": 0.155,
-            "cacheRead": 0.227
-          },
-          "tokensPerTask": {
-            "total": 30241,
-            "reasoning": 15527,
-            "answer": 14715
-          },
-          "speedTokPerSec": 52.05,
-          "cliEval": null
-        },
-        {
-          "id": "b25ac058-1e33-4c31-bbc9-a20c3ad0717a",
-          "slug": "gpt-6-1-sol",
-          "effortSlug": "max",
-          "effortLabel": "Max",
-          "shortTag": "MAX",
-          "effortLevel": 60,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 48.34,
-            "terminalBench4": 56.06,
-            "frontierCode2": 40.63,
-            "intelligence": 54.61
-          },
-          "costUsdPerTask": {
-            "total": 1.272,
-            "input": 0.594,
-            "output": 0.678,
-            "reasoning": 0.492,
-            "cacheRead": 0.252
-          },
-          "tokensPerTask": {
-            "total": 67824,
-            "reasoning": 49213,
-            "answer": 18611
-          },
-          "speedTokPerSec": 47.98,
-          "cliEval": {
-            "harness": "Codex",
-            "codingAgentScore": 52.16,
-            "costUsdPerTask": 1.51,
-            "frontierCode2": 42.49,
-            "sweAtlas": 59.95,
-            "terminalBench4": 54.04
-          }
+          "benchmark": "frontierMath",
+          "effort": "max",
+          "score": 93.7,
+          "stderr": 1.4,
+          "runOn": "2026-09-29"
         }
       ]
     },
@@ -1714,174 +517,52 @@
       "releaseDate": "2026-09-28",
       "deprecated": false,
       "supersededOn": null,
+      "announcementUrl": "https://www.anthropic.com/claude-sonnet-5-5",
       "pricing": {
         "inputPer1M": 2,
         "outputPer1M": 10,
         "cachedInputPer1M": 0.1,
-        "contextWindowTokens": 1000000
+        "maxInputTokens": 1000000
       },
-      "summary": "Everyday Claude Code workhorse reaching 63.6% on Terminal-Bench 4.0 at Max effort.",
-      "announcementUrl": "https://www.anthropic.com/claude-sonnet-5-5",
-      "benchmarkUrl": "https://artificialanalysis.ai/models/claude-sonnet-5-5-medium",
-      "harborEval": {
+      "terminalBench": {
+        "version": "4.0",
         "agent": "Claude Code",
+        "agentVersion": "2.1.284",
+        "agentUrl": "https://claude.com/product/claude-code",
         "effort": "max",
         "accuracy": 61.82,
-        "totalCostUsd": 7333.64,
-        "costPerTrialUsd": 22.22
+        "ci95": 2.94,
+        "trials": 330,
+        "successes": 204,
+        "costPerTaskUsd": 22.2232,
+        "tokensPerTask": {
+          "total": 58827416,
+          "output": 565388
+        },
+        "minutesPerTask": 123.9,
+        "sourceUrl": "https://github.com/harbor-framework/terminal-bench/blob/main/leaderboard/submissions/2026-09-30-anthropic-claude-sonnet-5-5-max-claude-code.json"
       },
-      "efforts": [
+      "epoch": [
         {
-          "id": "bbc2ffea-cf6b-43be-8c41-1769347e234d",
-          "slug": "claude-sonnet-5-5-low",
-          "effortSlug": "low",
-          "effortLabel": "Low",
-          "shortTag": "L",
-          "effortLevel": 20,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 13.92,
-            "terminalBench4": 20.71,
-            "frontierCode2": 7.13,
-            "intelligence": 25.65
-          },
-          "costUsdPerTask": {
-            "total": 0.511,
-            "input": 0.303,
-            "output": 0.209,
-            "reasoning": 0.086,
-            "cacheRead": 0.148
-          },
-          "tokensPerTask": {
-            "total": 20856,
-            "reasoning": 8559,
-            "answer": 12298
-          },
-          "speedTokPerSec": 133.47,
-          "cliEval": null
+          "benchmark": "mirrorCode",
+          "effort": "max",
+          "score": 97.8,
+          "stderr": 1.5,
+          "runOn": "2026-10-05"
         },
         {
-          "id": "042e8a37-fcd0-40f4-8f41-99215fb68eda",
-          "slug": "claude-sonnet-5-5-medium",
-          "effortSlug": "medium",
-          "effortLabel": "Med",
-          "shortTag": "M",
-          "effortLevel": 30,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 20.38,
-            "terminalBench4": 29.8,
-            "frontierCode2": 10.97,
-            "intelligence": 30.82
-          },
-          "costUsdPerTask": {
-            "total": 0.781,
-            "input": 0.473,
-            "output": 0.307,
-            "reasoning": 0.144,
-            "cacheRead": 0.25
-          },
-          "tokensPerTask": {
-            "total": 30746,
-            "reasoning": 14369,
-            "answer": 16377
-          },
-          "speedTokPerSec": 135.02,
-          "cliEval": null
+          "benchmark": "gpqaDiamond",
+          "effort": "max",
+          "score": 95.6,
+          "stderr": 1.4,
+          "runOn": "2026-09-29"
         },
         {
-          "id": "268525e2-f873-4178-bc07-e6a0ee1f002d",
-          "slug": "claude-sonnet-5-5-high",
-          "effortSlug": "high",
-          "effortLabel": "High",
-          "shortTag": "H",
-          "effortLevel": 40,
-          "isDefaultEffort": true,
-          "scores": {
-            "coding": 34.84,
-            "terminalBench4": 43.94,
-            "frontierCode2": 25.74,
-            "intelligence": 41.52
-          },
-          "costUsdPerTask": {
-            "total": 1.636,
-            "input": 1.052,
-            "output": 0.584,
-            "reasoning": 0.317,
-            "cacheRead": 0.623
-          },
-          "tokensPerTask": {
-            "total": 58421,
-            "reasoning": 31741,
-            "answer": 26680
-          },
-          "speedTokPerSec": 134.91,
-          "cliEval": null
-        },
-        {
-          "id": "975aeaef-50bd-4a65-9c73-f1015adcd4d4",
-          "slug": "claude-sonnet-5-5-xhigh",
-          "effortSlug": "xhigh",
-          "effortLabel": "XHigh",
-          "shortTag": "XH",
-          "effortLevel": 50,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 46.36,
-            "terminalBench4": 57.07,
-            "frontierCode2": 35.65,
-            "intelligence": 49.92
-          },
-          "costUsdPerTask": {
-            "total": 4.092,
-            "input": 2.87,
-            "output": 1.222,
-            "reasoning": 0.79,
-            "cacheRead": 1.896
-          },
-          "tokensPerTask": {
-            "total": 122205,
-            "reasoning": 78999,
-            "answer": 43206
-          },
-          "speedTokPerSec": 140.86,
-          "cliEval": null
-        },
-        {
-          "id": "b171d979-5ec1-45de-b8b9-db1ee65e77ec",
-          "slug": "claude-sonnet-5-5",
-          "effortSlug": "max",
-          "effortLabel": "Max",
-          "shortTag": "MAX",
-          "effortLevel": 60,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 52.67,
-            "terminalBench4": 63.64,
-            "frontierCode2": 41.7,
-            "intelligence": 54.54
-          },
-          "costUsdPerTask": {
-            "total": 10.021,
-            "input": 7.167,
-            "output": 2.854,
-            "reasoning": 2.064,
-            "cacheRead": 4.879
-          },
-          "tokensPerTask": {
-            "total": 285387,
-            "reasoning": 206362,
-            "answer": 79025
-          },
-          "speedTokPerSec": 145.24,
-          "cliEval": {
-            "harness": "Claude Code",
-            "codingAgentScore": 56.33,
-            "costUsdPerTask": 11.4,
-            "frontierCode2": 39.09,
-            "sweAtlas": 64.25,
-            "terminalBench4": 65.66
-          }
+          "benchmark": "frontierMath",
+          "effort": "max",
+          "score": 88.8,
+          "stderr": 1.9,
+          "runOn": "2026-09-29"
         }
       ]
     },
@@ -1892,174 +573,59 @@
       "releaseDate": "2026-09-22",
       "deprecated": false,
       "supersededOn": null,
+      "announcementUrl": "https://www.anthropic.com/claude-opus-5-5",
       "pricing": {
         "inputPer1M": 4,
         "outputPer1M": 20,
         "cachedInputPer1M": 0.2,
-        "contextWindowTokens": 1000000
+        "maxInputTokens": 1000000
       },
-      "summary": "September coding frontier leader (53.0% Coding composite, 64.9% Harbor Terminal-Bench in Claude Code).",
-      "announcementUrl": "https://www.anthropic.com/claude-opus-5-5",
-      "benchmarkUrl": "https://artificialanalysis.ai/models/claude-opus-5-5",
-      "harborEval": {
+      "terminalBench": {
+        "version": "4.0",
         "agent": "Claude Code",
+        "agentVersion": "2.1.284",
+        "agentUrl": "https://claude.com/product/claude-code",
         "effort": "max",
         "accuracy": 64.85,
-        "totalCostUsd": 4718.65,
-        "costPerTrialUsd": 14.3
+        "ci95": 3.11,
+        "trials": 330,
+        "successes": 214,
+        "costPerTaskUsd": 14.2989,
+        "tokensPerTask": {
+          "total": 24345704,
+          "output": 269135
+        },
+        "minutesPerTask": 79.8,
+        "sourceUrl": "https://github.com/harbor-framework/terminal-bench/blob/main/leaderboard/submissions/2026-09-30-anthropic-claude-opus-5-5-max-claude-code.json"
       },
-      "efforts": [
+      "epoch": [
         {
-          "id": "4416ca93-fde6-4b7b-abbc-3a6be109cc3d",
-          "slug": "claude-opus-5-5-low",
-          "effortSlug": "low",
-          "effortLabel": "Low",
-          "shortTag": "L",
-          "effortLevel": 20,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 23.58,
-            "terminalBench4": 31.31,
-            "frontierCode2": 15.84,
-            "intelligence": 34.75
-          },
-          "costUsdPerTask": {
-            "total": 0.976,
-            "input": 0.594,
-            "output": 0.381,
-            "reasoning": 0.137,
-            "cacheRead": 0.326
-          },
-          "tokensPerTask": {
-            "total": 19060,
-            "reasoning": 6864,
-            "answer": 12196
-          },
-          "speedTokPerSec": 103.23,
-          "cliEval": null
+          "benchmark": "mirrorCode",
+          "effort": "high",
+          "score": 78.9,
+          "stderr": 7.9,
+          "runOn": "2026-09-22"
         },
         {
-          "id": "ea9e0da6-169f-43c6-92f5-730a10d6ff8d",
-          "slug": "claude-opus-5-5-medium",
-          "effortSlug": "medium",
-          "effortLabel": "Med",
-          "shortTag": "M",
-          "effortLevel": 30,
-          "isDefaultEffort": true,
-          "scores": {
-            "coding": 42.8,
-            "terminalBench4": 52.53,
-            "frontierCode2": 33.08,
-            "intelligence": 48.21
-          },
-          "costUsdPerTask": {
-            "total": 2.451,
-            "input": 1.575,
-            "output": 0.876,
-            "reasoning": 0.414,
-            "cacheRead": 1
-          },
-          "tokensPerTask": {
-            "total": 43817,
-            "reasoning": 20676,
-            "answer": 23140
-          },
-          "speedTokPerSec": 105.07,
-          "cliEval": null
+          "benchmark": "mirrorCode",
+          "effort": "max",
+          "score": 95.6,
+          "stderr": 2.6,
+          "runOn": "2026-10-30"
         },
         {
-          "id": "f314eade-2232-44bf-a3ab-9b326bc67de6",
-          "slug": "claude-opus-5-5-high",
-          "effortSlug": "high",
-          "effortLabel": "High",
-          "shortTag": "H",
-          "effortLevel": 40,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 46.25,
-            "terminalBench4": 56.57,
-            "frontierCode2": 35.93,
-            "intelligence": 51.84
-          },
-          "costUsdPerTask": {
-            "total": 3.465,
-            "input": 2.263,
-            "output": 1.202,
-            "reasoning": 0.631,
-            "cacheRead": 1.511
-          },
-          "tokensPerTask": {
-            "total": 60071,
-            "reasoning": 31561,
-            "answer": 28510
-          },
-          "speedTokPerSec": 106.78,
-          "cliEval": null
+          "benchmark": "gpqaDiamond",
+          "effort": "max",
+          "score": 90.6,
+          "stderr": 1.9,
+          "runOn": "2026-09-22"
         },
         {
-          "id": "df5bf99d-d228-4715-b41b-19ca86118777",
-          "slug": "claude-opus-5-5-xhigh",
-          "effortSlug": "xhigh",
-          "effortLabel": "XHigh",
-          "shortTag": "XH",
-          "effortLevel": 50,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 51.68,
-            "terminalBench4": 59.6,
-            "frontierCode2": 43.75,
-            "intelligence": 57.44
-          },
-          "costUsdPerTask": {
-            "total": 6.047,
-            "input": 3.979,
-            "output": 2.068,
-            "reasoning": 1.275,
-            "cacheRead": 2.793
-          },
-          "tokensPerTask": {
-            "total": 103395,
-            "reasoning": 63763,
-            "answer": 39632
-          },
-          "speedTokPerSec": 106.79,
-          "cliEval": null
-        },
-        {
-          "id": "2f3c4dc9-a450-4303-8697-0237257cf08f",
-          "slug": "claude-opus-5-5",
-          "effortSlug": "max",
-          "effortLabel": "Max",
-          "shortTag": "MAX",
-          "effortLevel": 60,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 53.02,
-            "terminalBench4": 59.6,
-            "frontierCode2": 46.44,
-            "intelligence": 59.11
-          },
-          "costUsdPerTask": {
-            "total": 10.036,
-            "input": 6.57,
-            "output": 3.466,
-            "reasoning": 2.409,
-            "cacheRead": 4.738
-          },
-          "tokensPerTask": {
-            "total": 173313,
-            "reasoning": 120460,
-            "answer": 52853
-          },
-          "speedTokPerSec": 114.94,
-          "cliEval": {
-            "harness": "Claude Code",
-            "codingAgentScore": 58.16,
-            "costUsdPerTask": 12.61,
-            "frontierCode2": 43.97,
-            "sweAtlas": 65.86,
-            "terminalBench4": 64.65
-          }
+          "benchmark": "frontierMath",
+          "effort": "max",
+          "score": 91.2,
+          "stderr": 1.7,
+          "runOn": "2026-09-22"
         }
       ]
     },
@@ -2070,51 +636,52 @@
       "releaseDate": "2026-09-22",
       "deprecated": true,
       "supersededOn": "2026-09-29",
+      "announcementUrl": "https://developers.openai.com/api/docs/models/gpt-6-sol",
       "pricing": {
         "inputPer1M": 2,
         "outputPer1M": 10,
         "cachedInputPer1M": 0.2,
-        "contextWindowTokens": 1050000
+        "maxInputTokens": 922000
       },
-      "summary": "Initial GPT-6 mid-tier coding model released alongside Luna, quickly succeeded by GPT-6.1 Sol.",
-      "announcementUrl": "https://developers.openai.com/api/docs/models/gpt-6-sol",
-      "benchmarkUrl": "https://artificialanalysis.ai/models/gpt-6-sol",
-      "harborEval": {
+      "terminalBench": {
+        "version": "4.0",
         "agent": "Codex",
+        "agentVersion": "0.159.0",
+        "agentUrl": "https://openai.com/codex/",
         "effort": "max",
         "accuracy": 49.39,
-        "totalCostUsd": 1451.32,
-        "costPerTrialUsd": 4.4
+        "ci95": 3.23,
+        "trials": 330,
+        "successes": 163,
+        "costPerTaskUsd": 4.3979,
+        "tokensPerTask": {
+          "total": 15084667,
+          "output": 92642
+        },
+        "minutesPerTask": 44.4,
+        "sourceUrl": "https://github.com/harbor-framework/terminal-bench/blob/main/leaderboard/submissions/2026-09-30-openai-gpt-6-sol-max-codex.json"
       },
-      "efforts": [
+      "epoch": [
         {
-          "id": "c50ea08c-88c0-4eb7-85b8-27f2bbf6d527",
-          "slug": "gpt-6-sol",
-          "effortSlug": "max",
-          "effortLabel": "Max",
-          "shortTag": "MAX",
-          "effortLevel": 60,
-          "isDefaultEffort": true,
-          "scores": {
-            "coding": 39.76,
-            "terminalBench4": 43.94,
-            "frontierCode2": 35.58,
-            "intelligence": 44.16
-          },
-          "costUsdPerTask": {
-            "total": 2.466,
-            "input": 1.927,
-            "output": 0.539,
-            "reasoning": 0.354,
-            "cacheRead": 1.502
-          },
-          "tokensPerTask": {
-            "total": 53890,
-            "reasoning": 35370,
-            "answer": 18520
-          },
-          "speedTokPerSec": 114.64,
-          "cliEval": null
+          "benchmark": "mirrorCode",
+          "effort": "max",
+          "score": 48.9,
+          "stderr": 11.2,
+          "runOn": "2026-10-29"
+        },
+        {
+          "benchmark": "gpqaDiamond",
+          "effort": "max",
+          "score": 94.3,
+          "stderr": 1.5,
+          "runOn": "2026-09-22"
+        },
+        {
+          "benchmark": "frontierMath",
+          "effort": "max",
+          "score": 89.8,
+          "stderr": 1.8,
+          "runOn": "2026-09-22"
         }
       ]
     },
@@ -2125,203 +692,52 @@
       "releaseDate": "2026-09-22",
       "deprecated": false,
       "supersededOn": null,
+      "announcementUrl": "https://developers.openai.com/api/docs/models/gpt-6-luna",
       "pricing": {
         "inputPer1M": 0.1,
         "outputPer1M": 0.5,
         "cachedInputPer1M": 0.01,
-        "contextWindowTokens": 1000000
+        "maxInputTokens": 922000
       },
-      "summary": "Micro-budget reasoning model ($0.005–$0.15/task) anchoring the ultra-low-cost end of the frontier.",
-      "announcementUrl": "https://developers.openai.com/api/docs/models/gpt-6-luna",
-      "benchmarkUrl": "https://artificialanalysis.ai/models/gpt-6-luna-xhigh",
-      "harborEval": {
+      "terminalBench": {
+        "version": "4.0",
         "agent": "Codex",
+        "agentVersion": "0.159.0",
+        "agentUrl": "https://openai.com/codex/",
         "effort": "max",
         "accuracy": 16.36,
-        "totalCostUsd": 72.14,
-        "costPerTrialUsd": 0.22
+        "ci95": 2.72,
+        "trials": 330,
+        "successes": 54,
+        "costPerTaskUsd": 0.2186,
+        "tokensPerTask": {
+          "total": 11845833,
+          "output": 137851
+        },
+        "minutesPerTask": 38.1,
+        "sourceUrl": "https://github.com/harbor-framework/terminal-bench/blob/main/leaderboard/submissions/2026-09-30-openai-gpt-6-luna-max-codex.json"
       },
-      "efforts": [
+      "epoch": [
         {
-          "id": "63cb48ea-0b0c-4e07-8ded-6d28dec4fa28",
-          "slug": "gpt-6-luna-non-reasoning",
-          "effortSlug": "none",
-          "effortLabel": "None",
-          "shortTag": "0",
-          "effortLevel": 0,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 1.55,
-            "terminalBench4": 1.52,
-            "frontierCode2": 1.58,
-            "intelligence": 9.44
-          },
-          "costUsdPerTask": {
-            "total": 0.071,
-            "input": 0.066,
-            "output": 0.005,
-            "reasoning": 0,
-            "cacheRead": 0.056
-          },
-          "tokensPerTask": {
-            "total": 10059,
-            "reasoning": 0,
-            "answer": 10059
-          },
-          "speedTokPerSec": 83.95,
-          "cliEval": null
+          "benchmark": "mirrorCode",
+          "effort": "max",
+          "score": 26.7,
+          "stderr": 9,
+          "runOn": "2026-10-21"
         },
         {
-          "id": "bf9708d8-933d-44f6-affa-b696a7a650c9",
-          "slug": "gpt-6-luna-low",
-          "effortSlug": "low",
-          "effortLabel": "Low",
-          "shortTag": "L",
-          "effortLevel": 20,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 1.1,
-            "terminalBench4": 0,
-            "frontierCode2": 2.2,
-            "intelligence": 9.67
-          },
-          "costUsdPerTask": {
-            "total": 0.005,
-            "input": 0.003,
-            "output": 0.002,
-            "reasoning": 0,
-            "cacheRead": 0.001
-          },
-          "tokensPerTask": {
-            "total": 3296,
-            "reasoning": 702,
-            "answer": 2594
-          },
-          "speedTokPerSec": 86.47,
-          "cliEval": null
+          "benchmark": "gpqaDiamond",
+          "effort": "max",
+          "score": 90.5,
+          "stderr": 1.9,
+          "runOn": "2026-09-22"
         },
         {
-          "id": "36667da0-9222-4967-adbb-f7efa15ad213",
-          "slug": "gpt-6-luna-medium",
-          "effortSlug": "medium",
-          "effortLabel": "Med",
-          "shortTag": "M",
-          "effortLevel": 30,
-          "isDefaultEffort": true,
-          "scores": {
-            "coding": 7.65,
-            "terminalBench4": 2.53,
-            "frontierCode2": 12.77,
-            "intelligence": 18.45
-          },
-          "costUsdPerTask": {
-            "total": 0.042,
-            "input": 0.032,
-            "output": 0.01,
-            "reasoning": 0.006,
-            "cacheRead": 0.024
-          },
-          "tokensPerTask": {
-            "total": 19823,
-            "reasoning": 11043,
-            "answer": 8781
-          },
-          "speedTokPerSec": 94.96,
-          "cliEval": null
-        },
-        {
-          "id": "7d1229bc-deea-4717-ba5b-f59a35d991e3",
-          "slug": "gpt-6-luna-high",
-          "effortSlug": "high",
-          "effortLabel": "High",
-          "shortTag": "H",
-          "effortLevel": 40,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 11.57,
-            "terminalBench4": 4.55,
-            "frontierCode2": 18.6,
-            "intelligence": 21.43
-          },
-          "costUsdPerTask": {
-            "total": 0.073,
-            "input": 0.057,
-            "output": 0.016,
-            "reasoning": 0.011,
-            "cacheRead": 0.043
-          },
-          "tokensPerTask": {
-            "total": 32839,
-            "reasoning": 21618,
-            "answer": 11221
-          },
-          "speedTokPerSec": 92.87,
-          "cliEval": null
-        },
-        {
-          "id": "19813eb2-460a-475c-af65-810bb8660fec",
-          "slug": "gpt-6-luna-xhigh",
-          "effortSlug": "xhigh",
-          "effortLabel": "XHigh",
-          "shortTag": "XH",
-          "effortLevel": 50,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 13.25,
-            "terminalBench4": 8.08,
-            "frontierCode2": 18.42,
-            "intelligence": 23.45
-          },
-          "costUsdPerTask": {
-            "total": 0.104,
-            "input": 0.082,
-            "output": 0.022,
-            "reasoning": 0.015,
-            "cacheRead": 0.065
-          },
-          "tokensPerTask": {
-            "total": 43893,
-            "reasoning": 30020,
-            "answer": 13873
-          },
-          "speedTokPerSec": 100.07,
-          "cliEval": null
-        },
-        {
-          "id": "6fb13851-40ce-4bda-ad3f-6b38e0c5daa7",
-          "slug": "gpt-6-luna",
-          "effortSlug": "max",
-          "effortLabel": "Max",
-          "shortTag": "MAX",
-          "effortLevel": 60,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 18.9,
-            "terminalBench4": 12.63,
-            "frontierCode2": 25.17,
-            "intelligence": 27.86
-          },
-          "costUsdPerTask": {
-            "total": 0.152,
-            "input": 0.114,
-            "output": 0.038,
-            "reasoning": 0.029,
-            "cacheRead": 0.09
-          },
-          "tokensPerTask": {
-            "total": 75296,
-            "reasoning": 57562,
-            "answer": 17734
-          },
-          "speedTokPerSec": 103.79,
-          "cliEval": {
-            "harness": "Codex",
-            "codingAgentScore": 25.89,
-            "costUsdPerTask": 0.19,
-            "frontierCode2": 24.09,
-            "sweAtlas": 38.44,
-            "terminalBench4": 15.15
-          }
+          "benchmark": "frontierMath",
+          "effort": "max",
+          "score": 78.9,
+          "stderr": 2.4,
+          "runOn": "2026-09-22"
         }
       ]
     },
@@ -2332,168 +748,42 @@
       "releaseDate": "2026-09-03",
       "deprecated": true,
       "supersededOn": "2026-11-17",
+      "announcementUrl": "https://openai.com/index/gpt-6-astra/",
       "pricing": {
         "inputPer1M": 10,
         "outputPer1M": 50,
         "cachedInputPer1M": 1,
-        "contextWindowTokens": 1000000
+        "maxInputTokens": 922000
       },
-      "summary": "First-generation GPT-6 flagship; led coding efficiency at $6.24/task prior to Opus 5.5 and GPT-6.2 Astra.",
-      "announcementUrl": "https://openai.com/index/gpt-6-astra/",
-      "benchmarkUrl": "https://artificialanalysis.ai/models/gpt-6-astra-xhigh",
-      "harborEval": null,
-      "efforts": [
+      "terminalBench": null,
+      "epoch": [
         {
-          "id": "a3f8100d-e38f-408b-b0fa-0085dae18dc1",
-          "slug": "gpt-6-astra-low",
-          "effortSlug": "low",
-          "effortLabel": "Low",
-          "shortTag": "L",
-          "effortLevel": 20,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 34.07,
-            "terminalBench4": 41.92,
-            "frontierCode2": 26.22,
-            "intelligence": 43.33
-          },
-          "costUsdPerTask": {
-            "total": 1.424,
-            "input": 0.967,
-            "output": 0.456,
-            "reasoning": 0.165,
-            "cacheRead": 0.512
-          },
-          "tokensPerTask": {
-            "total": 9126,
-            "reasoning": 3304,
-            "answer": 5821
-          },
-          "speedTokPerSec": 44.7,
-          "cliEval": null
+          "benchmark": "mirrorCode",
+          "effort": "high",
+          "score": 46.7,
+          "stderr": 11.9,
+          "runOn": "2026-08-30"
         },
         {
-          "id": "e97a4ef5-e817-480e-9595-12f81dc4974f",
-          "slug": "gpt-6-astra-medium",
-          "effortSlug": "medium",
-          "effortLabel": "Med",
-          "shortTag": "M",
-          "effortLevel": 30,
-          "isDefaultEffort": true,
-          "scores": {
-            "coding": 43.04,
-            "terminalBench4": 49.49,
-            "frontierCode2": 36.58,
-            "intelligence": 51.55
-          },
-          "costUsdPerTask": {
-            "total": 2.732,
-            "input": 1.83,
-            "output": 0.903,
-            "reasoning": 0.429,
-            "cacheRead": 1.077
-          },
-          "tokensPerTask": {
-            "total": 18052,
-            "reasoning": 8581,
-            "answer": 9471
-          },
-          "speedTokPerSec": 46.24,
-          "cliEval": null
+          "benchmark": "mirrorCode",
+          "effort": "max",
+          "score": 60,
+          "stderr": 11.8,
+          "runOn": "2026-10-29"
         },
         {
-          "id": "e05a4828-0536-4876-870d-a235023f992b",
-          "slug": "gpt-6-astra-high",
-          "effortSlug": "high",
-          "effortLabel": "High",
-          "shortTag": "H",
-          "effortLevel": 40,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 47.09,
-            "terminalBench4": 54.04,
-            "frontierCode2": 40.14,
-            "intelligence": 54.85
-          },
-          "costUsdPerTask": {
-            "total": 3.239,
-            "input": 2.082,
-            "output": 1.157,
-            "reasoning": 0.605,
-            "cacheRead": 1.198
-          },
-          "tokensPerTask": {
-            "total": 23133,
-            "reasoning": 12092,
-            "answer": 11042
-          },
-          "speedTokPerSec": 43.98,
-          "cliEval": null
+          "benchmark": "gpqaDiamond",
+          "effort": "max",
+          "score": 95.8,
+          "stderr": 1.4,
+          "runOn": "2026-08-30"
         },
         {
-          "id": "1f541ef3-913f-4eb2-9d07-0e93c7a9a5e3",
-          "slug": "gpt-6-astra-xhigh",
-          "effortSlug": "xhigh",
-          "effortLabel": "XHigh",
-          "shortTag": "XH",
-          "effortLevel": 50,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 50.5,
-            "terminalBench4": 59.6,
-            "frontierCode2": 41.4,
-            "intelligence": 55.31
-          },
-          "costUsdPerTask": {
-            "total": 3.659,
-            "input": 2.323,
-            "output": 1.336,
-            "reasoning": 0.735,
-            "cacheRead": 1.343
-          },
-          "tokensPerTask": {
-            "total": 26724,
-            "reasoning": 14693,
-            "answer": 12031
-          },
-          "speedTokPerSec": 43.72,
-          "cliEval": null
-        },
-        {
-          "id": "2f339a97-9a0d-499a-9cb5-e0db665bfa25",
-          "slug": "gpt-6-astra",
-          "effortSlug": "max",
-          "effortLabel": "Max",
-          "shortTag": "MAX",
-          "effortLevel": 60,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 50.73,
-            "terminalBench4": 59.09,
-            "frontierCode2": 42.37,
-            "intelligence": 56.85
-          },
-          "costUsdPerTask": {
-            "total": 6.245,
-            "input": 3.646,
-            "output": 2.599,
-            "reasoning": 1.788,
-            "cacheRead": 2.175
-          },
-          "tokensPerTask": {
-            "total": 51973,
-            "reasoning": 35760,
-            "answer": 16214
-          },
-          "speedTokPerSec": 41.68,
-          "cliEval": {
-            "harness": "Codex",
-            "codingAgentScore": 53.1,
-            "costUsdPerTask": 7.63,
-            "frontierCode2": 42.58,
-            "sweAtlas": 59.14,
-            "terminalBench4": 57.58
-          }
+          "benchmark": "frontierMath",
+          "effort": "max",
+          "score": 93.7,
+          "stderr": 1.4,
+          "runOn": "2026-08-30"
         }
       ]
     },
@@ -2504,74 +794,52 @@
       "releaseDate": "2026-09-02",
       "deprecated": true,
       "supersededOn": "2026-11-12",
+      "announcementUrl": "https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash",
       "pricing": {
         "inputPer1M": 0.75,
         "outputPer1M": 3.75,
         "cachedInputPer1M": 0.075,
-        "contextWindowTokens": 1000000
+        "maxInputTokens": 1048576
       },
-      "summary": "Late Gemini 3.x fast reasoning release preceding the Gemini 4 element family.",
-      "announcementUrl": "https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash",
-      "benchmarkUrl": "https://artificialanalysis.ai/models/gemini-3-8-flash-medium",
-      "harborEval": null,
-      "efforts": [
+      "terminalBench": {
+        "version": "4.0",
+        "agent": "mini-SWE-agent",
+        "agentVersion": "2.4.6",
+        "agentUrl": "https://github.com/SWE-agent/mini-swe-agent",
+        "effort": "high",
+        "accuracy": 19.09,
+        "ci95": 3.36,
+        "trials": 330,
+        "successes": 63,
+        "costPerTaskUsd": null,
+        "tokensPerTask": {
+          "total": 52090089,
+          "output": 206232
+        },
+        "minutesPerTask": 33.3,
+        "sourceUrl": "https://github.com/harbor-framework/terminal-bench/blob/main/leaderboard/submissions/2026-09-01-gemini-gemini-3-8-flash-high-mini-swe-agent.json"
+      },
+      "epoch": [
         {
-          "id": "744fa3c1-42a7-4995-b138-fb6be11f463c",
-          "slug": "gemini-3-8-flash-medium",
-          "effortSlug": "medium",
-          "effortLabel": "Med",
-          "shortTag": "M",
-          "effortLevel": 30,
-          "isDefaultEffort": true,
-          "scores": {
-            "coding": 18.08,
-            "terminalBench4": 19.7,
-            "frontierCode2": 16.47,
-            "intelligence": 30.08
-          },
-          "costUsdPerTask": {
-            "total": 6.259,
-            "input": 5.951,
-            "output": 0.308,
-            "reasoning": 0.177,
-            "cacheRead": 0.293
-          },
-          "tokensPerTask": {
-            "total": 82068,
-            "reasoning": 47228,
-            "answer": 34840
-          },
-          "speedTokPerSec": 120.41,
-          "cliEval": null
+          "benchmark": "mirrorCode",
+          "effort": "high",
+          "score": 38.9,
+          "stderr": 11.9,
+          "runOn": "2026-09-02"
         },
         {
-          "id": "8a999846-4c1d-4ce7-a8b7-1310a7166fd7",
-          "slug": "gemini-3-8-flash",
-          "effortSlug": "high",
-          "effortLabel": "High",
-          "shortTag": "H",
-          "effortLevel": 40,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 19.22,
-            "terminalBench4": 19.7,
-            "frontierCode2": 18.74,
-            "intelligence": 30.85
-          },
-          "costUsdPerTask": {
-            "total": 7.766,
-            "input": 7.395,
-            "output": 0.371,
-            "reasoning": 0.225,
-            "cacheRead": 0.364
-          },
-          "tokensPerTask": {
-            "total": 98940,
-            "reasoning": 60067,
-            "answer": 38872
-          },
-          "speedTokPerSec": 116.65,
-          "cliEval": null
+          "benchmark": "gpqaDiamond",
+          "effort": "high",
+          "score": 95.4,
+          "stderr": 1.4,
+          "runOn": "2026-09-02"
+        },
+        {
+          "benchmark": "frontierMath",
+          "effort": "high",
+          "score": 68.4,
+          "stderr": 2.8,
+          "runOn": "2026-09-02"
         }
       ]
     },
@@ -2582,174 +850,108 @@
       "releaseDate": "2026-09-01",
       "deprecated": true,
       "supersededOn": "2026-11-09",
+      "announcementUrl": "https://www.anthropic.com/claude-fable-and-mythos-5-1",
       "pricing": {
         "inputPer1M": 10,
         "outputPer1M": 50,
         "cachedInputPer1M": 0.25,
-        "contextWindowTokens": 1000000
+        "maxInputTokens": 1000000
       },
-      "summary": "Early-September adaptive-thinking flagship succeeded by Opus 5.5 and Fable 5.2.",
-      "announcementUrl": "https://www.anthropic.com/claude-fable-and-mythos-5-1",
-      "benchmarkUrl": "https://artificialanalysis.ai/models/claude-fable-5-1-low",
-      "harborEval": {
+      "terminalBench": {
+        "version": "4.0",
         "agent": "Claude Code",
+        "agentVersion": "2.1.257",
+        "agentUrl": "https://claude.com/product/claude-code",
         "effort": "max",
         "accuracy": 57.88,
-        "totalCostUsd": 6243.5,
-        "costPerTrialUsd": 18.92
+        "ci95": 3.76,
+        "trials": 330,
+        "successes": 191,
+        "costPerTaskUsd": 18.9197,
+        "tokensPerTask": {
+          "total": 8321884,
+          "output": 191277
+        },
+        "minutesPerTask": 64.9,
+        "sourceUrl": "https://github.com/harbor-framework/terminal-bench/blob/main/leaderboard/submissions/2026-09-02-anthropic-claude-fable-5-1-max-claude-code.json"
       },
-      "efforts": [
+      "epoch": [
         {
-          "id": "05776db7-f5c0-40f7-b824-079160f8cfa8",
-          "slug": "claude-fable-5-1-low",
-          "effortSlug": "low",
-          "effortLabel": "Low",
-          "shortTag": "L",
-          "effortLevel": 20,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 31.62,
-            "terminalBench4": 40.4,
-            "frontierCode2": 22.84,
-            "intelligence": 38.68
-          },
-          "costUsdPerTask": {
-            "total": 4.471,
-            "input": 2.611,
-            "output": 1.86,
-            "reasoning": 0.756,
-            "cacheRead": 1.207
-          },
-          "tokensPerTask": {
-            "total": 37837,
-            "reasoning": 15534,
-            "answer": 22303
-          },
-          "speedTokPerSec": 83.14,
-          "cliEval": null
+          "benchmark": "mirrorCode",
+          "effort": "high",
+          "score": 73.3,
+          "stderr": 9.2,
+          "runOn": "2026-09-10"
         },
         {
-          "id": "3b7de71c-e034-4591-8ca6-6b6be2fa471f",
-          "slug": "claude-fable-5-1-medium",
-          "effortSlug": "medium",
-          "effortLabel": "Med",
-          "shortTag": "M",
-          "effortLevel": 30,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 36.86,
-            "terminalBench4": 44.95,
-            "frontierCode2": 28.77,
-            "intelligence": 43.17
-          },
-          "costUsdPerTask": {
-            "total": 5.564,
-            "input": 3.17,
-            "output": 2.394,
-            "reasoning": 1.098,
-            "cacheRead": 1.467
-          },
-          "tokensPerTask": {
-            "total": 48545,
-            "reasoning": 22374,
-            "answer": 26171
-          },
-          "speedTokPerSec": 84.01,
-          "cliEval": null
+          "benchmark": "mirrorCode",
+          "effort": "max",
+          "score": 93.3,
+          "stderr": 3.9,
+          "runOn": "2026-09-09"
         },
         {
-          "id": "9d7d72cd-d95d-45a0-b109-4ad292c9aabd",
-          "slug": "claude-fable-5-1-high",
-          "effortSlug": "high",
-          "effortLabel": "High",
-          "shortTag": "H",
-          "effortLevel": 40,
-          "isDefaultEffort": true,
-          "scores": {
-            "coding": 41.16,
-            "terminalBench4": 52.02,
-            "frontierCode2": 30.3,
-            "intelligence": 47.17
-          },
-          "costUsdPerTask": {
-            "total": 7.54,
-            "input": 4.285,
-            "output": 3.255,
-            "reasoning": 1.672,
-            "cacheRead": 2.082
-          },
-          "tokensPerTask": {
-            "total": 66031,
-            "reasoning": 34029,
-            "answer": 32002
-          },
-          "speedTokPerSec": 84.06,
-          "cliEval": null
+          "benchmark": "frontierMath",
+          "effort": "max",
+          "score": 90.2,
+          "stderr": 1.8,
+          "runOn": "2026-09-01"
+        }
+      ]
+    },
+    {
+      "slug": "gemini-3-7-flash",
+      "name": "Gemini 3.7 Flash",
+      "provider": "google",
+      "releaseDate": "2026-08-13",
+      "deprecated": true,
+      "supersededOn": "2026-09-02",
+      "announcementUrl": "https://ai.google.dev/gemini-api/docs/models/gemini-3.7-flash",
+      "pricing": {
+        "inputPer1M": 0.75,
+        "outputPer1M": 3.75,
+        "cachedInputPer1M": 0.075,
+        "maxInputTokens": 1048576
+      },
+      "terminalBench": {
+        "version": "4.0",
+        "agent": "mini-SWE-agent",
+        "agentVersion": "2.4.6",
+        "agentUrl": "https://github.com/SWE-agent/mini-swe-agent",
+        "effort": "high",
+        "accuracy": 11.21,
+        "ci95": 2.45,
+        "trials": 330,
+        "successes": 37,
+        "costPerTaskUsd": 3.8238,
+        "tokensPerTask": {
+          "total": 33749060,
+          "output": 157982
+        },
+        "minutesPerTask": 28.1,
+        "sourceUrl": "https://github.com/harbor-framework/terminal-bench/blob/main/leaderboard/submissions/2026-09-02-gemini-gemini-3-7-flash-high-mini-swe-agent.json"
+      },
+      "epoch": [
+        {
+          "benchmark": "mirrorCode",
+          "effort": "high",
+          "score": 41.1,
+          "stderr": 12.2,
+          "runOn": "2026-10-21"
         },
         {
-          "id": "9b166bf3-42db-4f63-8338-1c4a1244ffe8",
-          "slug": "claude-fable-5-1-xhigh",
-          "effortSlug": "xhigh",
-          "effortLabel": "XHigh",
-          "shortTag": "XH",
-          "effortLevel": 50,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 45.39,
-            "terminalBench4": 55.05,
-            "frontierCode2": 35.73,
-            "intelligence": 50.02
-          },
-          "costUsdPerTask": {
-            "total": 10.847,
-            "input": 6.07,
-            "output": 4.777,
-            "reasoning": 2.75,
-            "cacheRead": 3.064
-          },
-          "tokensPerTask": {
-            "total": 97059,
-            "reasoning": 55942,
-            "answer": 41116
-          },
-          "speedTokPerSec": 84.42,
-          "cliEval": null
+          "benchmark": "gpqaDiamond",
+          "effort": "high",
+          "score": 94.8,
+          "stderr": 1.3,
+          "runOn": "2026-08-14"
         },
         {
-          "id": "3e87c73e-a257-495e-9730-367a66229811",
-          "slug": "claude-fable-5-1",
-          "effortSlug": "max",
-          "effortLabel": "Max",
-          "shortTag": "MAX",
-          "effortLevel": 60,
-          "isDefaultEffort": false,
-          "scores": {
-            "coding": 41.82,
-            "terminalBench4": 52.02,
-            "frontierCode2": 31.62,
-            "intelligence": 49.16
-          },
-          "costUsdPerTask": {
-            "total": 12.994,
-            "input": 7.215,
-            "output": 5.779,
-            "reasoning": 3.488,
-            "cacheRead": 3.702
-          },
-          "tokensPerTask": {
-            "total": 117941,
-            "reasoning": 71387,
-            "answer": 46554
-          },
-          "speedTokPerSec": 90.33,
-          "cliEval": {
-            "harness": "Claude Code",
-            "codingAgentScore": 52.49,
-            "costUsdPerTask": 11.7,
-            "frontierCode2": 32.99,
-            "sweAtlas": 66.4,
-            "terminalBench4": 58.08
-          }
+          "benchmark": "frontierMath",
+          "effort": "high",
+          "score": 71.6,
+          "stderr": 2.7,
+          "runOn": "2026-08-14"
         }
       ]
     },
@@ -2760,51 +962,66 @@
       "releaseDate": "2026-07-24",
       "deprecated": true,
       "supersededOn": "2026-09-22",
+      "announcementUrl": "https://www.anthropic.com/news/claude-opus-5",
       "pricing": {
         "inputPer1M": 5,
         "outputPer1M": 25,
         "cachedInputPer1M": 0.5,
-        "contextWindowTokens": 1000000
+        "maxInputTokens": 1000000
       },
-      "summary": "Mid-summer Anthropic flagship (49.0% Terminal-Bench 4.0 at Max) preceding the 5.5 generation.",
-      "announcementUrl": "https://www.anthropic.com/news/claude-opus-5",
-      "benchmarkUrl": "https://artificialanalysis.ai/models/claude-opus-5",
-      "harborEval": {
+      "terminalBench": {
+        "version": "4.0",
         "agent": "Claude Code",
+        "agentVersion": "2.1.231",
+        "agentUrl": "https://claude.com/product/claude-code",
         "effort": "max",
         "accuracy": 51.82,
-        "totalCostUsd": 5969.11,
-        "costPerTrialUsd": 18.09
+        "ci95": 3.39,
+        "trials": 330,
+        "successes": 171,
+        "costPerTaskUsd": 18.0882,
+        "tokensPerTask": {
+          "total": 19779235,
+          "output": 200037
+        },
+        "minutesPerTask": 79.9,
+        "sourceUrl": "https://github.com/harbor-framework/terminal-bench/blob/main/leaderboard/submissions/2026-08-26-anthropic-claude-opus-5-max-claude-code.json"
       },
-      "efforts": [
+      "epoch": [
         {
-          "id": "b8fc61f7-5e9a-49e6-8547-6ac56db24627",
-          "slug": "claude-opus-5",
-          "effortSlug": "max",
-          "effortLabel": "Max",
-          "shortTag": "MAX",
-          "effortLevel": 60,
-          "isDefaultEffort": true,
-          "scores": {
-            "coding": 40.07,
-            "terminalBench4": 48.99,
-            "frontierCode2": 31.15,
-            "intelligence": 44.16
-          },
-          "costUsdPerTask": {
-            "total": 11.821,
-            "input": 8.87,
-            "output": 2.952,
-            "reasoning": 1.819,
-            "cacheRead": 7.352
-          },
-          "tokensPerTask": {
-            "total": 118068,
-            "reasoning": 72771,
-            "answer": 45297
-          },
-          "speedTokPerSec": 80.09,
-          "cliEval": null
+          "benchmark": "mirrorCode",
+          "effort": "max",
+          "score": 87.8,
+          "stderr": 7.2,
+          "runOn": "2026-10-20"
+        },
+        {
+          "benchmark": "gpqaDiamond",
+          "effort": null,
+          "score": 92.9,
+          "stderr": 1.8,
+          "runOn": "2026-08-06"
+        },
+        {
+          "benchmark": "gpqaDiamond",
+          "effort": "low",
+          "score": 87.9,
+          "stderr": 2.3,
+          "runOn": "2026-08-06"
+        },
+        {
+          "benchmark": "gpqaDiamond",
+          "effort": "max",
+          "score": 93.9,
+          "stderr": 1.5,
+          "runOn": "2026-07-24"
+        },
+        {
+          "benchmark": "frontierMath",
+          "effort": "max",
+          "score": 85.6,
+          "stderr": 2.1,
+          "runOn": "2026-07-24"
         }
       ]
     },
@@ -2815,45 +1032,228 @@
       "releaseDate": "2026-07-21",
       "deprecated": false,
       "supersededOn": null,
+      "announcementUrl": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-6-flash-3-5-flash-lite-3-5-flash-cyber/",
       "pricing": {
         "inputPer1M": 0.3,
         "outputPer1M": 2.5,
         "cachedInputPer1M": 0.03,
-        "contextWindowTokens": 1000000
+        "maxInputTokens": 1048576
       },
-      "summary": "Lightweight high-throughput summer baseline retained for historical cost comparison.",
-      "announcementUrl": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-6-flash-3-5-flash-lite-3-5-flash-cyber/",
-      "benchmarkUrl": "https://artificialanalysis.ai/models/gemini-3-5-flash-lite",
-      "harborEval": null,
-      "efforts": [
+      "terminalBench": null,
+      "epoch": [
         {
-          "id": "093b9df2-ebee-4309-943f-5a7e88360adf",
-          "slug": "gemini-3-5-flash-lite",
-          "effortSlug": "high",
-          "effortLabel": "High",
-          "shortTag": "H",
-          "effortLevel": 40,
-          "isDefaultEffort": true,
-          "scores": {
-            "coding": 3.52,
-            "terminalBench4": 1.01,
-            "frontierCode2": 6.03,
-            "intelligence": 11.66
-          },
-          "costUsdPerTask": {
-            "total": 0.693,
-            "input": 0.617,
-            "output": 0.076,
-            "reasoning": 0.042,
-            "cacheRead": 0.079
-          },
-          "tokensPerTask": {
-            "total": 30301,
-            "reasoning": 16765,
-            "answer": 13536
-          },
-          "speedTokPerSec": 314.05,
-          "cliEval": null
+          "benchmark": "gpqaDiamond",
+          "effort": "minimal",
+          "score": 74.2,
+          "stderr": 3.1,
+          "runOn": "2026-08-06"
+        },
+        {
+          "benchmark": "gpqaDiamond",
+          "effort": "low",
+          "score": 75.8,
+          "stderr": 3.1,
+          "runOn": "2026-08-06"
+        },
+        {
+          "benchmark": "gpqaDiamond",
+          "effort": "high",
+          "score": 83.3,
+          "stderr": 2.7,
+          "runOn": "2026-08-06"
+        },
+        {
+          "benchmark": "frontierMath",
+          "effort": "high",
+          "score": 26,
+          "stderr": 2.6,
+          "runOn": "2026-08-02"
+        }
+      ]
+    },
+    {
+      "slug": "gemini-3-6-flash",
+      "name": "Gemini 3.6 Flash",
+      "provider": "google",
+      "releaseDate": "2026-07-21",
+      "deprecated": true,
+      "supersededOn": "2026-08-13",
+      "announcementUrl": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-6-flash-3-5-flash-lite-3-5-flash-cyber/",
+      "pricing": {
+        "inputPer1M": 0.75,
+        "outputPer1M": 3.75,
+        "cachedInputPer1M": 0.075,
+        "maxInputTokens": 1048576
+      },
+      "terminalBench": null,
+      "epoch": [
+        {
+          "benchmark": "mirrorCode",
+          "effort": "high",
+          "score": 23.3,
+          "stderr": 9.3,
+          "runOn": "2026-10-21"
+        },
+        {
+          "benchmark": "gpqaDiamond",
+          "effort": "minimal",
+          "score": 85.9,
+          "stderr": 2.5,
+          "runOn": "2026-08-07"
+        },
+        {
+          "benchmark": "gpqaDiamond",
+          "effort": "low",
+          "score": 86.4,
+          "stderr": 2.4,
+          "runOn": "2026-08-06"
+        },
+        {
+          "benchmark": "gpqaDiamond",
+          "effort": "high",
+          "score": 94.1,
+          "stderr": 1.4,
+          "runOn": "2026-08-02"
+        },
+        {
+          "benchmark": "frontierMath",
+          "effort": "high",
+          "score": 58.9,
+          "stderr": 2.9,
+          "runOn": "2026-08-02"
+        }
+      ]
+    },
+    {
+      "slug": "claude-sonnet-5",
+      "name": "Claude Sonnet 5",
+      "provider": "anthropic",
+      "releaseDate": "2026-06-30",
+      "deprecated": true,
+      "supersededOn": "2026-09-28",
+      "announcementUrl": "https://www.anthropic.com/news/claude-sonnet-5",
+      "pricing": {
+        "inputPer1M": 2,
+        "outputPer1M": 10,
+        "cachedInputPer1M": 0.2,
+        "maxInputTokens": 1000000
+      },
+      "terminalBench": {
+        "version": "4.0",
+        "agent": "Claude Code",
+        "agentVersion": "2.1.231",
+        "agentUrl": "https://claude.com/product/claude-code",
+        "effort": "max",
+        "accuracy": 12.42,
+        "ci95": 3.06,
+        "trials": 330,
+        "successes": 41,
+        "costPerTaskUsd": 29.1026,
+        "tokensPerTask": {
+          "total": 65339942,
+          "output": 353330
+        },
+        "minutesPerTask": 108.5,
+        "sourceUrl": "https://github.com/harbor-framework/terminal-bench/blob/main/leaderboard/submissions/2026-08-26-anthropic-claude-sonnet-5-max-claude-code.json"
+      },
+      "epoch": [
+        {
+          "benchmark": "mirrorCode",
+          "effort": "max",
+          "score": 63.3,
+          "stderr": 10.7,
+          "runOn": "2026-10-21"
+        },
+        {
+          "benchmark": "gpqaDiamond",
+          "effort": "xhigh",
+          "score": 90.5,
+          "stderr": 1.8,
+          "runOn": "2026-07-01"
+        },
+        {
+          "benchmark": "gpqaDiamond",
+          "effort": "max",
+          "score": 80.3,
+          "stderr": 2.8,
+          "runOn": "2026-08-06"
+        },
+        {
+          "benchmark": "frontierMath",
+          "effort": "max",
+          "score": 65.6,
+          "stderr": 2.8,
+          "runOn": "2026-06-30"
+        }
+      ]
+    },
+    {
+      "slug": "gpt-5-6-sol",
+      "name": "GPT-5.6 Sol",
+      "provider": "openai",
+      "releaseDate": "2026-06-26",
+      "deprecated": true,
+      "supersededOn": "2026-09-22",
+      "announcementUrl": "https://developers.openai.com/api/docs/models/gpt-5.6-sol",
+      "pricing": {
+        "inputPer1M": 4,
+        "outputPer1M": 20,
+        "cachedInputPer1M": 0.4,
+        "maxInputTokens": 922000
+      },
+      "terminalBench": {
+        "version": "4.0",
+        "agent": "Codex",
+        "agentVersion": "0.149.1",
+        "agentUrl": "https://openai.com/codex/",
+        "effort": "max",
+        "accuracy": 37.27,
+        "ci95": 3.78,
+        "trials": 330,
+        "successes": 123,
+        "costPerTaskUsd": 7.7021,
+        "tokensPerTask": {
+          "total": 13363482,
+          "output": 71065
+        },
+        "minutesPerTask": 39.8,
+        "sourceUrl": "https://github.com/harbor-framework/terminal-bench/blob/main/leaderboard/submissions/2026-08-26-openai-gpt-5-6-sol-max-codex.json"
+      },
+      "epoch": [
+        {
+          "benchmark": "mirrorCode",
+          "effort": "high",
+          "score": 20,
+          "stderr": 9.2,
+          "runOn": "2026-08-10"
+        },
+        {
+          "benchmark": "gpqaDiamond",
+          "effort": "none",
+          "score": 82.8,
+          "stderr": 2.7,
+          "runOn": "2026-08-07"
+        },
+        {
+          "benchmark": "gpqaDiamond",
+          "effort": "low",
+          "score": 89.9,
+          "stderr": 2.1,
+          "runOn": "2026-08-07"
+        },
+        {
+          "benchmark": "gpqaDiamond",
+          "effort": "max",
+          "score": 93.5,
+          "stderr": 1.6,
+          "runOn": "2026-07-09"
+        },
+        {
+          "benchmark": "frontierMath",
+          "effort": "max",
+          "score": 89.1,
+          "stderr": 1.8,
+          "runOn": "2026-07-09"
         }
       ]
     },
@@ -2861,54 +1261,69 @@
       "slug": "gpt-5-6-terra",
       "name": "GPT-5.6 Terra",
       "provider": "openai",
-      "releaseDate": "2026-07-09",
+      "releaseDate": "2026-06-26",
       "deprecated": true,
       "supersededOn": "2026-10-26",
+      "announcementUrl": "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
       "pricing": {
         "inputPer1M": 2,
         "outputPer1M": 12,
         "cachedInputPer1M": 0.2,
-        "contextWindowTokens": 1000000
+        "maxInputTokens": 922000
       },
-      "summary": "Final GPT-5.x coding and multimodal tier before the transition to the GPT-6 architecture.",
-      "announcementUrl": "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
-      "benchmarkUrl": "https://artificialanalysis.ai/models/gpt-5-6-terra",
-      "harborEval": {
+      "terminalBench": {
+        "version": "4.0",
         "agent": "Codex",
+        "agentVersion": "0.149.1",
+        "agentUrl": "https://openai.com/codex/",
         "effort": "max",
         "accuracy": 21.52,
-        "totalCostUsd": 1733.52,
-        "costPerTrialUsd": 5.25
+        "ci95": 3.25,
+        "trials": 330,
+        "successes": 71,
+        "costPerTaskUsd": 5.2531,
+        "tokensPerTask": {
+          "total": 17223654,
+          "output": 100681
+        },
+        "minutesPerTask": 41.9,
+        "sourceUrl": "https://github.com/harbor-framework/terminal-bench/blob/main/leaderboard/submissions/2026-08-26-openai-gpt-5-6-terra-max-codex.json"
       },
-      "efforts": [
+      "epoch": [
         {
-          "id": "bcf8db0a-3bb6-4d82-9516-0f57370c85a6",
-          "slug": "gpt-5-6-terra",
-          "effortSlug": "max",
-          "effortLabel": "Max",
-          "shortTag": "MAX",
-          "effortLevel": 60,
-          "isDefaultEffort": true,
-          "scores": {
-            "coding": 29.62,
-            "terminalBench4": 35.35,
-            "frontierCode2": 23.89,
-            "intelligence": 32.34
-          },
-          "costUsdPerTask": {
-            "total": 3.735,
-            "input": 2.94,
-            "output": 0.795,
-            "reasoning": 0.495,
-            "cacheRead": 2.352
-          },
-          "tokensPerTask": {
-            "total": 66249,
-            "reasoning": 41228,
-            "answer": 25021
-          },
-          "speedTokPerSec": 83.22,
-          "cliEval": null
+          "benchmark": "mirrorCode",
+          "effort": "max",
+          "score": 41.1,
+          "stderr": 12.4,
+          "runOn": "2026-10-20"
+        },
+        {
+          "benchmark": "gpqaDiamond",
+          "effort": "none",
+          "score": 77.3,
+          "stderr": 3,
+          "runOn": "2026-08-07"
+        },
+        {
+          "benchmark": "gpqaDiamond",
+          "effort": "low",
+          "score": 87.4,
+          "stderr": 2.4,
+          "runOn": "2026-08-07"
+        },
+        {
+          "benchmark": "gpqaDiamond",
+          "effort": "max",
+          "score": 93.3,
+          "stderr": 1.5,
+          "runOn": "2026-07-09"
+        },
+        {
+          "benchmark": "frontierMath",
+          "effort": "max",
+          "score": 86,
+          "stderr": 2.1,
+          "runOn": "2026-07-09"
         }
       ]
     },
@@ -2916,54 +1331,160 @@
       "slug": "gpt-5-6-luna",
       "name": "GPT-5.6 Luna",
       "provider": "openai",
-      "releaseDate": "2026-07-09",
+      "releaseDate": "2026-06-26",
       "deprecated": true,
       "supersededOn": "2026-09-22",
+      "announcementUrl": "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
       "pricing": {
         "inputPer1M": 0.2,
         "outputPer1M": 1.2,
         "cachedInputPer1M": 0.02,
-        "contextWindowTokens": 1000000
+        "maxInputTokens": 922000
       },
-      "summary": "Compact GPT-5.6 efficiency tier succeeded by GPT-6 Luna.",
-      "announcementUrl": "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
-      "benchmarkUrl": "https://artificialanalysis.ai/models/gpt-5-6-luna",
-      "harborEval": {
+      "terminalBench": {
+        "version": "4.0",
         "agent": "Codex",
+        "agentVersion": "0.149.1",
+        "agentUrl": "https://openai.com/codex/",
         "effort": "max",
         "accuracy": 17.27,
-        "totalCostUsd": 346.67,
-        "costPerTrialUsd": 1.05
+        "ci95": 2.85,
+        "trials": 330,
+        "successes": 57,
+        "costPerTaskUsd": 1.0505,
+        "tokensPerTask": {
+          "total": 35022617,
+          "output": 185705
+        },
+        "minutesPerTask": 68.1,
+        "sourceUrl": "https://github.com/harbor-framework/terminal-bench/blob/main/leaderboard/submissions/2026-08-26-openai-gpt-5-6-luna-max-codex.json"
       },
-      "efforts": [
+      "epoch": [
         {
-          "id": "426d24c8-49ae-482a-b4a8-20f1c53f21c1",
-          "slug": "gpt-5-6-luna",
-          "effortSlug": "max",
-          "effortLabel": "Max",
-          "shortTag": "MAX",
-          "effortLevel": 60,
-          "isDefaultEffort": true,
-          "scores": {
-            "coding": 14.59,
-            "terminalBench4": 11.62,
-            "frontierCode2": 17.57,
-            "intelligence": 23.79
-          },
-          "costUsdPerTask": {
-            "total": 0.331,
-            "input": 0.26,
-            "output": 0.071,
-            "reasoning": 0.045,
-            "cacheRead": 0.207
-          },
-          "tokensPerTask": {
-            "total": 59003,
-            "reasoning": 37811,
-            "answer": 21192
-          },
-          "speedTokPerSec": 96.39,
-          "cliEval": null
+          "benchmark": "mirrorCode",
+          "effort": "max",
+          "score": 21.1,
+          "stderr": 9.8,
+          "runOn": "2026-10-21"
+        },
+        {
+          "benchmark": "gpqaDiamond",
+          "effort": "none",
+          "score": 63.6,
+          "stderr": 3.4,
+          "runOn": "2026-08-07"
+        },
+        {
+          "benchmark": "gpqaDiamond",
+          "effort": "low",
+          "score": 82.3,
+          "stderr": 2.7,
+          "runOn": "2026-08-07"
+        },
+        {
+          "benchmark": "gpqaDiamond",
+          "effort": "max",
+          "score": 91.6,
+          "stderr": 1.7,
+          "runOn": "2026-07-09"
+        },
+        {
+          "benchmark": "frontierMath",
+          "effort": "none",
+          "score": 39.6,
+          "stderr": 2.9,
+          "runOn": "2026-08-29"
+        },
+        {
+          "benchmark": "frontierMath",
+          "effort": "low",
+          "score": 41.4,
+          "stderr": 2.9,
+          "runOn": "2026-08-29"
+        },
+        {
+          "benchmark": "frontierMath",
+          "effort": "max",
+          "score": 82.1,
+          "stderr": 2.3,
+          "runOn": "2026-07-09"
+        }
+      ]
+    },
+    {
+      "slug": "claude-fable-5",
+      "name": "Claude Fable 5",
+      "provider": "anthropic",
+      "releaseDate": "2026-06-09",
+      "deprecated": true,
+      "supersededOn": "2026-09-01",
+      "announcementUrl": "https://www.anthropic.com/news/claude-fable-5-mythos-5",
+      "pricing": {
+        "inputPer1M": 10,
+        "outputPer1M": 50,
+        "cachedInputPer1M": 1,
+        "maxInputTokens": 1000000
+      },
+      "terminalBench": {
+        "version": "4.0",
+        "agent": "Claude Code",
+        "agentVersion": "2.1.231",
+        "agentUrl": "https://claude.com/product/claude-code",
+        "effort": "max",
+        "accuracy": 44.55,
+        "ci95": 3.85,
+        "trials": 330,
+        "successes": 147,
+        "costPerTaskUsd": 22.0152,
+        "tokensPerTask": {
+          "total": 11470365,
+          "output": 177636
+        },
+        "minutesPerTask": 70,
+        "sourceUrl": "https://github.com/harbor-framework/terminal-bench/blob/main/leaderboard/submissions/2026-08-26-anthropic-claude-fable-5-max-claude-code.json"
+      },
+      "epoch": [
+        {
+          "benchmark": "mirrorCode",
+          "effort": "high",
+          "score": 63.9,
+          "stderr": 10.4,
+          "runOn": "2026-08-10"
+        },
+        {
+          "benchmark": "mirrorCode",
+          "effort": "max",
+          "score": 70,
+          "stderr": 10.4,
+          "runOn": "2026-10-30"
+        },
+        {
+          "benchmark": "gpqaDiamond",
+          "effort": "low",
+          "score": 78.8,
+          "stderr": 2.9,
+          "runOn": "2026-08-06"
+        },
+        {
+          "benchmark": "gpqaDiamond",
+          "effort": "high",
+          "score": 83.3,
+          "stderr": 2.7,
+          "runOn": "2026-08-06"
+        },
+        {
+          "benchmark": "gpqaDiamond",
+          "effort": "max",
+          "score": 85.9,
+          "stderr": 2.5,
+          "runOn": "2026-08-06"
+        },
+        {
+          "benchmark": "frontierMath",
+          "effort": "max",
+          "score": 87,
+          "stderr": 2,
+          "runOn": "2026-06-09"
         }
       ]
     }

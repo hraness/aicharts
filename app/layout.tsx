@@ -5,14 +5,14 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://aicharts.io"),
   title: "AI model comparison chart for coding: score vs cost — aicharts",
   description:
-    "Compare AI models for coding on one chart: score against cost per task at every effort level. Find the best AI model for coding at your budget.",
+    "Compare AI models for coding on one chart: Terminal-Bench score against cost per task. Find the best AI model for coding at your budget.",
   alternates: {
     canonical: "/",
   },
   openGraph: {
     title: "AI model comparison chart for coding — aicharts",
     description:
-      "Every Anthropic, OpenAI and Google coding model on one chart: score against cost per task at each effort level.",
+      "Every Anthropic, OpenAI and Google coding model on one chart: Terminal-Bench score against cost per task.",
     url: "https://aicharts.io",
     siteName: "aicharts",
     type: "website",
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "AI model comparison chart for coding — aicharts",
     description:
-      "Every Anthropic, OpenAI and Google coding model on one chart: score against cost per task at each effort level.",
+      "Every Anthropic, OpenAI and Google coding model on one chart: Terminal-Bench score against cost per task.",
   },
 };
 
