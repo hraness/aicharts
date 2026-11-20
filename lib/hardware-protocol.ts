@@ -7,6 +7,6 @@ export function protocolKey(suite: string, metric: string, run: ProtocolRun) {
   // The Pi board revision and storage are part of the tested hardware; keep the common
   // pinned llama.cpp recipe comparable. Other differing source notes stay distinct.
   if (suite === "pi-llama") conditions = "";
-  if (suite === "moi" && ["peak","memoryMB","meanRss"].includes(metric)) conditions += " " + run.platform;
+  if ((suite === "moi" || suite.startsWith("rne-")) && ["peak","memoryMB","meanRss"].includes(metric)) conditions += " " + run.platform;
   return JSON.stringify([suite, metric, run.model, run.config, conditions]);
 }

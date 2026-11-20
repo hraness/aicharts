@@ -33,6 +33,18 @@ type Suite = {
 
 const suites: Suite[] = deviceBenchmarks.suites;
 const metrics: Record<string, { label: string; unit: string; lower: boolean }> = {
+  pipelineMedianMs: {label:"Median pipeline time",unit:"ms",lower:true},
+  pipelineMeanMs: {label:"Mean pipeline time",unit:"ms",lower:true},
+  executionMs: {label:"Forward execution",unit:"ms",lower:true},
+  coldLoadMs: {label:"Cold load",unit:"ms",lower:true},
+  forwardRate: {label:"Forward passes",unit:"passes/s",lower:false},
+  audioTimeRatio: {label:"Processing / audio",unit:"s/s",lower:true},
+  forwardMeanMs: {label:"Mean forward",unit:"ms",lower:true},
+  forwardMinMs: {label:"Fastest forward",unit:"ms",lower:true},
+  forwardMaxMs: {label:"Slowest forward",unit:"ms",lower:true},
+  combinedTokens: {label:"Prompt + output",unit:"tok/s",lower:false},
+  peakResidentMiB: {label:"Peak resident memory",unit:"MiB",lower:true},
+  stepSeconds: { label: "Denoising step", unit: "s/step", lower: true },
   peakGpuGB: { label: "Peak GPU memory", unit: "GB", lower: true },
   gpuMemoryMB: { label: "Peak GPU memory", unit: "MB", lower: true },
   visionEncoderMs: { label: "Visual encoder time", unit: "ms", lower: true },
@@ -75,7 +87,7 @@ const tasks: Record<string, string> = {
 };
 
 const workloadNames = [...new Set(suites.map(suite => suite.task ?? tasks[suite.id]!))];
-const speedKeys = ["generation", "tokenLatency", "requestMs", "firstToken", "audio", "synthesis", "latency", "embeddings", "rerank", "graphMs", "whisperEncodeMs", "prompt"];
+const speedKeys = ["generation", "tokenLatency", "requestMs", "firstToken", "audio", "synthesis", "latency", "embeddings", "rerank", "graphMs", "whisperEncodeMs", "prompt", "pipelineMedianMs", "pipelineMeanMs", "forwardMeanMs", "executionMs", "forwardRate", "audioTimeRatio", "combinedTokens", "coldLoadMs"];
 // Keep the source order within each suite. The overview picks the first shared protocol
 // in this order, so a faster measurement never wins selection just for being faster.
 const samples = suites.flatMap(suite => suite.runs.flatMap(run => {
@@ -117,28 +129,13 @@ function rankProtocols(a: Sample, b: Sample) {
   return Number(stageMetric(a)) - Number(stageMetric(b)) || (breadth.get(b.protocol) ?? 0) - (breadth.get(a.protocol) ?? 0);
 }
 
-function WorkloadCell({sample, max, inspect}: {sample?: Sample; max?: number; inspect: (s: Sample) => void}) {
-  if (!sample) return <td className="matrix-missing">Unreported</td>;
-  const {run, key} = sample;
-  const memory = measuredMemory(run, sample.suite.id);
-  const value = run.values[key]!;
-  return <td><button className="matrix-result" type="button" onClick={() => inspect(sample)}>
-    <b>{number.format(value)} {metrics[key]!.unit}</b>
-    {max !== undefined && max > 0 && <span aria-hidden="true" className="hardware-track"><i style={{width: 100 * value / max + "%"}} /></span>}
-    <span>{metrics[key]!.label} · {run.model} · {run.config}</span>
-    {memory && <span>{memory.kind} · {number.format(memory.gib)} GiB</span>}
-    {run.values.inferencePeakHighMB !== undefined && <span>Estimated inference memory · {number.format(run.values.inferencePeakLowMB ?? 0)}–{number.format(run.values.inferencePeakHighMB)} MB</span>}
-  </button><details className="hardware-conditions"><summary>Test conditions</summary>
-    <p>{sample.suite.description}</p>{run.protocol && <p>{run.protocol}</p>}{run.note && <p>{run.note}</p>}<a href={run.source ?? sample.suite.modelSources?.[run.model] ?? sample.suite.source}>Published benchmark</a>
-  </details></td>;
-}
-
 function measuredMemory(run: Run, suite?: string) {
+  if (run.values.peakResidentMiB !== undefined) return { gib: run.values.peakResidentMiB / 1024, kind: "Peak resident memory" };
   if (run.values.peakGpuGB !== undefined) return { gib: run.values.peakGpuGB * 1e9 / 2 ** 30, kind: "Peak GPU memory" };
   if (run.values.gpuMemoryMB !== undefined) return { gib: run.values.gpuMemoryMB * 1e6 / 2 ** 30, kind: "Peak GPU memory" };
   if (run.values.meanRss !== undefined) return { gib: run.values.meanRss * 1e6 / 2 ** 30, kind: "Mean resident RAM" };
   if (run.values.vramGiB !== undefined) return { gib: run.values.vramGiB, kind: "Peak GPU allocation" };
-  if (run.values.peak !== undefined) return { gib: run.values.peak / 1024, kind: suite === "moi" ? (run.platform === "Android" ? "Peak process PSS" : "Peak physical footprint") : "Peak app memory" };
+  if (run.values.peak !== undefined) return { gib: run.values.peak / 1024, kind: suite === "moi" || suite?.startsWith("rne-") ? (run.platform === "Android" ? "Peak process PSS" : "Peak physical footprint") : suite?.startsWith("edge-llm-") ? "Peak physical footprint" : "Peak app memory" };
   if (run.values.memoryMB !== undefined) return { gib: run.values.memoryMB * 1e6 / 2 ** 30, kind: run.platform === "NVIDIA GPUs" ? "Reported VRAM" : "Reported RAM" };
   return null;
 }
@@ -168,6 +165,151 @@ function rates(value: number, key: string) {
   return null;
 }
 
+const memoryKeys = new Set(["peakResidentMiB","peakGpuGB","gpuMemoryMB","vramGiB","peak","memoryMB","meanRss","inferencePeakLowMB","inferencePeakHighMB"]);
+const timingLabels: Record<string,string> = {
+  prompt:"Prompt speed", generation:"Output speed", firstToken:"First token", latency:"Elapsed time",
+  graphMs:"Graph time", audio:"Transcription", synthesis:"Speech speed", tokenLatency:"Token time",
+  firstAudio:"First audio", requestMs:"Request time", embeddings:"Embedding speed", rerank:"Reranking speed"
+};
+
+function memoryReadout(sample: Sample) {
+  const {run,suite} = sample;
+  if (run.values.inferencePeakHighMB !== undefined) {
+    const low = run.values.inferencePeakLowMB;
+    const high = number.format(run.values.inferencePeakHighMB);
+    return { value:(low === undefined ? high : number.format(low) + "–" + high) + " MB", label:"Inference estimate" };
+  }
+  const measured = measuredMemory(run,suite.id);
+  return measured ? {value:number.format(measured.gib) + " GiB",label:measured.kind} : undefined;
+}
+
+type Option = { primary?: Sample; secondary?: Sample };
+// Give each model a place in the first page before listing its many context sizes.
+function variedOptions(items:Option[]) {
+  if (items.length <= 6) return items;
+  const models = new Map<string,Option[]>();
+  for (const item of items) {
+    const model = (item.primary ?? item.secondary)!.run.model;
+    if (!models.has(model)) models.set(model,[]);
+    models.get(model)!.push(item);
+  }
+  const groups = [...models.values()];
+  return groups.flatMap(group => group.slice(0,1)).concat(groups.flatMap(group => group.slice(1)));
+}
+
+function TestTable({suite, items, device, peer, inspect}: {
+  suite: Suite; items: Option[]; device: string; peer?: string; inspect: (s:Sample) => void;
+}) {
+  const [limit,setLimit] = useState(6);
+  const [sort,setSort] = useState<{key:string; ascending:boolean}>();
+  const suffixes = new Set(items.map(item => {
+    const parts = (item.primary ?? item.secondary)!.run.model.split(" · ");
+    return parts.length > 1 ? parts[parts.length-1] : undefined;
+  }));
+  const commonSuffix = suffixes.size === 1 ? [...suffixes][0] : undefined;
+  const columns = suite.metrics.filter(key => !memoryKeys.has(key) && !["storage","wer","retrieval"].includes(key) &&
+    items.some(item => item.primary?.run.values[key] !== undefined || item.secondary?.run.values[key] !== undefined));
+  const hasDisk = items.some(item => [item.primary,item.secondary].some(sample => sample && storage(sample.run) !== null));
+  const hasMemory = items.some(item => [item.primary,item.secondary].some(sample => sample && memoryReadout(sample)));
+  const ordered = sort ? [...items].sort((a,b) => {
+    const val = (item:Option) => (item.primary ?? item.secondary)!.run.values[sort.key];
+    const av = val(a), bv = val(b);
+    if (av === undefined || bv === undefined) return Number(av === undefined) - Number(bv === undefined);
+    return (av - bv) * (sort.ascending ? 1 : -1);
+  }) : items;
+  const scales = new Map(columns.map(key => [key, items.reduce((high,item) =>
+    Math.max(high,item.primary?.run.values[key] ?? 0,item.secondary?.run.values[key] ?? 0),0)]));
+  const orderBy = (key:string) => {
+    setSort({key,ascending:sort?.key === key ? !sort.ascending : metrics[key]!.lower});
+    setLimit(6);
+  };
+  return <div className="timing-suite">
+    <header><h5>{suite.title}{commonSuffix && <small> · {commonSuffix}</small>}</h5><a href={suite.source}>Source</a></header>
+    <details className="timing-method"><summary>Test conditions</summary><p>{suite.description}</p>
+      <p>{peer ? "Bars share a scale within each matched pair." : "Bars share a scale within each timing column for the filtered configurations."}</p></details>
+    {items.length > 6 && <div className="timing-mobile-sort"><CompactPicker label={"Order " + suite.title} value={sort?.key ?? ""} options={[
+      {value:"",label:"Published configurations"}, ...columns.map(key => ({value:key,label:metrics[key]!.label,description:metrics[key]!.lower ? "Lowest first" : "Highest first"}))
+    ]} onChange={key => {setSort(key ? {key,ascending:metrics[key]!.lower} : undefined);setLimit(6);}}/></div>}
+    <table className="timing-table" aria-label={suite.title}>
+      <thead><tr><th scope="col">Model and settings</th>{peer && <th scope="col">Device</th>}
+        {columns.map(key => <th key={key} scope="col" aria-sort={sort?.key === key ? sort.ascending ? "ascending" : "descending" : undefined}>
+          <button type="button" title={"Sort by " + metrics[key]!.label} onClick={() => orderBy(key)}>{timingLabels[key] ?? metrics[key]!.label} {sort?.key === key ? (sort.ascending ? "↑" : "↓") : "↕"}</button></th>)}
+        {hasMemory && <th scope="col">Memory</th>}{hasDisk && <th scope="col">On disk</th>}</tr></thead>
+      <tbody>{ordered.slice(0,limit).flatMap((item,i) => [item.primary,item.secondary].flatMap((sample,side) => {
+        if (!sample) return [];
+        const {run} = sample;
+        const memory = memoryReadout(sample);
+        const disk = run.values.storage ?? run.storageMiB;
+        return [<tr key={side + sample.protocol} data-side={side} data-band={i%2}>
+          <th scope="row"><button type="button" title={run.model} onClick={() => inspect(sample)}>
+            {commonSuffix ? run.model.slice(0,-(commonSuffix.length+3)) : run.model}</button>
+            <small>{run.config}{(run.source || suite.modelSources?.[run.model]) &&
+              <> · <a href={run.source ?? suite.modelSources?.[run.model]}>Run source</a></>}</small></th>
+          {peer && <td className="timing-device">{side === 1 ? peer : device}<small>{item.primary && item.secondary ? "Matched timing" : "Only this device"}</small></td>}
+          {columns.map(key => {
+            const value = run.values[key];
+            const scale = peer ? item.primary && item.secondary && item.primary.run.values[key] !== undefined && item.secondary.run.values[key] !== undefined ?
+              Math.max(item.primary.run.values[key]!,item.secondary.run.values[key]!) : undefined : scales.get(key);
+            return <td key={key} data-label={timingLabels[key] ?? metrics[key]!.label}>
+            <span>{value === undefined ? "—" : number.format(value) + " " + metrics[key]!.unit}</span>
+            {value !== undefined && scale !== undefined && scale > 0 && <i className="timing-bar" aria-hidden="true" style={{width:100 * value / scale + "%"}}/>}</td>;
+          })}
+          {hasMemory && <td data-label="Memory"><span>{memory?.value ?? "—"}</span>{memory && <small>{memory.label}</small>}</td>}
+          {hasDisk && <td data-label="On disk"><span>{disk === undefined ? "—" : number.format(disk) + " MiB"}</span></td>}
+        </tr>];
+      }))}</tbody>
+    </table>
+    {items.length > 6 && <div className="timing-pages"><span>{Math.min(limit,items.length)} of {items.length} configurations</span>
+      {items.length > limit && <button type="button" onClick={() => setLimit(limit + 20)}>Show more timings</button>}
+      {limit > 6 && <button type="button" onClick={() => setLimit(6)}>Show fewer</button>}</div>}
+  </div>;
+}
+
+function WorkloadResults({left,right,device,peer,inspect}:{
+  left:Sample[]; right:Sample[]; device:string; peer?:string; inspect:(s:Sample)=>void;
+}) {
+  const [query,setQuery] = useState("");
+  const [task,setTask] = useState("");
+  const [allSources,setAllSources] = useState<string[]>([]);
+  const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const grouped = new Map<string,Map<Suite,Map<string,Option>>>();
+  const availableTasks = workloadNames.filter(name => left.some(s => s.task === name) || right.some(s => s.task === name));
+  for (const [side,samples] of [["primary",left],["secondary",right]] as const) {
+    for (const sample of samples) {
+      if (task && sample.task !== task) continue;
+      const {run,suite} = sample;
+      const text = [sample.task,suite.title,run.model,run.config,run.protocol].join(" ").toLowerCase();
+      if (words.some(word => !text.includes(word))) continue;
+      if (!grouped.has(sample.task)) grouped.set(sample.task,new Map());
+      const bySuite = grouped.get(sample.task)!;
+      if (!bySuite.has(suite)) bySuite.set(suite,new Map());
+      const pairs = bySuite.get(suite)!;
+      const pair = pairs.get(sample.protocol) ?? {};
+      pair[side] = sample;
+      pairs.set(sample.protocol,pair);
+    }
+  }
+  return <div className="timing-results" aria-label="Speed by workload">
+    <div className="timing-heading"><div><h3>Measured timings</h3><p>{device}{peer && " and " + peer}</p></div>
+      <label>Filter results<input type="search" value={query} placeholder="Model, runtime, or test" onChange={e => setQuery(e.target.value)}/></label></div>
+    <nav className="timing-tasks" aria-label="Filter measured workloads">
+      {["",...availableTasks].map(name => <button key={name} type="button" aria-pressed={task === name} onClick={() => setTask(name)}>{name || "All workloads"}</button>)}
+    </nav>
+    {grouped.size === 0 && <p role="status">No published timings match this filter. <button type="button" onClick={() => {setQuery("");setTask("");}}>Clear filters</button></p>}
+    {availableTasks.filter(name => grouped.has(name)).map(name => <section className="timing-workload" key={name} id={"workload-" + encodeURIComponent(name)}>
+      <h4>{name}</h4>{[...grouped.get(name)!].slice(0, words.length || task || allSources.includes(name) ? undefined : 2).map(([suite,pairs]) => {
+        const options = [...pairs.values()];
+        const shared = options.filter(item => item.primary && item.secondary);
+        const items = [...variedOptions(shared), ...variedOptions(options.filter(item => !item.primary || !item.secondary))];
+        return <TestTable key={suite.id + query} suite={suite} items={items} device={device} peer={peer} inspect={inspect}/>;
+      })}
+      {grouped.get(name)!.size > 2 && !words.length && !task && <button className="hardware-more" type="button" onClick={() =>
+        setAllSources(previous => previous.includes(name) ? previous.filter(x => x !== name) : [...previous,name])}>
+        {allSources.includes(name) ? "Show first two suites" : "See all " + grouped.get(name)!.size + " " + name.toLowerCase() + " suites"}
+      </button>}</section>)}
+  </div>;
+}
+
 export function LocalHardware() {
   const [example, setExample] = useState(true);
   const [platform, setPlatform] = useState("iPhone & iPad");
@@ -178,7 +320,7 @@ export function LocalHardware() {
   const [remembered, setRemembered] = useState("");
   const [storageAvailable, setStorageAvailable] = useState(false);
   const [browseTask, setBrowseTask] = useState("");
-  const [chosenProtocols, setChosenProtocols] = useState<Record<string, string>>({});
+  const [workloadVisit,setWorkloadVisit] = useState(0);
   const manual = useRef(false);
   const [inspecting, setInspecting] = useState(false);
   const [selection, setSelection] = useState("moi/latency");
@@ -268,7 +410,6 @@ export function LocalHardware() {
   const maxMemory = Math.max(0, ...memoryBars.map(item => item.gib));
   const formatted = (run: Run) => number.format(run.values[key]!) + (metric.unit === "%" ? "" : " ") + metric.unit;
   const changeDevice = (name: string) => {
-    setChosenProtocols({});
     manual.current = true; setAutomatic(false); setExample(false); setDevice(name); setInspectOpen(false); setSelectedRun(""); setExpanded(false); setAllDevices(false); setBudget("");
   };
   const setMeasurement = (id: string) => {
@@ -300,6 +441,7 @@ export function LocalHardware() {
     const sample = byDevice.get(id)?.filter(s => s.task === task).sort(rankProtocols)[0];
     if (!sample) return;
     pickDevice(id);
+    setWorkloadVisit(previous => previous + 1);
     setSelection(sample.suite.id + "/" + sample.key);
     setSelectedRun(runName(sample.run));
     requestAnimationFrame(() => document.getElementById("workload-" + encodeURIComponent(task))?.scrollIntoView({block:"center"}));
@@ -342,28 +484,7 @@ export function LocalHardware() {
       </div>}
       {suggestions.length > 0 && <div className="hardware-shortcuts"><span>Compare on shared tests</span>{suggestions.map(({entry,workloads,tests}) =>
         <button key={entry.value} type="button" title={workloads+" workloads · "+tests+" matching configurations"} onClick={() => { manual.current = true; setPeerId(entry.value); }}>{entry.device}</button>)}</div>}
-      <table className="device-matrix" aria-label="Speed by workload"><caption>Speed by workload <small>{covered.length} of {workloadNames.length} workloads have results for this selection</small></caption><thead><tr><th scope="col">Workload</th><th scope="col">{device}<small>{platform}</small></th>{peer && <th scope="col">{peer.device}<small>{peer.platform}</small></th>}</tr></thead>
-        <tbody>{covered.map(task => {
-          const first = left.filter(s => s.task === task).sort(rankProtocols);
-          const second = right.filter(s => s.task === task).sort(rankProtocols);
-          const other = new Map(second.map(s => [s.protocol,s]));
-          const shared = first.filter(s => other.has(s.protocol));
-          const common = shared.find(s => s.protocol === chosenProtocols[task]) ?? shared[0];
-          const a = common ?? first[0];
-          const b = common ? other.get(common.protocol) : second[0];
-          const max = common && b ? Math.max(a!.run.values[a!.key]!, b.run.values[b.key]!) : undefined;
-          return <tr key={task} id={"workload-" + encodeURIComponent(task)} data-focus={task === browseTask}><th scope="row">{task}
-            <small>{shared.length ? "Matched test · " + (metrics[a!.key]!.lower ? "lower" : "higher") + " is better" :
-              a && b ? "Separate tests" : peer ? "One device measured" : metrics[(a ?? b)!.key]!.label}</small>
-            {common && shared.length > 1 && <details className="hardware-conditions"><summary>{shared.length} shared tests</summary>
-              <CompactPicker label={"Shared test for " + task} value={common.protocol} options={shared.map(s => ({
-                value:s.protocol, label:runName(s.run), group:s.suite.title, description:s.run.protocol ?? s.run.note
-              }))} onChange={value => setChosenProtocols(previous => ({...previous,[task]:value}))}/>
-            </details>}
-          </th><WorkloadCell sample={a} max={max} inspect={inspect}/>{peer && <WorkloadCell sample={b} max={max} inspect={inspect}/>}</tr>;
-        })}</tbody>
-      </table>
-      <p className="hardware-fine">Select a value for the source, model settings and other runs. The overview favors matched tests, then whole workloads, then tests published for more devices. Bars compare results within a matched test.</p>
+      <WorkloadResults key={JSON.stringify([deviceId,peerId,workloadVisit])} left={left} right={right} device={device} peer={peer?.device} inspect={inspect}/>
       <div className="hardware-coverage">
         <h3>Browse by workload</h3>
         {[{label:"Measured on your selection",items:covered},{label:"Measured on other hardware",items:absent}].filter(group => group.items.length).map(group =>

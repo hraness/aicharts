@@ -1,5 +1,14 @@
 [
   {
+    "slug": "visible-device-timings",
+    "date": "2026-11-20",
+    "category": "Improved",
+    "surfaces": ["Website", "API"],
+    "title": "See model and runtime timings together",
+    "summary": "Compare published model configurations on your device in one table per benchmark. Filter by model or runtime to see prompt speed, output speed, latency and measured memory together.",
+    "link": {"href": "/local#hardware", "label": "Compare timings"}
+  },
+  {
     "slug": "remember-benchmark-device",
     "date": "2026-11-20",
     "category": "Improved",
