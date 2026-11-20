@@ -3,9 +3,6 @@ import { LocalHardware } from "@/components/local-hardware";
 import { LocalQuality } from "@/components/local-quality";
 import { workloads } from "@/lib/local-quality";
 import { pageMetadata } from "@/journal/content";
-import { VisionExplorer } from "@/components/vision-explorer";
-import { defaultVision } from "@/lib/vision-bench";
-import { visionRows } from "@/lib/vision-file";
 import "./local.css";
 
 export const metadata = pageMetadata(
@@ -23,13 +20,13 @@ export default async function LocalBenchmarksPage() {
       <a href="#quality">Model quality</a>
       <a href="/local/mobile">Everyday phone tasks</a>
       <a href="/local/devices">Browse devices</a>
+      <a href="/local/devices/apple-silicon-macs/apple-m4-pro">M4 Pro LLM benchmarks</a>
       <a href="#hardware">Device speeds and memory</a>
       <a href="/local/models">Find downloadable models</a>
     </nav>
     <LocalQuality workload={first} metric={first} />
     <section><h2>What can your phone do offline?</h2><p>On a Galaxy S10, Moonshine Tiny transcribed a 30-second recording in 1.36 seconds. On a Pixel 8a, KittenTTS started reading a short sentence aloud in about 370 ms.</p><a href="/local/mobile">Compare phone and tablet benchmarks by task</a></section>
     <LocalHardware />
-    <VisionExplorer initial={defaultVision} initialRows={await visionRows(defaultVision)}/>
     <p><a href="/api/local">Download benchmarks and sources (JSON)</a></p>
   </article>;
 }

@@ -1,5 +1,14 @@
 [
   {
+    "slug":"mac-language-models",
+    "date":"2026-11-20",
+    "category":"Improved",
+    "surfaces":["Website","API"],
+    "title":"Compare language models on M4 Pro Macs",
+    "summary":"Look up prompt processing, generation speed and complete task times on M4 Pro Macs with 24, 48 or 64 GB. See the runtime, model precision and hardware configuration behind each result.",
+    "link":{"href":"/local/devices/apple-silicon-macs/apple-m4-pro","label":"Explore M4 Pro benchmarks"}
+  },
+  {
     "slug":"phone-tasks",
     "date":"2026-11-20",
     "category":"Improved",

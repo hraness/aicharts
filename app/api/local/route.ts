@@ -10,7 +10,7 @@ export const dynamic = "force-static";
 export async function GET() {
   // Parse original snapshot bytes so the public export retains source precision.
   // Bundling numeric literals into JavaScript can round their last decimal place.
-  const filenames = ["local-hardware.json", "local-hardware-language.json", "local-hardware-nonlanguage.json", "local-hardware-iphone-studies.json", "local-hardware-llm-extra.json", "local-hardware-model-extra.json", "local-hardware-mobile-tasks.json", "local-hardware-tokforge.json"];
+  const filenames = ["local-hardware.json", "local-hardware-language.json", "local-hardware-nonlanguage.json", "local-hardware-iphone-studies.json", "local-hardware-llm-extra.json", "local-hardware-model-extra.json", "local-hardware-mobile-tasks.json", "local-hardware-tokforge.json", "local-hardware-mac-llms.json"];
   const [base, ...supplements] = await Promise.all(filenames.map(async file =>
     JSON.parse(await readFile(join(process.cwd(), "data", file), "utf8"))
   ));

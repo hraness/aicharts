@@ -1,5 +1,5 @@
 import { deviceBenchmarks } from "./local-hardware-data";
-import { hardwareSlug, visionExperiments } from "./vision-bench";
+import { hardwareSlug } from "./vision-bench";
 import { tasks, type Suite, type Run } from "./local-hardware-format";
 export type DeviceReport = {platform:string;device:string;slug:string;profiles:number; groups:Map<Suite,Run[]>;workloads:Set<string>};
 const index=new Map<string,DeviceReport>();
@@ -16,10 +16,6 @@ for(const suite of deviceBenchmarks.suites as Suite[]) for(const run of suite.ru
   report.workloads.add(suite.task ?? tasks[suite.id]!);
   if(!report.groups.has(suite))report.groups.set(suite,[]);
   report.groups.get(suite)!.push(run);
-}
-for(const experiment of visionExperiments) {
-  const report=entry(experiment.platform,experiment.device);
-  report.profiles+=experiment.count;report.workloads.add("Image classification");
 }
 export const reports=[...index.values()].filter(r=>r.profiles>=4).sort((a,b)=>a.platform.localeCompare(b.platform)||a.device.localeCompare(b.device,"en",{numeric:true}));
 export function reportFor(slug:string){return reports.find(report=>report.slug===slug);}

@@ -24,6 +24,8 @@ export type Suite = {
 
 
 export const metrics: Record<string, { label: string; unit: string; lower: boolean }> = {
+  answerRate: {label:"Output over whole request",unit:"tok/s",lower:false},
+  runtimePeakGiB: {label:"Runtime-reported peak",unit:"GiB",lower:true},
   energyJ: {label:"Energy per summary",unit:"J",lower:true},
   bufferMiB: {label:"Model and runtime buffers",unit:"MiB",lower:true},
   summaryQuality: {label:"G-Eval summary score",unit:"0–1",lower:false},
@@ -91,6 +93,7 @@ export const tasks: Record<string, string> = {
 
 export const speedKeys = ["generation", "tokenLatency", "requestMs", "firstToken", "audio", "synthesis", "latency", "embeddings", "rerank", "graphMs", "whisperEncodeMs", "prompt", "pipelineMedianMs", "pipelineMeanMs", "forwardMeanMs", "executionMs", "forwardRate", "audioTimeRatio", "combinedTokens", "coldLoadMs","queryP90Ms","sampleRate","finalTextMs","firstAudio","ttsInputRate","inferenceTokens"];
 export function measuredMemory(run: Run, suite?: string) {
+  if (run.values.runtimePeakGiB !== undefined) return {gib:run.values.runtimePeakGiB,kind:"Runtime-reported peak"};
   if (run.values.bufferMiB !== undefined) return {gib:run.values.bufferMiB / 1024,kind:"Model and runtime buffers"};
   if (run.values.tenSecondPeakMiB !== undefined) return {gib:run.values.tenSecondPeakMiB / 1024,kind:"Peak memory on 10 s of audio"};
   if (run.values.residentMB !== undefined) return {gib:run.values.residentMB*1e6 / 2**30,kind:"Resident memory"};

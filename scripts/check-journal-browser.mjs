@@ -11,7 +11,7 @@ const capture = process.argv.includes("--preview");
 const entries = JSON.parse(await readFile("journal/entries.json", "utf8"));
 const { releases } = JSON.parse(await readFile("data/releases.json", "utf8"));
 const localHardware = JSON.parse(await readFile("data/local-hardware.json", "utf8"));
-for (const file of ["local-hardware-language.json","local-hardware-nonlanguage.json", "local-hardware-iphone-studies.json", "local-hardware-llm-extra.json", "local-hardware-model-extra.json", "local-hardware-mobile-tasks.json", "local-hardware-tokforge.json"]) {
+for (const file of ["local-hardware-language.json","local-hardware-nonlanguage.json", "local-hardware-iphone-studies.json", "local-hardware-llm-extra.json", "local-hardware-model-extra.json", "local-hardware-mobile-tasks.json", "local-hardware-tokforge.json", "local-hardware-mac-llms.json"]) {
   const extra = JSON.parse(await readFile("data/" + file, "utf8"));
   localHardware.suites.push(...extra.suites);
 }
@@ -448,17 +448,14 @@ try {
     await page.getByRole("heading",{name:"iPhone 16 Pro Max local AI benchmarks"}).waitFor();
     assert.ok(await page.getByText("LiveChatBench mobile translation",{exact:true}).isVisible());
     assert.ok((await page.locator('link[rel=canonical]').getAttribute("href")).endsWith("/local/devices/iphone-ipad/iphone-16-pro-max"));
-    await page.goto(url+"/local#vision-frontier");
-    const vision=page.locator("#vision-frontier");
-    await vision.getByRole("button",{name:"All timings",exact:true}).click();
-    await vision.getByRole("searchbox",{name:"Search vision models"}).fill("resnet50");
-    assert.ok(await vision.locator("tbody tr").count()>0);
-    await vision.getByLabel("Minimum top-1 (%)").fill("100");
-    await vision.getByText("No scored architectures match these limits.").waitFor();
-    await vision.getByLabel("Minimum top-1 (%)").fill("");
-    await pickCompact(page,"Vision benchmark run","i7-12700H","fp32-nchw-pt240-cpu-i7_12700h-dynamo");
-    await vision.locator(".vision-caption").filter({hasText:"Core i7-12700H"}).waitFor();
-    assert.ok(await vision.getByRole("link",{name:"Core i7-12700H device report"}).isVisible());
+    await page.goto(url+"/local");
+    assert.equal(await page.locator("#vision-frontier").count(),0);
+    await page.getByRole("link",{name:"M4 Pro LLM benchmarks"}).click();
+    assert.ok(await page.getByRole("heading",{name:"Language models by prompt length on Mac"}).isVisible());
+    await page.getByRole("heading",{name:"How fast do the same models reply?"}).waitFor();
+    assert.ok(await page.getByRole("row",{name:/gemma-3-4b-it 88.*81/}).count() > 0);
+    assert.equal(await noSideScroll(page),true,"Mac result comparison fits");
+    await page.goto(url+"/local");
     await page.getByRole("button",{name:"Device",exact:true}).click();
     const deviceMenu=page.getByRole("dialog",{name:"Choose Device",exact:true});
     await deviceMenu.getByRole("combobox").fill("phone");
