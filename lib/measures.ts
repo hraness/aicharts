@@ -1,5 +1,6 @@
 import {
   EPOCH_BENCHMARKS,
+  type CurveEffort,
   type EffortSlug,
   type EpochBenchmarkId,
   type EpochScore,
@@ -24,8 +25,8 @@ export const EFFORT_NAMES: Readonly<Record<EffortSlug, string>> = {
 const EFFORT_LEVELS: readonly EffortSlug[] = ["none", "minimal", "low", "medium", "high", "xhigh", "max"];
 
 /** The setting's name; null is a run at the API's default setting. */
-export function effortName(slug: EffortSlug | null): string {
-  return slug ? EFFORT_NAMES[slug] : "Default";
+export function effortName(slug: CurveEffort | null): string {
+  return slug && slug !== "default" ? EFFORT_NAMES[slug] : "Default";
 }
 
 /** The best score a release has on an Epoch benchmark; ties go to the lower setting. */

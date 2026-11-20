@@ -1,6 +1,7 @@
 import type { BudgetAxis, ModelRelease } from "./types";
 
 export function formatUsd(value: number): string {
+  if (value > 0 && value < 0.001) return `$${value.toPrecision(2)}`;
   if (value < 0.01) return `$${value.toFixed(3)}`;
   if (value < 100) return `$${value.toFixed(2)}`;
   return `$${Math.round(value)}`;

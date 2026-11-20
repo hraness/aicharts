@@ -520,6 +520,17 @@ a:focus-visible {
   stroke-width: 1.5;
 }
 
+.peer-series.is-leader .peer-curve {
+  stroke-opacity: 0.8;
+  stroke-width: 1.9;
+}
+
+.peer-tag {
+  fill: var(--peer-color);
+  font-size: 10px;
+  font-weight: 600;
+}
+
 .peer-series.is-hovered .peer-curve {
   stroke-opacity: 0.9;
 }
@@ -534,6 +545,10 @@ a:focus-visible {
   fill-opacity: 0.72;
   stroke: var(--surface);
   stroke-width: 1;
+}
+
+.peer-series.is-leader .peer-dot {
+  fill-opacity: 0.78;
 }
 
 .peer-series.is-hovered .peer-dot {
@@ -848,8 +863,8 @@ a:focus-visible {
   text-underline-offset: 2px;
 }
 
-.gamebench-efforts .effort-table__head,
-.gamebench-efforts .effort-row {
+.benchmark-efforts .effort-table__head,
+.benchmark-efforts .effort-row {
   grid-template-columns: minmax(0, 1.4fr) minmax(60px, 0.8fr) minmax(84px, 1fr);
 }
 

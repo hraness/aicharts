@@ -1,8 +1,8 @@
 # aicharts
 
-See what the next point of coding score costs, at **[aicharts.io](https://aicharts.io)**.
+Compare AI model scores, costs and output tokens at **[aicharts.io](https://aicharts.io)**.
 
-aicharts compares Anthropic, OpenAI and Google models by benchmark score, reasoning effort and cost. GameBench 2 opens on the home page with curves across tested settings. The benchmark picker also offers Terminal-Bench agent runs and three Epoch AI score views.
+The explorer opens on Argo-Bench with 60 tested reasoning settings across 16 Anthropic, OpenAI and Google models, including historical releases. Use the benchmark picker to see how the trade-offs change across tasks.
 
 ## How it works
 
@@ -11,9 +11,10 @@ aicharts compares Anthropic, OpenAI and Google models by benchmark score, reason
   Terminal-Bench leaderboard ─┤ one agent run per model
   Epoch AI benchmarks ────────┼─▶ refresh-data.ts ─▶ data/releases.json ─▶ aicharts.io
   LiteLLM price list ─────────┘ scores and prices    checked, 5× a day      charts and pages
+  Argo-Bench, Roboflow and IronBee ────────▶ static snapshots ────────────▶ explorer
 ```
 
-One model in the published data, from [`/api/releases`](https://aicharts.io/api/releases) (abridged):
+The [schema v2 release API](https://aicharts.io/api/releases) includes the release catalog, GameBench 2 settings, Terminal-Bench runs, Epoch AI scores and API prices. The explorer loads its Argo-Bench, Roboflow and IronBee snapshots outside this API. The abridged example below shows one model from the release API.
 
 ```json
 {
@@ -48,7 +49,10 @@ bun run dev
 
 | Benchmark | What it measures | Explorer view |
 | --- | --- | --- |
-| **GameBench 2** *(default)* | Code generation across eight strategy games. Generated players compete against a shared reference field. | 0–100 score against cost per generated program. Each dot is a setting and each line connects a model's settings. |
+| **Argo-Bench** *(default)* | Data agents work on 210 tasks across finance, accounting, operations and growth. | 0–100 score against mean model API cost or output tokens per task, with a point for each tested setting. |
+| **Roboflow Visual Reasoning** | Models answer image-based reasoning questions, graded against ground truth by a model judge. | Judged accuracy against estimated API cost or output tokens per sample. |
+| **IronBee Code Review** | Models review 50 real pull requests, with three runs per setting. | F₂ score against estimated uncached API cost or output tokens per pull request. F₂ gives recall more weight than precision. |
+| **GameBench 2** | Code generation across eight strategy games. Generated players compete against a shared reference field. | 0–100 score against cost per generated program, with a point for each tested setting. |
 | **Terminal-Bench** | Coding agents completing real terminal tasks. | Percent of passed trials against cost or output tokens per task. |
 | **MirrorCode** | Reimplementing complete software packages against tests. | Best published score and measured effort levels. |
 | **GPQA Diamond** | Graduate-level science questions with verifiable answers. | Best published score and measured effort levels. |
@@ -69,6 +73,12 @@ bun run dev
 | [Epoch AI, Capabilities & benchmarking](https://epoch.ai/benchmarks) | CC BY 4.0 | MirrorCode, GPQA Diamond and FrontierMath Tiers 1–3 scores with standard errors, and release dates |
 | [LiteLLM model prices](https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json) | MIT | List API prices per million tokens and the longest input |
 
+The explorer uses three static snapshots of tested settings matched to catalog models. See [third-party notices](./THIRD_PARTY_NOTICES.md) for source credits and license text.
+
+- **Argo-Bench.** Gabriel Tomitsuka et al. (2026). Mean task score, model API spend and output tokens per task from TextQL's November 19 snapshot of the v1.4.2 leaderboard. [Leaderboard](https://argo-bench.com/#leaderboard), [paper](https://arxiv.org/abs/2610.02122).
+- **Roboflow Visual Reasoning.** Judged accuracy and average output tokens from Roboflow's visual reasoning results. Roboflow estimates cost from measured token use and its published API prices. [Leaderboard](https://playground.roboflow.com/evals/visual-reasoning), [pinned summary](https://github.com/roboflow/vlm-exam/blob/7955957ea07ff79616203badd53d851d119f72d9/web/benchmark_summary.json).
+- **IronBee Code Review.** F₂ and output tokens from the full three-repeat report on Martian's Code Review Bench. Costs use uncached API rates. [Benchmark report](https://ironbee.ai/blog/the-honest-raw-llm-code-review-benchmark), [pinned results](https://github.com/ironbee-ai/code-review-benchmarks/blob/d7300e86b568dad527f501f50510ab5bdbff3bb5/reports/full-r123/configs.csv).
+
 - **GameBench 2.** The public release supplies the score and cost for each setting. aicharts matches models and normalizes effort labels. The cost includes repair attempts. Each setting must have complete costs and scored results for all eight games. The API cites the exact DuelLab release used.
 - **One Terminal-Bench run per model.** Leaderboard runs attempt all 66 tasks at least five times; errored trials count as failures, and maintainers disqualify trials an LLM judge flags for reward hacking. When a model has several runs, aicharts takes the newest dataset version (4.1 over 4.0), then the lab's own agent, then the newest submission. Cost per task is what the run reported, divided by its trials.
 - **Epoch AI scores.** The export provides scores and standard errors. Fallback reruns and Pro modes are left out.
@@ -85,10 +95,10 @@ bun run dev
 - `bun run check`: `data:check`, the TypeScript typecheck, the unit tests and a production build.
 - `bun run check:journal:browser`: serve the production build and check the guide, changelog filters, model, comparison, agent and API pages, the API's CORS header, redirects and the site footer in Chromium at phone and desktop widths and with JavaScript off.
 
-Every page is generated from `data/releases.json` at build time, so each data refresh updates them. Pairs and successors come from `lib/catalog.ts`; page copy comes from `lib/copy.ts`. Addresses from the earlier aicharts.io, and the retired effort pages, redirect to their nearest page (`next.config.ts`).
+The release pages are generated from `data/releases.json` at build time. The additional explorer snapshots are checked into `data/`. Pairs and successors come from `lib/catalog.ts`, and page copy comes from `lib/copy.ts`. Addresses from the earlier aicharts.io and the retired effort pages redirect to their nearest page (`next.config.ts`).
 
 ## License
 
-Code: [MIT](./LICENSE). Data: each source's license above.
+The code uses the [MIT license](./LICENSE). Data follows the source terms and [third-party notices](./THIRD_PARTY_NOTICES.md).
 
 Read [Introducing aicharts](https://aicharts.io/blog/introducing-aicharts) to read the chart with a worked example. The [changelog](https://aicharts.io/changelog) covers updates to the explorer, website and API.

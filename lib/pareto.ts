@@ -1,14 +1,16 @@
 import type {
+  BenchmarkEffortRun,
   BudgetAxis,
   ContextMode,
-  EffortSlug,
+  CurveEffort,
   GameBenchRun,
   ModelRelease,
   ProviderId,
   TerminalBenchRun,
 } from "./types";
+import type { ChartBenchmark, CurveBenchmarkId } from "./benchmarks";
 
-export type ChartBenchmark = "game-bench" | "terminal-bench";
+export type { ChartBenchmark } from "./benchmarks";
 
 type Point = Readonly<{
   key: string;
@@ -20,7 +22,17 @@ type Point = Readonly<{
 
 /** One release's Terminal-Bench run on the chart. */
 export type PlottedPoint = Point & Readonly<{ run: TerminalBenchRun }>;
-export type BenchmarkPoint = PlottedPoint | (Point & Readonly<{ run: GameBenchRun }>);
+export type BenchmarkPoint = PlottedPoint | (Point & Readonly<{ run: BenchmarkEffortRun }>);
+
+function adaptGameBenchRun(run: GameBenchRun): BenchmarkEffortRun {
+  return { effort: run.effort, score: run.score, costUsd: run.costPerProgramUsd, outputTokens: null };
+}
+
+export function benchmarkEfforts(release: ModelRelease, benchmark: CurveBenchmarkId): readonly BenchmarkEffortRun[] {
+  return benchmark === "game-bench"
+    ? release.gameBench?.map(adaptGameBenchRun) ?? []
+    : release.benchmarkRuns?.[benchmark] ?? [];
+}
 
 export type FrontierComparison<T extends Point = PlottedPoint> =
   | Readonly<{
@@ -130,23 +142,26 @@ export function buildBenchmarkPoints(
   benchmark: ChartBenchmark,
 ): BenchmarkPoint[] {
   if (benchmark === "terminal-bench") return buildPlottedPoints(releases, axis);
-  if (axis === "tokens") return [];
   return releases.flatMap((release) =>
-    (release.gameBench ?? []).map((run) => ({
-      key: `${release.slug}:${run.effort}`,
-      release,
-      run,
-      provider: release.provider,
-      budget: run.costPerProgramUsd,
-      score: run.score,
-    })),
+    benchmarkEfforts(release, benchmark).flatMap((run) => {
+      const budget = axis === "cost" ? run.costUsd : run.outputTokens;
+      if (budget === null || !Number.isFinite(budget) || budget <= 0) return [];
+      return [{
+        key: `${release.slug}:${run.effort}`,
+        release,
+        run,
+        provider: release.provider,
+        budget,
+        score: run.score,
+      }];
+    }),
   );
 }
 
 /** The explicitly inspected effort, or the highest score at the lowest cost. */
 export function primaryPoint(
   points: readonly BenchmarkPoint[],
-  effort?: EffortSlug | null,
+  effort?: CurveEffort | null,
 ): BenchmarkPoint | null {
   if (effort) {
     const chosen = points.find((p) => p.run.effort === effort);
@@ -274,7 +289,7 @@ export function getContextualFrontierReleases(
 ): Set<string> {
   const starred = new Set<string>();
   for (const release of allReleases) {
-    if (benchmark === "game-bench" ? !release.gameBench?.length : !release.terminalBench) continue;
+    if (benchmark === "terminal-bench" ? !release.terminalBench : !benchmarkEfforts(release, benchmark).length) continue;
     const field = getContextualReleases(allReleases, release, mode, enabledProviders);
     if (getFrontierReleases(field, axis, benchmark).has(release.slug)) starred.add(release.slug);
   }

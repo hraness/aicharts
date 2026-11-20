@@ -1,0 +1,186 @@
+{
+  "snapshotDate": "2026-10-19",
+  "sourceUrl": "https://github.com/ironbee-ai/code-review-benchmarks/blob/d7300e86b568dad527f501f50510ab5bdbff3bb5/reports/full-r123/configs.csv",
+  "runs": {
+    "claude-haiku-5-5": [
+      {
+        "effort": "low",
+        "score": 46.74,
+        "costUsd": 0.02020241,
+        "outputTokens": 2643.27
+      },
+      {
+        "effort": "default",
+        "score": 50.69,
+        "costUsd": 0.02264492,
+        "outputTokens": 4912.67
+      },
+      {
+        "effort": "xhigh",
+        "score": 50.16,
+        "costUsd": 0.07041363,
+        "outputTokens": 39464.1
+      }
+    ],
+    "gemini-4-argon": [
+      {
+        "effort": "low",
+        "score": 52.57,
+        "costUsd": 0.12111571,
+        "outputTokens": 818.0
+      },
+      {
+        "effort": "default",
+        "score": 50.58,
+        "costUsd": 0.11282648,
+        "outputTokens": 779.7
+      },
+      {
+        "effort": "high",
+        "score": 56.6,
+        "costUsd": 0.23531549,
+        "outputTokens": 13392.29
+      }
+    ],
+    "gpt-6-1-sol": [
+      {
+        "effort": "low",
+        "score": 42.55,
+        "costUsd": 0.08353952,
+        "outputTokens": 390.9
+      },
+      {
+        "effort": "default",
+        "score": 44.24,
+        "costUsd": 0.08727825,
+        "outputTokens": 764.77
+      },
+      {
+        "effort": "xhigh",
+        "score": 47.48,
+        "costUsd": 0.15029739,
+        "outputTokens": 7066.69
+      }
+    ],
+    "claude-sonnet-5-5": [
+      {
+        "effort": "low",
+        "score": 64.38,
+        "costUsd": 0.14223179,
+        "outputTokens": 976.75
+      },
+      {
+        "effort": "default",
+        "score": 61.75,
+        "costUsd": 0.15662052,
+        "outputTokens": 2295.25
+      },
+      {
+        "effort": "xhigh",
+        "score": 61.13,
+        "costUsd": 0.21175132,
+        "outputTokens": 7958.8
+      }
+    ],
+    "claude-opus-5-5": [
+      {
+        "effort": "low",
+        "score": 62.14,
+        "costUsd": 0.28267667,
+        "outputTokens": 894.6
+      },
+      {
+        "effort": "default",
+        "score": 61.86,
+        "costUsd": 0.31596584,
+        "outputTokens": 2581.96
+      },
+      {
+        "effort": "xhigh",
+        "score": 60.36,
+        "costUsd": 0.47857877,
+        "outputTokens": 10712.61
+      }
+    ],
+    "gpt-6-luna": [
+      {
+        "effort": "low",
+        "score": 37.1,
+        "costUsd": 0.00438567,
+        "outputTokens": 808.29
+      },
+      {
+        "effort": "default",
+        "score": 41.56,
+        "costUsd": 0.00543175,
+        "outputTokens": 2900.44
+      },
+      {
+        "effort": "xhigh",
+        "score": 44.2,
+        "costUsd": 0.00894427,
+        "outputTokens": 9925.48
+      }
+    ],
+    "claude-opus-5": [
+      {
+        "effort": "low",
+        "score": 61.92,
+        "costUsd": 0.44900217,
+        "outputTokens": 2582.58
+      },
+      {
+        "effort": "default",
+        "score": 58.32,
+        "costUsd": 0.57427753,
+        "outputTokens": 9300.47
+      },
+      {
+        "effort": "xhigh",
+        "score": 59.06,
+        "costUsd": 0.7423506,
+        "outputTokens": 15473.49
+      }
+    ],
+    "claude-sonnet-5": [
+      {
+        "effort": "low",
+        "score": 33.05,
+        "costUsd": 0.14830236,
+        "outputTokens": 1289.35
+      },
+      {
+        "effort": "default",
+        "score": 46.57,
+        "costUsd": 0.26693052,
+        "outputTokens": 13359.89
+      },
+      {
+        "effort": "xhigh",
+        "score": 49.45,
+        "costUsd": 0.40129145,
+        "outputTokens": 26913.21
+      }
+    ],
+    "gpt-5-6-terra": [
+      {
+        "effort": "low",
+        "score": 41.94,
+        "costUsd": 0.10161244,
+        "outputTokens": 1831.83
+      },
+      {
+        "effort": "default",
+        "score": 42.08,
+        "costUsd": 0.10681756,
+        "outputTokens": 2265.59
+      },
+      {
+        "effort": "xhigh",
+        "score": 48.93,
+        "costUsd": 0.212283,
+        "outputTokens": 11054.37
+      }
+    ]
+  }
+}
