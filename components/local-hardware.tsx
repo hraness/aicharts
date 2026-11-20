@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { CompactPicker } from "@/components/compact-picker";
 import { browserSignals, matchDevice, type DeviceMatch } from "@/lib/device-match";
-import { deviceKind, deviceTerms } from "@/lib/device-kind";
+import { deviceKind, deviceKeywords } from "@/lib/device-kind";
 import { TradeoffPlot,frontierOf } from "@/components/tradeoff-plot";
 import { hardwareSlug,visionExperiments } from "@/lib/vision-bench";
 import { DeviceIcon } from "@/components/device-icon";
@@ -56,7 +56,7 @@ const entries = [...byDevice].map(([value, rows]) => {
   if(visions)coveredTasks.add("Image classification");
   const coverage=coveredTasks.size;
   const icon = deviceKind(device,platform);
-  return {value, icon, keywords:[deviceTerms[icon], ...coveredTasks], label:device, group:platform, platform, device, coverage,
+  return {value, icon, keywords:[...deviceKeywords(device,platform), ...coveredTasks], label:device, group:platform, platform, device, coverage,
     description: coverage + (coverage === 1 ? " workload" : " workloads") + " · " + (rows.length+visions).toLocaleString() + " configurations"};
 }).sort((a,b) => sortNames(a.platform,b.platform) || sortNames(a.device,b.device));
 const detectionEntries = [...entries].sort((a,b) => b.coverage - a.coverage ||

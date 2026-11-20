@@ -63,7 +63,10 @@ export function SearchPicker({ choices, value, onSelect, compactLabel, disabled 
   const groupPrefix = "group:";
   const results: readonly BenchmarkChoice[] = browsingGroups ? [
     ...choices.filter(c => !c.group),
-    ...groups.map(g => ({ id: groupPrefix + g, label: g, summary: new Intl.NumberFormat("en").format(choices.filter(c => c.group === g).length) + (choices.filter(c => c.group === g).length===1 ? " choice" : " choices"), icon:choices.find(c => c.group === g)?.icon })),
+    ...groups.map(g => {
+      const members=choices.filter(choice=>choice.group===g);
+      return {id:groupPrefix+g,label:g,summary:members.length+(members.length===1?" choice":" choices"),icon:members[0]?.icon};
+    }),
   ] : searchBenchmarks(group && !query.trim() ? choices.filter(c => c.group === group) : choices, query);
   const active = results.find((choice) => choice.id === highlighted) ?? results[0];
 
