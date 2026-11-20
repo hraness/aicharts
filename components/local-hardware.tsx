@@ -120,7 +120,7 @@ function rankProtocols(a: Sample, b: Sample) {
 function WorkloadCell({sample, max, inspect}: {sample?: Sample; max?: number; inspect: (s: Sample) => void}) {
   if (!sample) return <td className="matrix-missing">Unreported</td>;
   const {run, key} = sample;
-  const memory = measuredMemory(run);
+  const memory = measuredMemory(run, sample.suite.id);
   const value = run.values[key]!;
   return <td><button className="matrix-result" type="button" onClick={() => inspect(sample)}>
     <b>{number.format(value)} {metrics[key]!.unit}</b>
@@ -133,12 +133,12 @@ function WorkloadCell({sample, max, inspect}: {sample?: Sample; max?: number; in
   </details></td>;
 }
 
-function measuredMemory(run: Run) {
+function measuredMemory(run: Run, suite?: string) {
   if (run.values.peakGpuGB !== undefined) return { gib: run.values.peakGpuGB * 1e9 / 2 ** 30, kind: "Peak GPU memory" };
   if (run.values.gpuMemoryMB !== undefined) return { gib: run.values.gpuMemoryMB * 1e6 / 2 ** 30, kind: "Peak GPU memory" };
   if (run.values.meanRss !== undefined) return { gib: run.values.meanRss * 1e6 / 2 ** 30, kind: "Mean resident RAM" };
   if (run.values.vramGiB !== undefined) return { gib: run.values.vramGiB, kind: "Peak GPU allocation" };
-  if (run.values.peak !== undefined) return { gib: run.values.peak / 1024, kind: "Peak app memory" };
+  if (run.values.peak !== undefined) return { gib: run.values.peak / 1024, kind: suite === "moi" ? (run.platform === "Android" ? "Peak process PSS" : "Peak physical footprint") : "Peak app memory" };
   if (run.values.memoryMB !== undefined) return { gib: run.values.memoryMB * 1e6 / 2 ** 30, kind: run.platform === "NVIDIA GPUs" ? "Reported VRAM" : "Reported RAM" };
   return null;
 }
@@ -240,7 +240,7 @@ export function LocalHardware() {
   if (Number(budget) > 0 && Number.isFinite(Number(budget))) share.set("memory", budget);
   const peerMax = peers.reduce((highest,r) => Math.max(highest,r.values[key]!),0);
   const selectedIndex = peers.findIndex(r => r.device === device && r.platform === platform);
-  const selectedMemory = compare && measuredMemory(compare);
+  const selectedMemory = compare && measuredMemory(compare, active?.suite.id);
   const selectedDisk = compare && storage(compare);
   const capacity = rows.find(r => r.capacity)?.capacity;
   const hasMemory = rows.some(r => measuredMemory(r) !== null);
@@ -343,10 +343,10 @@ export function LocalHardware() {
       <p className="hardware-fine">Select a value for the source, model settings and other runs. The overview favors matched tests, then whole workloads, then tests published for more devices. Bars compare results within a matched test.</p>
       <div className="hardware-coverage">
         <h3>Browse by workload</h3>
-        <p>{absent.length ? "Find measured hardware for the gaps in this selection." : "See which other devices have published measurements."}</p>
-        <div className="coverage-tasks">{[...absent,...covered].map(task => <button type="button" key={task} aria-pressed={task === browseTask} onClick={() => setBrowseTask(task === browseTask ? "" : task)}>
+        {[{label:"Measured on your selection",items:covered},{label:"Measured on other hardware",items:absent}].filter(group => group.items.length).map(group =>
+          <div key={group.label}><p>{group.label}</p><div className="coverage-tasks">{group.items.map(task => <button type="button" key={task} aria-pressed={task === browseTask} onClick={() => setBrowseTask(task === browseTask ? "" : task)}>
           {task} <span>{devicesByTask.get(task)?.size ?? 0} devices</span>
-        </button>)}</div>
+        </button>)}</div></div>)}
         {browseTask && <div className="hardware-browse-results">
           <div className="hardware-shortcuts"><span>{browseTask} measurements</span>{detectionEntries.filter(e => devicesByTask.get(browseTask)?.has(e.value)).slice(0,3).map(e =>
             <button type="button" key={e.value} onClick={() => viewWorkload(e.value,browseTask)}>{e.device}</button>)}</div>
@@ -375,7 +375,7 @@ export function LocalHardware() {
           <div className="hardware-plot-title"><h4>{metric.label}</h4><span>{metric.lower ? "Lower" : "Higher"} is better · {rows.length} configurations</span></div>
           <div className="hardware-plot" aria-label="Measurements on selected device">
             {(expanded ? rows : rows.slice(0, 8)).map(run => {
-              const memory = measuredMemory(run);
+              const memory = measuredMemory(run, active.suite.id);
               const disk = storage(run);
               const remaining = memory && hasBudget ? Number(budget) - memory.gib : null;
               const normalized = rates(run.values[key]!, key);
