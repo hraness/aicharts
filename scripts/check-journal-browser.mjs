@@ -461,7 +461,7 @@ try {
     await page.goto(url+"/local");
     assert.equal(await page.locator("#vision-frontier").count(),0);
     await page.getByRole("link",{name:"M4 Pro LLM benchmarks"}).click();
-    assert.ok(await page.getByRole("heading",{name:"Language models by prompt length on Mac"}).isVisible());
+    await page.getByRole("heading",{name:"Language models by prompt length on Mac"}).waitFor();
     await page.getByRole("heading",{name:"How fast do the same models reply?"}).waitFor();
     assert.ok(await page.getByRole("row",{name:/gemma-3-4b-it 88.*81/}).count() > 0);
     assert.equal(await noSideScroll(page),true,"Mac result comparison fits");
