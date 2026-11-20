@@ -1,0 +1,39 @@
+.local-model-name {
+  display: inline-flex;
+  align-items: center;
+  gap: .48rem;
+  max-width: 100%;
+  vertical-align: middle;
+  text-align: left;
+}
+.local-model-mark {
+  flex: 0 0 1.25rem;
+  display: grid;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+.local-model-mark img, .local-model-mark svg { display: block; max-width: 100%; }
+.local-model-mark-mask {
+  width: 19px;
+  height: 19px;
+  background: var(--fg);
+  mask-position: center;
+  mask-repeat: no-repeat;
+  mask-size: contain;
+}
+.local-model-mark-initials {
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: .3rem;
+  color: var(--fg-muted);
+  font-size: .58rem;
+  font-weight: 650;
+  line-height: 1;
+}
+.local-model-words { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+.local-model-words small { display: block; color: var(--fg-muted); font-size: .78em; font-weight: 450; }

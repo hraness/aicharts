@@ -1551,3 +1551,22 @@ a:focus-visible {
 .release-head__page:hover {
   color: var(--fg);
 }
+
+.compact-picker { flex: 0 1 auto; max-width: 100%; }
+.compact-picker .benchmark-picker__trigger { grid-template-columns: minmax(0,1fr) auto; gap: .55rem; padding: .36rem .6rem; border-radius: 6px; }
+.compact-picker .benchmark-picker__symbol, .compact-picker .benchmark-picker__selection .benchmark-picker__summary { display: none; }
+.compact-picker .benchmark-picker__selection strong { font: inherit; font-weight: 600; font-size: .83rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.compact-picker .benchmark-picker__selection { gap: .08rem; }
+.compact-picker .benchmark-picker__label { font-size: .65rem; }
+.compact-picker .benchmark-picker__panel { inset-inline-end: auto; width: max(100%, min(19rem, 86vw)); }
+.compact-picker .benchmark-picker__option { padding: .4rem .6rem; }
+.compact-picker .benchmark-picker__summary:empty { display: none; }
+.compact-picker__back { background: transparent; border: 0; color: var(--fg); padding: .5rem; cursor: pointer; }
+@media (max-width: 640px) {
+  .compact-picker .benchmark-picker__panel { position: fixed; inset: auto .6rem max(.6rem, env(safe-area-inset-bottom)); width: auto; z-index: 90; }
+  .compact-picker .benchmark-picker__results { max-height: 38dvh; }
+}
+
+@media (min-width: 641px) {
+  .compact-picker[data-align-end] .benchmark-picker__panel { inset-inline-start: auto; inset-inline-end: 0; }
+}

@@ -1,5 +1,14 @@
 [
   {
+    "slug": "local-model-and-device-picker",
+    "date": "2026-11-20",
+    "category": "Improved",
+    "surfaces": ["Website", "API"],
+    "title": "Find local benchmarks by task or device",
+    "summary": "Start with model quality, search evaluations by name or browse by workload. Model rows distinguish publishers and variants, and a compact device picker leads to matching performance measurements.",
+    "link": {"href": "/local", "label": "Explore local models"}
+  },
+  {
     "slug": "device-and-workload-comparisons",
     "date": "2026-11-20",
     "category": "Improved",

@@ -1559,5 +1559,148 @@
     {"device": "A100 SXM4 · 80 GB","platform": "NVIDIA GPUs","model": "Qwen-VL-Chat","config": "INT4 · 8,192 total · image → 7,934 generated","values": {"generation": 34.34,"vramGiB": 17.23},"note": "GPU memory is PyTorch max_memory_allocated divided by 1024³."},
     {"device": "A100 SXM4 · 80 GB","platform": "NVIDIA GPUs","model": "Qwen-VL-Chat","config": "INT4 · 2,048-token encoding test · one output token","values": {"vramGiB": 11.82},"note": "GPU memory is PyTorch max_memory_allocated divided by 1024³."}
   ]
+},
+{
+  "id": "webllm-m3",
+  "title": "WebLLM on Apple silicon",
+  "source": "https://arxiv.org/html/2412.15803v1#S3.T1",
+  "description": "The WebLLM authors measured decoder throughput on an M3 Max MacBook Pro. Browser runs used WebLLM 0.2.75 and arm64 Chrome Canary 133. Native comparison used MLC-LLM commit d23d6f5.",
+  "metrics": [
+    "generation"
+  ],
+  "runs": [
+    {"device": "MacBook Pro (M3 Max)","platform": "Web browsers","model": "Llama 3.1 8B","config": "Chrome Canary 133 · WebGPU","values": {"generation": 41.1}},
+    {"device": "MacBook Pro (M3 Max)","platform": "Apple silicon Macs","model": "Llama 3.1 8B","config": "MLC-LLM · Metal","values": {"generation": 57.7}},
+    {"device": "MacBook Pro (M3 Max)","platform": "Web browsers","model": "Phi 3.5 Mini 3.8B","config": "Chrome Canary 133 · WebGPU","values": {"generation": 71.1}},
+    {"device": "MacBook Pro (M3 Max)","platform": "Apple silicon Macs","model": "Phi 3.5 Mini 3.8B","config": "MLC-LLM · Metal","values": {"generation": 89.3}}
+  ]
+},
+{
+  "id": "webgpu-decode",
+  "title": "Chrome WebGPU decoding",
+  "source": "https://arxiv.org/html/2610.39761v1#S5.T2",
+  "description": "Table 2 reports latency per output token in headless Chrome 155. Each comparison uses the prompts WebLLM completed out of 220. Prompt coverage and activation precision vary by GPU.",
+  "metrics": [
+    "tokenLatency"
+  ],
+  "runs": [
+    {"device": "GTX 1650 Laptop · Windows 11","platform": "Web browsers","model": "Qwen2.5-0.5B","config": "Transformers.js · 4-bit weights · 220/220 prompts","values": {"tokenLatency": 40.56},"capacity": "4 GB VRAM"},
+    {"device": "GTX 1650 Laptop · Windows 11","platform": "Web browsers","model": "Qwen2.5-0.5B","config": "LlamaWeb · Q4_0 · 220/220 prompts","values": {"tokenLatency": 20.84},"capacity": "4 GB VRAM"},
+    {"device": "GTX 1650 Laptop · Windows 11","platform": "Web browsers","model": "Qwen2.5-0.5B","config": "WebLLM 0.2.86 · q4f16_1 · 220/220 prompts","values": {"tokenLatency": 20.15},"capacity": "4 GB VRAM"},
+    {"device": "GTX 1650 Laptop · Windows 11","platform": "Web browsers","model": "Qwen2.5-0.5B","config": "Study prototype · adaptive speculation · 4-bit weights, 8-bit activations · 220/220 prompts","values": {"tokenLatency": 3.75},"capacity": "4 GB VRAM"},
+    {"device": "GTX 1650 Laptop · Windows 11","platform": "Web browsers","model": "Qwen2.5-1.5B","config": "Transformers.js · 4-bit weights · 150/220 prompts","values": {"tokenLatency": 76.79},"capacity": "4 GB VRAM"},
+    {"device": "GTX 1650 Laptop · Windows 11","platform": "Web browsers","model": "Qwen2.5-1.5B","config": "LlamaWeb · Q4_0 · 150/220 prompts","values": {"tokenLatency": 30.2},"capacity": "4 GB VRAM"},
+    {"device": "GTX 1650 Laptop · Windows 11","platform": "Web browsers","model": "Qwen2.5-1.5B","config": "WebLLM 0.2.86 · q4f16_1 · 150/220 prompts","values": {"tokenLatency": 38.02},"capacity": "4 GB VRAM"},
+    {"device": "GTX 1650 Laptop · Windows 11","platform": "Web browsers","model": "Qwen2.5-1.5B","config": "Study prototype · adaptive speculation · 4-bit weights, 8-bit activations · 150/220 prompts","values": {"tokenLatency": 8.87},"capacity": "4 GB VRAM"},
+    {"device": "GTX 1650 Laptop · Windows 11","platform": "Web browsers","model": "Llama-3.2-1B","config": "Transformers.js · 4-bit weights · 202/220 prompts","values": {"tokenLatency": 31.09},"capacity": "4 GB VRAM"},
+    {"device": "GTX 1650 Laptop · Windows 11","platform": "Web browsers","model": "Llama-3.2-1B","config": "LlamaWeb · Q4_0 · 202/220 prompts","values": {"tokenLatency": 22.86},"capacity": "4 GB VRAM"},
+    {"device": "GTX 1650 Laptop · Windows 11","platform": "Web browsers","model": "Llama-3.2-1B","config": "WebLLM 0.2.86 · q4f16_1 · 202/220 prompts","values": {"tokenLatency": 24.51},"capacity": "4 GB VRAM"},
+    {"device": "GTX 1650 Laptop · Windows 11","platform": "Web browsers","model": "Llama-3.2-1B","config": "Study prototype · adaptive speculation · 4-bit weights, 8-bit activations · 202/220 prompts","values": {"tokenLatency": 7.05},"capacity": "4 GB VRAM"},
+    {"device": "Ryzen 5 5600H Vega · Windows 11","platform": "Web browsers","model": "Qwen2.5-0.5B","config": "Transformers.js · 4-bit weights · 88/220 prompts","values": {"tokenLatency": 55.38},"capacity": "Shared system memory"},
+    {"device": "Ryzen 5 5600H Vega · Windows 11","platform": "Web browsers","model": "Qwen2.5-0.5B","config": "LlamaWeb · Q4_0 · 88/220 prompts","values": {"tokenLatency": 32.67},"capacity": "Shared system memory"},
+    {"device": "Ryzen 5 5600H Vega · Windows 11","platform": "Web browsers","model": "Qwen2.5-0.5B","config": "WebLLM 0.2.86 · q4f16_1 · 88/220 prompts","values": {"tokenLatency": 52.25},"capacity": "Shared system memory"},
+    {"device": "Ryzen 5 5600H Vega · Windows 11","platform": "Web browsers","model": "Qwen2.5-0.5B","config": "Study prototype · adaptive speculation · 4-bit weights, 8-bit activations · 88/220 prompts","values": {"tokenLatency": 8.42},"capacity": "Shared system memory"},
+    {"device": "Ryzen 5 5600H Vega · Windows 11","platform": "Web browsers","model": "Qwen2.5-1.5B","config": "Transformers.js · 4-bit weights · 51/220 prompts","values": {"tokenLatency": 99.32},"capacity": "Shared system memory"},
+    {"device": "Ryzen 5 5600H Vega · Windows 11","platform": "Web browsers","model": "Qwen2.5-1.5B","config": "LlamaWeb · Q4_0 · 51/220 prompts","values": {"tokenLatency": 66.09},"capacity": "Shared system memory"},
+    {"device": "Ryzen 5 5600H Vega · Windows 11","platform": "Web browsers","model": "Qwen2.5-1.5B","config": "WebLLM 0.2.86 · q4f16_1 · 51/220 prompts","values": {"tokenLatency": 143.15},"capacity": "Shared system memory"},
+    {"device": "Ryzen 5 5600H Vega · Windows 11","platform": "Web browsers","model": "Qwen2.5-1.5B","config": "Study prototype · adaptive speculation · 4-bit weights, 8-bit activations · 51/220 prompts","values": {"tokenLatency": 29.7},"capacity": "Shared system memory"},
+    {"device": "Ryzen 5 5600H Vega · Windows 11","platform": "Web browsers","model": "Llama-3.2-1B","config": "Transformers.js · 4-bit weights · 64/220 prompts","values": {"tokenLatency": 64.9},"capacity": "Shared system memory"},
+    {"device": "Ryzen 5 5600H Vega · Windows 11","platform": "Web browsers","model": "Llama-3.2-1B","config": "LlamaWeb · Q4_0 · 64/220 prompts","values": {"tokenLatency": 41.19},"capacity": "Shared system memory"},
+    {"device": "Ryzen 5 5600H Vega · Windows 11","platform": "Web browsers","model": "Llama-3.2-1B","config": "WebLLM 0.2.86 · q4f16_1 · 64/220 prompts","values": {"tokenLatency": 107.65},"capacity": "Shared system memory"},
+    {"device": "Ryzen 5 5600H Vega · Windows 11","platform": "Web browsers","model": "Llama-3.2-1B","config": "Study prototype · adaptive speculation · 4-bit weights, 8-bit activations · 64/220 prompts","values": {"tokenLatency": 22.63},"capacity": "Shared system memory"},
+    {"device": "RTX PRO 5000 Blackwell · Ubuntu 24.04","platform": "Web browsers","model": "Qwen2.5-0.5B","config": "Transformers.js · 4-bit weights · 220/220 prompts","values": {"tokenLatency": 27.03},"capacity": "48 GB VRAM"},
+    {"device": "RTX PRO 5000 Blackwell · Ubuntu 24.04","platform": "Web browsers","model": "Qwen2.5-0.5B","config": "LlamaWeb · Q4_0 · 220/220 prompts","values": {"tokenLatency": 16.04},"capacity": "48 GB VRAM"},
+    {"device": "RTX PRO 5000 Blackwell · Ubuntu 24.04","platform": "Web browsers","model": "Qwen2.5-0.5B","config": "WebLLM 0.2.86 · q4f32_1 · 220/220 prompts","values": {"tokenLatency": 12.17},"capacity": "48 GB VRAM"},
+    {"device": "RTX PRO 5000 Blackwell · Ubuntu 24.04","platform": "Web browsers","model": "Qwen2.5-0.5B","config": "Study prototype · adaptive speculation · 4-bit weights, 8-bit activations · 220/220 prompts","values": {"tokenLatency": 1.44},"capacity": "48 GB VRAM"},
+    {"device": "RTX PRO 5000 Blackwell · Ubuntu 24.04","platform": "Web browsers","model": "Qwen2.5-1.5B","config": "Transformers.js · 4-bit weights · 220/220 prompts","values": {"tokenLatency": 30.34},"capacity": "48 GB VRAM"},
+    {"device": "RTX PRO 5000 Blackwell · Ubuntu 24.04","platform": "Web browsers","model": "Qwen2.5-1.5B","config": "LlamaWeb · Q4_0 · 220/220 prompts","values": {"tokenLatency": 16.38},"capacity": "48 GB VRAM"},
+    {"device": "RTX PRO 5000 Blackwell · Ubuntu 24.04","platform": "Web browsers","model": "Qwen2.5-1.5B","config": "WebLLM 0.2.86 · q4f32_1 · 220/220 prompts","values": {"tokenLatency": 19.14},"capacity": "48 GB VRAM"},
+    {"device": "RTX PRO 5000 Blackwell · Ubuntu 24.04","platform": "Web browsers","model": "Qwen2.5-1.5B","config": "Study prototype · adaptive speculation · 4-bit weights, 8-bit activations · 220/220 prompts","values": {"tokenLatency": 2.23},"capacity": "48 GB VRAM"},
+    {"device": "RTX PRO 5000 Blackwell · Ubuntu 24.04","platform": "Web browsers","model": "Llama-3.2-1B","config": "Transformers.js · 4-bit weights · 220/220 prompts","values": {"tokenLatency": 9.0},"capacity": "48 GB VRAM"},
+    {"device": "RTX PRO 5000 Blackwell · Ubuntu 24.04","platform": "Web browsers","model": "Llama-3.2-1B","config": "LlamaWeb · Q4_0 · 220/220 prompts","values": {"tokenLatency": 11.49},"capacity": "48 GB VRAM"},
+    {"device": "RTX PRO 5000 Blackwell · Ubuntu 24.04","platform": "Web browsers","model": "Llama-3.2-1B","config": "WebLLM 0.2.86 · q4f32_1 · 220/220 prompts","values": {"tokenLatency": 8.85},"capacity": "48 GB VRAM"},
+    {"device": "RTX PRO 5000 Blackwell · Ubuntu 24.04","platform": "Web browsers","model": "Llama-3.2-1B","config": "Study prototype · adaptive speculation · 4-bit weights, 8-bit activations · 220/220 prompts","values": {"tokenLatency": 1.6},"capacity": "48 GB VRAM"},
+    {"device": "RTX PRO 5000 Blackwell · Ubuntu 24.04","platform": "Web browsers","model": "Qwen2.5-3B","config": "LlamaWeb · Q4_0 · 220/220 prompts","values": {"tokenLatency": 18.46},"capacity": "48 GB VRAM"},
+    {"device": "RTX PRO 5000 Blackwell · Ubuntu 24.04","platform": "Web browsers","model": "Qwen2.5-3B","config": "WebLLM 0.2.86 · q4f32_1 · 220/220 prompts","values": {"tokenLatency": 25.42},"capacity": "48 GB VRAM"},
+    {"device": "RTX PRO 5000 Blackwell · Ubuntu 24.04","platform": "Web browsers","model": "Qwen2.5-3B","config": "Study prototype · adaptive speculation · 4-bit weights, 8-bit activations · 220/220 prompts","values": {"tokenLatency": 3.5},"capacity": "48 GB VRAM"},
+    {"device": "RTX PRO 5000 Blackwell · Ubuntu 24.04","platform": "Web browsers","model": "Llama-3.2-3B","config": "Transformers.js · 4-bit weights · 220/220 prompts","values": {"tokenLatency": 14.15},"capacity": "48 GB VRAM"},
+    {"device": "RTX PRO 5000 Blackwell · Ubuntu 24.04","platform": "Web browsers","model": "Llama-3.2-3B","config": "LlamaWeb · Q4_0 · 220/220 prompts","values": {"tokenLatency": 14.95},"capacity": "48 GB VRAM"},
+    {"device": "RTX PRO 5000 Blackwell · Ubuntu 24.04","platform": "Web browsers","model": "Llama-3.2-3B","config": "WebLLM 0.2.86 · q4f32_1 · 220/220 prompts","values": {"tokenLatency": 19.13},"capacity": "48 GB VRAM"},
+    {"device": "RTX PRO 5000 Blackwell · Ubuntu 24.04","platform": "Web browsers","model": "Llama-3.2-3B","config": "Study prototype · adaptive speculation · 4-bit weights, 8-bit activations · 220/220 prompts","values": {"tokenLatency": 3.13},"capacity": "48 GB VRAM"},
+    {"device": "RTX PRO 5000 Blackwell · Ubuntu 24.04","platform": "Web browsers","model": "Qwen2.5-7B","config": "LlamaWeb · Q4_0 · 220/220 prompts","values": {"tokenLatency": 20.9},"capacity": "48 GB VRAM"},
+    {"device": "RTX PRO 5000 Blackwell · Ubuntu 24.04","platform": "Web browsers","model": "Qwen2.5-7B","config": "WebLLM 0.2.86 · q4f32_1 · 220/220 prompts","values": {"tokenLatency": 25.11},"capacity": "48 GB VRAM"},
+    {"device": "RTX PRO 5000 Blackwell · Ubuntu 24.04","platform": "Web browsers","model": "Qwen2.5-7B","config": "Study prototype · adaptive speculation · 4-bit weights, 8-bit activations · 220/220 prompts","values": {"tokenLatency": 4.87},"capacity": "48 GB VRAM"},
+    {"device": "RTX PRO 5000 Blackwell · Ubuntu 24.04","platform": "Web browsers","model": "Llama-3.1-8B","config": "LlamaWeb · Q4_0 · 220/220 prompts","values": {"tokenLatency": 23.54},"capacity": "48 GB VRAM"},
+    {"device": "RTX PRO 5000 Blackwell · Ubuntu 24.04","platform": "Web browsers","model": "Llama-3.1-8B","config": "WebLLM 0.2.86 · q4f32_1 · 220/220 prompts","values": {"tokenLatency": 24.17},"capacity": "48 GB VRAM"},
+    {"device": "RTX PRO 5000 Blackwell · Ubuntu 24.04","platform": "Web browsers","model": "Llama-3.1-8B","config": "Study prototype · adaptive speculation · 4-bit weights, 8-bit activations · 220/220 prompts","values": {"tokenLatency": 5.08},"capacity": "48 GB VRAM"}
+  ]
+},
+{
+  "id": "webgpu-request",
+  "title": "Chrome WebGPU request latency",
+  "source": "https://arxiv.org/html/2610.39761v1#S5.T4",
+  "description": "Table 4 reports first-token and total request latency on the study’s page-grounded tasks in headless Chrome 155. The prompt and output lengths come from the task mix.",
+  "metrics": [
+    "firstToken",
+    "requestMs"
+  ],
+  "runs": [
+    {"device": "RTX PRO 5000 Blackwell · Ubuntu 24.04","platform": "Web browsers","model": "Qwen2.5-0.5B","config": "WebLLM 0.2.86","values": {"firstToken": 366.0,"requestMs": 1494.0},"capacity": "48 GB VRAM"},
+    {"device": "RTX PRO 5000 Blackwell · Ubuntu 24.04","platform": "Web browsers","model": "Qwen2.5-0.5B","config": "Study prototype · adaptive speculation","values": {"firstToken": 124.0,"requestMs": 249.0},"capacity": "48 GB VRAM"},
+    {"device": "RTX PRO 5000 Blackwell · Ubuntu 24.04","platform": "Web browsers","model": "Qwen2.5-1.5B","config": "WebLLM 0.2.86","values": {"firstToken": 707.0,"requestMs": 2815.0},"capacity": "48 GB VRAM"},
+    {"device": "RTX PRO 5000 Blackwell · Ubuntu 24.04","platform": "Web browsers","model": "Qwen2.5-1.5B","config": "Study prototype · adaptive speculation","values": {"firstToken": 190.0,"requestMs": 394.0},"capacity": "48 GB VRAM"},
+    {"device": "RTX PRO 5000 Blackwell · Ubuntu 24.04","platform": "Web browsers","model": "Llama-3.2-1B","config": "WebLLM 0.2.86","values": {"firstToken": 401.0,"requestMs": 1462.0},"capacity": "48 GB VRAM"},
+    {"device": "RTX PRO 5000 Blackwell · Ubuntu 24.04","platform": "Web browsers","model": "Llama-3.2-1B","config": "Study prototype · adaptive speculation","values": {"firstToken": 125.0,"requestMs": 302.0},"capacity": "48 GB VRAM"},
+    {"device": "GTX 1650 Laptop · Windows 11","platform": "Web browsers","model": "Qwen2.5-0.5B","config": "WebLLM 0.2.86","values": {"firstToken": 1366.0,"requestMs": 3182.0},"capacity": "4 GB VRAM"},
+    {"device": "GTX 1650 Laptop · Windows 11","platform": "Web browsers","model": "Qwen2.5-0.5B","config": "Study prototype · adaptive speculation","values": {"firstToken": 578.0,"requestMs": 923.0},"capacity": "4 GB VRAM"},
+    {"device": "GTX 1650 Laptop · Windows 11","platform": "Web browsers","model": "Qwen2.5-1.5B","config": "WebLLM 0.2.86","values": {"firstToken": 2937.0,"requestMs": 6302.0},"capacity": "4 GB VRAM"},
+    {"device": "GTX 1650 Laptop · Windows 11","platform": "Web browsers","model": "Qwen2.5-1.5B","config": "Study prototype · adaptive speculation","values": {"firstToken": 841.0,"requestMs": 1569.0},"capacity": "4 GB VRAM"},
+    {"device": "GTX 1650 Laptop · Windows 11","platform": "Web browsers","model": "Llama-3.2-1B","config": "WebLLM 0.2.86","values": {"firstToken": 3154.0,"requestMs": 5963.0},"capacity": "4 GB VRAM"},
+    {"device": "GTX 1650 Laptop · Windows 11","platform": "Web browsers","model": "Llama-3.2-1B","config": "Study prototype · adaptive speculation","values": {"firstToken": 1017.0,"requestMs": 1843.0},"capacity": "4 GB VRAM"}
+  ]
+},
+{
+  "id": "pi-llama",
+  "title": "Gemma 4 on Raspberry Pi",
+  "source": "https://github.com/potato-os/core/blob/main/docs/benchmarks/gemma4-pi-benchmark-2026-04-04.md",
+  "description": "Potato OS, April 2026. One llama-bench repetition with 512 prompt and 128 generated tokens. Boards, storage and swap differ. The 26B-A4B llama-bench run exhausted memory on the 8 GB Pi 5.",
+  "metrics": [
+    "prompt",
+    "generation"
+  ],
+  "runs": [
+    {"device": "Raspberry Pi 5 · 16 GB","platform": "ARM Linux boards","model": "Gemma 4 E2B","config": "Q4_K_M · llama.cpp a1cfb64","values": {"prompt": 28.02,"generation": 6.71},"storageMiB": 2949.12,"capacity": "16 GB RAM","note": "Rev 1.1 · SD"},
+    {"device": "Raspberry Pi 5 · 16 GB","platform": "ARM Linux boards","model": "Gemma 4 E4B","config": "Q4_0 · llama.cpp a1cfb64","values": {"prompt": 18.46,"generation": 3.48},"storageMiB": 4597.76,"capacity": "16 GB RAM","note": "Rev 1.1 · SD"},
+    {"device": "Raspberry Pi 5 · 16 GB","platform": "ARM Linux boards","model": "Gemma 4 26B-A4B","config": "IQ4_NL · ik_llama 9a0a4628","values": {"prompt": 6.38,"generation": 2.54},"storageMiB": 12779.52,"capacity": "16 GB RAM","note": "Rev 1.1 · SD"},
+    {"device": "Raspberry Pi 5 · 8 GB","platform": "ARM Linux boards","model": "Gemma 4 E2B","config": "Q4_K_M · llama.cpp a1cfb64","values": {"prompt": 31.86,"generation": 5.97},"storageMiB": 2949.12,"capacity": "8 GB RAM","note": "Rev 1.0 · NVMe SSD"},
+    {"device": "Raspberry Pi 5 · 8 GB","platform": "ARM Linux boards","model": "Gemma 4 E4B","config": "Q4_0 · llama.cpp a1cfb64","values": {"prompt": 25.75,"generation": 3.26},"storageMiB": 4597.76,"capacity": "8 GB RAM","note": "Rev 1.0 · NVMe SSD"},
+    {"device": "Raspberry Pi 4 · 8 GB","platform": "ARM Linux boards","model": "Gemma 4 E2B","config": "Q4_K_M · llama.cpp a1cfb64","values": {"prompt": 4.06,"generation": 1.68},"storageMiB": 2949.12,"capacity": "8 GB RAM","note": "Rev 1.4 · SD"},
+    {"device": "Raspberry Pi 4 · 8 GB","platform": "ARM Linux boards","model": "Gemma 4 E4B","config": "Q4_0 · llama.cpp a1cfb64","values": {"prompt": 2.02,"generation": 0.87},"storageMiB": 4597.76,"capacity": "8 GB RAM","note": "Rev 1.4 · SD"}
+  ]
+},
+{
+  "id": "pi-asr",
+  "title": "Speech recognition on Raspberry Pi",
+  "source": "https://www.mdpi.com/2227-9709/13/2/19#informatics-13-00019-t009",
+  "description": "Table 9 compares mean runtime, mean resident memory and word error on 60-second English inputs. Both boards had 8 GB of RAM and ran 64-bit Bookworm. The paper reports identical mean RSS and WER across boards for each model.",
+  "metrics": [
+    "latency",
+    "meanRss",
+    "wer"
+  ],
+  "runs": [
+    {"device": "Raspberry Pi 5 · 8 GB","platform": "ARM Linux boards","model": "Whisper tiny","config": "60 seconds of speech","values": {"latency": 9.5,"meanRss": 302,"wer": 27.5},"capacity": "8 GB RAM"},
+    {"device": "Raspberry Pi 4 · 8 GB","platform": "ARM Linux boards","model": "Whisper tiny","config": "60 seconds of speech","values": {"latency": 27.7,"meanRss": 302,"wer": 27.5},"capacity": "8 GB RAM"},
+    {"device": "Raspberry Pi 5 · 8 GB","platform": "ARM Linux boards","model": "Whisper base","config": "60 seconds of speech","values": {"latency": 16.2,"meanRss": 665,"wer": 17.5},"capacity": "8 GB RAM"},
+    {"device": "Raspberry Pi 4 · 8 GB","platform": "ARM Linux boards","model": "Whisper base","config": "60 seconds of speech","values": {"latency": 41.7,"meanRss": 665,"wer": 17.5},"capacity": "8 GB RAM"},
+    {"device": "Raspberry Pi 5 · 8 GB","platform": "ARM Linux boards","model": "Whisper small","config": "60 seconds of speech","values": {"latency": 42.2,"meanRss": 1657,"wer": 16.7},"capacity": "8 GB RAM"},
+    {"device": "Raspberry Pi 4 · 8 GB","platform": "ARM Linux boards","model": "Whisper small","config": "60 seconds of speech","values": {"latency": 83.5,"meanRss": 1657,"wer": 16.7},"capacity": "8 GB RAM"},
+    {"device": "Raspberry Pi 5 · 8 GB","platform": "ARM Linux boards","model": "Whisper medium","config": "60 seconds of speech","values": {"latency": 134.1,"meanRss": 4886,"wer": 6.7},"capacity": "8 GB RAM"},
+    {"device": "Raspberry Pi 4 · 8 GB","platform": "ARM Linux boards","model": "Whisper medium","config": "60 seconds of speech","values": {"latency": 260.6,"meanRss": 4886,"wer": 6.7},"capacity": "8 GB RAM"},
+    {"device": "Raspberry Pi 5 · 8 GB","platform": "ARM Linux boards","model": "Vosk small-en-us-0.15","config": "60 seconds of speech","values": {"latency": 8.5,"meanRss": 4548,"wer": 50},"capacity": "8 GB RAM"},
+    {"device": "Raspberry Pi 4 · 8 GB","platform": "ARM Linux boards","model": "Vosk small-en-us-0.15","config": "60 seconds of speech","values": {"latency": 20.6,"meanRss": 4548,"wer": 50},"capacity": "8 GB RAM"},
+    {"device": "Raspberry Pi 5 · 8 GB","platform": "ARM Linux boards","model": "Vosk base-en-us-0.22","config": "60 seconds of speech","values": {"latency": 43.9,"meanRss": 4994,"wer": 27.5},"capacity": "8 GB RAM"},
+    {"device": "Raspberry Pi 4 · 8 GB","platform": "ARM Linux boards","model": "Vosk base-en-us-0.22","config": "60 seconds of speech","values": {"latency": 78.8,"meanRss": 4994,"wer": 27.5},"capacity": "8 GB RAM"}
+  ]
 }
 ]}

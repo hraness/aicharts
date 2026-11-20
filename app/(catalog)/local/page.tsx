@@ -17,12 +17,12 @@ export default function LocalBenchmarksPage() {
     <Breadcrumbs trail={[{ name: "Local benchmarks", href: "/local" }]} />
     <header className="page-head"><h1>Local AI benchmarks</h1></header>
     <nav className="local-section-links" aria-label="Explore local AI">
-      <a href="#hardware">Device speeds and memory</a>
       <a href="#quality">Model quality</a>
+      <a href="#hardware">Device speeds and memory</a>
       <a href="/local/models">Find downloadable models</a>
     </nav>
-    <LocalHardware />
     <LocalQuality workload={first} metric={first} />
+    <LocalHardware />
     <p><a href="/api/local">Download benchmarks and sources (JSON)</a></p>
   </article>;
 }

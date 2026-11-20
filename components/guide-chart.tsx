@@ -1,4 +1,5 @@
 "use client";
+import { CompactPicker } from "@/components/compact-picker";
 import { useEffect, useState } from "react";
 import { ParetoChart } from "./pareto-chart";
 import { chartReadout } from "@/lib/format";
@@ -24,33 +25,8 @@ export function GuideChart({
     <figure data-pj-article-figure>
       <div className="guide-chart" data-pj-visual>
         <div className="chart-controls">
-          <label>
-            Model
-            <select
-              disabled={!interactive}
-              aria-label="Model"
-              value={slug}
-              onChange={(e) => selectRelease(e.target.value)}
-            >
-              {plotted.map((r) => (
-                <option key={r.slug} value={r.slug}>
-                  {r.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Budget
-            <select
-              disabled={!interactive}
-              aria-label="Budget"
-              value={axis}
-              onChange={(e) => setAxis(e.target.value === "tokens" ? "tokens" : "cost")}
-            >
-              <option value="cost">Cost per task</option>
-              <option value="tokens">Output tokens</option>
-            </select>
-          </label>
+          <CompactPicker label="Model" disabled={!interactive} value={slug} options={plotted.map(r => ({value:r.slug,label:r.name,group:r.provider}))} onChange={selectRelease} />
+          <CompactPicker label="Budget" disabled={!interactive} value={axis} options={[{value:"cost",label:"Cost per task"},{value:"tokens",label:"Output tokens"}]} onChange={v => setAxis(v === "tokens" ? "tokens" : "cost")} />
         </div>
         <ParetoChart
           releases={releases}

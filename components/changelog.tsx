@@ -1,4 +1,5 @@
 "use client";
+import { CompactPicker } from "./compact-picker";
 import { useEffect, useState } from "react";
 import { dateLabel, type entries as notes } from "@/journal/content";
 
@@ -54,26 +55,8 @@ export function Changelog({ entries }: { entries: typeof notes }) {
           value={filters.q}
           onChange={(e) => change({ ...filters, q: e.target.value })}
         />
-        <select
-          aria-label="Category"
-          value={filters.category}
-          onChange={(e) => change({ ...filters, category: e.target.value })}
-        >
-          <option value="">All categories</option>
-          {[...new Set(entries.map((e) => e.category))].sort().map((c) => (
-            <option key={c}>{c}</option>
-          ))}
-        </select>
-        <select
-          aria-label="Surface"
-          value={filters.surface}
-          onChange={(e) => change({ ...filters, surface: e.target.value })}
-        >
-          <option value="">All surfaces</option>
-          {[...new Set(entries.flatMap((e) => e.surfaces))].sort().map((s) => (
-            <option key={s}>{s}</option>
-          ))}
-        </select>
+        <CompactPicker label="Category" value={filters.category} options={[{value:"",label:"All categories"}, ...[...new Set(entries.map(e => e.category))].sort().map(v => ({value:v,label:v}))]} onChange={v => change({...filters,category:v})} />
+        <CompactPicker label="Surface" value={filters.surface} options={[{value:"",label:"All surfaces"}, ...[...new Set(entries.flatMap(e => e.surfaces))].sort().map(v => ({value:v,label:v}))]} onChange={v => change({...filters,surface:v})} />
       </form>
       {active && (
         <p className="filter-result">

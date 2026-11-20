@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { CompactPicker } from "@/components/compact-picker";
 import measurements from "@/data/local-hardware.json";
 import "./local-hardware.css";
 
@@ -35,6 +36,10 @@ const metrics: Record<string, { label: string; unit: string; lower: boolean }> =
   retrieval: { label: "Retrieval quality", unit: "NDCG@10", lower: false },
   synthesis: { label: "Generate speech", unit: "× real time", lower: false },
   firstAudio: { label: "Time to first audio", unit: "ms", lower: true },
+  tokenLatency: { label: "Time per decoded token", unit: "ms/token", lower: true },
+  firstToken: { label: "Time to first token", unit: "ms", lower: true },
+  requestMs: { label: "Request latency", unit: "ms", lower: true },
+  meanRss: { label: "Mean resident memory", unit: "MB", lower: true },
   latency: { label: "Elapsed time", unit: "s", lower: true },
   peak: { label: "Peak app memory", unit: "MiB", lower: true },
   storage: { label: "Model storage", unit: "MiB", lower: true },
@@ -54,9 +59,33 @@ const defaults: Record<string, string> = {
   "AMD graphics": "RX 7900 XTX",
   "Intel graphics": "Intel Arc B580",
   "Android": "Xiaomi 15 Pro",
+  "ARM Linux boards": "Raspberry Pi 5 · 8 GB",
+  "Web browsers": "GTX 1650 Laptop · Windows 11",
 };
 
+const tasks: Record<string, string> = {
+  "4167": "Language", "4508": "Language", "15013": "Language", "15021": "Language", "10879": "Language",
+  "webllm-m3": "Language", "webgpu-decode": "Language", "webgpu-request": "Language", "pi-llama": "Language",
+  "pi-asr": "Transcription", "wk-earnings22": "Transcription", "wk-librispeech": "Transcription",
+  "faster-whisper": "Transcription", moi: "Image generation", coreml: "Image generation",
+  sana: "Image generation", video: "Video generation", ace: "Music generation",
+  "fluid-tts": "Speech synthesis", "hf-gooaq": "Embeddings", "msmarco-v100": "Reranking",
+  "qwen-vl-a100": "Vision and language",
+};
+
+function deviceGroup(device: string) {
+  if (device.startsWith("iPhone")) return "iPhone";
+  if (device.startsWith("iPad")) return "iPad";
+  if (device.startsWith("RTX")) return device.match(/^RTX (\d{2})\d{2}/)?.[1]?.concat("-series RTX") ?? "RTX workstation";
+  if (device.startsWith("RX")) return device.match(/^RX (\d)\d{3}/)?.[1]?.concat("000-series Radeon") ?? "Radeon RX";
+  if (device.startsWith("Intel Arc")) return "Intel Arc";
+  const mac = device.match(/\bM(\d+)\b/);
+  if (mac) return "Apple M" + mac[1];
+  return "Other devices";
+}
+
 function measuredMemory(run: Run) {
+  if (run.values.meanRss !== undefined) return { gib: run.values.meanRss * 1e6 / 2 ** 30, kind: "Mean resident RAM" };
   if (run.values.vramGiB !== undefined) return { gib: run.values.vramGiB, kind: "Peak GPU allocation" };
   if (run.values.peak !== undefined) return { gib: run.values.peak / 1024, kind: "Peak app memory" };
   if (run.values.memoryMB !== undefined) return { gib: run.values.memoryMB * 1e6 / 2 ** 30, kind: run.platform === "NVIDIA GPUs" ? "Reported VRAM" : "Reported RAM" };
@@ -80,6 +109,7 @@ function comparisonRows(rows: Run[], device: string, expanded: boolean) {
 }
 
 function rates(value: number, key: string) {
+  if (key === "tokenLatency") return number.format(1000 / value) + " tok/s";
   if (key === "audio") return number.format(600 / value) + " s per 10 min audio";
   if (key === "synthesis") return number.format(60 / value) + " s per minute of speech";
   if (key === "generation") return number.format(128 / value) + " s per 128 tokens";
@@ -96,6 +126,7 @@ export function LocalHardware() {
   const [selectedRun, setSelectedRun] = useState("");
   const [expanded, setExpanded] = useState(false);
   const [allDevices, setAllDevices] = useState(false);
+  const [inspectOpen, setInspectOpen] = useState(false);
   useEffect(() => {
     const query = new URLSearchParams(window.location.search);
     const p = query.get("platform");
@@ -106,6 +137,7 @@ export function LocalHardware() {
     setDevice(d);
     setSelection(query.get("measure") ?? "");
     setSelectedRun(query.get("run") ?? "");
+    setInspectOpen(query.has("run"));
     const memory = Number(query.get("memory"));
     if (Number.isFinite(memory) && memory > 0) setBudget(String(memory));
   }, []);
@@ -141,26 +173,29 @@ export function LocalHardware() {
   const maxMemory = Math.max(0, ...memoryBars.map(item => item.gib));
   const formatted = (run: Run) => number.format(run.values[key]!) + (metric.unit === "%" ? "" : " ") + metric.unit;
   const changeDevice = (name: string) => {
-    setExample(false); setDevice(name); setSelectedRun(""); setExpanded(false); setAllDevices(false); setBudget("");
+    setExample(false); setDevice(name); setInspectOpen(false); setSelectedRun(""); setExpanded(false); setAllDevices(false); setBudget("");
   };
   const setMeasurement = (id: string) => {
-    setSelection(id); setSelectedRun(""); setExpanded(false); setAllDevices(false);
+    setSelection(id); setInspectOpen(false); setSelectedRun(""); setExpanded(false); setAllDevices(false);
   };
   return (
     <section id="hardware" className="local-hardware" aria-labelledby="hardware-heading">
       <h2 id="hardware-heading">Device speeds and memory</h2>
       <p>Choose your hardware to see measured runs, compare model configurations and check memory use.</p>
       <div className="hardware-controls">
-        <label>Platform<select aria-label="Platform" value={platform} onChange={e => {
-          const p = e.target.value;
-          setPlatform(p); changeDevice(defaults[p] ?? devicesByPlatform.get(p)![0]!);
-        }}>{platforms.map(p => <option key={p}>{p}</option>)}</select></label>
-        <label>Device<select aria-label="Device" value={device} onChange={e => changeDevice(e.target.value)}>
-          {devices.map(d => <option key={d}>{d}</option>)}<option value="">My device is missing</option>
-        </select></label>
-        {active && <label>Measurement<select aria-label="Measurement" value={active.id} onChange={e => setMeasurement(e.target.value)}>
-          {available.map(({ suite, id, key }) => <option value={id} key={id}>{suite.title} · {metrics[key]!.label}</option>)}
-        </select></label>}
+        <CompactPicker label="Platform" value={platform} options={platforms.map(p => ({
+          value: p, label: p, description: devicesByPlatform.get(p)!.length + " published device configurations",
+        }))} onChange={p => { setPlatform(p); changeDevice(defaults[p] ?? devicesByPlatform.get(p)![0]!); }} />
+        <CompactPicker label="Device" value={device} options={[
+          ...devices.map(d => ({ value: d, label: d, group: deviceGroup(d) })),
+          { value: "", label: "My device is missing" },
+        ]} onChange={changeDevice} />
+        {active && available.length > 1 && <CompactPicker label="Measurement" value={active.id} options={
+          available.map(({ suite, id, key }) => ({
+            value: id, label: suite.title + " · " + metrics[key]!.label,
+            group: tasks[suite.id] ?? suite.title, description: metrics[key]!.unit,
+          }))
+        } onChange={setMeasurement} />}
       </div>
       {!active && <p className="hardware-empty">The published sources cover {devices.length} device configurations on this platform. Choose a listed device to inspect its measurements. Speed and memory for an unlisted device are unknown.</p>}
       {active && (
@@ -185,7 +220,6 @@ export function LocalHardware() {
                   {disk !== null && <span>Weights on disk {number.format(disk)} GiB</span>}
                   {memory && <span>{memory.kind} {number.format(memory.gib)} GiB</span>}
                   {remaining !== null && <strong>{number.format(Math.abs(remaining))} GiB {remaining < 0 ? "over budget" : "below budget"}</strong>}
-                  {run.note && <span>{run.note}</span>}
                 </div>
               </div>;
             })}
@@ -193,11 +227,12 @@ export function LocalHardware() {
           {rows.length > 8 && <button className="hardware-more" type="button" onClick={() => setExpanded(!expanded)}>{expanded ? "Show first 8" : "Show all " + rows.length + " configurations"}</button>}
           {hasMemory ? <p className="hardware-fine">The budget compares your available memory to the reported run. Other apps and longer inputs can change what fits.</p>
             : <p className="hardware-fine">Runtime memory use is unreported for these runs.{hasStorage && " Loading weights also requires working memory."}</p>}
-          <div className="hardware-peers">
-            <h4>Inspect a configuration</h4>
-            <label>Model and configuration<select aria-label="Model and configuration" value={compare ? runName(compare) : ""} onChange={e => {setSelectedRun(e.target.value);setAllDevices(false);}}>
-              {rows.map(r => <option key={runName(r)}>{runName(r)}</option>)}
-            </select></label>
+          <details className="hardware-peers" open={inspectOpen} onToggle={e => setInspectOpen(e.currentTarget.open)}>
+            <summary>Inspect a configuration</summary>
+            {compare && rows.length > 1 ? <CompactPicker label="Model and configuration" value={runName(compare)}
+              options={rows.map(r => ({ value: runName(r), label: runName(r), group: r.model, description: formatted(r) }))}
+              onChange={value => {setSelectedRun(value);setAllDevices(false);}} /> : compare && <p>{runName(compare)}</p>}
+            {compare?.note && <p className="hardware-fine">{compare.note}</p>}
             {memoryBars.length > 0 && <div className="hardware-memory-profile">
               <h5>Memory profile</h5>
               {memoryBars.map(item => <div className="hardware-peer" key={item.name}>
@@ -215,7 +250,7 @@ export function LocalHardware() {
               </div>)}
               {peers.length > 7 && <button className="hardware-more" type="button" onClick={() => setAllDevices(!allDevices)}>{allDevices ? "Show nearby and endpoint results" : "Show all " + peers.length + " devices"}</button>}
             </>}
-          </div>
+          </details>
           <p><a href={"/local?" + share + "#hardware"}>Link to this comparison</a></p>
         </div>
       )}
