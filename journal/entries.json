@@ -1,4 +1,13 @@
 [
+  {
+    "slug": "device-and-workload-comparisons",
+    "date": "2026-11-20",
+    "category": "Improved",
+    "surfaces": ["Website", "API"],
+    "title": "Explore local AI results by device and task",
+    "summary": "Choose hardware to inspect published speed and memory results. Change evaluations within a workload, compare a model with a baseline, or share a link to the exact benchmark.",
+    "link": {"href": "/local", "label": "Explore device measurements"}
+  },
   {"slug": "local-model-directory", "date": "2026-11-20", "category": "Improved", "surfaces": ["Website", "API"], "title": "Find model weights and compare music and video models", "summary": "Browse published music, video and reranking results, compare device timings, and search the public Hugging Face catalog by task and format.", "link": {"href": "/local", "label": "Explore local models"}},
   {
     "slug": "local-model-workloads",
