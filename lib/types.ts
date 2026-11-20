@@ -1,71 +1,59 @@
 export type ProviderId = "anthropic" | "openai" | "google";
 
-export type BenchmarkId = "coding" | "terminalBench4" | "frontierCode2" | "intelligence";
-
 export type BudgetAxis = "cost" | "tokens";
 
 export type ContextMode = "release" | "live";
 
-export type EffortSlug = "none" | "low" | "medium" | "high" | "xhigh" | "max";
+export type EffortSlug = "none" | "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
 
-export type BenchmarkScores = Readonly<{
-  coding: number;
-  terminalBench4: number;
-  frontierCode2: number;
-  intelligence: number;
-}>;
-
-export type CostBreakdown = Readonly<{
-  total: number;
-  input: number;
-  output: number;
-  reasoning: number;
-  cacheRead: number;
-}>;
-
-export type TokenBreakdown = Readonly<{
-  total: number;
-  reasoning: number;
-  answer: number;
-}>;
-
-export type CliHarnessEval = Readonly<{
-  harness: string;
-  codingAgentScore: number;
-  costUsdPerTask: number;
-  frontierCode2: number;
-  sweAtlas: number;
-  terminalBench4: number;
-}>;
-
-export type EffortPoint = Readonly<{
-  id: string;
-  slug: string;
-  effortSlug: EffortSlug;
-  effortLabel: string;
-  shortTag: string;
-  effortLevel: number;
-  isDefaultEffort: boolean;
-  scores: BenchmarkScores;
-  costUsdPerTask: CostBreakdown;
-  tokensPerTask: TokenBreakdown;
-  speedTokPerSec: number | null;
-  cliEval: CliHarnessEval | null;
-}>;
-
-export type HarborBenchEval = Readonly<{
+/**
+ * One run on the official Terminal-Bench leaderboard: a coding agent driving
+ * the model through every task, five trials (attempts) per task.
+ */
+export type TerminalBenchRun = Readonly<{
+  /** Dataset version the trials were graded on, such as "4.1". 4.1 changed the checks on every task. */
+  version: string;
+  /** The agent as Terminal-Bench names it, such as "Claude Code" or "Codex". */
   agent: string;
-  effort: string;
+  agentVersion: string | null;
+  agentUrl: string | null;
+  effort: EffortSlug | null;
+  /** Percent of trials passed. */
   accuracy: number;
-  totalCostUsd: number;
-  costPerTrialUsd: number;
+  /** Half width of the 95% confidence interval, in points. */
+  ci95: number | null;
+  trials: number;
+  successes: number;
+  /** The run's API bill divided by its trials; null when the run reported no cost. */
+  costPerTaskUsd: number | null;
+  /** Tokens per trial: everything, and the output alone. */
+  tokensPerTask: Readonly<{ total: number; output: number }>;
+  /** Average wall-clock minutes per trial; null when unknown. */
+  minutesPerTask: number | null;
+  /** The submission file on GitHub. */
+  sourceUrl: string;
+}>;
+
+export type EpochBenchmarkId = "mirrorCode" | "gpqaDiamond" | "frontierMath";
+
+/** One Epoch AI benchmark result for a model at one reasoning setting. */
+export type EpochScore = Readonly<{
+  benchmark: EpochBenchmarkId;
+  /** Null when Epoch ran the model at its default setting or did not record one. */
+  effort: EffortSlug | null;
+  /** Percent, 0–100. */
+  score: number;
+  /** Standard error, in points. */
+  stderr: number | null;
+  /** The day Epoch started the run. */
+  runOn: string | null;
 }>;
 
 export type ModelPricing = Readonly<{
   inputPer1M: number;
   outputPer1M: number;
   cachedInputPer1M: number | null;
-  contextWindowTokens: number;
+  maxInputTokens: number | null;
 }>;
 
 export type ModelRelease = Readonly<{
@@ -75,110 +63,78 @@ export type ModelRelease = Readonly<{
   releaseDate: string;
   deprecated: boolean;
   supersededOn: string | null;
-  pricing: ModelPricing;
-  summary: string;
-  announcementUrl: string;
-  benchmarkUrl: string;
-  harborEval: HarborBenchEval | null;
-  efforts: readonly EffortPoint[];
+  /** The lab's launch post or model page; null when no source links one. */
+  announcementUrl: string | null;
+  /** List API prices from LiteLLM; null when it does not list the model. */
+  pricing: ModelPricing | null;
+  /** The model's Terminal-Bench run; null when it has none on the leaderboard. */
+  terminalBench: TerminalBenchRun | null;
+  epoch: readonly EpochScore[];
+}>;
+
+export type DataSourceId = "terminal-bench" | "epoch-ai" | "litellm";
+
+export type DataSource = Readonly<{
+  id: DataSourceId;
+  name: string;
+  url: string;
+  license: string;
+  licenseUrl: string;
+  attribution: string;
+  covers: string;
 }>;
 
 export type ReleaseDataset = Readonly<{
-  schemaVersion: 1;
+  schemaVersion: 2;
   updatedAt: string;
   snapshotDate: string;
-  sources: readonly {
-    id: string;
-    name: string;
-    url: string;
-    note: string;
-  }[];
+  sources: readonly DataSource[];
   releases: readonly ModelRelease[];
 }>;
 
-export type BenchmarkMeta = Readonly<{
-  id: BenchmarkId;
+export const TERMINAL_BENCH = {
+  label: "Terminal-Bench",
+  /** Tasks in the full dataset; 4.1 added and removed none. */
+  tasks: 66,
+  url: "https://tbench.ai",
+  repoUrl: "https://github.com/harbor-framework/terminal-bench",
+  releaseNotesUrl: "https://github.com/harbor-framework/terminal-bench/releases/tag/v4.1.0",
+  description:
+    "Hard, realistic tasks done in a terminal, from building software to science and data work. Each run is a coding agent driving the model, five attempts per task.",
+} as const;
+
+export type EpochBenchmarkMeta = Readonly<{
+  id: EpochBenchmarkId;
   label: string;
-  shortLabel: string;
-  fullLabel: string;
-  unit: "%" | "pts";
   description: string;
+  url: string;
 }>;
 
-export const BENCHMARKS: readonly BenchmarkMeta[] = [
+export const EPOCH_BENCHMARKS: readonly EpochBenchmarkMeta[] = [
   {
-    id: "coding",
-    label: "Coding",
-    shortLabel: "Coding",
-    fullLabel: "Normalized Coding Composite",
-    unit: "%",
-    description: "50/50 mean of FrontierCode 2.0 (repo SWE) and Terminal-Bench 4.0 (agentic CLI).",
+    id: "mirrorCode",
+    label: "MirrorCode",
+    description:
+      "A long-horizon coding benchmark. Models reimplement entire programs end-to-end, without access to the original source code.",
+    url: "https://epoch.ai/benchmarks/mirrorcode",
   },
   {
-    id: "terminalBench4",
-    label: "Terminal-Bench",
-    shortLabel: "Terminal",
-    fullLabel: "Terminal-Bench 4.0",
-    unit: "%",
-    description: "Autonomous terminal & CLI software engineering pass rate.",
+    id: "gpqaDiamond",
+    label: "GPQA Diamond",
+    description:
+      "A challenging multiple-choice question set in biology, chemistry, and physics, authored by PhD-level experts.",
+    url: "https://epoch.ai/benchmarks/gpqa-diamond",
   },
   {
-    id: "frontierCode2",
-    label: "FrontierCode",
-    shortLabel: "FrontierCode",
-    fullLabel: "FrontierCode-AA 2.0",
-    unit: "%",
-    description: "Multi-file repository coding & bug-resolution pass rate.",
-  },
-  {
-    id: "intelligence",
-    label: "Intelligence",
-    shortLabel: "Intelligence",
-    fullLabel: "Artificial Analysis Intelligence Index v5.0.1",
-    unit: "pts",
-    description: "9-benchmark reasoning, coding, scientific, and agentic index.",
-  },
-] as const;
-
-/**
- * The same four chart slots, filled with runs inside each lab's coding agent
- * (see chartRelease in lib/agents.ts): Artificial Analysis's Coding Agent
- * Index and its three parts.
- */
-export const AGENT_BENCHMARKS: readonly BenchmarkMeta[] = [
-  {
-    id: "coding",
-    label: "Coding Agent Index",
-    shortLabel: "Index",
-    fullLabel: "Artificial Analysis Coding Agent Index",
-    unit: "pts",
-    description: "Equal-weight mean of FrontierCode 2.0, Terminal-Bench 4.1 and SWE-Atlas QnA, run inside each agent.",
-  },
-  {
-    id: "terminalBench4",
-    label: "Terminal-Bench 4.1",
-    shortLabel: "Terminal",
-    fullLabel: "Terminal-Bench 4.1",
-    unit: "%",
-    description: "66 terminal tasks, run inside each agent.",
-  },
-  {
-    id: "frontierCode2",
-    label: "FrontierCode 2.0",
-    shortLabel: "FrontierCode",
-    fullLabel: "FrontierCode-AA 2.0",
-    unit: "%",
-    description: "132 repository coding tasks, run inside each agent.",
-  },
-  {
-    id: "intelligence",
-    label: "SWE-Atlas QnA",
-    shortLabel: "SWE-Atlas",
-    fullLabel: "SWE-Atlas-QnA-AA",
-    unit: "%",
-    description: "124 questions about real codebases, answered inside each agent.",
+    id: "frontierMath",
+    label: "FrontierMath Tiers 1–3",
+    description:
+      "Unpublished math problems written by expert mathematicians: Tiers 1 to 3 of FrontierMath, a set Epoch keeps private.",
+    url: "https://epoch.ai/benchmarks/frontiermath-tiers-1-3-v2",
   },
 ];
+
+export const EPOCH_BENCHMARKS_URL = "https://epoch.ai/benchmarks";
 
 export const PROVIDERS: Readonly<
   Record<

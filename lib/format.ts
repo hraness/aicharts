@@ -1,3 +1,5 @@
+import type { BudgetAxis, ModelRelease } from "./types";
+
 export function formatUsd(value: number): string {
   if (value < 0.01) return `$${value.toFixed(3)}`;
   if (value < 100) return `$${value.toFixed(2)}`;
@@ -94,4 +96,17 @@ export function formatPrice(perMillion: number): string {
 export function formatContext(tokens: number): string {
   if (tokens >= 1_000_000) return `${Number((tokens / 1_000_000).toFixed(2))}M`;
   return `${Math.round(tokens / 1000)}k`;
+}
+
+/** One model's place on the chart, in words, for the line under the chart. */
+export function chartReadout(release: ModelRelease, axis: BudgetAxis): string {
+  const run = release.terminalBench;
+  if (!run) return `${release.name} · no Terminal-Bench run yet`;
+  const budget =
+    axis === "cost"
+      ? run.costPerTaskUsd === null
+        ? "no cost reported"
+        : `${formatUsd(run.costPerTaskUsd)} per task`
+      : `${formatTokens(run.tokensPerTask.output)} output tokens per task`;
+  return `${release.name} in ${run.agent} · ${formatScore(run.accuracy, "%")} on Terminal-Bench · ${budget}`;
 }

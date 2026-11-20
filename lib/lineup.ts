@@ -33,16 +33,18 @@ function lineTier(release: ModelRelease): number | undefined {
 
 /**
  * A release's place in its lab's lineup. A line not listed yet takes the tier
- * of the listed current model closest to it in output price.
+ * of the listed current model closest to it in output price, or the smallest
+ * tier when it has no price.
  */
 export function tierOf(release: ModelRelease, all: readonly ModelRelease[]): number {
   const listed = lineTier(release);
   if (listed !== undefined) return listed;
   let tier = TIER_LABELS.length - 1;
+  if (!release.pricing) return tier;
   let gap = Infinity;
   for (const other of all) {
     const otherTier = lineTier(other);
-    if (otherTier === undefined || other.deprecated) continue;
+    if (otherTier === undefined || other.deprecated || !other.pricing) continue;
     const distance = Math.abs(
       Math.log(other.pricing.outputPer1M) - Math.log(release.pricing.outputPer1M),
     );

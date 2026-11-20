@@ -7,7 +7,7 @@ export const guide = {
   slug: "introducing-aicharts",
   href: "/blog/introducing-aicharts",
   summary:
-    "See what a higher coding score costs. Compare the reasoning effort, cost per task, and output tokens behind an AI model release.",
+    "See what a higher coding score costs. Compare the Terminal-Bench score, cost per task and output tokens behind each AI model release.",
   published: "2026-11-19",
   evergreen: true,
 };

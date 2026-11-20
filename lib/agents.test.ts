@@ -6,75 +6,47 @@ import {
   agentLead,
   agentPairs,
   agentQuestions,
+  bestRun,
   bestUnder,
-  chartRelease,
   cheapestRun,
+  compareVersions,
   findAgentPair,
-  flagship,
-  frontierCodeGap,
-  harborPick,
-  harborRows,
   harness,
   harnessGroups,
   harnessRuns,
+  olderVersionRuns,
+  pickRun,
   runSegments,
-  summarizeGaps,
+  type HarnessGroup,
   type HarnessId,
 } from "./agents";
 import { buildCatalog, catalog } from "./catalog";
-import { release } from "./test-fixtures";
-import { AGENT_BENCHMARKS, PROVIDERS, type EffortSlug, type HarborBenchEval, type ModelRelease } from "./types";
+import { release, run } from "./test-fixtures";
+import { PROVIDERS, type ModelRelease, type TerminalBenchRun } from "./types";
 
-type Run = [EffortSlug, number, number, Partial<{ tb: number; fc: number; swe: number }>?];
-
-/** A release whose efforts carry runs in its lab's own agent. */
+/** A current release whose Terminal-Bench run is in its lab's own agent. */
 function agentRelease(
   slug: string,
   name: string,
   provider: ModelRelease["provider"],
-  runs: Run[],
-  options: Partial<{ supersededOn: string; harbor: Partial<HarborBenchEval> }> = {},
+  score: number,
+  cost: number | null,
+  overrides: Partial<TerminalBenchRun> = {},
+  supersededOn: string | null = null,
 ): ModelRelease {
-  const base = release(
+  return release(
     slug,
     name,
     provider,
-    "2027-01-01",
-    options.supersededOn ?? null,
-    runs.map(([level, index, cost]) => [level, index + 2, cost * 0.8]),
+    supersededOn ? "2026-12-01" : "2027-01-01",
+    supersededOn,
+    run(score, cost, { agent: PROVIDERS[provider].harness, ...overrides }),
   );
-  return {
-    ...base,
-    harborEval: options.harbor
-      ? {
-          agent: PROVIDERS[provider].harness,
-          effort: "max",
-          accuracy: 50,
-          totalCostUsd: 100,
-          costPerTrialUsd: 1,
-          ...options.harbor,
-        }
-      : null,
-    efforts: base.efforts.map((effort, i) => {
-      const [, index, cost, parts = {}] = runs[i]!;
-      return {
-        ...effort,
-        cliEval: {
-          harness: PROVIDERS[provider].harness,
-          codingAgentScore: index,
-          costUsdPerTask: cost,
-          frontierCode2: parts.fc ?? index - 1,
-          sweAtlas: parts.swe ?? index,
-          terminalBench4: parts.tb ?? index + 1,
-        },
-      };
-    }),
-  };
 }
 
 function fixture(releases: ModelRelease[]) {
   return buildCatalog({
-    schemaVersion: 1,
+    schemaVersion: 2,
     updatedAt: "2027-03-05T00:00:00.000Z",
     snapshotDate: "2027-03-05",
     sources: [],
@@ -83,50 +55,32 @@ function fixture(releases: ModelRelease[]) {
 }
 
 // Codex is cheaper at the low end; Claude Code tops out higher.
-const SOL = agentRelease("gpt-9-sol", "GPT-9 Sol", "openai", [
-  ["low", 40, 0.3],
-  ["medium", 46, 0.6],
-  ["high", 50, 1.2],
-]);
-const ASTRA = agentRelease(
-  "gpt-9-astra",
-  "GPT-9 Astra",
-  "openai",
-  [
-    ["medium", 51, 2],
-    ["high", 53, 4],
-  ],
-  { harbor: { accuracy: 60, costPerTrialUsd: 4 } },
+const LUNA = agentRelease("gpt-9-luna", "GPT-9 Luna", "openai", 40, 0.3, { version: "4.0" });
+const SOL = agentRelease("gpt-9-sol", "GPT-9 Sol", "openai", 50, 1.2);
+const ASTRA = agentRelease("gpt-9-astra", "GPT-9 Astra", "openai", 53, 4);
+const OLD_ASTRA = agentRelease("gpt-8-astra", "GPT-8 Astra", "openai", 70, 0.1, {}, "2027-01-01");
+const SONNET = agentRelease("claude-sonnet-9", "Claude Sonnet 9", "anthropic", 52, 3);
+const OPUS = agentRelease("claude-opus-9", "Claude Opus 9", "anthropic", 58, 12, { minutesPerTask: 60 });
+// A Gemini run in someone else's agent never counts as Antigravity CLI's.
+const FLASH = release(
+  "gemini-9-flash",
+  "Gemini 9 Flash",
+  "google",
+  "2027-01-01",
+  null,
+  run(45, 0.5, { agent: "mini-SWE-agent" }),
 );
-const OLD_ASTRA = agentRelease("gpt-8-astra", "GPT-8 Astra", "openai", [["high", 70, 0.1]], {
-  supersededOn: "2027-01-01",
-});
-const OPUS = agentRelease(
-  "claude-opus-9",
-  "Claude Opus 9",
-  "anthropic",
-  [
-    ["medium", 49, 2.5],
-    ["high", 57, 6],
-    ["max", 58, 12],
-  ],
-  { harbor: { accuracy: 65, costPerTrialUsd: 40 } },
-);
-const SONNET = agentRelease("claude-sonnet-9", "Claude Sonnet 9", "anthropic", [["high", 52, 3]], {
-  harbor: { accuracy: 63, costPerTrialUsd: 10 },
-});
-const CAT = fixture([SOL, ASTRA, OLD_ASTRA, OPUS, SONNET]);
-const groups = (ids: HarnessId[]) => harnessGroups(ids, CAT);
+const CAT = fixture([LUNA, SOL, ASTRA, OLD_ASTRA, SONNET, OPUS, FLASH]);
+const groups = (ids: HarnessId[], cat = CAT) => harnessGroups(ids, cat);
+const pairOf = (cat: ReturnType<typeof fixture>) =>
+  groups(["codex", "claude-code"], cat) as [HarnessGroup, HarnessGroup];
 
 describe("agent runs", () => {
   test("keep current models' runs in their own agent, best model first", () => {
-    const runs = harnessRuns(harness("codex"), CAT);
-    expect(runs.map((r) => `${r.release.slug}:${r.effort.effortSlug}`)).toEqual([
-      "gpt-9-astra:medium",
-      "gpt-9-astra:high",
-      "gpt-9-sol:low",
-      "gpt-9-sol:medium",
-      "gpt-9-sol:high",
+    expect(harnessRuns(harness("codex"), CAT).map((r) => r.key)).toEqual([
+      "codex:gpt-9-astra",
+      "codex:gpt-9-sol",
+      "codex:gpt-9-luna",
     ]);
     expect(harnessRuns(harness("antigravity-cli"), CAT)).toEqual([]);
   });
@@ -139,140 +93,125 @@ describe("agent runs", () => {
     expect(agentPairs(CAT).map((p) => p.slug)).toEqual(["codex-vs-claude-code"]);
   });
 
-  test("pick the cheapest run, the best under a budget and the most-measured model", () => {
+  test("pick the best, the cheapest, the cheapest near the best and the best under a budget", () => {
     const runs = harnessRuns(harness("codex"), CAT);
-    expect(cheapestRun(runs)?.key).toBe("codex:gpt-9-sol:low");
-    expect(bestUnder(runs, 1)?.key).toBe("codex:gpt-9-sol:medium");
+    expect(bestRun(runs).key).toBe("codex:gpt-9-astra");
+    expect(cheapestRun(runs)?.key).toBe("codex:gpt-9-luna");
+    // GPT-9 Sol is 3.0 points under GPT-9 Astra: inside two tasks' worth (3.03).
+    expect(pickRun(runs)?.key).toBe("codex:gpt-9-sol");
+    expect(bestUnder(runs, 1)?.key).toBe("codex:gpt-9-luna");
     expect(bestUnder(runs, 0.2)).toBeNull();
-    expect(flagship(runs).slug).toBe("gpt-9-sol");
+    // A run without a reported cost is never the cheapest.
+    const unpriced = fixture([agentRelease("gpt-9-nova", "GPT-9 Nova", "openai", 60, null), SOL]);
+    expect(cheapestRun(harnessRuns(harness("codex"), unpriced))?.key).toBe("codex:gpt-9-sol");
+    expect(pickRun([])).toBeNull();
   });
 
   test("group the shared cost frontier by agent", () => {
     const all = groups(["codex", "claude-code"]).flatMap((g) => g.runs);
-    // Opus at Medium (49 for $2.50) is under Astra at Medium (51 for $2), so it's off the frontier.
     expect(runSegments(all).map((s) => [s.harness.id, s.runs.map((r) => r.key)])).toEqual([
-      ["codex", ["codex:gpt-9-sol:low", "codex:gpt-9-sol:medium", "codex:gpt-9-sol:high", "codex:gpt-9-astra:medium"]],
-      ["claude-code", ["claude-code:claude-sonnet-9:high"]],
-      ["codex", ["codex:gpt-9-astra:high"]],
-      ["claude-code", ["claude-code:claude-opus-9:high", "claude-code:claude-opus-9:max"]],
+      ["codex", ["codex:gpt-9-luna", "codex:gpt-9-sol"]],
+      ["claude-code", ["claude-code:claude-sonnet-9"]],
+      ["codex", ["codex:gpt-9-astra"]],
+      ["claude-code", ["claude-code:claude-opus-9"]],
     ]);
   });
 
-  test("chart a release's runs in the benchmark slots the chart reads", () => {
-    const charted = chartRelease(OPUS, harness("claude-code"))!;
-    expect(charted.efforts.map((e) => [e.scores.coding, e.costUsdPerTask.total])).toEqual([
-      [49, 2.5],
-      [57, 6],
-      [58, 12],
-    ]);
-    expect(charted.efforts[1]!.scores.terminalBench4).toBe(58);
-    expect(charted.efforts[1]!.scores.intelligence).toBe(57);
-    expect(chartRelease(OPUS, harness("codex"))).toBeNull();
-    expect(AGENT_BENCHMARKS.map((b) => b.id)).toEqual([
-      "coding",
-      "terminalBench4",
-      "frontierCode2",
-      "intelligence",
-    ]);
-  });
-
-  test("measure FrontierCode against the model alone", () => {
-    const gap = frontierCodeGap(harnessRuns(harness("claude-code"), CAT)[0]!);
-    // The fixture's model alone scores index + 2; FrontierCode in the agent is index - 1.
-    expect(gap.change).toBe(-3);
-    expect(summarizeGaps(harnessRuns(harness("codex"), CAT))).toEqual({ count: 5, lower: 5, median: -3 });
+  test("compare dataset versions part by part", () => {
+    expect(compareVersions("4.10", "4.9")).toBeGreaterThan(0);
+    expect(compareVersions("4.1", "4.1")).toBe(0);
+    expect(compareVersions("4.0", "4.1")).toBeLessThan(0);
+    const all = groups(["codex", "claude-code"]).flatMap((g) => g.runs);
+    expect(olderVersionRuns(all).map((r) => r.key)).toEqual(["codex:gpt-9-luna"]);
+    expect(olderVersionRuns([])).toEqual([]);
   });
 });
 
 describe("agent copy", () => {
-  const [codex, claude] = groups(["codex", "claude-code"]) as [
-    ReturnType<typeof groups>[number],
-    ReturnType<typeof groups>[number],
-  ];
+  const [codex, claude] = pairOf(CAT);
 
-  test("names the leader and where it passes the other's best", () => {
+  test("names the leader, and calls tops within two tasks level", () => {
     expect(agentLead([codex, claude])).toBe(
-      "Claude Code scores higher on the Coding Agent Index: 58.0 with Claude Opus 9 at Max, for $12.00 per task. Codex peaks at 53.0, with GPT-9 Astra at High for $4.00. Claude Code passes that for $6.00 per task, with Claude Opus 9 at High (57.0).",
+      "Claude Code scores higher on Terminal-Bench: 58.0% with Claude Opus 9, for $12.00 per task. Codex peaks at 53.0%, with GPT-9 Astra for $4.00.",
+    );
+    const close = fixture([SOL, agentRelease("claude-opus-9", "Claude Opus 9", "anthropic", 50.5, 3)]);
+    expect(agentLead(pairOf(close))).toBe(
+      "Claude Code and Codex are level at the top of Terminal-Bench, within two tasks of each other: 50.5% for Claude Code with Claude Opus 9 ($3.00 per task) and 50.0% for Codex with GPT-9 Sol ($1.20 per task). Claude Code's top run costs 2.5× as much per task as Codex's.",
     );
   });
 
-  test("calls scores within a point level and compares their cost", () => {
-    const close = fixture([
-      SOL,
-      agentRelease("claude-opus-9", "Claude Opus 9", "anthropic", [["high", 50.5, 3]]),
-    ]);
-    expect(agentLead(harnessGroups(["codex", "claude-code"], close))).toBe(
-      "Claude Code and Codex top the Coding Agent Index within a point of each other: 50.5 for Claude Code with Claude Opus 9 at High ($3.00 per task) and 50.0 for Codex with GPT-9 Sol at High ($1.20 per task). Claude Code's top run costs 2.5× as much per task.",
-    );
-  });
-
-  test("says which agent leads at which budget", () => {
+  test("says which agent leads at which budget, and where paying more stops helping", () => {
     expect(agentBudgetText([codex, claude])).toBe(
-      "Codex gives the higher score below $3.00 per task, and Claude Code from $6.00, up to 58.0. In between, Claude Code and Codex trade the lead, all between 52.0 and 53.0.",
+      "Codex gives the higher score below $3.00 per task, and Claude Code from $12.00, up to 58.0%. In between, Claude Code and Codex trade the lead, all between 52.0% and 53.0%.",
     );
-    const two = fixture([SOL, OPUS]);
-    expect(agentBudgetText(harnessGroups(["codex", "claude-code"], two))).toBe(
-      // Opus at Medium (49 for $2.50) is under Sol at High (50 for $1.20).
-      "Below $6.00 per task, Codex gives the higher score; from $6.00, Claude Code does, up to 58.0.",
+    expect(agentBudgetText(pairOf(fixture([SOL, OPUS])))).toBe(
+      "Below $12.00 per task, Codex gives the higher score; from $12.00, Claude Code does, up to 58.0%.",
+    );
+    const flat = fixture([SOL, agentRelease("claude-opus-9", "Claude Opus 9", "anthropic", 52, 12)]);
+    expect(agentBudgetText(pairOf(flat))).toBe(
+      "Below $12.00 per task, Codex gives the higher score; from $12.00, Claude Code does, up to 52.0%. From $1.20 per task, Codex with GPT-9 Sol comes within two tasks of the top score; paying more buys at most 2.0 points.",
     );
   });
 
   test("gives reasons only for gaps of two tasks or more", () => {
-    expect(agentChooseReasons(claude, codex, CAT)).toEqual([
-      "You want the highest score: Claude Opus 9 at Max reaches 58.0 on the Coding Agent Index, 5.0 points above Codex's best.",
-      // Terminal-Bench 59.0% against 54.0% is more than two of its 66 tasks.
-      "Your work leans on terminal tasks, repository coding and questions about a codebase: its best runs beat Codex's on Terminal-Bench 4.1 (59.0% against 54.0%), FrontierCode 2.0 (57.0% against 52.0%) and SWE-Atlas QnA (58.0% against 53.0%).",
-      "You want the most official Terminal-Bench passes: with Claude Opus 9 it passes 65.0% at $40.00 per trial, against 60.0% at $4.00 per trial for Codex with GPT-9 Astra.",
+    expect(agentChooseReasons(claude, codex)).toEqual([
+      "You want the highest score: with Claude Opus 9 it passes 58.0% of Terminal-Bench, 5.0 points above Codex's best.",
+      "Your budget is between $3.00 and $4.00 per task: Claude Code scores higher in that range, up to 52.0% with Claude Sonnet 9 ($3.00).",
     ]);
-    const near = fixture([
-      agentRelease("gpt-9-sol", "GPT-9 Sol", "openai", [["high", 50, 1, { tb: 60, fc: 40, swe: 50 }]], {
-        harbor: { accuracy: 63, costPerTrialUsd: 2 },
-      }),
-      agentRelease("claude-opus-9", "Claude Opus 9", "anthropic", [["high", 50, 3, { tb: 62, fc: 41.6, swe: 50 }]], {
-        harbor: { accuracy: 65, costPerTrialUsd: 30 },
-      }),
+    expect(agentChooseReasons(codex, claude)).toEqual([
+      "Your budget is under $3.00 per task: Codex scores higher at every budget below that, up to 50.0% with GPT-9 Sol ($1.20).",
+      "You want shorter output: GPT-9 Sol wrote 24.0k output tokens per task against 240k for Claude Opus 9.",
+      "You want quicker runs: GPT-9 Sol took 30 minutes per task against 60 for Claude Opus 9.",
     ]);
-    const [x, y] = harnessGroups(["codex", "claude-code"], near) as [typeof codex, typeof claude];
-    // 2 points of Terminal-Bench is under two tasks; 1.6 of FrontierCode is over.
-    expect(agentChooseReasons(y, x, near)).toEqual([
-      "Your work leans on repository coding: its best run beats Codex's on FrontierCode 2.0 (41.6% against 40.0%).",
-    ]);
-    expect(agentChooseReasons(x, y, near)).toEqual([
-      "You want a top score for less: GPT-9 Sol at High reaches 50.0 for $1.00 per task, level with Claude Code's best at $3.00.",
-      // Opus is off the frontier, so Codex leads at every budget; its runs alone come in under $3.
-      "You want runs under $3.00 per task: of the runs measured, only Codex's come in under that, up to 50.0 with GPT-9 Sol at High ($1.00).",
-      "You want official Terminal-Bench results for less: with GPT-9 Sol it passes 63.0% at $2.00 per trial, against 65.0% at $30.00 per trial for Claude Code with Claude Opus 9.",
-    ]);
-  });
 
-  test("compares the leaderboard against each agent's cheapest entry near its best", () => {
-    const rows = harborRows(harness("claude-code"), CAT);
-    expect(rows.map((r) => r.release.slug)).toEqual(["claude-opus-9", "claude-sonnet-9"]);
-    // Sonnet is within two tasks (3.03 points) of Opus and costs a quarter as much.
-    expect(harborPick(rows)?.release.slug).toBe("claude-sonnet-9");
-    expect(harborPick([])).toBeNull();
+    const tokens = { total: 1_000_000, output: 50_000 };
+    const level = fixture([
+      agentRelease("gpt-9-sol", "GPT-9 Sol", "openai", 50, 1.5, { tokensPerTask: tokens }),
+      agentRelease("claude-opus-9", "Claude Opus 9", "anthropic", 51, 1, { tokensPerTask: tokens }),
+    ]);
+    const [x, y] = pairOf(level);
+    expect(agentChooseReasons(y, x)).toEqual([
+      "You want a top score for less: with Claude Opus 9 it passes 51.0% for $1.00 per task, within two tasks of Codex's best at $1.50.",
+      "At every budget measured, Claude Code scores at least as high for no more per task.",
+    ]);
+    expect(agentChooseReasons(x, y)).toEqual([
+      "Few reasons in this data: its best run, 50.0% with GPT-9 Sol for $1.50 per task, is within two tasks of Claude Code's best, 51.0% with Claude Opus 9 for $1.00.",
+    ]);
   });
 
   test("asks about Gemini CLI only where Antigravity CLI is compared", () => {
-    expect(agentQuestions([codex, claude]).map((qa) => qa.q)).toEqual([
+    const questions = agentQuestions([codex, claude]);
+    expect(questions.map((qa) => qa.q)).toEqual([
       "Is Codex better than Claude Code?",
       "Which is cheaper, Codex or Claude Code?",
       "Which model works best in each agent?",
-      "Does the agent change a model's score?",
       "What about Cursor, OpenCode or other coding agents?",
       "How were these agents tested?",
     ]);
+    expect(questions[1]!.a).toBe(
+      "Each agent's cheapest run within two tasks of its best: GPT-9 Sol in Codex, 50.0% for $1.20 per task; Claude Opus 9 in Claude Code, 58.0% for $12.00 per task. The cheapest run of all is GPT-9 Luna in Codex, $0.30 per task for 40.0%. A run's cost is what it reported spending across its trials, divided by the trials; on a subscription plan you pay the plan instead.",
+    );
+    expect(questions[2]!.a).toBe(
+      "In Codex, GPT-9 Astra scores highest, 53.0% for $4.00 per task; GPT-9 Sol comes within two tasks of it for $1.20. In Claude Code, Claude Opus 9 scores highest, 58.0% for $12.00 per task.",
+    );
+    expect(questions[4]!.a).toContain(
+      "5 runs with current models are compared here; GPT-9 Luna was graded on version 4.0, before 4.1 changed the checks on every task.",
+    );
+    const all = agentQuestions(harnessGroups(undefined, catalog)).map((qa) => qa.q);
+    expect(all).toContain("What happened to Gemini CLI?");
     expect(agentDescription([codex, claude])).toBe(
-      "Codex and Claude Code on the Coding Agent Index: best runs 53.0 and 58.0, at $4.00 and $12.00 per task. Every model and effort measured inside Codex CLI and Claude Code, with official Terminal-Bench results.",
+      "Codex and Claude Code on Terminal-Bench: best runs 53.0% and 58.0%, at $4.00 and $12.00 per task. Cost, tokens and time per model.",
     );
   });
 });
 
 describe("agent pages on the dataset", () => {
-  test("every agent run is the lab's own agent", () => {
-    for (const r of catalog.releases) {
-      for (const e of r.efforts) {
-        if (e.cliEval) expect(`${r.slug}: ${e.cliEval.harness}`).toBe(`${r.slug}: ${PROVIDERS[r.provider].harness}`);
+  test("each agent's runs are its own lab's models in that agent", () => {
+    for (const group of harnessGroups()) {
+      for (const r of group.runs) {
+        expect(r.release.provider).toBe(group.harness.provider);
+        expect(r.run.agent).toBe(group.harness.name);
+        expect(r.release.deprecated).toBe(false);
       }
     }
   });
@@ -295,19 +234,21 @@ describe("agent pages on the dataset", () => {
 
   test("every page's copy builds", () => {
     const sets = [harnessGroups(), ...agentPairs().map((p) => harnessGroups([p.first.id, p.second.id]))];
+    const missing = /undefined|NaN|Infinity|null|\[object/;
     for (const set of sets) {
       expect(set.length).toBeGreaterThan(1);
-      expect(agentLead(set)).not.toContain("undefined");
-      expect(agentBudgetText(set)).not.toContain("NaN");
-      for (const qa of agentQuestions(set)) expect(qa.a).not.toMatch(/undefined|NaN/);
+      expect(agentLead(set)).not.toMatch(missing);
+      expect(agentBudgetText(set)).not.toMatch(missing);
+      expect(agentDescription(set)).not.toMatch(missing);
+      expect(agentDescription(set).length).toBeLessThanOrEqual(170);
+      for (const qa of agentQuestions(set)) expect(qa.a).not.toMatch(missing);
     }
     for (const pair of agentPairs()) {
-      const [a, b] = harnessGroups([pair.first.id, pair.second.id]) as [
-        ReturnType<typeof harnessGroups>[number],
-        ReturnType<typeof harnessGroups>[number],
-      ];
-      expect(agentChooseReasons(a, b).length).toBeGreaterThan(0);
-      expect(agentChooseReasons(b, a).length).toBeGreaterThan(0);
+      const [a, b] = harnessGroups([pair.first.id, pair.second.id]) as [HarnessGroup, HarnessGroup];
+      for (const reasons of [agentChooseReasons(a, b), agentChooseReasons(b, a)]) {
+        expect(reasons.length).toBeGreaterThan(0);
+        for (const reason of reasons) expect(reason).not.toMatch(missing);
+      }
     }
   });
 });

@@ -16,7 +16,7 @@ export default function HomePage() {
               url: SITE_URL,
               name: "aicharts",
               description:
-                "Coding scores, cost per task and effort levels for AI model releases from OpenAI, Anthropic and Google.",
+                "Terminal-Bench scores, cost per task and API prices for AI model releases from OpenAI, Anthropic and Google.",
               publisher: { "@id": "https://hraness.com/#organization" },
             },
             {

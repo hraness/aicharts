@@ -5,15 +5,16 @@ import {
   comparePointToFrontier,
   computeParetoFrontier,
   getChartScale,
-  getContextualFrontierEfforts,
+  getContextualFrontierReleases,
   getContextualReleases,
-  getFrontierEffortsByRelease,
+  getFrontierReleases,
   getQualifiedFrontierKeys,
 } from "./pareto";
-import { release } from "./test-fixtures";
+import { release, run } from "./test-fixtures";
 import type { ProviderId, ReleaseDataset } from "./types";
 
 const dataset = rawDataset as unknown as ReleaseDataset;
+const AXES = ["cost", "tokens"] as const;
 
 describe("Pareto frontier & release context", () => {
   test("dataset starts with the most recent release and covers Anthropic, OpenAI, and Google", () => {
@@ -27,26 +28,41 @@ describe("Pareto frontier & release context", () => {
     }
   });
 
+  test("each release with a run plots once, at its accuracy", () => {
+    for (const axis of AXES) {
+      const points = buildPlottedPoints(dataset.releases, axis);
+      expect(new Set(points.map((p) => p.key)).size).toBe(points.length);
+      for (const point of points) {
+        expect(point.key).toBe(point.release.slug);
+        expect(point.score).toBe(point.release.terminalBench!.accuracy);
+        expect(point.budget).toBeGreaterThan(0);
+      }
+    }
+    // A run without a reported cost still plots on the tokens axis.
+    const free = release("free", "Free", "google", "2027-01-01", null, run(40, null));
+    expect(buildPlottedPoints([free], "cost")).toHaveLength(0);
+    expect(buildPlottedPoints([free], "tokens")).toHaveLength(1);
+    expect(buildPlottedPoints([release("none", "None", "google", "2027-01-01", null)], "tokens")).toHaveLength(0);
+  });
+
   test("computeParetoFrontier yields strictly increasing budget and score", () => {
-    for (const metric of ["coding", "terminalBench4", "frontierCode2", "intelligence"] as const) {
-      for (const axis of ["cost", "tokens"] as const) {
-        const points = buildPlottedPoints(dataset.releases, metric, axis);
-        const frontier = computeParetoFrontier(points);
-        expect(frontier.length).toBeGreaterThanOrEqual(3);
+    for (const axis of AXES) {
+      const points = buildPlottedPoints(dataset.releases, axis);
+      const frontier = computeParetoFrontier(points);
+      expect(frontier.length).toBeGreaterThanOrEqual(3);
 
-        for (let i = 1; i < frontier.length; i++) {
-          expect(frontier[i]!.budget).toBeGreaterThan(frontier[i - 1]!.budget);
-          expect(frontier[i]!.score).toBeGreaterThan(frontier[i - 1]!.score);
-        }
+      for (let i = 1; i < frontier.length; i++) {
+        expect(frontier[i]!.budget).toBeGreaterThan(frontier[i - 1]!.budget);
+        expect(frontier[i]!.score).toBeGreaterThan(frontier[i - 1]!.score);
+      }
 
-        // No plotted point may strictly dominate any frontier point
-        for (const f of frontier) {
-          for (const p of points) {
-            const strictlyBetter =
-              (p.budget <= f.budget && p.score > f.score + 1e-9) ||
-              (p.budget < f.budget - 1e-9 && p.score >= f.score);
-            expect(strictlyBetter).toBe(false);
-          }
+      // No plotted point may strictly dominate any frontier point
+      for (const f of frontier) {
+        for (const p of points) {
+          const strictlyBetter =
+            (p.budget <= f.budget && p.score > f.score + 1e-9) ||
+            (p.budget < f.budget - 1e-9 && p.score >= f.score);
+          expect(strictlyBetter).toBe(false);
         }
       }
     }
@@ -78,7 +94,7 @@ describe("Pareto frontier & release context", () => {
 
   test("comparePointToFrontier identifies frontier points and dominating points", () => {
     const live = getContextualReleases(dataset.releases, dataset.releases[0]!, "live");
-    const points = buildPlottedPoints(live, "coding", "cost");
+    const points = buildPlottedPoints(live, "cost");
     const frontier = computeParetoFrontier(points);
 
     for (const f of frontier) {
@@ -98,106 +114,65 @@ describe("Pareto frontier & release context", () => {
 
   test("getQualifiedFrontierKeys keeps frontier points within 75% of the top score", () => {
     const live = dataset.releases.filter((r) => !r.deprecated);
-    for (const metric of ["coding", "terminalBench4", "frontierCode2", "intelligence"] as const) {
-      const frontier = computeParetoFrontier(buildPlottedPoints(live, metric, "cost"));
+    for (const axis of AXES) {
+      const frontier = computeParetoFrontier(buildPlottedPoints(live, axis));
       const qualified = getQualifiedFrontierKeys(frontier);
       const top = frontier[frontier.length - 1]!;
       expect(qualified.has(top.key)).toBe(true);
       for (const point of frontier) {
         expect(qualified.has(point.key)).toBe(point.score + 1e-9 >= top.score * 0.75);
       }
+      expect(getFrontierReleases(live, axis)).toEqual(qualified);
     }
     expect(getQualifiedFrontierKeys([]).size).toBe(0);
   });
 
-  test("getFrontierEffortsByRelease groups the qualified frontier by release, lowest effort first", () => {
-    const live = dataset.releases.filter((r) => !r.deprecated);
-    const qualified = getQualifiedFrontierKeys(
-      computeParetoFrontier(buildPlottedPoints(live, "coding", "cost")),
-    );
-    const byRelease = getFrontierEffortsByRelease(live, "coding", "cost");
-
-    const stars = [...byRelease.values()].reduce((n, efforts) => n + efforts.length, 0);
-    expect(stars).toBe(qualified.size);
-    for (const [slug, efforts] of byRelease) {
-      expect(efforts.length).toBeGreaterThan(0);
-      for (let i = 1; i < efforts.length; i++) {
-        expect(efforts[i]!.effortLevel).toBeGreaterThan(efforts[i - 1]!.effortLevel);
-      }
-      for (const effort of efforts) {
-        expect(qualified.has(`${slug}:${effort.effortSlug}`)).toBe(true);
-      }
-    }
-  });
-
-  test("each release's stars match what its effort table shows when selected", () => {
-    const slugs = (efforts: readonly { effortSlug: string }[]) => efforts.map((e) => e.effortSlug);
+  test("each release's star matches the chart it gets when selected", () => {
     for (const mode of ["release", "live"] as const) {
       for (const providers of [undefined, new Set<ProviderId>(["google"])]) {
-        const stars = getContextualFrontierEfforts(dataset.releases, "coding", "cost", mode, providers);
+        const stars = getContextualFrontierReleases(dataset.releases, "cost", mode, providers);
         for (const rel of dataset.releases) {
           const field = getContextualReleases(dataset.releases, rel, mode, providers);
-          const qualified = getQualifiedFrontierKeys(
-            computeParetoFrontier(buildPlottedPoints(field, "coding", "cost")),
-          );
-          const expected = [...rel.efforts]
-            .filter((e) => qualified.has(`${rel.slug}:${e.effortSlug}`))
-            .sort((a, b) => a.effortLevel - b.effortLevel);
-          expect(slugs(stars.get(rel.slug) ?? [])).toEqual(slugs(expected));
+          expect(stars.has(rel.slug)).toBe(getFrontierReleases(field, "cost").has(rel.slug));
         }
       }
     }
   });
 
-  test("a model keeps its release-day stars after a newer model beats it", () => {
-    const older = release("model-a", "Model A", "google", "2027-01-01", null, [
-      ["low", 40, 1],
-      ["high", 50, 2],
-    ]);
-    const newer = release("model-b", "Model B", "openai", "2027-02-01", null, [
-      ["low", 45, 0.5],
-      ["high", 60, 1],
-    ]);
+  test("a model keeps its release-day star after a newer model beats it", () => {
+    const older = release("model-a", "Model A", "google", "2027-01-01", null, run(50, 2));
+    const newer = release("model-b", "Model B", "openai", "2027-02-01", null, run(60, 1));
     const field = [newer, older];
     const starred = (mode: "release" | "live", providers?: ReadonlySet<ProviderId>) =>
-      Object.fromEntries(
-        [...getContextualFrontierEfforts(field, "coding", "cost", mode, providers)].map(
-          ([slug, efforts]) => [slug, efforts.map((e) => e.effortSlug)],
-        ),
-      );
+      [...getContextualFrontierReleases(field, "cost", mode, providers)].sort();
 
-    expect(starred("release")).toEqual({ "model-a": ["low", "high"], "model-b": ["low", "high"] });
-    expect(starred("live")).toEqual({ "model-b": ["low", "high"] });
-    // With only Google shown, Model A leads its live field again. (Model B's own
-    // row is hidden by that filter; selecting it would still plot it.)
-    expect(starred("live", new Set<ProviderId>(["google"]))["model-a"]).toEqual(["low", "high"]);
+    expect(starred("release")).toEqual(["model-a", "model-b"]);
+    expect(starred("live")).toEqual(["model-b"]);
+    // With only Google shown, Model A leads its live field again.
+    expect(starred("live", new Set<ProviderId>(["google"]))).toContain("model-a");
   });
 
   test("live stars across all labs match the static pages' stars", () => {
     const current = dataset.releases.filter((r) => !r.deprecated);
-    const explorer = getContextualFrontierEfforts(dataset.releases, "coding", "cost", "live");
-    const pages = getFrontierEffortsByRelease(current, "coding", "cost");
+    const explorer = getContextualFrontierReleases(dataset.releases, "cost", "live");
+    const pages = getFrontierReleases(current, "cost");
     for (const rel of current) {
-      expect((explorer.get(rel.slug) ?? []).map((e) => e.effortSlug)).toEqual(
-        (pages.get(rel.slug) ?? []).map((e) => e.effortSlug),
-      );
+      expect(explorer.has(rel.slug)).toBe(pages.has(rel.slug));
     }
   });
 
   test("one chart scale covers every model, whatever the cohort", () => {
     const scale = getChartScale(dataset.releases);
-    for (const axis of ["cost", "tokens"] as const) {
-      for (const metric of ["coding", "terminalBench4", "frontierCode2", "intelligence"] as const) {
-        const points = buildPlottedPoints(dataset.releases, metric, axis);
-        const bounds = scale[axis][metric]!;
-        for (const point of points) {
-          expect(point.budget).toBeGreaterThanOrEqual(bounds.budget[0]);
-          expect(point.budget).toBeLessThanOrEqual(bounds.budget[1]);
-          expect(point.score).toBeGreaterThanOrEqual(bounds.score[0]);
-          expect(point.score).toBeLessThanOrEqual(bounds.score[1]);
-        }
+    for (const axis of AXES) {
+      const bounds = scale[axis]!;
+      for (const point of buildPlottedPoints(dataset.releases, axis)) {
+        expect(point.budget).toBeGreaterThanOrEqual(bounds.budget[0]);
+        expect(point.budget).toBeLessThanOrEqual(bounds.budget[1]);
+        expect(point.score).toBeGreaterThanOrEqual(bounds.score[0]);
+        expect(point.score).toBeLessThanOrEqual(bounds.score[1]);
       }
     }
+    expect(getChartScale([]).cost).toBeNull();
     // The case the scale fixes: siblings launched two months apart see
     // different fields at release, with different top scores.
     const find = (name: string) => dataset.releases.find((r) => r.name === name)!;
@@ -205,7 +180,6 @@ describe("Pareto frontier & release context", () => {
       Math.max(
         ...buildPlottedPoints(
           getContextualReleases(dataset.releases, find(name), "release"),
-          "coding",
           "cost",
         ).map((p) => p.score),
       );

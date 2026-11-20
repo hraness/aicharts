@@ -9,35 +9,34 @@ import {
   ProviderLogo,
   ThemeIcon,
 } from "./brand-icon";
-import { FrontierStars } from "./frontier-stars";
+import { FrontierStar } from "./frontier-stars";
 import { ParetoChart } from "./pareto-chart";
 import { SiteFooter } from "./site-footer";
 import {
   formatFullDate,
+  formatPrice,
   formatScore,
   formatShortDate,
   formatTokens,
   formatUsd,
 } from "@/lib/format";
 import { buildLineup } from "@/lib/lineup";
+import { bestEpoch, effortName } from "@/lib/measures";
 import {
   buildPlottedPoints,
   comparePointToFrontier,
   computeParetoFrontier,
   getChartScale,
-  getContextualFrontierEfforts,
+  getContextualFrontierReleases,
   getContextualReleases,
-  getPointScore,
   getQualifiedFrontierKeys,
 } from "@/lib/pareto";
 import {
-  BENCHMARKS,
+  EPOCH_BENCHMARKS,
   PROVIDERS,
-  type BenchmarkId,
+  TERMINAL_BENCH,
   type BudgetAxis,
   type ContextMode,
-  type EffortPoint,
-  type EffortSlug,
   type ModelRelease,
   type ProviderId,
   type ReleaseDataset,
@@ -54,50 +53,40 @@ const VIEW_CONTEXT: Readonly<Record<FeedView, ContextMode>> = {
   releases: "release",
 };
 
-function pickPreferredEffort(release: ModelRelease, benchmark: BenchmarkId = "coding"): EffortSlug {
-  let best = release.efforts[release.efforts.length - 1];
-  for (const eff of release.efforts) {
-    if (!best || eff.scores[benchmark] >= best.scores[benchmark]) {
-      best = eff;
-    }
-  }
-  return best?.effortSlug ?? "high";
+/** The newest release whose run is on the cost chart, so the page opens on a dot. */
+function openingRelease(releases: readonly ModelRelease[]): ModelRelease {
+  return releases.find((r) => r.terminalBench?.costPerTaskUsd != null) ?? releases[0]!;
 }
 
 export function ReleaseExplorer({
   dataset,
   initialReleaseSlug,
-  initialBenchmark,
   initialAxis,
   initialContext,
 }: Readonly<{
   dataset: ReleaseDataset;
   initialReleaseSlug?: string;
-  initialBenchmark?: BenchmarkId;
   initialAxis?: BudgetAxis;
   initialContext?: ContextMode;
 }>) {
   const chartSectionRef = useRef<HTMLElement>(null);
 
+  const openingSlug = useMemo(() => openingRelease(dataset.releases).slug, [dataset.releases]);
   const defaultRelease = useMemo(() => {
     if (initialReleaseSlug) {
       const found = dataset.releases.find((r) => r.slug === initialReleaseSlug);
       if (found) return found;
     }
-    return dataset.releases[0]!;
+    return openingRelease(dataset.releases);
   }, [dataset.releases, initialReleaseSlug]);
 
   const [selectedSlug, setSelectedSlug] = useState<string>(defaultRelease.slug);
-  const [benchmarkId, setBenchmarkId] = useState<BenchmarkId>(initialBenchmark ?? "coding");
   const [axis, setAxis] = useState<BudgetAxis>(initialAxis ?? "cost");
   const [view, setView] = useState<FeedView>("lineup");
   const [contextMode, setContextMode] = useState<ContextMode>(
     initialContext ?? VIEW_CONTEXT.lineup,
   );
   const [providerFilter, setProviderFilter] = useState<ProviderId | "all">("all");
-  const [activeEffortSlug, setActiveEffortSlug] = useState<EffortSlug>(() =>
-    pickPreferredEffort(defaultRelease, initialBenchmark ?? "coding"),
-  );
   const [theme, setTheme] = useState<"system" | "light" | "dark">("system");
   const [urlHydrated, setUrlHydrated] = useState(false);
 
@@ -112,23 +101,10 @@ export function ReleaseExplorer({
     }
 
     const params = new URLSearchParams(window.location.search);
-    const metricParam = params.get("metric");
-    const validMetric: BenchmarkId =
-      metricParam === "coding" ||
-      metricParam === "terminalBench4" ||
-      metricParam === "frontierCode2" ||
-      metricParam === "intelligence"
-        ? metricParam
-        : "coding";
-    setBenchmarkId(validMetric);
-
     const relParam = params.get("release");
     if (relParam) {
       const found = dataset.releases.find((r) => r.slug === relParam);
-      if (found) {
-        setSelectedSlug(found.slug);
-        setActiveEffortSlug(pickPreferredEffort(found, validMetric));
-      }
+      if (found) setSelectedSlug(found.slug);
     }
     const axisParam = params.get("axis");
     if (axisParam === "cost" || axisParam === "tokens") {
@@ -162,30 +138,23 @@ export function ReleaseExplorer({
   }, []);
 
   const selectedRelease = useMemo(
-    () => dataset.releases.find((r) => r.slug === selectedSlug) ?? dataset.releases[0]!,
-    [dataset.releases, selectedSlug],
+    () => dataset.releases.find((r) => r.slug === selectedSlug) ?? defaultRelease,
+    [dataset.releases, selectedSlug, defaultRelease],
   );
-
-  const activeEffort: EffortPoint = useMemo(() => {
-    const match = selectedRelease.efforts.find((e) => e.effortSlug === activeEffortSlug);
-    if (match) return match;
-    return selectedRelease.efforts[selectedRelease.efforts.length - 1]!;
-  }, [selectedRelease, activeEffortSlug]);
 
   useEffect(() => {
     if (!urlHydrated || typeof window === "undefined") return;
     const params = new URLSearchParams();
-    if (selectedRelease.slug !== dataset.releases[0]?.slug) {
+    if (selectedRelease.slug !== openingSlug) {
       params.set("release", selectedRelease.slug);
     }
-    if (benchmarkId !== "coding") params.set("metric", benchmarkId);
     if (axis !== "cost") params.set("axis", axis);
     if (view !== "lineup") params.set("view", view);
     if (contextMode !== VIEW_CONTEXT[view]) params.set("ctx", contextMode);
     const qs = params.toString();
     const nextUrl = qs ? `${window.location.pathname}?${qs}` : window.location.pathname;
     window.history.replaceState(null, "", nextUrl);
-  }, [urlHydrated, selectedRelease.slug, benchmarkId, axis, view, contextMode, dataset.releases]);
+  }, [urlHydrated, selectedRelease.slug, openingSlug, axis, view, contextMode]);
 
   // Each order brings its own field: today's for the lineup, launch day's for releases.
   const selectView = useCallback((next: FeedView) => {
@@ -198,11 +167,6 @@ export function ReleaseExplorer({
       const target = dataset.releases.find((r) => r.slug === slug);
       if (!target) return;
       setSelectedSlug(target.slug);
-      setActiveEffortSlug((prev) =>
-        target.efforts.some((e) => e.effortSlug === prev)
-          ? prev
-          : pickPreferredEffort(target, benchmarkId),
-      );
       if (scrollIfNeeded && chartSectionRef.current) {
         const rect = chartSectionRef.current.getBoundingClientRect();
         if (rect.top < -36) {
@@ -210,7 +174,7 @@ export function ReleaseExplorer({
         }
       }
     },
-    [dataset.releases, benchmarkId],
+    [dataset.releases],
   );
 
   const filteredFeedReleases = useMemo(() => {
@@ -273,11 +237,6 @@ export function ReleaseExplorer({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [feedOrder, selectedRelease.slug, handleSelectRelease]);
 
-  const benchmark = useMemo(
-    () => BENCHMARKS.find((b) => b.id === benchmarkId) ?? BENCHMARKS[0]!,
-    [benchmarkId],
-  );
-
   const enabledProvidersSet = useMemo(() => {
     if (providerFilter === "all") return undefined;
     return new Set<ProviderId>([providerFilter]);
@@ -295,60 +254,46 @@ export function ReleaseExplorer({
   );
 
   const plottedPoints = useMemo(
-    () => buildPlottedPoints(contextualReleases, benchmark.id, axis),
-    [contextualReleases, benchmark.id, axis],
+    () => buildPlottedPoints(contextualReleases, axis),
+    [contextualReleases, axis],
   );
 
   const frontier = useMemo(() => computeParetoFrontier(plottedPoints), [plottedPoints]);
   const qualifiedFrontierSet = useMemo(() => getQualifiedFrontierKeys(frontier), [frontier]);
 
-  const activePlottedPoint = useMemo(
-    () =>
-      plottedPoints.find(
-        (p) =>
-          p.release.slug === selectedRelease.slug &&
-          p.effort.effortSlug === activeEffort.effortSlug,
-      ) ?? plottedPoints[0]!,
-    [plottedPoints, selectedRelease.slug, activeEffort.effortSlug],
+  // Null when the selected model has no dot on this chart.
+  const selectedPoint = useMemo(
+    () => plottedPoints.find((p) => p.key === selectedRelease.slug) ?? null,
+    [plottedPoints, selectedRelease.slug],
   );
 
   const frontierComparison = useMemo(
-    () => comparePointToFrontier(activePlottedPoint, frontier),
-    [activePlottedPoint, frontier],
+    () => (selectedPoint ? comparePointToFrontier(selectedPoint, frontier) : null),
+    [selectedPoint, frontier],
   );
 
-  // One star per effort setting on the qualified frontier (>= 75% of the top
-  // score), by release. Each row shows what its effort table shows when
-  // selected, so stars follow At release / Live and the lab filter.
-  const frontierStarEfforts = useMemo(
-    () =>
-      getContextualFrontierEfforts(
-        dataset.releases,
-        benchmark.id,
-        axis,
-        contextMode,
-        enabledProvidersSet,
-      ),
-    [dataset.releases, benchmark.id, axis, contextMode, enabledProvidersSet],
+  // A star for each release on the qualified frontier (>= 75% of the top
+  // score) of the field its chart shows when selected, so stars follow
+  // At release / Live and the lab filter.
+  const frontierStars = useMemo(
+    () => getContextualFrontierReleases(dataset.releases, axis, contextMode, enabledProvidersSet),
+    [dataset.releases, axis, contextMode, enabledProvidersSet],
   );
 
   const globalMaxFeedScore = useMemo(() => {
     let max = 65;
     for (const r of dataset.releases) {
-      for (const e of r.efforts) {
-        const s = getPointScore(e, benchmark.id);
-        if (s > max) max = s;
-      }
+      const s = r.terminalBench?.accuracy ?? 0;
+      if (s > max) max = s;
     }
     return Math.ceil(max / 5) * 5;
-  }, [dataset.releases, benchmark.id]);
+  }, [dataset.releases]);
 
   // One feed row; both orders list the same rows.
   const renderFeedRow = (rel: ModelRelease) => {
     const isSelected = rel.slug === selectedRelease.slug;
-    const bestScore = Math.max(...rel.efforts.map((e) => getPointScore(e, benchmark.id)));
-    const frontierEfforts = frontierStarEfforts.get(rel.slug) ?? [];
-    const barPct = Math.max(2, Math.min(100, (bestScore / globalMaxFeedScore) * 100));
+    const score = rel.terminalBench?.accuracy ?? null;
+    const barPct = score === null ? 0 : Math.max(2, Math.min(100, (score / globalMaxFeedScore) * 100));
 
     return (
       <button
@@ -364,7 +309,7 @@ export function ReleaseExplorer({
         <span className="feed-row__main">
           <ProviderLogo provider={rel.provider} size={18} />
           <span className="feed-row__name">{rel.name}</span>
-          <FrontierStars efforts={frontierEfforts} size={8} context={contextMode} />
+          {frontierStars.has(rel.slug) && <FrontierStar size={8} context={contextMode} />}
         </span>
 
         <span className="feed-row__right">
@@ -375,7 +320,7 @@ export function ReleaseExplorer({
             />
           </span>
           <strong className="feed-row__score mono">
-            {formatScore(bestScore, benchmark.unit)}
+            {score === null ? "—" : formatScore(score, "%")}
           </strong>
         </span>
       </button>
@@ -450,12 +395,9 @@ export function ReleaseExplorer({
               <div className="release-head__titles">
                 <div className="release-head__title-row">
                   <h1 className="release-head__name">{selectedRelease.name}</h1>
-                  <FrontierStars
-                    efforts={frontierStarEfforts.get(selectedRelease.slug) ?? []}
-                    size={9}
-                    labelled
-                    context={contextMode}
-                  />
+                  {frontierStars.has(selectedRelease.slug) && (
+                    <FrontierStar size={9} labelled context={contextMode} />
+                  )}
                 </div>
                 <div className="release-head__meta">
                   <span>{PROVIDERS[selectedRelease.provider].name}</span>
@@ -471,35 +413,24 @@ export function ReleaseExplorer({
               </div>
             </div>
 
-            <a
-              href={selectedRelease.announcementUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="source-link"
-            >
-              <span>Source</span>
-              <ExternalArrowIcon size={10} />
-            </a>
+            {selectedRelease.announcementUrl && (
+              <a
+                href={selectedRelease.announcementUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="source-link"
+              >
+                <span>Source</span>
+                <ExternalArrowIcon size={10} />
+              </a>
+            )}
           </div>
 
           {/* Chart Controls */}
           <div className="chart-controls">
-            <div className="seg-group seg-group--scroll" role="tablist" aria-label="Benchmark">
-              {BENCHMARKS.map((b) => (
-                <button
-                  key={b.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={benchmarkId === b.id}
-                  className={`seg-btn${benchmarkId === b.id ? " is-active" : ""}`}
-                  onClick={() => setBenchmarkId(b.id)}
-                  title={b.description}
-                >
-                  <span className="seg-btn__full">{b.label}</span>
-                  <span className="seg-btn__short">{b.shortLabel}</span>
-                </button>
-              ))}
-            </div>
+            <p className="chart-controls__title" title={TERMINAL_BENCH.description}>
+              {TERMINAL_BENCH.label} score
+            </p>
 
             <div className="chart-controls__right">
               <div className="seg-group" role="group" aria-label="Budget axis">
@@ -545,23 +476,31 @@ export function ReleaseExplorer({
             releases={contextualReleases}
             scale={chartScale}
             selectedRelease={selectedRelease}
-            activeEffortSlug={activeEffort.effortSlug}
-            benchmark={benchmark}
             axis={axis}
-            onSelectEffort={setActiveEffortSlug}
             onSelectRelease={(slug) => handleSelectRelease(slug, false)}
           />
 
-          {/* Clean Effort Breakdown & Frontier Verdict */}
+          {/* Frontier verdict and the model's scores */}
           <div className="inspector">
             <div
               className={`frontier-banner${
-                qualifiedFrontierSet.has(activePlottedPoint.key) ? " frontier-banner--optimal" : ""
+                selectedPoint && qualifiedFrontierSet.has(selectedPoint.key)
+                  ? " frontier-banner--optimal"
+                  : ""
               }`}
             >
-              {frontierComparison.onFrontier ? (
+              {!selectedPoint || !frontierComparison ? (
                 <div className="frontier-banner__line">
-                  {qualifiedFrontierSet.has(activePlottedPoint.key) ? (
+                  <span className="effort-dot" aria-hidden="true" />
+                  <span>
+                    {selectedRelease.terminalBench
+                      ? "Its Terminal-Bench run reported no cost, so it is on the tokens chart only."
+                      : `No Terminal-Bench run yet, so ${selectedRelease.name} is not on the chart.`}
+                  </span>
+                </div>
+              ) : frontierComparison.onFrontier ? (
+                <div className="frontier-banner__line">
+                  {qualifiedFrontierSet.has(selectedPoint.key) ? (
                     <span className="frontier-banner__star">
                       <FrontierStarIcon size={11} />
                     </span>
@@ -569,22 +508,21 @@ export function ReleaseExplorer({
                     <span className="effort-dot is-active" aria-hidden="true" />
                   )}
                   <span>
-                    {qualifiedFrontierSet.has(activePlottedPoint.key) ? (
+                    {qualifiedFrontierSet.has(selectedPoint.key) ? (
                       <>
-                        <strong>{activeEffort.effortLabel}</strong> leads the{" "}
-                        {contextMode === "release" ? "release-day" : "live"} Pareto frontier at{" "}
+                        On the {contextMode === "release" ? "release-day" : "live"} Pareto frontier at{" "}
                       </>
                     ) : (
-                      <>
-                        <strong>{activeEffort.effortLabel}</strong> is undominated at low budget (
-                      </>
+                      <>Undominated at low budget (</>
                     )}
                     <strong className="mono">
                       {axis === "cost"
-                        ? `${formatUsd(activeEffort.costUsdPerTask.total)}/task`
-                        : `${formatTokens(activeEffort.tokensPerTask.total)} tok`}
+                        ? `${formatUsd(selectedPoint.budget)}/task`
+                        : `${formatTokens(selectedPoint.budget)} tok`}
                     </strong>
-                    {!qualifiedFrontierSet.has(activePlottedPoint.key) && ")"}
+                    {qualifiedFrontierSet.has(selectedPoint.key)
+                      ? ": no model scores higher for less"
+                      : "), below the bar for a star: 75% of the top score"}
                   </span>
                 </div>
               ) : (
@@ -597,14 +535,9 @@ export function ReleaseExplorer({
                 >
                   <ProviderLogo provider={frontierComparison.dominator.provider} size={14} />
                   <span>
-                    Topped by{" "}
-                    <strong>
-                      {frontierComparison.dominator.release.name} (
-                      {frontierComparison.dominator.effort.effortLabel})
-                    </strong>{" "}
-                    ·{" "}
+                    Topped by <strong>{frontierComparison.dominator.release.name}</strong> ·{" "}
                     <strong className="mono">
-                      {formatScore(frontierComparison.dominator.score, benchmark.unit)}
+                      {formatScore(frontierComparison.dominator.score, "%")}
                     </strong>{" "}
                     <span className="frontier-banner__delta mono">
                       (+{frontierComparison.scoreDeficit.toFixed(1)})
@@ -623,49 +556,7 @@ export function ReleaseExplorer({
               )}
             </div>
 
-            <div className="effort-table" role="listbox" aria-label="Effort levels">
-              <div className="effort-table__head" aria-hidden="true">
-                <span>Effort</span>
-                <span className="align-right">{benchmark.shortLabel}</span>
-                <span className="align-right">Cost / task</span>
-                <span className="align-right">Tokens</span>
-              </div>
-
-              {selectedRelease.efforts.map((eff) => {
-                const isAct = eff.effortSlug === activeEffort.effortSlug;
-                const ptKey = `${selectedRelease.slug}:${eff.effortSlug}`;
-                const isQualFrontier = qualifiedFrontierSet.has(ptKey);
-                return (
-                  <button
-                    key={eff.effortSlug}
-                    type="button"
-                    role="option"
-                    aria-selected={isAct}
-                    className={`effort-row${isAct ? " is-active" : ""}`}
-                    onClick={() => setActiveEffortSlug(eff.effortSlug)}
-                  >
-                    <span className="effort-row__name">
-                      <span className={`effort-dot${isAct ? " is-active" : ""}`} />
-                      <span className="effort-row__label">{eff.effortLabel}</span>
-                      {isQualFrontier && (
-                        <span className="effort-row__star" title="On Pareto frontier">
-                          <FrontierStarIcon size={9} />
-                        </span>
-                      )}
-                    </span>
-                    <span className="effort-row__score mono align-right">
-                      {formatScore(eff.scores[benchmark.id], benchmark.unit)}
-                    </span>
-                    <span className="effort-row__cell mono align-right">
-                      {formatUsd(eff.costUsdPerTask.total)}
-                    </span>
-                    <span className="effort-row__cell mono align-right">
-                      {formatTokens(eff.tokensPerTask.total)}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+            <MeasureTable release={selectedRelease} />
           </div>
         </section>
 
@@ -759,19 +650,79 @@ export function ReleaseExplorer({
           )}
         </section>
         <p className="data-note">
-          Normalized from{" "}
-          <a href="https://artificialanalysis.ai/models" target="_blank" rel="noopener noreferrer">
-            Artificial Analysis v5.0
-          </a>{" "}
-          &{" "}
-          <a href="https://tbench.ai" target="_blank" rel="noopener noreferrer">
-            Terminal-Bench
-          </a>{" "}
+          Data from{" "}
+          {dataset.sources.map((source, i) => (
+            <Fragment key={source.id}>
+              {i > 0 && ", "}
+              <a href={source.url} target="_blank" rel="noopener noreferrer">
+                {source.name}
+              </a>{" "}
+              ({source.license})
+            </Fragment>
+          ))}{" "}
           · Updated {dataset.snapshotDate}
         </p>
       </main>
 
       <SiteFooter />
     </div>
+  );
+}
+
+/**
+ * The selected model's scores: its Terminal-Bench run, then its best Epoch AI
+ * score on each benchmark, with the setting each was run at.
+ */
+function MeasureTable({ release }: Readonly<{ release: ModelRelease }>) {
+  const run = release.terminalBench;
+  const facts = [
+    run && run.costPerTaskUsd !== null ? `${formatUsd(run.costPerTaskUsd)} per task` : null,
+    run ? `${formatTokens(run.tokensPerTask.output)} output tokens` : null,
+    run?.minutesPerTask != null ? `${Math.round(run.minutesPerTask)} min per task` : null,
+    release.pricing
+      ? `API ${formatPrice(release.pricing.inputPer1M)}/${formatPrice(release.pricing.outputPer1M)} per 1M tokens`
+      : null,
+  ].filter((fact): fact is string => fact !== null);
+  return (
+    <>
+      <div className="effort-table measure-table" role="table" aria-label={`${release.name} scores`}>
+        <div className="effort-table__head" role="row">
+          <span role="columnheader">Benchmark</span>
+          <span role="columnheader" className="align-right">
+            Score
+          </span>
+          <span role="columnheader">Run</span>
+        </div>
+        <div className="effort-row" role="row">
+          <span role="cell" className="effort-row__label" title={TERMINAL_BENCH.description}>
+            {TERMINAL_BENCH.label}
+            {run ? ` ${run.version}` : ""}
+          </span>
+          <span role="cell" className="effort-row__score mono align-right">
+            {run ? formatScore(run.accuracy, "%") : "—"}
+          </span>
+          <span role="cell" className="effort-row__cell">
+            {run ? `${run.agent} · ${effortName(run.effort)}` : "No run yet"}
+          </span>
+        </div>
+        {EPOCH_BENCHMARKS.map((benchmark) => {
+          const best = bestEpoch(release, benchmark.id);
+          return (
+            <div key={benchmark.id} className="effort-row" role="row">
+              <span role="cell" className="effort-row__label" title={benchmark.description}>
+                {benchmark.label}
+              </span>
+              <span role="cell" className="effort-row__score mono align-right">
+                {best ? formatScore(best.score, "%") : "—"}
+              </span>
+              <span role="cell" className="effort-row__cell">
+                {best ? `Epoch AI · ${effortName(best.effort)}` : "Not run by Epoch AI"}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      {facts.length > 0 && <p className="measure-facts mono">{facts.join(" · ")}</p>}
+    </>
   );
 }

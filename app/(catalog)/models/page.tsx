@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
 import { ProviderLogo } from "@/components/brand-icon";
 import { Breadcrumbs } from "@/components/catalog/breadcrumbs";
-import { FrontierStars } from "@/components/frontier-stars";
+import { FrontierStar } from "@/components/frontier-stars";
 import { pageMetadata } from "@/journal/content";
-import { bestEffort, catalog, cheapestEffort, defaultEffort, effortName } from "@/lib/catalog";
+import { bestEpoch, catalog, effortName } from "@/lib/catalog";
 import { formatFullDate, formatPrice, formatScore, formatUsd } from "@/lib/format";
 import { PROVIDERS, type ModelRelease } from "@/lib/types";
 
 export const metadata: Metadata = pageMetadata(
-  "AI models: coding scores, cost per task and effort levels",
-  `Every model release aicharts tracks from OpenAI, Anthropic and Google, with coding scores, cost per task and the frontier stars each effort setting earns. ${catalog.current.length} current, ${catalog.superseded.length} superseded.`,
+  "AI models: Terminal-Bench scores, cost per task and API prices",
+  `Every model release aicharts tracks from OpenAI, Anthropic and Google, with Terminal-Bench scores, cost per task, Epoch AI scores and API prices. ${catalog.current.length} current, ${catalog.superseded.length} superseded.`,
   "/models",
 );
 
@@ -19,7 +19,6 @@ function ModelTable({
   releases,
   superseded = false,
 }: Readonly<{ id: string; caption: string; releases: readonly ModelRelease[]; superseded?: boolean }>) {
-  const live = catalog.liveFrontier("coding");
   return (
     <div className="table-scroll" role="region" aria-labelledby={id} tabIndex={0}>
       <table className="data-table model-table">
@@ -28,18 +27,17 @@ function ModelTable({
           <tr>
             <th scope="col">Model</th>
             <th scope="col">Released</th>
-            <th scope="col">Best coding</th>
-            <th scope="col">Default effort</th>
-            <th scope="col">Lowest cost</th>
+            <th scope="col">Terminal-Bench</th>
+            <th scope="col">Cost per task</th>
+            <th scope="col">MirrorCode</th>
             <th scope="col">Price per 1M</th>
             <th scope="col">{superseded ? "Replaced by" : "Frontier"}</th>
           </tr>
         </thead>
         <tbody>
           {releases.map((release) => {
-            const best = bestEffort(release);
-            const preset = defaultEffort(release);
-            const cheapest = cheapestEffort(release);
+            const run = release.terminalBench;
+            const mirror = bestEpoch(release, "mirrorCode");
             const next = catalog.successorOf(release);
             return (
               <tr key={release.slug}>
@@ -53,19 +51,20 @@ function ModelTable({
                   <time dateTime={release.releaseDate}>{formatFullDate(release.releaseDate)}</time>
                 </td>
                 <td>
-                  {formatScore(best.scores.coding, "%")}
-                  <span className="cell-note">{effortName(best.effortSlug)}</span>
+                  {run ? formatScore(run.accuracy, "%") : "—"}
+                  {run && <span className="cell-note">{run.agent}</span>}
                 </td>
                 <td>
-                  {effortName(preset.effortSlug)}
-                  <span className="cell-note">{formatUsd(preset.costUsdPerTask.total)}</span>
+                  {run?.costPerTaskUsd != null ? formatUsd(run.costPerTaskUsd) : "—"}
                 </td>
                 <td>
-                  {formatUsd(cheapest.costUsdPerTask.total)}
-                  <span className="cell-note">{effortName(cheapest.effortSlug)}</span>
+                  {mirror ? formatScore(mirror.score, "%") : "—"}
+                  {mirror && <span className="cell-note">{effortName(mirror.effort)}</span>}
                 </td>
                 <td>
-                  {formatPrice(release.pricing.inputPer1M)}/{formatPrice(release.pricing.outputPer1M)}
+                  {release.pricing
+                    ? `${formatPrice(release.pricing.inputPer1M)}/${formatPrice(release.pricing.outputPer1M)}`
+                    : "—"}
                 </td>
                 <td>
                   {superseded ? (
@@ -74,9 +73,9 @@ function ModelTable({
                     ) : (
                       "—"
                     )
-                  ) : (
-                    <FrontierStars efforts={live.get(release.slug) ?? []} size={9} />
-                  )}
+                  ) : catalog.liveFrontier.has(release.slug) ? (
+                    <FrontierStar size={9} />
+                  ) : null}
                 </td>
               </tr>
             );
@@ -111,14 +110,15 @@ export default function ModelsPage() {
       </header>
       <p className="lead">
         Every release from {byLab.map(({ lab, count }) => `${lab.name} (${count} current)`).join(", ")},
-        measured at each effort setting it offers. Stars count the settings on the live cost
-        frontier: for that spend per task, no current model scores higher on coding.
+        with its run on the official Terminal-Bench leaderboard, Epoch AI&apos;s scores and its API
+        price. A star marks a model on the live cost frontier: for its cost per task, no current
+        model scores higher on Terminal-Bench.
       </p>
       <section aria-labelledby="current">
         <h2 id="current">Current models</h2>
         <ModelTable
           id="current-caption"
-          caption="Current releases, newest first. Best coding is the highest score across effort settings."
+          caption="Current releases, newest first. MirrorCode is Epoch AI's best score for the model alone."
           releases={catalog.current}
         />
       </section>

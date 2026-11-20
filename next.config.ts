@@ -60,6 +60,9 @@ export function siteRedirects(): Redirect[] {
     permanent("/coding", "/"),
     permanent("/preview", "/"),
     permanent("/calculator", "/models"),
+    // Effort pages compared lab settings from a dataset aicharts no longer uses.
+    permanent("/effort", "/models"),
+    permanent("/effort/:step*", "/models"),
     permanent("/data", "/api/releases"),
     permanent("/data/:path*", "/api/releases"),
     permanent("/api/markdown/:path*", "/llms.txt"),

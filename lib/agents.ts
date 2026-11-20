@@ -1,47 +1,38 @@
-// Coding agents compared: each lab's own CLI running that lab's models, from
-// Artificial Analysis's Coding Agent Index runs and the official Terminal-Bench
-// leaderboard. Every number and sentence here is computed from the dataset.
-import { catalog as defaultCatalog, EFFORT_NAMES, effortName, median, type Catalog } from "./catalog";
-import { listNames, type QA } from "./copy";
-import { formatDelta, formatRatio, formatScore, formatUsd } from "./format";
-import { computeParetoFrontier, getChartScale, type ChartScale } from "./pareto";
+// Coding agents compared: each lab's own agent running that lab's current
+// models, from the official Terminal-Bench leaderboard. Every number and
+// sentence here is computed from the dataset.
+import { bestEpoch, catalog as defaultCatalog, TB_TIE, type Catalog } from "./catalog";
+import { agentLabel, effortPhrase, epochTie, listNames, type QA } from "./copy";
+import { formatRatio, formatScore, formatTokens, formatUsd } from "./format";
+import { computeParetoFrontier, getChartScale, type ChartScale, type PlottedPoint } from "./pareto";
 import {
   PROVIDERS,
-  type CliHarnessEval,
-  type EffortPoint,
-  type EffortSlug,
-  type HarborBenchEval,
+  TERMINAL_BENCH,
+  type EpochBenchmarkId,
+  type EpochScore,
   type ModelRelease,
   type ProviderId,
+  type TerminalBenchRun,
 } from "./types";
 
 export type HarnessId = "codex" | "claude-code" | "antigravity-cli";
 
 export type Harness = Readonly<{
   id: HarnessId;
-  /** As Artificial Analysis and Terminal-Bench name it; matches `cliEval.harness`. */
+  /** As Terminal-Bench names the agent; matches `terminalBench.agent`. */
   name: string;
   provider: ProviderId;
-  /** The command-line tool Artificial Analysis runs. */
-  cli: string;
   /** An earlier name people still search for. */
   formerly: string | null;
 }>;
 
 export const HARNESSES: readonly Harness[] = [
-  { id: "codex", name: PROVIDERS.openai.harness, provider: "openai", cli: "Codex CLI", formerly: null },
-  {
-    id: "claude-code",
-    name: PROVIDERS.anthropic.harness,
-    provider: "anthropic",
-    cli: "Claude Code",
-    formerly: null,
-  },
+  { id: "codex", name: PROVIDERS.openai.harness, provider: "openai", formerly: null },
+  { id: "claude-code", name: PROVIDERS.anthropic.harness, provider: "anthropic", formerly: null },
   {
     id: "antigravity-cli",
     name: PROVIDERS.google.harness,
     provider: "google",
-    cli: "Antigravity CLI",
     formerly: "Gemini CLI",
   },
 ];
@@ -59,36 +50,29 @@ export type AgentRun = Readonly<{
   key: string;
   harness: Harness;
   release: ModelRelease;
-  effort: EffortPoint;
-  cli: CliHarnessEval;
+  run: TerminalBenchRun;
 }>;
 
 export type HarnessGroup = Readonly<{ harness: Harness; runs: readonly AgentRun[] }>;
 
-const indexOf = (run: AgentRun) => run.cli.codingAgentScore;
-const costOf = (run: AgentRun) => run.cli.costUsdPerTask;
+const scoreOf = (r: AgentRun) => r.run.accuracy;
+/** Runs that reported no cost sort after every priced run. */
+const costOf = (r: AgentRun) => r.run.costPerTaskUsd ?? Number.POSITIVE_INFINITY;
 
-/** A harness's runs with current models: the best model first, then by effort level. */
+/** A harness's runs with current models, highest score first. */
 export function harnessRuns(h: Harness, cat: Catalog = defaultCatalog): AgentRun[] {
-  const runs: AgentRun[] = [];
-  for (const release of cat.current) {
-    for (const effort of release.efforts) {
-      const cli = effort.cliEval;
-      if (cli?.harness === h.name) {
-        runs.push({ key: `${h.id}:${release.slug}:${effort.effortSlug}`, harness: h, release, effort, cli });
-      }
-    }
-  }
-  const top = new Map<string, number>();
-  for (const run of runs) {
-    top.set(run.release.slug, Math.max(top.get(run.release.slug) ?? 0, indexOf(run)));
-  }
-  return runs.sort(
-    (a, b) =>
-      top.get(b.release.slug)! - top.get(a.release.slug)! ||
-      a.release.slug.localeCompare(b.release.slug) ||
-      a.effort.effortLevel - b.effort.effortLevel,
-  );
+  return cat.current
+    .filter((release) => release.terminalBench?.agent === h.name)
+    .map((release) => ({
+      key: `${h.id}:${release.slug}`,
+      harness: h,
+      release,
+      run: release.terminalBench!,
+    }))
+    .sort(
+      (a, b) =>
+        scoreOf(b) - scoreOf(a) || costOf(a) - costOf(b) || a.release.slug.localeCompare(b.release.slug),
+    );
 }
 
 /** Harnesses with at least one current run, in the order given. */
@@ -110,22 +94,29 @@ function pick(
   return chosen;
 }
 
-/** The run with the highest value of `metric`; ties go to the cheaper run. */
-export function bestRun(
-  runs: readonly AgentRun[],
-  metric: (run: AgentRun) => number = indexOf,
-): AgentRun {
+/** The highest-scoring run; ties go to the cheaper run. */
+export function bestRun(runs: readonly AgentRun[]): AgentRun {
   const best = pick(
     runs,
-    (a, b) => metric(a) > metric(b) || (metric(a) === metric(b) && costOf(a) < costOf(b)),
+    (a, b) => scoreOf(a) > scoreOf(b) || (scoreOf(a) === scoreOf(b) && costOf(a) < costOf(b)),
   );
   if (!best) throw new Error("bestRun needs at least one run");
   return best;
 }
 
-/** The cheapest run; ties go to the higher index. */
+/** The cheapest run that reported a cost; ties go to the higher score. */
 export function cheapestRun(runs: readonly AgentRun[]): AgentRun | null {
-  return pick(runs, (a, b) => costOf(a) < costOf(b) || (costOf(a) === costOf(b) && indexOf(a) > indexOf(b)));
+  return pick(
+    runs.filter((run) => run.run.costPerTaskUsd !== null),
+    (a, b) => costOf(a) < costOf(b) || (costOf(a) === costOf(b) && scoreOf(a) > scoreOf(b)),
+  );
+}
+
+/** The run a reader would pick: the cheapest one within two tasks of the best. */
+export function pickRun(runs: readonly AgentRun[]): AgentRun | null {
+  if (runs.length === 0) return null;
+  const top = scoreOf(bestRun(runs));
+  return cheapestRun(runs.filter((run) => top - scoreOf(run) < TB_TIE)) ?? bestRun(runs);
 }
 
 /** Per-task budgets the comparison tables report the best run under. */
@@ -137,17 +128,19 @@ export function bestUnder(runs: readonly AgentRun[], budget: number): AgentRun |
   return within.length > 0 ? bestRun(within) : null;
 }
 
-/** The cost frontier of `runs` on the Coding Agent Index, cheapest first. */
+/** The cost frontier of `runs`, cheapest first. */
 export function runFrontier(runs: readonly AgentRun[]): AgentRun[] {
   const byKey = new Map(runs.map((run) => [run.key, run]));
-  const points = runs.map((run) => ({
-    key: run.key,
-    release: run.release,
-    effort: run.effort,
-    provider: run.release.provider,
-    budget: costOf(run),
-    score: indexOf(run),
-  }));
+  const points: PlottedPoint[] = runs
+    .filter((run) => run.run.costPerTaskUsd !== null)
+    .map((run) => ({
+      key: run.key,
+      release: run.release,
+      run: run.run,
+      provider: run.release.provider,
+      budget: run.run.costPerTaskUsd!,
+      score: run.run.accuracy,
+    }));
   return computeParetoFrontier(points).map((point) => byKey.get(point.key)!);
 }
 
@@ -164,122 +157,32 @@ export function runSegments(runs: readonly AgentRun[]): RunSegment[] {
   return segments;
 }
 
-/**
- * The release a harness was measured with most, ties to the higher best
- * score: the chart draws it as that harness's curve.
- */
-export function flagship(runs: readonly AgentRun[]): ModelRelease {
-  const counts = new Map<string, number>();
-  for (const run of runs) counts.set(run.release.slug, (counts.get(run.release.slug) ?? 0) + 1);
-  const best = pick(runs, (a, b) => {
-    const diff = counts.get(a.release.slug)! - counts.get(b.release.slug)!;
-    return diff > 0 || (diff === 0 && indexOf(a) > indexOf(b));
-  });
-  if (!best) throw new Error("flagship needs at least one run");
-  return best.release;
-}
-
-/**
- * The chart reads `scores` and `costUsdPerTask`, so a release's runs in one
- * harness fill those slots; AGENT_BENCHMARKS (lib/types.ts) names each slot.
- */
-export function chartRelease(release: ModelRelease, h: Harness): ModelRelease | null {
-  const efforts = release.efforts.flatMap((effort) => {
-    const cli = effort.cliEval;
-    if (cli?.harness !== h.name) return [];
-    return [
-      {
-        ...effort,
-        scores: {
-          coding: cli.codingAgentScore,
-          terminalBench4: cli.terminalBench4,
-          frontierCode2: cli.frontierCode2,
-          intelligence: cli.sweAtlas,
-        },
-        costUsdPerTask: { total: cli.costUsdPerTask, input: 0, output: 0, reasoning: 0, cacheRead: 0 },
-      },
-    ];
-  });
-  return efforts.length > 0 ? { ...release, efforts } : null;
-}
-
-/** Each group's models, with their runs inside its agent in the chart's score slots. */
-export function agentChartReleases(
-  groups: readonly HarnessGroup[],
-  cat: Catalog = defaultCatalog,
-): ModelRelease[] {
-  return groups.flatMap((g) =>
-    [...new Set(g.runs.map((r) => r.release.slug))].map(
-      (slug) => chartRelease(cat.find(slug)!, g.harness)!,
-    ),
-  );
+/** The releases each group ran, for the chart: one point per run. */
+export function agentChartReleases(groups: readonly HarnessGroup[]): ModelRelease[] {
+  return groups.flatMap((g) => g.runs.map((r) => r.release));
 }
 
 /** Axes from every agent's runs, so the hub and each matchup page share them. */
 export function agentChartScale(cat: Catalog = defaultCatalog): ChartScale {
-  return getChartScale(agentChartReleases(harnessGroups(undefined, cat), cat));
+  return getChartScale(agentChartReleases(harnessGroups(undefined, cat)));
 }
 
-export type HarnessGap = Readonly<{ run: AgentRun; alone: number; inAgent: number; change: number }>;
-
-/**
- * FrontierCode 2.0 for the same model, effort and 132 tasks, alone in
- * Artificial Analysis's own harness and inside the lab's agent. Terminal-Bench
- * is left out: the agent runs use version 4.1, which changed the checks on all
- * 66 tasks, and the model runs use 4.0.
- */
-export function frontierCodeGap(run: AgentRun): HarnessGap {
-  const alone = run.effort.scores.frontierCode2;
-  return { run, alone, inAgent: run.cli.frontierCode2, change: run.cli.frontierCode2 - alone };
+/** Compares dotted versions such as "4.1" and "4.10" part by part. */
+export function compareVersions(a: string, b: string): number {
+  const x = a.split(".").map(Number);
+  const y = b.split(".").map(Number);
+  for (let i = 0; i < Math.max(x.length, y.length); i++) {
+    const d = (x[i] ?? 0) - (y[i] ?? 0);
+    if (d !== 0) return d;
+  }
+  return 0;
 }
 
-export type GapSummary = Readonly<{ count: number; lower: number; median: number }>;
-
-export function summarizeGaps(runs: readonly AgentRun[]): GapSummary {
-  const changes = runs.map((run) => frontierCodeGap(run).change);
-  return {
-    count: changes.length,
-    lower: changes.filter((c) => c < 0).length,
-    median: median(changes),
-  };
-}
-
-export type HarborRow = Readonly<{ harness: Harness; release: ModelRelease; result: HarborBenchEval }>;
-
-/** A harness's entries on the official Terminal-Bench leaderboard, best first. */
-export function harborRows(h: Harness, cat: Catalog = defaultCatalog): HarborRow[] {
-  return cat.current
-    .filter((release) => release.harborEval?.agent === h.name)
-    .map((release) => ({ harness: h, release, result: release.harborEval! }))
-    .sort((a, b) => b.result.accuracy - a.result.accuracy);
-}
-
-export function harborEffort(row: HarborRow): string {
-  return EFFORT_NAMES[row.result.effort as EffortSlug] ?? row.result.effort;
-}
-
-/** Terminal-Bench has 66 tasks. */
-export const TERMINAL_BENCH_TASKS = 66;
-
-/**
- * A gap smaller than two tasks' worth of a benchmark is treated as a tie:
- * scores are means over a few attempts, so one task can flip either way.
- */
-export function noiseFloor(tasks: number): number {
-  return 200 / tasks;
-}
-
-/**
- * The entry a reader would pick from a harness's leaderboard rows: the
- * cheapest one within two tasks of its best.
- */
-export function harborPick(rows: readonly HarborRow[]): HarborRow | null {
-  const top = rows[0];
-  if (!top) return null;
-  const floor = top.result.accuracy - noiseFloor(TERMINAL_BENCH_TASKS);
-  return rows
-    .filter((row) => row.result.accuracy >= floor)
-    .reduce((a, b) => (b.result.costPerTrialUsd < a.result.costPerTrialUsd ? b : a));
+/** Runs graded on an older dataset version than the newest one shown. */
+export function olderVersionRuns(runs: readonly AgentRun[]): AgentRun[] {
+  if (runs.length === 0) return [];
+  const newest = runs.map((r) => r.run.version).reduce((v, w) => (compareVersions(w, v) > 0 ? w : v));
+  return runs.filter((r) => r.run.version !== newest);
 }
 
 export type AgentPair = Readonly<{
@@ -321,251 +224,267 @@ export function findAgentPair(slug: string, cat: Catalog = defaultCatalog): Agen
   return agentPairs(cat).find((pair) => pair.slug === slug) ?? null;
 }
 
-// Copy. A point of the index is about two Terminal-Bench tasks: one task is
-// 1/66 of Terminal-Bench, which is a third of the index.
-export const TIE_POINTS = 1;
-
-const score = (run: AgentRun) => indexOf(run).toFixed(1);
-const usd = (run: AgentRun) => formatUsd(costOf(run));
-const setting = (run: AgentRun) => `${run.release.name} at ${effortName(run.effort.effortSlug)}`;
-const pct = (value: number) => formatScore(value, "%");
+// Copy.
+const score = (run: AgentRun) => formatScore(scoreOf(run), "%");
+const usd = (run: AgentRun) =>
+  run.run.costPerTaskUsd !== null ? formatUsd(run.run.costPerTaskUsd) : "no reported cost";
 
 export function agentLead(groups: readonly HarnessGroup[]): string {
   const word = groups.length === 2 ? "higher" : "highest";
   const tops = groups
     .map((group) => ({ group, top: bestRun(group.runs) }))
-    .sort((x, y) => indexOf(y.top) - indexOf(x.top));
-  const high = indexOf(tops[0]!.top);
-  const level = tops.filter((t) => high - indexOf(t.top) < TIE_POINTS);
-  const behind = tops.filter((t) => high - indexOf(t.top) >= TIE_POINTS);
+    .sort((x, y) => scoreOf(y.top) - scoreOf(x.top));
+  const high = scoreOf(tops[0]!.top);
+  const level = tops.filter((t) => high - scoreOf(t.top) < TB_TIE);
+  const behind = tops.filter((t) => high - scoreOf(t.top) >= TB_TIE);
 
   let text: string;
   if (level.length === 1) {
     const { group, top } = level[0]!;
-    text = `${group.harness.name} scores ${word} on the Coding Agent Index: ${score(top)} with ${setting(top)}, for ${usd(top)} per task.`;
+    text = `${group.harness.name} scores ${word} on Terminal-Bench: ${score(top)} with ${top.release.name}, for ${usd(top)} per task.`;
   } else {
     const parts = level.map(
-      (t) => `${score(t.top)} for ${t.group.harness.name} with ${setting(t.top)} (${usd(t.top)} per task)`,
+      (t) => `${score(t.top)} for ${t.group.harness.name} with ${t.top.release.name} (${usd(t.top)} per task)`,
     );
-    text = `${listNames(level.map((t) => t.group.harness.name))} top the Coding Agent Index within a point of each other: ${listNames(parts)}.`;
-    const byCost = [...level].sort((x, y) => costOf(x.top) - costOf(y.top));
-    const ratio = costOf(byCost[byCost.length - 1]!.top) / costOf(byCost[0]!.top);
-    if (level.length === 2 && ratio >= 1.2) {
-      text += ` ${byCost[1]!.group.harness.name}'s top run costs ${formatRatio(ratio)} as much per task.`;
+    text = `${listNames(level.map((t) => t.group.harness.name))} are level at the top of Terminal-Bench, within two tasks of each other: ${listNames(parts)}.`;
+    const priced = level.filter((t) => t.top.run.costPerTaskUsd !== null);
+    const byCost = [...priced].sort((x, y) => costOf(x.top) - costOf(y.top));
+    if (byCost.length >= 2) {
+      const ratio = costOf(byCost[byCost.length - 1]!.top) / costOf(byCost[0]!.top);
+      if (ratio >= 1.2) {
+        text += ` ${byCost[byCost.length - 1]!.group.harness.name}'s top run costs ${formatRatio(ratio)} as much per task as ${byCost[0]!.group.harness.name}'s.`;
+      }
     }
   }
   for (const { group, top } of behind) {
-    text += ` ${group.harness.name} peaks at ${score(top)}, with ${setting(top)} for ${usd(top)}.`;
-  }
-  if (level.length === 1 && behind.length > 0) {
-    const leader = level[0]!;
-    const target = indexOf(behind[0]!.top);
-    const pass = cheapestRun(leader.group.runs.filter((run) => indexOf(run) > target));
-    if (pass && pass.key !== leader.top.key) {
-      text += ` ${leader.group.harness.name} passes that for ${usd(pass)} per task, with ${setting(pass)} (${score(pass)}).`;
-    }
+    text += ` ${group.harness.name} peaks at ${score(top)}, with ${top.release.name} for ${usd(top)}.`;
   }
   return text;
 }
 
-export function agentBudgetText(groups: readonly HarnessGroup[]): string {
-  const word = groups.length === 2 ? "higher" : "highest";
-  const segments = runSegments(groups.flatMap((group) => group.runs));
-  if (segments.length === 1) {
-    return `At every budget measured, ${segments[0]!.harness.name} scores at least as high for no more per task.`;
-  }
-  const low = segments[0]!;
-  const high = segments[segments.length - 1]!;
-  const start = high.runs[0]!;
-  const peak = high.runs[high.runs.length - 1]!;
-  if (segments.length === 2) {
-    return `Below ${usd(start)} per task, ${low.harness.name} gives the ${word} score; from ${usd(start)}, ${high.harness.name} does, up to ${score(peak)}.`;
-  }
-  const turn = segments[1]!.runs[0]!;
-  const middle = segments.slice(1, -1).flatMap((s) => s.runs);
-  const names = [...new Set(middle.map((run) => run.harness.name))];
-  const scores = middle.map(indexOf);
-  const range = `${Math.min(...scores).toFixed(1)} and ${Math.max(...scores).toFixed(1)}`;
-  const between =
-    names.length > 1
-      ? `${listNames(names)} trade the lead, all between ${range}`
-      : `${names[0]} leads, between ${range}`;
-  const ends =
-    low.harness.id === high.harness.id
-      ? `${low.harness.name} gives the ${word} score below ${usd(turn)} per task and from ${usd(start)}, up to ${score(peak)}`
-      : `${low.harness.name} gives the ${word} score below ${usd(turn)} per task, and ${high.harness.name} from ${usd(start)}, up to ${score(peak)}`;
-  return `${ends}. In between, ${between}.`;
+/**
+ * The cheapest frontier run within two tasks of the top score, when it isn't
+ * the top run itself: past its cost, spending more buys little.
+ */
+export function enoughRun(runs: readonly AgentRun[]): AgentRun | null {
+  const frontier = runFrontier(runs);
+  const peak = frontier[frontier.length - 1];
+  if (!peak) return null;
+  const enough = frontier.find((run) => scoreOf(peak) - scoreOf(run) < TB_TIE)!;
+  return enough.key === peak.key ? null : enough;
 }
 
-const PARTS: readonly {
-  label: string;
-  area: string;
-  tasks: number;
-  value: (run: AgentRun) => number;
-}[] = [
-  {
-    label: "Terminal-Bench 4.1",
-    area: "terminal tasks",
-    tasks: TERMINAL_BENCH_TASKS,
-    value: (run) => run.cli.terminalBench4,
-  },
-  { label: "FrontierCode 2.0", area: "repository coding", tasks: 132, value: (run) => run.cli.frontierCode2 },
-  { label: "SWE-Atlas QnA", area: "questions about a codebase", tasks: 124, value: (run) => run.cli.sweAtlas },
-];
+export function agentBudgetText(groups: readonly HarnessGroup[]): string {
+  const word = groups.length === 2 ? "higher" : "highest";
+  const all = groups.flatMap((group) => group.runs);
+  const segments = runSegments(all);
+  if (segments.length === 0) return "";
+  let text: string;
+  if (segments.length === 1) {
+    text = `At every budget measured, ${segments[0]!.harness.name} scores at least as high for no more per task.`;
+  } else {
+    const low = segments[0]!;
+    const high = segments[segments.length - 1]!;
+    const start = high.runs[0]!;
+    const peak = high.runs[high.runs.length - 1]!;
+    if (segments.length === 2) {
+      text = `Below ${usd(start)} per task, ${low.harness.name} gives the ${word} score; from ${usd(start)}, ${high.harness.name} does, up to ${score(peak)}.`;
+    } else {
+      const turn = segments[1]!.runs[0]!;
+      const middle = segments.slice(1, -1).flatMap((s) => s.runs);
+      const names = [...new Set(middle.map((run) => run.harness.name))];
+      const scores = middle.map(scoreOf);
+      const lo = Math.min(...scores);
+      const hi = Math.max(...scores);
+      const range =
+        lo === hi
+          ? `at ${formatScore(lo, "%")}`
+          : `between ${formatScore(lo, "%")} and ${formatScore(hi, "%")}`;
+      const between =
+        names.length > 1 ? `${listNames(names)} trade the lead, all ${range}` : `${names[0]} leads, ${range}`;
+      const ends =
+        low.harness.id === high.harness.id
+          ? `${low.harness.name} gives the ${word} score below ${usd(turn)} per task and from ${usd(start)}, up to ${score(peak)}`
+          : `${low.harness.name} gives the ${word} score below ${usd(turn)} per task, and ${high.harness.name} from ${usd(start)}, up to ${score(peak)}`;
+      text = `${ends}. In between, ${between}.`;
+    }
+  }
+  const enough = enoughRun(all);
+  if (enough) {
+    const peak = runFrontier(all).at(-1)!;
+    const more = `paying more buys at most ${(scoreOf(peak) - scoreOf(enough)).toFixed(1)} points`;
+    const start = segments[segments.length - 1]!.runs[0]!;
+    text +=
+      enough.key === start.key
+        ? ` Past ${usd(enough)}, ${more}.`
+        : ` From ${usd(enough)} per task, ${enough.harness.name} with ${enough.release.name} comes within two tasks of the top score; ${more}.`;
+  }
+  return text;
+}
 
 /** Reasons to pick `self` over `other`, strongest first. */
-export function agentChooseReasons(
-  self: HarnessGroup,
-  other: HarnessGroup,
-  cat: Catalog = defaultCatalog,
-): string[] {
+export function agentChooseReasons(self: HarnessGroup, other: HarnessGroup): string[] {
   const name = self.harness.name;
   const reasons: string[] = [];
   const top = bestRun(self.runs);
   const rivalTop = bestRun(other.runs);
-  const gap = indexOf(top) - indexOf(rivalTop);
-  if (gap >= TIE_POINTS) {
+  const gap = scoreOf(top) - scoreOf(rivalTop);
+  const level = Math.abs(gap) < TB_TIE;
+  if (gap >= TB_TIE) {
     reasons.push(
-      `You want the highest score: ${setting(top)} reaches ${score(top)} on the Coding Agent Index, ${gap.toFixed(1)} points above ${other.harness.name}'s best.`,
+      `You want the highest score: with ${top.release.name} it passes ${score(top)} of Terminal-Bench, ${gap.toFixed(1)} points above ${other.harness.name}'s best.`,
     );
-  } else if (gap > -TIE_POINTS && costOf(rivalTop) / costOf(top) >= 1.2) {
+  } else if (level && costOf(rivalTop) / costOf(top) >= 1.2) {
     reasons.push(
-      `You want a top score for less: ${setting(top)} reaches ${score(top)} for ${usd(top)} per task, level with ${other.harness.name}'s best at ${usd(rivalTop)}.`,
+      `You want a top score for less: with ${top.release.name} it passes ${score(top)} for ${usd(top)} per task, within two tasks of ${other.harness.name}'s best at ${usd(rivalTop)}.`,
     );
   }
 
+  // Where on the shared cost frontier this agent leads.
   const segments = runSegments([...self.runs, ...other.runs]);
-  const low = segments[0]!;
-  if (segments.length > 1 && low.harness.id === self.harness.id) {
-    const last = low.runs[low.runs.length - 1]!;
+  const owned = segments.findIndex((s) => s.harness.id === self.harness.id);
+  if (segments.length === 1 && owned === 0) {
+    reasons.push(`At every budget measured, ${name} scores at least as high for no more per task.`);
+  } else if (owned !== -1 && owned < segments.length - 1) {
+    const mine = segments[owned]!;
+    const last = mine.runs[mine.runs.length - 1]!;
+    const until = usd(segments[owned + 1]!.runs[0]!);
     reasons.push(
-      `Your budget is under ${usd(segments[1]!.runs[0]!)} per task: ${name} scores higher at every budget below that, up to ${score(last)} with ${setting(last)} (${usd(last)}).`,
-    );
-  } else {
-    for (const budget of BUDGETS) {
-      const mine = bestUnder(self.runs, budget);
-      if (mine && !bestUnder(other.runs, budget)) {
-        reasons.push(
-          `You want runs under ${formatUsd(budget)} per task: of the runs measured, only ${name}'s come in under that, up to ${score(mine)} with ${setting(mine)} (${usd(mine)}).`,
-        );
-        break;
-      }
-    }
-  }
-
-  const leads = PARTS.flatMap((part) => {
-    const mine = part.value(bestRun(self.runs, part.value));
-    const theirs = part.value(bestRun(other.runs, part.value));
-    return mine - theirs >= noiseFloor(part.tasks) ? [{ part, mine, theirs }] : [];
-  });
-  if (leads.length > 0) {
-    reasons.push(
-      `Your work leans on ${listNames(leads.map((l) => l.part.area))}: ${leads.length === 1 ? "its best run beats" : "its best runs beat"} ${other.harness.name}'s on ${listNames(leads.map((l) => `${l.part.label} (${pct(l.mine)} against ${pct(l.theirs)})`))}.`,
+      owned === 0
+        ? `Your budget is under ${until} per task: ${name} scores higher at every budget below that, up to ${score(last)} with ${last.release.name} (${usd(last)}).`
+        : `Your budget is between ${usd(mine.runs[0]!)} and ${until} per task: ${name} scores higher in that range, up to ${score(last)} with ${last.release.name} (${usd(last)}).`,
     );
   }
 
-  const mine = harborRows(self.harness, cat);
-  const theirs = harborRows(other.harness, cat);
-  const pickMine = harborPick(mine);
-  const pickTheirs = harborPick(theirs);
-  if (pickMine && pickTheirs) {
-    const [best, rival] = [mine[0]!, theirs[0]!];
-    const floor = noiseFloor(TERMINAL_BENCH_TASKS);
-    const entry = (row: HarborRow) =>
-      `${pct(row.result.accuracy)} at ${formatUsd(row.result.costPerTrialUsd)} per trial`;
-    if (best.result.accuracy - rival.result.accuracy >= floor) {
+  // MirrorCode is Epoch AI's long coding benchmark, run on the model alone.
+  const ownLong = bestEpochRun(self.runs, "mirrorCode");
+  const rivalLong = bestEpochRun(other.runs, "mirrorCode");
+  if (ownLong && rivalLong && ownLong.score.score - rivalLong.score.score >= epochTie(ownLong.score, rivalLong.score)) {
+    reasons.push(
+      `You hand it long coding projects: on Epoch AI's MirrorCode, ${ownLong.release.name} scores ${formatScore(ownLong.score.score, "%")} against ${formatScore(rivalLong.score.score, "%")} for ${rivalLong.release.name}, the best of ${other.harness.name}'s models there. Epoch runs the model on its own, outside the agent.`,
+    );
+  }
+
+  const mine = pickRun(self.runs);
+  const theirs = pickRun(other.runs);
+  if (mine && theirs) {
+    const ownTokens = mine.run.tokensPerTask.output;
+    if (ownTokens > 0 && theirs.run.tokensPerTask.output / ownTokens >= 1.5) {
       reasons.push(
-        `You want the most official Terminal-Bench passes: with ${best.release.name} it passes ${entry(best)}, against ${entry(rival)} for ${other.harness.name} with ${rival.release.name}.`,
+        `You want shorter output: ${mine.release.name} wrote ${formatTokens(ownTokens)} output tokens per task against ${formatTokens(theirs.run.tokensPerTask.output)} for ${theirs.release.name}.`,
       );
-    } else if (
-      pickMine.result.accuracy >= pickTheirs.result.accuracy - floor &&
-      pickMine.result.costPerTrialUsd * 2 <= pickTheirs.result.costPerTrialUsd
-    ) {
+    }
+    const a = mine.run.minutesPerTask;
+    const b = theirs.run.minutesPerTask;
+    if (a && b && b / a >= 1.3) {
       reasons.push(
-        `You want official Terminal-Bench results for less: with ${pickMine.release.name} it passes ${entry(pickMine)}, against ${entry(pickTheirs)} for ${other.harness.name} with ${pickTheirs.release.name}.`,
+        `You want quicker runs: ${mine.release.name} took ${Math.round(a)} minutes per task against ${Math.round(b)} for ${theirs.release.name}.`,
       );
     }
   }
 
   if (reasons.length === 0) {
     reasons.push(
-      `Few reasons in this data: ${other.harness.name} scores at least as high for no more per task at every budget measured.`,
+      level
+        ? `Few reasons in this data: its best run, ${score(top)} with ${top.release.name} for ${usd(top)} per task, is within two tasks of ${other.harness.name}'s best, ${score(rivalTop)} with ${rivalTop.release.name} for ${usd(rivalTop)}.`
+        : `Few reasons in this data: ${other.harness.name}'s best run scores ${(-gap).toFixed(1)} points higher, and ${name} leads at no budget on the cost frontier.`,
     );
   }
-  return reasons.slice(0, 4);
+  return reasons.slice(0, 5);
+}
+
+/** The agent's model with the best Epoch score on a benchmark, if any has one. */
+export function bestEpochRun(
+  runs: readonly AgentRun[],
+  benchmark: EpochBenchmarkId,
+): { release: ModelRelease; score: EpochScore } | null {
+  let best: { release: ModelRelease; score: EpochScore } | null = null;
+  for (const run of runs) {
+    const score = bestEpoch(run.release, benchmark);
+    if (score && (!best || score.score > best.score.score)) best = { release: run.release, score };
+  }
+  return best;
 }
 
 function modelAdvice(group: HarnessGroup): string {
   const top = bestRun(group.runs);
-  const near = cheapestRun(group.runs.filter((run) => indexOf(top) - indexOf(run) < TIE_POINTS));
-  let text = `In ${group.harness.name}, ${setting(top)} scores highest, ${score(top)} for ${usd(top)} per task`;
+  const near = pickRun(group.runs);
+  let text = `In ${group.harness.name}, ${top.release.name} scores highest, ${score(top)} for ${usd(top)} per task`;
   if (near && near.key !== top.key) {
-    text += `; ${setting(near)} comes within a point for ${usd(near)}`;
+    text += `; ${near.release.name} comes within two tasks of it for ${usd(near)}`;
   }
   return `${text}.`;
 }
 
-export function gapText(groups: readonly HarnessGroup[]): string {
-  const all = summarizeGaps(groups.flatMap((group) => group.runs));
-  const parts = groups.map((group) => {
-    const s = summarizeGaps(group.runs);
-    return `${group.harness.name} ${formatDelta(s.median)} over ${s.count} run${s.count === 1 ? "" : "s"}`;
-  });
-  const share = all.lower === all.count ? `all ${all.count}` : `${all.lower} of ${all.count}`;
-  return `On FrontierCode 2.0, ${share} runs scored lower inside the agent than the same model at the same effort in Artificial Analysis's own harness, on the same 132 tasks. The median change is ${formatDelta(all.median)} points: ${listNames(parts)}.`;
-}
-
 export const GEMINI_CLI_ANSWER =
-  "In May 2026 Google announced it was moving Gemini CLI users to Antigravity CLI. On June 18, 2026, Gemini CLI stopped serving Google AI Pro and Ultra subscribers and people using it free through Gemini Code Assist for individuals; enterprise licences and paid API keys kept access. Artificial Analysis measures Antigravity CLI, so the Gemini results here are Antigravity CLI runs.";
+  "In May 2026 Google announced it was moving Gemini CLI users to Antigravity CLI. On June 18, 2026, Gemini CLI stopped serving Google AI Pro and Ultra subscribers and people using it free through Gemini Code Assist for individuals; enterprise licences and paid API keys kept access. The Gemini results on these pages are Terminal-Bench runs in Antigravity CLI.";
 
 export function agentQuestions(groups: readonly HarnessGroup[]): QA[] {
   const names = groups.map((group) => group.harness.name);
   const all = groups.flatMap((group) => group.runs);
-  const cheapest = groups
-    .map((group) => ({ group, run: cheapestRun(group.runs)! }))
-    .sort((x, y) => costOf(x.run) - costOf(y.run));
-  const first = cheapest[0]!;
+  const near = groups
+    .flatMap((group) => {
+      const run = pickRun(group.runs);
+      return run && run.run.costPerTaskUsd !== null ? [run] : [];
+    })
+    .sort((x, y) => costOf(x) - costOf(y));
+  const cheapest = cheapestRun(all);
+  const older = olderVersionRuns(all);
   const questions: QA[] = [
     {
       q: groups.length === 2 ? `Is ${names[0]} better than ${names[1]}?` : "Which coding agent is best?",
-      a: `${agentLead(groups)} ${agentBudgetText(groups)}`,
+      a: `${agentLead(groups)} ${agentBudgetText(groups)}`.trim(),
     },
-    {
-      q: groups.length === 2 ? `Which is cheaper, ${names[0]} or ${names[1]}?` : "Which coding agent is cheapest?",
-      a: `${first.group.harness.name} has the cheapest measured run: ${setting(first.run)} costs ${usd(first.run)} per task and scores ${score(first.run)}. ${cheapest
-        .slice(1)
-        .map((c) => `${c.group.harness.name}'s cheapest is ${setting(c.run)}, ${usd(c.run)} for ${score(c.run)}.`)
-        .join(" ")} Artificial Analysis prices every run at pay-per-token API rates, cache discounts included. Many people use these agents on a subscription plan instead, where the cost is the plan.`,
-    },
+  ];
+  if (near.length > 0) {
+    const nearText = near
+      .map((run) => `${run.release.name} in ${run.harness.name}, ${score(run)} for ${usd(run)} per task`)
+      .join("; ");
+    const floor =
+      cheapest && !near.some((run) => run.key === cheapest.key)
+        ? ` The cheapest run of all is ${cheapest.release.name} in ${cheapest.harness.name}, ${usd(cheapest)} per task for ${score(cheapest)}.`
+        : "";
+    questions.push({
+      q:
+        groups.length === 2
+          ? `Which is cheaper, ${names[0]} or ${names[1]}?`
+          : "Which coding agent is cheapest?",
+      a: `Each agent's cheapest run within two tasks of its best: ${nearText}.${floor} A run's cost is what it reported spending across its trials, divided by the trials; on a subscription plan you pay the plan instead.`,
+    });
+  }
+  questions.push(
     {
       q: "Which model works best in each agent?",
       a: groups.map(modelAdvice).join(" "),
     },
     {
-      q: "Does the agent change a model's score?",
-      a: `${gapText(groups)} Limits and prompts differ between the two set-ups, so the gap measures the whole set-up, not the agent alone. Terminal-Bench can't be compared this way: the agent runs use version 4.1, which changed the checks on all 66 tasks, and the model runs use 4.0.`,
-    },
-    {
       q: "What about Cursor, OpenCode or other coding agents?",
-      a: `These pages compare each lab's own agent running that lab's models, which Artificial Analysis measures on the same tasks at each effort level: ${listNames(
+      a: `These pages compare each lab's own agent running that lab's current models: ${listNames(
         groups.map((group) => `${group.harness.name} with ${PROVIDERS[group.harness.provider].name} models`),
-      )}. Other agents, such as Cursor or OpenCode, aren't compared here; Artificial Analysis's Coding Agents page lists every agent it has run.`,
+      )}. The Terminal-Bench leaderboard also lists other agents, such as mini-SWE-agent, GitHub Copilot, Grok Build and Muse Code; they aren't compared here.`,
     },
-  ];
+  );
   if (groups.some((group) => group.harness.formerly)) {
     questions.push({ q: "What happened to Gemini CLI?", a: GEMINI_CLI_ANSWER });
   }
   questions.push({
     q: "How were these agents tested?",
-    a: `Artificial Analysis runs ${listNames(groups.map((group) => group.harness.cli))} on three benchmarks, three attempts per task: FrontierCode 2.0 (132 repository coding tasks), Terminal-Bench 4.1 (66 terminal tasks) and SWE-Atlas QnA (124 questions about codebases). The Coding Agent Index weights the three equally, so one Terminal-Bench task is worth about half a point. ${all.length} runs with current models are listed here.`,
+    a: `Each run is on the official Terminal-Bench leaderboard: the agent attempts all ${TERMINAL_BENCH.tasks} tasks at least five times each, and errored trials count as failures. Before a run is listed, an LLM judge reviews every passing trial for reward hacking, and trials the maintainers disqualify count as failures too. ${all.length} runs with current models are compared here${
+      older.length > 0
+        ? `; ${listNames(older.map((r) => r.release.name))} ${older.length === 1 ? "was" : "were"} graded on version ${older[0]!.run.version}, before 4.1 changed the checks on every task`
+        : ""
+    }.`,
   });
   return questions;
 }
 
 export function agentDescription(groups: readonly HarnessGroup[]): string {
   const tops = groups.map((group) => bestRun(group.runs));
-  const scores = tops.map(score);
-  const costs = tops.map(usd);
   const names = groups.map((group) => group.harness.name);
-  return `${listNames(names)} on the Coding Agent Index: best runs ${listNames(scores)}, at ${listNames(costs)} per task. Every model and effort measured inside ${listNames(groups.map((group) => group.harness.cli))}, with official Terminal-Bench results.`;
+  return `${listNames(names)} on Terminal-Bench: best runs ${listNames(tops.map(score))}, at ${listNames(tops.map(usd))} per task. Cost, tokens and time per model.`;
+}
+
+/** A run's setting for tables: "Codex 0.169.0, Max effort". */
+export function runSetting(run: AgentRun): string {
+  return `${agentLabel(run.run)}, ${effortPhrase(run.run.effort).replace(/^at /, "")}`;
 }

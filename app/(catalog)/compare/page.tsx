@@ -2,19 +2,22 @@ import type { Metadata } from "next";
 import { Breadcrumbs } from "@/components/catalog/breadcrumbs";
 import { PairList } from "@/components/catalog/pair-list";
 import { pageMetadata } from "@/journal/content";
-import { catalog, type ReleasePair } from "@/lib/catalog";
+import { catalog, isComparable, type ReleasePair } from "@/lib/catalog";
 import { formatFullDate } from "@/lib/format";
+
+// Only pairs with a result in common get listed; the rest have little to compare.
+const pairs = catalog.pairs.filter(isComparable);
 
 export const metadata: Metadata = pageMetadata(
   "Compare AI models: coding score against cost per task",
-  `${catalog.pairs.length} head-to-head comparisons of OpenAI, Anthropic and Google models: coding scores, cost per task and both effort curves on one chart.`,
+  `${pairs.length} head-to-head comparisons of OpenAI, Anthropic and Google models: Terminal-Bench scores, cost per task, Epoch AI scores and API prices side by side.`,
   "/compare",
 );
 
 export default function ComparePage() {
-  const current = catalog.pairs.filter((p) => p.current && p.relation !== "upgrade");
-  const upgrades = catalog.pairs.filter((p) => p.relation === "upgrade");
-  const earlier = catalog.pairs.filter((p) => !p.current && p.relation !== "upgrade");
+  const current = pairs.filter((p) => p.current && p.relation !== "upgrade");
+  const upgrades = pairs.filter((p) => p.relation === "upgrade");
+  const earlier = pairs.filter((p) => !p.current && p.relation !== "upgrade");
   const groups = new Map<string, ReleasePair[]>();
   for (const pair of current) {
     const list = groups.get(pair.first.slug) ?? [];
@@ -27,7 +30,7 @@ export default function ComparePage() {
       <header className="page-head">
         <h1>Compare models</h1>
         <p className="page-meta">
-          <span>{catalog.pairs.length} comparisons</span>
+          <span>{pairs.length} comparisons</span>
           <span>
             Data checked{" "}
             <time dateTime={catalog.dataset.snapshotDate}>
@@ -37,9 +40,10 @@ export default function ComparePage() {
         </p>
       </header>
       <p className="lead">
-        Each comparison puts two models&apos; effort curves on one chart and answers which scores
-        higher on coding for what it costs per task. Pages exist for every two models that were
-        current at the same time and for each model against the one it replaced.
+        Each comparison puts two models on one chart and answers which passes more of
+        Terminal-Bench for what it costs per task, with Epoch AI&apos;s scores and API prices beside
+        them. Pages exist for every two models that were current at the same time and for each
+        model against the one it replaced.
       </p>
       <section aria-labelledby="current-pairs">
         <h2 id="current-pairs">Current models</h2>
