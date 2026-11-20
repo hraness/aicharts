@@ -16,7 +16,7 @@ export default function HomePage() {
               url: SITE_URL,
               name: "aicharts",
               description:
-                "Terminal-Bench scores, cost per task and API prices for AI model releases from OpenAI, Anthropic and Google.",
+                "GameBench 2 effort curves, Terminal-Bench agent scores and Epoch AI benchmarks for OpenAI, Anthropic and Google models.",
               publisher: { "@id": "https://hraness.com/#organization" },
             },
             {

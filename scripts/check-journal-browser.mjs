@@ -159,6 +159,20 @@ try {
     );
     await checkFooter(page);
     assert.equal(await noSideScroll(page), true);
+    const header = page.locator(".topbar");
+    assert.equal(await header.getByText(/^(Anthropic|OpenAI|Google|JSON)$/).count(), 0);
+
+    const benchmark = page.getByLabel("Benchmark", { exact: true });
+    assert.equal(await benchmark.inputValue(), "game-bench");
+    const chart = page.locator('[data-benchmark="game-bench"]');
+    for (const provider of ["anthropic", "openai", "google"]) {
+      assert.ok(await chart.locator(`.peer-series--${provider} polyline, .hero-series--${provider} polyline`).count());
+    }
+    const settings = page.getByRole("group", { name: "Reasoning settings" });
+    const firstEffort = settings.getByRole("button").first();
+    await firstEffort.click();
+    assert.equal(await firstEffort.getAttribute("aria-pressed"), "true");
+    assert.ok(new URL(page.url()).searchParams.get("effort"));
 
     // The lineup is the default order. The chart keeps its axes whichever
     // model, order or lab is picked, so siblings compare by position: before
@@ -203,6 +217,23 @@ try {
     await page.getByRole("button", { name: "Lineup", exact: true }).click();
     assert.equal(new URL(page.url()).searchParams.get("view"), null);
     assert.equal(await noSideScroll(page), true);
+
+    for (const [id, name] of [
+      ["mirrorCode", "MirrorCode"],
+      ["gpqaDiamond", "GPQA Diamond"],
+      ["frontierMath", "FrontierMath Tiers 1–3"],
+    ]) {
+      await benchmark.selectOption(id);
+      const scores = page.getByRole("group", { name: name + " best scores" });
+      await scores.getByRole("button").first().click();
+      assert.equal(await scores.getByRole("button").first().getAttribute("aria-pressed"), "true");
+      assert.equal(new URL(page.url()).searchParams.get("bench"), id);
+      assert.equal(await noSideScroll(page), true);
+    }
+    await page.goto(url + "/?axis=tokens");
+    await page.locator('[data-benchmark="terminal-bench"]').waitFor();
+    assert.equal(await benchmark.inputValue(), "terminal-bench");
+    assert.equal(await page.getByRole("button", { name: "Tokens", exact: true }).getAttribute("aria-pressed"), "true");
 
     await page
       .getByRole("navigation", { name: "Product pages" })
@@ -304,7 +335,7 @@ try {
     }
     // The API page documents every object, and its example is real data.
     await page.goto(url + "/api");
-    assert.equal(await page.locator("table.data-table--fields").count(), 6);
+    assert.equal(await page.locator("table.data-table--fields").count(), 7);
     const example = JSON.parse(await page.locator("#example ~ pre").textContent());
     assert.ok(releases.some((r) => r.slug === example.slug), "The API example is a release");
     // The reverse order of a comparison redirects to the canonical page.
@@ -388,7 +419,7 @@ try {
       reducedMotion: "reduce",
     });
     const page = await ctx.newPage();
-    await page.goto(url + "/?release=" + model.slug);
+    await page.goto(url);
     await page.locator(".pareto-svg").waitFor();
     await page.waitForFunction(
       () => document.querySelector(".pareto-svg").width.baseVal.value < 480,
@@ -437,7 +468,7 @@ try {
       },
       browser: browser.version(),
       encoder: execFileSync("cwebp", ["-version"], { encoding: "utf8" }).trim(),
-      alt: "aicharts plotting Terminal-Bench scores against cost per task for Anthropic, OpenAI and Google models.",
+      alt: "aicharts plotting GameBench 2 scores and costs across reasoning settings for Anthropic, OpenAI and Google models.",
     };
     await writeFile(
       "showcase/media/preview.json",

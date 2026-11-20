@@ -11,15 +11,24 @@ import {
   shortModelName,
 } from "@/lib/format";
 import {
-  buildPlottedPoints,
+  buildBenchmarkPoints,
   computeParetoFrontier,
   getQualifiedFrontierKeys,
+  primaryPoint,
+  type BenchmarkPoint,
+  type ChartBenchmark,
   type ChartScale,
-  type PlottedPoint,
 } from "@/lib/pareto";
-import { TERMINAL_BENCH, type BudgetAxis, type ModelRelease } from "@/lib/types";
+import { effortName } from "@/lib/measures";
+import {
+  GAME_BENCH,
+  TERMINAL_BENCH,
+  type BudgetAxis,
+  type EffortSlug,
+  type ModelRelease,
+} from "@/lib/types";
 
-const COST_TICKS = [0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10, 25, 50, 100, 250];
+const COST_TICKS = [0.001, 0.002, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10, 25, 50, 100, 250];
 const TOKEN_TICKS = [5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000, 2000000];
 
 type Box = { x1: number; y1: number; x2: number; y2: number };
@@ -29,16 +38,16 @@ function boxesOverlap(a: Box, b: Box): boolean {
 }
 
 /**
- * Terminal-Bench score against what each run spent per task, one dot per
- * model. The selected model is the filled dot; a second model on head-to-head
- * pages is the hollow one. The dashed line is the Pareto frontier: no model
- * scores higher for the same budget or less.
+ * Score against budget within one benchmark. Terminal-Bench has one dot per
+ * model and GameBench 2 connects each model's tested effort settings.
  */
 export function ParetoChart({
   releases,
   selectedRelease,
   compareRelease = null,
   axis,
+  benchmark = "terminal-bench",
+  activeEffort,
   onSelectRelease,
   ariaLabel,
   scale,
@@ -48,7 +57,9 @@ export function ParetoChart({
   /** A second release drawn as an emphasized hollow dot, for head-to-head pages. */
   compareRelease?: ModelRelease | null;
   axis: BudgetAxis;
-  onSelectRelease: (slug: string) => void;
+  benchmark?: ChartBenchmark;
+  activeEffort?: EffortSlug | null;
+  onSelectRelease: (slug: string, effort?: EffortSlug) => void;
   /** Replaces the generated description of the chart. */
   ariaLabel?: string;
   /**
@@ -78,7 +89,7 @@ export function ParetoChart({
   useEffect(() => {
     setPinnedPeerKey(null);
     setHoveredKey(null);
-  }, [selectedRelease.slug, axis]);
+  }, [selectedRelease.slug, axis, benchmark]);
 
   const isCompact = width < 520;
   const height = isCompact ? 236 : 268;
@@ -91,7 +102,7 @@ export function ParetoChart({
   const plotW = Math.max(180, width - pad.left - pad.right);
   const plotH = Math.max(140, height - pad.top - pad.bottom);
 
-  const allPoints = useMemo(() => buildPlottedPoints(releases, axis), [releases, axis]);
+  const allPoints = useMemo(() => buildBenchmarkPoints(releases, axis, benchmark), [releases, axis, benchmark]);
   const frontier = useMemo(() => computeParetoFrontier(allPoints), [allPoints]);
   const frontierKeySet = useMemo(() => new Set(frontier.map((p) => p.key)), [frontier]);
   const qualifiedFrontierSet = useMemo(() => getQualifiedFrontierKeys(frontier), [frontier]);
@@ -155,14 +166,28 @@ export function ParetoChart({
   const pointByKey = useMemo(() => new Map(allPoints.map((p) => [p.key, p])), [allPoints]);
   const inspectedPoint = inspectedKey ? (pointByKey.get(inspectedKey) ?? null) : null;
 
-  const compareSlug = compareRelease?.slug ?? null;
-  const selectedPoint = pointByKey.get(selectedRelease.slug) ?? null;
-  const comparePoint = compareSlug ? (pointByKey.get(compareSlug) ?? null) : null;
-  const peerPoints = allPoints.filter(
-    (p) => p.key !== selectedRelease.slug && p.key !== compareSlug,
-  );
+  const series = useMemo(() => {
+    const groups = new Map<string, BenchmarkPoint[]>();
+    for (const point of allPoints) {
+      const slug = point.release.slug;
+      const group = groups.get(slug) ?? [];
+      group.push(point);
+      groups.set(slug, group);
+    }
+    return groups;
+  }, [allPoints]);
+  const isGameBench = benchmark === "game-bench";
+  const scoreUnit = isGameBench ? "pts" : "%";
+  const selectedPoints = series.get(selectedRelease.slug) ?? [];
+  const comparePoints = compareRelease ? series.get(compareRelease.slug) ?? [] : [];
+  const selectedPoint = primaryPoint(selectedPoints, activeEffort);
+  const peerSeries = [...series.values()].filter((points) => points !== selectedPoints && points !== comparePoints);
+  const pointTag = (point: BenchmarkPoint) =>
+    isGameBench ? effortName(point.run.effort) : shortModelName(point.release.name);
+  const curve = (points: readonly BenchmarkPoint[]) =>
+    points.map((p) => `${toX(p.budget)},${toY(p.score)}`).join(" ");
 
-  // Name tags for the emphasized dots, placed clear of every dot and each other.
+  // Place labels where they clear the dots and the other labels.
   const tagPositions = useMemo(() => {
     const occupied: Box[] = allPoints.map((p) => {
       const x = toX(p.budget);
@@ -170,11 +195,13 @@ export function ParetoChart({
       return { x1: x - 5, y1: y - 5, x2: x + 5, y2: y + 5 };
     });
     const tags = new Map<string, { x: number; y: number }>();
-    for (const point of [selectedPoint, comparePoint]) {
-      if (!point) continue;
+    const emphasized = selectedPoint
+      ? [selectedPoint, ...selectedPoints.filter((p) => p !== selectedPoint), ...comparePoints]
+      : comparePoints;
+    for (const point of emphasized) {
       const x = toX(point.budget);
       const y = toY(point.score);
-      const w = shortModelName(point.release.name).length * 6.2 + 8;
+      const w = pointTag(point).length * 6.2 + 8;
       const h = 13;
       const candidates = [
         { x, y: y - 11 },
@@ -196,7 +223,7 @@ export function ParetoChart({
           break;
         }
       }
-      // The selected model is always named, even over a neighbour.
+      // Keep a label on the selected setting when the frontier is crowded.
       if (!chosen && point === selectedPoint) {
         const fallback = candidates.find((c) => {
           const x1 = c.x - w / 2;
@@ -207,21 +234,21 @@ export function ParetoChart({
       if (chosen) tags.set(point.key, chosen);
     }
     return tags;
-  }, [allPoints, selectedPoint, comparePoint, logMin, logMax, yMin, yMax, plotW, plotH, pad.left, pad.top]);
+  }, [allPoints, selectedPoint, selectedPoints, comparePoints, isGameBench, logMin, logMax, yMin, yMax, plotW, plotH, pad.left, pad.top]);
 
-  function findNearestPoint(clientX: number, clientY: number): PlottedPoint | null {
+  function findNearestPoint(clientX: number, clientY: number): BenchmarkPoint | null {
     const el = containerRef.current;
     if (!el) return null;
     const rect = el.getBoundingClientRect();
     const mx = clientX - rect.left;
     const my = clientY - rect.top;
-    let best: PlottedPoint | null = null;
+    let best: BenchmarkPoint | null = null;
     let bestDist = 26 * 26;
     for (const pt of allPoints) {
       const dx = toX(pt.budget) - mx;
       const dy = toY(pt.score) - my;
       const d2 = dx * dx + dy * dy;
-      const emphasized = pt.key === selectedRelease.slug || pt.key === compareSlug;
+      const emphasized = pt.release.slug === selectedRelease.slug || pt.release.slug === compareRelease?.slug;
       const weighted = emphasized ? d2 * 0.75 : d2;
       if (weighted < bestDist) {
         bestDist = weighted;
@@ -257,13 +284,18 @@ export function ParetoChart({
     return { left, top };
   }, [inspectedPoint, width, height, logMin, logMax, yMin, yMax]);
 
-  const budgetLabel = axis === "cost" ? "cost per task" : "output tokens per task";
+  const budgetLabel = isGameBench ? "estimated cost per program" : axis === "cost" ? "cost per task" : "output tokens per task";
+  const axisLabel = budgetLabel[0]!.toUpperCase() + budgetLabel.slice(1);
+  const benchmarkLabel = isGameBench ? GAME_BENCH.label : TERMINAL_BENCH.label;
   const named = [selectedRelease.name, compareRelease?.name].filter(Boolean).join(" and ");
+  const inspectedRun = inspectedPoint?.run;
+  const inspectedCost = inspectedRun && ("agent" in inspectedRun ? inspectedRun.costPerTaskUsd : inspectedRun.costPerProgramUsd);
 
   return (
     <div
       ref={containerRef}
       className="pareto-chart-wrap"
+      data-benchmark={benchmark}
       onPointerMove={(e) => {
         if (e.pointerType === "touch") return;
         const nearest = findNearestPoint(e.clientX, e.clientY);
@@ -273,8 +305,14 @@ export function ParetoChart({
       onClick={(e) => {
         if ((e.target as HTMLElement).closest("button")) return;
         const nearest = findNearestPoint(e.clientX, e.clientY);
-        if (!nearest || nearest.key === selectedRelease.slug) {
+        if (!nearest) {
           setPinnedPeerKey(null);
+          return;
+        }
+        const effort = isGameBench ? nearest.run.effort ?? undefined : undefined;
+        if (nearest.release.slug === selectedRelease.slug) {
+          setPinnedPeerKey(null);
+          if (isGameBench) onSelectRelease(nearest.release.slug, effort);
           return;
         }
         const isTouch = window.matchMedia("(pointer: coarse)").matches;
@@ -282,7 +320,7 @@ export function ParetoChart({
           setPinnedPeerKey(nearest.key);
         } else {
           setPinnedPeerKey(null);
-          onSelectRelease(nearest.key);
+          onSelectRelease(nearest.release.slug, effort);
         }
       }}
     >
@@ -293,7 +331,7 @@ export function ParetoChart({
         role="img"
         aria-label={
           ariaLabel ??
-          `${TERMINAL_BENCH.label} score against ${budgetLabel} for ${allPoints.length} models, with ${named} highlighted`
+          `${benchmarkLabel} score against ${budgetLabel} for ${series.size} models, with ${named} selected`
         }
         className="pareto-svg"
       >
@@ -309,7 +347,7 @@ export function ParetoChart({
                 className="chart-gridline"
               />
               <text x={pad.left - 6} y={y + 3.5} textAnchor="end" className="chart-tick">
-                {`${tick}%`}
+                {scoreUnit === "%" ? `${tick}%` : tick}
               </text>
             </g>
           );
@@ -340,66 +378,73 @@ export function ParetoChart({
           </text>
         </g>
         <text x={pad.left + plotW} y={height - 2} textAnchor="end" className="chart-axis-hint">
-          {axis === "cost" ? "Cost per task (log)" : "Output tokens per task (log)"}
+          {axisLabel} (log)
         </text>
 
         {frontierPath && <path d={frontierPath} fill="none" className="pareto-frontier-line" />}
 
-        {peerPoints.map((p) => {
-          const onFront = frontierKeySet.has(p.key);
-          const isInspected = inspectedKey === p.key;
+        {peerSeries.map((points) => {
+          const { release, provider } = points[0]!;
+          const isInspected = inspectedPoint?.release.slug === release.slug;
           return (
             <g
-              key={p.key}
-              className={`peer-series peer-series--${p.provider}${isInspected ? " is-hovered" : ""}`}
+              key={release.slug}
+              className={`peer-series peer-series--${provider}${isInspected ? " is-hovered" : ""}`}
             >
-              <circle
-                cx={toX(p.budget)}
-                cy={toY(p.score)}
-                r={isInspected ? 5.4 : onFront ? 4.4 : 3.6}
-                className={`peer-dot${onFront ? " is-frontier" : ""}`}
-              />
+              {points.length > 1 && <polyline points={curve(points)} className="peer-curve" />}
+              {points.map((p) => {
+                const onFront = frontierKeySet.has(p.key);
+                return (
+                  <circle
+                    key={p.key}
+                    cx={toX(p.budget)}
+                    cy={toY(p.score)}
+                    r={inspectedKey === p.key ? 5.4 : onFront ? 4.4 : 3.6}
+                    className={`peer-dot${onFront ? " is-frontier" : ""}`}
+                  />
+                );
+              })}
             </g>
           );
         })}
 
-        {[comparePoint, selectedPoint].map((p) => {
-          if (!p) return null;
-          const isSelected = p === selectedPoint;
-          const x = toX(p.budget);
-          const y = toY(p.score);
-          const tag = tagPositions.get(p.key);
+        {[comparePoints, selectedPoints].map((points) => {
+          if (!points.length) return null;
+          const { release, provider } = points[0]!;
           return (
             <g
-              key={p.key}
-              className={`hero-series hero-series--${p.provider}${isSelected ? "" : " hero-series--compare"}`}
+              key={release.slug}
+              className={`hero-series hero-series--${provider}${points === selectedPoints ? "" : " hero-series--compare"}`}
             >
-              {isSelected && <circle cx={x} cy={y} r={10.5} className="hero-dot-active-halo" />}
-              {qualifiedFrontierSet.has(p.key) && !isSelected && (
-                <circle cx={x} cy={y} r={7.5} className="hero-dot-frontier-ring" />
-              )}
-              <circle
-                cx={x}
-                cy={y}
-                r={isSelected ? 6.2 : 5}
-                className={`hero-dot${isSelected ? " is-active" : ""}`}
-              />
-              {tag && (
-                <text
-                  x={tag.x}
-                  y={tag.y}
-                  textAnchor="middle"
-                  className={`hero-tag${isSelected ? " is-active" : ""}`}
-                >
-                  {shortModelName(p.release.name)}
-                </text>
-              )}
+              {points.length > 1 && <polyline points={curve(points)} className="hero-curve" />}
+              {points.map((p) => {
+                const isSelected = p === selectedPoint;
+                const x = toX(p.budget);
+                const y = toY(p.score);
+                const tag = tagPositions.get(p.key);
+                return (
+                  <g key={p.key}>
+                    {isSelected && <circle cx={x} cy={y} r={10.5} className="hero-dot-active-halo" />}
+                    {qualifiedFrontierSet.has(p.key) && !isSelected && (
+                      <circle cx={x} cy={y} r={7.5} className="hero-dot-frontier-ring" />
+                    )}
+                    <circle cx={x} cy={y} r={isSelected ? 6.2 : 5}
+                      className={`hero-dot${isSelected ? " is-active" : ""}`} />
+                    {tag && (
+                      <text x={tag.x} y={tag.y} textAnchor="middle"
+                        className={`hero-tag${isSelected ? " is-active" : ""}`}>
+                        {pointTag(p)}
+                      </text>
+                    )}
+                  </g>
+                );
+              })}
             </g>
           );
         })}
       </svg>
 
-      {inspectedPoint && tooltipPos && (
+      {inspectedPoint && inspectedRun && tooltipPos && (
         <div
           className={`chart-tooltip chart-tooltip--${inspectedPoint.provider}`}
           style={{ left: tooltipPos.left, top: tooltipPos.top }}
@@ -407,7 +452,9 @@ export function ParetoChart({
           <div className="chart-tooltip__head">
             <ProviderLogo provider={inspectedPoint.provider} size={13} />
             <span className="chart-tooltip__name">{shortModelName(inspectedPoint.release.name)}</span>
-            <span className="chart-tooltip__agent">{inspectedPoint.run.agent}</span>
+            <span className="chart-tooltip__agent">
+              {"agent" in inspectedRun ? inspectedRun.agent : effortName(inspectedRun.effort)}
+            </span>
             {qualifiedFrontierSet.has(inspectedPoint.key) && (
               <span className="chart-tooltip__frontier">
                 <FrontierStarIcon size={8} />
@@ -416,24 +463,28 @@ export function ParetoChart({
             )}
           </div>
           <div className="chart-tooltip__metrics">
-            <strong>{formatScore(inspectedPoint.score, "%")}</strong>
-            {inspectedPoint.run.costPerTaskUsd !== null && (
+            <strong>{formatScore(inspectedPoint.score, scoreUnit)}</strong>
+            {inspectedCost != null && (
               <>
                 <span>·</span>
-                <span>{formatUsd(inspectedPoint.run.costPerTaskUsd)}</span>
+                <span>{formatUsd(inspectedCost)}</span>
               </>
             )}
-            <span>·</span>
-            <span>{formatTokens(inspectedPoint.run.tokensPerTask.output)} out</span>
+            {"agent" in inspectedRun && (
+              <>
+                <span>·</span>
+                <span>{formatTokens(inspectedRun.tokensPerTask.output)} out</span>
+              </>
+            )}
           </div>
-          {inspectedPoint.key !== selectedRelease.slug && pinnedPeerKey === inspectedPoint.key && (
+          {inspectedPoint.release.slug !== selectedRelease.slug && pinnedPeerKey === inspectedPoint.key && (
             <div className="chart-tooltip__delta">
               <button
                 type="button"
                 className="chart-tooltip__jump"
                 onClick={() => {
                   setPinnedPeerKey(null);
-                  onSelectRelease(inspectedPoint.key);
+                  onSelectRelease(inspectedPoint.release.slug, isGameBench ? inspectedRun.effort ?? undefined : undefined);
                 }}
               >
                 Select model →

@@ -1,7 +1,7 @@
 {
   "name": "aicharts",
   "version": "2.0.0",
-  "description": "Terminal-Bench score against cost per task for every Anthropic, OpenAI and Google coding model, on one Pareto chart.",
+  "description": "Reasoning effort, benchmark score and cost for AI models from Anthropic, OpenAI and Google.",
   "license": "MIT",
   "homepage": "https://aicharts.io",
   "repository": {

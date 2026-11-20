@@ -27,6 +27,7 @@ describe("API reference", () => {
     ["release", releases, []],
     ["terminalBench", releases.flatMap((r) => (r.terminalBench ? [r.terminalBench] : [])), ["tokensPerTask"]],
     ["epoch", releases.flatMap((r) => r.epoch), []],
+    ["gameBench", releases.flatMap((r) => r.gameBench ?? []), []],
     ["pricing", releases.flatMap((r) => (r.pricing ? [r.pricing] : [])), []],
     ["source", dataset.sources, []],
   ];

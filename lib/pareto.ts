@@ -1,31 +1,36 @@
 import type {
   BudgetAxis,
   ContextMode,
+  EffortSlug,
+  GameBenchRun,
   ModelRelease,
   ProviderId,
   TerminalBenchRun,
 } from "./types";
 
-/** One release's Terminal-Bench run on the chart. */
-export type PlottedPoint = Readonly<{
-  /** The release slug: each release has one point. */
+export type ChartBenchmark = "game-bench" | "terminal-bench";
+
+type Point = Readonly<{
   key: string;
   release: ModelRelease;
-  run: TerminalBenchRun;
   provider: ProviderId;
   budget: number;
   score: number;
 }>;
 
-export type FrontierComparison =
+/** One release's Terminal-Bench run on the chart. */
+export type PlottedPoint = Point & Readonly<{ run: TerminalBenchRun }>;
+export type BenchmarkPoint = PlottedPoint | (Point & Readonly<{ run: GameBenchRun }>);
+
+export type FrontierComparison<T extends Point = PlottedPoint> =
   | Readonly<{
       onFrontier: true;
-      previousStep: PlottedPoint | null;
+      previousStep: T | null;
       scoreGainOverPrevious: number | null;
     }>
   | Readonly<{
       onFrontier: false;
-      dominator: PlottedPoint;
+      dominator: T;
       scoreDeficit: number;
       budgetRatio: number;
     }>;
@@ -52,9 +57,12 @@ export type ChartBounds = Readonly<{
  */
 export type ChartScale = Readonly<Record<BudgetAxis, ChartBounds | null>>;
 
-export function getChartScale(releases: readonly ModelRelease[]): ChartScale {
+export function getChartScale(
+  releases: readonly ModelRelease[],
+  benchmark: ChartBenchmark = "terminal-bench",
+): ChartScale {
   const bounds = (axis: BudgetAxis): ChartBounds | null => {
-    const points = buildPlottedPoints(releases, axis);
+    const points = buildBenchmarkPoints(releases, axis, benchmark);
     if (points.length === 0) return null;
     const budgets = points.map((p) => p.budget);
     const scores = points.map((p) => p.score);
@@ -116,11 +124,47 @@ export function buildPlottedPoints(
   return points;
 }
 
+export function buildBenchmarkPoints(
+  releases: readonly ModelRelease[],
+  axis: BudgetAxis,
+  benchmark: ChartBenchmark,
+): BenchmarkPoint[] {
+  if (benchmark === "terminal-bench") return buildPlottedPoints(releases, axis);
+  if (axis === "tokens") return [];
+  return releases.flatMap((release) =>
+    (release.gameBench ?? []).map((run) => ({
+      key: `${release.slug}:${run.effort}`,
+      release,
+      run,
+      provider: release.provider,
+      budget: run.costPerProgramUsd,
+      score: run.score,
+    })),
+  );
+}
+
+/** The explicitly inspected effort, or the highest score at the lowest cost. */
+export function primaryPoint(
+  points: readonly BenchmarkPoint[],
+  effort?: EffortSlug | null,
+): BenchmarkPoint | null {
+  if (effort) {
+    const chosen = points.find((p) => p.run.effort === effort);
+    if (chosen) return chosen;
+  }
+  return points.reduce<BenchmarkPoint | null>((best, point) => {
+    if (!best || point.score > best.score || (point.score === best.score && point.budget < best.budget)) {
+      return point;
+    }
+    return best;
+  }, null);
+}
+
 /**
  * Computes the strict Pareto-optimal frontier (minimize budget x, maximize score y).
  * Returned points are strictly increasing in both budget and score.
  */
-export function computeParetoFrontier(points: readonly PlottedPoint[]): PlottedPoint[] {
+export function computeParetoFrontier<T extends Point>(points: readonly T[]): T[] {
   const EPS = 1e-9;
   const sorted = [...points].sort((a, b) => {
     if (Math.abs(a.budget - b.budget) > EPS) return a.budget - b.budget;
@@ -128,7 +172,7 @@ export function computeParetoFrontier(points: readonly PlottedPoint[]): PlottedP
     return a.key.localeCompare(b.key);
   });
 
-  const frontier: PlottedPoint[] = [];
+  const frontier: T[] = [];
   let bestScore = -Infinity;
 
   for (const pt of sorted) {
@@ -145,10 +189,10 @@ export function computeParetoFrontier(points: readonly PlottedPoint[]): PlottedP
   return frontier;
 }
 
-export function comparePointToFrontier(
-  point: PlottedPoint,
-  frontier: readonly PlottedPoint[],
-): FrontierComparison {
+export function comparePointToFrontier<T extends Point>(
+  point: T,
+  frontier: readonly T[],
+): FrontierComparison<T> {
   const idx = frontier.findIndex((f) => f.key === point.key);
   if (idx !== -1) {
     const prev = idx > 0 ? frontier[idx - 1]! : null;
@@ -161,7 +205,7 @@ export function comparePointToFrontier(
 
   // Find the highest-scoring frontier point with budget <= point.budget
   const EPS = 1e-9;
-  let dominator: PlottedPoint | null = null;
+  let dominator: T | null = null;
   for (const f of frontier) {
     if (f.budget <= point.budget + EPS) {
       if (dominator === null || f.score > dominator.score) {
@@ -188,7 +232,7 @@ export function comparePointToFrontier(
  * degenerate near-zero micro-budget points from earning "Frontier" badges.
  */
 export function getQualifiedFrontierKeys(
-  frontier: readonly PlottedPoint[],
+  frontier: readonly Point[],
   minRelativeScore = 0.75,
 ): Set<string> {
   if (frontier.length === 0) return new Set();
@@ -207,8 +251,11 @@ export function getQualifiedFrontierKeys(
 export function getFrontierReleases(
   field: readonly ModelRelease[],
   axis: BudgetAxis,
+  benchmark: ChartBenchmark = "terminal-bench",
 ): Set<string> {
-  return getQualifiedFrontierKeys(computeParetoFrontier(buildPlottedPoints(field, axis)));
+  const frontier = computeParetoFrontier(buildBenchmarkPoints(field, axis, benchmark));
+  const keys = getQualifiedFrontierKeys(frontier);
+  return new Set(frontier.filter((p) => keys.has(p.key)).map((p) => p.release.slug));
 }
 
 /**
@@ -223,12 +270,13 @@ export function getContextualFrontierReleases(
   axis: BudgetAxis,
   mode: ContextMode,
   enabledProviders?: ReadonlySet<ProviderId>,
+  benchmark: ChartBenchmark = "terminal-bench",
 ): Set<string> {
   const starred = new Set<string>();
   for (const release of allReleases) {
-    if (!release.terminalBench) continue;
+    if (benchmark === "game-bench" ? !release.gameBench?.length : !release.terminalBench) continue;
     const field = getContextualReleases(allReleases, release, mode, enabledProviders);
-    if (getFrontierReleases(field, axis).has(release.slug)) starred.add(release.slug);
+    if (getFrontierReleases(field, axis, benchmark).has(release.slug)) starred.add(release.slug);
   }
   return starred;
 }
