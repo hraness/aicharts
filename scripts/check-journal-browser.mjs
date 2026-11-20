@@ -10,6 +10,7 @@ import { chromium } from "playwright-core";
 const capture = process.argv.includes("--preview");
 const entries = JSON.parse(await readFile("journal/entries.json", "utf8"));
 const { releases } = JSON.parse(await readFile("data/releases.json", "utf8"));
+const localHardware = JSON.parse(await readFile("data/local-hardware.json", "utf8"));
 const localBenchmarks = JSON.parse(await readFile("data/local-benchmarks.json", "utf8"));
 // A current model with a costed run, so its page draws the chart.
 const model = releases.find((r) => !r.deprecated && r.terminalBench?.costPerTaskUsd != null);
@@ -428,10 +429,33 @@ try {
       assert.equal(await noSideScroll(page), true, path + " scrolls sideways");
     }
     assert.equal(await page.locator("main h1").textContent(), "Local AI benchmarks");
-    assert.deepEqual(await page.locator(".local-charts h2").allTextContents(), localBenchmarks.workloads.map((group) => group.name));
+    await page.getByLabel("Available memory (GiB)", { exact: true }).fill("1");
+    assert.ok((await page.locator(".hardware-meta").allTextContents()).some(t => t.includes("over budget")));
+    await page.getByLabel("Platform", { exact: true }).selectOption("NVIDIA GPUs");
+    await page.getByLabel("Device", { exact: true }).selectOption("RTX 4090");
+    await page.getByLabel("Measurement", { exact: true }).selectOption("ace/latency");
+    assert.ok((await page.locator(".hardware-plot").textContent()).includes("1.74 s"));
+    const hardwareLink = await page.getByRole("link", { name: "Link to this comparison" }).getAttribute("href");
+    await page.goto(url + hardwareLink);
+    await page.waitForFunction(() => document.querySelector(".hardware-panel h3")?.textContent === "RTX 4090");
+    assert.equal(await page.getByLabel("Measurement", { exact: true }).inputValue(), "ace/latency");
+    await page.getByLabel("Device", { exact: true }).selectOption("");
+    assert.ok(await page.locator(".hardware-empty").isVisible());
+    await page.getByLabel("Size–quality frontier").check();
+    assert.ok(await page.locator(".local-score-table tbody tr").count() < localBenchmarks.workloads[0].models.length);
+    assert.deepEqual(await page.getByRole("navigation", { name: "Choose a workload" }).getByRole("link").allTextContents(), localBenchmarks.workloads.map(g => g.name));
+    await page.getByRole("link", { name: "Music generation", exact: true }).click();
+    await page.getByRole("heading", { name: "Music generation benchmarks", exact: true }).waitFor();
+    await page.getByRole("navigation", { name: "Choose an evaluation" }).getByRole("link").nth(1).click();
+    const music = localBenchmarks.workloads.find(g => g.name === "Music generation");
+    const alternate = music.comparisons[0];
+    await page.getByRole("heading", { name: alternate.metric, exact: true }).waitFor();
+    await page.getByLabel("Compare with", { exact: true }).selectOption(alternate.models[0].name);
+    await page.getByRole("columnheader", { name: "Difference", exact: true }).waitFor();
+    assert.equal(await noSideScroll(page), true);
     const localData = await page.request.get(url + "/api/local");
     assert.equal(localData.status(), 200);
-    assert.deepEqual(await localData.json(), localBenchmarks);
+    assert.deepEqual(await localData.json(), { ...localBenchmarks, deviceBenchmarks: localHardware });
     // The API page documents every object, and its example is real data.
     await page.goto(url + "/api");
     assert.equal(await page.locator("table.data-table--fields").count(), 7);
@@ -492,7 +516,9 @@ try {
   assert.ok(await page.locator(".agent-chart .pareto-svg").isVisible());
   assert.equal(await page.locator(".agent-chart .chart-controls").isVisible(), false);
   await page.goto(url + "/local");
-  assert.equal(await page.locator(".local-charts li").count(), localBenchmarks.workloads.reduce((n, group) => n + group.models.length, 0));
+  assert.equal(await page.locator(".local-score-table tbody tr").count(), localBenchmarks.workloads[0].models.length);
+  await page.getByRole("link", { name: "Music generation", exact: true }).click();
+  assert.equal(await page.locator(".local-quality h3").textContent(), "Music generation");
   // Addresses from the earlier aicharts.io keep working.
   for (const [from, to] of [
     ["/models/lab/" + model.slug + "/profile", "/models/" + model.slug],

@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import localBenchmarks from "@/data/local-benchmarks.json";
+import { metrics, qualityPath, workloads } from "@/lib/local-quality";
 import { entries, guide } from "@/journal/content";
 import { agentPairs } from "@/lib/agents";
 import { catalog, isComparable, SITE_URL } from "@/lib/catalog";
@@ -19,6 +20,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     data("/models", 0.9),
     data("/compare", 0.8),
     { url: SITE_URL + "/local", lastModified: localBenchmarks.date },
+    ...workloads.flatMap(w => metrics(w).map(m => ({ url: SITE_URL + qualityPath(w, m), lastModified: localBenchmarks.date }))),
     data("/agents", 0.8),
     ...agentPairs().map((p) => data(`/agents/${p.slug}`, 0.7)),
     data("/api", 0.5),

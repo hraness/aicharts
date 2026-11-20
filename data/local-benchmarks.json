@@ -5,18 +5,30 @@
     {
       "name": "Language",
       "metric": "MMLU-Pro",
-      "description": "Accuracy on multiple-choice reasoning questions.",
+      "description": "Accuracy on multi-choice questions across 14 subject areas.",
       "publisher": "Qwen evaluation",
-      "source": "https://huggingface.co/Qwen/Qwen3.5-4B#evaluation",
+      "source": "https://huggingface.co/Qwen/Qwen3.5-4B/blob/851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a/README.md#evaluation",
       "maximum": 100,
       "unit": "%",
       "lowerIsBetter": false,
       "models": [
         {
+          "name": "Qwen3-Next-80B-A3B-Thinking",
+          "score": 82.7,
+          "repository": "Qwen/Qwen3-Next-80B-A3B-Thinking",
+          "storedParameters": 81324862720
+        },
+        {
           "name": "Qwen3.5-9B",
           "score": 82.5,
           "repository": "Qwen/Qwen3.5-9B",
           "storedParameters": 9653104368
+        },
+        {
+          "name": "Qwen3-30B-A3B-Thinking-2507",
+          "score": 80.9,
+          "repository": "Qwen/Qwen3-30B-A3B-Thinking-2507",
+          "storedParameters": 30532122624
         },
         {
           "name": "gpt-oss-120b",
@@ -36,14 +48,487 @@
           "repository": "openai/gpt-oss-20b",
           "storedParameters": 20914757184
         }
-      ]
+      ],
+      "comparisons": [
+        {
+          "metric": "GPQA Diamond",
+          "description": "Accuracy on graduate-level science questions from the Diamond split.",
+          "publisher": "Qwen evaluation",
+          "source": "https://huggingface.co/Qwen/Qwen3.5-4B/blob/851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a/README.md#evaluation",
+          "maximum": 100,
+          "unit": "%",
+          "lowerIsBetter": false,
+          "models": [
+            {
+              "name": "Qwen3.5-9B",
+              "score": 81.7,
+              "repository": "Qwen/Qwen3.5-9B",
+              "storedParameters": 9653104368
+            },
+            {
+              "name": "gpt-oss-120b",
+              "score": 80.1,
+              "repository": "openai/gpt-oss-120b",
+              "storedParameters": 116829156672
+            },
+            {
+              "name": "Qwen3-Next-80B-A3B-Thinking",
+              "score": 77.2,
+              "repository": "Qwen/Qwen3-Next-80B-A3B-Thinking",
+              "storedParameters": 81324862720
+            },
+            {
+              "name": "Qwen3.5-4B",
+              "score": 76.2,
+              "repository": "Qwen/Qwen3.5-4B",
+              "storedParameters": 4659865088
+            },
+            {
+              "name": "Qwen3-30B-A3B-Thinking-2507",
+              "score": 73.4,
+              "repository": "Qwen/Qwen3-30B-A3B-Thinking-2507",
+              "storedParameters": 30532122624
+            },
+            {
+              "name": "gpt-oss-20b",
+              "score": 71.5,
+              "repository": "openai/gpt-oss-20b",
+              "storedParameters": 20914757184
+            }
+          ]
+        },
+        {
+          "metric": "IFEval",
+          "description": "Adherence to explicitly verifiable instructions.",
+          "publisher": "Qwen evaluation",
+          "source": "https://huggingface.co/Qwen/Qwen3.5-4B/blob/851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a/README.md#evaluation",
+          "maximum": 100,
+          "unit": "%",
+          "lowerIsBetter": false,
+          "models": [
+            {
+              "name": "Qwen3.5-9B",
+              "score": 91.5,
+              "repository": "Qwen/Qwen3.5-9B",
+              "storedParameters": 9653104368
+            },
+            {
+              "name": "Qwen3.5-4B",
+              "score": 89.8,
+              "repository": "Qwen/Qwen3.5-4B",
+              "storedParameters": 4659865088
+            },
+            {
+              "name": "gpt-oss-120b",
+              "score": 88.9,
+              "repository": "openai/gpt-oss-120b",
+              "storedParameters": 116829156672
+            },
+            {
+              "name": "Qwen3-Next-80B-A3B-Thinking",
+              "score": 88.9,
+              "repository": "Qwen/Qwen3-Next-80B-A3B-Thinking",
+              "storedParameters": 81324862720
+            },
+            {
+              "name": "Qwen3-30B-A3B-Thinking-2507",
+              "score": 88.9,
+              "repository": "Qwen/Qwen3-30B-A3B-Thinking-2507",
+              "storedParameters": 30532122624
+            },
+            {
+              "name": "gpt-oss-20b",
+              "score": 88.2,
+              "repository": "openai/gpt-oss-20b",
+              "storedParameters": 20914757184
+            }
+          ]
+        },
+        {
+          "metric": "LongBench v2",
+          "description": "Accuracy on questions that depend on long input documents.",
+          "publisher": "Qwen evaluation",
+          "source": "https://huggingface.co/Qwen/Qwen3.5-4B/blob/851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a/README.md#evaluation",
+          "maximum": 100,
+          "unit": "%",
+          "lowerIsBetter": false,
+          "models": [
+            {
+              "name": "Qwen3.5-9B",
+              "score": 55.2,
+              "repository": "Qwen/Qwen3.5-9B",
+              "storedParameters": 9653104368
+            },
+            {
+              "name": "Qwen3.5-4B",
+              "score": 50.0,
+              "repository": "Qwen/Qwen3.5-4B",
+              "storedParameters": 4659865088
+            },
+            {
+              "name": "gpt-oss-120b",
+              "score": 48.2,
+              "repository": "openai/gpt-oss-120b",
+              "storedParameters": 116829156672
+            },
+            {
+              "name": "Qwen3-Next-80B-A3B-Thinking",
+              "score": 48.0,
+              "repository": "Qwen/Qwen3-Next-80B-A3B-Thinking",
+              "storedParameters": 81324862720
+            },
+            {
+              "name": "gpt-oss-20b",
+              "score": 45.6,
+              "repository": "openai/gpt-oss-20b",
+              "storedParameters": 20914757184
+            },
+            {
+              "name": "Qwen3-30B-A3B-Thinking-2507",
+              "score": 44.8,
+              "repository": "Qwen/Qwen3-30B-A3B-Thinking-2507",
+              "storedParameters": 30532122624
+            }
+          ]
+        },
+        {
+          "metric": "LiveCodeBench v6",
+          "description": "Performance on coding challenges in the v6 evaluation window.",
+          "publisher": "Qwen evaluation",
+          "source": "https://huggingface.co/Qwen/Qwen3.5-4B/blob/851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a/README.md#evaluation",
+          "maximum": 100,
+          "unit": "%",
+          "lowerIsBetter": false,
+          "models": [
+            {
+              "name": "gpt-oss-120b",
+              "score": 82.7,
+              "repository": "openai/gpt-oss-120b",
+              "storedParameters": 116829156672
+            },
+            {
+              "name": "gpt-oss-20b",
+              "score": 74.6,
+              "repository": "openai/gpt-oss-20b",
+              "storedParameters": 20914757184
+            },
+            {
+              "name": "Qwen3-Next-80B-A3B-Thinking",
+              "score": 68.7,
+              "repository": "Qwen/Qwen3-Next-80B-A3B-Thinking",
+              "storedParameters": 81324862720
+            },
+            {
+              "name": "Qwen3-30B-A3B-Thinking-2507",
+              "score": 66.0,
+              "repository": "Qwen/Qwen3-30B-A3B-Thinking-2507",
+              "storedParameters": 30532122624
+            },
+            {
+              "name": "Qwen3.5-9B",
+              "score": 65.6,
+              "repository": "Qwen/Qwen3.5-9B",
+              "storedParameters": 9653104368
+            },
+            {
+              "name": "Qwen3.5-4B",
+              "score": 55.8,
+              "repository": "Qwen/Qwen3.5-4B",
+              "storedParameters": 4659865088
+            }
+          ]
+        },
+        {
+          "metric": "Open LLM Leaderboard · MMLU-Pro",
+          "description": "Multiple-choice knowledge and reasoning. Raw scores from the archived Hugging Face evaluation, expressed as percentages. All selected entries used original BF16 weights.",
+          "publisher": "Hugging Face Open LLM Leaderboard v2",
+          "source": "https://huggingface.co/datasets/open-llm-leaderboard/contents/tree/9c09a7cae43334062a82cb164f2ef255013dafa2",
+          "unit": "%",
+          "maximum": 100,
+          "lowerIsBetter": false,
+          "models": [
+            {
+              "name": "Qwen2.5-32B-Instruct",
+              "repository": "Qwen/Qwen2.5-32B-Instruct",
+              "score": 56.67
+            },
+            {
+              "name": "Llama-3.3-70B-Instruct",
+              "repository": "meta-llama/Llama-3.3-70B-Instruct",
+              "score": 53.32
+            },
+            {
+              "name": "DeepSeek-R1-Distill-Qwen-14B",
+              "repository": "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B",
+              "score": 46.67
+            },
+            {
+              "name": "gemma-2-27b-it",
+              "repository": "google/gemma-2-27b-it",
+              "score": 44.51
+            },
+            {
+              "name": "Qwen2.5-7B-Instruct",
+              "repository": "Qwen/Qwen2.5-7B-Instruct",
+              "score": 42.87
+            },
+            {
+              "name": "Falcon3-7B-Instruct",
+              "repository": "tiiuae/Falcon3-7B-Instruct",
+              "score": 40.87
+            },
+            {
+              "name": "Phi-4-mini-instruct",
+              "repository": "microsoft/Phi-4-mini-instruct",
+              "score": 39.32
+            },
+            {
+              "name": "gemma-2-9b-it",
+              "repository": "google/gemma-2-9b-it",
+              "score": 38.75
+            },
+            {
+              "name": "Mixtral-8x7B-Instruct-v0.1",
+              "repository": "mistralai/Mixtral-8x7B-Instruct-v0.1",
+              "score": 36.92
+            },
+            {
+              "name": "Meta-Llama-3-8B-Instruct",
+              "repository": "meta-llama/Meta-Llama-3-8B-Instruct",
+              "score": 36.64
+            },
+            {
+              "name": "c4ai-command-r7b-12-2024",
+              "repository": "CohereForAI/c4ai-command-r7b-12-2024",
+              "score": 35.72
+            },
+            {
+              "name": "Mistral-Nemo-Instruct-2407",
+              "repository": "mistralai/Mistral-Nemo-Instruct-2407",
+              "score": 35.17
+            },
+            {
+              "name": "granite-3.2-8b-instruct",
+              "repository": "ibm-granite/granite-3.2-8b-instruct",
+              "score": 35.12
+            },
+            {
+              "name": "Ministral-8B-Instruct-2410",
+              "repository": "mistralai/Ministral-8B-Instruct-2410",
+              "score": 32.91
+            },
+            {
+              "name": "Qwen2.5-3B-Instruct",
+              "repository": "Qwen/Qwen2.5-3B-Instruct",
+              "score": 32.55
+            },
+            {
+              "name": "Llama-3.2-3B-Instruct",
+              "repository": "meta-llama/Llama-3.2-3B-Instruct",
+              "score": 31.95
+            },
+            {
+              "name": "Llama-3.1-Tulu-3-8B",
+              "repository": "allenai/Llama-3.1-Tulu-3-8B",
+              "score": 28.27
+            },
+            {
+              "name": "granite-3.2-2b-instruct",
+              "repository": "ibm-granite/granite-3.2-2b-instruct",
+              "score": 27.83
+            },
+            {
+              "name": "gemma-2-2b-it",
+              "repository": "google/gemma-2-2b-it",
+              "score": 25.5
+            },
+            {
+              "name": "SmolLM2-1.7B-Instruct",
+              "repository": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
+              "score": 20.54
+            },
+            {
+              "name": "Falcon3-1B-Instruct",
+              "repository": "tiiuae/Falcon3-1B-Instruct",
+              "score": 18.38
+            },
+            {
+              "name": "Qwen2.5-0.5B-Instruct",
+              "repository": "Qwen/Qwen2.5-0.5B-Instruct",
+              "score": 16.97
+            },
+            {
+              "name": "Llama-3.2-1B-Instruct",
+              "repository": "meta-llama/Llama-3.2-1B-Instruct",
+              "score": 16.82
+            },
+            {
+              "name": "DeepSeek-R1-Distill-Qwen-1.5B",
+              "repository": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
+              "score": 11.87
+            },
+            {
+              "name": "SmolLM2-360M-Instruct",
+              "repository": "HuggingFaceTB/SmolLM2-360M-Instruct",
+              "score": 11.17
+            },
+            {
+              "name": "SmolLM2-135M-Instruct",
+              "repository": "HuggingFaceTB/SmolLM2-135M-Instruct",
+              "score": 11.15
+            }
+          ]
+        },
+        {
+          "metric": "Open LLM Leaderboard · IFEval",
+          "description": "Following verifiable instructions. Raw scores from the archived Hugging Face evaluation, expressed as percentages. All selected entries used original BF16 weights.",
+          "publisher": "Hugging Face Open LLM Leaderboard v2",
+          "source": "https://huggingface.co/datasets/open-llm-leaderboard/contents/tree/9c09a7cae43334062a82cb164f2ef255013dafa2",
+          "unit": "%",
+          "maximum": 100,
+          "lowerIsBetter": false,
+          "models": [
+            {
+              "name": "Llama-3.3-70B-Instruct",
+              "repository": "meta-llama/Llama-3.3-70B-Instruct",
+              "score": 89.98
+            },
+            {
+              "name": "Qwen2.5-32B-Instruct",
+              "repository": "Qwen/Qwen2.5-32B-Instruct",
+              "score": 83.46
+            },
+            {
+              "name": "Llama-3.1-Tulu-3-8B",
+              "repository": "allenai/Llama-3.1-Tulu-3-8B",
+              "score": 82.67
+            },
+            {
+              "name": "gemma-2-27b-it",
+              "repository": "google/gemma-2-27b-it",
+              "score": 79.78
+            },
+            {
+              "name": "c4ai-command-r7b-12-2024",
+              "repository": "CohereForAI/c4ai-command-r7b-12-2024",
+              "score": 77.13
+            },
+            {
+              "name": "Falcon3-7B-Instruct",
+              "repository": "tiiuae/Falcon3-7B-Instruct",
+              "score": 76.12
+            },
+            {
+              "name": "Qwen2.5-7B-Instruct",
+              "repository": "Qwen/Qwen2.5-7B-Instruct",
+              "score": 75.85
+            },
+            {
+              "name": "gemma-2-9b-it",
+              "repository": "google/gemma-2-9b-it",
+              "score": 74.36
+            },
+            {
+              "name": "Meta-Llama-3-8B-Instruct",
+              "repository": "meta-llama/Meta-Llama-3-8B-Instruct",
+              "score": 74.08
+            },
+            {
+              "name": "Llama-3.2-3B-Instruct",
+              "repository": "meta-llama/Llama-3.2-3B-Instruct",
+              "score": 73.93
+            },
+            {
+              "name": "Phi-4-mini-instruct",
+              "repository": "microsoft/Phi-4-mini-instruct",
+              "score": 73.78
+            },
+            {
+              "name": "granite-3.2-8b-instruct",
+              "repository": "ibm-granite/granite-3.2-8b-instruct",
+              "score": 72.75
+            },
+            {
+              "name": "Qwen2.5-3B-Instruct",
+              "repository": "Qwen/Qwen2.5-3B-Instruct",
+              "score": 64.75
+            },
+            {
+              "name": "Mistral-Nemo-Instruct-2407",
+              "repository": "mistralai/Mistral-Nemo-Instruct-2407",
+              "score": 63.8
+            },
+            {
+              "name": "granite-3.2-2b-instruct",
+              "repository": "ibm-granite/granite-3.2-2b-instruct",
+              "score": 61.52
+            },
+            {
+              "name": "Ministral-8B-Instruct-2410",
+              "repository": "mistralai/Ministral-8B-Instruct-2410",
+              "score": 58.96
+            },
+            {
+              "name": "Llama-3.2-1B-Instruct",
+              "repository": "meta-llama/Llama-3.2-1B-Instruct",
+              "score": 56.98
+            },
+            {
+              "name": "gemma-2-2b-it",
+              "repository": "google/gemma-2-2b-it",
+              "score": 56.68
+            },
+            {
+              "name": "Mixtral-8x7B-Instruct-v0.1",
+              "repository": "mistralai/Mixtral-8x7B-Instruct-v0.1",
+              "score": 55.99
+            },
+            {
+              "name": "Falcon3-1B-Instruct",
+              "repository": "tiiuae/Falcon3-1B-Instruct",
+              "score": 55.57
+            },
+            {
+              "name": "SmolLM2-1.7B-Instruct",
+              "repository": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
+              "score": 53.68
+            },
+            {
+              "name": "DeepSeek-R1-Distill-Qwen-14B",
+              "repository": "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B",
+              "score": 43.82
+            },
+            {
+              "name": "SmolLM2-360M-Instruct",
+              "repository": "HuggingFaceTB/SmolLM2-360M-Instruct",
+              "score": 38.42
+            },
+            {
+              "name": "DeepSeek-R1-Distill-Qwen-1.5B",
+              "repository": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
+              "score": 34.63
+            },
+            {
+              "name": "Qwen2.5-0.5B-Instruct",
+              "repository": "Qwen/Qwen2.5-0.5B-Instruct",
+              "score": 30.71
+            },
+            {
+              "name": "SmolLM2-135M-Instruct",
+              "repository": "HuggingFaceTB/SmolLM2-135M-Instruct",
+              "score": 28.83
+            }
+          ]
+        }
+      ],
+      "interpretation": "Qwen3.5-9B scores 82.5 on MMLU-Pro and 65.6 on LiveCodeBench. The 120B gpt-oss checkpoint scores 80.8 and 82.7 respectively. Select the coding, instruction or long-document test that matches your workload."
     },
     {
       "name": "Embeddings",
       "metric": "Multilingual MTEB",
       "description": "Mean task score across multilingual embedding tasks.",
       "publisher": "Qwen’s MTEB results",
-      "source": "https://huggingface.co/Qwen/Qwen3-Embedding-0.6B#mteb-multilingual",
+      "source": "https://huggingface.co/Qwen/Qwen3-Embedding-0.6B/blob/97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3/README.md#mteb-multilingual",
       "maximum": 100,
       "unit": "",
       "lowerIsBetter": false,
@@ -73,22 +558,251 @@
           "storedParameters": 559890432
         },
         {
+          "name": "gte-Qwen2-7b-Instruct",
+          "score": 62.51,
+          "repository": "Alibaba-NLP/gte-Qwen2-7B-instruct",
+          "storedParameters": 7612620288
+        },
+        {
+          "name": "GritLM-7B",
+          "score": 60.92,
+          "repository": "GritLM/GritLM-7B",
+          "storedParameters": 7241732096
+        },
+        {
           "name": "BGE-M3",
           "score": 59.56,
           "repository": "BAAI/bge-m3"
+        },
+        {
+          "name": "gte-Qwen2-1.5B-instruct",
+          "score": 59.45,
+          "repository": "Alibaba-NLP/gte-Qwen2-1.5B-instruct",
+          "storedParameters": 1776197120
+        },
+        {
+          "name": "NV-Embed-v2",
+          "score": 56.29,
+          "repository": "nvidia/NV-Embed-v2",
+          "storedParameters": 7851016192
         }
-      ]
+      ],
+      "comparisons": [
+        {
+          "metric": "Multilingual retrieval",
+          "description": "Finding relevant documents for a query in the multilingual MTEB retrieval tasks.",
+          "publisher": "Qwen’s MTEB results",
+          "source": "https://huggingface.co/Qwen/Qwen3-Embedding-0.6B/blob/97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3/README.md#mteb-multilingual",
+          "maximum": 100,
+          "unit": "",
+          "lowerIsBetter": false,
+          "models": [
+            {
+              "name": "Qwen3-Embedding-8B",
+              "score": 70.88,
+              "repository": "Qwen/Qwen3-Embedding-8B",
+              "storedParameters": 7567295488
+            },
+            {
+              "name": "Qwen3-Embedding-4B",
+              "score": 69.6,
+              "repository": "Qwen/Qwen3-Embedding-4B",
+              "storedParameters": 4021774336
+            },
+            {
+              "name": "Qwen3-Embedding-0.6B",
+              "score": 64.64,
+              "repository": "Qwen/Qwen3-Embedding-0.6B",
+              "storedParameters": 595776512
+            },
+            {
+              "name": "gte-Qwen2-1.5B-instruct",
+              "score": 60.78,
+              "repository": "Alibaba-NLP/gte-Qwen2-1.5B-instruct",
+              "storedParameters": 1776197120
+            },
+            {
+              "name": "gte-Qwen2-7b-Instruct",
+              "score": 60.08,
+              "repository": "Alibaba-NLP/gte-Qwen2-7B-instruct",
+              "storedParameters": 7612620288
+            },
+            {
+              "name": "GritLM-7B",
+              "score": 58.31,
+              "repository": "GritLM/GritLM-7B",
+              "storedParameters": 7241732096
+            },
+            {
+              "name": "multilingual-e5-large-instruct",
+              "score": 57.12,
+              "repository": "intfloat/multilingual-e5-large-instruct",
+              "storedParameters": 559890432
+            },
+            {
+              "name": "NV-Embed-v2",
+              "score": 56.72,
+              "repository": "nvidia/NV-Embed-v2",
+              "storedParameters": 7851016192
+            },
+            {
+              "name": "BGE-M3",
+              "score": 54.6,
+              "repository": "BAAI/bge-m3"
+            }
+          ]
+        },
+        {
+          "metric": "Bitext mining",
+          "description": "Finding translations of sentences across languages.",
+          "publisher": "Qwen’s MTEB results",
+          "source": "https://huggingface.co/Qwen/Qwen3-Embedding-0.6B/blob/97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3/README.md#mteb-multilingual",
+          "maximum": 100,
+          "unit": "",
+          "lowerIsBetter": false,
+          "models": [
+            {
+              "name": "Qwen3-Embedding-8B",
+              "score": 80.89,
+              "repository": "Qwen/Qwen3-Embedding-8B",
+              "storedParameters": 7567295488
+            },
+            {
+              "name": "multilingual-e5-large-instruct",
+              "score": 80.13,
+              "repository": "intfloat/multilingual-e5-large-instruct",
+              "storedParameters": 559890432
+            },
+            {
+              "name": "Qwen3-Embedding-4B",
+              "score": 79.36,
+              "repository": "Qwen/Qwen3-Embedding-4B",
+              "storedParameters": 4021774336
+            },
+            {
+              "name": "BGE-M3",
+              "score": 79.11,
+              "repository": "BAAI/bge-m3"
+            },
+            {
+              "name": "gte-Qwen2-7b-Instruct",
+              "score": 73.92,
+              "repository": "Alibaba-NLP/gte-Qwen2-7B-instruct",
+              "storedParameters": 7612620288
+            },
+            {
+              "name": "Qwen3-Embedding-0.6B",
+              "score": 72.22,
+              "repository": "Qwen/Qwen3-Embedding-0.6B",
+              "storedParameters": 595776512
+            },
+            {
+              "name": "GritLM-7B",
+              "score": 70.53,
+              "repository": "GritLM/GritLM-7B",
+              "storedParameters": 7241732096
+            },
+            {
+              "name": "gte-Qwen2-1.5B-instruct",
+              "score": 62.51,
+              "repository": "Alibaba-NLP/gte-Qwen2-1.5B-instruct",
+              "storedParameters": 1776197120
+            },
+            {
+              "name": "NV-Embed-v2",
+              "score": 57.84,
+              "repository": "nvidia/NV-Embed-v2",
+              "storedParameters": 7851016192
+            }
+          ]
+        },
+        {
+          "metric": "Semantic similarity",
+          "description": "Agreement with human ratings of sentence-pair similarity.",
+          "publisher": "Qwen’s MTEB results",
+          "source": "https://huggingface.co/Qwen/Qwen3-Embedding-0.6B/blob/97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3/README.md#mteb-multilingual",
+          "maximum": 100,
+          "unit": "",
+          "lowerIsBetter": false,
+          "models": [
+            {
+              "name": "Qwen3-Embedding-8B",
+              "score": 81.08,
+              "repository": "Qwen/Qwen3-Embedding-8B",
+              "storedParameters": 7567295488
+            },
+            {
+              "name": "Qwen3-Embedding-4B",
+              "score": 80.86,
+              "repository": "Qwen/Qwen3-Embedding-4B",
+              "storedParameters": 4021774336
+            },
+            {
+              "name": "multilingual-e5-large-instruct",
+              "score": 76.81,
+              "repository": "intfloat/multilingual-e5-large-instruct",
+              "storedParameters": 559890432
+            },
+            {
+              "name": "Qwen3-Embedding-0.6B",
+              "score": 76.17,
+              "repository": "Qwen/Qwen3-Embedding-0.6B",
+              "storedParameters": 595776512
+            },
+            {
+              "name": "BGE-M3",
+              "score": 74.12,
+              "repository": "BAAI/bge-m3"
+            },
+            {
+              "name": "gte-Qwen2-7b-Instruct",
+              "score": 73.98,
+              "repository": "Alibaba-NLP/gte-Qwen2-7B-instruct",
+              "storedParameters": 7612620288
+            },
+            {
+              "name": "GritLM-7B",
+              "score": 73.33,
+              "repository": "GritLM/GritLM-7B",
+              "storedParameters": 7241732096
+            },
+            {
+              "name": "gte-Qwen2-1.5B-instruct",
+              "score": 71.61,
+              "repository": "Alibaba-NLP/gte-Qwen2-1.5B-instruct",
+              "storedParameters": 1776197120
+            },
+            {
+              "name": "NV-Embed-v2",
+              "score": 71.1,
+              "repository": "nvidia/NV-Embed-v2",
+              "storedParameters": 7851016192
+            }
+          ]
+        }
+      ],
+      "interpretation": "For multilingual search, compare retrieval directly. BGE-M3 scores 79.11 on bitext mining and 54.60 on retrieval. A model that pairs translations well can still miss relevant passages."
     },
     {
       "name": "Image generation",
       "metric": "GenEval",
-      "description": "How well a 1024px image follows instructions about objects, counts, colors and positions.",
+      "description": "Object composition in 1024px images, including counts, colors and positions.",
       "publisher": "NVIDIA Sana comparison",
-      "source": "https://github.com/NVlabs/Sana#image-generation-1024px",
+      "source": "https://github.com/NVlabs/Sana/blob/27303b8de8e3f02f5dc96acf14705a0e04fca355/README.md#image-generation-1024px",
       "maximum": 1,
       "unit": "",
       "lowerIsBetter": false,
       "models": [
+        {
+          "name": "SANA 1.5 1.6B",
+          "score": 0.82,
+          "repository": "Efficient-Large-Model/SANA1.5_1.6B_1024px_diffusers"
+        },
+        {
+          "name": "SANA 1.5 4.8B",
+          "score": 0.81,
+          "repository": "Efficient-Large-Model/SANA1.5_4.8B_1024px_diffusers"
+        },
         {
           "name": "Sana-1.6B MultiLing",
           "score": 0.69,
@@ -105,15 +819,129 @@
           "repository": "black-forest-labs/FLUX.1-dev",
           "storedParameters": 11901408320
         }
-      ]
+      ],
+      "comparisons": [
+        {
+          "metric": "DPG-Bench",
+          "description": "Following dense prompts with multiple objects, attributes and relationships.",
+          "publisher": "NVIDIA Sana comparison",
+          "source": "https://github.com/NVlabs/Sana/blob/27303b8de8e3f02f5dc96acf14705a0e04fca355/README.md#image-generation-1024px",
+          "maximum": 100,
+          "unit": "",
+          "lowerIsBetter": false,
+          "models": [
+            {
+              "name": "SANA 1.5 4.8B",
+              "score": 84.7,
+              "repository": "Efficient-Large-Model/SANA1.5_4.8B_1024px_diffusers"
+            },
+            {
+              "name": "Sana-1.6B MultiLing",
+              "score": 84.5,
+              "repository": "Efficient-Large-Model/Sana_1600M_1024px_MultiLing"
+            },
+            {
+              "name": "SANA 1.5 1.6B",
+              "score": 84.5,
+              "repository": "Efficient-Large-Model/SANA1.5_1.6B_1024px_diffusers"
+            },
+            {
+              "name": "Sana-0.6B (1024px)",
+              "score": 84.2,
+              "repository": "Efficient-Large-Model/Sana_600M_1024px"
+            },
+            {
+              "name": "FLUX.1-dev",
+              "score": 84.0,
+              "repository": "black-forest-labs/FLUX.1-dev",
+              "storedParameters": 11901408320
+            }
+          ]
+        },
+        {
+          "metric": "FID",
+          "description": "Distance between generated and reference image distributions under the publisher’s 1024px protocol.",
+          "publisher": "NVIDIA Sana comparison",
+          "source": "https://github.com/NVlabs/Sana/blob/27303b8de8e3f02f5dc96acf14705a0e04fca355/README.md#image-generation-1024px",
+          "maximum": 12,
+          "unit": "",
+          "lowerIsBetter": true,
+          "models": [
+            {
+              "name": "Sana-0.6B (1024px)",
+              "score": 5.61,
+              "repository": "Efficient-Large-Model/Sana_600M_1024px"
+            },
+            {
+              "name": "SANA 1.5 1.6B",
+              "score": 5.7,
+              "repository": "Efficient-Large-Model/SANA1.5_1.6B_1024px_diffusers"
+            },
+            {
+              "name": "Sana-1.6B MultiLing",
+              "score": 5.92,
+              "repository": "Efficient-Large-Model/Sana_1600M_1024px_MultiLing"
+            },
+            {
+              "name": "SANA 1.5 4.8B",
+              "score": 5.99,
+              "repository": "Efficient-Large-Model/SANA1.5_4.8B_1024px_diffusers"
+            },
+            {
+              "name": "FLUX.1-dev",
+              "score": 10.15,
+              "repository": "black-forest-labs/FLUX.1-dev",
+              "storedParameters": 11901408320
+            }
+          ]
+        },
+        {
+          "metric": "CLIP score",
+          "description": "Alignment between the image and its text prompt under the publisher’s 1024px protocol.",
+          "publisher": "NVIDIA Sana comparison",
+          "source": "https://github.com/NVlabs/Sana/blob/27303b8de8e3f02f5dc96acf14705a0e04fca355/README.md#image-generation-1024px",
+          "maximum": 32,
+          "unit": "",
+          "lowerIsBetter": false,
+          "models": [
+            {
+              "name": "SANA 1.5 4.8B",
+              "score": 29.23,
+              "repository": "Efficient-Large-Model/SANA1.5_4.8B_1024px_diffusers"
+            },
+            {
+              "name": "SANA 1.5 1.6B",
+              "score": 29.12,
+              "repository": "Efficient-Large-Model/SANA1.5_1.6B_1024px_diffusers"
+            },
+            {
+              "name": "Sana-1.6B MultiLing",
+              "score": 28.94,
+              "repository": "Efficient-Large-Model/Sana_1600M_1024px_MultiLing"
+            },
+            {
+              "name": "Sana-0.6B (1024px)",
+              "score": 28.8,
+              "repository": "Efficient-Large-Model/Sana_600M_1024px"
+            },
+            {
+              "name": "FLUX.1-dev",
+              "score": 27.47,
+              "repository": "black-forest-labs/FLUX.1-dev",
+              "storedParameters": 11901408320
+            }
+          ]
+        }
+      ],
+      "interpretation": "At 1024px, SANA 1.5 1.6B and 4.8B score 0.82 and 0.81 on GenEval. Their DPG scores reverse the order, 84.5 and 84.7. These small gaps make the target prompt and available memory relevant to the choice."
     },
     {
       "name": "Transcription",
       "metric": "LibriSpeech test-clean",
-      "description": "English word error rate on clean read speech.",
+      "description": "English word error rate on clean audiobook speech.",
       "publisher": "Hugging Face Open ASR Leaderboard",
       "source": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard",
-      "maximum": 2.5,
+      "maximum": 5,
       "unit": "%",
       "lowerIsBetter": true,
       "models": [
@@ -135,19 +963,192 @@
           "storedParameters": 1543490560
         },
         {
+          "name": "Canary 1B v2",
+          "score": 1.76,
+          "repository": "nvidia/canary-1b-v2",
+          "storedParameters": 978998272
+        },
+        {
+          "name": "Distil-Whisper large-v3.5",
+          "score": 1.94,
+          "repository": "distil-whisper/distil-large-v3.5",
+          "storedParameters": 756405760
+        },
+        {
           "name": "Whisper large-v3-turbo",
           "score": 2.13,
           "repository": "openai/whisper-large-v3-turbo",
           "storedParameters": 808878080
+        },
+        {
+          "name": "Niagara 19M batch.en",
+          "score": 4.74,
+          "repository": "abr-ai/niagara-19m-batch.en"
         }
-      ]
+      ],
+      "comparisons": [
+        {
+          "metric": "LibriSpeech test-other",
+          "description": "English word error rate on the harder audiobook split.",
+          "publisher": "Hugging Face Open ASR Leaderboard",
+          "source": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard",
+          "maximum": 8,
+          "unit": "%",
+          "lowerIsBetter": true,
+          "models": [
+            {
+              "name": "Parakeet TDT 0.6B v2",
+              "score": 2.73,
+              "repository": "nvidia/parakeet-tdt-0.6b-v2"
+            },
+            {
+              "name": "Canary 1B v2",
+              "score": 3.07,
+              "repository": "nvidia/canary-1b-v2",
+              "storedParameters": 978998272
+            },
+            {
+              "name": "Parakeet TDT 0.6B v3",
+              "score": 3.13,
+              "repository": "nvidia/parakeet-tdt-0.6b-v3",
+              "storedParameters": 627057286
+            },
+            {
+              "name": "Whisper large-v3",
+              "score": 3.52,
+              "repository": "openai/whisper-large-v3",
+              "storedParameters": 1543490560
+            },
+            {
+              "name": "Whisper large-v3-turbo",
+              "score": 3.71,
+              "repository": "openai/whisper-large-v3-turbo",
+              "storedParameters": 808878080
+            },
+            {
+              "name": "Distil-Whisper large-v3.5",
+              "score": 4.52,
+              "repository": "distil-whisper/distil-large-v3.5",
+              "storedParameters": 756405760
+            },
+            {
+              "name": "Niagara 19M batch.en",
+              "score": 7.01,
+              "repository": "abr-ai/niagara-19m-batch.en"
+            }
+          ]
+        },
+        {
+          "metric": "AMI cleaned",
+          "description": "English word error rate on meeting recordings with the leaderboard’s cleaned references.",
+          "publisher": "Hugging Face Open ASR Leaderboard",
+          "source": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard",
+          "maximum": 20,
+          "unit": "%",
+          "lowerIsBetter": true,
+          "models": [
+            {
+              "name": "Parakeet TDT 0.6B v2",
+              "score": 9.09,
+              "repository": "nvidia/parakeet-tdt-0.6b-v2"
+            },
+            {
+              "name": "Parakeet TDT 0.6B v3",
+              "score": 9.42,
+              "repository": "nvidia/parakeet-tdt-0.6b-v3",
+              "storedParameters": 627057286
+            },
+            {
+              "name": "Distil-Whisper large-v3.5",
+              "score": 12.09,
+              "repository": "distil-whisper/distil-large-v3.5",
+              "storedParameters": 756405760
+            },
+            {
+              "name": "Canary 1B v2",
+              "score": 13.03,
+              "repository": "nvidia/canary-1b-v2",
+              "storedParameters": 978998272
+            },
+            {
+              "name": "Whisper large-v3",
+              "score": 13.63,
+              "repository": "openai/whisper-large-v3",
+              "storedParameters": 1543490560
+            },
+            {
+              "name": "Whisper large-v3-turbo",
+              "score": 13.88,
+              "repository": "openai/whisper-large-v3-turbo",
+              "storedParameters": 808878080
+            },
+            {
+              "name": "Niagara 19M batch.en",
+              "score": 16.17,
+              "repository": "abr-ai/niagara-19m-batch.en"
+            }
+          ]
+        },
+        {
+          "metric": "Earnings22 cleaned",
+          "description": "English word error rate on the cleaned, audio-aligned and chunked earnings-call split.",
+          "publisher": "Hugging Face Open ASR Leaderboard",
+          "source": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard",
+          "maximum": 20,
+          "unit": "%",
+          "lowerIsBetter": true,
+          "models": [
+            {
+              "name": "Parakeet TDT 0.6B v3",
+              "score": 5.85,
+              "repository": "nvidia/parakeet-tdt-0.6b-v3",
+              "storedParameters": 627057286
+            },
+            {
+              "name": "Parakeet TDT 0.6B v2",
+              "score": 6.76,
+              "repository": "nvidia/parakeet-tdt-0.6b-v2"
+            },
+            {
+              "name": "Canary 1B v2",
+              "score": 7.28,
+              "repository": "nvidia/canary-1b-v2",
+              "storedParameters": 978998272
+            },
+            {
+              "name": "Distil-Whisper large-v3.5",
+              "score": 7.7,
+              "repository": "distil-whisper/distil-large-v3.5",
+              "storedParameters": 756405760
+            },
+            {
+              "name": "Whisper large-v3",
+              "score": 7.99,
+              "repository": "openai/whisper-large-v3",
+              "storedParameters": 1543490560
+            },
+            {
+              "name": "Whisper large-v3-turbo",
+              "score": 8.09,
+              "repository": "openai/whisper-large-v3-turbo",
+              "storedParameters": 808878080
+            },
+            {
+              "name": "Niagara 19M batch.en",
+              "score": 16.1,
+              "repository": "abr-ai/niagara-19m-batch.en"
+            }
+          ]
+        }
+      ],
+      "interpretation": "The best clean-audiobook result here is Parakeet v2 at 1.28% word error. For earnings calls, v3 leads at 5.85%. Meeting audio produces more errors across this group, so use that column for a meeting transcription shortlist."
     },
     {
       "name": "Vision & language",
       "metric": "MMMU-Pro",
-      "description": "Accuracy on questions that require interpreting images across academic subjects.",
+      "description": "Accuracy on multimodal questions across academic subjects.",
       "publisher": "Google Gemma 4 model card",
-      "source": "https://huggingface.co/google/gemma-4-E2B-it",
+      "source": "https://huggingface.co/google/gemma-4-E2B-it/blob/4adf15748de9e1a0097b6274cee9c15836c41c37/README.md",
       "maximum": 100,
       "unit": "%",
       "lowerIsBetter": false,
@@ -177,20 +1178,123 @@
           "storedParameters": 7996156490
         },
         {
+          "name": "Gemma 3 27B (thinking off)",
+          "score": 49.7,
+          "repository": "google/gemma-3-27b-it",
+          "storedParameters": 27432406640
+        },
+        {
           "name": "Gemma 4 E2B",
           "score": 44.2,
           "repository": "google/gemma-4-E2B-it",
           "storedParameters": 5123178051
         }
-      ]
+      ],
+      "comparisons": [
+        {
+          "metric": "OmniDocBench 1.5",
+          "description": "Average edit distance on document parsing. Smaller values mean the extracted content is closer to the reference.",
+          "publisher": "Google Gemma 4 model card",
+          "source": "https://huggingface.co/google/gemma-4-E2B-it/blob/4adf15748de9e1a0097b6274cee9c15836c41c37/README.md",
+          "maximum": 0.4,
+          "unit": "",
+          "lowerIsBetter": true,
+          "models": [
+            {
+              "name": "Gemma 4 31B",
+              "score": 0.131,
+              "repository": "google/gemma-4-31B-it",
+              "storedParameters": 31273088876
+            },
+            {
+              "name": "Gemma 4 26B A4B",
+              "score": 0.149,
+              "repository": "google/gemma-4-26B-A4B-it",
+              "storedParameters": 25805936206
+            },
+            {
+              "name": "Gemma 4 12B Unified",
+              "score": 0.164,
+              "repository": "google/gemma-4-12B-it",
+              "storedParameters": 11959730224
+            },
+            {
+              "name": "Gemma 4 E4B",
+              "score": 0.181,
+              "repository": "google/gemma-4-E4B-it",
+              "storedParameters": 7996156490
+            },
+            {
+              "name": "Gemma 4 E2B",
+              "score": 0.29,
+              "repository": "google/gemma-4-E2B-it",
+              "storedParameters": 5123178051
+            },
+            {
+              "name": "Gemma 3 27B (thinking off)",
+              "score": 0.365,
+              "repository": "google/gemma-3-27b-it",
+              "storedParameters": 27432406640
+            }
+          ]
+        },
+        {
+          "metric": "MATH-Vision",
+          "description": "Accuracy on mathematical reasoning problems that require visual input.",
+          "publisher": "Google Gemma 4 model card",
+          "source": "https://huggingface.co/google/gemma-4-E2B-it/blob/4adf15748de9e1a0097b6274cee9c15836c41c37/README.md",
+          "maximum": 100,
+          "unit": "%",
+          "lowerIsBetter": false,
+          "models": [
+            {
+              "name": "Gemma 4 31B",
+              "score": 85.6,
+              "repository": "google/gemma-4-31B-it",
+              "storedParameters": 31273088876
+            },
+            {
+              "name": "Gemma 4 26B A4B",
+              "score": 82.4,
+              "repository": "google/gemma-4-26B-A4B-it",
+              "storedParameters": 25805936206
+            },
+            {
+              "name": "Gemma 4 12B Unified",
+              "score": 79.7,
+              "repository": "google/gemma-4-12B-it",
+              "storedParameters": 11959730224
+            },
+            {
+              "name": "Gemma 4 E4B",
+              "score": 59.5,
+              "repository": "google/gemma-4-E4B-it",
+              "storedParameters": 7996156490
+            },
+            {
+              "name": "Gemma 4 E2B",
+              "score": 52.4,
+              "repository": "google/gemma-4-E2B-it",
+              "storedParameters": 5123178051
+            },
+            {
+              "name": "Gemma 3 27B (thinking off)",
+              "score": 46.0,
+              "repository": "google/gemma-3-27b-it",
+              "storedParameters": 27432406640
+            }
+          ]
+        }
+      ],
+      "interpretation": "For scanned pages, switch to OmniDocBench. Gemma 4 E4B reduces average edit distance to 0.181 from E2B’s 0.290. For figures in math problems, inspect MATH-Vision instead."
     },
     {
       "name": "Speech synthesis",
       "metric": "Seed-TTS test-zh",
-      "description": "Transcript error on synthesized Mandarin speech.",
+      "description": "Transcript error on synthesized Mandarin speech in the Seed-TTS test set.",
       "publisher": "Qwen speech evaluation",
-      "source": "https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice",
-      "maximum": 2,
+      "source": "https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice/blob/0c0e3051f131929182e2c023b9537f8b1c68adfe/README.md",
+      "maximum": 3,
       "unit": "%",
       "lowerIsBetter": true,
       "models": [
@@ -200,22 +1304,108 @@
           "repository": "FunAudioLLM/Fun-CosyVoice3-0.5B-2512"
         },
         {
-          "name": "Qwen3-TTS-25Hz-1.7B-Base",
-          "score": 1.1
+          "name": "Qwen3-TTS-12Hz-1.7B-Base",
+          "score": 0.77,
+          "repository": "Qwen/Qwen3-TTS-12Hz-1.7B-Base",
+          "storedParameters": 1928677440
+        },
+        {
+          "name": "Qwen3-TTS-12Hz-0.6B-Base",
+          "score": 0.92,
+          "repository": "Qwen/Qwen3-TTS-12Hz-0.6B-Base",
+          "storedParameters": 914643008
+        },
+        {
+          "name": "FireRedTTS 2",
+          "score": 1.14,
+          "repository": "FireRedTeam/FireRedTTS2"
+        },
+        {
+          "name": "Spark-TTS",
+          "score": 1.2,
+          "repository": "SparkAudio/Spark-TTS-0.5B"
         },
         {
           "name": "F5-TTS",
           "score": 1.56,
           "repository": "SWivid/F5-TTS"
+        },
+        {
+          "name": "Llasa-8B",
+          "score": 1.59,
+          "repository": "HKUSTAudio/Llasa-8B",
+          "storedParameters": 8567197696
+        },
+        {
+          "name": "MaskGCT",
+          "score": 2.27,
+          "repository": "amphion/MaskGCT"
         }
-      ]
+      ],
+      "comparisons": [
+        {
+          "metric": "Seed-TTS test-en",
+          "description": "Transcript error on synthesized English speech in the Seed-TTS test set.",
+          "publisher": "Qwen speech evaluation",
+          "source": "https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice/blob/0c0e3051f131929182e2c023b9537f8b1c68adfe/README.md",
+          "maximum": 3,
+          "unit": "%",
+          "lowerIsBetter": true,
+          "models": [
+            {
+              "name": "Qwen3-TTS-12Hz-1.7B-Base",
+              "score": 1.24,
+              "repository": "Qwen/Qwen3-TTS-12Hz-1.7B-Base",
+              "storedParameters": 1928677440
+            },
+            {
+              "name": "Qwen3-TTS-12Hz-0.6B-Base",
+              "score": 1.32,
+              "repository": "Qwen/Qwen3-TTS-12Hz-0.6B-Base",
+              "storedParameters": 914643008
+            },
+            {
+              "name": "CosyVoice 3",
+              "score": 1.45,
+              "repository": "FunAudioLLM/Fun-CosyVoice3-0.5B-2512"
+            },
+            {
+              "name": "F5-TTS",
+              "score": 1.83,
+              "repository": "SWivid/F5-TTS"
+            },
+            {
+              "name": "FireRedTTS 2",
+              "score": 1.95,
+              "repository": "FireRedTeam/FireRedTTS2"
+            },
+            {
+              "name": "Spark-TTS",
+              "score": 1.98,
+              "repository": "SparkAudio/Spark-TTS-0.5B"
+            },
+            {
+              "name": "MaskGCT",
+              "score": 2.62,
+              "repository": "amphion/MaskGCT"
+            },
+            {
+              "name": "Llasa-8B",
+              "score": 2.97,
+              "repository": "HKUSTAudio/Llasa-8B",
+              "storedParameters": 8567197696
+            }
+          ]
+        }
+      ],
+      "interpretation": "The Seed-TTS scores measure whether the intended words survive synthesis. Choose the language you need, then audition samples for pronunciation, pacing and resemblance to the voice you want."
     },
     {
       "name": "Music generation",
       "metric": "MusicCaps · Fréchet Audio Distance",
       "description": "Distance between generated and reference audio distributions on the released instrumental models.",
       "publisher": "Meta AudioCraft evaluation",
-      "source": "https://github.com/facebookresearch/audiocraft/blob/main/model_cards/MUSICGEN_MODEL_CARD.md",
+      "source": "https://github.com/facebookresearch/audiocraft/blob/896ec7c47f5e5d1e5aa1e4b260c4405328bf009d/model_cards/MUSICGEN_MODEL_CARD.md",
       "maximum": 6,
       "unit": "",
       "lowerIsBetter": true,
@@ -242,14 +1432,140 @@
           "score": 5.48,
           "repository": "facebook/musicgen-large"
         }
-      ]
+      ],
+      "comparisons": [
+        {
+          "metric": "MusicCaps text consistency",
+          "description": "Alignment of generated instrumental music with the MusicCaps text description.",
+          "publisher": "Meta AudioCraft evaluation",
+          "source": "https://github.com/facebookresearch/audiocraft/blob/896ec7c47f5e5d1e5aa1e4b260c4405328bf009d/model_cards/MUSICGEN_MODEL_CARD.md",
+          "maximum": 1,
+          "unit": "",
+          "lowerIsBetter": false,
+          "models": [
+            {
+              "name": "MusicGen Medium · 1.5B",
+              "score": 0.28,
+              "repository": "facebook/musicgen-medium"
+            },
+            {
+              "name": "MusicGen Large · 3.3B",
+              "score": 0.28,
+              "repository": "facebook/musicgen-large"
+            },
+            {
+              "name": "MusicGen Small · 300M",
+              "score": 0.27,
+              "repository": "facebook/musicgen-small",
+              "storedParameters": 591087174
+            },
+            {
+              "name": "MusicGen Melody · 1.5B",
+              "score": 0.27,
+              "repository": "facebook/musicgen-melody",
+              "storedParameters": 1557389894
+            }
+          ]
+        },
+        {
+          "metric": "WildSongBench · SongBench average",
+          "description": "SongBench average over seven automatic quality dimensions. The WildSongBench evaluation uses 192 prompts and selects the lower-error of two candidates for these systems.",
+          "publisher": "YuE WildSongBench evaluation",
+          "source": "https://github.com/multimodal-art-projection/YuE/blob/1116bea76032bee5668e5f097294d082fa0b84f0/docs/benchmarks.md#wildsongbench",
+          "maximum": 10,
+          "unit": "",
+          "lowerIsBetter": false,
+          "models": [
+            {
+              "name": "YuE2",
+              "score": 6.7316,
+              "repository": "m-a-p/YuE2-3B",
+              "storedParameters": 3630684224
+            },
+            {
+              "name": "MiniMax Music 3",
+              "score": 6.283,
+              "repository": "MiniMaxAI/MiniMax-Music3"
+            },
+            {
+              "name": "HeartMuLa",
+              "score": 6.2483,
+              "repository": "HeartMuLa/HeartMuLa-oss-3B",
+              "storedParameters": 3938113536
+            },
+            {
+              "name": "ACE-Step 1.5",
+              "score": 6.0118,
+              "repository": "ACE-Step/Ace-Step1.5"
+            },
+            {
+              "name": "DiffRhythm 2",
+              "score": 5.2428,
+              "repository": "ASLP-lab/DiffRhythm2",
+              "storedParameters": 1136249664
+            },
+            {
+              "name": "YuE 1",
+              "score": 4.9165,
+              "repository": "m-a-p/YuE-s1-7B-anneal-en-cot",
+              "storedParameters": 6224613376
+            }
+          ]
+        },
+        {
+          "metric": "WildSongBench · phoneme error",
+          "description": "Phoneme error rate for sung lyrics. The WildSongBench evaluation uses 192 prompts and selects the lower-error of two candidates for these systems.",
+          "publisher": "YuE WildSongBench evaluation",
+          "source": "https://github.com/multimodal-art-projection/YuE/blob/1116bea76032bee5668e5f097294d082fa0b84f0/docs/benchmarks.md#wildsongbench",
+          "maximum": 100,
+          "unit": "%",
+          "lowerIsBetter": true,
+          "models": [
+            {
+              "name": "MiniMax Music 3",
+              "score": 6.27,
+              "repository": "MiniMaxAI/MiniMax-Music3"
+            },
+            {
+              "name": "ACE-Step 1.5",
+              "score": 7.46,
+              "repository": "ACE-Step/Ace-Step1.5"
+            },
+            {
+              "name": "YuE2",
+              "score": 8.44,
+              "repository": "m-a-p/YuE2-3B",
+              "storedParameters": 3630684224
+            },
+            {
+              "name": "HeartMuLa",
+              "score": 10.71,
+              "repository": "HeartMuLa/HeartMuLa-oss-3B",
+              "storedParameters": 3938113536
+            },
+            {
+              "name": "DiffRhythm 2",
+              "score": 18.41,
+              "repository": "ASLP-lab/DiffRhythm2",
+              "storedParameters": 1136249664
+            },
+            {
+              "name": "YuE 1",
+              "score": 36.38,
+              "repository": "m-a-p/YuE-s1-7B-anneal-en-cot",
+              "storedParameters": 6224613376
+            }
+          ]
+        }
+      ],
+      "interpretation": "Use MusicCaps for instrumental prompts and WildSongBench for full songs. YuE2 leads this group on the SongBench average, while MiniMax Music 3 has the lowest sung-phoneme error. Listen for phrasing and intelligibility on your own lyrics."
     },
     {
       "name": "Video generation",
       "metric": "VBench total",
       "description": "Overall video benchmark score in the 720p comparison.",
       "publisher": "NVIDIA Sana evaluation",
-      "source": "https://github.com/NVlabs/Sana#performance",
+      "source": "https://github.com/NVlabs/Sana/blob/27303b8de8e3f02f5dc96acf14705a0e04fca355/README.md#performance",
       "maximum": 100,
       "unit": "",
       "lowerIsBetter": false,
@@ -271,18 +1587,234 @@
           "repository": "Wan-AI/Wan2.1-T2V-1.3B",
           "storedParameters": 1418996800
         }
-      ]
+      ],
+      "comparisons": [
+        {
+          "metric": "VBench · visual quality",
+          "description": "Visual quality in the ContentV comparison, aggregated across VBench quality dimensions.",
+          "publisher": "ByteDance ContentV comparison",
+          "source": "https://github.com/bytedance/ContentV/blob/8ad3ca206e4c9f0a29885de87476ce190a6c746d/README.md#-vbench",
+          "maximum": 100,
+          "unit": "",
+          "lowerIsBetter": false,
+          "models": [
+            {
+              "name": "Wan-2.1-14B",
+              "score": 86.67,
+              "repository": "Wan-AI/Wan2.1-T2V-14B",
+              "storedParameters": 14288491584
+            },
+            {
+              "name": "ContentV (Long)",
+              "score": 86.64,
+              "repository": "ByteDance/ContentV-8B",
+              "storedParameters": 8056627520
+            },
+            {
+              "name": "ContentV (Short)",
+              "score": 86.23,
+              "repository": "ByteDance/ContentV-8B",
+              "storedParameters": 8056627520
+            },
+            {
+              "name": "Open-Sora 2.0",
+              "score": 85.4,
+              "repository": "hpcai-tech/Open-Sora-v2"
+            },
+            {
+              "name": "HunyuanVideo",
+              "score": 85.09,
+              "repository": "tencent/HunyuanVideo"
+            },
+            {
+              "name": "EasyAnimate 5.1",
+              "score": 85.03,
+              "repository": "alibaba-pai/EasyAnimateV5.1-12b-zh",
+              "storedParameters": 11799056960
+            },
+            {
+              "name": "AnimateDiff-V2",
+              "score": 82.9,
+              "repository": "guoyww/animatediff"
+            },
+            {
+              "name": "CogVideoX-5B",
+              "score": 82.75,
+              "repository": "zai-org/CogVideoX-5b",
+              "storedParameters": 5570283072
+            },
+            {
+              "name": "VideoCrafter-2.0",
+              "score": 82.2,
+              "repository": "VideoCrafter/VideoCrafter2"
+            },
+            {
+              "name": "OpenSora 1.2",
+              "score": 80.71,
+              "repository": "hpcai-tech/OpenSora-STDiT-v3",
+              "storedParameters": 1208872772
+            }
+          ]
+        },
+        {
+          "metric": "VBench · semantics",
+          "description": "Aggregate semantic score in the ContentV comparison, measuring how closely generated content follows the requested concepts.",
+          "publisher": "ByteDance ContentV comparison",
+          "source": "https://github.com/bytedance/ContentV/blob/8ad3ca206e4c9f0a29885de87476ce190a6c746d/README.md#-vbench",
+          "maximum": 100,
+          "unit": "",
+          "lowerIsBetter": false,
+          "models": [
+            {
+              "name": "Wan-2.1-14B",
+              "score": 84.44,
+              "repository": "Wan-AI/Wan2.1-T2V-14B",
+              "storedParameters": 14288491584
+            },
+            {
+              "name": "Open-Sora 2.0",
+              "score": 80.12,
+              "repository": "hpcai-tech/Open-Sora-v2"
+            },
+            {
+              "name": "ContentV (Long)",
+              "score": 79.12,
+              "repository": "ByteDance/ContentV-8B",
+              "storedParameters": 8056627520
+            },
+            {
+              "name": "CogVideoX-5B",
+              "score": 77.04,
+              "repository": "zai-org/CogVideoX-5b",
+              "storedParameters": 5570283072
+            },
+            {
+              "name": "EasyAnimate 5.1",
+              "score": 77.01,
+              "repository": "alibaba-pai/EasyAnimateV5.1-12b-zh",
+              "storedParameters": 11799056960
+            },
+            {
+              "name": "HunyuanVideo",
+              "score": 75.82,
+              "repository": "tencent/HunyuanVideo"
+            },
+            {
+              "name": "ContentV (Short)",
+              "score": 75.61,
+              "repository": "ByteDance/ContentV-8B",
+              "storedParameters": 8056627520
+            },
+            {
+              "name": "VideoCrafter-2.0",
+              "score": 73.42,
+              "repository": "VideoCrafter/VideoCrafter2"
+            },
+            {
+              "name": "OpenSora 1.2",
+              "score": 73.3,
+              "repository": "hpcai-tech/OpenSora-STDiT-v3",
+              "storedParameters": 1208872772
+            },
+            {
+              "name": "AnimateDiff-V2",
+              "score": 69.75,
+              "repository": "guoyww/animatediff"
+            }
+          ]
+        },
+        {
+          "metric": "VBench · dynamic degree",
+          "description": "Amount of motion in the ContentV comparison. Larger scores indicate more dynamic output.",
+          "publisher": "ByteDance ContentV comparison",
+          "source": "https://github.com/bytedance/ContentV/blob/8ad3ca206e4c9f0a29885de87476ce190a6c746d/README.md#-vbench",
+          "maximum": 100,
+          "unit": "",
+          "lowerIsBetter": false,
+          "models": [
+            {
+              "name": "Wan-2.1-14B",
+              "score": 94.26,
+              "repository": "Wan-AI/Wan2.1-T2V-14B",
+              "storedParameters": 14288491584
+            },
+            {
+              "name": "ContentV (Long)",
+              "score": 83.05,
+              "repository": "ByteDance/ContentV-8B",
+              "storedParameters": 8056627520
+            },
+            {
+              "name": "ContentV (Short)",
+              "score": 79.26,
+              "repository": "ByteDance/ContentV-8B",
+              "storedParameters": 8056627520
+            },
+            {
+              "name": "Open-Sora 2.0",
+              "score": 71.39,
+              "repository": "hpcai-tech/Open-Sora-v2"
+            },
+            {
+              "name": "CogVideoX-5B",
+              "score": 70.97,
+              "repository": "zai-org/CogVideoX-5b",
+              "storedParameters": 5570283072
+            },
+            {
+              "name": "HunyuanVideo",
+              "score": 70.83,
+              "repository": "tencent/HunyuanVideo"
+            },
+            {
+              "name": "EasyAnimate 5.1",
+              "score": 57.15,
+              "repository": "alibaba-pai/EasyAnimateV5.1-12b-zh",
+              "storedParameters": 11799056960
+            },
+            {
+              "name": "OpenSora 1.2",
+              "score": 47.22,
+              "repository": "hpcai-tech/OpenSora-STDiT-v3",
+              "storedParameters": 1208872772
+            },
+            {
+              "name": "VideoCrafter-2.0",
+              "score": 42.5,
+              "repository": "VideoCrafter/VideoCrafter2"
+            },
+            {
+              "name": "AnimateDiff-V2",
+              "score": 40.83,
+              "repository": "guoyww/animatediff"
+            }
+          ]
+        }
+      ],
+      "interpretation": "Start with the 720p total for the three checkpoints tested together. The ContentV comparison breaks out motion and prompt semantics across a wider set. A high dynamic-degree score favors movement, which can be undesirable in a locked-off shot."
     },
     {
       "name": "Reranking",
       "metric": "MTEB-R",
-      "description": "English MTEB v2 retrieval subset. A reranker scores candidate passages against the query.",
+      "description": "English MTEB v2 retrieval subset. Rerankers score candidate passages against a query.",
       "publisher": "Qwen reranking evaluation",
-      "source": "https://huggingface.co/Qwen/Qwen3-Reranker-0.6B",
+      "source": "https://huggingface.co/Qwen/Qwen3-Reranker-0.6B/blob/e61197ed45024b0ed8a2d74b80b4d909f1255473/README.md",
       "maximum": 100,
       "unit": "",
       "lowerIsBetter": false,
       "models": [
+        {
+          "name": "Qwen3-Reranker-4B",
+          "score": 69.76,
+          "repository": "Qwen/Qwen3-Reranker-4B",
+          "storedParameters": 4021784576
+        },
+        {
+          "name": "Qwen3-Reranker-8B",
+          "score": 69.02,
+          "repository": "Qwen/Qwen3-Reranker-8B",
+          "storedParameters": 8188548096
+        },
         {
           "name": "Qwen3-Reranker-0.6B",
           "score": 65.8,
@@ -290,12 +1822,168 @@
           "storedParameters": 595776512
         },
         {
+          "name": "gte-multilingual-reranker-base",
+          "score": 59.51,
+          "repository": "Alibaba-NLP/gte-multilingual-reranker-base",
+          "storedParameters": 305959681
+        },
+        {
+          "name": "Jina-multilingual-reranker-v2-base",
+          "score": 58.22,
+          "repository": "jinaai/jina-reranker-v2-base-multilingual",
+          "storedParameters": 278437633
+        },
+        {
           "name": "BGE-reranker-v2-m3",
           "score": 57.03,
           "repository": "BAAI/bge-reranker-v2-m3",
           "storedParameters": 567755777
         }
-      ]
+      ],
+      "comparisons": [
+        {
+          "metric": "Chinese MTEB-R",
+          "description": "Reranking on the Chinese MTEB v1 retrieval subset.",
+          "publisher": "Qwen reranking evaluation",
+          "source": "https://huggingface.co/Qwen/Qwen3-Reranker-0.6B/blob/e61197ed45024b0ed8a2d74b80b4d909f1255473/README.md",
+          "maximum": 100,
+          "unit": "",
+          "lowerIsBetter": false,
+          "models": [
+            {
+              "name": "Qwen3-Reranker-8B",
+              "score": 77.45,
+              "repository": "Qwen/Qwen3-Reranker-8B",
+              "storedParameters": 8188548096
+            },
+            {
+              "name": "Qwen3-Reranker-4B",
+              "score": 75.94,
+              "repository": "Qwen/Qwen3-Reranker-4B",
+              "storedParameters": 4021784576
+            },
+            {
+              "name": "gte-multilingual-reranker-base",
+              "score": 74.08,
+              "repository": "Alibaba-NLP/gte-multilingual-reranker-base",
+              "storedParameters": 305959681
+            },
+            {
+              "name": "BGE-reranker-v2-m3",
+              "score": 72.16,
+              "repository": "BAAI/bge-reranker-v2-m3",
+              "storedParameters": 567755777
+            },
+            {
+              "name": "Qwen3-Reranker-0.6B",
+              "score": 71.31,
+              "repository": "Qwen/Qwen3-Reranker-0.6B",
+              "storedParameters": 595776512
+            },
+            {
+              "name": "Jina-multilingual-reranker-v2-base",
+              "score": 63.37,
+              "repository": "jinaai/jina-reranker-v2-base-multilingual",
+              "storedParameters": 278437633
+            }
+          ]
+        },
+        {
+          "metric": "MLDR",
+          "description": "Multilingual long-document retrieval.",
+          "publisher": "Qwen reranking evaluation",
+          "source": "https://huggingface.co/Qwen/Qwen3-Reranker-0.6B/blob/e61197ed45024b0ed8a2d74b80b4d909f1255473/README.md",
+          "maximum": 100,
+          "unit": "",
+          "lowerIsBetter": false,
+          "models": [
+            {
+              "name": "Qwen3-Reranker-8B",
+              "score": 70.19,
+              "repository": "Qwen/Qwen3-Reranker-8B",
+              "storedParameters": 8188548096
+            },
+            {
+              "name": "Qwen3-Reranker-4B",
+              "score": 69.97,
+              "repository": "Qwen/Qwen3-Reranker-4B",
+              "storedParameters": 4021784576
+            },
+            {
+              "name": "Qwen3-Reranker-0.6B",
+              "score": 67.28,
+              "repository": "Qwen/Qwen3-Reranker-0.6B",
+              "storedParameters": 595776512
+            },
+            {
+              "name": "gte-multilingual-reranker-base",
+              "score": 66.33,
+              "repository": "Alibaba-NLP/gte-multilingual-reranker-base",
+              "storedParameters": 305959681
+            },
+            {
+              "name": "BGE-reranker-v2-m3",
+              "score": 59.51,
+              "repository": "BAAI/bge-reranker-v2-m3",
+              "storedParameters": 567755777
+            },
+            {
+              "name": "Jina-multilingual-reranker-v2-base",
+              "score": 39.66,
+              "repository": "jinaai/jina-reranker-v2-base-multilingual",
+              "storedParameters": 278437633
+            }
+          ]
+        },
+        {
+          "metric": "MTEB-Code",
+          "description": "Ranking code passages for retrieval queries.",
+          "publisher": "Qwen reranking evaluation",
+          "source": "https://huggingface.co/Qwen/Qwen3-Reranker-0.6B/blob/e61197ed45024b0ed8a2d74b80b4d909f1255473/README.md",
+          "maximum": 100,
+          "unit": "",
+          "lowerIsBetter": false,
+          "models": [
+            {
+              "name": "Qwen3-Reranker-8B",
+              "score": 81.22,
+              "repository": "Qwen/Qwen3-Reranker-8B",
+              "storedParameters": 8188548096
+            },
+            {
+              "name": "Qwen3-Reranker-4B",
+              "score": 81.2,
+              "repository": "Qwen/Qwen3-Reranker-4B",
+              "storedParameters": 4021784576
+            },
+            {
+              "name": "Qwen3-Reranker-0.6B",
+              "score": 73.42,
+              "repository": "Qwen/Qwen3-Reranker-0.6B",
+              "storedParameters": 595776512
+            },
+            {
+              "name": "Jina-multilingual-reranker-v2-base",
+              "score": 58.98,
+              "repository": "jinaai/jina-reranker-v2-base-multilingual",
+              "storedParameters": 278437633
+            },
+            {
+              "name": "gte-multilingual-reranker-base",
+              "score": 54.18,
+              "repository": "Alibaba-NLP/gte-multilingual-reranker-base",
+              "storedParameters": 305959681
+            },
+            {
+              "name": "BGE-reranker-v2-m3",
+              "score": 41.38,
+              "repository": "BAAI/bge-reranker-v2-m3",
+              "storedParameters": 567755777
+            }
+          ]
+        }
+      ],
+      "interpretation": "Reranking is a second pass over retrieved candidates. Qwen3-Reranker-4B edges out 8B on English MTEB-R, while 8B leads on the Chinese subset. Compare the metric for the language or code corpus you actually index."
     }
   ],
   "hardware": [

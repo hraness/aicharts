@@ -1,29 +1,19 @@
-.local-charts {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
-  gap: 1.25rem;
-  margin: 1.5rem 0;
-}
-.catalog-page .local-charts section {
-  margin: 0;
-  padding: 1rem;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
-}
-.local-charts ol { list-style: none; padding: 0; }
-.local-charts li {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: .2rem .5rem;
-  margin: .6rem 0;
-  font-size: .88rem;
-  font-variant-numeric: tabular-nums;
-}
-.local-track { grid-column: 1 / -1; background: var(--border); height: 4px; }
-.local-track i { display: block; height: 100%; background: var(--brand-openai); }
 .local-search { display: flex; flex-wrap: wrap; gap: .75rem; align-items: end; margin: 1rem 0; }
 .local-search label { display: grid; gap: .3rem; max-width: 100%; }
 .local-search :is(input, select, button) { font: inherit; padding: .4rem; max-width: 100%; }
 
-.local-size { display: block; color: var(--fg-muted); }
+
+.local-section-links, .local-options, .local-compare-controls { display: flex; flex-wrap: wrap; gap: .5rem .8rem; margin: 1rem 0; align-items: center; }
+.local-section-links { gap: .6rem 1.3rem; }
+.local-options a { padding: .3rem .6rem; border: 1px solid var(--border); border-radius: 5px; font-size: .88rem; }
+.local-options a[aria-current="true"] { background: var(--fg); color: var(--bg); }
+.local-quality h3 { margin: 1.4rem 0 .4rem; }
+.local-quality h4 { margin: 1rem 0 .3rem; }
+.local-compare-controls label { display: grid; gap: .25rem; max-width: 100%; font-size: .84rem; }
+.local-compare-controls select { font: inherit; max-width: 100%; padding: .35rem; }
+.local-score-table .quality-bar { display: block; background: var(--border); height: 4px; min-width: 4rem; margin-top: .25rem; }
+.quality-bar i { display: block; height: 100%; background: var(--brand-openai); }
+.local-compare-controls .local-frontier { display: flex; align-items: center; gap: .4rem; }
+@media (scripting: none) {
+  .local-compare-controls { display: none; }
+}
