@@ -415,6 +415,7 @@ try {
       "/models",
       "/models/" + model.slug,
       "/compare",
+      "/benchmarks/terminal-bench",
       pair,
       "/api",
       "/local",
@@ -431,6 +432,15 @@ try {
       await checkFooter(page);
       assert.equal(await noSideScroll(page), true, path + " scrolls sideways");
     }
+    await page.goto(url + "/compare");
+    const matchup = page.locator("#current-pairs a").first();
+    const [firstSlug, secondSlug] = (await matchup.getAttribute("href")).slice("/compare/".length).split("-vs-");
+    const [first, second] = [firstSlug, secondSlug].map(slug => releases.find(release => release.slug === slug));
+    await pickCompact(page, "First model", first.name, firstSlug);
+    await pickCompact(page, "Second model", second.name, secondSlug);
+    assert.equal(await page.getByRole("link", { name: "Open side-by-side comparison" }).getAttribute("href"),
+      await matchup.getAttribute("href"));
+    await page.goto(url + "/local");
     assert.equal(await page.locator("main h1").textContent(), "Local AI benchmarks");
     await page.getByRole("link",{name:"Everyday phone tasks"}).click();
     const board = page.locator("details").filter({has:page.locator("summary",{hasText:"Community phone reply speeds"})});
@@ -604,6 +614,12 @@ try {
   await page.goto(url + "/agents");
   assert.ok(await page.locator(".agent-chart .pareto-svg").isVisible());
   assert.equal(await page.locator(".agent-chart .chart-controls").isVisible(), false);
+  const leaderPath = "/benchmarks/terminal-bench";
+  await page.goto(url + leaderPath);
+  assert.match(await page.locator("main h1").innerText(), /Terminal-Bench .* leaderboard/);
+  assert.ok(await page.locator("td a[aria-label$='submission']").count() > 0);
+  assert.ok((await page.locator('link[rel="canonical"]').getAttribute("href")).endsWith(leaderPath));
+  assert.ok((await (await page.request.get(url + "/sitemap.xml")).text()).includes(leaderPath));
   const reportPath="/local/devices/android/oneplus-12";
   await page.goto(url+reportPath);
   assert.match(await page.locator("main").innerText(),/50.2 tok\/s/);

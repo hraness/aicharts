@@ -423,6 +423,7 @@ export function ReleaseExplorer({
       </header>
 
       <main className="main-stack">
+        <h1 className="explorer-title">AI model benchmarks</h1>
         {/* Selected Release Pareto Card */}
         <section
           ref={chartSectionRef}
@@ -434,7 +435,7 @@ export function ReleaseExplorer({
               <ProviderLogo provider={selectedRelease.provider} size={22} />
               <div className="release-head__titles">
                 <div className="release-head__title-row">
-                  <h1 className="release-head__name">{selectedRelease.name}</h1>
+                  <h2 className="release-head__name">{selectedRelease.name}</h2>
                   {frontierStars.has(selectedRelease.slug) && (
                     <FrontierStar size={9} labelled context={contextMode} />
                   )}
@@ -736,6 +737,9 @@ export function ReleaseExplorer({
             </div>
           )}
         </section>
+        <nav className="data-note" aria-label="Benchmark reports">
+          <a href="/compare">AI model comparisons</a> · <a href="/benchmarks/terminal-bench">Terminal-Bench leaderboard</a> · <a href="/local">Local AI benchmarks</a>
+        </nav>
         <p className="data-note">
           Data from{" "}
           {dataset.sources.map((source, i) => (
