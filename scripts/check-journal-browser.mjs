@@ -27,6 +27,13 @@ const frontierWebsite = entries.filter(
 assert.ok(frontierWebsite > 0, "Keep a Website changelog entry about the frontier");
 const noSideScroll = (page) =>
   page.evaluate(() => document.documentElement.scrollWidth <= innerWidth);
+async function pick(page, label, query, value) {
+  await page.getByRole("button", {name:label, exact:true}).click();
+  const panel = page.getByRole("dialog", {name:"Choose " + label, exact:true});
+  await panel.getByRole("combobox").fill(query);
+  await panel.locator("[role=option]").filter({visible:true}).and(page.locator("[data-value=" + JSON.stringify(value) + "]")).click();
+}
+
 async function checkFooter(page) {
   const footer = page.getByRole("contentinfo", { name: "Site" });
   assert.equal(
@@ -342,23 +349,15 @@ try {
       .waitFor();
     await page.locator("[data-pj-evergreen] a").click();
     await page.locator(".guide-chart").waitFor();
-    await page.getByLabel("Budget", { exact: true }).selectOption("tokens");
+    await pick(page,"Budget","Output tokens","tokens");
     await page.waitForFunction(() =>
       document.querySelector("output").textContent.includes("output tokens"),
     );
     // Picking another model moves the readout to it.
-    const guideModel = page.getByLabel("Model", { exact: true });
-    const shown = await guideModel.inputValue();
-    const [otherSlug, otherName] = await guideModel
-      .locator("option")
-      .evaluateAll(
-        (options, current) =>
-          options
-            .filter((o) => o.value !== current)
-            .map((o) => [o.value, o.textContent])[0],
-        shown,
-      );
-    await guideModel.selectOption(otherSlug);
+    const currentModel = await page.getByRole("button",{name:"Model",exact:true}).getAttribute("data-value");
+    const other = releases.find(r => r.slug !== currentModel && r.terminalBench && !r.deprecated);
+    const otherName = other.name;
+    await pick(page,"Model",otherName,other.slug);
     await page.waitForFunction(
       (name) => document.querySelector(".guide-chart output").textContent.startsWith(name),
       otherName,
@@ -400,7 +399,7 @@ try {
       .click();
     await page.waitForURL(url + "/models/" + model.slug);
     await page.locator(".catalog-chart .pareto-svg").waitFor();
-    await page.getByLabel("Budget", { exact: true }).selectOption("tokens");
+    await pick(page,"Budget","Output tokens","tokens");
     await page.waitForFunction(() =>
       document.querySelector(".chart-readout").textContent.includes("output tokens"),
     );
@@ -431,26 +430,33 @@ try {
     assert.equal(await page.locator("main h1").textContent(), "Local AI benchmarks");
     await page.getByLabel("Available memory (GiB)", { exact: true }).fill("1");
     assert.ok((await page.locator(".hardware-meta").allTextContents()).some(t => t.includes("over budget")));
-    await page.getByLabel("Platform", { exact: true }).selectOption("NVIDIA GPUs");
-    await page.getByLabel("Device", { exact: true }).selectOption("RTX 4090");
-    await page.getByLabel("Measurement", { exact: true }).selectOption("ace/latency");
+    await pick(page,"Platform","NVIDIA GPUs","NVIDIA GPUs");
+    await pick(page,"Device","RTX 4090","RTX 4090");
+    await pick(page,"Measurement","Music generation","ace/latency");
     assert.ok((await page.locator(".hardware-plot").textContent()).includes("1.74 s"));
     const hardwareLink = await page.getByRole("link", { name: "Link to this comparison" }).getAttribute("href");
     await page.goto(url + hardwareLink);
     await page.waitForFunction(() => document.querySelector(".hardware-panel h3")?.textContent === "RTX 4090");
-    assert.equal(await page.getByLabel("Measurement", { exact: true }).inputValue(), "ace/latency");
-    await page.getByLabel("Device", { exact: true }).selectOption("");
+    assert.ok((await page.locator(".hardware-plot").textContent()).includes("1.74 s"));
+    await pick(page,"Device","My device is missing","");
     assert.ok(await page.locator(".hardware-empty").isVisible());
-    await page.getByLabel("Size–quality frontier").check();
-    assert.ok(await page.locator(".local-score-table tbody tr").count() < localBenchmarks.workloads[0].models.length);
-    assert.deepEqual(await page.getByRole("navigation", { name: "Choose a workload" }).getByRole("link").allTextContents(), localBenchmarks.workloads.map(g => g.name));
-    await page.getByRole("link", { name: "Music generation", exact: true }).click();
-    await page.getByRole("heading", { name: "Music generation benchmarks", exact: true }).waitFor();
-    await page.getByRole("navigation", { name: "Choose an evaluation" }).getByRole("link").nth(1).click();
+    assert.ok(await page.locator("#quality").evaluate(e => !!(e.compareDocumentPosition(document.querySelector("#hardware")) & Node.DOCUMENT_POSITION_FOLLOWING)));
+    assert.ok(await page.locator(".local-score-table tbody tr").count() <= 15);
+    const overview = localBenchmarks.workloads[0];
+    assert.equal(await page.locator(".local-score-table tbody tr").count(),overview.overviewPublishers.length);
+    await page.getByRole("button",{name:"See all " + overview.models.length + " checkpoints"}).click();
+    assert.equal(await page.locator(".local-score-table tbody tr").count(),15);
+    await page.getByRole("button",{name:"Next",exact:true}).click();
+    assert.ok((await page.getByRole("navigation",{name:"Model result pages"}).textContent()).includes("16–30"));
     const music = localBenchmarks.workloads.find(g => g.name === "Music generation");
     const alternate = music.comparisons[0];
+    await page.getByRole("button",{name:"Benchmark",exact:true}).click();
+    const picker = page.getByRole("dialog",{name:"Choose Benchmark",exact:true});
+    await picker.getByRole("option",{name:"Music generation",exact:true}).click();
+    await picker.getByRole("option",{name:alternate.metric,exact:true}).click();
     await page.getByRole("heading", { name: alternate.metric, exact: true }).waitFor();
-    await page.getByLabel("Compare with", { exact: true }).selectOption(alternate.models[0].name);
+    await page.getByText("Sort, filter and compare",{exact:true}).click();
+    await pick(page,"Compare with",alternate.models[0].name,alternate.models[0].name);
     await page.getByRole("columnheader", { name: "Difference", exact: true }).waitFor();
     assert.equal(await noSideScroll(page), true);
     const localData = await page.request.get(url + "/api/local");
@@ -467,7 +473,7 @@ try {
     assert.equal(new URL(page.url()).pathname, pair);
     // Coding agent pages: the budget control relabels the readout.
     await page.goto(url + "/agents");
-    await page.getByLabel("Budget", { exact: true }).selectOption("tokens");
+    await pick(page,"Budget","Output tokens","tokens");
     await page.waitForFunction(() =>
       document.querySelector(".agent-chart .chart-readout").textContent.includes("output tokens"),
     );
@@ -516,9 +522,10 @@ try {
   assert.ok(await page.locator(".agent-chart .pareto-svg").isVisible());
   assert.equal(await page.locator(".agent-chart .chart-controls").isVisible(), false);
   await page.goto(url + "/local");
-  assert.equal(await page.locator(".local-score-table tbody tr").count(), localBenchmarks.workloads[0].models.length);
-  await page.getByRole("link", { name: "Music generation", exact: true }).click();
-  assert.equal(await page.locator(".local-quality h3").textContent(), "Music generation");
+  assert.equal(await page.locator(".local-score-table tbody tr").count(), localBenchmarks.workloads[0].overviewPublishers.length);
+  await page.getByText("Browse evaluations",{exact:true}).click();
+  await page.getByRole("link", { name: "MusicCaps text consistency", exact: true }).click();
+  assert.equal(await page.locator(".local-quality h4").textContent(), "MusicCaps text consistency");
   // Addresses from the earlier aicharts.io keep working.
   for (const [from, to] of [
     ["/models/lab/" + model.slug + "/profile", "/models/" + model.slug],

@@ -29,6 +29,22 @@ export function BenchmarkPicker({
   value: BenchmarkId;
   onSelect: (id: BenchmarkId) => void;
 }>) {
+  return <SearchPicker choices={choices} value={value} onSelect={next => {
+    const choice = choices.find(c => c.id === next);
+    if (choice) onSelect(choice.id);
+  }} />;
+}
+
+export function SearchPicker({ choices, value, onSelect, compactLabel, disabled }: {
+  choices: readonly (BenchmarkChoice & { group?: string })[];
+  value: string;
+  onSelect: (id: string) => void;
+  compactLabel?: string;
+  disabled?: boolean;
+}) {
+  const label = compactLabel ?? "Benchmark";
+  const [group, setGroup] = useState("");
+  const [alignEnd, setAlignEnd] = useState(false);
   const id = useId();
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -36,12 +52,19 @@ export function BenchmarkPicker({
   const listRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [highlighted, setHighlighted] = useState<BenchmarkId | null>(null);
+  const [highlighted, setHighlighted] = useState<string | null>(null);
   const selected = choices.find((choice) => choice.id === value);
-  const results = searchBenchmarks(choices, query);
+  const groups = [...new Set(choices.map(c => c.group).filter((g): g is string => Boolean(g)))];
+  const layers = groups.length > 1 && choices.length > 7;
+  const browsingGroups = layers && !group && !query.trim();
+  const groupPrefix = "group:";
+  const results = browsingGroups ? [
+    ...choices.filter(c => !c.group),
+    ...groups.map(g => ({ id: groupPrefix + g, label: g, summary: choices.filter(c => c.group === g).length + " choices" })),
+  ] : searchBenchmarks(group && !query.trim() ? choices.filter(c => c.group === group) : choices, query);
   const active = results.find((choice) => choice.id === highlighted) ?? results[0];
 
-  const optionId = (choice: BenchmarkId) => `${id}-option-${choice}`;
+  const optionId = (choice: string) => `${id}-option-${encodeURIComponent(choice)}`;
 
   useEffect(() => {
     if (!open) return;
@@ -56,7 +79,10 @@ export function BenchmarkPicker({
   }, [open]);
 
   function openPicker() {
+    const bounds = triggerRef.current?.getBoundingClientRect();
+    setAlignEnd(Boolean(bounds && bounds.left + Math.max(bounds.width, 304) > window.innerWidth - 8));
     setQuery("");
+    setGroup("");
     setHighlighted(value);
     setOpen(true);
   }
@@ -66,12 +92,18 @@ export function BenchmarkPicker({
     triggerRef.current?.focus();
   }
 
-  function choose(next: BenchmarkId) {
+  function choose(next: string) {
+    if (browsingGroups && next.startsWith(groupPrefix)) {
+      setGroup(next.slice(groupPrefix.length));
+      changeQuery("");
+      inputRef.current?.focus();
+      return;
+    }
     if (next !== value) onSelect(next);
     closePicker();
   }
 
-  function changeQuery(next: string, highlight: BenchmarkId | null = null) {
+  function changeQuery(next: string, highlight: string | null = null) {
     if (listRef.current) listRef.current.scrollTop = 0;
     setQuery(next);
     setHighlighted(highlight);
@@ -80,6 +112,17 @@ export function BenchmarkPicker({
   function moveHighlight(event: KeyboardEvent<HTMLInputElement>) {
     if (event.nativeEvent.isComposing) return;
     const { key } = event;
+    if (key === "ArrowLeft" && group && !query) {
+      event.preventDefault();
+      setGroup("");
+      setHighlighted(groupPrefix + group);
+      return;
+    }
+    if (key === "ArrowRight" && browsingGroups && active?.id.startsWith(groupPrefix) && !query) {
+      event.preventDefault();
+      choose(active.id);
+      return;
+    }
     if (key === "Enter") {
       event.preventDefault();
       if (active) choose(active.id);
@@ -97,7 +140,8 @@ export function BenchmarkPicker({
   return (
     <div
       ref={rootRef}
-      className="benchmark-picker"
+      data-align-end={alignEnd || undefined}
+      className={compactLabel ? "benchmark-picker compact-picker" : "benchmark-picker"}
       onBlur={(event) => {
         if (open && event.relatedTarget instanceof Node && !rootRef.current?.contains(event.relatedTarget)) {
           setOpen(false);
@@ -115,8 +159,10 @@ export function BenchmarkPicker({
         ref={triggerRef}
         type="button"
         className="benchmark-picker__trigger"
-        aria-label={selected ? `Benchmark: ${selected.label}` : "Benchmark"}
-        aria-describedby={`${id}-selection-summary`}
+        aria-label={compactLabel ?? (selected ? `Benchmark: ${selected.label}` : "Benchmark")}
+        data-value={value}
+        disabled={disabled}
+        aria-describedby={compactLabel ? `${id}-value` : `${id}-selection-summary`}
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-controls={open ? `${id}-panel` : undefined}
@@ -124,21 +170,21 @@ export function BenchmarkPicker({
       >
         <span className="benchmark-picker__symbol"><PickerIcon name="chart" /></span>
         <span className="benchmark-picker__selection">
-          <span className="benchmark-picker__label">Benchmark</span>
-          <strong>{selected?.label ?? "Choose a benchmark"}</strong>
+          <span className="benchmark-picker__label">{label}</span>
+          <strong id={`${id}-value`}>{selected?.label ?? "Choose a benchmark"}</strong>
           <span id={`${id}-selection-summary`} className="benchmark-picker__summary">{selected?.summary}</span>
         </span>
         <span className="benchmark-picker__chevron"><PickerIcon name="chevron" /></span>
       </button>
 
       {open && (
-        <div id={`${id}-panel`} role="dialog" aria-label="Choose a benchmark" className="benchmark-picker__panel">
+        <div id={`${id}-panel`} role="dialog" aria-label={compactLabel ? "Choose " + label : "Choose a benchmark"} className="benchmark-picker__panel">
           <div className="benchmark-picker__search">
             <PickerIcon name="search" />
             <input
               ref={inputRef}
               role="combobox"
-              aria-label="Search benchmarks"
+              aria-label={compactLabel ? "Search " + label : "Search benchmarks"}
               aria-autocomplete="list"
               aria-expanded={true}
               aria-controls={`${id}-list`}
@@ -146,7 +192,7 @@ export function BenchmarkPicker({
               autoComplete="off"
               spellCheck={false}
               enterKeyHint="go"
-              placeholder="Search benchmarks…"
+              placeholder={compactLabel ? "Search all choices…" : "Search benchmarks…"}
               value={query}
               onChange={(event) => changeQuery(event.currentTarget.value)}
               onKeyDown={moveHighlight}
@@ -166,13 +212,15 @@ export function BenchmarkPicker({
             )}
           </div>
 
-          <div ref={listRef} role="listbox" id={`${id}-list`} aria-label="Benchmarks" className="benchmark-picker__results">
+          {group && !query.trim() && <button type="button" className="compact-picker__back" onClick={() => { setGroup(""); changeQuery(""); inputRef.current?.focus(); }}>‹ All groups · {group}</button>}
+          <div ref={listRef} role="listbox" id={`${id}-list`} aria-label={compactLabel ?? "Benchmarks"} className="benchmark-picker__results">
             {results.map((choice) => {
               const row = optionId(choice.id);
               return (
                 <div
                   id={row}
                   key={choice.id}
+                  data-value={choice.id}
                   role="option"
                   aria-labelledby={`${row}-name`}
                   aria-describedby={`${row}-summary`}
@@ -191,7 +239,7 @@ export function BenchmarkPicker({
               );
             })}
           </div>
-          {results.length === 0 && <p className="benchmark-picker__empty" role="status">No benchmarks found.</p>}
+          {results.length === 0 && <p className="benchmark-picker__empty" role="status">{compactLabel ? "No matches." : "No benchmarks found."}</p>}
         </div>
       )}
     </div>

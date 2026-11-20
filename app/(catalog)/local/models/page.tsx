@@ -1,4 +1,6 @@
 import "../local.css";
+import { FormPicker } from "@/components/form-picker";
+import { LocalModelName } from "@/components/local-model-name";
 
 import { pageMetadata } from "@/journal/content";
 
@@ -49,13 +51,13 @@ export default async function Models({ searchParams }: { searchParams: Promise<R
     <p>Search public Hugging Face repositories, including fine-tunes, conversions and gated releases. Results are ordered by downloads. Open Files for exact artifact sizes or the model card for setup and license terms.</p>
     <form className="local-search" action="/local/models">
       <label>Model or publisher <input name="q" defaultValue={query} maxLength={160} /></label>
-      <label>Task <select name="task" defaultValue={task}><option value="">All tasks</option>{tasks.map(t => <option key={t}>{t}</option>)}</select></label>
-      <label>Library or format <select name="format" defaultValue={format}><option value="">Any</option>{formats.map(f => <option key={f}>{f}</option>)}</select></label>
+      <FormPicker name="task" label="Task" initial={task} options={[{value:"",label:"All tasks"},...tasks.map(v => ({value:v,label:v.replaceAll("-"," ")}))]} />
+      <FormPicker name="format" label="Library or format" initial={format} options={[{value:"",label:"Any"},...formats.map(v => ({value:v,label:v.replaceAll("-"," ")}))]} />
       <button>Search</button>
     </form>
     {failed ? <p>The Hub could not return results. <a href={"https://huggingface.co/models?search=" + encodeURIComponent(query)}>Search on Hugging Face</a>.</p> : models.length === 0 ? <p>No matching repositories.</p> :
       <div className="table-scroll"><table className="data-table"><caption>Parameters counted in Safetensors files when available.</caption><thead><tr><th>Model</th><th>Parameters</th><th>Library</th><th>Weights</th></tr></thead>
-      <tbody>{models.map(m => <tr key={m.id}><th><a href={"https://huggingface.co/" + m.id}>{m.id}</a></th><td>{m.safetensors?.total ? Intl.NumberFormat("en", {notation:"compact",maximumFractionDigits:2}).format(m.safetensors.total) : "Unreported"}</td><td>{m.library_name || "Unreported"}</td><td><a href={"https://huggingface.co/" + m.id + "/tree/main"}>Files</a></td></tr>)}</tbody></table></div>}
+      <tbody>{models.map(m => <tr key={m.id}><th><LocalModelName repository={m.id} name={m.id.split("/").at(-1) ?? m.id} /></th><td>{m.safetensors?.total ? Intl.NumberFormat("en", {notation:"compact",maximumFractionDigits:2}).format(m.safetensors.total) : "Unreported"}</td><td>{m.library_name || "Unreported"}</td><td><a href={"https://huggingface.co/" + m.id + "/tree/main"}>Files</a></td></tr>)}</tbody></table></div>}
     {next && <p><a href={"?"+new URLSearchParams({q:query,task,format,cursor:next})}>Next 24 models →</a></p>}
   </article>;
 }

@@ -56,6 +56,7 @@ export function siteRedirects(): Redirect[] {
     permanent("/models/:creator/:model/:rest*", "/models"),
     ...Object.entries(LEGACY_POSTS).map(([slug, to]) => permanent(`/blog/${slug}`, to)),
     permanent("/blog/feed.xml", "/blog"),
+    permanent("/local/quality/language/open-llm-leaderboard-mmlu-pro", "/local/quality/language/mmlu-pro"),
     permanent("/benchmarks", "/"),
     permanent("/coding", "/"),
     permanent("/preview", "/"),

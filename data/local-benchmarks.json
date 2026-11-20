@@ -5,51 +5,2852 @@
     {
       "name": "Language",
       "metric": "MMLU-Pro",
-      "description": "Accuracy on multi-choice questions across 14 subject areas.",
-      "publisher": "Qwen evaluation",
-      "source": "https://huggingface.co/Qwen/Qwen3.5-4B/blob/851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a/README.md#evaluation",
+      "overviewPublishers": ["Qwen", "meta-llama", "google", "mistralai", "microsoft", "deepseek-ai", "ibm-granite"],
+      "description": "Five-shot multiple-choice accuracy from the March 20, 2025 Open LLM Leaderboard archive. Includes every chat checkpoint marked Hub-available, original BF16 weights, unmerged and unflagged, with a reported raw score. Parameter counts use the archive’s rounded billions.",
+      "publisher": "Hugging Face Open LLM Leaderboard v2",
+      "source": "https://huggingface.co/datasets/open-llm-leaderboard/contents/tree/9c09a7cae43334062a82cb164f2ef255013dafa2",
       "maximum": 100,
       "unit": "%",
       "lowerIsBetter": false,
       "models": [
         {
-          "name": "Qwen3-Next-80B-A3B-Thinking",
-          "score": 82.7,
-          "repository": "Qwen/Qwen3-Next-80B-A3B-Thinking",
-          "storedParameters": 81324862720
+          "name": "calme-3.1-instruct-78b",
+          "repository": "MaziyarPanahi/calme-3.1-instruct-78b",
+          "score": 71.85,
+          "storedParameters": 77965000000
         },
         {
-          "name": "Qwen3.5-9B",
-          "score": 82.5,
-          "repository": "Qwen/Qwen3.5-9B",
-          "storedParameters": 9653104368
+          "name": "CalmeRys-78B-Orpo-v0.1",
+          "repository": "dfurman/CalmeRys-78B-Orpo-v0.1",
+          "score": 70.121,
+          "storedParameters": 77965000000
         },
         {
-          "name": "Qwen3-30B-A3B-Thinking-2507",
-          "score": 80.9,
-          "repository": "Qwen/Qwen3-30B-A3B-Thinking-2507",
-          "storedParameters": 30532122624
+          "name": "calme-2.4-rys-78b",
+          "repository": "MaziyarPanahi/calme-2.4-rys-78b",
+          "score": 70.022,
+          "storedParameters": 77965000000
         },
         {
-          "name": "gpt-oss-120b",
-          "score": 80.8,
-          "repository": "openai/gpt-oss-120b",
-          "storedParameters": 116829156672
+          "name": "FluentlyLM-Prinum",
+          "repository": "fluently-lm/FluentlyLM-Prinum",
+          "score": 58.078,
+          "storedParameters": 32764000000
         },
         {
-          "name": "Qwen3.5-4B",
-          "score": 79.1,
-          "repository": "Qwen/Qwen3.5-4B",
-          "storedParameters": 4659865088
+          "name": "QwQ-32B-Preview",
+          "repository": "Qwen/QwQ-32B-Preview",
+          "score": 56.782,
+          "storedParameters": 32764000000
         },
         {
-          "name": "gpt-oss-20b",
-          "score": 74.8,
-          "repository": "openai/gpt-oss-20b",
-          "storedParameters": 20914757184
+          "name": "Qwen2.5-32B-Instruct",
+          "repository": "Qwen/Qwen2.5-32B-Instruct",
+          "score": 56.666,
+          "storedParameters": 32764000000
+        },
+        {
+          "name": "lambda-qwen2.5-32b-dpo-test",
+          "repository": "tanliboy/lambda-qwen2.5-32b-dpo-test",
+          "score": 56.566,
+          "storedParameters": 32764000000
+        },
+        {
+          "name": "Qwen2.5-72B-Instruct",
+          "repository": "Qwen/Qwen2.5-72B-Instruct",
+          "score": 56.258,
+          "storedParameters": 72706000000
+        },
+        {
+          "name": "orca_mini_v7_72b",
+          "repository": "pankajmathur/orca_mini_v7_72b",
+          "score": 56.217,
+          "storedParameters": 72706000000
+        },
+        {
+          "name": "calme-2.1-qwen2.5-72b",
+          "repository": "MaziyarPanahi/calme-2.1-qwen2.5-72b",
+          "score": 56.192,
+          "storedParameters": 72700000000
+        },
+        {
+          "name": "calme-2.2-qwen2.5-72b",
+          "repository": "MaziyarPanahi/calme-2.2-qwen2.5-72b",
+          "score": 56.175,
+          "storedParameters": 72700000000
+        },
+        {
+          "name": "openbuddy-qwq-32b-v24.1-200k",
+          "repository": "OpenBuddy/openbuddy-qwq-32b-v24.1-200k",
+          "score": 54.904,
+          "storedParameters": 32764000000
+        },
+        {
+          "name": "magnum-v1-72b",
+          "repository": "anthracite-org/magnum-v1-72b",
+          "score": 54.862,
+          "storedParameters": 72706000000
+        },
+        {
+          "name": "calme-2.3-rys-78b",
+          "repository": "MaziyarPanahi/calme-2.3-rys-78b",
+          "score": 54.754,
+          "storedParameters": 77965000000
+        },
+        {
+          "name": "magnum-72b-v1",
+          "repository": "alpindale/magnum-72b-v1",
+          "score": 54.679,
+          "storedParameters": 72706000000
+        },
+        {
+          "name": "magnum-v2-72b",
+          "repository": "anthracite-org/magnum-v2-72b",
+          "score": 54.563,
+          "storedParameters": 72706000000
+        },
+        {
+          "name": "Qwen2-72B-Orpo-v0.1",
+          "repository": "dfurman/Qwen2-72B-Orpo-v0.1",
+          "score": 54.546,
+          "storedParameters": 72699000000
+        },
+        {
+          "name": "Arcee-Nova",
+          "repository": "arcee-ai/Arcee-Nova",
+          "score": 54.521,
+          "storedParameters": 72706000000
+        },
+        {
+          "name": "openbuddy-qwq-32b-v24.2-200k",
+          "repository": "OpenBuddy/openbuddy-qwq-32b-v24.2-200k",
+          "score": 54.463,
+          "storedParameters": 32764000000
+        },
+        {
+          "name": "calme-2.1-rys-78b",
+          "repository": "MaziyarPanahi/calme-2.1-rys-78b",
+          "score": 54.438,
+          "storedParameters": 77965000000
+        },
+        {
+          "name": "calme-2.2-qwen2-72b",
+          "repository": "MaziyarPanahi/calme-2.2-qwen2-72b",
+          "score": 54.347,
+          "storedParameters": 72706000000
+        },
+        {
+          "name": "calme-2.3-qwen2-72b",
+          "repository": "MaziyarPanahi/calme-2.3-qwen2-72b",
+          "score": 54.189,
+          "storedParameters": 72706000000
+        },
+        {
+          "name": "calme-2.1-qwen2-72b",
+          "repository": "MaziyarPanahi/calme-2.1-qwen2-72b",
+          "score": 54.147,
+          "storedParameters": 72699000000
+        },
+        {
+          "name": "Qwen2-72B-Instruct",
+          "repository": "Qwen/Qwen2-72B-Instruct",
+          "score": 54.031,
+          "storedParameters": 72706000000
+        },
+        {
+          "name": "calme-2.2-rys-78b",
+          "repository": "MaziyarPanahi/calme-2.2-rys-78b",
+          "score": 53.856,
+          "storedParameters": 77965000000
+        },
+        {
+          "name": "unsloth/phi-4",
+          "repository": "unsloth/phi-4",
+          "score": 53.782,
+          "storedParameters": 14660000000
+        },
+        {
+          "name": "Llama-3.3-70B-Instruct",
+          "repository": "meta-llama/Llama-3.3-70B-Instruct",
+          "score": 53.316,
+          "storedParameters": 70554000000
+        },
+        {
+          "name": "openbuddy-llama3.3-70b-v24.1-131k",
+          "repository": "OpenBuddy/openbuddy-llama3.3-70b-v24.1-131k",
+          "score": 53.275,
+          "storedParameters": 70554000000
+        },
+        {
+          "name": "Llama-3.1-70B-Instruct",
+          "repository": "meta-llama/Llama-3.1-70B-Instruct",
+          "score": 53.092,
+          "storedParameters": 70554000000
+        },
+        {
+          "name": "openbuddy-llama3.1-70b-v22.1-131k",
+          "repository": "OpenBuddy/openbuddy-llama3.1-70b-v22.1-131k",
+          "score": 53.042,
+          "storedParameters": 70554000000
+        },
+        {
+          "name": "Microsoft_Phi-4",
+          "repository": "NyxKrage/Microsoft_Phi-4",
+          "score": 52.867,
+          "storedParameters": 14660000000
+        },
+        {
+          "name": "microsoft/phi-4",
+          "repository": "microsoft/phi-4",
+          "score": 52.867,
+          "storedParameters": 14660000000
+        },
+        {
+          "name": "phi-4-unsloth-bnb-4bit",
+          "repository": "unsloth/phi-4-unsloth-bnb-4bit",
+          "score": 52.859,
+          "storedParameters": 8483000000
+        },
+        {
+          "name": "Phi4-abliterated",
+          "repository": "Undi95/Phi4-abliterated",
+          "score": 52.809,
+          "storedParameters": 14660000000
+        },
+        {
+          "name": "solar-pro-preview-instruct",
+          "repository": "upstage/solar-pro-preview-instruct",
+          "score": 52.734,
+          "storedParameters": 22140000000
+        },
+        {
+          "name": "Confucius-o1-14B",
+          "repository": "netease-youdao/Confucius-o1-14B",
+          "score": 52.651,
+          "storedParameters": 14770000000
+        },
+        {
+          "name": "phi-4-bnb-4bit",
+          "repository": "unsloth/phi-4-bnb-4bit",
+          "score": 52.56,
+          "storedParameters": 8058000000
+        },
+        {
+          "name": "orca_mini_phi-4",
+          "repository": "pankajmathur/orca_mini_phi-4",
+          "score": 52.552,
+          "storedParameters": 14660000000
+        },
+        {
+          "name": "orca_mini_v9_2_14B",
+          "repository": "pankajmathur/orca_mini_v9_2_14B",
+          "score": 52.552,
+          "storedParameters": 14660000000
+        },
+        {
+          "name": "Tsunami-1.0-14B-Instruct",
+          "repository": "Tsunami-th/Tsunami-1.0-14B-Instruct",
+          "score": 52.485,
+          "storedParameters": 14770000000
+        },
+        {
+          "name": "Qwen2.5-95B-Instruct",
+          "repository": "ssmits/Qwen2.5-95B-Instruct",
+          "score": 52.169,
+          "storedParameters": 94648000000
+        },
+        {
+          "name": "Llama3-TenyxChat-70B",
+          "repository": "tenyx/Llama3-TenyxChat-70B",
+          "score": 52.103,
+          "storedParameters": 70554000000
+        },
+        {
+          "name": "calme-2.2-llama3-70b",
+          "repository": "MaziyarPanahi/calme-2.2-llama3-70b",
+          "score": 52.069,
+          "storedParameters": 70554000000
+        },
+        {
+          "name": "Meta-Llama-3-70B-Instruct",
+          "repository": "meta-llama/Meta-Llama-3-70B-Instruct",
+          "score": 52.069,
+          "storedParameters": 70554000000
+        },
+        {
+          "name": "calme-2.3-llama3-70b",
+          "repository": "MaziyarPanahi/calme-2.3-llama3-70b",
+          "score": 52.045,
+          "storedParameters": 70554000000
+        },
+        {
+          "name": "calme-2.4-llama3-70b",
+          "repository": "MaziyarPanahi/calme-2.4-llama3-70b",
+          "score": 52.036,
+          "storedParameters": 70554000000
+        },
+        {
+          "name": "qwen-carpmuscle-v0.4.1",
+          "repository": "TheTsar1209/qwen-carpmuscle-v0.4.1",
+          "score": 51.912,
+          "storedParameters": 14770000000
+        },
+        {
+          "name": "Smaug-Qwen2-72B-Instruct",
+          "repository": "abacusai/Smaug-Qwen2-72B-Instruct",
+          "score": 51.903,
+          "storedParameters": 72706000000
+        },
+        {
+          "name": "openbuddy-nemotron-70b-v23.1-131k",
+          "repository": "OpenBuddy/openbuddy-nemotron-70b-v23.1-131k",
+          "score": 51.745,
+          "storedParameters": 70554000000
+        },
+        {
+          "name": "miscii-14b-1028",
+          "repository": "sthenno-com/miscii-14b-1028",
+          "score": 51.529,
+          "storedParameters": 14770000000
+        },
+        {
+          "name": "qwen-carpmuscle-v0.2",
+          "repository": "TheTsar1209/qwen-carpmuscle-v0.2",
+          "score": 51.471,
+          "storedParameters": 14770000000
+        },
+        {
+          "name": "qwen-carpmuscle-v0.4",
+          "repository": "TheTsar1209/qwen-carpmuscle-v0.4",
+          "score": 51.438,
+          "storedParameters": 14770000000
+        },
+        {
+          "name": "RYS-Llama-3-Large-Instruct",
+          "repository": "dnhkng/RYS-Llama-3-Large-Instruct",
+          "score": 51.371,
+          "storedParameters": 73976000000
+        },
+        {
+          "name": "Shi-Ci-Robin-Test_3AD80",
+          "repository": "NLPark/Shi-Ci-Robin-Test_3AD80",
+          "score": 51.205,
+          "storedParameters": 70554000000
+        },
+        {
+          "name": "openbuddy-nemotron-70b-v23.2-131k",
+          "repository": "OpenBuddy/openbuddy-nemotron-70b-v23.2-131k",
+          "score": 51.205,
+          "storedParameters": 70554000000
+        },
+        {
+          "name": "gen-try1",
+          "repository": "dwikitheduck/gen-try1",
+          "score": 51.105,
+          "storedParameters": 14770000000
+        },
+        {
+          "name": "RYS-Llama-3-Huge-Instruct",
+          "repository": "dnhkng/RYS-Llama-3-Huge-Instruct",
+          "score": 51.097,
+          "storedParameters": 99646000000
+        },
+        {
+          "name": "gen-inst-1",
+          "repository": "dwikitheduck/gen-inst-1",
+          "score": 50.889,
+          "storedParameters": 14770000000
+        },
+        {
+          "name": "qwen-carpmuscle-v0.3",
+          "repository": "TheTsar1209/qwen-carpmuscle-v0.3",
+          "score": 50.615,
+          "storedParameters": 14770000000
+        },
+        {
+          "name": "orca_mini_v8_1_70b",
+          "repository": "pankajmathur/orca_mini_v8_1_70b",
+          "score": 49.834,
+          "storedParameters": 70554000000
+        },
+        {
+          "name": "Qwen2.5-14B-Gutenberg-1e-Delta",
+          "repository": "v000000/Qwen2.5-14B-Gutenberg-1e-Delta",
+          "score": 49.302,
+          "storedParameters": 14770000000
+        },
+        {
+          "name": "Llama-3.1-Nemotron-70B-Instruct-HF",
+          "repository": "nvidia/Llama-3.1-Nemotron-70B-Instruct-HF",
+          "score": 49.186,
+          "storedParameters": 70554000000
+        },
+        {
+          "name": "Qwen/Qwen2.5-14B-Instruct",
+          "repository": "Qwen/Qwen2.5-14B-Instruct",
+          "score": 49.044,
+          "storedParameters": 14770000000
+        },
+        {
+          "name": "Qwen2.5-Lumen-14B",
+          "repository": "v000000/Qwen2.5-Lumen-14B",
+          "score": 49.028,
+          "storedParameters": 14770000000
+        },
+        {
+          "name": "Higgs-Llama-3-70B",
+          "repository": "bosonai/Higgs-Llama-3-70B",
+          "score": 49.019,
+          "storedParameters": 70554000000
+        },
+        {
+          "name": "Llama3-70B-ShiningValiant2",
+          "repository": "ValiantLabs/Llama3-70B-ShiningValiant2",
+          "score": 48.978,
+          "storedParameters": 70554000000
+        },
+        {
+          "name": "braindao/Qwen2.5-14B-Instruct",
+          "repository": "braindao/Qwen2.5-14B-Instruct",
+          "score": 48.895,
+          "storedParameters": 14770000000
+        },
+        {
+          "name": "MultiVerse_70B",
+          "repository": "MTSAIR/MultiVerse_70B",
+          "score": 48.604,
+          "storedParameters": 72289000000
+        },
+        {
+          "name": "lambda-qwen2.5-14b-dpo-test",
+          "repository": "tanliboy/lambda-qwen2.5-14b-dpo-test",
+          "score": 48.479,
+          "storedParameters": 14770000000
+        },
+        {
+          "name": "openbuddy-llama3-70b-v21.2-32k",
+          "repository": "OpenBuddy/openbuddy-llama3-70b-v21.2-32k",
+          "score": 48.321,
+          "storedParameters": 70554000000
+        },
+        {
+          "name": "Qwen1.5-110B-Chat",
+          "repository": "Qwen/Qwen1.5-110B-Chat",
+          "score": 48.246,
+          "storedParameters": 111210000000
+        },
+        {
+          "name": "orca_mini_v9_2_70b",
+          "repository": "pankajmathur/orca_mini_v9_2_70b",
+          "score": 48.213,
+          "storedParameters": 70554000000
+        },
+        {
+          "name": "Qwen2.5-Math-72B-Instruct",
+          "repository": "Qwen/Qwen2.5-Math-72B-Instruct",
+          "score": 48.122,
+          "storedParameters": 72706000000
+        },
+        {
+          "name": "openbuddy-qwen2.5llamaify-14b-v23.3-200k",
+          "repository": "OpenBuddy/openbuddy-qwen2.5llamaify-14b-v23.3-200k",
+          "score": 47.947,
+          "storedParameters": 14770000000
+        },
+        {
+          "name": "Smaug-Llama-3-70B-Instruct-32K",
+          "repository": "abacusai/Smaug-Llama-3-70B-Instruct-32K",
+          "score": 47.648,
+          "storedParameters": 70554000000
+        },
+        {
+          "name": "DeepSeek-R1-Distill-Llama-70B",
+          "repository": "deepseek-ai/DeepSeek-R1-Distill-Llama-70B",
+          "score": 47.482,
+          "storedParameters": 70554000000
+        },
+        {
+          "name": "B-and-W_Flycatcher-3AD1E",
+          "repository": "NLPark/B-and-W_Flycatcher-3AD1E",
+          "score": 47.407,
+          "storedParameters": 14770000000
+        },
+        {
+          "name": "Hermes-3-Llama-3.1-70B",
+          "repository": "NousResearch/Hermes-3-Llama-3.1-70B",
+          "score": 47.266,
+          "storedParameters": 70554000000
+        },
+        {
+          "name": "Phi-3-medium-128k-instruct",
+          "repository": "microsoft/Phi-3-medium-128k-instruct",
+          "score": 47.116,
+          "storedParameters": 13960000000
+        },
+        {
+          "name": "Yi-34Bx2-MoE-60B-DPO",
+          "repository": "cloudyu/Yi-34Bx2-MoE-60B-DPO",
+          "score": 46.767,
+          "storedParameters": 60814000000
+        },
+        {
+          "name": "Phi-3-medium-4k-instruct",
+          "repository": "microsoft/Phi-3-medium-4k-instruct",
+          "score": 46.759,
+          "storedParameters": 13960000000
+        },
+        {
+          "name": "openbuddy-qwen2.5llamaify-14b-v23.1-200k",
+          "repository": "OpenBuddy/openbuddy-qwen2.5llamaify-14b-v23.1-200k",
+          "score": 46.734,
+          "storedParameters": 14770000000
+        },
+        {
+          "name": "Phi-3.5-MoE-instruct",
+          "repository": "microsoft/Phi-3.5-MoE-instruct",
+          "score": 46.576,
+          "storedParameters": 42000000000
+        },
+        {
+          "name": "Llama-3.1-Tulu-3-70B",
+          "repository": "allenai/Llama-3.1-Tulu-3-70B",
+          "score": 46.451,
+          "storedParameters": 70554000000
+        },
+        {
+          "name": "Llama-3.1-Tulu-3-70B-DPO",
+          "repository": "allenai/Llama-3.1-Tulu-3-70B-DPO",
+          "score": 46.326,
+          "storedParameters": 70000000000
+        },
+        {
+          "name": "Llama-3.1-Tulu-3-70B-SFT",
+          "repository": "allenai/Llama-3.1-Tulu-3-70B-SFT",
+          "score": 46.243,
+          "storedParameters": 70554000000
+        },
+        {
+          "name": "Llama-3-70B-Instruct-v0.1",
+          "repository": "MaziyarPanahi/Llama-3-70B-Instruct-v0.1",
+          "score": 46.177,
+          "storedParameters": 70554000000
+        },
+        {
+          "name": "openbuddy-yi1.5-34b-v21.3-32k",
+          "repository": "OpenBuddy/openbuddy-yi1.5-34b-v21.3-32k",
+          "score": 45.994,
+          "storedParameters": 34407000000
+        },
+        {
+          "name": "Fireball-Phi-3-medium-4k-inst-Philos",
+          "repository": "EpistemeAI2/Fireball-Phi-3-medium-4k-inst-Philos",
+          "score": 45.986,
+          "storedParameters": 13960000000
+        },
+        {
+          "name": "Bagel-Hermes-2x34B",
+          "repository": "Weyaxi/Bagel-Hermes-2x34B",
+          "score": 45.886,
+          "storedParameters": 60814000000
+        },
+        {
+          "name": "Qwen2-57B-A14B-Instruct",
+          "repository": "Qwen/Qwen2-57B-A14B-Instruct",
+          "score": 45.753,
+          "storedParameters": 57409000000
+        },
+        {
+          "name": "Qwen2.5-7B-olm-v1.0",
+          "repository": "jeffmeloy/Qwen2.5-7B-olm-v1.0",
+          "score": 45.662,
+          "storedParameters": 7616000000
+        },
+        {
+          "name": "Neos-Phi-3-14B-v0.1",
+          "repository": "BlackBeenie/Neos-Phi-3-14B-v0.1",
+          "score": 45.637,
+          "storedParameters": 13960000000
+        },
+        {
+          "name": "blossom-v5.1-34b",
+          "repository": "Azure99/blossom-v5.1-34b",
+          "score": 45.578,
+          "storedParameters": 34389000000
+        },
+        {
+          "name": "dolphin-2.9.2-Phi-3-Medium",
+          "repository": "cognitivecomputations/dolphin-2.9.2-Phi-3-Medium",
+          "score": 45.554
+        },
+        {
+          "name": "Yi-1.5-34B-Chat-16K",
+          "repository": "01-ai/Yi-1.5-34B-Chat-16K",
+          "score": 45.445,
+          "storedParameters": 34389000000
+        },
+        {
+          "name": "Blossom-V6-14B",
+          "repository": "Azure99/Blossom-V6-14B",
+          "score": 45.437,
+          "storedParameters": 14770000000
+        },
+        {
+          "name": "Smaug-34B-v0.1",
+          "repository": "abacusai/Smaug-34B-v0.1",
+          "score": 45.429,
+          "storedParameters": 34389000000
+        },
+        {
+          "name": "orca_mini_v9_4_70B",
+          "repository": "pankajmathur/orca_mini_v9_4_70B",
+          "score": 45.362,
+          "storedParameters": 70554000000
+        },
+        {
+          "name": "Yi-1.5-34B-Chat",
+          "repository": "01-ai/Yi-1.5-34B-Chat",
+          "score": 45.204,
+          "storedParameters": 34389000000
+        },
+        {
+          "name": "Phi-3-small-8k-instruct",
+          "repository": "microsoft/Phi-3-small-8k-instruct",
+          "score": 45.063,
+          "storedParameters": 7392000000
+        },
+        {
+          "name": "Phi-3-small-128k-instruct",
+          "repository": "microsoft/Phi-3-small-128k-instruct",
+          "score": 44.905,
+          "storedParameters": 7392000000
+        },
+        {
+          "name": "Mixtral-8x22B-Instruct-v0.1",
+          "repository": "mistralai/Mixtral-8x22B-Instruct-v0.1",
+          "score": 44.83,
+          "storedParameters": 140621000000
+        },
+        {
+          "name": "Qwen2.5-7B-olm-v1.3",
+          "repository": "jeffmeloy/Qwen2.5-7B-olm-v1.3",
+          "score": 44.697,
+          "storedParameters": 7616000000
+        },
+        {
+          "name": "Tsunami-0.5x-7B-Instruct",
+          "repository": "Tsunami-th/Tsunami-0.5x-7B-Instruct",
+          "score": 44.581,
+          "storedParameters": 7616000000
+        },
+        {
+          "name": "Qwen1.5-32B-Chat",
+          "repository": "Qwen/Qwen1.5-32B-Chat",
+          "score": 44.573,
+          "storedParameters": 32512000000
+        },
+        {
+          "name": "Qwen2.5-7B-olm-v1.4",
+          "repository": "jeffmeloy/Qwen2.5-7B-olm-v1.4",
+          "score": 44.573,
+          "storedParameters": 7616000000
+        },
+        {
+          "name": "gemma-2-27b-it",
+          "repository": "google/gemma-2-27b-it",
+          "score": 44.515,
+          "storedParameters": 27227000000
+        },
+        {
+          "name": "Qwen2.5-7B-nerd-uncensored-v1.5",
+          "repository": "jeffmeloy/Qwen2.5-7B-nerd-uncensored-v1.5",
+          "score": 44.481,
+          "storedParameters": 7616000000
+        },
+        {
+          "name": "T.E-8.1",
+          "repository": "Cran-May/T.E-8.1",
+          "score": 44.323,
+          "storedParameters": 7616000000
+        },
+        {
+          "name": "Falcon3-10B-Instruct",
+          "repository": "tiiuae/Falcon3-10B-Instruct",
+          "score": 44.29,
+          "storedParameters": 10306000000
+        },
+        {
+          "name": "Qwen2.5-7B-Instruct-Uncensored",
+          "repository": "Orion-zhen/Qwen2.5-7B-Instruct-Uncensored",
+          "score": 44.265,
+          "storedParameters": 7616000000
+        },
+        {
+          "name": "Tsunami-1.0-7B-Instruct",
+          "repository": "Tsunami-th/Tsunami-1.0-7B-Instruct",
+          "score": 44.24,
+          "storedParameters": 7616000000
+        },
+        {
+          "name": "Qwen2.5-7B-nerd-uncensored-v1.4",
+          "repository": "jeffmeloy/Qwen2.5-7B-nerd-uncensored-v1.4",
+          "score": 44.19,
+          "storedParameters": 7616000000
+        },
+        {
+          "name": "Tsunami-0.5-7B-Instruct",
+          "repository": "Tsunami-th/Tsunami-0.5-7B-Instruct",
+          "score": 44.132,
+          "storedParameters": 7616000000
+        },
+        {
+          "name": "AceMath-72B-Instruct",
+          "repository": "nvidia/AceMath-72B-Instruct",
+          "score": 44.107,
+          "storedParameters": 72706000000
+        },
+        {
+          "name": "Humanish-Qwen2.5-7B-Instruct",
+          "repository": "HumanLLMs/Humanish-Qwen2.5-7B-Instruct",
+          "score": 43.983,
+          "storedParameters": 7616000000
+        },
+        {
+          "name": "Qwen2.5-7B-olm-v1.2",
+          "repository": "jeffmeloy/Qwen2.5-7B-olm-v1.2",
+          "score": 43.875,
+          "storedParameters": 7616000000
+        },
+        {
+          "name": "jeffmeloy_Qwen2.5-7B-minperplexity-1",
+          "repository": "jeffmeloy/jeffmeloy_Qwen2.5-7B-minperplexity-1",
+          "score": 43.675,
+          "storedParameters": 7616000000
+        },
+        {
+          "name": "Qwen2.5-7B-nerd-uncensored-v0.9",
+          "repository": "jeffmeloy/Qwen2.5-7B-nerd-uncensored-v0.9",
+          "score": 43.634,
+          "storedParameters": 7616000000
+        },
+        {
+          "name": "Qwen-7B-nerd-uncensored-v1.0",
+          "repository": "jeffmeloy/Qwen-7B-nerd-uncensored-v1.0",
+          "score": 43.625,
+          "storedParameters": 7616000000
+        },
+        {
+          "name": "Qwen2.5-7B-olm-v1.1",
+          "repository": "jeffmeloy/Qwen2.5-7B-olm-v1.1",
+          "score": 43.542,
+          "storedParameters": 7616000000
+        },
+        {
+          "name": "Qwen2.5-7B-minperplexity-2",
+          "repository": "jeffmeloy/Qwen2.5-7B-minperplexity-2",
+          "score": 43.459,
+          "storedParameters": 7000000000
+        },
+        {
+          "name": "Qwen2.5-7B-nerd-uncensored-v1.8",
+          "repository": "jeffmeloy/Qwen2.5-7B-nerd-uncensored-v1.8",
+          "score": 43.434,
+          "storedParameters": 7616000000
+        },
+        {
+          "name": "Xwen-7B-Chat",
+          "repository": "xwen-team/Xwen-7B-Chat",
+          "score": 42.902,
+          "storedParameters": 7616000000
+        },
+        {
+          "name": "Qwen2.5-7B-Instruct",
+          "repository": "Qwen/Qwen2.5-7B-Instruct",
+          "score": 42.869,
+          "storedParameters": 7616000000
+        },
+        {
+          "name": "Qwen2.5-7B-nerd-uncensored-v1.7",
+          "repository": "jeffmeloy/Qwen2.5-7B-nerd-uncensored-v1.7",
+          "score": 42.803,
+          "storedParameters": 7616000000
+        },
+        {
+          "name": "Qwen2-Math-72B-Instruct",
+          "repository": "Qwen/Qwen2-Math-72B-Instruct",
+          "score": 42.728,
+          "storedParameters": 72706000000
+        },
+        {
+          "name": "magnum-v3-9b-chatml",
+          "repository": "anthracite-org/magnum-v3-9b-chatml",
+          "score": 42.42,
+          "storedParameters": 9242000000
+        },
+        {
+          "name": "magnum-v3-27b-kto",
+          "repository": "anthracite-org/magnum-v3-27b-kto",
+          "score": 42.379,
+          "storedParameters": 27227000000
+        },
+        {
+          "name": "blossom-v5-32b",
+          "repository": "Azure99/blossom-v5-32b",
+          "score": 42.345,
+          "storedParameters": 32512000000
+        },
+        {
+          "name": "magnum-v3-9b-customgemma2",
+          "repository": "anthracite-org/magnum-v3-9b-customgemma2",
+          "score": 42.046,
+          "storedParameters": 9242000000
+        },
+        {
+          "name": "gemma-2-9b-it-chinese-kyara",
+          "repository": "zake7749/gemma-2-9b-it-chinese-kyara",
+          "score": 41.789,
+          "storedParameters": 9242000000
+        },
+        {
+          "name": "Blossom-V6-7B",
+          "repository": "Azure99/Blossom-V6-7B",
+          "score": 41.439,
+          "storedParameters": 7616000000
+        },
+        {
+          "name": "dolphin-2.9.1-llama-3-70b",
+          "repository": "cognitivecomputations/dolphin-2.9.1-llama-3-70b",
+          "score": 41.298,
+          "storedParameters": 70554000000
+        },
+        {
+          "name": "Josiefied-Qwen2.5-7B-Instruct-abliterated-v2",
+          "repository": "Goekdeniz-Guelmez/Josiefied-Qwen2.5-7B-Instruct-abliterated-v2",
+          "score": 41.198,
+          "storedParameters": 7616000000
+        },
+        {
+          "name": "Yi-34B-Chat",
+          "repository": "01-ai/Yi-34B-Chat",
+          "score": 40.933,
+          "storedParameters": 34389000000
+        },
+        {
+          "name": "Falcon3-7B-Instruct",
+          "repository": "tiiuae/Falcon3-7B-Instruct",
+          "score": 40.874,
+          "storedParameters": 7456000000
+        },
+        {
+          "name": "dolphin-2.9.2-qwen2-7b",
+          "repository": "cognitivecomputations/dolphin-2.9.2-qwen2-7b",
+          "score": 40.509,
+          "storedParameters": 7616000000
+        },
+        {
+          "name": "josie-7b-v6.0-step2000",
+          "repository": "Goekdeniz-Guelmez/josie-7b-v6.0-step2000",
+          "score": 40.326,
+          "storedParameters": 7616000000
+        },
+        {
+          "name": "Qwen2.5-7B-nerd-uncensored-v1.3",
+          "repository": "jeffmeloy/Qwen2.5-7B-nerd-uncensored-v1.3",
+          "score": 40.16,
+          "storedParameters": 7000000000
+        },
+        {
+          "name": "MedIT-Mesh-3B-Instruct",
+          "repository": "meditsolutions/MedIT-Mesh-3B-Instruct",
+          "score": 40.118,
+          "storedParameters": 3821000000
+        },
+        {
+          "name": "internlm2_5-20b-chat",
+          "repository": "internlm/internlm2_5-20b-chat",
+          "score": 39.977,
+          "storedParameters": 19860000000
+        },
+        {
+          "name": "Yi-1.5-9B-Chat-16K",
+          "repository": "01-ai/Yi-1.5-9B-Chat-16K",
+          "score": 39.935,
+          "storedParameters": 8829000000
+        },
+        {
+          "name": "Mistral-NeMo-Minitron-8B-Instruct",
+          "repository": "nvidia/Mistral-NeMo-Minitron-8B-Instruct",
+          "score": 39.91,
+          "storedParameters": 8414000000
+        },
+        {
+          "name": "blossom-v5.1-9b",
+          "repository": "Azure99/blossom-v5.1-9b",
+          "score": 39.794,
+          "storedParameters": 8829000000
+        },
+        {
+          "name": "Yi-1.5-9B-Chat",
+          "repository": "01-ai/Yi-1.5-9B-Chat",
+          "score": 39.752,
+          "storedParameters": 8829000000
+        },
+        {
+          "name": "gemma-2-9b-it-SimPO",
+          "repository": "princeton-nlp/gemma-2-9b-it-SimPO",
+          "score": 39.752,
+          "storedParameters": 9242000000
+        },
+        {
+          "name": "Qwen2.5-7B-nerd-uncensored-v1.2",
+          "repository": "jeffmeloy/Qwen2.5-7B-nerd-uncensored-v1.2",
+          "score": 39.686,
+          "storedParameters": 7616000000
+        },
+        {
+          "name": "Phi-3.5-mini-instruct",
+          "repository": "microsoft/Phi-3.5-mini-instruct",
+          "score": 39.619,
+          "storedParameters": 3821000000
+        },
+        {
+          "name": "Mistral-Small-Instruct-2409",
+          "repository": "mistralai/Mistral-Small-Instruct-2409",
+          "score": 39.603,
+          "storedParameters": 22050000000
+        },
+        {
+          "name": "openbuddy-qwen2.5llamaify-7b-v23.1-200k",
+          "repository": "OpenBuddy/openbuddy-qwen2.5llamaify-7b-v23.1-200k",
+          "score": 39.478,
+          "storedParameters": 7615000000
+        },
+        {
+          "name": "deepseek-llm-67b-chat",
+          "repository": "deepseek-ai/deepseek-llm-67b-chat",
+          "score": 39.437,
+          "storedParameters": 67000000000
+        },
+        {
+          "name": "Qwen2.5-Coder-14B-Instruct",
+          "repository": "Qwen/Qwen2.5-Coder-14B-Instruct",
+          "score": 39.395,
+          "storedParameters": 14770000000
+        },
+        {
+          "name": "calme-2.1-phi3.5-4b",
+          "repository": "MaziyarPanahi/calme-2.1-phi3.5-4b",
+          "score": 39.353,
+          "storedParameters": 3821000000
+        },
+        {
+          "name": "Phi-4-mini-instruct",
+          "repository": "microsoft/Phi-4-mini-instruct",
+          "score": 39.32,
+          "storedParameters": 3836000000
+        },
+        {
+          "name": "Llama-3.1-MedIT-SUN-8B",
+          "repository": "meditsolutions/Llama-3.1-MedIT-SUN-8B",
+          "score": 39.162,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Gemma-2-9B-It-SPPO-Iter1",
+          "repository": "UCLA-AGI/Gemma-2-9B-It-SPPO-Iter1",
+          "score": 39.071,
+          "storedParameters": 9242000000
+        },
+        {
+          "name": "SeaLLMs-v3-7B-Chat",
+          "repository": "SeaLLMs/SeaLLMs-v3-7B-Chat",
+          "score": 38.946,
+          "storedParameters": 7616000000
+        },
+        {
+          "name": "gemma-2-9b-it",
+          "repository": "google/gemma-2-9b-it",
+          "score": 38.755,
+          "storedParameters": 9000000000
+        },
+        {
+          "name": "Aura-8B",
+          "repository": "AuraIndustries/Aura-8B",
+          "score": 38.738,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Gemma-2-9B-It-SPPO-Iter2",
+          "repository": "UCLA-AGI/Gemma-2-9B-It-SPPO-Iter2",
+          "score": 38.697,
+          "storedParameters": 9242000000
+        },
+        {
+          "name": "Phi-3-mini-4k-instruct",
+          "repository": "microsoft/Phi-3-mini-4k-instruct",
+          "score": 38.664,
+          "storedParameters": 3821000000
+        },
+        {
+          "name": "Phi-3-mini-4K-instruct-cpo-simpo",
+          "repository": "Syed-Hasan-8503/Phi-3-mini-4K-instruct-cpo-simpo",
+          "score": 38.605,
+          "storedParameters": 3821000000
+        },
+        {
+          "name": "Qwen2.5-7B-nerd-uncensored-v1.1",
+          "repository": "jeffmeloy/Qwen2.5-7B-nerd-uncensored-v1.1",
+          "score": 38.497,
+          "storedParameters": 7616000000
+        },
+        {
+          "name": "Qwen2-7B-Instruct",
+          "repository": "Qwen/Qwen2-7B-Instruct",
+          "score": 38.472,
+          "storedParameters": 7616000000
+        },
+        {
+          "name": "Qwen2-Cantonese-7B-Instruct",
+          "repository": "lordjia/Qwen2-Cantonese-7B-Instruct",
+          "score": 38.431,
+          "storedParameters": 7616000000
+        },
+        {
+          "name": "calme-2.3-phi3-4b",
+          "repository": "MaziyarPanahi/calme-2.3-phi3-4b",
+          "score": 38.281,
+          "storedParameters": 3821000000
+        },
+        {
+          "name": "Yi-1.5-9B-Chat-16K-abliterated",
+          "repository": "byroneverson/Yi-1.5-9B-Chat-16K-abliterated",
+          "score": 38.231,
+          "storedParameters": 8829000000
+        },
+        {
+          "name": "calme-2.2-phi3-4b",
+          "repository": "MaziyarPanahi/calme-2.2-phi3-4b",
+          "score": 38.14,
+          "storedParameters": 3821000000
+        },
+        {
+          "name": "lambda-gemma-2-9b-dpo",
+          "repository": "tanliboy/lambda-gemma-2-9b-dpo",
+          "score": 38.049,
+          "storedParameters": 9242000000
+        },
+        {
+          "name": "openbuddy-mixtral-7bx8-v18.1-32k",
+          "repository": "OpenBuddy/openbuddy-mixtral-7bx8-v18.1-32k",
+          "score": 38.04,
+          "storedParameters": 46741000000
+        },
+        {
+          "name": "Llama-3-Instruct-8B-RDPO-v0.2",
+          "repository": "princeton-nlp/Llama-3-Instruct-8B-RDPO-v0.2",
+          "score": 37.741,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "suzume-llama-3-8B-multilingual-orpo-borda-top75",
+          "repository": "lightblue/suzume-llama-3-8B-multilingual-orpo-borda-top75",
+          "score": 37.691,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Llama-3-Instruct-8B-DPO-v0.2",
+          "repository": "princeton-nlp/Llama-3-Instruct-8B-DPO-v0.2",
+          "score": 37.691,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "calme-2.1-phi3-4b",
+          "repository": "MaziyarPanahi/calme-2.1-phi3-4b",
+          "score": 37.458,
+          "storedParameters": 3821000000
+        },
+        {
+          "name": "Phi-3-mini-128k-instruct",
+          "repository": "microsoft/Phi-3-mini-128k-instruct",
+          "score": 37.342,
+          "storedParameters": 3821000000
+        },
+        {
+          "name": "FuseChat-Llama-3.1-8B-Instruct",
+          "repository": "FuseAI/FuseChat-Llama-3.1-8B-Instruct",
+          "score": 37.334,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "haoranxu/Llama-3-Instruct-8B-SimPO",
+          "repository": "haoranxu/Llama-3-Instruct-8B-SimPO",
+          "score": 37.334,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "FuseChat-Llama-3.1-8B-Instruct-preview",
+          "repository": "AALF/FuseChat-Llama-3.1-8B-Instruct-preview",
+          "score": 37.325,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Llama-3-Instruct-8B-ORPO-v0.2",
+          "repository": "princeton-nlp/Llama-3-Instruct-8B-ORPO-v0.2",
+          "score": 37.309,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Llama-3-Instruct-8B-SPPO-Iter1",
+          "repository": "UCLA-AGI/Llama-3-Instruct-8B-SPPO-Iter1",
+          "score": 37.109,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Llama-3-Instruct-8B-CPO-v0.2",
+          "repository": "princeton-nlp/Llama-3-Instruct-8B-CPO-v0.2",
+          "score": 37.06,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "L3.1-8B-Celeste-V1.5",
+          "repository": "nothingiisreal/L3.1-8B-Celeste-V1.5",
+          "score": 37.043,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Humanish-LLama3-8B-Instruct",
+          "repository": "HumanLLMs/Humanish-LLama3-8B-Instruct",
+          "score": 37.018,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Not-So-Small-Alpaca-24B",
+          "repository": "SaisExperiments/Not-So-Small-Alpaca-24B",
+          "score": 36.943,
+          "storedParameters": 23572000000
+        },
+        {
+          "name": "Llama-3-Instruct-8B-SPPO-Iter2",
+          "repository": "UCLA-AGI/Llama-3-Instruct-8B-SPPO-Iter2",
+          "score": 36.918,
+          "storedParameters": 8000000000
+        },
+        {
+          "name": "Mixtral-8x7B-Instruct-v0.1",
+          "repository": "mistralai/Mixtral-8x7B-Instruct-v0.1",
+          "score": 36.918,
+          "storedParameters": 46703000000
+        },
+        {
+          "name": "Llama-3-Instruct-8B-CPO-SimPO",
+          "repository": "haoranxu/Llama-3-Instruct-8B-CPO-SimPO",
+          "score": 36.86,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "suzume-llama-3-8B-multilingual-orpo-borda-top25",
+          "repository": "lightblue/suzume-llama-3-8B-multilingual-orpo-borda-top25",
+          "score": 36.843,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "dbrx-instruct",
+          "repository": "databricks/dbrx-instruct",
+          "score": 36.827,
+          "storedParameters": 131597000000
+        },
+        {
+          "name": "Llama-3-Instruct-8B-KTO-v0.2",
+          "repository": "princeton-nlp/Llama-3-Instruct-8B-KTO-v0.2",
+          "score": 36.677,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Nous-Hermes-2-Mixtral-8x7B-DPO",
+          "repository": "NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO",
+          "score": 36.661,
+          "storedParameters": 46703000000
+        },
+        {
+          "name": "Llama-3-Instruct-8B-DPO",
+          "repository": "princeton-nlp/Llama-3-Instruct-8B-DPO",
+          "score": 36.652,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Meta-Llama-3-8B-Instruct",
+          "repository": "meta-llama/Meta-Llama-3-8B-Instruct",
+          "score": 36.644,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Llama3.1-8B-Cobalt",
+          "repository": "ValiantLabs/Llama3.1-8B-Cobalt",
+          "score": 36.627,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "notux-8x7b-v1",
+          "repository": "argilla/notux-8x7b-v1",
+          "score": 36.602,
+          "storedParameters": 46703000000
+        },
+        {
+          "name": "llama-3-8b-instruct-gapo-v2-rouge2-beta10-1minus-gamma0.3-rerun",
+          "repository": "Jimmy19991222/llama-3-8b-instruct-gapo-v2-rouge2-beta10-1minus-gamma0.3-rerun",
+          "score": 36.577,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Llama-3-Instruct-8B-CPO",
+          "repository": "princeton-nlp/Llama-3-Instruct-8B-CPO",
+          "score": 36.519,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "GritLM-8x7B-KTO",
+          "repository": "GritLM/GritLM-8x7B-KTO",
+          "score": 36.478,
+          "storedParameters": 46703000000
+        },
+        {
+          "name": "Llama-3-Instruct-8B-ORPO",
+          "repository": "princeton-nlp/Llama-3-Instruct-8B-ORPO",
+          "score": 36.461,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Llama-3-Instruct-8B-RRHF",
+          "repository": "princeton-nlp/Llama-3-Instruct-8B-RRHF",
+          "score": 36.436,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Llama-3-Instruct-8B-SimPO-v0.2",
+          "repository": "princeton-nlp/Llama-3-Instruct-8B-SimPO-v0.2",
+          "score": 36.22,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Qwen1.5-14B-Chat",
+          "repository": "Qwen/Qwen1.5-14B-Chat",
+          "score": 36.179,
+          "storedParameters": 14167000000
+        },
+        {
+          "name": "Hercules-6.0-Llama-3.1-8B",
+          "repository": "Locutusque/Hercules-6.0-Llama-3.1-8B",
+          "score": 36.145,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "suzume-llama-3-8B-multilingual-orpo-borda-half",
+          "repository": "lightblue/suzume-llama-3-8B-multilingual-orpo-borda-half",
+          "score": 36.137,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Llama-3-Instruct-8B-RDPO",
+          "repository": "princeton-nlp/Llama-3-Instruct-8B-RDPO",
+          "score": 36.07,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Llama-3-Instruct-8B-KTO",
+          "repository": "princeton-nlp/Llama-3-Instruct-8B-KTO",
+          "score": 35.987,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "llama-3-Korean-Bllossom-8B",
+          "repository": "MLP-KTLim/llama-3-Korean-Bllossom-8B",
+          "score": 35.938,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Llama-3-Instruct-8B-SLiC-HF",
+          "repository": "princeton-nlp/Llama-3-Instruct-8B-SLiC-HF",
+          "score": 35.846,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "EXAONE-3.0-7.8B-Instruct",
+          "repository": "LGAI-EXAONE/EXAONE-3.0-7.8B-Instruct",
+          "score": 35.771,
+          "storedParameters": 7800000000
+        },
+        {
+          "name": "c4ai-command-r7b-12-2024",
+          "repository": "CohereForAI/c4ai-command-r7b-12-2024",
+          "score": 35.721,
+          "storedParameters": 8028000000
+        },
+        {
+          "name": "Llama-3.1-Instruct_NSFW-pretrained_e1-plus_reddit",
+          "repository": "athirdpath/Llama-3.1-Instruct_NSFW-pretrained_e1-plus_reddit",
+          "score": 35.647,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "RYS-Llama-3-8B-Instruct",
+          "repository": "dnhkng/RYS-Llama-3-8B-Instruct",
+          "score": 35.572,
+          "storedParameters": 8248000000
+        },
+        {
+          "name": "mistral-nemo-wissenschaft-12B",
+          "repository": "nbeerbower/mistral-nemo-wissenschaft-12B",
+          "score": 35.322,
+          "storedParameters": 12248000000
+        },
+        {
+          "name": "Humanish-Mistral-Nemo-Instruct-2407",
+          "repository": "HumanLLMs/Humanish-Mistral-Nemo-Instruct-2407",
+          "score": 35.206,
+          "storedParameters": 12248000000
+        },
+        {
+          "name": "Mistral-Nemo-Instruct-2407",
+          "repository": "mistralai/Mistral-Nemo-Instruct-2407",
+          "score": 35.173,
+          "storedParameters": 12248000000
+        },
+        {
+          "name": "Llama-3-Cantonese-8B-Instruct",
+          "repository": "lordjia/Llama-3-Cantonese-8B-Instruct",
+          "score": 35.148,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "granite-3.2-8b-instruct",
+          "repository": "ibm-granite/granite-3.2-8b-instruct",
+          "score": 35.123,
+          "storedParameters": 8171000000
+        },
+        {
+          "name": "MSH-v1-Bielik-v2.3-Instruct-MedIT-merge",
+          "repository": "meditsolutions/MSH-v1-Bielik-v2.3-Instruct-MedIT-merge",
+          "score": 34.998,
+          "storedParameters": 11169000000
+        },
+        {
+          "name": "princeton-nlp/Llama-3-Instruct-8B-SimPO",
+          "repository": "princeton-nlp/Llama-3-Instruct-8B-SimPO",
+          "score": 34.89,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Bielik-11B-v2.2-Instruct",
+          "repository": "speakleash/Bielik-11B-v2.2-Instruct",
+          "score": 34.865,
+          "storedParameters": 11169000000
+        },
+        {
+          "name": "Llama-3-Instruct-8B-RRHF-v0.2",
+          "repository": "princeton-nlp/Llama-3-Instruct-8B-RRHF-v0.2",
+          "score": 34.824,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Llama-3-Instruct-8B-SLiC-HF-v0.2",
+          "repository": "princeton-nlp/Llama-3-Instruct-8B-SLiC-HF-v0.2",
+          "score": 34.824,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "luxia-21.4b-alignment-v1.2",
+          "repository": "saltlux/luxia-21.4b-alignment-v1.2",
+          "score": 34.732,
+          "storedParameters": 21421000000
+        },
+        {
+          "name": "romulus-mistral-nemo-12b-simpo",
+          "repository": "axolotl-ai-co/romulus-mistral-nemo-12b-simpo",
+          "score": 34.691,
+          "storedParameters": 12248000000
+        },
+        {
+          "name": "Nous-Hermes-2-SOLAR-10.7B",
+          "repository": "NousResearch/Nous-Hermes-2-SOLAR-10.7B",
+          "score": 34.583,
+          "storedParameters": 10732000000
+        },
+        {
+          "name": "granite-3.0-8b-instruct",
+          "repository": "ibm-granite/granite-3.0-8b-instruct",
+          "score": 34.566,
+          "storedParameters": 8171000000
+        },
+        {
+          "name": "Bielik-11B-v2.1-Instruct",
+          "repository": "speakleash/Bielik-11B-v2.1-Instruct",
+          "score": 34.466,
+          "storedParameters": 11169000000
+        },
+        {
+          "name": "AceMath-7B-Instruct",
+          "repository": "nvidia/AceMath-7B-Instruct",
+          "score": 33.835,
+          "storedParameters": 7616000000
+        },
+        {
+          "name": "K2-Chat",
+          "repository": "LLM360/K2-Chat",
+          "score": 33.71,
+          "storedParameters": 65286000000
+        },
+        {
+          "name": "Falcon3-Mamba-7B-Instruct",
+          "repository": "tiiuae/Falcon3-Mamba-7B-Instruct",
+          "score": 33.693,
+          "storedParameters": 7273000000
+        },
+        {
+          "name": "Qwen2.5-Coder-7B-Instruct-20241106",
+          "repository": "theo77186/Qwen2.5-Coder-7B-Instruct-20241106",
+          "score": 33.527,
+          "storedParameters": 7616000000
+        },
+        {
+          "name": "Qwen2.5-Coder-7B-Instruct",
+          "repository": "Qwen/Qwen2.5-Coder-7B-Instruct",
+          "score": 33.519,
+          "storedParameters": 7616000000
+        },
+        {
+          "name": "Smaug-Mixtral-v0.1",
+          "repository": "abacusai/Smaug-Mixtral-v0.1",
+          "score": 33.519,
+          "storedParameters": 46703000000
+        },
+        {
+          "name": "Bielik-11B-v2.0-Instruct",
+          "repository": "speakleash/Bielik-11B-v2.0-Instruct",
+          "score": 33.511,
+          "storedParameters": 11169000000
+        },
+        {
+          "name": "Llama-3.1-Hawkish-8B",
+          "repository": "mukaj/Llama-3.1-Hawkish-8B",
+          "score": 33.311,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Llama-Krikri-8B-Instruct",
+          "repository": "ilsp/Llama-Krikri-8B-Instruct",
+          "score": 33.128,
+          "storedParameters": 8202000000
+        },
+        {
+          "name": "openbuddy-llama3.1-8b-v22.2-131k",
+          "repository": "OpenBuddy/openbuddy-llama3.1-8b-v22.2-131k",
+          "score": 33.103,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "suzume-llama-3-8B-multilingual-orpo-borda-full",
+          "repository": "lightblue/suzume-llama-3-8B-multilingual-orpo-borda-full",
+          "score": 33.095,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "openbuddy-llama3-8b-v21.2-32k",
+          "repository": "OpenBuddy/openbuddy-llama3-8b-v21.2-32k",
+          "score": 32.987,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Ministral-8B-Instruct-2410",
+          "repository": "mistralai/Ministral-8B-Instruct-2410",
+          "score": 32.912,
+          "storedParameters": 8020000000
+        },
+        {
+          "name": "openbuddy-llama3.1-8b-v22.3-131k",
+          "repository": "OpenBuddy/openbuddy-llama3.1-8b-v22.3-131k",
+          "score": 32.771,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "bacon_and_food",
+          "repository": "Sicarius-Prototyping/bacon_and_food",
+          "score": 32.63,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Neos-Llama-3.1-8B",
+          "repository": "BlackBeenie/Neos-Llama-3.1-8B",
+          "score": 32.621,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Llama-3.1-8B-Magpie-Align-v0.1",
+          "repository": "Magpie-Align/Llama-3.1-8B-Magpie-Align-v0.1",
+          "score": 32.621,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Qwen2.5-3B-Instruct",
+          "repository": "Qwen/Qwen2.5-3B-Instruct",
+          "score": 32.547,
+          "storedParameters": 3000000000
+        },
+        {
+          "name": "Llama-3-8B-ProLong-512k-Instruct",
+          "repository": "princeton-nlp/Llama-3-8B-ProLong-512k-Instruct",
+          "score": 32.314,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "MagpieLM-8B-Chat-v0.1",
+          "repository": "Magpie-Align/MagpieLM-8B-Chat-v0.1",
+          "score": 31.948,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Llama-3.2-3B-Instruct",
+          "repository": "meta-llama/Llama-3.2-3B-Instruct",
+          "score": 31.948,
+          "storedParameters": 3213000000
+        },
+        {
+          "name": "Yi-1.5-6B-Chat",
+          "repository": "01-ai/Yi-1.5-6B-Chat",
+          "score": 31.932,
+          "storedParameters": 6061000000
+        },
+        {
+          "name": "Llama-VARCO-8B-Instruct",
+          "repository": "NCSOFT/Llama-VARCO-8B-Instruct",
+          "score": 31.898,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "openbuddy-zero-14b-v22.3-32k",
+          "repository": "OpenBuddy/openbuddy-zero-14b-v22.3-32k",
+          "score": 31.873,
+          "storedParameters": 14022000000
+        },
+        {
+          "name": "Starling-LM-7B-alpha",
+          "repository": "berkeley-nest/Starling-LM-7B-alpha",
+          "score": 31.715,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "magnum-v2-12b",
+          "repository": "anthracite-org/magnum-v2-12b",
+          "score": 31.674,
+          "storedParameters": 12248000000
+        },
+        {
+          "name": "glm-4-9b-chat",
+          "repository": "THUDM/glm-4-9b-chat",
+          "score": 31.666,
+          "storedParameters": 9000000000
+        },
+        {
+          "name": "glm-4-9b-chat-1m",
+          "repository": "THUDM/glm-4-9b-chat-1m",
+          "score": 31.632,
+          "storedParameters": 9484000000
+        },
+        {
+          "name": "openchat_3.5",
+          "repository": "openchat/openchat_3.5",
+          "score": 31.533,
+          "storedParameters": 7000000000
+        },
+        {
+          "name": "Llama-3.1-8B-MagPie-Ultra",
+          "repository": "argilla-warehouse/Llama-3.1-8B-MagPie-Ultra",
+          "score": 31.441,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "openchat-3.5-1210",
+          "repository": "openchat/openchat-3.5-1210",
+          "score": 31.425,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "Mengzi3-8B-Chat",
+          "repository": "Langboat/Mengzi3-8B-Chat",
+          "score": 31.416,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Hermes-3-Llama-3.1-8B",
+          "repository": "NousResearch/Hermes-3-Llama-3.1-8B",
+          "score": 31.391,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Llama-3-8B-Magpie-Align-v0.3",
+          "repository": "Magpie-Align/Llama-3-8B-Magpie-Align-v0.3",
+          "score": 31.341,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Einstein-v6.1-Llama3-8B",
+          "repository": "Weyaxi/Einstein-v6.1-Llama3-8B",
+          "score": 31.308,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "LLaMa-3.2-Instruct-JankMix-v0.1-SFT-3B",
+          "repository": "PJMixers-Dev/LLaMa-3.2-Instruct-JankMix-v0.1-SFT-3B",
+          "score": 31.275,
+          "storedParameters": 3213000000
+        },
+        {
+          "name": "LLaMa-3.2-Instruct-JankMix-v0.2-SFT-3B",
+          "repository": "PJMixers-Dev/LLaMa-3.2-Instruct-JankMix-v0.2-SFT-3B",
+          "score": 31.15,
+          "storedParameters": 3213000000
+        },
+        {
+          "name": "Llama-3-Base-8B-SFT-IPO",
+          "repository": "princeton-nlp/Llama-3-Base-8B-SFT-IPO",
+          "score": 31.15,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "LLaMa-3.2-Instruct-JankMix-v0.2-SFT-HailMary-v0.1-KTO-3B",
+          "repository": "PJMixers-Dev/LLaMa-3.2-Instruct-JankMix-v0.2-SFT-HailMary-v0.1-KTO-3B",
+          "score": 31.075,
+          "storedParameters": 3213000000
+        },
+        {
+          "name": "Llama-3-Refueled",
+          "repository": "refuelai/Llama-3-Refueled",
+          "score": 30.951,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Einstein-v6.1-developed-by-Weyaxi-Llama3-8B",
+          "repository": "Weyaxi/Einstein-v6.1-developed-by-Weyaxi-Llama3-8B",
+          "score": 30.926,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Llama-3-Base-8B-SFT-ORPO",
+          "repository": "princeton-nlp/Llama-3-Base-8B-SFT-ORPO",
+          "score": 30.826,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Llama-3-Base-8B-SFT-DPO",
+          "repository": "princeton-nlp/Llama-3-Base-8B-SFT-DPO",
+          "score": 30.785,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Mistral-7B-Instruct-v0.3",
+          "repository": "mistralai/Mistral-7B-Instruct-v0.3",
+          "score": 30.751,
+          "storedParameters": 7248000000
+        },
+        {
+          "name": "merlinite-7b",
+          "repository": "ibm/merlinite-7b",
+          "score": 30.685,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "Nous-Hermes-2-Mixtral-8x7B-SFT",
+          "repository": "NousResearch/Nous-Hermes-2-Mixtral-8x7B-SFT",
+          "score": 30.66,
+          "storedParameters": 46703000000
+        },
+        {
+          "name": "Llama-3-Base-8B-SFT-SLiC-HF",
+          "repository": "princeton-nlp/Llama-3-Base-8B-SFT-SLiC-HF",
+          "score": 30.635,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Yi-6B-Chat",
+          "repository": "01-ai/Yi-6B-Chat",
+          "score": 30.61,
+          "storedParameters": 6061000000
+        },
+        {
+          "name": "Llama-3-Base-8B-SFT-KTO",
+          "repository": "princeton-nlp/Llama-3-Base-8B-SFT-KTO",
+          "score": 30.544,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "OpenHermes-2.5-Mistral-7B",
+          "repository": "teknium/OpenHermes-2.5-Mistral-7B",
+          "score": 30.544,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "Nous-Hermes-2-Mistral-7B-DPO",
+          "repository": "NousResearch/Nous-Hermes-2-Mistral-7B-DPO",
+          "score": 30.153,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "Llama-3-Base-8B-SFT-RDPO",
+          "repository": "princeton-nlp/Llama-3-Base-8B-SFT-RDPO",
+          "score": 30.145,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Llama-3-8B-Magpie-Align-v0.1",
+          "repository": "Magpie-Align/Llama-3-8B-Magpie-Align-v0.1",
+          "score": 30.062,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Dolphin3.0-R1-Mistral-24B",
+          "repository": "cognitivecomputations/Dolphin3.0-R1-Mistral-24B",
+          "score": 30.053,
+          "storedParameters": 23572000000
+        },
+        {
+          "name": "Falcon3-3B-Instruct",
+          "repository": "tiiuae/Falcon3-3B-Instruct",
+          "score": 30.053,
+          "storedParameters": 3228000000
+        },
+        {
+          "name": "notus-7b-v1",
+          "repository": "argilla/notus-7b-v1",
+          "score": 30.037,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "Llama-3-Base-8B-SFT-CPO",
+          "repository": "princeton-nlp/Llama-3-Base-8B-SFT-CPO",
+          "score": 29.762,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "mistral-orpo-capybara-7k",
+          "repository": "kaist-ai/mistral-orpo-capybara-7k",
+          "score": 29.712,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "openbuddy-llama3-8b-v21.1-8k",
+          "repository": "OpenBuddy/openbuddy-llama3-8b-v21.1-8k",
+          "score": 29.546,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Qwen1.5-7B-Chat",
+          "repository": "Qwen/Qwen1.5-7B-Chat",
+          "score": 29.513,
+          "storedParameters": 7721000000
+        },
+        {
+          "name": "calm3-22b-chat",
+          "repository": "cyberagent/calm3-22b-chat",
+          "score": 29.496,
+          "storedParameters": 22543000000
+        },
+        {
+          "name": "Hermes-2-Pro-Mistral-7B",
+          "repository": "NousResearch/Hermes-2-Pro-Mistral-7B",
+          "score": 29.463,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "Qwen2.5-Math-7B-CFT",
+          "repository": "TIGER-Lab/Qwen2.5-Math-7B-CFT",
+          "score": 29.446,
+          "storedParameters": 7616000000
+        },
+        {
+          "name": "Llama-3-8B-Instruct-Gradient-1048k",
+          "repository": "gradientai/Llama-3-8B-Instruct-Gradient-1048k",
+          "score": 29.405,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Llama-3-NeuralHercules-5.0-8B",
+          "repository": "Locutusque/Llama-3-NeuralHercules-5.0-8B",
+          "score": 29.33,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "OpenHermes-2-Mistral-7B",
+          "repository": "teknium/OpenHermes-2-Mistral-7B",
+          "score": 29.313,
+          "storedParameters": 7000000000
+        },
+        {
+          "name": "Qwen1.5-MoE-A2.7B-Chat",
+          "repository": "Qwen/Qwen1.5-MoE-A2.7B-Chat",
+          "score": 29.23,
+          "storedParameters": 14316000000
+        },
+        {
+          "name": "Llama-3.1-Tulu-3-8B-DPO",
+          "repository": "allenai/Llama-3.1-Tulu-3-8B-DPO",
+          "score": 28.981,
+          "storedParameters": 8000000000
+        },
+        {
+          "name": "Llama-3-Base-8B-SFT-RRHF",
+          "repository": "princeton-nlp/Llama-3-Base-8B-SFT-RRHF",
+          "score": 28.89,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "orca_mini_v9_5_3B-Instruct",
+          "repository": "pankajmathur/orca_mini_v9_5_3B-Instruct",
+          "score": 28.823,
+          "storedParameters": 3213000000
+        },
+        {
+          "name": "PLLuM-12B-chat",
+          "repository": "CYFRAGOVPL/PLLuM-12B-chat",
+          "score": 28.723,
+          "storedParameters": 12248000000
+        },
+        {
+          "name": "Mistral-7B-Base-SFT-KTO",
+          "repository": "princeton-nlp/Mistral-7B-Base-SFT-KTO",
+          "score": 28.715,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "BrainCog-8B-0.1-Instruct",
+          "repository": "sunbaby/BrainCog-8B-0.1-Instruct",
+          "score": 28.582,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "orca_mini_v9_6_3B-Instruct",
+          "repository": "pankajmathur/orca_mini_v9_6_3B-Instruct",
+          "score": 28.507,
+          "storedParameters": 3213000000
+        },
+        {
+          "name": "zephyr-7b-gemma-v0.1",
+          "repository": "HuggingFaceH4/zephyr-7b-gemma-v0.1",
+          "score": 28.474,
+          "storedParameters": 8538000000
+        },
+        {
+          "name": "recurrentgemma-9b-it",
+          "repository": "google/recurrentgemma-9b-it",
+          "score": 28.433,
+          "storedParameters": 9000000000
+        },
+        {
+          "name": "ghost-8b-beta-1608",
+          "repository": "ghost-x/ghost-8b-beta-1608",
+          "score": 28.399,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Llama-3.1-Tulu-3-8B",
+          "repository": "allenai/Llama-3.1-Tulu-3-8B",
+          "score": 28.266,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "dolphin-2.9.3-mistral-7B-32k",
+          "repository": "cognitivecomputations/dolphin-2.9.3-mistral-7B-32k",
+          "score": 28.208,
+          "storedParameters": 7248000000
+        },
+        {
+          "name": "Qwen2.5-Math-7B-Instruct",
+          "repository": "Qwen/Qwen2.5-Math-7B-Instruct",
+          "score": 28.2,
+          "storedParameters": 7000000000
+        },
+        {
+          "name": "granite-3.0-2b-instruct",
+          "repository": "ibm-granite/granite-3.0-2b-instruct",
+          "score": 28.142,
+          "storedParameters": 2634000000
+        },
+        {
+          "name": "Mistral-7B-Instruct-KTO",
+          "repository": "princeton-nlp/Mistral-7B-Instruct-KTO",
+          "score": 28.125,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "Llama-3.1-Tulu-3-8B-SFT",
+          "repository": "allenai/Llama-3.1-Tulu-3-8B-SFT",
+          "score": 28.117,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Qwen2.5-1.5B-Instruct",
+          "repository": "Qwen/Qwen2.5-1.5B-Instruct",
+          "score": 27.992,
+          "storedParameters": 1500000000
+        },
+        {
+          "name": "zephyr-7b-alpha",
+          "repository": "HuggingFaceH4/zephyr-7b-alpha",
+          "score": 27.95,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "Mistral-7B-Base-SFT-IPO",
+          "repository": "princeton-nlp/Mistral-7B-Base-SFT-IPO",
+          "score": 27.917,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "granite-3.2-2b-instruct",
+          "repository": "ibm-granite/granite-3.2-2b-instruct",
+          "score": 27.834,
+          "storedParameters": 2534000000
+        },
+        {
+          "name": "Josiefied-Qwen2.5-1.5B-Instruct-abliterated-v1",
+          "repository": "Goekdeniz-Guelmez/Josiefied-Qwen2.5-1.5B-Instruct-abliterated-v1",
+          "score": 27.826,
+          "storedParameters": 1777000000
+        },
+        {
+          "name": "zephyr-7b-beta",
+          "repository": "HuggingFaceH4/zephyr-7b-beta",
+          "score": 27.809,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "Mistral-7B-Base-SFT-SLiC-HF",
+          "repository": "princeton-nlp/Mistral-7B-Base-SFT-SLiC-HF",
+          "score": 27.809,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "Mistral-7B-Base-SFT-RDPO",
+          "repository": "princeton-nlp/Mistral-7B-Base-SFT-RDPO",
+          "score": 27.768,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "Mistral-7B-Instruct-RDPO",
+          "repository": "princeton-nlp/Mistral-7B-Instruct-RDPO",
+          "score": 27.768,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "glm-4-9b-chat-hf",
+          "repository": "THUDM/glm-4-9b-chat-hf",
+          "score": 27.743,
+          "storedParameters": 9400000000
+        },
+        {
+          "name": "dolphin-2.9-llama3-8b",
+          "repository": "cognitivecomputations/dolphin-2.9-llama3-8b",
+          "score": 27.709,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Mistral-7B-Base-SimPO2-5e-7",
+          "repository": "TTTXXX01/Mistral-7B-Base-SimPO2-5e-7",
+          "score": 27.66,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "Mistral-7B-Instruct-DPO",
+          "repository": "princeton-nlp/Mistral-7B-Instruct-DPO",
+          "score": 27.485,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "zephyr-sft-bnb-4bit-DPO-mtbo-180steps",
+          "repository": "sonthenguyen/zephyr-sft-bnb-4bit-DPO-mtbo-180steps",
+          "score": 27.477,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "stablelm-2-12b-chat",
+          "repository": "stabilityai/stablelm-2-12b-chat",
+          "score": 27.344,
+          "storedParameters": 12143000000
+        },
+        {
+          "name": "Llama-PLLuM-8B-chat",
+          "repository": "CYFRAGOVPL/Llama-PLLuM-8B-chat",
+          "score": 27.194,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "h2o-danube3.1-4b-chat",
+          "repository": "h2oai/h2o-danube3.1-4b-chat",
+          "score": 27.186,
+          "storedParameters": 3962000000
+        },
+        {
+          "name": "Mistral-7B-Instruct-v0.2",
+          "repository": "mistralai/Mistral-7B-Instruct-v0.2",
+          "score": 27.169,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "Mistral-7B-Instruct-SLiC-HF",
+          "repository": "princeton-nlp/Mistral-7B-Instruct-SLiC-HF",
+          "score": 27.153,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "zephyr-sft-bnb-4bit-DPO-mtbr-180steps",
+          "repository": "sonthenguyen/zephyr-sft-bnb-4bit-DPO-mtbr-180steps",
+          "score": 27.111,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "zephyr-sft-bnb-4bit-DPO-mtbc-213steps",
+          "repository": "sonthenguyen/zephyr-sft-bnb-4bit-DPO-mtbc-213steps",
+          "score": 27.086,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "Mistral-7B-Instruct-IPO",
+          "repository": "princeton-nlp/Mistral-7B-Instruct-IPO",
+          "score": 27.078,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "Aura-4B",
+          "repository": "AuraIndustries/Aura-4B",
+          "score": 27.061,
+          "storedParameters": 4513000000
+        },
+        {
+          "name": "Mistral-7B-Base-SFT-SimPO",
+          "repository": "princeton-nlp/Mistral-7B-Base-SFT-SimPO",
+          "score": 27.02,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "Mistral-7B-Instruct-CPO",
+          "repository": "princeton-nlp/Mistral-7B-Instruct-CPO",
+          "score": 27.011,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "Mistral7B-PairRM-SPPO-Iter1",
+          "repository": "UCLA-AGI/Mistral7B-PairRM-SPPO-Iter1",
+          "score": 26.953,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "GritLM-7B-KTO",
+          "repository": "GritLM/GritLM-7B-KTO",
+          "score": 26.804,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "Mistral7B-PairRM-SPPO-Iter2",
+          "repository": "UCLA-AGI/Mistral7B-PairRM-SPPO-Iter2",
+          "score": 26.77,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "Mistral-7B-Instruct-ORPO",
+          "repository": "princeton-nlp/Mistral-7B-Instruct-ORPO",
+          "score": 26.621,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "Mistral7B-PairRM-SPPO-Iter3",
+          "repository": "UCLA-AGI/Mistral7B-PairRM-SPPO-Iter3",
+          "score": 26.579,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "Mistral-7B-OpenOrca",
+          "repository": "Open-Orca/Mistral-7B-OpenOrca",
+          "score": 26.529,
+          "storedParameters": 7000000000
+        },
+        {
+          "name": "Mistral-7B-Base-SFT-CPO",
+          "repository": "princeton-nlp/Mistral-7B-Base-SFT-CPO",
+          "score": 26.513,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "Mistral-7B-Instruct-RRHF",
+          "repository": "princeton-nlp/Mistral-7B-Instruct-RRHF",
+          "score": 26.513,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "Mistral-7B-Base-SFT-DPO",
+          "repository": "princeton-nlp/Mistral-7B-Base-SFT-DPO",
+          "score": 26.454,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "EnnoAi-Pro-French-Llama-3-8B-v0.4",
+          "repository": "Enno-Ai/EnnoAi-Pro-French-Llama-3-8B-v0.4",
+          "score": 26.346,
+          "storedParameters": 8031000000
+        },
+        {
+          "name": "Llama3-8B-SuperNova-Spectrum-Hermes-DPO",
+          "repository": "yuvraj17/Llama3-8B-SuperNova-Spectrum-Hermes-DPO",
+          "score": 26.346,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Nemotron-Mini-4B-Instruct",
+          "repository": "nvidia/Nemotron-Mini-4B-Instruct",
+          "score": 26.263,
+          "storedParameters": 4000000000
+        },
+        {
+          "name": "Mistral7B-PairRM-SPPO",
+          "repository": "UCLA-AGI/Mistral7B-PairRM-SPPO",
+          "score": 26.205,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "DeciLM-7B-instruct",
+          "repository": "Deci/DeciLM-7B-instruct",
+          "score": 26.08,
+          "storedParameters": 7044000000
+        },
+        {
+          "name": "dictalm2.0-instruct",
+          "repository": "dicta-il/dictalm2.0-instruct",
+          "score": 26.047,
+          "storedParameters": 7251000000
+        },
+        {
+          "name": "orca_mini_v9_0_3B-Instruct",
+          "repository": "pankajmathur/orca_mini_v9_0_3B-Instruct",
+          "score": 26.031,
+          "storedParameters": 3213000000
+        },
+        {
+          "name": "PLLuM-12B-nc-chat",
+          "repository": "CYFRAGOVPL/PLLuM-12B-nc-chat",
+          "score": 25.972,
+          "storedParameters": 12248000000
+        },
+        {
+          "name": "Llama-3.1-8B-paraphrase-type-generation-apty-ipo",
+          "repository": "cluebbers/Llama-3.1-8B-paraphrase-type-generation-apty-ipo",
+          "score": 25.906,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "gemma-1.1-7b-it",
+          "repository": "google/gemma-1.1-7b-it",
+          "score": 25.839,
+          "storedParameters": 8538000000
+        },
+        {
+          "name": "Llama-3.1-8B-paraphrase-type-generation-apty-sigmoid",
+          "repository": "cluebbers/Llama-3.1-8B-paraphrase-type-generation-apty-sigmoid",
+          "score": 25.623,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Josiefied-Qwen2.5-1.5B-Instruct-abliterated-v2",
+          "repository": "Goekdeniz-Guelmez/Josiefied-Qwen2.5-1.5B-Instruct-abliterated-v2",
+          "score": 25.615,
+          "storedParameters": 1544000000
+        },
+        {
+          "name": "Josiefied-Qwen2.5-1.5B-Instruct-abliterated-v3",
+          "repository": "Goekdeniz-Guelmez/Josiefied-Qwen2.5-1.5B-Instruct-abliterated-v3",
+          "score": 25.557,
+          "storedParameters": 1544000000
+        },
+        {
+          "name": "Llama-3.1-8B-paraphrase-type-generation-etpc",
+          "repository": "cluebbers/Llama-3.1-8B-paraphrase-type-generation-etpc",
+          "score": 25.557,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Hermes-3-Llama-3.2-3B",
+          "repository": "NousResearch/Hermes-3-Llama-3.2-3B",
+          "score": 25.44,
+          "storedParameters": 3213000000
+        },
+        {
+          "name": "RightSheep-Llama3.2-3B",
+          "repository": "SaisExperiments/RightSheep-Llama3.2-3B",
+          "score": 25.399,
+          "storedParameters": 3213000000
+        },
+        {
+          "name": "Qwarkstar-4B-Instruct-Preview",
+          "repository": "qingy2024/Qwarkstar-4B-Instruct-Preview",
+          "score": 25.025,
+          "storedParameters": 4473000000
+        },
+        {
+          "name": "Qwen2-1.5B-Instruct",
+          "repository": "Qwen/Qwen2-1.5B-Instruct",
+          "score": 25.008,
+          "storedParameters": 1544000000
+        },
+        {
+          "name": "openbuddy-llama3.2-3b-v23.2-131k",
+          "repository": "OpenBuddy/openbuddy-llama3.2-3b-v23.2-131k",
+          "score": 24.792,
+          "storedParameters": 3607000000
+        },
+        {
+          "name": "gemma-2-2b-jpn-it",
+          "repository": "google/gemma-2-2b-jpn-it",
+          "score": 24.668,
+          "storedParameters": 2614000000
+        },
+        {
+          "name": "Llama3.1-8B-Fireplace2",
+          "repository": "ValiantLabs/Llama3.1-8B-Fireplace2",
+          "score": 24.235,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Mistral-7B-Instruct-v0.1",
+          "repository": "mistralai/Mistral-7B-Instruct-v0.1",
+          "score": 24.144,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "Mistral-NeMo-Minitron-8B-Chat",
+          "repository": "rasyosef/Mistral-NeMo-Minitron-8B-Chat",
+          "score": 24.036,
+          "storedParameters": 8414000000
+        },
+        {
+          "name": "Mistral-7B-Base-SFT-RRHF",
+          "repository": "princeton-nlp/Mistral-7B-Base-SFT-RRHF",
+          "score": 23.978,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "Qwen1.5-4B-Chat",
+          "repository": "Qwen/Qwen1.5-4B-Chat",
+          "score": 23.961,
+          "storedParameters": 3950000000
+        },
+        {
+          "name": "DeepSeek-R1-Distill-Qwen-7B",
+          "repository": "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
+          "score": 23.213,
+          "storedParameters": 7616000000
+        },
+        {
+          "name": "granite-7b-instruct",
+          "repository": "ibm-granite/granite-7b-instruct",
+          "score": 22.864,
+          "storedParameters": 6738000000
+        },
+        {
+          "name": "Llama-3-8B-Orpo-v0.1",
+          "repository": "dfurman/Llama-3-8B-Orpo-v0.1",
+          "score": 22.806,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "Mistral-v0.3-7B-ORPO",
+          "repository": "llmat/Mistral-v0.3-7B-ORPO",
+          "score": 22.781,
+          "storedParameters": 7248000000
+        },
+        {
+          "name": "falcon-40b-instruct",
+          "repository": "tiiuae/falcon-40b-instruct",
+          "score": 22.615,
+          "storedParameters": 40000000000
+        },
+        {
+          "name": "Einstein-v4-7B",
+          "repository": "Weyaxi/Einstein-v4-7B",
+          "score": 22.59,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "autotrain-llama3-orpo-v2",
+          "repository": "abhishek/autotrain-llama3-orpo-v2",
+          "score": 22.183,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "blossom-v5-llama3-8b",
+          "repository": "Azure99/blossom-v5-llama3-8b",
+          "score": 22.058,
+          "storedParameters": 8030000000
+        },
+        {
+          "name": "MSH-Lite-7B-v1-Bielik-v2.3-Instruct-Llama-Prune",
+          "repository": "meditsolutions/MSH-Lite-7B-v1-Bielik-v2.3-Instruct-Llama-Prune",
+          "score": 21.9,
+          "storedParameters": 7646000000
+        },
+        {
+          "name": "granite-3.0-3b-a800m-instruct",
+          "repository": "ibm-granite/granite-3.0-3b-a800m-instruct",
+          "score": 21.518,
+          "storedParameters": 3374000000
+        },
+        {
+          "name": "EnnoAi-Pro-Llama-3-8B",
+          "repository": "Enno-Ai/EnnoAi-Pro-Llama-3-8B",
+          "score": 21.509,
+          "storedParameters": 8031000000
+        },
+        {
+          "name": "deepseek-llm-7b-chat",
+          "repository": "deepseek-ai/deepseek-llm-7b-chat",
+          "score": 21.335,
+          "storedParameters": 7000000000
+        },
+        {
+          "name": "gemma-2-27b-it-SimPO-37K-100steps",
+          "repository": "AALF/gemma-2-27b-it-SimPO-37K-100steps",
+          "score": 21.252,
+          "storedParameters": 27227000000
+        },
+        {
+          "name": "dolphin-2.9.4-gemma2-2b",
+          "repository": "cognitivecomputations/dolphin-2.9.4-gemma2-2b",
+          "score": 21.052,
+          "storedParameters": 2614000000
+        },
+        {
+          "name": "fietje-2-instruct",
+          "repository": "BramVanroy/fietje-2-instruct",
+          "score": 21.036,
+          "storedParameters": 2775000000
+        },
+        {
+          "name": "AceMath-1.5B-Instruct",
+          "repository": "nvidia/AceMath-1.5B-Instruct",
+          "score": 20.637,
+          "storedParameters": 1777000000
+        },
+        {
+          "name": "fietje-2-chat",
+          "repository": "BramVanroy/fietje-2-chat",
+          "score": 20.545,
+          "storedParameters": 2775000000
+        },
+        {
+          "name": "Gemmasutra-Mini-2B-v1",
+          "repository": "TheDrummer/Gemmasutra-Mini-2B-v1",
+          "score": 20.545,
+          "storedParameters": 2614000000
+        },
+        {
+          "name": "SmolLM2-1.7B-Instruct",
+          "repository": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
+          "score": 20.537,
+          "storedParameters": 1711000000
+        },
+        {
+          "name": "Hymba-1.5B-Instruct",
+          "repository": "nvidia/Hymba-1.5B-Instruct",
+          "score": 20.404,
+          "storedParameters": 1523000000
+        },
+        {
+          "name": "openbuddy-zero-3b-v21.2-32k",
+          "repository": "OpenBuddy/openbuddy-zero-3b-v21.2-32k",
+          "score": 20.337,
+          "storedParameters": 4769000000
+        },
+        {
+          "name": "GEITje-7B-ultra",
+          "repository": "BramVanroy/GEITje-7B-ultra",
+          "score": 20.113,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "gemma-2-27b-it-SimPO-37K",
+          "repository": "AALF/gemma-2-27b-it-SimPO-37K",
+          "score": 19.714,
+          "storedParameters": 27227000000
+        },
+        {
+          "name": "deepseek-moe-16b-chat",
+          "repository": "deepseek-ai/deepseek-moe-16b-chat",
+          "score": 19.639,
+          "storedParameters": 16376000000
+        },
+        {
+          "name": "LLaMA-Pro-8B-Instruct",
+          "repository": "TencentARC/LLaMA-Pro-8B-Instruct",
+          "score": 19.456,
+          "storedParameters": 8357000000
+        },
+        {
+          "name": "leniachat-qwen2-1.5B-v0",
+          "repository": "LenguajeNaturalAI/leniachat-qwen2-1.5B-v0",
+          "score": 18.8,
+          "storedParameters": 1543000000
+        },
+        {
+          "name": "OLMoE-1B-7B-0924-Instruct",
+          "repository": "allenai/OLMoE-1B-7B-0924-Instruct",
+          "score": 18.758,
+          "storedParameters": 6919000000
+        },
+        {
+          "name": "openbuddy-llama3.2-1b-v23.1-131k",
+          "repository": "OpenBuddy/openbuddy-llama3.2-1b-v23.1-131k",
+          "score": 18.401,
+          "storedParameters": 1498000000
+        },
+        {
+          "name": "internlm2-chat-1_8b",
+          "repository": "internlm/internlm2-chat-1_8b",
+          "score": 18.393,
+          "storedParameters": 1889000000
+        },
+        {
+          "name": "Falcon3-1B-Instruct",
+          "repository": "tiiuae/Falcon3-1B-Instruct",
+          "score": 18.384,
+          "storedParameters": 1669000000
+        },
+        {
+          "name": "Llama-3.2-SUN-1B-chat",
+          "repository": "meditsolutions/Llama-3.2-SUN-1B-chat",
+          "score": 18.376,
+          "storedParameters": 1498000000
+        },
+        {
+          "name": "glm-4-9b-chat-1m-hf",
+          "repository": "THUDM/glm-4-9b-chat-1m-hf",
+          "score": 18.143,
+          "storedParameters": 9484000000
+        },
+        {
+          "name": "Llama-3.2-SUN-2.5B-chat",
+          "repository": "meditsolutions/Llama-3.2-SUN-2.5B-chat",
+          "score": 18.135,
+          "storedParameters": 2472000000
+        },
+        {
+          "name": "orca_mini_v9_6_1B-Instruct",
+          "repository": "pankajmathur/orca_mini_v9_6_1B-Instruct",
+          "score": 18.085,
+          "storedParameters": 1236000000
+        },
+        {
+          "name": "Qwen1.5-1.8B-Chat",
+          "repository": "Qwen/Qwen1.5-1.8B-Chat",
+          "score": 18.035,
+          "storedParameters": 1837000000
+        },
+        {
+          "name": "OLMo-7B-Instruct-hf",
+          "repository": "allenai/OLMo-7B-Instruct-hf",
+          "score": 17.852,
+          "storedParameters": 7000000000
+        },
+        {
+          "name": "stablelm-zephyr-3b",
+          "repository": "stabilityai/stablelm-zephyr-3b",
+          "score": 17.678,
+          "storedParameters": 2795000000
+        },
+        {
+          "name": "Llama-3.2-1B-Instruct-gptqmodel-4bit-vortex-v1",
+          "repository": "ModelCloud/Llama-3.2-1B-Instruct-gptqmodel-4bit-vortex-v1",
+          "score": 17.645,
+          "storedParameters": 5453000000
+        },
+        {
+          "name": "SmolTulu-1.7b-Reinforced",
+          "repository": "SultanR/SmolTulu-1.7b-Reinforced",
+          "score": 17.628,
+          "storedParameters": 1711000000
+        },
+        {
+          "name": "unsloth/Llama-3.2-1B-Instruct",
+          "repository": "unsloth/Llama-3.2-1B-Instruct",
+          "score": 17.42,
+          "storedParameters": 1236000000
+        },
+        {
+          "name": "SmolTulu-1.7b-Instruct",
+          "repository": "SultanR/SmolTulu-1.7b-Instruct",
+          "score": 17.104,
+          "storedParameters": 1711000000
+        },
+        {
+          "name": "SmolTulu-1.7b-it-v0",
+          "repository": "SultanR/SmolTulu-1.7b-it-v0",
+          "score": 17.104,
+          "storedParameters": 1711000000
+        },
+        {
+          "name": "Qwen2.5-0.5B-Instruct",
+          "repository": "Qwen/Qwen2.5-0.5B-Instruct",
+          "score": 16.971,
+          "storedParameters": 500000000
+        },
+        {
+          "name": "gemma-7b-it",
+          "repository": "google/gemma-7b-it",
+          "score": 16.946,
+          "storedParameters": 8538000000
+        },
+        {
+          "name": "meta-llama/Llama-3.2-1B-Instruct",
+          "repository": "meta-llama/Llama-3.2-1B-Instruct",
+          "score": 16.822,
+          "storedParameters": 1240000000
+        },
+        {
+          "name": "stablelm-2-1_6b-chat",
+          "repository": "stabilityai/stablelm-2-1_6b-chat",
+          "score": 16.215,
+          "storedParameters": 1645000000
+        },
+        {
+          "name": "Nxcode-CQ-7B-orpo",
+          "repository": "NTQAI/Nxcode-CQ-7B-orpo",
+          "score": 16.115,
+          "storedParameters": 7250000000
+        },
+        {
+          "name": "Qwen2.5-0.5B-Instruct-CrashCourse-dropout",
+          "repository": "agentlans/Qwen2.5-0.5B-Instruct-CrashCourse-dropout",
+          "score": 16.082,
+          "storedParameters": 494000000
+        },
+        {
+          "name": "QwQ-0.5B-Distilled-SFT",
+          "repository": "kz919/QwQ-0.5B-Distilled-SFT",
+          "score": 15.874,
+          "storedParameters": 494000000
+        },
+        {
+          "name": "Phi-1_5-Instruct-v0.1",
+          "repository": "rasyosef/Phi-1_5-Instruct-v0.1",
+          "score": 15.617,
+          "storedParameters": 1415000000
+        },
+        {
+          "name": "Llama-3.2-SUN-2.4B-v1.0.0",
+          "repository": "meditsolutions/Llama-3.2-SUN-2.4B-v1.0.0",
+          "score": 15.426,
+          "storedParameters": 2472000000
+        },
+        {
+          "name": "Qwen2-0.5B-Instruct",
+          "repository": "Qwen/Qwen2-0.5B-Instruct",
+          "score": 15.309,
+          "storedParameters": 494000000
+        },
+        {
+          "name": "gemma-1.1-2b-it",
+          "repository": "google/gemma-1.1-2b-it",
+          "score": 14.835,
+          "storedParameters": 2506000000
+        },
+        {
+          "name": "ReflectionCoder-CL-34B",
+          "repository": "SenseLLM/ReflectionCoder-CL-34B",
+          "score": 14.237,
+          "storedParameters": 33744000000
+        },
+        {
+          "name": "recurrentgemma-2b-it",
+          "repository": "google/recurrentgemma-2b-it",
+          "score": 14.021,
+          "storedParameters": 2683000000
+        },
+        {
+          "name": "orca_mini_v9_7_3B-Instruct",
+          "repository": "pankajmathur/orca_mini_v9_7_3B-Instruct",
+          "score": 13.747,
+          "storedParameters": 3213000000
+        },
+        {
+          "name": "orca_mini_v9_1_1B-Instruct",
+          "repository": "pankajmathur/orca_mini_v9_1_1B-Instruct",
+          "score": 13.738,
+          "storedParameters": 1236000000
+        },
+        {
+          "name": "orca_mini_v9_5_1B-Instruct",
+          "repository": "pankajmathur/orca_mini_v9_5_1B-Instruct",
+          "score": 13.697,
+          "storedParameters": 1236000000
+        },
+        {
+          "name": "Llama-3.2-SUN-2.4B-checkpoint-34800",
+          "repository": "meditsolutions/Llama-3.2-SUN-2.4B-checkpoint-34800",
+          "score": 13.572,
+          "storedParameters": 2209000000
+        },
+        {
+          "name": "gemma-2b-it",
+          "repository": "google/gemma-2b-it",
+          "score": 13.531,
+          "storedParameters": 2506000000
+        },
+        {
+          "name": "Llama-3.2-SUN-2.4B-checkpoint-26000",
+          "repository": "meditsolutions/Llama-3.2-SUN-2.4B-checkpoint-26000",
+          "score": 13.447,
+          "storedParameters": 2209000000
+        },
+        {
+          "name": "orca_mini_v9_7_1B-Instruct",
+          "repository": "pankajmathur/orca_mini_v9_7_1B-Instruct",
+          "score": 13.447,
+          "storedParameters": 1236000000
+        },
+        {
+          "name": "Qwen2-0.5B-Abyme",
+          "repository": "CoolSpring/Qwen2-0.5B-Abyme",
+          "score": 13.331,
+          "storedParameters": 494000000
+        },
+        {
+          "name": "orca_mini_v9_5_1B-Instruct_preview",
+          "repository": "pankajmathur/orca_mini_v9_5_1B-Instruct_preview",
+          "score": 13.273,
+          "storedParameters": 1236000000
+        },
+        {
+          "name": "OpenLongCoT-Base-Gemma2-2B",
+          "repository": "qq8933/OpenLongCoT-Base-Gemma2-2B",
+          "score": 13.157,
+          "storedParameters": 3204000000
+        },
+        {
+          "name": "gemma-2b-orpo",
+          "repository": "anakin87/gemma-2b-orpo",
+          "score": 13.057,
+          "storedParameters": 2506000000
+        },
+        {
+          "name": "internlm2_5-1_8b-chat",
+          "repository": "internlm/internlm2_5-1_8b-chat",
+          "score": 12.99,
+          "storedParameters": 1890000000
+        },
+        {
+          "name": "granite-3.0-1b-a400m-instruct",
+          "repository": "ibm-granite/granite-3.0-1b-a400m-instruct",
+          "score": 12.442,
+          "storedParameters": 1335000000
+        },
+        {
+          "name": "Qwen1.5-0.5B-Chat",
+          "repository": "Qwen/Qwen1.5-0.5B-Chat",
+          "score": 12.126,
+          "storedParameters": 620000000
+        },
+        {
+          "name": "ReflectionCoder-DS-33B",
+          "repository": "SenseLLM/ReflectionCoder-DS-33B",
+          "score": 12.018,
+          "storedParameters": 33340000000
+        },
+        {
+          "name": "DeepSeek-R1-Distill-Qwen-1.5B",
+          "repository": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
+          "score": 11.868,
+          "storedParameters": 1777000000
+        },
+        {
+          "name": "SmolLM-135M-Instruct",
+          "repository": "HuggingFaceTB/SmolLM-135M-Instruct",
+          "score": 11.76,
+          "storedParameters": 135000000
+        },
+        {
+          "name": "leniachat-gemma-2b-v0",
+          "repository": "LenguajeNaturalAI/leniachat-gemma-2b-v0",
+          "score": 11.702,
+          "storedParameters": 2506000000
+        },
+        {
+          "name": "SmolLM-1.7B-Instruct",
+          "repository": "HuggingFaceTB/SmolLM-1.7B-Instruct",
+          "score": 11.661,
+          "storedParameters": 1710000000
+        },
+        {
+          "name": "SmolLM-360M-Instruct",
+          "repository": "HuggingFaceTB/SmolLM-360M-Instruct",
+          "score": 11.661,
+          "storedParameters": 362000000
+        },
+        {
+          "name": "Rhea-72b-v0.5",
+          "repository": "davidkim205/Rhea-72b-v0.5",
+          "score": 11.661,
+          "storedParameters": 72000000000
+        },
+        {
+          "name": "Matter-0.2-7B-DPO",
+          "repository": "0-hero/Matter-0.2-7B-DPO",
+          "score": 11.636,
+          "storedParameters": 7242000000
+        },
+        {
+          "name": "Einstein-v8-Llama3.2-1B",
+          "repository": "Weyaxi/Einstein-v8-Llama3.2-1B",
+          "score": 11.611,
+          "storedParameters": 1236000000
+        },
+        {
+          "name": "falcon-7b-instruct",
+          "repository": "tiiuae/falcon-7b-instruct",
+          "score": 11.553,
+          "storedParameters": 7000000000
+        },
+        {
+          "name": "tFINE-900m-instruct-orpo",
+          "repository": "BEE-spoke-data/tFINE-900m-instruct-orpo",
+          "score": 11.519,
+          "storedParameters": 887000000
+        },
+        {
+          "name": "TinyLlama-1.1B-Chat-v0.6",
+          "repository": "TinyLlama/TinyLlama-1.1B-Chat-v0.6",
+          "score": 11.486,
+          "storedParameters": 1100000000
+        },
+        {
+          "name": "Fireball-MathMistral-Nemo-Base-2407-v2dpo",
+          "repository": "EpistemeAI2/Fireball-MathMistral-Nemo-Base-2407-v2dpo",
+          "score": 11.478,
+          "storedParameters": 11580000000
+        },
+        {
+          "name": "smol_llama-220M-openhermes",
+          "repository": "BEE-spoke-data/smol_llama-220M-openhermes",
+          "score": 11.203,
+          "storedParameters": 218000000
+        },
+        {
+          "name": "notHumpback-M0",
+          "repository": "Alepach/notHumpback-M0",
+          "score": 11.187,
+          "storedParameters": 3213000000
+        },
+        {
+          "name": "DialoGPT-medium",
+          "repository": "microsoft/DialoGPT-medium",
+          "score": 11.187,
+          "storedParameters": 345000000
+        },
+        {
+          "name": "KhanomTanLLM-Instruct",
+          "repository": "wannaphong/KhanomTanLLM-Instruct",
+          "score": 11.187,
+          "storedParameters": 3447000000
+        },
+        {
+          "name": "SmolLM2-360M-Instruct",
+          "repository": "HuggingFaceTB/SmolLM2-360M-Instruct",
+          "score": 11.17,
+          "storedParameters": 360000000
+        },
+        {
+          "name": "SmolLM2-135M-Instruct",
+          "repository": "HuggingFaceTB/SmolLM2-135M-Instruct",
+          "score": 11.145,
+          "storedParameters": 135000000
+        },
+        {
+          "name": "TinyLlama-1.1B-Chat-v0.5",
+          "repository": "TinyLlama/TinyLlama-1.1B-Chat-v0.5",
+          "score": 10.962,
+          "storedParameters": 1100000000
+        },
+        {
+          "name": "notHumpback-M1",
+          "repository": "Alepach/notHumpback-M1",
+          "score": 10.913,
+          "storedParameters": 3213000000
+        },
+        {
+          "name": "Llama-3.1-Tulu-3-8B-RM",
+          "repository": "allenai/Llama-3.1-Tulu-3-8B-RM",
+          "score": 10.821,
+          "storedParameters": 8000000000
+        },
+        {
+          "name": "ArmoRM-Llama3-8B-v0.1",
+          "repository": "RLHFlow/ArmoRM-Llama3-8B-v0.1",
+          "score": 10.78,
+          "storedParameters": 7511000000
+        },
+        {
+          "name": "INTELLECT-1-Instruct",
+          "repository": "PrimeIntellect/INTELLECT-1-Instruct",
+          "score": 10.638,
+          "storedParameters": 10211000000
+        },
+        {
+          "name": "GRAG-NEMO-12B-ORPO-HESSIAN-AI",
+          "repository": "avemio/GRAG-NEMO-12B-ORPO-HESSIAN-AI",
+          "score": 10.605,
+          "storedParameters": 12248000000
         }
       ],
       "comparisons": [
+        {
+          "metric": "MMLU-Pro · Qwen comparison",
+          "description": "Multiple-choice accuracy from the Qwen3.5-4B release comparison. Six checkpoints share this publisher table, including recent Qwen3.5 and gpt-oss releases.",
+          "publisher": "Qwen evaluation",
+          "source": "https://huggingface.co/Qwen/Qwen3.5-4B/blob/851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a/README.md#evaluation",
+          "maximum": 100,
+          "unit": "%",
+          "lowerIsBetter": false,
+          "models": [
+            {
+              "name": "Qwen3-Next-80B-A3B-Thinking",
+              "score": 82.7,
+              "repository": "Qwen/Qwen3-Next-80B-A3B-Thinking",
+              "storedParameters": 81324862720
+            },
+            {
+              "name": "Qwen3.5-9B",
+              "score": 82.5,
+              "repository": "Qwen/Qwen3.5-9B",
+              "storedParameters": 9653104368
+            },
+            {
+              "name": "Qwen3-30B-A3B-Thinking-2507",
+              "score": 80.9,
+              "repository": "Qwen/Qwen3-30B-A3B-Thinking-2507",
+              "storedParameters": 30532122624
+            },
+            {
+              "name": "gpt-oss-120b",
+              "score": 80.8,
+              "repository": "openai/gpt-oss-120b",
+              "storedParameters": 116829156672
+            },
+            {
+              "name": "Qwen3.5-4B",
+              "score": 79.1,
+              "repository": "Qwen/Qwen3.5-4B",
+              "storedParameters": 4659865088
+            },
+            {
+              "name": "gpt-oss-20b",
+              "score": 74.8,
+              "repository": "openai/gpt-oss-20b",
+              "storedParameters": 20914757184
+            }
+          ]
+        },
         {
           "metric": "GPQA Diamond",
           "description": "Accuracy on graduate-level science questions from the Diamond split.",
@@ -239,147 +3040,6 @@
           ]
         },
         {
-          "metric": "Open LLM Leaderboard · MMLU-Pro",
-          "description": "Multiple-choice knowledge and reasoning. Raw scores from the archived Hugging Face evaluation, expressed as percentages. All selected entries used original BF16 weights.",
-          "publisher": "Hugging Face Open LLM Leaderboard v2",
-          "source": "https://huggingface.co/datasets/open-llm-leaderboard/contents/tree/9c09a7cae43334062a82cb164f2ef255013dafa2",
-          "unit": "%",
-          "maximum": 100,
-          "lowerIsBetter": false,
-          "models": [
-            {
-              "name": "Qwen2.5-32B-Instruct",
-              "repository": "Qwen/Qwen2.5-32B-Instruct",
-              "score": 56.67
-            },
-            {
-              "name": "Llama-3.3-70B-Instruct",
-              "repository": "meta-llama/Llama-3.3-70B-Instruct",
-              "score": 53.32
-            },
-            {
-              "name": "DeepSeek-R1-Distill-Qwen-14B",
-              "repository": "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B",
-              "score": 46.67
-            },
-            {
-              "name": "gemma-2-27b-it",
-              "repository": "google/gemma-2-27b-it",
-              "score": 44.51
-            },
-            {
-              "name": "Qwen2.5-7B-Instruct",
-              "repository": "Qwen/Qwen2.5-7B-Instruct",
-              "score": 42.87
-            },
-            {
-              "name": "Falcon3-7B-Instruct",
-              "repository": "tiiuae/Falcon3-7B-Instruct",
-              "score": 40.87
-            },
-            {
-              "name": "Phi-4-mini-instruct",
-              "repository": "microsoft/Phi-4-mini-instruct",
-              "score": 39.32
-            },
-            {
-              "name": "gemma-2-9b-it",
-              "repository": "google/gemma-2-9b-it",
-              "score": 38.75
-            },
-            {
-              "name": "Mixtral-8x7B-Instruct-v0.1",
-              "repository": "mistralai/Mixtral-8x7B-Instruct-v0.1",
-              "score": 36.92
-            },
-            {
-              "name": "Meta-Llama-3-8B-Instruct",
-              "repository": "meta-llama/Meta-Llama-3-8B-Instruct",
-              "score": 36.64
-            },
-            {
-              "name": "c4ai-command-r7b-12-2024",
-              "repository": "CohereForAI/c4ai-command-r7b-12-2024",
-              "score": 35.72
-            },
-            {
-              "name": "Mistral-Nemo-Instruct-2407",
-              "repository": "mistralai/Mistral-Nemo-Instruct-2407",
-              "score": 35.17
-            },
-            {
-              "name": "granite-3.2-8b-instruct",
-              "repository": "ibm-granite/granite-3.2-8b-instruct",
-              "score": 35.12
-            },
-            {
-              "name": "Ministral-8B-Instruct-2410",
-              "repository": "mistralai/Ministral-8B-Instruct-2410",
-              "score": 32.91
-            },
-            {
-              "name": "Qwen2.5-3B-Instruct",
-              "repository": "Qwen/Qwen2.5-3B-Instruct",
-              "score": 32.55
-            },
-            {
-              "name": "Llama-3.2-3B-Instruct",
-              "repository": "meta-llama/Llama-3.2-3B-Instruct",
-              "score": 31.95
-            },
-            {
-              "name": "Llama-3.1-Tulu-3-8B",
-              "repository": "allenai/Llama-3.1-Tulu-3-8B",
-              "score": 28.27
-            },
-            {
-              "name": "granite-3.2-2b-instruct",
-              "repository": "ibm-granite/granite-3.2-2b-instruct",
-              "score": 27.83
-            },
-            {
-              "name": "gemma-2-2b-it",
-              "repository": "google/gemma-2-2b-it",
-              "score": 25.5
-            },
-            {
-              "name": "SmolLM2-1.7B-Instruct",
-              "repository": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
-              "score": 20.54
-            },
-            {
-              "name": "Falcon3-1B-Instruct",
-              "repository": "tiiuae/Falcon3-1B-Instruct",
-              "score": 18.38
-            },
-            {
-              "name": "Qwen2.5-0.5B-Instruct",
-              "repository": "Qwen/Qwen2.5-0.5B-Instruct",
-              "score": 16.97
-            },
-            {
-              "name": "Llama-3.2-1B-Instruct",
-              "repository": "meta-llama/Llama-3.2-1B-Instruct",
-              "score": 16.82
-            },
-            {
-              "name": "DeepSeek-R1-Distill-Qwen-1.5B",
-              "repository": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
-              "score": 11.87
-            },
-            {
-              "name": "SmolLM2-360M-Instruct",
-              "repository": "HuggingFaceTB/SmolLM2-360M-Instruct",
-              "score": 11.17
-            },
-            {
-              "name": "SmolLM2-135M-Instruct",
-              "repository": "HuggingFaceTB/SmolLM2-135M-Instruct",
-              "score": 11.15
-            }
-          ]
-        },
-        {
           "metric": "Open LLM Leaderboard · IFEval",
           "description": "Following verifiable instructions. Raw scores from the archived Hugging Face evaluation, expressed as percentages. All selected entries used original BF16 weights.",
           "publisher": "Hugging Face Open LLM Leaderboard v2",
@@ -521,7 +3181,7 @@
           ]
         }
       ],
-      "interpretation": "Qwen3.5-9B scores 82.5 on MMLU-Pro and 65.6 on LiveCodeBench. The 120B gpt-oss checkpoint scores 80.8 and 82.7 respectively. Select the coding, instruction or long-document test that matches your workload."
+      "interpretation": "Use this archive to compare chat checkpoints tested by one evaluator. Check the parameter count when comparing sizes. The Qwen comparison covers newer releases under its own protocol. Switch to LiveCodeBench for code or LongBench for long-document questions."
     },
     {
       "name": "Embeddings",

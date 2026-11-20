@@ -1,4 +1,5 @@
 "use client";
+import { CompactPicker } from "@/components/compact-picker";
 import { useEffect, useState } from "react";
 import { ParetoChart } from "../pareto-chart";
 import type { ChartScale } from "@/lib/pareto";
@@ -34,18 +35,7 @@ export function CatalogChart({
   return (
     <figure className="catalog-chart">
       <div className="chart-controls">
-        <label>
-          Budget
-          <select
-            disabled={!interactive}
-            aria-label="Budget"
-            value={axis}
-            onChange={(e) => setAxis(e.target.value === "tokens" ? "tokens" : "cost")}
-          >
-            <option value="cost">Cost per task</option>
-            <option value="tokens">Output tokens</option>
-          </select>
-        </label>
+        <CompactPicker label="Budget" disabled={!interactive} value={axis} options={[{value:"cost",label:"Cost per task"},{value:"tokens",label:"Output tokens"}]} onChange={v => setAxis(v === "tokens" ? "tokens" : "cost")} />
       </div>
       {compare && (
         <p className="chart-legend">

@@ -8,6 +8,7 @@ export type QualityModel = {
 };
 export type QualityMetric = {
   metric: string;
+  overviewPublishers?: string[];
   description: string;
   publisher: string;
   source: string;
