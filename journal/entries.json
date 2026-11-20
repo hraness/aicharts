@@ -5,7 +5,7 @@
     "category": "Improved",
     "surfaces": ["Website"],
     "title": "Compare two devices across nine workloads",
-    "summary": "See published speeds and memory side by side. Choose a device tested under the same conditions in one click, or select a result to inspect its model, settings and source.",
+    "summary": "See published speeds and memory side by side. Choose a device tested under the same conditions in one click, or select a result to inspect its model, settings and source. Where a pair has no published result, the chart shows a measured example from another device.",
     "link": {"href": "/local#hardware", "label": "Compare device speeds"}
   },
   {
