@@ -3,15 +3,15 @@
   "product": "aicharts",
   "file": "preview.webp",
   "command": "bun run showcase",
-  "sourceSha": "c71a912ccad15f5a41207fca4cd210153664ff2a",
+  "sourceSha": "6e7d8598ce13c7c0beb76b4b11e4e259f52ecec4",
   "pixelWidth": 480,
   "pixelHeight": 480,
-  "bytes": 19054,
-  "sha256": "80d502b7bcaeb725eacb85781022ee4096394313755bc0d033f1466d40fe9e7c",
+  "bytes": 17476,
+  "sha256": "946fa6df07b7035bc2d2b60477f98d027ca27f742ec7d470e7bbdcd32c0905bf",
   "inputs": {
-    "data/releases.json": "af16caf43f9e966e489a9088e237138b93f64b2427552049ea3fa9322692e875"
+    "data/releases.json": "f347ddc6f898b37e478d10a3fd80f6a6936731b37701b9094597d93c42d7e9da"
   },
   "browser": "153.0.8010.12",
   "encoder": "1.6.0\nlibsharpyuv: 0.4.2",
-  "alt": "aicharts comparing coding benchmark scores with cost per task at several reasoning effort settings."
+  "alt": "aicharts plotting Terminal-Bench scores against cost per task for Anthropic, OpenAI and Google models."
 }
