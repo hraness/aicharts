@@ -12,5 +12,8 @@ export const metadata: Metadata = pageMetadata(
 );
 
 export default function AgentsPage() {
-  return <AgentComparison groups={groups} pair={null} />;
+  return <>
+    <AgentComparison groups={groups} pair={null} />
+    <p><a href="/benchmarks/terminal-bench">Terminal-Bench leaderboard by benchmark version</a></p>
+  </>;
 }

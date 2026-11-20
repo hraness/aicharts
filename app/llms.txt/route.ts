@@ -42,6 +42,8 @@ export function GET() {
     "",
     "## Coding agents",
     "",
+    `- [Terminal-Bench leaderboard](${SITE_URL}/benchmarks/terminal-bench): task success, reasoning effort and cost per task by benchmark version. Each row links to the original submission.`,
+    "",
     `- [Best AI coding agent](${SITE_URL}/agents): ${agentDescription(harnessGroups())}`,
     ...agentPairs().map(
       (p) =>
@@ -51,6 +53,8 @@ export function GET() {
     "## Data",
     "",
     `- [Local AI benchmarks](${SITE_URL}/local): device speed and memory explorer, model quality by workload and evaluation.`,
+    `- [Apple M4 Pro LLM benchmarks](${SITE_URL}/local/devices/apple-silicon-macs/apple-m4-pro): published prompt and generation speeds with model, runtime and hardware settings.`,
+    `- [Mobile AI benchmarks](${SITE_URL}/local/mobile): studies of on-device transcription, summaries, translation, image generation and replies.`,
     `- [Local measurements (JSON)](${SITE_URL}/api/local): device measurements, models, metrics, scores and evaluation sources.`,
     `- [Release dataset (JSON)](${SITE_URL}/api/releases) contains the schema v2 catalog with GameBench 2 settings, Terminal-Bench runs, Epoch AI scores and API prices, plus each source's license and attribution. Argo-Bench, Roboflow and IronBee are explorer snapshots outside the release API.`,
     `- [API documentation](${SITE_URL}/api): the dataset's fields, examples in the shell and JavaScript, caching and licenses. Free, no key, callable from any website.`,

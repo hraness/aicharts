@@ -257,6 +257,14 @@ a:focus-visible {
   gap: 12px;
 }
 
+.explorer-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(20px, 3vw, 26px);
+  font-weight: 560;
+  line-height: 1.2;
+}
+
 /* Pareto Card */
 .pareto-card {
   background: var(--surface);

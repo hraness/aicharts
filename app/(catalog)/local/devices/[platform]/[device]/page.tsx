@@ -10,7 +10,7 @@ export const dynamicParams=false;
 export function generateStaticParams(){return reports.map(r=>{const [platform,device]=r.slug.split("/");return {platform,device};});}
 type Props={params:Promise<{platform:string;device:string}>};
 async function selected({params}:Props){const p=await params;return reportFor(p.platform+"/"+p.device) ?? notFound();}
-export async function generateMetadata(props:Props){const r=await selected(props);return pageMetadata(r.device+" local AI benchmarks",r.profiles.toLocaleString()+" measured configurations for "+r.device+", covering "+[...r.workloads].join(", ")+". See model settings, timings and original sources.","/local/devices/"+r.slug);}
+export async function generateMetadata(props:Props){const r=await selected(props);return pageMetadata(r.device+(r.platform==="Apple silicon Macs" && r.workloads.has("Language") ? " LLM Benchmarks | Tokens per Second and Memory" : " local AI benchmarks"),r.profiles.toLocaleString()+" measured configurations for "+r.device+", covering "+[...r.workloads].join(", ")+". See model settings, timings and original sources.","/local/devices/"+r.slug);}
 export default async function DevicePage(props:Props){
   const r=await selected(props), path="/local/devices/"+r.slug;
   const macStudy=[...r.groups].find(([suite])=>suite.id==="mac-llm-context");

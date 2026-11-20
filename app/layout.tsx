@@ -3,14 +3,14 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://aicharts.io"),
-  title: "AI model benchmark chart by reasoning effort and cost — aicharts",
+  title: "LLM benchmarks by score, cost and reasoning effort | aicharts",
   description:
-    "Compare AI model scores, API cost and output tokens by reasoning effort. Explore Argo-Bench, visual reasoning, code review and other benchmarks.",
+    "Compare Claude, GPT and Gemini across LLM benchmarks. See how task scores change with API cost, output tokens and reasoning effort.",
   alternates: {
     canonical: "/",
   },
   openGraph: {
-    title: "AI model benchmarks by reasoning effort — aicharts",
+    title: "LLM benchmarks by score, cost and reasoning effort | aicharts",
     description:
       "Compare OpenAI, Anthropic and Google models by reasoning effort, score, API cost and output tokens.",
     url: "https://aicharts.io",
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "AI model benchmarks by reasoning effort — aicharts",
+    title: "LLM benchmarks by score, cost and reasoning effort | aicharts",
     description:
       "Compare OpenAI, Anthropic and Google models by reasoning effort, score, API cost and output tokens.",
   },
