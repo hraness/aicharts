@@ -14,11 +14,14 @@ export const metadata: Metadata = {
     description:
       "Compare OpenAI, Anthropic and Google models by reasoning effort, score, API cost and output tokens.",
     url: "https://aicharts.io",
+    images: [{ url: "/share/poster.jpg", width: 1200, height: 630, alt: "aicharts comparing AI model scores against cost in the benchmark explorer." }],
+    videos: [{ url: "/share/preview.mp4", secureUrl: "/share/preview.mp4", width: 1200, height: 630, type: "video/mp4" }],
     siteName: "aicharts",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
+    images: ["/share/poster.jpg"],
     title: "LLM benchmarks by score, cost and reasoning effort | aicharts",
     description:
       "Compare OpenAI, Anthropic and Google models by reasoning effort, score, API cost and output tokens.",
