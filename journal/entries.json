@@ -1,5 +1,14 @@
 [
   {
+    "slug": "remember-benchmark-device",
+    "date": "2026-11-20",
+    "category": "Improved",
+    "surfaces": ["Website", "API"],
+    "title": "Keep your phone selected",
+    "summary": "Remember a measured device in this browser and return directly to its benchmarks. Compare published translation timings on the iPhone 16 Pro Max and other named phones.",
+    "link": {"href": "/local#hardware", "label": "Find your phone"}
+  },
+  {
     "slug": "device-discovery",
     "date": "2026-11-20",
     "category": "Improved",
