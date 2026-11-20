@@ -103,6 +103,52 @@ assert(whisperRuns.length > 0);
 suites.push({id:"whisper-cpp-stages", task:"Transcription", title:"Whisper encoder and decoder speed", source:`https://github.com/ggml-org/whisper.cpp/blob/${whisper}/${benchPath}`,
   description:"whisper.cpp microbenchmarks use synthetic inputs. Encoder time is per call. Decoder timings are per token with a single token, a five-token batch, or a 256-token prompt. Each row retains its build, thread count and attention setting. End-to-end transcription depends on the audio and decoded length.",
   metrics:["whisperEncodeMs","whisperDecodeMs","whisperBatchMs","whisperPromptMs"], runs:whisperRuns});
+// Wan's results are published as a raster table. Each pair is seconds / reported peak GB,
+// in the figure's order of one, four and eight GPUs. Keep the authors' combined device labels.
+const wan = "https://github.com/Wan-Video/Wan2.2/blob/1ea34ff48f87168174e12956e200b1d908b1c5ff";
+const wanRuns = [];
+for (const [gpu, model, resolution, pairs] of [
+  ["RTX 4090","TI2V-5B text-to-video","720p",[[534.7,22.9],[231.3,22.6],[157.2,22.6]]],
+  ["RTX 4090","TI2V-5B image-to-video","720p",[[524.8,22.8],[227.3,22.6],[160.1,22.6]]],
+  ["H20","T2V-A14B","480p",[[1133.9,41.3],[306.6,40.9],[170.5,26.2]]],
+  ["H20","T2V-A14B","720p",[[4048.7,59.8],[1067.8,51.7],[564.7,37.0]]],
+  ["H20","I2V-A14B","480p",[[1117.4,41.0],[305.4,40.8],[173.4,26.1]]],
+  ["H20","I2V-A14B","720p",[[4054.7,59.7],[1076.9,51.6],[577.0,37.0]]],
+  ["A100/A800","T2V-A14B","480p",[[785.7,41.3],[215.2,40.9],[119.9,26.3]]],
+  ["A100/A800","T2V-A14B","720p",[[2735.7,59.8],[725.3,51.7],[386.7,37.0]]],
+  ["A100/A800","I2V-A14B","480p",[[810.0,41.0],[215.4,40.7],[121.6,26.1]]],
+  ["A100/A800","I2V-A14B","720p",[[2810.9,59.7],[730.5,51.6],[393.4,37.0]]],
+  ["H100/H800","T2V-A14B","480p",[[326.9,41.3],[91.7,40.9],[51.5,26.3]]],
+  ["H100/H800","T2V-A14B","720p",[[1041.5,59.8],[288.7,51.7],[155.1,37.1]]],
+  ["H100/H800","I2V-A14B","480p",[[327.8,41.0],[92.4,40.8],[52.9,26.1]]],
+  ["H100/H800","I2V-A14B","720p",[[1055.9,59.7],[290.4,51.6],[159.0,37.0]]],
+]) {
+  for (const [i, [latency, peakGpuGB]] of pairs.entries()) {
+    const count = [1,4,8][i];
+    const small = model.startsWith("TI2V-5B");
+    const settings = [
+      count > 1 ? "Ulysses " + count : "Single GPU", small || count === 1 ? "model offload + dtype conversion" : "DiT + T5 FSDP",
+      small ? "T5 on CPU" : "", /^(H100|H20)/.test(gpu) ? "FlashAttention 3" : "",
+    ].filter(Boolean).join(" · ");
+    wanRuns.push({platform:"NVIDIA GPUs", device:count === 1 ? gpu : count + " × " + gpu, model:"Wan 2.2 " + model,
+      config:resolution + " · " + settings, protocol:"Warm mean · " + settings, note:"Prompt extension disabled", values:{latency, peakGpuGB}});
+  }
+}
+suites.push({id:"wan22-multigpu",task:"Video generation",title:"Wan 2.2 video generation on one to eight GPUs",source:wan+"/README.md#computational-efficiency-on-different-gpus",
+  description:"Average total time after warm-up and peak GPU memory from the Wan team. Text and image inputs are separate. Paired accelerator names reproduce the publisher’s grouped results. GPU count describes the complete system needed. Frame count and steps are unspecified in the table.",
+  metrics:["latency","peakGpuGB"],runs:wanRuns});
+
+const musicSource = "https://github.com/andrade0/musicgen-mlx/blob/3c2451568b56297cd8443c4e2a7d09093ee89f96/README.md#performance";
+suites.push({id:"musicgen-mlx", task:"Music generation", title:"MusicGen on Apple silicon", source:musicSource,
+  description:"The MLX port’s author measured generation of eight seconds on M4 Max with MLX 0.21. T5 runs in PyTorch on CPU. Model downloads are approximate.",
+  metrics:["latency"], runs:[
+    {model:"MusicGen Small",config:"Mono · 300M",latency:6.3,note:"Reported download about 1.2 GB."},
+    {model:"MusicGen Stereo Large",config:"Stereo · 3.3B",latency:24,note:"Approximate elapsed time. Stereo EnCodec runs in PyTorch. Reported download about 6.5 GB."},
+  ].map(({model, config, latency, note})=>({platform:"Apple silicon Macs",device:"M4 Max",model,config,values:{latency},note,protocol:"8 s output · MLX 0.21"}))});
+suites.push({id:"audiocraft-mlx-music", task:"Music generation", title:"MusicGen medium and large on M4 Max", source:"https://github.com/theashishmaurya/mlx-audiocraft/blob/bd969249949729dc907f28522377378d382b1ed1/README.md#benchmark-m4-max-64-gb",
+  description:"The MLX AudioCraft maintainer reports approximate elapsed time to generate ten seconds of music. The host had 64 GB of unified memory.",
+  metrics:["latency"],runs:[["MusicGen Medium",17],["MusicGen Large",35]].map(([model,latency])=>({platform:"Apple silicon Macs",device:"M4 Max",capacity:"64 GB unified memory",model,config:"MLX AudioCraft · 10 s output",protocol:"MLX AudioCraft · 10 s output · 64 GB host",values:{latency},note:"Approximate elapsed time."}))});
+
 for (const suite of suites) {
   const keys = suite.runs.map(run => [run.platform, run.device, run.model, run.config].join("|"));
   assert.equal(new Set(keys).size, keys.length, suite.id + ": indistinguishable runs");
