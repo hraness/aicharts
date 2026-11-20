@@ -241,8 +241,12 @@ export function LocalHardware() {
           const example = !a && !b && samples.find(s => s.task === task);
           return <tr key={task}><th scope="row">{task}
             {shared ? <small>{metrics[shared.key]!.lower ? "Lower" : "Higher"} is better</small> : a && b ? <small>Different tests</small> : null}
-            {example && <button className="matrix-browse" onClick={() => inspect(example)}>See a measured device</button>}
-          </th><WorkloadCell sample={a} max={max} inspect={inspect}/>{peer && <WorkloadCell sample={b} max={max} inspect={inspect}/>}</tr>;
+            {example && <small>No published result here</small>}
+          </th>{example ? <td colSpan={peer ? 2 : 1}><button className="matrix-result matrix-reference" type="button" onClick={() => inspect(example)}>
+            <b>{example.run.device} · {number.format(example.run.values[example.key]!)} {metrics[example.key]!.unit}</b>
+            <span>{example.run.model} · {example.run.config}</span>
+            <span className="matrix-link">Inspect this device →</span>
+          </button></td> : <><WorkloadCell sample={a} max={max} inspect={inspect}/>{peer && <WorkloadCell sample={b} max={max} inspect={inspect}/>}</>}</tr>;
         })}</tbody>
       </table>
       <p className="hardware-fine">Each workload shows the first matching published configuration in the dataset. When the devices have no shared test, each column shows its own first reported result. Open a value to explore other configurations.</p>

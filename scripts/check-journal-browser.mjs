@@ -431,6 +431,7 @@ try {
     const matrix = page.getByRole("table",{name:"Speed by workload"});
     assert.equal(await matrix.locator("tbody tr").count(),9);
     await matrix.getByRole("columnheader",{name:/iPhone 16 Pro/}).waitFor();
+    assert.ok(await matrix.locator(".matrix-reference").count() > 0);
     const shortcut = page.locator(".hardware-shortcuts button").first();
     const peerName = await shortcut.textContent();
     await shortcut.click();

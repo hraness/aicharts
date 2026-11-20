@@ -38,9 +38,10 @@
 .device-matrix th,.device-matrix td {text-align:left;vertical-align:top;overflow-wrap:anywhere;padding:.72rem .5rem;border-bottom:1px solid var(--border)}
 .device-matrix th:first-child {width:24%;padding-left:0}
 .device-matrix small,.matrix-result span:not(.hardware-track) {display:block;font-size:.75rem;line-height:1.4;color:var(--fg-muted);font-weight:400;margin-top:.15rem}
-.matrix-result,.matrix-browse {border:0;background:none;text-align:left;padding:0;color:var(--fg);font:inherit;cursor:pointer}
+.matrix-result {border:0;background:none;text-align:left;padding:0;color:var(--fg);font:inherit;cursor:pointer}
 .matrix-result {display:block;width:100%}
-.matrix-browse {display:block;margin-top:.25rem;color:var(--fg-muted);font-size:.75rem;text-decoration:underline}
+.matrix-reference {border-inline-start:2px solid var(--border);padding-inline-start:.65rem}
+.matrix-result .matrix-link {text-decoration:underline}
 .matrix-result:hover b,.matrix-result:focus-visible b {text-decoration:underline}
 .matrix-missing {color:var(--fg-muted);font-size:.8rem}
 .hardware-drill {margin-top:1rem;scroll-margin-top:1rem}
