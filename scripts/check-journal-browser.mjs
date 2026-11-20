@@ -185,10 +185,7 @@ try {
       new RegExp(name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "(?![.\\d])");
     const pick = async (feed, name) => {
       await feed.getByRole("option", { name: whole(name) }).click();
-      await feed
-        .locator('[role="option"][aria-selected="true"]')
-        .filter({ hasText: whole(name) })
-        .waitFor();
+      await feed.getByRole("option", { name: whole(name), selected: true }).waitFor();
       return ticks();
     };
     const lineup = page.getByRole("listbox", { name: "Models by lineup tier" });
