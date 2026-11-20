@@ -1,6 +1,7 @@
 const LINKS = [
   ["/models", "Models"],
   ["/compare", "Compare"],
+  ["/local", "Local benchmarks"],
   ["/agents", "Coding agents"],
   ["/blog", "Blog"],
   ["/changelog", "Changelog"],

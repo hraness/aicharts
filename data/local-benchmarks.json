@@ -1,0 +1,190 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-20",
+  "hardware": "Apple M5 Max",
+  "memoryGiB": 36,
+  "os": "macOS 26.5.1",
+  "conditions": "The host scheduler reserved the Mac for the timed runs.",
+  "runtime": {
+    "version": "0.7.0",
+    "build": 11669,
+    "commit": "620d2225cc436ab0b001e3200e590e3b286ef9ab",
+    "ggmlVersion": "0.27.0",
+    "backend": "Metal",
+    "documentation": "https://github.com/ggml-org/llama.cpp/tree/620d2225cc436ab0b001e3200e590e3b286ef9ab/tools/llama-bench"
+  },
+  "quantization": "Q4_K_M",
+  "repetitions": 5,
+  "arguments": [
+    "-p",
+    "512,4096",
+    "-n",
+    "128",
+    "-d",
+    "0",
+    "-r",
+    "5",
+    "-t",
+    "6",
+    "-ngl",
+    "99",
+    "-fa",
+    "on",
+    "-o",
+    "json"
+  ],
+  "tests": [
+    {
+      "id": "pp512",
+      "label": "Prompt 512",
+      "promptTokens": 512,
+      "generatedTokens": 0
+    },
+    {
+      "id": "pp4096",
+      "label": "Prompt 4,096",
+      "promptTokens": 4096,
+      "generatedTokens": 0
+    },
+    {
+      "id": "tg128",
+      "label": "Generate 128",
+      "promptTokens": 0,
+      "generatedTokens": 128
+    }
+  ],
+  "models": [
+    {
+      "name": "Qwen3.5 0.8B",
+      "source": "https://huggingface.co/unsloth/Qwen3.5-0.8B-GGUF/blob/6ab461498e2023f6e3c1baea90a8f0fe38ab64d0/Qwen3.5-0.8B-Q4_K_M.gguf",
+      "sha256": "bd258782e35f7f458f8aced1adc053e6e92e89bc735ba3be89d38a06121dc517",
+      "bytes": 532517120,
+      "results": [
+        {
+          "test": "pp512",
+          "meanTokensPerSecond": 13743.031533,
+          "stddevTokensPerSecond": 251.279967,
+          "samplesTokensPerSecond": [
+            14010.7,
+            13910.4,
+            13827.8,
+            13556.1,
+            13410.2
+          ]
+        },
+        {
+          "test": "pp4096",
+          "meanTokensPerSecond": 5623.004475,
+          "stddevTokensPerSecond": 2654.494066,
+          "samplesTokensPerSecond": [
+            9588.52,
+            6951.03,
+            3591.86,
+            3201.49,
+            4782.12
+          ]
+        },
+        {
+          "test": "tg128",
+          "meanTokensPerSecond": 218.518554,
+          "stddevTokensPerSecond": 9.602758,
+          "samplesTokensPerSecond": [
+            202.196,
+            221.314,
+            225.714,
+            225.059,
+            218.31
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Qwen3.5 2B",
+      "source": "https://huggingface.co/unsloth/Qwen3.5-2B-GGUF/blob/f6d5376be1edb4d416d56da11e5397a961aca8ae/Qwen3.5-2B-Q4_K_M.gguf",
+      "sha256": "aaf42c8b7c3cab2bf3d69c355048d4a0ee9973d48f16c731c0520ee914699223",
+      "bytes": 1280835840,
+      "results": [
+        {
+          "test": "pp512",
+          "meanTokensPerSecond": 4063.394553,
+          "stddevTokensPerSecond": 441.30328,
+          "samplesTokensPerSecond": [
+            4664.86,
+            4326.82,
+            4005.46,
+            3757.08,
+            3562.75
+          ]
+        },
+        {
+          "test": "pp4096",
+          "meanTokensPerSecond": 3227.675229,
+          "stddevTokensPerSecond": 481.850644,
+          "samplesTokensPerSecond": [
+            2778.59,
+            2747.2,
+            3187.21,
+            3602.97,
+            3822.4
+          ]
+        },
+        {
+          "test": "tg128",
+          "meanTokensPerSecond": 105.937136,
+          "stddevTokensPerSecond": 15.925563,
+          "samplesTokensPerSecond": [
+            131.623,
+            92.4842,
+            92.8756,
+            105.167,
+            107.536
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Qwen3.5 4B",
+      "source": "https://huggingface.co/unsloth/Qwen3.5-4B-GGUF/blob/e87f176479d0855a907a41277aca2f8ee7a09523/Qwen3.5-4B-Q4_K_M.gguf",
+      "sha256": "00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4",
+      "bytes": 2740937888,
+      "results": [
+        {
+          "test": "pp512",
+          "meanTokensPerSecond": 2044.051284,
+          "stddevTokensPerSecond": 333.195624,
+          "samplesTokensPerSecond": [
+            2494.31,
+            2253.05,
+            1992.74,
+            1811.58,
+            1668.57
+          ]
+        },
+        {
+          "test": "pp4096",
+          "meanTokensPerSecond": 1555.839927,
+          "stddevTokensPerSecond": 76.628613,
+          "samplesTokensPerSecond": [
+            1435.03,
+            1615.15,
+            1611.39,
+            1592.51,
+            1525.11
+          ]
+        },
+        {
+          "test": "tg128",
+          "meanTokensPerSecond": 58.282092,
+          "stddevTokensPerSecond": 3.681335,
+          "samplesTokensPerSecond": [
+            63.5122,
+            54.5025,
+            58.8064,
+            55.0204,
+            59.5689
+          ]
+        }
+      ]
+    }
+  ]
+}

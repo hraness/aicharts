@@ -10,6 +10,7 @@ import { chromium } from "playwright-core";
 const capture = process.argv.includes("--preview");
 const entries = JSON.parse(await readFile("journal/entries.json", "utf8"));
 const { releases } = JSON.parse(await readFile("data/releases.json", "utf8"));
+const localBenchmarks = JSON.parse(await readFile("data/local-benchmarks.json", "utf8"));
 // A current model with a costed run, so its page draws the chart.
 const model = releases.find((r) => !r.deprecated && r.terminalBench?.costPerTaskUsd != null);
 assert.ok(model, "Keep a current model with a costed Terminal-Bench run");
@@ -412,6 +413,7 @@ try {
       "/compare",
       pair,
       "/api",
+      "/local",
     ]) {
       await page.goto(url + path);
       assert.equal(await page.locator("main h1").count(), 1, path);
@@ -425,6 +427,11 @@ try {
       await checkFooter(page);
       assert.equal(await noSideScroll(page), true, path + " scrolls sideways");
     }
+    assert.equal(await page.locator("main h1").textContent(), "Local AI benchmarks");
+    assert.deepEqual(await page.locator("main tbody th a").allTextContents(), localBenchmarks.models.map((model) => model.name));
+    const localData = await page.request.get(url + "/api/local");
+    assert.equal(localData.status(), 200);
+    assert.deepEqual(await localData.json(), localBenchmarks);
     // The API page documents every object, and its example is real data.
     await page.goto(url + "/api");
     assert.equal(await page.locator("table.data-table--fields").count(), 7);
@@ -484,6 +491,8 @@ try {
   await page.goto(url + "/agents");
   assert.ok(await page.locator(".agent-chart .pareto-svg").isVisible());
   assert.equal(await page.locator(".agent-chart .chart-controls").isVisible(), false);
+  await page.goto(url + "/local");
+  assert.equal(await page.locator("main tbody tr").count(), localBenchmarks.models.length);
   // Addresses from the earlier aicharts.io keep working.
   for (const [from, to] of [
     ["/models/lab/" + model.slug + "/profile", "/models/" + model.slug],
