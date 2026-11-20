@@ -366,13 +366,13 @@ a:focus-visible {
   border-color: var(--border-strong);
 }
 
-/* Segmented Controls */
+/* Chart controls */
 .chart-controls {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px 16px;
 }
 
 .chart-controls__right {
@@ -383,18 +383,205 @@ a:focus-visible {
 }
 
 .benchmark-picker {
-  field-sizing: content;
-  max-width: 100%;
-  min-height: 28px;
-  padding: 2px 6px 2px 8px;
-  border: 1px solid var(--border);
-  border-radius: 7px;
+  position: relative;
+  flex: 1 1 27rem;
+  min-width: 0;
+}
+
+.benchmark-picker__trigger {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 13px;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
   background: var(--surface-subtle);
   color: var(--fg);
-  font: inherit;
+  text-align: left;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+
+.benchmark-picker__trigger:hover,
+.benchmark-picker__trigger[aria-expanded="true"] {
+  border-color: color-mix(in srgb, var(--fg) 32%, transparent);
+  background: var(--surface-hover);
+}
+
+.benchmark-picker__symbol {
+  display: grid;
+  place-items: center;
+  width: 35px;
+  height: 35px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--fg-muted);
+}
+
+.benchmark-picker svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+}
+
+.benchmark-picker__chevron {
+  color: var(--fg-muted);
+}
+
+.benchmark-picker__trigger[aria-expanded="true"] .benchmark-picker__chevron {
+  transform: rotate(180deg);
+}
+
+.benchmark-picker__selection,
+.benchmark-picker__option-copy {
+  display: grid;
+  gap: 2px;
+}
+
+.benchmark-picker__label {
+  color: var(--fg-muted);
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.065em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.benchmark-picker__selection strong {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 650;
+  line-height: 1.18;
+}
+
+.benchmark-picker__summary {
+  color: var(--fg-muted);
   font-size: 12px;
-  font-weight: 600;
+  line-height: 1.4;
+}
+
+.benchmark-picker__panel {
+  position: absolute;
+  z-index: 20;
+  inset-inline: 0;
+  inset-block-start: calc(100% + 6px);
+  padding: 6px;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow-tooltip);
+}
+
+.benchmark-picker__search {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 9px;
+  min-height: 44px;
+  margin-bottom: 5px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-subtle);
+  color: var(--fg-muted);
+}
+
+.benchmark-picker__search:focus-within {
+  border-color: color-mix(in srgb, var(--fg) 38%, transparent);
+}
+
+.benchmark-picker__search > svg {
+  flex-shrink: 0;
+}
+
+.benchmark-picker__search input {
+  flex: 1;
+  min-width: 0;
+  min-height: 42px;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  font-size: 16px;
+}
+
+.benchmark-picker__search input::placeholder {
+  color: var(--fg-muted);
+}
+
+.benchmark-picker__clear {
+  display: grid;
+  place-items: center;
+  min-width: 28px;
+  min-height: 30px;
+  border-radius: 5px;
+  color: var(--fg-muted);
+}
+
+.benchmark-picker__clear:hover {
+  background: var(--surface-hover);
+  color: var(--fg);
+}
+
+.benchmark-picker__results {
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  max-height: min(26rem, 48dvh);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.benchmark-picker__option {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 7px;
+  min-height: 48px;
+  padding: 7px 9px;
+  border: 1px solid transparent;
+  border-radius: 7px;
   cursor: pointer;
+}
+
+.benchmark-picker__option[data-highlighted="true"] {
+  border-color: var(--border);
+  background: var(--surface-subtle);
+}
+
+.benchmark-picker__option:hover {
+  background: var(--surface-hover);
+}
+
+.benchmark-picker__option strong {
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.benchmark-picker__check {
+  color: var(--fg);
+}
+
+.benchmark-picker__empty {
+  margin: 0;
+  padding: 15px 9px;
+  color: var(--fg-muted);
+  font-size: 13px;
+}
+
+@media (max-width: 420px) {
+  .benchmark-picker__trigger {
+    gap: 8px;
+    padding-inline: 9px;
+  }
+
+  .benchmark-picker__symbol {
+    width: 30px;
+    height: 32px;
+  }
 }
 
 .seg-group {
