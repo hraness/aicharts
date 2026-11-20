@@ -11,7 +11,7 @@ const capture = process.argv.includes("--preview");
 const entries = JSON.parse(await readFile("journal/entries.json", "utf8"));
 const { releases } = JSON.parse(await readFile("data/releases.json", "utf8"));
 const localHardware = JSON.parse(await readFile("data/local-hardware.json", "utf8"));
-for (const file of ["local-hardware-language.json","local-hardware-nonlanguage.json"]) {
+for (const file of ["local-hardware-language.json","local-hardware-nonlanguage.json", "local-hardware-iphone-studies.json"]) {
   const extra = JSON.parse(await readFile("data/" + file, "utf8"));
   localHardware.suites.push(...extra.suites);
 }
