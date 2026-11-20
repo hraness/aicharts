@@ -2,6 +2,7 @@ export type BenchmarkChoice<Id extends string = string> = Readonly<{
   id: Id;
   label: string;
   summary: string;
+  icon?: import("./device-kind").DeviceKind;
   keywords?: readonly string[];
 }>;
 

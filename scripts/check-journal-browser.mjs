@@ -432,6 +432,32 @@ try {
       assert.equal(await noSideScroll(page), true, path + " scrolls sideways");
     }
     assert.equal(await page.locator("main h1").textContent(), "Local AI benchmarks");
+    await page.getByRole("link",{name:"Browse devices",exact:true}).click();
+    await page.getByRole("searchbox",{name:"Find hardware"}).fill("phone translation");
+    await page.getByRole("searchbox",{name:"Find hardware"}).fill("iPhone 16 Pro Max");
+    const phoneReport=page.locator(".device-directory a").filter({hasText:"iPhone 16 Pro Max"}).first();
+    await phoneReport.click();
+    await page.getByRole("heading",{name:"iPhone 16 Pro Max local AI benchmarks"}).waitFor();
+    assert.ok(await page.getByText("LiveChatBench mobile translation",{exact:true}).isVisible());
+    assert.ok((await page.locator('link[rel=canonical]').getAttribute("href")).endsWith("/local/devices/iphone-ipad/iphone-16-pro-max"));
+    await page.goto(url+"/local#vision-frontier");
+    const vision=page.locator("#vision-frontier");
+    await vision.getByRole("button",{name:"All timings",exact:true}).click();
+    await vision.getByRole("searchbox",{name:"Search vision models"}).fill("resnet50");
+    assert.ok(await vision.locator("tbody tr").count()>0);
+    await vision.getByLabel("Minimum top-1 (%)").fill("100");
+    await vision.getByText("No scored architectures match these limits.").waitFor();
+    await vision.getByLabel("Minimum top-1 (%)").fill("");
+    await pickCompact(page,"Vision benchmark run","i7-12700H","fp32-nchw-pt240-cpu-i7_12700h-dynamo");
+    await vision.locator(".vision-caption").filter({hasText:"Core i7-12700H"}).waitFor();
+    assert.ok(await vision.getByRole("link",{name:"Core i7-12700H device report"}).isVisible());
+    await page.getByRole("button",{name:"Device",exact:true}).click();
+    const deviceMenu=page.getByRole("dialog",{name:"Choose Device",exact:true});
+    await deviceMenu.getByRole("combobox").fill("phone");
+    assert.ok(await deviceMenu.locator("[role=option] .device-glyph").count()>0);
+    if(width===960)assert.equal(await deviceMenu.getByRole("listbox").evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(" ").length),3);
+    assert.equal(await noSideScroll(page),true,"device grid fits");
+    await deviceMenu.getByRole("combobox").press("Escape");
     const matrix = page.locator(".timing-results");
     const chartDevice = matrix.locator(".timing-heading p");
     await page.addInitScript(() => {
@@ -511,7 +537,9 @@ try {
     assert.equal(await noSideScroll(page), true);
     const localData = await page.request.get(url + "/api/local");
     assert.equal(localData.status(), 200);
-    assert.deepEqual(await localData.json(), { ...localBenchmarks, deviceBenchmarks: localHardware });
+    const {visionBenchmarks,...baseLocal} = await localData.json();
+    assert.deepEqual(baseLocal,{...localBenchmarks,deviceBenchmarks:localHardware});
+    assert.equal(visionBenchmarks.experiments.length,20);
     // The API page documents every object, and its example is real data.
     await page.goto(url + "/api");
     assert.equal(await page.locator("table.data-table--fields").count(), 7);
@@ -571,6 +599,12 @@ try {
   await page.goto(url + "/agents");
   assert.ok(await page.locator(".agent-chart .pareto-svg").isVisible());
   assert.equal(await page.locator(".agent-chart .chart-controls").isVisible(), false);
+  const reportPath="/local/devices/android/oneplus-12";
+  await page.goto(url+reportPath);
+  assert.match(await page.locator("main").innerText(),/50.2 tok\/s/);
+  assert.ok(await page.getByRole("link",{name:"Published measurements"}).count()>0);
+  assert.ok((await (await page.request.get(url+"/sitemap.xml")).text()).includes(reportPath));
+  assert.equal((await page.request.get(url+"/local/devices/android/unknown-device")).status(),404);
   await page.goto(url + "/local");
   assert.equal(await page.locator(".local-score-table tbody tr").count(), localBenchmarks.workloads[0].overviewPublishers.length);
   await page.getByText("Browse evaluations",{exact:true}).click();

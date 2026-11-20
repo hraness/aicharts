@@ -1570,3 +1570,14 @@ a:focus-visible {
 @media (min-width: 641px) {
   .compact-picker[data-align-end] .benchmark-picker__panel { inset-inline-start: auto; inset-inline-end: 0; }
 }
+.device-glyph {display:inline-block;vertical-align:-.22em;width:1.2em;height:1.2em;flex:none}
+@media(min-width:641px){
+ .compact-picker[data-grid] .benchmark-picker__panel {width:min(464px,calc(100vw - 24px));inset-inline-start:var(--panel-offset);inset-inline-end:auto}
+ .compact-picker[data-grid=large] .benchmark-picker__panel {width:min(680px,calc(100vw - 24px))}
+ .compact-picker[data-grid] .benchmark-picker__results {grid-template-columns:repeat(auto-fit,minmax(185px,1fr))}
+}
+@media(min-width:380px) and (max-width:640px){
+ .compact-picker[data-grid] .benchmark-picker__results {grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+.compact-picker[data-grid] .benchmark-picker__option strong {overflow-wrap:anywhere}
+.benchmark-picker .device-glyph {display:inline-block;vertical-align:-.2em;width:1.15em;height:1.15em;margin-inline-end:.2em}

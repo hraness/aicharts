@@ -1,5 +1,14 @@
 [
   {
+    "slug":"local-benchmark-frontiers",
+    "date":"2026-11-20",
+    "category":"Improved",
+    "surfaces":["Website","API"],
+    "title":"Explore local model trade-offs by device",
+    "summary":"Search devices by name, type or workload. Explore 28,766 timm timings across six CPUs and GPUs, compare speed with measured memory, and open device reports with primary sources. New phone results include Meta’s Llama 3.2 tests and MLPerf Mobile.",
+    "link":{"href":"/local","label":"Explore local benchmarks"}
+  },
+  {
     "slug": "visible-device-timings",
     "date": "2026-11-20",
     "category": "Improved",
