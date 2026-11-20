@@ -5,7 +5,7 @@ import "./local.css";
 
 export const metadata = pageMetadata(
   "Local AI benchmarks by workload",
-  "Compare published quality scores for local language, embedding, image, transcription, speech synthesis and vision models.",
+  "Find downloadable AI models and compare published quality, model sizes and device speeds for language, music, images, video and other workloads.",
   "/local",
 );
 
@@ -38,9 +38,9 @@ export default function LocalBenchmarksPage() {
       </div>
       <section id="hardware">
         <h2>Device speeds and memory</h2>
-        <div className="table-scroll"><table className="data-table"><caption>Publisher-reported time per output under the listed settings.</caption>
-          <thead><tr><th>Model</th><th>Device</th><th>Output and settings</th><th>Time</th></tr></thead>
-          <tbody>{benchmarks.hardware.flatMap(group => group.runs.map(([device, time]) => <tr key={group.model + device}><th><a href={group.source}>{group.model}</a></th><td>{device}</td><td>{group.work}</td><td>{time}</td></tr>))}</tbody>
+        <div className="table-scroll"><table className="data-table"><caption>Published measurements under the listed settings. Time per output and tokens per second use different scales.</caption>
+          <thead><tr><th>Model</th><th>Device</th><th>Output and settings</th><th>Speed</th></tr></thead>
+          <tbody>{benchmarks.hardware.flatMap(group => group.runs.map(([device, time]) => <tr key={group.model + group.work + device}><th><a href={group.source}>{group.model}</a></th><td>{device}</td><td>{group.work}</td><td>{time}</td></tr>))}</tbody>
         </table></div>
         <p>Weight storage depends on precision. One billion parameters take roughly 2 GB at 16 bits or 0.5 GB at 4 bits before format overhead. Runtime memory also includes activations and, for language models, the context cache. Meta specifies at least 16 GB of GPU memory for medium MusicGen inference. <a href="https://github.com/facebookresearch/audiocraft/blob/main/docs/MUSICGEN.md">AudioCraft requirements</a></p>
         <p>For Apple silicon, look for an MLX conversion. For CPU or GPU inference with llama.cpp, check its supported architectures and GGUF files. ONNX device support depends on the execution provider. <a href="https://github.com/ml-explore/mlx">MLX</a> · <a href="https://github.com/ggml-org/llama.cpp">llama.cpp</a> · <a href="https://onnxruntime.ai/docs/execution-providers/">ONNX providers</a></p>

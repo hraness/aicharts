@@ -332,6 +332,51 @@
           "30.9 s"
         ]
       ]
+    },
+    {
+      "model": "Llama 7B Q4_0 · 3.56 GiB",
+      "work": "512 input tokens · Metal · llama.cpp build 1550",
+      "source": "https://github.com/ggml-org/llama.cpp/discussions/4167",
+      "runs": [
+        [
+          "M2 mini · 10 GPU cores",
+          "179.57 tok/s"
+        ],
+        [
+          "M2 Max Studio · 38 GPU cores",
+          "671.31 tok/s"
+        ]
+      ]
+    },
+    {
+      "model": "Llama 7B Q4_0 · 3.56 GiB",
+      "work": "128 generated tokens · Metal · llama.cpp build 1550",
+      "source": "https://github.com/ggml-org/llama.cpp/discussions/4167",
+      "runs": [
+        [
+          "M2 mini · 10 GPU cores",
+          "21.91 tok/s"
+        ],
+        [
+          "M2 Max Studio · 38 GPU cores",
+          "65.95 tok/s"
+        ]
+      ]
+    },
+    {
+      "model": "SANA-Sprint",
+      "work": "One 1024px image · publisher-reported latency",
+      "source": "https://nvlabs.github.io/Sana/Sprint/",
+      "runs": [
+        [
+          "H100",
+          "0.1 s"
+        ],
+        [
+          "RTX 4090",
+          "0.3 s"
+        ]
+      ]
     }
   ]
 }
