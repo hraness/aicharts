@@ -162,14 +162,48 @@ try {
     const header = page.locator(".topbar");
     assert.equal(await header.getByText(/^(Anthropic|OpenAI|Google|JSON)$/).count(), 0);
 
-    const benchmark = page.getByLabel("Benchmark", { exact: true });
+    const benchmark = page.getByRole("button", { name: /^Benchmark:/ });
+    const benchmarkDialog = page.getByRole("dialog", { name: "Choose a benchmark" });
+    const search = benchmarkDialog.getByRole("combobox", { name: "Search benchmarks" });
+    const benchmarkOption = (name) => benchmarkDialog.getByRole("option", { name, exact: true });
+    const openBenchmark = async () => {
+      await benchmark.click();
+      await benchmarkDialog.waitFor();
+    };
+    const chooseBenchmark = async (name) => {
+      await openBenchmark();
+      await benchmarkOption(name).click();
+      await benchmarkDialog.waitFor({ state: "hidden" });
+    };
     const chart = (id) => page.locator(`[data-benchmark="${id}"]`);
     const budget = page.getByRole("group", { name: "Budget axis" });
     const waitForParams = (expected) =>
       page.waitForURL(({ searchParams }) =>
         Object.entries(expected).every(([key, value]) => searchParams.get(key) === value),
       );
-    assert.equal(await benchmark.inputValue(), "argo-bench");
+    await page.getByRole("button", { name: "Benchmark: Argo-Bench", exact: true }).waitFor();
+    await openBenchmark();
+    assert.equal(await search.evaluate((input) => input === document.activeElement), true);
+    assert.equal(await noSideScroll(page), true);
+    await search.fill("zzznomatchzzz");
+    await benchmarkDialog.getByText(/no (matching benchmarks|benchmarks|results)/i).waitFor();
+    assert.equal(await benchmarkDialog.getByRole("option").count(), 0);
+    await benchmarkDialog.getByRole("button", { name: /^clear( search)?$/i }).click();
+    assert.equal(await search.inputValue(), "");
+    await benchmarkOption("Argo-Bench").waitFor();
+    await search.press("ArrowDown");
+    const highlighted = await search.getAttribute("aria-activedescendant");
+    assert.ok(highlighted);
+    await search.press("ArrowDown");
+    assert.notEqual(await search.getAttribute("aria-activedescendant"), highlighted);
+    await search.press("ArrowUp");
+    assert.equal(await search.getAttribute("aria-activedescendant"), highlighted);
+    await search.press("Escape");
+    await benchmarkDialog.waitFor({ state: "hidden" });
+    assert.equal(await benchmark.evaluate((button) => button === document.activeElement), true);
+    await openBenchmark();
+    await page.getByRole("heading", { level: 1 }).click();
+    await benchmarkDialog.waitFor({ state: "hidden" });
     const argo = chart("argo-bench");
     assert.equal(await budget.getByRole("button", { name: "Cost", pressed: true }).count(), 1);
     assert.equal(
@@ -240,12 +274,27 @@ try {
     await settings.getByRole("button", { name: /^Medium\b/, pressed: true }).waitFor();
     await waitForParams({ bench: "argo-bench", axis: "tokens", release: astra, effort: "medium" });
     assert.equal(await modelPage.getAttribute("href"), `/models/${astra}`);
-    for (const [id, minSettings, source] of [
-      ["roboflow", 2, "web/benchmark_summary.json"],
-      ["ironbee", 3, "reports/full-r123/configs.csv"],
-      ["game-bench", 2, "benchmarks.duellab.org/releases/"],
+    for (const [id, name, minSettings, source] of [
+      ["roboflow", "Roboflow Visual Reasoning", 2, "web/benchmark_summary.json"],
+      ["ironbee", "IronBee Code Review", 3, "reports/full-r123/configs.csv"],
+      ["game-bench", "GameBench 2", 2, "benchmarks.duellab.org/releases/"],
     ]) {
-      await benchmark.selectOption(id);
+      if (id === "roboflow") {
+        await openBenchmark();
+        await search.fill("robflw");
+        await benchmarkOption(name).waitFor();
+        await search.press("ArrowDown");
+        await search.press("Enter");
+      } else if (id === "ironbee") {
+        await openBenchmark();
+        await search.fill("pull request");
+        await benchmarkDialog.getByRole("option").first().and(benchmarkOption(name)).waitFor();
+        await benchmarkOption(name).getByText(/pull requests/i).click();
+      } else {
+        await chooseBenchmark(name);
+      }
+      await benchmarkDialog.waitFor({ state: "hidden" });
+      await page.getByRole("button", { name: `Benchmark: ${name}`, exact: true }).waitFor();
       await chart(id).waitFor();
       await waitForParams({ bench: id, effort: null });
       assert.ok((await settings.getByRole("button").count()) >= minSettings, id);
@@ -257,7 +306,7 @@ try {
       assert.equal(await noSideScroll(page), true);
     }
     assert.equal(await budget.count(), 0);
-    await benchmark.selectOption("terminal-bench");
+    await chooseBenchmark("Terminal-Bench");
     await chart("terminal-bench").waitFor();
     await waitForParams({ bench: "terminal-bench" });
 
@@ -266,7 +315,7 @@ try {
       ["gpqaDiamond", "GPQA Diamond"],
       ["frontierMath", "FrontierMath Tiers 1–3"],
     ]) {
-      await benchmark.selectOption(id);
+      await chooseBenchmark(name);
       const scores = page.getByRole("group", { name: name + " best scores" });
       await scores.getByRole("button").first().click();
       assert.equal(await scores.getByRole("button").first().getAttribute("aria-pressed"), "true");
@@ -275,7 +324,7 @@ try {
     }
     await page.goto(url + "/?axis=tokens");
     await page.locator('[data-benchmark="terminal-bench"]').waitFor();
-    assert.equal(await benchmark.inputValue(), "terminal-bench");
+    await page.getByRole("button", { name: "Benchmark: Terminal-Bench", exact: true }).waitFor();
     assert.equal(await page.getByRole("button", { name: "Tokens", exact: true }).getAttribute("aria-pressed"), "true");
 
     await page

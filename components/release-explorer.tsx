@@ -10,6 +10,7 @@ import {
   ThemeIcon,
 } from "./brand-icon";
 import { FrontierStar } from "./frontier-stars";
+import { BenchmarkPicker } from "./benchmark-picker";
 import { BenchmarkEfforts, EpochScoreChart } from "./benchmark-scores";
 import { ParetoChart } from "./pareto-chart";
 import { SiteFooter } from "./site-footer";
@@ -21,7 +22,7 @@ import {
   formatTokens,
   formatUsd,
 } from "@/lib/format";
-import { CHART_BENCHMARKS, type BenchmarkSources, type ChartBenchmark } from "@/lib/benchmarks";
+import { BENCHMARK_CHOICES, CHART_BENCHMARKS, type BenchmarkId, type BenchmarkSources, type ChartBenchmark } from "@/lib/benchmarks";
 import { buildLineup } from "@/lib/lineup";
 import { bestEpoch, effortName } from "@/lib/measures";
 import {
@@ -42,7 +43,6 @@ import {
   type BudgetAxis,
   type ContextMode,
   type CurveEffort,
-  type EpochBenchmarkId,
   type ModelRelease,
   type ProviderId,
   type ReleaseDataset,
@@ -59,16 +59,10 @@ const VIEW_CONTEXT: Readonly<Record<FeedView, ContextMode>> = {
   releases: "release",
 };
 
-type Benchmark = ChartBenchmark | EpochBenchmarkId;
-
-const BENCHMARKS: readonly { id: Benchmark; label: string }[] = [
-  ...Object.entries(CHART_BENCHMARKS).map(([id, { label }]) => ({ id: id as ChartBenchmark, label })),
-  ...EPOCH_BENCHMARKS,
-];
 const DEFAULT_BENCHMARK = "argo-bench";
-const isChartBenchmark = (id: Benchmark): id is ChartBenchmark => Object.hasOwn(CHART_BENCHMARKS, id);
+const isChartBenchmark = (id: BenchmarkId): id is ChartBenchmark => Object.hasOwn(CHART_BENCHMARKS, id);
 
-function benchmarkScore(release: ModelRelease, benchmark: Benchmark): number | null {
+function benchmarkScore(release: ModelRelease, benchmark: BenchmarkId): number | null {
   if (benchmark === "terminal-bench") return release.terminalBench?.accuracy ?? null;
   if (isChartBenchmark(benchmark)) {
     const runs = benchmarkEfforts(release, benchmark);
@@ -78,7 +72,7 @@ function benchmarkScore(release: ModelRelease, benchmark: Benchmark): number | n
 }
 
 /** Start on a release with a point or score on the chosen benchmark. */
-function openingRelease(releases: readonly ModelRelease[], benchmark: Benchmark): ModelRelease {
+function openingRelease(releases: readonly ModelRelease[], benchmark: BenchmarkId): ModelRelease {
   return releases.find((r) =>
     benchmark === "terminal-bench"
       ? r.terminalBench?.costPerTaskUsd != null
@@ -101,7 +95,7 @@ export function ReleaseExplorer({
 }>) {
   const chartSectionRef = useRef<HTMLElement>(null);
   const gameBenchSource = dataset.sources.find((source) => source.id === "gamebench-2");
-  const [benchmark, setBenchmark] = useState<Benchmark>(DEFAULT_BENCHMARK);
+  const [benchmark, setBenchmark] = useState<BenchmarkId>(DEFAULT_BENCHMARK);
   const [activeEffort, setActiveEffort] = useState<CurveEffort | null>(null);
   const openingSlug = useMemo(
     () => openingRelease(dataset.releases, benchmark).slug,
@@ -138,7 +132,7 @@ export function ReleaseExplorer({
     const params = new URLSearchParams(window.location.search);
     const axisParam = params.get("axis");
     const benchParam = params.get("bench");
-    const requested = BENCHMARKS.find((option) => option.id === benchParam)?.id;
+    const requested = BENCHMARK_CHOICES.find((option) => option.id === benchParam)?.id;
     const wasTerminal = params.get("metric") === "terminalBench4" || axisParam === "tokens";
     const nextBenchmark = requested === "game-bench" && !gameBenchSource
       ? DEFAULT_BENCHMARK
@@ -473,23 +467,17 @@ export function ReleaseExplorer({
 
           {/* Chart Controls */}
           <div className="chart-controls">
-            <select
-              className="benchmark-picker"
-              aria-label="Benchmark"
+            <BenchmarkPicker
+              choices={gameBenchSource ? BENCHMARK_CHOICES : BENCHMARK_CHOICES.filter(({ id }) => id !== "game-bench")}
               value={benchmark}
-              onChange={(event) => {
-                const next = event.currentTarget.value as Benchmark;
+              onSelect={(next) => {
                 setBenchmark(next);
                 setActiveEffort(null);
                 if (benchmarkScore(selectedRelease, next) === null) {
-                  setSelectedSlug(openingRelease(filteredFeedReleases.length ? filteredFeedReleases : dataset.releases, next).slug);
+                  setSelectedSlug(openingRelease(filteredFeedReleases, next).slug);
                 }
               }}
-            >
-              {BENCHMARKS.filter((option) => option.id !== "game-bench" || gameBenchSource).map((option) => (
-                <option key={option.id} value={option.id}>{option.label}</option>
-              ))}
-            </select>
+            />
 
             <div className="chart-controls__right">
               {chartMeta?.tokens && (

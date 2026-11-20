@@ -1,5 +1,17 @@
 [
   {
+    "slug": "searchable-benchmark-picker",
+    "date": "2026-11-20",
+    "category": "Improved",
+    "surfaces": ["Web app"],
+    "title": "Search benchmarks by name or workload",
+    "summary": "Open the benchmark picker to read what each test measures. Search by name or by topics like pull requests and visual reasoning. The picker handles typos and supports keyboard navigation.",
+    "link": {
+      "href": "/",
+      "label": "Find a benchmark"
+    }
+  },
+  {
     "slug": "argo-bench-explorer",
     "date": "2026-11-20",
     "category": "Improved",
