@@ -1,0 +1,2122 @@
+{
+  "suites": [
+    {
+      "id": "tokforge-mobile",
+      "task": "Language",
+      "title": "Community phone reply speeds",
+      "source": "https://tokforge.ai/leaderboard/",
+      "metrics": [
+        "generation",
+        "prompt",
+        "firstToken",
+        "memoryMB"
+      ],
+      "description": "Signed TokForge app submissions. The board retains the best submitted score by chip, model, backend and quantization. A configuration can report its best pass or its median. Prompt rates, first-token delays and app-reported peak memory appear where available. Device RAM capacity is separate. Hardware conditions and app versions vary across submissions.",
+      "runs": [
+        {
+          "device": "8849 OB-A98",
+          "platform": "Android",
+          "model": "Qwen3.6-35B-A3B-abliterated-MNN",
+          "config": "cpu · MNN · best3 · 32768 context",
+          "values": {
+            "generation": 4.378706455230713,
+            "prompt": 5.7104010581970215,
+            "firstToken": 7739,
+            "memoryMB": 70
+          },
+          "protocol": "1.1.1 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · severe",
+          "note": "OB-A98 · MT6897 · Android 16 · 2026-08-23"
+        },
+        {
+          "device": "BLU BOLD N2",
+          "platform": "Android",
+          "model": "gemma-4-E2B-it-qat-UD-Q4_K_XL",
+          "config": "gguf · Q4_K_XL",
+          "values": {
+            "generation": 8.2412534225346,
+            "prompt": 6.659729480743408
+          },
+          "protocol": "v3.6.0-beta55",
+          "note": "BOLD N2 · mt6833 · 2026-06-15"
+        },
+        {
+          "device": "docomo Xperia 5 III",
+          "platform": "Android",
+          "model": "DeepSeek-R1-Distill-Qwen-0.5B-CoMa.IQ4_XS",
+          "config": "gguf · CoMa.IQ4_XS",
+          "values": {
+            "generation": 27.102006912231445,
+            "prompt": 27.102006912231445
+          },
+          "protocol": "v3.6.0-beta70",
+          "note": "SO-53B · SM8350 · 2026-06-16"
+        },
+        {
+          "device": "Google Pixel 10",
+          "platform": "Android",
+          "model": "Qwen3.5-4B-uncensored-MNN",
+          "config": "cpu",
+          "values": {
+            "generation": 9.773800655394421,
+            "prompt": 8.85445499420166
+          },
+          "protocol": "v3.6.0-beta70",
+          "note": "Pixel 10 · Tensor G5 · 2026-06-16"
+        },
+        {
+          "device": "Google Pixel 10 Pro XL",
+          "platform": "Android",
+          "model": "Llama-3.2-1B-Instruct-Uncensored.i1-Q4_K_M",
+          "config": "gguf · Q4_K_M · cpu · best3 · 8192 context",
+          "values": {
+            "generation": 11.016654968261719,
+            "prompt": 108.03324127197266,
+            "firstToken": 333,
+            "memoryMB": 1758
+          },
+          "protocol": "v3.6.0-beta145 · gguf@33595ab60f96bbf09eb859247cad9feb · none",
+          "note": "Pixel 10 Pro XL · Tensor G5 · Android 17 · 2026-08-06"
+        },
+        {
+          "device": "Google Pixel 10 Pro XL",
+          "platform": "Android",
+          "model": "Qwen3-6B-Hivemind-Inst-Hrtic-Ablit-Uncensored-Q4_K_M-imat",
+          "config": "gguf · imat · cpu · best3 · 4096 context",
+          "values": {
+            "generation": 3.4805963039398193,
+            "prompt": 23.2412052154541,
+            "firstToken": 1475,
+            "memoryMB": 4957
+          },
+          "protocol": "v3.6.0-beta145 · gguf@33595ab60f96bbf09eb859247cad9feb · light",
+          "note": "Pixel 10 Pro XL · Tensor G5 · Android 17 · 2026-08-07"
+        },
+        {
+          "device": "Google Pixel 10 Pro XL",
+          "platform": "Android",
+          "model": "Qwen3-8B-abliterated-v2-MNN",
+          "config": "cpu · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 4.972202777862549,
+            "prompt": 16.907217025756836,
+            "firstToken": 2795,
+            "memoryMB": 4689
+          },
+          "protocol": "1.3.6.1 · mnn@ffff0707cc93a5eb682ee6ea6cf09d50 · 8 · none",
+          "note": "Pixel 10 Pro XL · Tensor G5 · Android 17 · 2026-10-05"
+        },
+        {
+          "device": "Google Pixel 10 Pro XL",
+          "platform": "Android",
+          "model": "Qwen3.5-4B-MNN",
+          "config": "cpu · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 9.043313026428223,
+            "prompt": 14.598540306091309,
+            "firstToken": 137,
+            "memoryMB": 3018
+          },
+          "protocol": "v3.6.0-beta145 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · none",
+          "note": "Pixel 10 Pro XL · Tensor G5 · Android 17 · 2026-08-07"
+        },
+        {
+          "device": "Google Pixel 9a",
+          "platform": "Android",
+          "model": "Qwen3.5-4B-MNN",
+          "config": "cpu · MNN",
+          "values": {
+            "generation": 5.222683906555176,
+            "prompt": 5.222683906555176
+          },
+          "protocol": "v3.6.0-beta70",
+          "note": "Pixel 9a · Tensor G4 · 2026-06-25"
+        },
+        {
+          "device": "HONOR 400",
+          "platform": "Android",
+          "model": "Qwen3.5-0.8B-MNN",
+          "config": "cpu · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 20.239044189453125,
+            "prompt": 132.4921112060547,
+            "firstToken": 276,
+            "memoryMB": 730
+          },
+          "protocol": "1.3.6.1 · mnn@ffff0707cc93a5eb682ee6ea6cf09d50 · 8 · none",
+          "note": "DNY-NX9 · SM7550 · Android 16 · 2026-10-13"
+        },
+        {
+          "device": "HONOR Magic6",
+          "platform": "Android",
+          "model": "LFM2.5-1.2B-Instruct-Q8_0",
+          "config": "gguf · Q8_0 · cpu · median3 · 2048 context",
+          "values": {
+            "generation": 20.34211625392301,
+            "firstToken": 203,
+            "memoryMB": 1442
+          },
+          "protocol": "v3.6.0-beta139 · gguf@de28396d7c59d5ede34afe6f30d435c3 · light",
+          "note": "BVL-AN00 · SM8650 · Android 16 · 2026-07-21"
+        },
+        {
+          "device": "HONOR Magic6",
+          "platform": "Android",
+          "model": "Qwen3-4B-abliterated-MNN",
+          "config": "cpu · MNN · best3 · 1024 context",
+          "values": {
+            "generation": 6.988982200622559,
+            "prompt": 11.832612037658691,
+            "firstToken": 3465,
+            "memoryMB": 2702
+          },
+          "protocol": "1.3.6.1 · mnn@ffff0707cc93a5eb682ee6ea6cf09d50 · 8 · moderate",
+          "note": "BVL-AN00 · SM8650 · Android 16 · 2026-10-06"
+        },
+        {
+          "device": "HONOR Magic6",
+          "platform": "Android",
+          "model": "Qwen3-4B-abliterated-MNN",
+          "config": "cpu · median3 · 1024 context",
+          "values": {
+            "generation": 8.087918709340043,
+            "firstToken": 2819,
+            "memoryMB": 2576
+          },
+          "protocol": "v3.6.0-beta139 · mnn@23cbbf5042a43ad792bec671e68203e5 · 10 · light",
+          "note": "BVL-AN00 · SM8650 · Android 16 · 2026-07-21"
+        },
+        {
+          "device": "HONOR Magic6",
+          "platform": "Android",
+          "model": "Qwen3-4B-abliterated-MNN",
+          "config": "opencl · MNN · best3 · 1024 context",
+          "values": {
+            "generation": 12.697306632995605,
+            "prompt": 44.956138610839844,
+            "firstToken": 912,
+            "memoryMB": 170
+          },
+          "protocol": "1.3.6.1 · mnn@ffff0707cc93a5eb682ee6ea6cf09d50 · 8 · severe",
+          "note": "BVL-AN00 · SM8650 · Android 16 · 2026-10-06"
+        },
+        {
+          "device": "HONOR Magic6",
+          "platform": "Android",
+          "model": "Qwen3.5-4B-uncensored-MNN",
+          "config": "cpu · median3 · 2048 context",
+          "values": {
+            "generation": 13.465029631877933,
+            "firstToken": 671,
+            "memoryMB": 2415
+          },
+          "protocol": "v3.6.0-beta139 · mnn@23cbbf5042a43ad792bec671e68203e5 · 13 · light",
+          "note": "BVL-AN00 · SM8650 · Android 16 · 2026-07-21"
+        },
+        {
+          "device": "HONOR Magic6 Pro",
+          "platform": "Android",
+          "model": "Qwen3",
+          "config": "cpu · median3 · 8192 context",
+          "values": {
+            "generation": 11.521364212036133,
+            "firstToken": 2924,
+            "memoryMB": 2468
+          },
+          "protocol": "v3.5.0-RC20.23.69 · none",
+          "note": "BVL-N49 · SM8650 · Android 16 · 2026-07-09"
+        },
+        {
+          "device": "HONOR Magic6 Pro",
+          "platform": "Android",
+          "model": "Qwen3.5-9B-uncensored-MNN",
+          "config": "cpu · MNN · median3 · 8192 context",
+          "values": {
+            "generation": 6.543159008026123,
+            "firstToken": 3180,
+            "memoryMB": 4428
+          },
+          "protocol": "v3.5.0-RC20.23.69 · light",
+          "note": "BVL-N49 · SM8650 · Android 16 · 2026-07-09"
+        },
+        {
+          "device": "HUAWEI LMU-LX9",
+          "platform": "Android",
+          "model": "Qwen3.5-4B-uncensored-MNN",
+          "config": "cpu · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 9.62267017364502,
+            "prompt": 29.309141159057617,
+            "firstToken": 1354,
+            "memoryMB": 2675
+          },
+          "protocol": "1.3.3 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · severe",
+          "note": "LMU-LX9 · Kirin · Android 12 · 2026-09-21"
+        },
+        {
+          "device": "Infinix HOT 11S NFC",
+          "platform": "Android",
+          "model": "Qwen3.5-2B-MNN",
+          "config": "cpu · MNN · best3 · 2048 context",
+          "values": {
+            "generation": 5.592742443084717,
+            "prompt": 14.904187202453613,
+            "firstToken": 2895,
+            "memoryMB": 1537
+          },
+          "protocol": "1.3.1 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · none",
+          "note": "Infinix X6812B · mt6769 · Android 11 · 2026-09-09"
+        },
+        {
+          "device": "Infinix HOT 50",
+          "platform": "Android",
+          "model": "Qwen3.5-4B-MNN",
+          "config": "cpu · median3 · 2048 context",
+          "values": {
+            "generation": 2.8947630526862076,
+            "firstToken": 3340,
+            "memoryMB": 3260
+          },
+          "protocol": "1.3.9.5 · mnn@634608d25a0595acc4c436c43cec2fd7 · 2 · severe",
+          "note": "Infinix X6882 · MT6789 · Android 14 · 2026-11-02"
+        },
+        {
+          "device": "Infinix ZERO 20",
+          "platform": "Android",
+          "model": "LFM3-Omni-2B-RP-heretic.Q4_K_M",
+          "config": "gguf · Q4_K_M · cpu · median3 · 2048 context",
+          "values": {
+            "generation": 8.804322295498723,
+            "firstToken": 1433,
+            "memoryMB": 1428
+          },
+          "protocol": "1.3.9.9 · gguf@3eda5f250d0996245c936c29ade3b490 · none",
+          "note": "Infinix X6821 · MT6789V/CD · Android 13 · 2026-11-18"
+        },
+        {
+          "device": "Infinix ZERO 20",
+          "platform": "Android",
+          "model": "Palette-RP-1.2B-Instruct-2609-v0.5.Q8_0",
+          "config": "gguf · Q8_0 · cpu · median3 · 8192 context",
+          "values": {
+            "generation": 9.52253985182928,
+            "firstToken": 663,
+            "memoryMB": 1916
+          },
+          "protocol": "1.3.4 · gguf@cf65527531bd2d1de224cb3c7d415829 · none",
+          "note": "Infinix X6821 · MT6789V/CD · Android 13 · 2026-09-24"
+        },
+        {
+          "device": "Infinix ZERO 20",
+          "platform": "Android",
+          "model": "PHOEBE_SENTIMENTAL-RP-NSFW-3.2-1B.Q8_0",
+          "config": "gguf · Q8_0 · cpu · median3 · 2048 context",
+          "values": {
+            "generation": 9.925778440805992,
+            "firstToken": 524,
+            "memoryMB": 1647
+          },
+          "protocol": "1.3.8 · gguf@eab11bd21c7dcc59739931995ddb3078 · none",
+          "note": "Infinix X6821 · MT6789V/CD · Android 13 · 2026-10-10"
+        },
+        {
+          "device": "iPhone 14 Pro Max",
+          "platform": "iPhone & iPad",
+          "model": "x",
+          "config": "llama.cpp",
+          "values": {
+            "generation": 1
+          },
+          "protocol": "16.134 (1801)",
+          "note": "iPhone15,3 · Apple A16 Bionic · 2026-07-06"
+        },
+        {
+          "device": "iPhone 15",
+          "platform": "iPhone & iPad",
+          "model": "Glimmer-1-Base-Q4_K_M.gguf",
+          "config": "llama.cpp · Q4_K_M · best3",
+          "values": {
+            "generation": 2950.0867,
+            "prompt": 5267.1364,
+            "firstToken": 13.6697
+          },
+          "protocol": "16.191 (1858) · nominal",
+          "note": "iPhone15,4 · Apple A16 Bionic · iOS 26.6 · 2026-10-26"
+        },
+        {
+          "device": "iPhone 15",
+          "platform": "iPhone & iPad",
+          "model": "LFM2.5-230M-BF16.gguf",
+          "config": "llama.cpp · F16 · best3",
+          "values": {
+            "generation": 79.2181,
+            "prompt": 1043.25,
+            "firstToken": 29.7148
+          },
+          "protocol": "16.191 (1858) · nominal",
+          "note": "iPhone15,4 · Apple A16 Bionic · iOS 26.6 · 2026-10-26"
+        },
+        {
+          "device": "iPhone 15",
+          "platform": "iPhone & iPad",
+          "model": "MiniCPM-V-4.7-1B-abliterated-heretic-Q4_K_M.gguf",
+          "config": "llama.cpp · Q4_K_M · best3",
+          "values": {
+            "generation": 35.439,
+            "prompt": 360.239,
+            "firstToken": 74.9503
+          },
+          "protocol": "16.191 (1858) · fair",
+          "note": "iPhone15,4 · Apple A16 Bionic · iOS 26.6 · 2026-10-26"
+        },
+        {
+          "device": "iPhone 15",
+          "platform": "iPhone & iPad",
+          "model": "Qwen3-0.6B-Q8_0.gguf",
+          "config": "llama.cpp · Q8_0 · best3",
+          "values": {
+            "generation": 38.0027,
+            "prompt": 480.0192,
+            "firstToken": 56.2478
+          },
+          "protocol": "16.191 (1858) · nominal",
+          "note": "iPhone15,4 · Apple A16 Bionic · iOS 26.6 · 2026-10-26"
+        },
+        {
+          "device": "iPhone 15 Pro Max",
+          "platform": "iPhone & iPad",
+          "model": "llama-3.2-1b-instruct-q4_k_m.gguf",
+          "config": "llama.cpp · Q4_K_M · warmup1_median2",
+          "values": {
+            "generation": 41.3,
+            "prompt": 479.4
+          },
+          "protocol": "16.163 (1830) · nominal",
+          "note": "iPhone16,2 · Apple A17 Pro · iOS 18.7 · 2026-07-06"
+        },
+        {
+          "device": "iPhone 15 Pro Max",
+          "platform": "iPhone & iPad",
+          "model": "Qwen2.5-1.5B-Instruct-Q4_K_M",
+          "config": "gguf · Q4_K_M",
+          "values": {
+            "generation": 48.27,
+            "prompt": 312.5
+          },
+          "protocol": "0.1.0",
+          "note": "iPhone16,2 · Apple A17 Pro · 2026-06-20"
+        },
+        {
+          "device": "iPhone 17 Pro Max",
+          "platform": "iPhone & iPad",
+          "model": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+          "config": "llama.cpp · Q4_K_M · warmup1_median2",
+          "values": {
+            "generation": 64.3745
+          },
+          "protocol": "16.163 (1830) · nominal",
+          "note": "iPhone18,2 · Apple A19 Pro · iOS 26.5 · 2026-07-06"
+        },
+        {
+          "device": "iPhone 17 Pro Max",
+          "platform": "iPhone & iPad",
+          "model": "Qwen3-30B-A3B (MoE, top-4 experts)",
+          "config": "MNN CPU (KleidiAI W4A8) · INT4 W4A8",
+          "values": {
+            "generation": 14.38,
+            "prompt": 10.63
+          },
+          "protocol": "16.108",
+          "note": "iPhone 17 Pro Max · Apple A19 Pro · 2026-07-01"
+        },
+        {
+          "device": "iPhone 17 Pro Max",
+          "platform": "iPhone & iPad",
+          "model": "Qwen3.5-9B-Q4_K_M.gguf",
+          "config": "llama.cpp · Q4_K_M · best3",
+          "values": {
+            "generation": 8.3027,
+            "prompt": 111.7152,
+            "firstToken": 241.6859
+          },
+          "protocol": "16.191 (1858) · fair",
+          "note": "iPhone18,2 · Apple A19 Pro · iOS 27.2 · 2026-10-13"
+        },
+        {
+          "device": "iQOO 15R",
+          "platform": "Android",
+          "model": "qwen2.5-1.5b-instruct-q4_k_m",
+          "config": "gguf · q4_k_m · cpu · best3 · 4096 context",
+          "values": {
+            "generation": 18.464670181274414,
+            "prompt": 77.82101440429688,
+            "firstToken": 608,
+            "memoryMB": 1260
+          },
+          "protocol": "1.2 · gguf@4be73c36ad479cd9b6e4f1936debdf63 · none",
+          "note": "I2508 · SM8845 · Android 16 · 2026-08-30"
+        },
+        {
+          "device": "iQOO Z10 5G",
+          "platform": "Android",
+          "model": "Gemma-4-E2B-it-MNN",
+          "config": "mnn",
+          "values": {
+            "generation": 6.714750795601056,
+            "prompt": 5.925628185272217
+          },
+          "protocol": "v3.6.0-beta105",
+          "note": "I2407 · SM7635 · 2026-06-26"
+        },
+        {
+          "device": "Lenovo Idea Tab Pro Gen 2 / Lenovo Tab K13",
+          "platform": "Android",
+          "model": "Qwen3.5-4B-uncensored-MNN",
+          "config": "cpu · MNN · best3 · 2048 context",
+          "values": {
+            "generation": 15.26809310913086,
+            "prompt": 43.61370849609375,
+            "firstToken": 832,
+            "memoryMB": 2486
+          },
+          "protocol": "v3.6.0-beta146 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · none",
+          "note": "TB390FU · SM8735P · Android 16 · 2026-08-11"
+        },
+        {
+          "device": "Lenovo TB520FU",
+          "platform": "Android",
+          "model": "Qwen3-1.7B-Q4_K_M",
+          "config": "gguf · Q4_K_M",
+          "values": {
+            "generation": 19.136808395385742,
+            "prompt": 19.136808395385742
+          },
+          "protocol": "v3.6.0-beta39",
+          "note": "TB520FU · SM8650 · 2026-06-10"
+        },
+        {
+          "device": "motorola edge 30 pro",
+          "platform": "Android",
+          "model": "Qwen3-0.6B-MNN",
+          "config": "cpu · MNN · best3 · 1024 context",
+          "values": {
+            "generation": 53.654415130615234,
+            "prompt": 195.23809814453125,
+            "firstToken": 224,
+            "memoryMB": 658
+          },
+          "protocol": "1.0 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · none",
+          "note": "motorola edge 30 pro · SM8450 · Android 14 · 2026-08-14"
+        },
+        {
+          "device": "motorola edge 50 ultra",
+          "platform": "Android",
+          "model": "gemma-4-E4B-it-Q4_0-pure",
+          "config": "gguf · Q4_0 · cpu · median3 · 2048 context",
+          "values": {
+            "generation": 7.057866848750161,
+            "firstToken": 2024,
+            "memoryMB": 3388
+          },
+          "protocol": "1.3.6.1 · gguf@db0bfca1a21598f3a2da3ee2fcdf00b5 · none",
+          "note": "motorola edge 50 ultra · SM8635 · Android 17 · 2026-10-21"
+        },
+        {
+          "device": "motorola edge 50 ultra",
+          "platform": "Android",
+          "model": "luna-7B-A4B-mnn",
+          "config": "cpu · median3 · 8192 context",
+          "values": {
+            "generation": 11.484135816255046,
+            "firstToken": 1064,
+            "memoryMB": 4133
+          },
+          "protocol": "1.3.6.1 · mnn@ffff0707cc93a5eb682ee6ea6cf09d50 · 8 · none",
+          "note": "motorola edge 50 ultra · SM8635 · Android 17 · 2026-10-21"
+        },
+        {
+          "device": "motorola edge 50 ultra",
+          "platform": "Android",
+          "model": "luna-7B-A4B-mnn",
+          "config": "cpu · mnn · best3 · 8192 context",
+          "values": {
+            "generation": 5.0037431716918945,
+            "prompt": 38.74345397949219,
+            "firstToken": 998,
+            "memoryMB": 4280
+          },
+          "protocol": "1.3.6.1 · mnn@ffff0707cc93a5eb682ee6ea6cf09d50 · 8 · none",
+          "note": "motorola edge 50 ultra · SM8635 · Android 17 · 2026-10-21"
+        },
+        {
+          "device": "motorola edge 50 ultra",
+          "platform": "Android",
+          "model": "ornstein-v2-Q4_K_M",
+          "config": "gguf · Q4_K_M · cpu · median3 · 8192 context",
+          "values": {
+            "generation": 4.161070909394473,
+            "firstToken": 2031,
+            "memoryMB": 6175
+          },
+          "protocol": "1.3.6.1 · gguf@db0bfca1a21598f3a2da3ee2fcdf00b5 · none",
+          "note": "motorola edge 50 ultra · SM8635 · Android 17 · 2026-10-21"
+        },
+        {
+          "device": "motorola edge 50 ultra",
+          "platform": "Android",
+          "model": "Qwen3-0.6B-Q8_0",
+          "config": "gguf · Q8_0 · cpu · median3 · 2048 context",
+          "values": {
+            "generation": 30.642760074050333,
+            "firstToken": 143,
+            "memoryMB": 1135
+          },
+          "protocol": "1.3.6.1 · gguf@db0bfca1a21598f3a2da3ee2fcdf00b5 · none",
+          "note": "motorola edge 50 ultra · SM8635 · Android 17 · 2026-10-21"
+        },
+        {
+          "device": "Motorola moto g(20)",
+          "platform": "Android",
+          "model": "Qwen3.5-0.8B-MNN",
+          "config": "cpu · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 12.930156707763672,
+            "prompt": 31.890661239624023,
+            "firstToken": 1332,
+            "memoryMB": 182
+          },
+          "protocol": "1.3.2.1 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · none",
+          "note": "moto g(20) · ums512_1h10 · Android 11 · 2026-09-13"
+        },
+        {
+          "device": "Nothing Phone (2a)",
+          "platform": "Android",
+          "model": "Qwen3.5-9B-MNN",
+          "config": "cpu · median3 · 4096 context",
+          "values": {
+            "generation": 2.2338893507824444,
+            "firstToken": 4964,
+            "memoryMB": 5128
+          },
+          "protocol": "1.3.2.1 · mnn@23cbbf5042a43ad792bec671e68203e5 · 10 · light",
+          "note": "A142 · MT6886 · Android 16 · 2026-09-21"
+        },
+        {
+          "device": "nubia NP05J",
+          "platform": "Android",
+          "model": "Qwen3.5-9B-uncensored-MNN",
+          "config": "cpu · MNN",
+          "values": {
+            "generation": 11.31806468963623,
+            "prompt": 11.31806468963623
+          },
+          "protocol": "v3.6.0-beta105",
+          "note": "NP05J · SM8750 · 2026-06-26"
+        },
+        {
+          "device": "nubia NX733J",
+          "platform": "Android",
+          "model": "Qwen3-0.6B-Q8_0",
+          "config": "gguf · Q8_0 · cpu · best3 · 4096 context",
+          "values": {
+            "generation": 41.98347091674805,
+            "prompt": 339.4495544433594,
+            "firstToken": 96,
+            "memoryMB": 1428
+          },
+          "protocol": "v3.6.0-beta130 · gguf@f35cf4782b577750b4b62c756871416b · none",
+          "note": "NX733J · SM8750 · Android 15 · 2026-07-16"
+        },
+        {
+          "device": "nubia NX733J",
+          "platform": "Android",
+          "model": "Qwen3-0.6B.Q4_K_M",
+          "config": "gguf · 0.6B.Q4_K_M · cpu · best3 · 8192 context",
+          "values": {
+            "generation": 36.389686584472656,
+            "prompt": 262.4113464355469,
+            "firstToken": 160,
+            "memoryMB": 1168
+          },
+          "protocol": "v3.6.0-beta130 · gguf@f35cf4782b577750b4b62c756871416b · none",
+          "note": "NX733J · SM8750 · Android 15 · 2026-07-16"
+        },
+        {
+          "device": "nubia NX733J",
+          "platform": "Android",
+          "model": "Qwen3.5-27B-MNN",
+          "config": "cpu · MNN · best3 · 8192 context",
+          "values": {
+            "generation": 1.706086277961731,
+            "prompt": 2.0100502967834473,
+            "firstToken": 1045,
+            "memoryMB": 235
+          },
+          "protocol": "v3.6.0-beta130 · mnn@f2dd3571bc79e340cfc5d48893fa6df6 · 8 · none",
+          "note": "NX733J · SM8750 · Android 15 · 2026-07-16"
+        },
+        {
+          "device": "nubia NX789J",
+          "platform": "Android",
+          "model": "Qwen3.5-4B-uncensored-MNN",
+          "config": "cpu · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 16.408267974853516,
+            "prompt": 44.397464752197266,
+            "firstToken": 935,
+            "memoryMB": 2480
+          },
+          "protocol": "1.3.6.1 · mnn@ffff0707cc93a5eb682ee6ea6cf09d50 · 8 · none",
+          "note": "NX789J · SM8750 · Android 16 · 2026-10-06"
+        },
+        {
+          "device": "nubia Z80",
+          "platform": "Android",
+          "model": "DarkIdol-Llama-3.1-8B-Instruct-1.2-Uncensored-MNN",
+          "config": "opencl · MNN · best3 · 32768 context",
+          "values": {
+            "generation": 11.553857803344727,
+            "prompt": 53.278690338134766,
+            "firstToken": 829,
+            "memoryMB": 169
+          },
+          "protocol": "1.3 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · none",
+          "note": "NX741J · SM8850 · Android 16 · 2026-09-11"
+        },
+        {
+          "device": "nubia Z80",
+          "platform": "Android",
+          "model": "gemma-4-E4B-it-MNN",
+          "config": "cpu · MNN · best3 · 32768 context",
+          "values": {
+            "generation": 10.908778190612793,
+            "prompt": 52.7065544128418,
+            "firstToken": 758,
+            "memoryMB": 54
+          },
+          "protocol": "1.3 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · none",
+          "note": "NX741J · SM8850 · Android 16 · 2026-09-08"
+        },
+        {
+          "device": "nubia Z80",
+          "platform": "Android",
+          "model": "Lumimaid-Magnum-v4-12B-Q4_K_M",
+          "config": "gguf · Q4_K_M · cpu · best3 · 65536 context",
+          "values": {
+            "generation": 4.23291015625,
+            "prompt": 15.29411792755127,
+            "firstToken": 1805,
+            "memoryMB": 9279
+          },
+          "protocol": "1.3 · gguf@b6b000d5faec9612852eca55ca87ad1f · none",
+          "note": "NX741J · SM8850 · Android 16 · 2026-09-08"
+        },
+        {
+          "device": "nubia Z80",
+          "platform": "Android",
+          "model": "Qwen3-0.6B-kl-baseline-20k-MNN",
+          "config": "cpu · MNN · best3 · 8192 context",
+          "values": {
+            "generation": 122.03389739990234,
+            "prompt": 379.629638671875,
+            "firstToken": 99,
+            "memoryMB": 519
+          },
+          "protocol": "1.3 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · none",
+          "note": "NX741J · SM8850 · Android 16 · 2026-09-08"
+        },
+        {
+          "device": "OnePlus 11 5G 中国版",
+          "platform": "Android",
+          "model": "Qwen3.5-9B-Q4_0",
+          "config": "gguf · Q4_0 · cpu · best3 · 16384 context",
+          "values": {
+            "generation": 4.154128074645996,
+            "prompt": 15.592942237854004,
+            "firstToken": 2947,
+            "memoryMB": 6271
+          },
+          "protocol": "1.3.2.1 · gguf@b746fe9408236606c4800eeb2c221571 · severe",
+          "note": "PHB110 · SM8550 · Android 16 · 2026-09-17"
+        },
+        {
+          "device": "OnePlus 11 5G 中国版",
+          "platform": "Android",
+          "model": "Qwen3.5-9B-ultra-uncensored-heretic-v1-MNN",
+          "config": "cpu · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 4.406050682067871,
+            "prompt": 15.521064758300781,
+            "firstToken": 2717,
+            "memoryMB": 5089
+          },
+          "protocol": "1.3.2.1 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · moderate",
+          "note": "PHB110 · SM8550 · Android 16 · 2026-09-17"
+        },
+        {
+          "device": "OnePlus 13",
+          "platform": "Android",
+          "model": "Qwen3-0.6B-lk-alpha-40k-MNN",
+          "config": "cpu · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 33.66913986206055,
+            "prompt": 99.0338134765625,
+            "firstToken": 184,
+            "memoryMB": 559
+          },
+          "protocol": "1.3.6.1 · mnn@ffff0707cc93a5eb682ee6ea6cf09d50 · 8 · none",
+          "note": "CPH2653 · SM8750 · Android 16 · 2026-10-16"
+        },
+        {
+          "device": "OnePlus 15",
+          "platform": "Android",
+          "model": "Qwen3.5-9B-ultra-uncensored-heretic-v1-MNN",
+          "config": "opencl · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 12.655705451965332,
+            "prompt": 21.6606502532959,
+            "firstToken": 958,
+            "memoryMB": 199
+          },
+          "protocol": "1.3.3 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · none",
+          "note": "CPH2747 · SM8850 · Android 16 · 2026-09-26"
+        },
+        {
+          "device": "OnePlus 15R",
+          "platform": "Android",
+          "model": "Qwen3.5-9B-MNN",
+          "config": "cpu · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 7.0018744468688965,
+            "prompt": 20.329137802124023,
+            "firstToken": 1758,
+            "memoryMB": 5704
+          },
+          "protocol": "1.1.1 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · severe",
+          "note": "CPH2767 · SM8845 · Android 16 · 2026-08-23"
+        },
+        {
+          "device": "OnePlus 8T",
+          "platform": "Android",
+          "model": "Qwen3-0.6B-lk-alpha-20k-MNN",
+          "config": "cpu · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 43.85359191894531,
+            "prompt": 136.21263122558594,
+            "firstToken": 345,
+            "memoryMB": 500
+          },
+          "protocol": "1.1.1 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · severe",
+          "note": "KB2005 · SM8250 · Android 16 · 2026-08-21"
+        },
+        {
+          "device": "OnePlus Ace 5 至尊版",
+          "platform": "Android",
+          "model": "Qwen3.5-4B-Uncensored-MNN",
+          "config": "cpu · median3 · 1024 context",
+          "values": {
+            "generation": 17.009302535606146,
+            "firstToken": 827,
+            "memoryMB": 468
+          },
+          "protocol": "1.3.3 · mnn@23cbbf5042a43ad792bec671e68203e5 · 13 · none",
+          "note": "PLC110 · MT6991 · Android 15 · 2026-09-24"
+        },
+        {
+          "device": "OnePlus Ace 6 至尊版",
+          "platform": "Android",
+          "model": "Qwen3.5-9B-uncensored-MNN",
+          "config": "cpu · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 4.141799449920654,
+            "prompt": 36.842105865478516,
+            "firstToken": 1487,
+            "memoryMB": 4771
+          },
+          "protocol": "v3.6.0-beta146 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · none",
+          "note": "PMB110 · MT6993 · Android 16 · 2026-08-10"
+        },
+        {
+          "device": "OnePlus Ace 6 至尊版",
+          "platform": "Android",
+          "model": "Qwen3.5-9B-uncensored-MNN",
+          "config": "opencl · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 120.83729553222656,
+            "prompt": 25.331724166870117,
+            "firstToken": 3186,
+            "memoryMB": 2158
+          },
+          "protocol": "1.1.1 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · moderate",
+          "note": "PMB110 · MT6993 · Android 16 · 2026-08-22"
+        },
+        {
+          "device": "OPPO Find X10 Pro Max",
+          "platform": "Android",
+          "model": "Qwen3-4B-abliterated-MNN",
+          "config": "cpu · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 10.305095672607422,
+            "prompt": 35.59027862548828,
+            "firstToken": 681,
+            "memoryMB": 2968
+          },
+          "protocol": "1.3.9.5 · mnn@634608d25a0595acc4c436c43cec2fd7 · 8 · moderate",
+          "note": "CPH2913 · MT6995 · Android 17 · 2026-10-29"
+        },
+        {
+          "device": "OPPO Find X5 Pro",
+          "platform": "Android",
+          "model": "Gemma-4-E2B-it-MNN",
+          "config": "cpu · MNN",
+          "values": {
+            "generation": 8.470619201660156,
+            "prompt": 8.470619201660156
+          },
+          "protocol": "v3.6.0-beta105",
+          "note": "CPH2305 · SM8450 · 2026-07-02"
+        },
+        {
+          "device": "OPPO Find X9 Pro",
+          "platform": "Android",
+          "model": "Qwen3-0.6B-MNN",
+          "config": "cpu · MNN · best3 · 16384 context",
+          "values": {
+            "generation": 35.415504455566406,
+            "prompt": 289.0625,
+            "firstToken": 137,
+            "memoryMB": 713
+          },
+          "protocol": "1.3.1 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · none",
+          "note": "CPH2791 · MT6993 · Android 16 · 2026-09-10"
+        },
+        {
+          "device": "OPPO Reno9 Pro 5G",
+          "platform": "Android",
+          "model": "Qwen3-4B-abliterated-MNN",
+          "config": "cpu · MNN · best3 · 1024 context",
+          "values": {
+            "generation": 8.628303527832031,
+            "prompt": 17.314189910888672,
+            "firstToken": 2274,
+            "memoryMB": 2805
+          },
+          "protocol": "1.1.1 · mnn@23cbbf5042a43ad792bec671e68203e5 · 12 · none",
+          "note": "PGX110 · MT6895Z_A/TCZA · Android 14 · 2026-08-29"
+        },
+        {
+          "device": "OPPO Reno9 Pro 5G",
+          "platform": "Android",
+          "model": "Qwen3.5-4B-MNN",
+          "config": "cpu · MNN · best3 · 3072 context",
+          "values": {
+            "generation": 8.87863540649414,
+            "prompt": 16.58112907409668,
+            "firstToken": 2446,
+            "memoryMB": 3326
+          },
+          "protocol": "1.1.1 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · severe",
+          "note": "PGX110 · MT6895Z_A/TCZA · Android 14 · 2026-08-28"
+        },
+        {
+          "device": "OPPO Reno9 Pro 5G",
+          "platform": "Android",
+          "model": "Qwen3.5-4B-MNN",
+          "config": "cpu · median3 · 4096 context",
+          "values": {
+            "generation": 9.496798762685831,
+            "firstToken": 1549,
+            "memoryMB": 3341
+          },
+          "protocol": "1.1.1 · mnn@23cbbf5042a43ad792bec671e68203e5 · 10 · severe",
+          "note": "PGX110 · MT6895Z_A/TCZA · Android 14 · 2026-08-28"
+        },
+        {
+          "device": "OPPO Reno9 Pro 5G",
+          "platform": "Android",
+          "model": "Qwen3.5-4B-uncensored-MNN",
+          "config": "cpu · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 4.726460933685303,
+            "prompt": 4.553339004516602,
+            "firstToken": 3202,
+            "memoryMB": 2790
+          },
+          "protocol": "1.1.1 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · none",
+          "note": "PGX110 · MT6895Z_A/TCZA · Android 14 · 2026-08-29"
+        },
+        {
+          "device": "OPPO Reno9 Pro 5G",
+          "platform": "Android",
+          "model": "Qwen3.5-4B-uncensored-MNN",
+          "config": "cpu · median3 · 4096 context",
+          "values": {
+            "generation": 9.882223963621064,
+            "firstToken": 1566,
+            "memoryMB": 2748
+          },
+          "protocol": "1.1.1 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · none",
+          "note": "PGX110 · MT6895Z_A/TCZA · Android 14 · 2026-08-29"
+        },
+        {
+          "device": "POCO F5",
+          "platform": "Android",
+          "model": "Huihui-gemma-4-E2B-it-abliterated-MNN",
+          "config": "cpu · median3 · 1024 context",
+          "values": {
+            "generation": 16.05851723681094,
+            "firstToken": 557,
+            "memoryMB": 58
+          },
+          "protocol": "1.3.3 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · none",
+          "note": "23049PCD8G · SM7475 · Android 17 · 2026-09-22"
+        },
+        {
+          "device": "POCO F5",
+          "platform": "Android",
+          "model": "Josiefied-Qwen3-1.7B-abliterated-v1-MNN-plus",
+          "config": "cpu · median3 · 4096 context",
+          "values": {
+            "generation": 24.10639659467015,
+            "firstToken": 540,
+            "memoryMB": 1345
+          },
+          "protocol": "1.3.3 · mnn@23cbbf5042a43ad792bec671e68203e5 · 10 · none",
+          "note": "23049PCD8G · SM7475 · Android 17 · 2026-09-22"
+        },
+        {
+          "device": "POCO F5",
+          "platform": "Android",
+          "model": "Qwen3.5-4B-Claude-4.6-Opus-abliterated-MNN",
+          "config": "cpu · median3 · 8192 context",
+          "values": {
+            "generation": 13.085012508454145,
+            "firstToken": 1017,
+            "memoryMB": 2475
+          },
+          "protocol": "1.3.3 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · none",
+          "note": "23049PCD8G · SM7475 · Android 17 · 2026-09-22"
+        },
+        {
+          "device": "POCO F5",
+          "platform": "Android",
+          "model": "Qwen3.5-4B-uncensored-MNN",
+          "config": "cpu · median3 · 1024 context",
+          "values": {
+            "generation": 11.466599587059083,
+            "firstToken": 986,
+            "memoryMB": 2375
+          },
+          "protocol": "v3.6.0-beta144 · mnn@23cbbf5042a43ad792bec671e68203e5 · 13 · none",
+          "note": "23049PCD8G · SM7475 · Android 16 · 2026-08-01"
+        },
+        {
+          "device": "POCO F8 Pro",
+          "platform": "Android",
+          "model": "Gemma-4-E2B-it-MNN",
+          "config": "cpu · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 17.942922592163086,
+            "prompt": 84.86238861083984,
+            "firstToken": 429,
+            "memoryMB": 45
+          },
+          "protocol": "1.3.3 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · none",
+          "note": "2510DPC44G · SM8750 · Android 16 · 2026-09-28"
+        },
+        {
+          "device": "POCO F9 Ultra",
+          "platform": "Android",
+          "model": "Gemma-4-E2B-it-MNN",
+          "config": "cpu · MNN · best3 · 8192 context",
+          "values": {
+            "generation": 19.4904842376709,
+            "prompt": 74.89878845214844,
+            "firstToken": 486,
+            "memoryMB": 57
+          },
+          "protocol": "1.3.3 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · none",
+          "note": "26077PC53G · SM8850 · Android 16 · 2026-09-28"
+        },
+        {
+          "device": "POCO M3",
+          "platform": "Android",
+          "model": "smollm2-360m-aac-q3ks",
+          "config": "gguf · q3ks · cpu · best3 · 4096 context",
+          "values": {
+            "generation": 17.05237579345703,
+            "prompt": 38.46154022216797,
+            "firstToken": 961,
+            "memoryMB": 183
+          },
+          "protocol": "1.3.8.1 · gguf@45ec0e1beb18710fdb7d72f48f0c9fb8 · none",
+          "note": "M2010J19CG · SM6115 · Android 12 · 2026-10-19"
+        },
+        {
+          "device": "POCO X3 Pro",
+          "platform": "Android",
+          "model": "mlabonne_gemma-3-4b-it-abliterated-Q4_K_M",
+          "config": "gguf · Q4_K_M · cpu · best3 · 2048 context",
+          "values": {
+            "generation": 3.8483681678771973,
+            "prompt": 11.727078437805176,
+            "firstToken": 3006,
+            "memoryMB": 3170
+          },
+          "protocol": "v3.6.0-beta143 · gguf@7b76b25310298616b9b480d20d0461d2 · none",
+          "note": "M2102J20SG · SM8150 · Android 13 · 2026-08-17"
+        },
+        {
+          "device": "POCO X7 Pro",
+          "platform": "Android",
+          "model": "Gemma-4-E2B-it-MNN",
+          "config": "cpu · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 14.788076400756836,
+            "prompt": 49.399200439453125,
+            "firstToken": 725,
+            "memoryMB": 83
+          },
+          "protocol": "v3.6.0-beta144 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · none",
+          "note": "2412DPC0AG · MT6899 · Android 16 · 2026-07-31"
+        },
+        {
+          "device": "POCO X7 Pro",
+          "platform": "Android",
+          "model": "Gemma-4-E2B-it-MNN",
+          "config": "cpu · median3 · 2048 context",
+          "values": {
+            "generation": 16.06529164954387,
+            "firstToken": 572,
+            "memoryMB": 74
+          },
+          "protocol": "1.0 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · none",
+          "note": "2412DPC0AG · MT6899 · Android 16 · 2026-08-12"
+        },
+        {
+          "device": "POCO X7 Pro",
+          "platform": "Android",
+          "model": "microsoft_Phi-4-mini-reasoning-Q4_K_M",
+          "config": "gguf · Q4_K_M · cpu · median3 · 2048 context",
+          "values": {
+            "generation": 7.95987259375357,
+            "firstToken": 993,
+            "memoryMB": 3048
+          },
+          "protocol": "v3.6.0-beta146 · gguf@651063646e4bc6c8ffb0a6a8c76ce0b8 · none",
+          "note": "2412DPC0AG · MT6899 · Android 16 · 2026-08-12"
+        },
+        {
+          "device": "POCO X7 Pro",
+          "platform": "Android",
+          "model": "Phi-4-mini-reasoning-Q8_0",
+          "config": "gguf · Q8_0 · cpu · median3 · 2048 context",
+          "values": {
+            "generation": 6.032641450744858,
+            "firstToken": 742,
+            "memoryMB": 4693
+          },
+          "protocol": "v3.6.0-beta146 · gguf@651063646e4bc6c8ffb0a6a8c76ce0b8 · none",
+          "note": "2412DPC0AG · MT6899 · Android 16 · 2026-08-12"
+        },
+        {
+          "device": "POCO X7 Pro",
+          "platform": "Android",
+          "model": "Qwen3-0.6B-MNN",
+          "config": "cpu · MNN · best3 · 2048 context",
+          "values": {
+            "generation": 50.15797805786133,
+            "prompt": 221.556884765625,
+            "firstToken": 175,
+            "memoryMB": 635
+          },
+          "protocol": "1.0 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · none",
+          "note": "2412DPC0AG · MT6899 · Android 16 · 2026-08-12"
+        },
+        {
+          "device": "POCO X7 Pro",
+          "platform": "Android",
+          "model": "Qwen3-4B-abliterated-MNN",
+          "config": "cpu · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 12.066508293151855,
+            "prompt": 37.78801727294922,
+            "firstToken": 1002,
+            "memoryMB": 2674
+          },
+          "protocol": "1.3.2 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · none",
+          "note": "2412DPC0AG · MT6899 · Android 16 · 2026-09-11"
+        },
+        {
+          "device": "POCO X8 Pro",
+          "platform": "Android",
+          "model": "Qwen3.5-4B-MNN",
+          "config": "cpu · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 10.577886581420898,
+            "prompt": 22.948938369750977,
+            "firstToken": 1800,
+            "memoryMB": 3040
+          },
+          "protocol": "1.3.9.6 · mnn@d236495a020341f03f6f3cfeee7c3a09 · 8 · none",
+          "note": "2511FPC34G · MT6899 · Android 16 · 2026-11-06"
+        },
+        {
+          "device": "POCO X8 Pro Max",
+          "platform": "Android",
+          "model": "Qwen3.5-4B-uncensored-MNN",
+          "config": "cpu · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 12.211538314819336,
+            "prompt": 63.253013610839844,
+            "firstToken": 672,
+            "memoryMB": 2462
+          },
+          "protocol": "1.3.2.1 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · none",
+          "note": "2602BPC18G · MT6991 · Android 16 · 2026-09-16"
+        },
+        {
+          "device": "realme RMX3370",
+          "platform": "Android",
+          "model": "LFM2.5-1.2B-Thinking-Q4_K_M",
+          "config": "gguf · Q4_K_M · cpu · best3 · 4096 context",
+          "values": {
+            "generation": 10.83895206451416,
+            "prompt": 54.755043029785156,
+            "firstToken": 702,
+            "memoryMB": 967
+          },
+          "protocol": "v3.6.0-beta143 · gguf@7b76b25310298616b9b480d20d0461d2 · none",
+          "note": "RMX3370 · SM8250 · Android 13 · 2026-07-30"
+        },
+        {
+          "device": "realme 真我GT7 Pro竞速版",
+          "platform": "Android",
+          "model": "Bonsai-2-27B-PQ2_0-CRACK",
+          "config": "gguf · Q2_0 · cpu · median3 · 2048 context",
+          "values": {
+            "generation": 1.8384982686517086,
+            "firstToken": 9918,
+            "memoryMB": 1260
+          },
+          "protocol": "1.3.6.1 · gguf@db0bfca1a21598f3a2da3ee2fcdf00b5 · light",
+          "note": "RMX5090 · SM8750 · Android 15 · 2026-10-07"
+        },
+        {
+          "device": "realme 真我GT7 Pro竞速版",
+          "platform": "Android",
+          "model": "gemma-4-26B-A4B-it-ultra-uncensored-heretic.i1-Q4_0",
+          "config": "gguf · Q4_0 · cpu · median3 · 4096 context",
+          "values": {
+            "generation": 4.169308257239727,
+            "firstToken": 4711,
+            "memoryMB": 1797
+          },
+          "protocol": "1.3.6.1 · gguf@db0bfca1a21598f3a2da3ee2fcdf00b5 · light",
+          "note": "RMX5090 · SM8750 · Android 15 · 2026-10-07"
+        },
+        {
+          "device": "realme 真我GT7 Pro竞速版",
+          "platform": "Android",
+          "model": "Qwen3.5-9B-uncensored-MNN",
+          "config": "cpu · median3 · 1024 context",
+          "values": {
+            "generation": 10.863956458403859,
+            "firstToken": 1625,
+            "memoryMB": 4835
+          },
+          "protocol": "1.3.6.1 · mnn@ffff0707cc93a5eb682ee6ea6cf09d50 · 8 · light",
+          "note": "RMX5090 · SM8750 · Android 15 · 2026-10-06"
+        },
+        {
+          "device": "realme 真我GT7 Pro竞速版",
+          "platform": "Android",
+          "model": "Qwen3.5-9B-uncensored-MNN",
+          "config": "opencl · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 11.34434986114502,
+            "prompt": 16.60079002380371,
+            "firstToken": 920,
+            "memoryMB": 137
+          },
+          "protocol": "1.3.6.1 · mnn@ffff0707cc93a5eb682ee6ea6cf09d50 · 8 · light",
+          "note": "RMX5090 · SM8750 · Android 15 · 2026-10-06"
+        },
+        {
+          "device": "realme 真我GT7 Pro竞速版",
+          "platform": "Android",
+          "model": "Qwen3.8-9B-Distill-SLERP-F451-Pro-Writer-Uncensored-Q5_K_M-no-mtp",
+          "config": "gguf · mtp · opencl · best3 · 4096 context",
+          "values": {
+            "generation": 3.823343515396118,
+            "prompt": 35.24904251098633,
+            "firstToken": 1298,
+            "memoryMB": 714
+          },
+          "protocol": "1.3.6.1 · gguf@db0bfca1a21598f3a2da3ee2fcdf00b5 · moderate",
+          "note": "RMX5090 · SM8750 · Android 15 · 2026-10-06"
+        },
+        {
+          "device": "realme 真我Neo7",
+          "platform": "Android",
+          "model": "Qwen3.5-9B-uncensored-MNN",
+          "config": "cpu · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 7.401059627532959,
+            "prompt": 10.204081535339355,
+            "firstToken": 185,
+            "memoryMB": 4782
+          },
+          "protocol": "1.1.1 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · severe",
+          "note": "RMX5060 · MT6989 · Android 16 · 2026-08-22"
+        },
+        {
+          "device": "REDMAGIC NX799J",
+          "platform": "Android",
+          "model": "DarkIdol-Llama-3.1-8B-Instruct-1.2-Uncensored-MNN",
+          "config": "opencl · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 11.327593803405762,
+            "prompt": 23.186681747436523,
+            "firstToken": 2827,
+            "memoryMB": 112
+          },
+          "protocol": "v3.6.0-beta137 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · none",
+          "note": "NX799J · SM8750 · Android 16 · 2026-07-21"
+        },
+        {
+          "device": "REDMAGIC NX809J",
+          "platform": "Android",
+          "model": "Qwen3-1.7B-MNN",
+          "config": "cpu",
+          "values": {
+            "generation": 50.561189704793755,
+            "prompt": 45.13399124145508
+          },
+          "protocol": "v3.6.0-beta43",
+          "note": "NX809J · SM8850 · 2026-06-11"
+        },
+        {
+          "device": "REDMAGIC NX809J",
+          "platform": "Android",
+          "model": "Qwen3-4B-abliterated-MNN",
+          "config": "cpu · MNN · best3 · 8192 context",
+          "values": {
+            "generation": 23.514163970947266,
+            "prompt": 54.95978546142578,
+            "firstToken": 773,
+            "memoryMB": 2646
+          },
+          "protocol": "v3.6.0-beta146 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · none",
+          "note": "NX809J · SM8850 · Android 16 · 2026-08-13"
+        },
+        {
+          "device": "REDMAGIC NX809J",
+          "platform": "Android",
+          "model": "Qwen3.5-0.8B-MNN",
+          "config": "cpu · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 78.3467025756836,
+            "prompt": 274.5097961425781,
+            "firstToken": 149,
+            "memoryMB": 711
+          },
+          "protocol": "1.0 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · none",
+          "note": "NX809J · SM8850 · Android 16 · 2026-08-13"
+        },
+        {
+          "device": "REDMAGIC NX809J",
+          "platform": "Android",
+          "model": "Qwen3.5-9B-uncensored-MNN",
+          "config": "cpu · MNN · best3 · 8192 context",
+          "values": {
+            "generation": 13.775897979736328,
+            "prompt": 32.0121955871582,
+            "firstToken": 1233,
+            "memoryMB": 4502
+          },
+          "protocol": "1.0 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · none",
+          "note": "NX809J · SM8850 · Android 16 · 2026-08-14"
+        },
+        {
+          "device": "REDMAGIC NX809J",
+          "platform": "Android",
+          "model": "Qwen3.6-35B-A3B-abliterated-MNN",
+          "config": "cpu · MNN",
+          "values": {
+            "generation": 13.629533767700195,
+            "prompt": 13.629533767700195
+          },
+          "protocol": "v3.6.0-beta75",
+          "note": "NX809J · SM8850 · 2026-06-16"
+        },
+        {
+          "device": "Redmi K60 Ultra",
+          "platform": "Android",
+          "model": "Qwen3.5-9B-ultra-uncensored-heretic-v1-MNN",
+          "config": "cpu · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 4.186997413635254,
+            "prompt": 13.112707138061523,
+            "firstToken": 3524,
+            "memoryMB": 5120
+          },
+          "protocol": "1.3.9.5 · mnn@634608d25a0595acc4c436c43cec2fd7 · 8 · none",
+          "note": "23078RKD5C · MT6985 · Android 14 · 2026-10-31"
+        },
+        {
+          "device": "Redmi K70 Ultra",
+          "platform": "Android",
+          "model": "Qwen3-8B-abliterated-v2-MNN",
+          "config": "cpu · MNN",
+          "values": {
+            "generation": 7.156945705413818,
+            "prompt": 7.156945705413818
+          },
+          "protocol": "v3.6.0-beta39",
+          "note": "2407FRK8EC · MT6989 · 2026-06-10"
+        },
+        {
+          "device": "REDMI K90 Pro Max",
+          "platform": "Android",
+          "model": "Qwen3.5-4B-uncensored-MNN",
+          "config": "cpu · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 18.690214157104492,
+            "prompt": 46.71857452392578,
+            "firstToken": 899,
+            "memoryMB": 2467
+          },
+          "protocol": "1.3.6.1 · mnn@ffff0707cc93a5eb682ee6ea6cf09d50 · 8 · none",
+          "note": "25102RKBEC · SM8850 · Android 16 · 2026-10-06"
+        },
+        {
+          "device": "Redmi Note 14 Pro",
+          "platform": "Android",
+          "model": "Qwen3.5-4B-MNN",
+          "config": "cpu · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 2.660911798477173,
+            "prompt": 9.931426048278809,
+            "firstToken": 4538,
+            "memoryMB": 2975
+          },
+          "protocol": "1.3.6.1 · mnn@ffff0707cc93a5eb682ee6ea6cf09d50 · 0 · none",
+          "note": "24116RACCG · MT6789 · Android 16 · 2026-10-19"
+        },
+        {
+          "device": "Redmi Turbo 3",
+          "platform": "Android",
+          "model": "Qwen3.5-4B-MNN",
+          "config": "cpu · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 2.730748176574707,
+            "prompt": 2.7322404384613037,
+            "firstToken": 327,
+            "memoryMB": 2979
+          },
+          "protocol": "v3.6.0-beta146 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · none",
+          "note": "24069RA21C · SM8635 · Android 16 · 2026-08-10"
+        },
+        {
+          "device": "REDMI Turbo 4 Pro",
+          "platform": "Android",
+          "model": "Qwen3.5-4B-uncensored-MNN",
+          "config": "cpu",
+          "values": {
+            "generation": 7.6967185040657915,
+            "prompt": 6.119132041931152
+          },
+          "protocol": "v3.6.0-beta55",
+          "note": "25053RT47C · SM8735 · 2026-06-14"
+        },
+        {
+          "device": "Samsung Galaxy A05s",
+          "platform": "Android",
+          "model": "qwen3-0.6b-q4_k_m",
+          "config": "gguf · q4_k_m · cpu · best3 · 4096 context",
+          "values": {
+            "generation": 7.124424934387207,
+            "prompt": 17.86439323425293,
+            "firstToken": 2646,
+            "memoryMB": 336
+          },
+          "protocol": "1.3.3 · gguf@b746fe9408236606c4800eeb2c221571 · none",
+          "note": "SM-A057F · SM6225 · Android 16 · 2026-09-22"
+        },
+        {
+          "device": "Samsung Galaxy A05s",
+          "platform": "Android",
+          "model": "Qwen3.8-2B-Q4_K_M",
+          "config": "gguf · Q4_K_M · cpu · median3 · 4096 context",
+          "values": {
+            "generation": 4.61717711333128,
+            "firstToken": 3563,
+            "memoryMB": 484
+          },
+          "protocol": "1.3.6.1 · gguf@db0bfca1a21598f3a2da3ee2fcdf00b5 · none",
+          "note": "SM-A057F · SM6225 · Android 16 · 2026-10-14"
+        },
+        {
+          "device": "Samsung Galaxy A17 5G",
+          "platform": "Android",
+          "model": "Qwen3.5-0.8B-MNN",
+          "config": "cpu · median3 · 1024 context",
+          "values": {
+            "generation": 13.674321730388478,
+            "firstToken": 1101,
+            "memoryMB": 166
+          },
+          "protocol": "1.2.1 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · severe",
+          "note": "SM-S176V · s5e8535 · Android 16 · 2026-09-09"
+        },
+        {
+          "device": "Samsung Galaxy A33 5G",
+          "platform": "Android",
+          "model": "Qwen3.5-2B-MNN",
+          "config": "cpu · MNN · best3 · 2048 context",
+          "values": {
+            "generation": 3.247974395751953,
+            "prompt": 1.9607843160629272,
+            "firstToken": 434,
+            "memoryMB": 1527
+          },
+          "protocol": "v3.6.0-beta139 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · moderate",
+          "note": "SM-A336E · s5e8825 · Android 16 · 2026-07-22"
+        },
+        {
+          "device": "Samsung Galaxy A34 5G",
+          "platform": "Android",
+          "model": "Huihui-Qwen3.5-2B-abliterated-MNN",
+          "config": "cpu · median3 · 1024 context",
+          "values": {
+            "generation": 11.373022338037499,
+            "firstToken": 844,
+            "memoryMB": 2260
+          },
+          "protocol": "1.3.9.7 · mnn@dadf1eff622000de99d16bdcdd76ee8c · 2 · none",
+          "note": "SM-A346E · MT6877V/TTZA · Android 14 · 2026-11-19"
+        },
+        {
+          "device": "Samsung Galaxy A34 5G",
+          "platform": "Android",
+          "model": "Llama-3.2-3B-Instruct-MNN",
+          "config": "cpu · median3 · 2048 context",
+          "values": {
+            "generation": 7.688955719747705,
+            "firstToken": 3018,
+            "memoryMB": 1853
+          },
+          "protocol": "1.3.9.4 · mnn@7c2ce9514b183e3fc54981613092c8ad · 0 · none",
+          "note": "SM-A346E · MT6877V/TTZA · Android 14 · 2026-11-19"
+        },
+        {
+          "device": "Samsung Galaxy A34 5G",
+          "platform": "Android",
+          "model": "Qwen3.5-0.8B-MNN",
+          "config": "cpu · MNN · best3 · 2048 context",
+          "values": {
+            "generation": 7.575153350830078,
+            "prompt": 9.90099048614502,
+            "firstToken": 351,
+            "memoryMB": 719
+          },
+          "protocol": "1.1.1 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · severe",
+          "note": "SM-A346E · MT6877 · Android 16 · 2026-08-23"
+        },
+        {
+          "device": "Samsung Galaxy A35 5G",
+          "platform": "Android",
+          "model": "Qwen3.5-4B-MNN",
+          "config": "cpu · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 2.8205299377441406,
+            "prompt": 7.032819747924805,
+            "firstToken": 9671,
+            "memoryMB": 2984
+          },
+          "protocol": "1.3.6.1 · mnn@ffff0707cc93a5eb682ee6ea6cf09d50 · 0 · severe",
+          "note": "SM-A356E · s5e8835 · Android 16 · 2026-10-13"
+        },
+        {
+          "device": "Samsung Galaxy A54 5G",
+          "platform": "Android",
+          "model": "Qwen3.5-4B-uncensored-MNN",
+          "config": "cpu · median3 · 1024 context",
+          "values": {
+            "generation": 5.2946711969812315,
+            "firstToken": 2800,
+            "memoryMB": 2395
+          },
+          "protocol": "v3.6.0-beta145 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · light",
+          "note": "SM-A546B · s5e8835 · Android 16 · 2026-08-06"
+        },
+        {
+          "device": "Samsung Galaxy A55 5G",
+          "platform": "Android",
+          "model": "Qwen3.5-9B-MNN",
+          "config": "cpu · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 3.148942470550537,
+            "prompt": 9.608785629272461,
+            "firstToken": 4298,
+            "memoryMB": 5187
+          },
+          "protocol": "1.3.2 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · light",
+          "note": "SM-A556E · s5e8845 · Android 16 · 2026-09-12"
+        },
+        {
+          "device": "Samsung Galaxy S20 FE 5G",
+          "platform": "Android",
+          "model": "Qwen3.5-2B-MNN",
+          "config": "cpu · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 18.126312255859375,
+            "prompt": 33.783782958984375,
+            "firstToken": 1189,
+            "memoryMB": 1630
+          },
+          "protocol": "1.3.9.7 · mnn@dadf1eff622000de99d16bdcdd76ee8c · 0 · none",
+          "note": "SM-G781V · SM8250 · Android 13 · 2026-11-10"
+        },
+        {
+          "device": "Samsung Galaxy S20 Ultra 5G",
+          "platform": "Android",
+          "model": "Qwen3-4B-Instruct-2507-Q4_K_M",
+          "config": "gguf · Q4_K_M · cpu · best3 · 4096 context",
+          "values": {
+            "generation": 3.7676515579223633,
+            "prompt": 15.839040756225586,
+            "firstToken": 2185,
+            "memoryMB": 2908
+          },
+          "protocol": "v3.6.0-beta129 · gguf@ebda8bb344c02598141a4488ec746f7c · light",
+          "note": "SM-G988U · SM8250 · Android 11 · 2026-07-13"
+        },
+        {
+          "device": "Samsung Galaxy S20 Ultra 5G",
+          "platform": "Android",
+          "model": "Qwen3-4B-Instruct-2507-Q4_K_M.gguf",
+          "config": "gguf · median3 · 4096 context",
+          "values": {
+            "generation": 4.840105962839878,
+            "firstToken": 1566,
+            "memoryMB": 2903
+          },
+          "protocol": "v3.6.0-beta129 · light",
+          "note": "SM-G988U · SM8250 · Android 11 · 2026-07-13"
+        },
+        {
+          "device": "Samsung Galaxy S20 Ultra 5G",
+          "platform": "Android",
+          "model": "Qwen3.5-0.8B-MNN",
+          "config": "cpu · median3 · 4096 context",
+          "values": {
+            "generation": 38.30433874441969,
+            "firstToken": 342,
+            "memoryMB": 676
+          },
+          "protocol": "v3.6.0-beta130 · mnn@f2dd3571bc79e340cfc5d48893fa6df6 · 8 · light",
+          "note": "SM-G988U · SM8250 · Android 11 · 2026-07-14"
+        },
+        {
+          "device": "Samsung Galaxy S21 FE 5G",
+          "platform": "Android",
+          "model": "Qwen3.5-2B-MNN",
+          "config": "cpu · MNN",
+          "values": {
+            "generation": 13.697153091430664,
+            "prompt": 13.697153091430664
+          },
+          "protocol": "v3.6.0-beta105",
+          "note": "SM-G990W2 · SM8350 · 2026-06-27"
+        },
+        {
+          "device": "Samsung Galaxy S22+",
+          "platform": "Android",
+          "model": "LFM2.5-1.2B-Instruct-Q4_K_M",
+          "config": "gguf · Q4_K_M · cpu · best3 · 4096 context",
+          "values": {
+            "generation": 17.253089904785156,
+            "prompt": 61.946903228759766,
+            "firstToken": 747,
+            "memoryMB": 945
+          },
+          "protocol": "1.3.3 · gguf@b746fe9408236606c4800eeb2c221571 · light",
+          "note": "SM-S906E · SM8450 · Android 16 · 2026-09-22"
+        },
+        {
+          "device": "Samsung Galaxy S23 FE",
+          "platform": "Android",
+          "model": "Qwen3.5-2B-MNN",
+          "config": "cpu · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 23.917137145996094,
+            "prompt": 96.55172729492188,
+            "firstToken": 492,
+            "memoryMB": 1662
+          },
+          "protocol": "1.3.9.7 · mnn@dadf1eff622000de99d16bdcdd76ee8c · 8 · light",
+          "note": "SM-S711U · SM8450 · Android 16 · 2026-11-14"
+        },
+        {
+          "device": "Samsung Galaxy S23 Ultra",
+          "platform": "Android",
+          "model": "Qwen3.5-9B-uncensored-MNN",
+          "config": "cpu · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 4.80078649520874,
+            "prompt": 15.322875022888184,
+            "firstToken": 2838,
+            "memoryMB": 4755
+          },
+          "protocol": "v3.6.0-beta130 · mnn@f2dd3571bc79e340cfc5d48893fa6df6 · 8 · none",
+          "note": "SM-S918B · SM8550 · Android 16 · 2026-07-16"
+        },
+        {
+          "device": "Samsung Galaxy S24 Ultra",
+          "platform": "Android",
+          "model": "Phi-4-mini-Instruct-Q4_K_M",
+          "config": "gguf · Q4_K_M · cpu · median3 · 8192 context",
+          "values": {
+            "generation": 10.604510098144742,
+            "firstToken": 627,
+            "memoryMB": 3131
+          },
+          "protocol": "1.3.6.1 · gguf@db0bfca1a21598f3a2da3ee2fcdf00b5 · moderate",
+          "note": "SM-S928U · SM8650 · Android 16 · 2026-10-15"
+        },
+        {
+          "device": "Samsung Galaxy S24 Ultra",
+          "platform": "Android",
+          "model": "Qwen3-VL-4B-Instruct-Uncensored-abliterated.Q4_K_M",
+          "config": "gguf · abliterated.Q4_K_M · cpu · best3 · 4096 context",
+          "values": {
+            "generation": 8.436296463012695,
+            "prompt": 32.68551254272461,
+            "firstToken": 983,
+            "memoryMB": 3334
+          },
+          "protocol": "v3.6.0-beta146 · gguf@651063646e4bc6c8ffb0a6a8c76ce0b8 · light",
+          "note": "SM-S928W · SM8650 · Android 16 · 2026-08-13"
+        },
+        {
+          "device": "Samsung Galaxy S24 Ultra",
+          "platform": "Android",
+          "model": "Qwen3.5-4B-abliterated.i1-Q4_0",
+          "config": "gguf · Q4_0 · cpu · median3 · 2048 context",
+          "values": {
+            "generation": 9.06268346623853,
+            "firstToken": 818,
+            "memoryMB": 3481
+          },
+          "protocol": "1.3.3 · gguf@b746fe9408236606c4800eeb2c221571 · moderate",
+          "note": "SM-S928U · SM8650 · Android 16 · 2026-09-27"
+        },
+        {
+          "device": "Samsung Galaxy S24 Ultra",
+          "platform": "Android",
+          "model": "Qwen3.5-9B-MNN",
+          "config": "cpu · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 4.158344745635986,
+            "prompt": 13.88888931274414,
+            "firstToken": 3722,
+            "memoryMB": 5170
+          },
+          "protocol": "1.1.1 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · severe",
+          "note": "SM-S928U1 · SM8650 · Android 16 · 2026-08-22"
+        },
+        {
+          "device": "Samsung Galaxy S25",
+          "platform": "Android",
+          "model": "Huihui-gemma-4-E4B-it-abliterated-MNN",
+          "config": "cpu · median3 · 8192 context",
+          "values": {
+            "generation": 11.231059213478394,
+            "firstToken": 883,
+            "memoryMB": 36
+          },
+          "protocol": "1.2.1 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · moderate",
+          "note": "SM-S931W · SM8750 · Android 16 · 2026-09-05"
+        },
+        {
+          "device": "Samsung Galaxy S25",
+          "platform": "Android",
+          "model": "LFM3-Omni-2B-Q4_K_M",
+          "config": "gguf · Q4_K_M · cpu · median3 · 4096 context",
+          "values": {
+            "generation": 41.53614806119381,
+            "firstToken": 890,
+            "memoryMB": 2623
+          },
+          "protocol": "1.3.9.7 · gguf@d202862ec715180d5ec4dbe2e88d4276 · none",
+          "note": "SM-S931U1 · SM8750 · Android 17 · 2026-11-15"
+        },
+        {
+          "device": "Samsung Galaxy S25",
+          "platform": "Android",
+          "model": "Ternary-Bonsai-2-4B-PQ2_0",
+          "config": "gguf · Q2_0 · vulkan · median3 · 2048 context",
+          "values": {
+            "generation": 22.483546610851263,
+            "firstToken": 1142,
+            "memoryMB": 473
+          },
+          "protocol": "1.3.9.7 · gguf@d202862ec715180d5ec4dbe2e88d4276 · moderate",
+          "note": "SM-S931U1 · SM8750 · Android 17 · 2026-11-15"
+        },
+        {
+          "device": "Samsung Galaxy S25 Ultra",
+          "platform": "Android",
+          "model": "gemma-4-26B-A4B-it-UD-IQ2_XXS",
+          "config": "gguf · IQ2_XXS · cpu · median3 · 4096 context",
+          "values": {
+            "generation": 5.821057420547569,
+            "firstToken": 4022,
+            "memoryMB": 1081
+          },
+          "protocol": "1.3.9.4 · gguf@65a2dd17fcba836987339d7a96f8f717 · moderate",
+          "note": "SM-S938U · SM8750 · Android 17 · 2026-10-25"
+        },
+        {
+          "device": "Samsung Galaxy S25 Ultra",
+          "platform": "Android",
+          "model": "gemma-4-26B-A4B-it-uncensored-Q4_K_M",
+          "config": "gguf · Q4_K_M · cpu · median3 · 8192 context",
+          "values": {
+            "generation": 2.5735521195775255,
+            "firstToken": 4868,
+            "memoryMB": 2484
+          },
+          "protocol": "1.3.6.1 · gguf@db0bfca1a21598f3a2da3ee2fcdf00b5 · moderate",
+          "note": "SM-S938U · SM8750 · Android 17 · 2026-10-20"
+        },
+        {
+          "device": "Samsung Galaxy S25 Ultra",
+          "platform": "Android",
+          "model": "llama-3.2-1b-instruct-q4_k_m",
+          "config": "gguf · cpu · median3 · 1024 context",
+          "values": {
+            "generation": 46.15476703020757,
+            "firstToken": 208,
+            "memoryMB": 1181
+          },
+          "protocol": "1.3.9.4 · gguf@65a2dd17fcba836987339d7a96f8f717 · none",
+          "note": "SM-S938U · SM8750 · Android 17 · 2026-10-26"
+        },
+        {
+          "device": "Samsung Galaxy S25 Ultra",
+          "platform": "Android",
+          "model": "Qwen3.5-9B-Uncensored-HauhauCS-Aggressive",
+          "config": "gguf · cpu · median3 · 8192 context",
+          "values": {
+            "generation": 2.1320425947464736,
+            "firstToken": 6073,
+            "memoryMB": 823
+          },
+          "protocol": "1.3.6.1 · gguf@db0bfca1a21598f3a2da3ee2fcdf00b5 · moderate",
+          "note": "SM-S938U · SM8750 · Android 17 · 2026-10-22"
+        },
+        {
+          "device": "Samsung Galaxy S25 Ultra",
+          "platform": "Android",
+          "model": "Qwen_Qwen3-30B-A3B-IQ2_XXS",
+          "config": "gguf · IQ2_XXS · cpu · best3 · 512 context",
+          "values": {
+            "generation": 3.5723326206207275,
+            "prompt": 9.477458953857422,
+            "firstToken": 3458,
+            "memoryMB": 562
+          },
+          "protocol": "1.3.9.5 · gguf@e9e25d96143ded242e97f48f69aeb105 · severe",
+          "note": "SM-S9380 · SM8750 · Android 15 · 2026-10-28"
+        },
+        {
+          "device": "Samsung Galaxy S26",
+          "platform": "Android",
+          "model": "Qwen3.5-4B-MNN",
+          "config": "cpu · MNN · best3 · 8192 context",
+          "values": {
+            "generation": 17.260173797607422,
+            "prompt": 42.328041076660156,
+            "firstToken": 947,
+            "memoryMB": 3357
+          },
+          "protocol": "1.3.9.6 · mnn@d236495a020341f03f6f3cfeee7c3a09 · 12 · none",
+          "note": "SM-S942B · s5e9965 · Android 17 · 2026-11-06"
+        },
+        {
+          "device": "Samsung Galaxy S26",
+          "platform": "Android",
+          "model": "Qwen3.5-4B-MNN",
+          "config": "cpu · median3 · 8192 context",
+          "values": {
+            "generation": 13.84194702557105,
+            "firstToken": 495,
+            "memoryMB": 3017
+          },
+          "protocol": "1.3.9.6 · mnn@d236495a020341f03f6f3cfeee7c3a09 · 12 · moderate",
+          "note": "SM-S942B · s5e9965 · Android 17 · 2026-11-06"
+        },
+        {
+          "device": "Samsung Galaxy S26 Ultra",
+          "platform": "Android",
+          "model": "Qwen3.5-9B-uncensored-MNN",
+          "config": "cpu · median3 · 1024 context",
+          "values": {
+            "generation": 13.849911966497062,
+            "firstToken": 1327,
+            "memoryMB": 42
+          },
+          "protocol": "v3.6.0-beta140 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · none",
+          "note": "SM-S948N · SM8850 · Android 16 · 2026-07-23"
+        },
+        {
+          "device": "TECNO POVA 7 Ultra 5G",
+          "platform": "Android",
+          "model": "Qwen3.5-4B-uncensored-MNN",
+          "config": "cpu · MNN",
+          "values": {
+            "generation": 9.176301002502441,
+            "prompt": 9.176301002502441
+          },
+          "protocol": "v3.5.0-RC20.23.81",
+          "note": "TECNO LJ9 · MT6897 · 2026-06-23"
+        },
+        {
+          "device": "vivo iQOO Z7",
+          "platform": "Android",
+          "model": "Qwen3.5-0.8B-MNN",
+          "config": "cpu · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 24.40430450439453,
+            "prompt": 74.73309326171875,
+            "firstToken": 655,
+            "memoryMB": 703
+          },
+          "protocol": "v3.6.0-beta120 · none",
+          "note": "V2270A · SM7325 · Android 13 · 2026-07-08"
+        },
+        {
+          "device": "vivo iQOO Z8",
+          "platform": "Android",
+          "model": "Qwen3.5-4B-uncensored-MNN",
+          "config": "cpu · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 3.235668897628784,
+            "prompt": 12.974976539611816,
+            "firstToken": 3817,
+            "memoryMB": 2460
+          },
+          "protocol": "v3.6.0-beta140 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · severe",
+          "note": "V2314A · MT6896Z/CZA · Android 15 · 2026-07-23"
+        },
+        {
+          "device": "vivo iQOO Z9 Turbo 长续航版",
+          "platform": "Android",
+          "model": "Qwen3-1.7B-MNN-HQQ",
+          "config": "cpu · HQQ · best3 · 8192 context",
+          "values": {
+            "generation": 27.572731018066406,
+            "prompt": 97.8520278930664,
+            "firstToken": 409,
+            "memoryMB": 1261
+          },
+          "protocol": "1.3.9.7 · mnn@dadf1eff622000de99d16bdcdd76ee8c · 8 · none",
+          "note": "V2352GA · SM8635 · Android 16 · 2026-11-20"
+        },
+        {
+          "device": "vivo iQOO Z9 Turbo+",
+          "platform": "Android",
+          "model": "Qwen3.5-4B-uncensored-MNN",
+          "config": "cpu · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 11.197319984436035,
+            "prompt": 34.653465270996094,
+            "firstToken": 1214,
+            "memoryMB": 2466
+          },
+          "protocol": "1.3.6.1 · mnn@ffff0707cc93a5eb682ee6ea6cf09d50 · 8 · moderate",
+          "note": "V2417A · MT6989 · Android 16 · 2026-10-07"
+        },
+        {
+          "device": "vivo V2059A",
+          "platform": "Android",
+          "model": "Qwen3.5-4B-uncensored-MNN",
+          "config": "cpu · MNN · best3 · 8192 context",
+          "values": {
+            "generation": 4.283137798309326,
+            "prompt": 12.37240982055664,
+            "firstToken": 3206,
+            "memoryMB": 2529
+          },
+          "protocol": "1.3.9.5 · mnn@634608d25a0595acc4c436c43cec2fd7 · 0 · none",
+          "note": "V2059A · Exynos 9815 · Android 13 · 2026-10-28"
+        },
+        {
+          "device": "vivo X50",
+          "platform": "Android",
+          "model": "Qwen3.5-4B-uncensored-MNN",
+          "config": "cpu · MNN · best3 · 2048 context",
+          "values": {
+            "generation": 3.798642158508301,
+            "prompt": 8.126935005187988,
+            "firstToken": 5138,
+            "memoryMB": 2431
+          },
+          "protocol": "v3.6.0-beta146 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · none",
+          "note": "vivo 2004 · SM7150 · Android 12 · 2026-08-12"
+        },
+        {
+          "device": "Xiaomi 11T Pro",
+          "platform": "Android",
+          "model": "starcoder2-3b.i1-Q6_K",
+          "config": "gguf · Q6_K · median3 · 4096 context",
+          "values": {
+            "generation": 4.735509931548204,
+            "firstToken": 4484,
+            "memoryMB": 2980
+          },
+          "protocol": "v3.6.0-beta124 · none",
+          "note": "2107113SG · SM8350 · Android 14 · 2026-07-11"
+        },
+        {
+          "device": "Xiaomi 14",
+          "platform": "Android",
+          "model": "Qwen3.5-4B-MNN",
+          "config": "cpu · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 11.61620807647705,
+            "prompt": 44.91978454589844,
+            "firstToken": 993,
+            "memoryMB": 3009
+          },
+          "protocol": "1.3.3 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · none",
+          "note": "23127PN0CC · SM8650 · Android 16 · 2026-09-26"
+        },
+        {
+          "device": "Xiaomi 15",
+          "platform": "Android",
+          "model": "LFM3-1.7B-MNN",
+          "config": "opencl · median3 · 8192 context",
+          "values": {
+            "generation": 38.41529697125395,
+            "firstToken": 175,
+            "memoryMB": 162
+          },
+          "protocol": "1.3.9.7 · mnn@dadf1eff622000de99d16bdcdd76ee8c · 12 · none",
+          "note": "24129PN74C · SM8750 · Android 16 · 2026-11-13"
+        },
+        {
+          "device": "Xiaomi 15",
+          "platform": "Android",
+          "model": "Qwen3.5-4B-MNN",
+          "config": "cpu · MNN · best3 · 8192 context",
+          "values": {
+            "generation": 17.779644012451172,
+            "prompt": 73.17073059082031,
+            "firstToken": 609,
+            "memoryMB": 3039
+          },
+          "protocol": "1.3.9.5 · mnn@634608d25a0595acc4c436c43cec2fd7 · 8 · none",
+          "note": "24129PN74C · SM8750 · Android 16 · 2026-11-13"
+        },
+        {
+          "device": "Xiaomi 15 Pro",
+          "platform": "Android",
+          "model": "DeepSeek-R1-Distill-Qwen-7B-Q4_K_M",
+          "config": "gguf · Q4_K_M · vulkan · best3 · 8192 context",
+          "values": {
+            "generation": 10.079364776611328,
+            "prompt": 11.811023712158203,
+            "firstToken": 2354,
+            "memoryMB": 149
+          },
+          "protocol": "1.3.9.7 · gguf@d202862ec715180d5ec4dbe2e88d4276 · none",
+          "note": "2410DPN6CC · SM8750 · Android 17 · 2026-11-18"
+        },
+        {
+          "device": "Xiaomi 15 Ultra",
+          "platform": "Android",
+          "model": "Qwen3.5-9B-MNN",
+          "config": "cpu · MNN · best3 · 8192 context",
+          "values": {
+            "generation": 3.1838595867156982,
+            "prompt": 3.220611810684204,
+            "firstToken": 296,
+            "memoryMB": 5192
+          },
+          "protocol": "1.2.1 · mnn@23cbbf5042a43ad792bec671e68203e5 · 8 · none",
+          "note": "25019PNF3C · SM8750 · Android 16 · 2026-09-02"
+        },
+        {
+          "device": "Xiaomi 15T",
+          "platform": "Android",
+          "model": "Qwen3.5-4B-MNN",
+          "config": "cpu · median3 · 4096 context",
+          "values": {
+            "generation": 11.68339869933354,
+            "firstToken": 792,
+            "memoryMB": 2931
+          },
+          "protocol": "1.3.9.7 · mnn@dadf1eff622000de99d16bdcdd76ee8c · 8 · none",
+          "note": "25069PTEBG · MT6899 · Android 16 · 2026-11-11"
+        },
+        {
+          "device": "Xiaomi 17 Pro Max",
+          "platform": "Android",
+          "model": "Qwen3.5-9B-MNN",
+          "config": "cpu",
+          "values": {
+            "generation": 2.347136070409388,
+            "prompt": 2.111793041229248
+          },
+          "protocol": "v3.6.0-beta55",
+          "note": "2509FPN0BC · SM8850 · 2026-06-16"
+        },
+        {
+          "device": "Xiaomi Mi 10T",
+          "platform": "Android",
+          "model": "Qwen3-1.7B-MNN-HQQ",
+          "config": "cpu · HQQ · best3 · 4096 context",
+          "values": {
+            "generation": 18.941089630126953,
+            "prompt": 44.51683044433594,
+            "firstToken": 924,
+            "memoryMB": 1203
+          },
+          "protocol": "1.3.9.7 · mnn@dadf1eff622000de99d16bdcdd76ee8c · 0 · none",
+          "note": "M2007J3SY · SM8250 · Android 10 · 2026-11-16"
+        },
+        {
+          "device": "Xiaomi Mi 10T",
+          "platform": "Android",
+          "model": "Qwen3-4B-abliterated-MNN",
+          "config": "cpu · MNN · best3 · 4096 context",
+          "values": {
+            "generation": 7.889668941497803,
+            "prompt": 22.031166076660156,
+            "firstToken": 1857,
+            "memoryMB": 2868
+          },
+          "protocol": "1.3.9.7 · mnn@dadf1eff622000de99d16bdcdd76ee8c · 0 · none",
+          "note": "M2007J3SY · SM8250 · Android 10 · 2026-11-16"
+        },
+        {
+          "device": "Xiaomi Pad 7S Pro 12.5",
+          "platform": "Android",
+          "model": "DeepSeek-R1-Distill-Qwen-7B-Q4_K_M",
+          "config": "gguf · Q4_K_M · cpu · best3 · 4096 context",
+          "values": {
+            "generation": 3.767428159713745,
+            "prompt": 14.886164665222168,
+            "firstToken": 2377,
+            "memoryMB": 470
+          },
+          "protocol": "1.3.9.7 · gguf@d202862ec715180d5ec4dbe2e88d4276 · none",
+          "note": "25053RP5CC · O1 · Android 17 · 2026-11-17"
+        }
+      ]
+    }
+  ]
+}

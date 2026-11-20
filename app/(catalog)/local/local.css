@@ -61,3 +61,14 @@
 .local-section-links {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,145px),1fr));gap:.45rem}
 .local-section-links a {display:flex;align-items:center;min-height:42px;padding:.4rem .7rem;border:1px solid var(--border);border-radius:6px;font-weight:550;font-size:14px}
 .local-section-links a:hover,.device-directory a:hover {background:var(--surface-subtle);border-color:var(--border-strong)}
+
+.phone-study {margin:.55rem 0;padding:.65rem .8rem;border:1px solid var(--border);border-radius:.45rem}
+.phone-study summary {cursor:pointer;font-weight:600}
+.phone-results {overflow:auto;max-height:32rem;font-size:.85rem}
+.phone-results table {border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+.phone-results th,.phone-results td {text-align:left;min-width:6rem;padding:.4rem;border-bottom:1px solid var(--border)}
+.phone-results thead th {position:sticky;top:0;background:var(--bg)}
+.phone-results small {display:block;font-weight:normal;color:var(--fg-muted)}
+.phone-source {font-size:.85rem}
+
+@media (scripting: none) { .phone-search {display:none} }

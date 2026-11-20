@@ -21,6 +21,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     data("/models", 0.9),
     data("/compare", 0.8),
     { url: SITE_URL + "/local", lastModified: localBenchmarks.date },
+    {url:SITE_URL+"/local/mobile",lastModified:"2026-11-20"},
     {url:SITE_URL+"/local/devices",lastModified:localBenchmarks.date},
     ...reports.map(r=>({url:SITE_URL+"/local/devices/"+r.slug,lastModified:localBenchmarks.date})),
     ...workloads.flatMap(w => metrics(w).map(m => ({ url: SITE_URL + qualityPath(w, m), lastModified: localBenchmarks.date }))),

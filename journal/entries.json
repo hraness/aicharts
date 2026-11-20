@@ -1,5 +1,14 @@
 [
   {
+    "slug":"phone-tasks",
+    "date":"2026-11-20",
+    "category":"Improved",
+    "surfaces":["Website","API"],
+    "title":"Compare everyday AI tasks on phones",
+    "summary":"See how long it takes to transcribe speech, summarize a passage, read aloud or generate an image. Search 157 signed community phone results or compare model settings within a published study.",
+    "link":{"href":"/local/mobile","label":"Browse phone benchmarks"}
+  },
+  {
     "slug":"local-benchmark-frontiers",
     "date":"2026-11-20",
     "category":"Improved",

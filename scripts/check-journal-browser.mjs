@@ -11,7 +11,7 @@ const capture = process.argv.includes("--preview");
 const entries = JSON.parse(await readFile("journal/entries.json", "utf8"));
 const { releases } = JSON.parse(await readFile("data/releases.json", "utf8"));
 const localHardware = JSON.parse(await readFile("data/local-hardware.json", "utf8"));
-for (const file of ["local-hardware-language.json","local-hardware-nonlanguage.json", "local-hardware-iphone-studies.json", "local-hardware-llm-extra.json", "local-hardware-model-extra.json"]) {
+for (const file of ["local-hardware-language.json","local-hardware-nonlanguage.json", "local-hardware-iphone-studies.json", "local-hardware-llm-extra.json", "local-hardware-model-extra.json", "local-hardware-mobile-tasks.json", "local-hardware-tokforge.json"]) {
   const extra = JSON.parse(await readFile("data/" + file, "utf8"));
   localHardware.suites.push(...extra.suites);
 }
@@ -432,6 +432,14 @@ try {
       assert.equal(await noSideScroll(page), true, path + " scrolls sideways");
     }
     assert.equal(await page.locator("main h1").textContent(), "Local AI benchmarks");
+    await page.getByRole("link",{name:"Everyday phone tasks"}).click();
+    const board = page.locator("details").filter({has:page.locator("summary",{hasText:"Community phone reply speeds"})});
+    await board.locator("summary").click();
+    await board.getByRole("searchbox").fill("POCO X7");
+    assert.ok(await board.locator("tbody tr").count() > 0);
+    assert.ok((await board.locator("tbody tr").allTextContents()).every(row => row.includes("POCO X7")));
+    assert.equal(await noSideScroll(page),true,"mobile studies fit");
+    await page.goto(url+"/local");
     await page.getByRole("link",{name:"Browse devices",exact:true}).click();
     await page.getByRole("searchbox",{name:"Find hardware"}).fill("phone translation");
     await page.getByRole("searchbox",{name:"Find hardware"}).fill("iPhone 16 Pro Max");
