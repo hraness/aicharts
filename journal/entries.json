@@ -1,5 +1,14 @@
 [
   {
+    "slug": "device-speed-by-workload",
+    "date": "2026-11-20",
+    "category": "Improved",
+    "surfaces": ["Website"],
+    "title": "Compare two devices across nine workloads",
+    "summary": "See published speeds and memory side by side. Choose a device tested under the same conditions in one click, or select a result to inspect its model, settings and source.",
+    "link": {"href": "/local#hardware", "label": "Compare device speeds"}
+  },
+  {
     "slug": "local-model-and-device-picker",
     "date": "2026-11-20",
     "category": "Improved",

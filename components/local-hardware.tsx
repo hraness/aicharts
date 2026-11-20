@@ -52,17 +52,6 @@ const platforms = [...new Set(suites.flatMap(s => s.runs.map(r => r.platform)))]
 const devicesByPlatform = new Map(platforms.map(p => [
   p, [...new Set(suites.flatMap(s => s.runs.filter(r => r.platform === p).map(r => r.device)))].sort(sortNames),
 ]));
-const defaults: Record<string, string> = {
-  "iPhone & iPad": "iPhone 17 Pro",
-  "Apple silicon Macs": "M2 Max · 38 GPU cores",
-  "NVIDIA GPUs": "RTX 4090",
-  "AMD graphics": "RX 7900 XTX",
-  "Intel graphics": "Intel Arc B580",
-  "Android": "Xiaomi 15 Pro",
-  "ARM Linux boards": "Raspberry Pi 5 · 8 GB",
-  "Web browsers": "GTX 1650 Laptop · Windows 11",
-};
-
 const tasks: Record<string, string> = {
   "4167": "Language", "4508": "Language", "15013": "Language", "15021": "Language", "10879": "Language",
   "webllm-m3": "Language", "webgpu-decode": "Language", "webgpu-request": "Language", "pi-llama": "Language",
@@ -73,15 +62,34 @@ const tasks: Record<string, string> = {
   "qwen-vl-a100": "Vision and language",
 };
 
-function deviceGroup(device: string) {
-  if (device.startsWith("iPhone")) return "iPhone";
-  if (device.startsWith("iPad")) return "iPad";
-  if (device.startsWith("RTX")) return device.match(/^RTX (\d{2})\d{2}/)?.[1]?.concat("-series RTX") ?? "RTX workstation";
-  if (device.startsWith("RX")) return device.match(/^RX (\d)\d{3}/)?.[1]?.concat("000-series Radeon") ?? "Radeon RX";
-  if (device.startsWith("Intel Arc")) return "Intel Arc";
-  const mac = device.match(/\bM(\d+)\b/);
-  if (mac) return "Apple M" + mac[1];
-  return "Other devices";
+const entries = platforms.flatMap(platform => devicesByPlatform.get(platform)!.map(device => ({
+  value: JSON.stringify([platform, device]), label: device, group: platform, platform, device,
+})));
+const workloadNames = [...new Set(Object.values(tasks))];
+const speedKeys = ["generation", "tokenLatency", "requestMs", "firstToken", "audio", "synthesis", "latency", "embeddings", "rerank"];
+// Keep the source order within each suite. The overview picks the first shared protocol
+// in this order, so a faster measurement never wins selection just for being faster.
+const samples = suites.flatMap(suite => {
+  const key = speedKeys.find(k => suite.metrics.includes(k));
+  return key ? suite.runs.filter(run => run.values[key] !== undefined).map(run => ({
+    suite, key, run, task: tasks[suite.id]!, protocol: JSON.stringify([suite.id, key, run.model, run.config]),
+    deviceId: JSON.stringify([run.platform, run.device]),
+  })) : [];
+});
+const byDevice = new Map(entries.map(entry => [entry.value, samples.filter(row => row.deviceId === entry.value)]));
+type Sample = typeof samples[number];
+
+function WorkloadCell({sample, max, inspect}: {sample?: Sample; max?: number; inspect: (s: Sample) => void}) {
+  if (!sample) return <td className="matrix-missing">Unreported</td>;
+  const {run, key} = sample;
+  const memory = measuredMemory(run);
+  const value = run.values[key]!;
+  return <td><button className="matrix-result" type="button" onClick={() => inspect(sample)}>
+    <b>{number.format(value)} {metrics[key]!.unit}</b>
+    {max !== undefined && max > 0 && <span aria-hidden="true" className="hardware-track"><i style={{width: 100 * value / max + "%"}} /></span>}
+    <span>{run.model} · {run.config}</span>
+    {memory && <span>{memory.kind} · {number.format(memory.gib)} GiB</span>}
+  </button></td>;
 }
 
 function measuredMemory(run: Run) {
@@ -121,6 +129,8 @@ export function LocalHardware() {
   const [example, setExample] = useState(true);
   const [platform, setPlatform] = useState("iPhone & iPad");
   const [device, setDevice] = useState("iPhone 17 Pro");
+  const [peerId, setPeerId] = useState(JSON.stringify(["iPhone & iPad", "iPhone 16 Pro"]));
+  const [inspecting, setInspecting] = useState(false);
   const [selection, setSelection] = useState("moi/latency");
   const [budget, setBudget] = useState("");
   const [selectedRun, setSelectedRun] = useState("");
@@ -132,6 +142,9 @@ export function LocalHardware() {
     const p = query.get("platform");
     const d = query.get("device");
     if (!p || !d || !devicesByPlatform.get(p)?.includes(d)) return;
+    const peer = query.get("peer");
+    if (peer !== null) setPeerId(entries.some(e => e.value === peer) ? peer : "");
+    setInspecting(query.has("measure"));
     setExample(false);
     setPlatform(p);
     setDevice(d);
@@ -155,6 +168,7 @@ export function LocalHardware() {
   const compare = rows.find(r => runName(r) === selectedRun) ?? rows[0];
   const peers = active && compare ? active.suite.runs.filter(r => r.model === compare.model && r.config === compare.config && r.values[key] !== undefined).sort(sorted) : [];
   const share = new URLSearchParams({ platform, device, measure: active?.id ?? "" });
+  share.set("peer", peerId);
   if (compare) share.set("run", runName(compare));
   if (Number(budget) > 0 && Number.isFinite(Number(budget))) share.set("memory", budget);
   const peerMax = Math.max(0, ...peers.map(r => r.values[key]!));
@@ -178,18 +192,64 @@ export function LocalHardware() {
   const setMeasurement = (id: string) => {
     setSelection(id); setInspectOpen(false); setSelectedRun(""); setExpanded(false); setAllDevices(false);
   };
+  const deviceId = JSON.stringify([platform, device]);
+  const peer = entries.find(e => e.value === peerId && peerId !== deviceId);
+  const left = byDevice.get(deviceId) ?? [];
+  const right = (peer && byDevice.get(peer.value)) || [];
+  const coverage = (task: string) => Number(left.some(s => s.task === task)) + Number(right.some(s => s.task === task));
+  const orderedTasks = [...workloadNames].sort((a, b) => coverage(b) - coverage(a));
+  const protocols = new Set(left.map(s => s.protocol));
+  const suggestions = entries.filter(e => e.value !== deviceId && e.value !== peer?.value)
+    .map(e => ({entry: e, overlap: byDevice.get(e.value)!.filter(s => protocols.has(s.protocol)).length}))
+    .filter(e => e.overlap > 0).sort((a,b) => b.overlap - a.overlap || sortNames(a.entry.device,b.entry.device)).slice(0,3);
+  function inspect(sample: Sample) {
+    if (sample.deviceId !== deviceId) {
+      setPeerId(deviceId);
+      setPlatform(sample.run.platform);
+      changeDevice(sample.run.device);
+    }
+    setSelection(sample.suite.id + "/" + sample.key);
+    setSelectedRun(runName(sample.run));
+    setInspectOpen(true);
+    setInspecting(true);
+    requestAnimationFrame(() => document.getElementById("hardware-detail")?.scrollIntoView({block:"start"}));
+  }
   return (
     <section id="hardware" className="local-hardware" aria-labelledby="hardware-heading">
       <h2 id="hardware-heading">Device speeds and memory</h2>
-      <p>Choose your hardware to see measured runs, compare model configurations and check memory use.</p>
+      <p>Compare published speeds by workload. Bars share a scale only within a row tested with the same model, settings and protocol. Select a result for its source and full measurements.</p>
       <div className="hardware-controls">
-        <CompactPicker label="Platform" value={platform} options={platforms.map(p => ({
-          value: p, label: p, description: devicesByPlatform.get(p)!.length + " published device configurations",
-        }))} onChange={p => { setPlatform(p); changeDevice(defaults[p] ?? devicesByPlatform.get(p)![0]!); }} />
-        <CompactPicker label="Device" value={device} options={[
-          ...devices.map(d => ({ value: d, label: d, group: deviceGroup(d) })),
-          { value: "", label: "My device is missing" },
-        ]} onChange={changeDevice} />
+        <CompactPicker label="Device" value={deviceId} options={entries} onChange={id => {
+          const entry = entries.find(e => e.value === id)!;
+          if (id === peerId) setPeerId(deviceId);
+          setPlatform(entry.platform); changeDevice(entry.device); setInspecting(false);
+        }} />
+        <CompactPicker label="Compare device" value={peer?.value ?? ""} options={[{value:"",label:"One device"}, ...entries.filter(e => e.value !== deviceId)]}
+          onChange={setPeerId} />
+      </div>
+      {suggestions.length > 0 && <div className="hardware-shortcuts"><span>Also tested together</span>{suggestions.map(({entry}) =>
+        <button key={entry.value} type="button" onClick={() => setPeerId(entry.value)}>{entry.device}</button>)}</div>}
+      <table className="device-matrix"><caption>Speed by workload</caption><thead><tr><th scope="col">Workload</th><th scope="col">{device}<small>{platform}</small></th>{peer && <th scope="col">{peer.device}<small>{peer.platform}</small></th>}</tr></thead>
+        <tbody>{orderedTasks.map(task => {
+          const first = left.filter(s => s.task === task);
+          const second = right.filter(s => s.task === task);
+          const other = new Map(second.map(s => [s.protocol,s]));
+          const shared = first.find(s => other.has(s.protocol));
+          const a = shared ?? first[0];
+          const b = shared ? other.get(shared.protocol) : second[0];
+          const max = shared && b ? Math.max(shared.run.values[shared.key]!, b.run.values[b.key]!) : undefined;
+          const example = !a && !b && samples.find(s => s.task === task);
+          return <tr key={task}><th scope="row">{task}
+            {shared ? <small>{metrics[shared.key]!.lower ? "Lower" : "Higher"} is better</small> : a && b ? <small>Different tests</small> : null}
+            {example && <button className="matrix-browse" onClick={() => inspect(example)}>See a measured device</button>}
+          </th><WorkloadCell sample={a} max={max} inspect={inspect}/>{peer && <WorkloadCell sample={b} max={max} inspect={inspect}/>}</tr>;
+        })}</tbody>
+      </table>
+      <p className="hardware-fine">Each workload shows the first matching published configuration in the dataset. When the devices have no shared test, each column shows its own first reported result. Open a value to explore other configurations.</p>
+      <a href={"/local?" + new URLSearchParams({platform, device, peer: peer?.value ?? ""}) + "#hardware"}>Share device overview</a>
+      <details className="hardware-drill" id="hardware-detail" open={inspecting} onToggle={e => setInspecting(e.currentTarget.open)}>
+      <summary>Explore all measurements on {device}</summary>
+      <div className="hardware-controls">
         {active && available.length > 1 && <CompactPicker label="Measurement" value={active.id} options={
           available.map(({ suite, id, key }) => ({
             value: id, label: suite.title + " · " + metrics[key]!.label,
@@ -254,6 +314,7 @@ export function LocalHardware() {
           <p><a href={"/local?" + share + "#hardware"}>Link to this comparison</a></p>
         </div>
       )}
+      </details>
       <noscript><p>The initial device measurements are available above. Download the full dataset to inspect other devices.</p></noscript>
     </section>
   );
