@@ -433,7 +433,7 @@ try {
       assert.equal(await noSideScroll(page), true, path + " scrolls sideways");
     }
     await page.goto(url + "/compare");
-    const matchup = page.locator("#current-pairs a").first();
+    const matchup = page.getByRole("region", { name: "Current models" }).getByRole("link").first();
     const [firstSlug, secondSlug] = (await matchup.getAttribute("href")).slice("/compare/".length).split("-vs-");
     const [firstModel, secondModel] = [firstSlug, secondSlug].map(slug => releases.find(release => release.slug === slug));
     await pickCompact(page, "First model", firstModel.name, firstSlug);
