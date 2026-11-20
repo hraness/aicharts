@@ -1,5 +1,17 @@
 [
   {
+    "slug": "gamebench-effort-curves",
+    "date": "2026-11-20",
+    "category": "New",
+    "surfaces": ["Web app", "Website", "API"],
+    "title": "Reasoning-effort curves and a benchmark picker",
+    "summary": "The explorer opens on GameBench 2, with one point per tested effort setting and a curve for each model. Switch benchmarks to see Terminal-Bench agent runs or Epoch AI’s MirrorCode, GPQA Diamond and FrontierMath scores. GameBench 2 settings and costs are available in the release API, linked from the footer. The header has more room for navigation.",
+    "link": {
+      "href": "/",
+      "label": "Explore the effort curves"
+    }
+  },
+  {
     "slug": "api-docs",
     "date": "2026-11-19",
     "category": "Docs",

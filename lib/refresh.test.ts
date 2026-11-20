@@ -8,6 +8,7 @@ import {
   hasDatasetChanges,
   parseCsv,
   pickTerminalBenchRuns,
+  readGameBench,
   readPricing,
   readZipEntries,
   slugify,
@@ -17,6 +18,32 @@ import {
 import type { ReleaseDataset } from "./types";
 
 const dataset = rawDataset as unknown as ReleaseDataset;
+
+test("GameBench 2 reads complete ranked settings and cites the release", () => {
+  const complete = {
+    model_slug: "google-gemini-4-carbon",
+    provider_key: "google",
+    reasoning_level: "High",
+    ranking_status: "ranked",
+    score: 94.8,
+    headline_games: Object.fromEntries(Array.from({ length: 8 }, (_, index) => [index, {}])),
+    codegen_cost_usd: { mean: 0.8, cost_is_complete: true, evidence_basis: "Standard list-price estimate" },
+  };
+  const { source, byModel } = readGameBench({
+    public_release_id: "gb2-20261119-235af8c04037",
+    track_id: "full_freedom/mixed",
+    rows: [
+      complete,
+      { ...complete, reasoning_level: "Medium", codegen_cost_usd: { ...complete.codegen_cost_usd, cost_is_complete: false } },
+      { ...complete, reasoning_level: "Low", ranking_status: "provisional" },
+      { ...complete, reasoning_level: "Minimal", headline_games: { 0: {} } },
+    ],
+  });
+  expect(source.url).toBe("https://benchmarks.duellab.org/releases/gb2-20261119-235af8c04037/");
+  expect([...byModel.get("google:gemini-4-carbon")!.values()]).toEqual([
+    { effort: "high", score: 94.8, costPerProgramUsd: 0.8, costBasis: "Standard list-price estimate" },
+  ]);
+});
 
 type TbSpec = Readonly<{
   leaderboard?: string;

@@ -6,6 +6,16 @@ export type ContextMode = "release" | "live";
 
 export type EffortSlug = "none" | "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
 
+/** One costed reasoning setting on DuelLab's GameBench 2 leaderboard. */
+export type GameBenchRun = Readonly<{
+  effort: EffortSlug;
+  /** Relative game-playing strength of generated programs, 0–100. */
+  score: number;
+  /** DuelLab's mean API cost to generate a player program for one game. */
+  costPerProgramUsd: number;
+  costBasis: string;
+}>;
+
 /**
  * One run on the official Terminal-Bench leaderboard: a coding agent driving
  * the model through every task, five trials (attempts) per task.
@@ -70,9 +80,11 @@ export type ModelRelease = Readonly<{
   /** The model's Terminal-Bench run; null when it has none on the leaderboard. */
   terminalBench: TerminalBenchRun | null;
   epoch: readonly EpochScore[];
+  /** Published reasoning settings with scores and costs for all eight games. */
+  gameBench?: readonly GameBenchRun[];
 }>;
 
-export type DataSourceId = "terminal-bench" | "epoch-ai" | "litellm";
+export type DataSourceId = "terminal-bench" | "epoch-ai" | "litellm" | "gamebench-2";
 
 export type DataSource = Readonly<{
   id: DataSourceId;
@@ -91,6 +103,15 @@ export type ReleaseDataset = Readonly<{
   sources: readonly DataSource[];
   releases: readonly ModelRelease[];
 }>;
+
+export const GAME_BENCH = {
+  label: "GameBench 2",
+  tasks: 8,
+  methodologyUrl: "https://benchmarks.duellab.org/methodology",
+  releasesUrl: "https://benchmarks.duellab.org/releases/",
+  description:
+    "Models write programs for eight strategy games. DuelLab scores the programs on a 0–100 scale against a shared field of opponents.",
+} as const;
 
 export const TERMINAL_BENCH = {
   label: "Terminal-Bench",

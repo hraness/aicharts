@@ -7,9 +7,7 @@ export function formatUsd(value: number): string {
 }
 
 export function formatUsdTick(value: number): string {
-  if (value < 0.01) return `$${value}`;
-  if (value < 1) return `$${Number(value.toFixed(2))}`;
-  return `$${Math.round(value)}`;
+  return `$${value}`;
 }
 
 export function formatTokens(value: number): string {

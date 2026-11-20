@@ -9,8 +9,8 @@ import { formatFullDate } from "@/lib/format";
 const { dataset } = catalog;
 
 export const metadata: Metadata = pageMetadata(
-  "Free AI model benchmark API: Terminal-Bench scores and prices as JSON",
-  "One free JSON endpoint with no key: Terminal-Bench scores, cost per task, Epoch AI scores and API prices for every Anthropic, OpenAI and Google model on aicharts, with each source's license.",
+  "Free AI model benchmark API: scores and costs as JSON",
+  "One free JSON endpoint with no key: GameBench 2 effort scores and costs, Terminal-Bench runs, Epoch AI scores and API prices for models from Anthropic, OpenAI and Google.",
   "/api",
 );
 
@@ -34,7 +34,7 @@ for (const r of ranked) {
 
 // A current model with every kind of data, so the example shows each object.
 const sample = dataset.releases.find(
-  (r) => !r.deprecated && r.terminalBench?.costPerTaskUsd != null && r.pricing && r.epoch.length > 0,
+  (r) => !r.deprecated && r.terminalBench?.costPerTaskUsd != null && r.pricing && r.epoch.length > 0 && r.gameBench?.length,
 );
 
 function FieldTable({ object }: Readonly<{ object: ApiObject }>) {
@@ -87,9 +87,9 @@ export default function ApiPage() {
       </header>
       <p className="lead">
         One endpoint returns the data behind every chart on aicharts: each Anthropic, OpenAI and
-        Google model with its run on the official Terminal-Bench leaderboard, Epoch AI&apos;s
-        benchmark scores and its list API prices, plus each source&apos;s license. It needs no key
-        or sign-up and answers requests from any website.
+        Google model with its GameBench 2 scores and costs by reasoning setting, official
+        Terminal-Bench run, Epoch AI scores and list API prices. Every response includes source
+        licenses. The endpoint needs no key or sign-up and answers requests from any website.
       </p>
       <section aria-labelledby="endpoint">
         <h2 id="endpoint">Endpoint</h2>
@@ -157,7 +157,7 @@ export default function ApiPage() {
       <section aria-labelledby="updates">
         <h2 id="updates">Updates and caching</h2>
         <p>
-          A scheduled job reads the three sources five times a day and rebuilds the data only when
+          A scheduled job reads the sources five times a day and rebuilds the data only when
           a release, score or price changed; <code>updatedAt</code> records when. Browsers may keep
           a response for five minutes and shared caches for up to an hour, so asking more often
           returns the same data:
@@ -176,7 +176,7 @@ export default function ApiPage() {
           "@type": "Dataset",
           name: "aicharts AI model release data",
           description:
-            "Terminal-Bench leaderboard runs, Epoch AI benchmark scores and list API prices for each Anthropic, OpenAI and Google model on aicharts, one item per model release, with each source's license and credit.",
+            "GameBench 2 reasoning results, Terminal-Bench runs, Epoch AI benchmark scores and list API prices for models from Anthropic, OpenAI and Google, with each source's license and credit.",
           url: `${SITE_URL}/api`,
           isAccessibleForFree: true,
           creator: { "@type": "Organization", name: "Hraness", url: "https://hraness.com" },

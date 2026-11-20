@@ -13,7 +13,7 @@ export const RELEASES_HEADERS = {
 export type ApiField = Readonly<{ name: string; type: string; about: string }>;
 
 export type ApiObject = Readonly<{
-  id: "response" | "release" | "terminalBench" | "epoch" | "pricing" | "source";
+  id: "response" | "release" | "terminalBench" | "epoch" | "gameBench" | "pricing" | "source";
   caption: string;
   fields: readonly ApiField[];
 }>;
@@ -55,6 +55,7 @@ export const API_OBJECTS: readonly ApiObject[] = [
       field("pricing", "object or null", "List API prices; null when LiteLLM does not list the model."),
       field("terminalBench", "object or null", "Its run on the Terminal-Bench leaderboard; null when it has none."),
       field("epoch", "array", "Its Epoch AI scores; empty when Epoch has none."),
+      field("gameBench", "array", "Its DuelLab GameBench 2 results in effort order; empty when no setting has complete results."),
     ],
   },
   {
@@ -93,6 +94,16 @@ export const API_OBJECTS: readonly ApiObject[] = [
     ],
   },
   {
+    id: "gameBench",
+    caption: "Each item in gameBench: one GameBench 2 setting",
+    fields: [
+      field("effort", "string", "The reasoning setting, such as low, medium, high or xhigh."),
+      field("score", "number", "DuelLab's 0–100 score for programs competing against a shared reference field."),
+      field("costPerProgramUsd", "number", "Mean cost in US dollars to generate a player program for one game, including retries."),
+      field("costBasis", "string", "How DuelLab measured the cost, such as Standard list-price estimate."),
+    ],
+  },
+  {
     id: "pricing",
     caption: "pricing: list API prices from LiteLLM",
     fields: [
@@ -106,7 +117,7 @@ export const API_OBJECTS: readonly ApiObject[] = [
     id: "source",
     caption: "Each item in sources",
     fields: [
-      field("id", "string", "terminal-bench, epoch-ai or litellm."),
+      field("id", "string", "gamebench-2, terminal-bench, epoch-ai or litellm."),
       field("name", "string", "The source's name."),
       field("url", "string", "The source's page or file."),
       field("license", "string", "SPDX license id, such as CC-BY-4.0."),

@@ -1,4 +1,5 @@
-// Builds data/releases.json from three openly licensed sources:
+// Builds data/releases.json from openly licensed sources:
+// - DuelLab GameBench 2 (CC BY 4.0): reasoning settings with complete scores and costs.
 // - Terminal-Bench leaderboard submissions (Apache-2.0): one agent run per model,
 //   with accuracy, cost and tokens per trial.
 // - Epoch AI's benchmark data (CC BY 4.0): GPQA Diamond, MirrorCode and
@@ -10,20 +11,23 @@
 //   bun run scripts/refresh-data.ts --check    validate the committed file only
 //   bun run scripts/refresh-data.ts --from-raw <dir>
 //       read <dir>/tb/*.json, <dir>/epoch/benchmark_data.zip and
-//       <dir>/litellm/prices.json instead of fetching
+//       <dir>/litellm/prices.json instead of fetching. Include
+//       <dir>/gamebench/reasoning-variants.json for GameBench 2 results.
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { inflateRawSync } from "node:zlib";
-import type {
-  DataSource,
-  EffortSlug,
-  EpochBenchmarkId,
-  EpochScore,
-  ModelPricing,
-  ModelRelease,
-  ProviderId,
-  ReleaseDataset,
-  TerminalBenchRun,
+import {
+  GAME_BENCH,
+  type DataSource,
+  type EffortSlug,
+  type EpochBenchmarkId,
+  type EpochScore,
+  type GameBenchRun,
+  type ModelPricing,
+  type ModelRelease,
+  type ProviderId,
+  type ReleaseDataset,
+  type TerminalBenchRun,
 } from "../lib/types";
 
 const DATA_PATH = path.join(import.meta.dir, "..", "data", "releases.json");
@@ -35,6 +39,8 @@ const TB_LISTING_URL =
   "https://api.github.com/repos/harbor-framework/terminal-bench/contents/leaderboard/submissions";
 const TB_FILE_URL = "https://github.com/harbor-framework/terminal-bench/blob/main/leaderboard/submissions/";
 const EPOCH_ZIP_URL = "https://epoch.ai/data/benchmark_data.zip";
+const GAME_BENCH_URL =
+  "https://huggingface.co/datasets/DuelLab/gamebench-2-results/resolve/main/leaderboard/reasoning-variants.json";
 const LITELLM_URL =
   "https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json";
 
@@ -518,15 +524,92 @@ export function supersessionDates(
   return out;
 }
 
+type GameBenchRow = Readonly<{
+  model_slug: string;
+  provider_key: ProviderId;
+  reasoning_level: string;
+  ranking_status: string;
+  listing_status?: string;
+  score: number;
+  headline_games?: Readonly<Record<string, unknown>>;
+  codegen_cost_usd?: Readonly<{
+    mean: number;
+    cost_is_complete: boolean;
+    evidence_basis: string;
+  }>;
+}>;
+
+/** Read only comparable, published rows with scores and cost coverage for all games. */
+export function readGameBench(raw: unknown) {
+  const file = raw as { public_release_id?: string; track_id?: string; rows?: GameBenchRow[] } | null;
+  const id = file?.public_release_id;
+  if (
+    !file ||
+    typeof id !== "string" ||
+    !/^gb2-\d{8}-[0-9a-f]+$/.test(id) ||
+    file.track_id !== "full_freedom/mixed" ||
+    !Array.isArray(file.rows)
+  ) {
+    throw new Error("Invalid DuelLab GameBench 2 reasoning variants release");
+  }
+
+  const byModel = new Map<string, Map<EffortSlug, GameBenchRun>>();
+  for (const row of file.rows) {
+    if (!row || !TARGET_PROVIDERS.has(row.provider_key) || typeof row.model_slug !== "string") continue;
+    if (row.ranking_status !== "ranked" || (row.listing_status && row.listing_status !== "listed")) continue;
+    if (Object.keys(row.headline_games ?? {}).length !== GAME_BENCH.tasks) continue;
+    const cost = row.codegen_cost_usd;
+    if (
+      cost?.cost_is_complete !== true ||
+      !Number.isFinite(cost.mean) ||
+      cost.mean <= 0 ||
+      typeof cost.evidence_basis !== "string" ||
+      !cost.evidence_basis
+    ) continue;
+    if (!Number.isFinite(row.score) || row.score < 0 || row.score > 100) continue;
+
+    const label = typeof row.reasoning_level === "string" ? row.reasoning_level.trim().toLowerCase() : "";
+    const effort = label === "thinking disabled" || label === "reasoning disabled" ? "none" : effortSlug(label);
+    if (!effort) continue;
+    const publishedSlug = slugify(row.model_slug);
+    const prefix = `${row.provider_key}-`;
+    const slug = publishedSlug.startsWith(prefix) ? publishedSlug.slice(prefix.length) : publishedSlug;
+    const key = `${row.provider_key}:${slug}`;
+    const runs = byModel.get(key) ?? new Map<EffortSlug, GameBenchRun>();
+    if (runs.has(effort)) throw new Error(`Duplicate GameBench 2 setting ${key}:${effort}`);
+    runs.set(effort, {
+      effort,
+      score: row.score,
+      costPerProgramUsd: cost.mean,
+      costBasis: cost.evidence_basis,
+    });
+    byModel.set(key, runs);
+  }
+
+  const url = `${GAME_BENCH.releasesUrl}${id}/`;
+  const source: DataSource = {
+    id: "gamebench-2",
+    name: "DuelLab GameBench 2",
+    url,
+    license: "CC-BY-4.0",
+    licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
+    attribution: `DuelLab, GameBench 2 public release ${id}. aicharts selected rows with complete scores and costs, matched model IDs and normalized effort labels.`,
+    covers: "Reasoning settings, relative scores and mean API costs per generated player program across eight strategy games.",
+  };
+  return { source, byModel };
+}
+
 export type RawInputs = Readonly<{
   tb: readonly TbFile[];
   epoch: ReadonlyMap<string, string>;
   prices: Record<string, unknown>;
+  gameBench?: unknown;
 }>;
 
 export function buildDataset(raw: RawInputs, snapshotDate: string): ReleaseDataset {
   const tb = pickTerminalBenchRuns(raw.tb);
   const epoch = readEpoch(raw.epoch);
+  const gameBench = raw.gameBench === undefined ? null : readGameBench(raw.gameBench);
 
   const slugs = new Set<string>([
     ...tb.keys(),
@@ -561,6 +644,10 @@ export function buildDataset(raw: RawInputs, snapshotDate: string): ReleaseDatas
       pricing: readPricing(raw.prices, provider, name),
       terminalBench: run?.run ?? null,
       epoch: sortedScores(group?.scores.values() ?? []),
+      ...(gameBench && {
+        gameBench: [...(gameBench.byModel.get(`${provider}:${slug}`)?.values() ?? [])]
+          .sort((a, b) => EFFORTS.indexOf(a.effort) - EFFORTS.indexOf(b.effort)),
+      }),
     });
   }
 
@@ -578,6 +665,7 @@ export function buildDataset(raw: RawInputs, snapshotDate: string): ReleaseDatas
       pricing: d.pricing,
       terminalBench: d.terminalBench,
       epoch: d.epoch,
+      ...(d.gameBench && { gameBench: d.gameBench }),
     };
   });
   releases.sort(
@@ -592,7 +680,7 @@ export function buildDataset(raw: RawInputs, snapshotDate: string): ReleaseDatas
     schemaVersion: 2,
     updatedAt: new Date().toISOString().replace(/\.\d{3}Z$/, "Z"),
     snapshotDate,
-    sources: SOURCES,
+    sources: gameBench ? [...SOURCES, gameBench.source] : SOURCES,
     releases,
   };
 }
@@ -614,6 +702,9 @@ export function validateDataset(ds: ReleaseDataset): void {
   const ids = new Set(ds.sources.map((s) => s.id));
   for (const id of ["terminal-bench", "epoch-ai", "litellm"] as const) {
     if (!ids.has(id)) throw new Error(`Missing source ${id}`);
+  }
+  if (ids.has("gamebench-2") && !ds.releases.some((r) => r.gameBench?.length)) {
+    throw new Error("GameBench 2 source has no matching release results");
   }
   const withRuns = ds.releases.filter((r) => r.terminalBench).length;
   if (withRuns < 10) throw new Error(`Expected at least 10 Terminal-Bench runs, got ${withRuns}`);
@@ -653,6 +744,18 @@ export function validateDataset(ds: ReleaseDataset): void {
     for (const s of r.epoch) {
       if (!EPOCH_ORDER.includes(s.benchmark)) throw new Error(`Unknown Epoch benchmark ${at}`);
       if (!(s.score >= 0 && s.score <= 100)) throw new Error(`Bad ${s.benchmark} score ${at}`);
+    }
+    const gameBenchEfforts = new Set<EffortSlug>();
+    for (const run of r.gameBench ?? []) {
+      if (!ids.has("gamebench-2")) throw new Error(`Missing GameBench 2 source ${at}`);
+      if (!EFFORTS.includes(run.effort) || gameBenchEfforts.has(run.effort)) {
+        throw new Error(`Bad or duplicate GameBench 2 effort ${at}`);
+      }
+      gameBenchEfforts.add(run.effort);
+      if (!(run.score >= 0 && run.score <= 100) || !Number.isFinite(run.costPerProgramUsd) ||
+          run.costPerProgramUsd <= 0 || typeof run.costBasis !== "string" || !run.costBasis) {
+        throw new Error(`Bad GameBench 2 result ${at}`);
+      }
     }
   });
 }
@@ -694,9 +797,12 @@ async function fetchInputs(): Promise<RawInputs> {
     );
     tb.push(...batch);
   }
-  const zip = new Uint8Array(await (await fetchOk(EPOCH_ZIP_URL)).arrayBuffer());
-  const prices = (await (await fetchOk(LITELLM_URL)).json()) as Record<string, unknown>;
-  return { tb, epoch: readZipEntries(zip, epochFileNames()), prices };
+  const [zip, prices, gameBench] = await Promise.all([
+    fetchOk(EPOCH_ZIP_URL).then((r) => r.arrayBuffer()),
+    fetchOk(LITELLM_URL).then((r) => r.json() as Promise<Record<string, unknown>>),
+    fetchOk(GAME_BENCH_URL).then((r) => r.json()),
+  ]);
+  return { tb, epoch: readZipEntries(new Uint8Array(zip), epochFileNames()), prices, gameBench };
 }
 
 function epochFileNames(): Set<string> {
@@ -714,14 +820,17 @@ function readInputs(dir: string): RawInputs {
     string,
     unknown
   >;
-  return { tb, epoch: readZipEntries(zip, epochFileNames()), prices };
+  const gameBenchPath = path.join(dir, "gamebench", "reasoning-variants.json");
+  const gameBench = existsSync(gameBenchPath) ? JSON.parse(readFileSync(gameBenchPath, "utf8")) : undefined;
+  return { tb, epoch: readZipEntries(zip, epochFileNames()), prices, gameBench };
 }
 
 function describe(ds: ReleaseDataset): string {
   const runs = ds.releases.filter((r) => r.terminalBench).length;
   const scores = ds.releases.reduce((n, r) => n + r.epoch.length, 0);
+  const efforts = ds.releases.reduce((n, r) => n + (r.gameBench?.length ?? 0), 0);
   const priced = ds.releases.filter((r) => r.pricing).length;
-  return `${ds.releases.length} releases, ${runs} Terminal-Bench runs, ${scores} Epoch scores, ${priced} priced`;
+  return `${ds.releases.length} releases, ${runs} Terminal-Bench runs, ${scores} Epoch scores, ${efforts} GameBench 2 settings, ${priced} priced`;
 }
 
 if (import.meta.main) {

@@ -57,7 +57,7 @@ export default function Introduction() {
       </p>
       <h2>Read one model on the chart</h2>
       <p>
-        Each dot is one model&apos;s run on {TERMINAL_BENCH.label}:{" "}
+        In the {TERMINAL_BENCH.label} view, each dot is one model&apos;s run on{" "}
         {TERMINAL_BENCH.tasks} hard tasks done in a terminal, each attempted at
         least five times, with the model driving a coding agent. Higher means
         more tasks passed. Farther right means a higher cost per task. The
@@ -86,11 +86,11 @@ export default function Introduction() {
         period.
       </p>
       <p>
-        The cost is what a run reported spending across its trials, divided by
+        On Terminal-Bench, the cost is what a run reported spending across its trials, divided by
         the trials. Your own repository, prompts and workload will have a
-        different bill. Each model page also lists Epoch AI&apos;s scores on
-        MirrorCode, GPQA Diamond and FrontierMath, which test the model on its
-        own, without an agent.
+        different bill. Choose GameBench 2 to see what models gain at higher
+        reasoning settings on eight game-programming tasks. The benchmark menu
+        also includes Epoch AI&apos;s MirrorCode, GPQA Diamond and FrontierMath scores.
       </p>
       <p className="source-line">
         Explore the measurements at{" "}
@@ -102,7 +102,7 @@ export default function Introduction() {
         slug={guide.slug}
         heading="What does the next point cost?"
         description="Pick a model you use and see what the runs above it on the chart cost."
-        href={`/?release=${example?.key ?? ""}`}
+        href={`/?bench=terminal-bench&release=${example?.key ?? ""}`}
         label="Compare models"
       />
     </article>
