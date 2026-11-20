@@ -196,6 +196,8 @@ export function LocalHardware() {
   const peer = entries.find(e => e.value === peerId && peerId !== deviceId);
   const left = byDevice.get(deviceId) ?? [];
   const right = (peer && byDevice.get(peer.value)) || [];
+  const coverage = (task: string) => Number(left.some(s => s.task === task)) + Number(right.some(s => s.task === task));
+  const orderedTasks = [...workloadNames].sort((a, b) => coverage(b) - coverage(a));
   const protocols = new Set(left.map(s => s.protocol));
   const suggestions = entries.filter(e => e.value !== deviceId && e.value !== peer?.value)
     .map(e => ({entry: e, overlap: byDevice.get(e.value)!.filter(s => protocols.has(s.protocol)).length}))
@@ -228,7 +230,7 @@ export function LocalHardware() {
       {suggestions.length > 0 && <div className="hardware-shortcuts"><span>Also tested together</span>{suggestions.map(({entry}) =>
         <button key={entry.value} type="button" onClick={() => setPeerId(entry.value)}>{entry.device}</button>)}</div>}
       <table className="device-matrix"><caption>Speed by workload</caption><thead><tr><th scope="col">Workload</th><th scope="col">{device}<small>{platform}</small></th>{peer && <th scope="col">{peer.device}<small>{peer.platform}</small></th>}</tr></thead>
-        <tbody>{workloadNames.map(task => {
+        <tbody>{orderedTasks.map(task => {
           const first = left.filter(s => s.task === task);
           const second = right.filter(s => s.task === task);
           const other = new Map(second.map(s => [s.protocol,s]));
@@ -243,6 +245,7 @@ export function LocalHardware() {
           </th><WorkloadCell sample={a} max={max} inspect={inspect}/>{peer && <WorkloadCell sample={b} max={max} inspect={inspect}/>}</tr>;
         })}</tbody>
       </table>
+      <p className="hardware-fine">Each workload shows the first matching published configuration in the dataset. When the devices have no shared test, each column shows its own first reported result. Open a value to explore other configurations.</p>
       <a href={"/local?" + new URLSearchParams({platform, device, peer: peer?.value ?? ""}) + "#hardware"}>Share device overview</a>
       <details className="hardware-drill" id="hardware-detail" open={inspecting} onToggle={e => setInspecting(e.currentTarget.open)}>
       <summary>Explore all measurements on {device}</summary>
