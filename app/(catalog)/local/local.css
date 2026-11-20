@@ -1,0 +1,24 @@
+.local-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
+  gap: 1.25rem;
+  margin: 1.5rem 0;
+}
+.catalog-page .local-charts section {
+  margin: 0;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+.local-charts ol { list-style: none; padding: 0; }
+.local-charts li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: .2rem .5rem;
+  margin: .6rem 0;
+  font-size: .88rem;
+  font-variant-numeric: tabular-nums;
+}
+.local-track { grid-column: 1 / -1; background: var(--border); height: 4px; }
+.local-track i { display: block; height: 100%; background: var(--brand-openai); }
