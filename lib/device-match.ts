@@ -33,7 +33,7 @@ export function matchDevice(signals: DeviceSignals, devices: readonly DeviceEntr
   const name = code && galaxyModels[code] ? "Samsung Galaxy " + galaxyModels[code] : reported;
   const graphics = chip?.[0] ?? gpuName ?? (appleMac ? "Apple GPU" : gpu.match(/nvidia|intel|amd|radeon/i)?.[0]);
   const detected = [family, reported ?? graphics?.toUpperCase()].filter(Boolean).join(" · ");
-  const candidates = devices.filter(e => e.platform === category && (family !== "iPhone" && family !== "iPad" || e.device.startsWith(family)));
+  const candidates = devices.filter(e => !/^\d+\s*[×x]/i.test(e.device) && e.platform === category && (family !== "iPhone" && family !== "iPad" || e.device.startsWith(family)));
   if (name) {
     const exact = candidates.find(e => tidy(e.device).replace(/^(samsung|google) /,"") === tidy(name).replace(/^(samsung|google) /,""));
     if (exact) return {detected,entry:exact,reason:"Published measurements for the reported model. Regional chips and memory can vary."};

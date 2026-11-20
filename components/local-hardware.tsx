@@ -305,6 +305,7 @@ export function LocalHardware() {
   return (
     <section id="hardware" className="local-hardware" aria-labelledby="hardware-heading">
       <h2 id="hardware-heading">Device speeds and memory</h2>
+      <p className="hardware-fine">{entries.length} hardware configurations · {workloadNames.length} workloads · {suites.length} published benchmark suites</p>
       <div className="hardware-detected" data-private>
         <span>Browser reports <strong>{match?.detected ?? "Checking device…"}</strong></span>
         {automatic ? <span>{match?.reason}</span> : match?.entry && match.entry.value !== deviceId ?
