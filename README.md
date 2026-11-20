@@ -40,7 +40,8 @@ bun run dev
 - [`/models`](https://aicharts.io/models) and `/models/<slug>`: a page per release with its Terminal-Bench run, Epoch AI scores, API prices, frontier stars and links to its comparisons.
 - [`/compare`](https://aicharts.io/compare) and `/compare/<newer>-vs-<older>`: a head-to-head page for every two releases that were current at the same time, plus each release against the one it replaced. The reverse order redirects to the canonical page. Pairs with no result in common stay out of search results.
 - [`/agents`](https://aicharts.io/agents) and `/agents/<a>-vs-<b>`: Codex, Claude Code and Antigravity CLI compared through the current models' runs inside each.
-- [`/llms.txt`](https://aicharts.io/llms.txt), [`/sitemap.xml`](https://aicharts.io/sitemap.xml) and [`/api/releases`](https://aicharts.io/api/releases): entry points for agents and crawlers.
+- [`/api`](https://aicharts.io/api): the free JSON API, [`/api/releases`](https://aicharts.io/api/releases), field by field, with examples, caching and each source's license. It needs no key and any website may call it.
+- [`/llms.txt`](https://aicharts.io/llms.txt) and [`/sitemap.xml`](https://aicharts.io/sitemap.xml): entry points for agents and crawlers.
 
 ### The chart
 
@@ -71,7 +72,7 @@ bun run dev
 - `bun run data:refresh`: fetch the three sources and write `data/releases.json` when a release, score or price changed. `--from-raw <dir>` reads saved copies instead, and `--force` writes regardless.
 - `bun run data:check`: validate `data/releases.json`: schema, ordering, supersession and source records.
 - `bun run check`: `data:check`, the TypeScript typecheck, the unit tests and a production build.
-- `bun run check:journal:browser`: serve the production build and check the guide, changelog filters, model, comparison and agent pages, redirects and the site footer in Chromium at phone and desktop widths and with JavaScript off.
+- `bun run check:journal:browser`: serve the production build and check the guide, changelog filters, model, comparison, agent and API pages, the API's CORS header, redirects and the site footer in Chromium at phone and desktop widths and with JavaScript off.
 
 Every page is generated from `data/releases.json` at build time, so each data refresh updates them. Pairs and successors come from `lib/catalog.ts`; page copy comes from `lib/copy.ts`. Addresses from the earlier aicharts.io, and the retired effort pages, redirect to their nearest page (`next.config.ts`).
 

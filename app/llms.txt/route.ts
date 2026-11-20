@@ -49,6 +49,7 @@ export function GET() {
     "## Data",
     "",
     `- [Release dataset (JSON)](${SITE_URL}/api/releases): every release with its Terminal-Bench run, Epoch AI scores and API prices, plus each source's license and attribution.`,
+    `- [API documentation](${SITE_URL}/api): the dataset's fields, examples in the shell and JavaScript, caching and licenses. Free, no key, callable from any website.`,
     "",
     "## Optional",
     "",

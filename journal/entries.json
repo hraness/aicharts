@@ -1,5 +1,17 @@
 [
   {
+    "slug": "api-docs",
+    "date": "2026-11-19",
+    "category": "Docs",
+    "surfaces": ["Website", "API"],
+    "title": "Documentation for the free API",
+    "summary": "A new API page documents the free JSON endpoint behind every chart: each field, examples in the shell and JavaScript, how often the data changes, and each source’s license and the credit to keep with it. The endpoint needs no key, and any website may call it.",
+    "link": {
+      "href": "/api",
+      "label": "Read the API docs"
+    }
+  },
+  {
     "slug": "open-benchmark-data",
     "date": "2026-11-19",
     "category": "Improved",

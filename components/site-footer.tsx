@@ -4,7 +4,7 @@ const LINKS = [
   ["/agents", "Coding agents"],
   ["/blog", "Blog"],
   ["/changelog", "Changelog"],
-  ["/api/releases", "API"],
+  ["/api", "API"],
   ["https://github.com/hraness/aicharts", "GitHub"],
 ] as const;
 
