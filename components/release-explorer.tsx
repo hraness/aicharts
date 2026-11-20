@@ -465,20 +465,19 @@ export function ReleaseExplorer({
 
           {/* Chart Controls */}
           <div className="chart-controls">
-            <label className="benchmark-picker">
-              <span className="sr-only">Benchmark</span>
-              <select
-                value={benchmark}
-                onChange={(event) => {
-                  setBenchmark(event.currentTarget.value as Benchmark);
-                  setActiveEffort(null);
-                }}
-              >
-                {BENCHMARKS.filter((option) => option.id !== "game-bench" || gameBenchSource).map((option) => (
-                  <option key={option.id} value={option.id}>{option.label}</option>
-                ))}
-              </select>
-            </label>
+            <select
+              className="benchmark-picker"
+              aria-label="Benchmark"
+              value={benchmark}
+              onChange={(event) => {
+                setBenchmark(event.currentTarget.value as Benchmark);
+                setActiveEffort(null);
+              }}
+            >
+              {BENCHMARKS.filter((option) => option.id !== "game-bench" || gameBenchSource).map((option) => (
+                <option key={option.id} value={option.id}>{option.label}</option>
+              ))}
+            </select>
 
             <div className="chart-controls__right">
               {benchmark === "terminal-bench" && (

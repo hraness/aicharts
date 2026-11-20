@@ -383,10 +383,6 @@ a:focus-visible {
 }
 
 .benchmark-picker {
-  max-width: 100%;
-}
-
-.benchmark-picker select {
   field-sizing: content;
   max-width: 100%;
   min-height: 28px;
