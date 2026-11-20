@@ -27,7 +27,7 @@ const frontierWebsite = entries.filter(
 assert.ok(frontierWebsite > 0, "Keep a Website changelog entry about the frontier");
 const noSideScroll = (page) =>
   page.evaluate(() => document.documentElement.scrollWidth <= innerWidth);
-async function pick(page, label, query, value) {
+async function pickCompact(page, label, query, value) {
   await page.getByRole("button", {name:label, exact:true}).click();
   const panel = page.getByRole("dialog", {name:"Choose " + label, exact:true});
   await panel.getByRole("combobox").fill(query);
@@ -349,7 +349,7 @@ try {
       .waitFor();
     await page.locator("[data-pj-evergreen] a").click();
     await page.locator(".guide-chart").waitFor();
-    await pick(page,"Budget","Output tokens","tokens");
+    await pickCompact(page,"Budget","Output tokens","tokens");
     await page.waitForFunction(() =>
       document.querySelector("output").textContent.includes("output tokens"),
     );
@@ -357,7 +357,7 @@ try {
     const currentModel = await page.getByRole("button",{name:"Model",exact:true}).getAttribute("data-value");
     const other = releases.find(r => r.slug !== currentModel && r.terminalBench && !r.deprecated);
     const otherName = other.name;
-    await pick(page,"Model",otherName,other.slug);
+    await pickCompact(page,"Model",otherName,other.slug);
     await page.waitForFunction(
       (name) => document.querySelector(".guide-chart output").textContent.startsWith(name),
       otherName,
@@ -399,7 +399,7 @@ try {
       .click();
     await page.waitForURL(url + "/models/" + model.slug);
     await page.locator(".catalog-chart .pareto-svg").waitFor();
-    await pick(page,"Budget","Output tokens","tokens");
+    await pickCompact(page,"Budget","Output tokens","tokens");
     await page.waitForFunction(() =>
       document.querySelector(".chart-readout").textContent.includes("output tokens"),
     );
@@ -430,15 +430,15 @@ try {
     assert.equal(await page.locator("main h1").textContent(), "Local AI benchmarks");
     await page.getByLabel("Available memory (GiB)", { exact: true }).fill("1");
     assert.ok((await page.locator(".hardware-meta").allTextContents()).some(t => t.includes("over budget")));
-    await pick(page,"Platform","NVIDIA GPUs","NVIDIA GPUs");
-    await pick(page,"Device","RTX 4090","RTX 4090");
-    await pick(page,"Measurement","Music generation","ace/latency");
+    await pickCompact(page,"Platform","NVIDIA GPUs","NVIDIA GPUs");
+    await pickCompact(page,"Device","RTX 4090","RTX 4090");
+    await pickCompact(page,"Measurement","Music generation","ace/latency");
     assert.ok((await page.locator(".hardware-plot").textContent()).includes("1.74 s"));
     const hardwareLink = await page.getByRole("link", { name: "Link to this comparison" }).getAttribute("href");
     await page.goto(url + hardwareLink);
     await page.waitForFunction(() => document.querySelector(".hardware-panel h3")?.textContent === "RTX 4090");
     assert.ok((await page.locator(".hardware-plot").textContent()).includes("1.74 s"));
-    await pick(page,"Device","My device is missing","");
+    await pickCompact(page,"Device","My device is missing","");
     assert.ok(await page.locator(".hardware-empty").isVisible());
     assert.ok(await page.locator("#quality").evaluate(e => !!(e.compareDocumentPosition(document.querySelector("#hardware")) & Node.DOCUMENT_POSITION_FOLLOWING)));
     assert.ok(await page.locator(".local-score-table tbody tr").count() <= 15);
@@ -456,7 +456,7 @@ try {
     await picker.getByRole("option",{name:alternate.metric,exact:true}).click();
     await page.getByRole("heading", { name: alternate.metric, exact: true }).waitFor();
     await page.getByText("Sort, filter and compare",{exact:true}).click();
-    await pick(page,"Compare with",alternate.models[0].name,alternate.models[0].name);
+    await pickCompact(page,"Compare with",alternate.models[0].name,alternate.models[0].name);
     await page.getByRole("columnheader", { name: "Difference", exact: true }).waitFor();
     assert.equal(await noSideScroll(page), true);
     const localData = await page.request.get(url + "/api/local");
@@ -473,7 +473,7 @@ try {
     assert.equal(new URL(page.url()).pathname, pair);
     // Coding agent pages: the budget control relabels the readout.
     await page.goto(url + "/agents");
-    await pick(page,"Budget","Output tokens","tokens");
+    await pickCompact(page,"Budget","Output tokens","tokens");
     await page.waitForFunction(() =>
       document.querySelector(".agent-chart .chart-readout").textContent.includes("output tokens"),
     );
