@@ -1,5 +1,19 @@
 [
   {
+    "slug": "cleaner-linked-titles",
+    "date": "2026-11-21",
+    "title": "Cleaner titles in the blog and changelog",
+    "summary": "Article and update titles use color on hover and an outline for keyboard focus.",
+    "category": "Improved",
+    "surfaces": [
+      "Website"
+    ],
+    "link": {
+      "label": "See the titles",
+      "href": "/blog"
+    }
+  },
+  {
     "slug": "share-benchmark-explorer",
     "date": "2026-11-20",
     "title": "Share the benchmark explorer",

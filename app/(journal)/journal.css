@@ -40,6 +40,12 @@
   text-decoration: underline;
   text-underline-offset: 0.2em;
 }
+.journal-main :is(.guide-teaser h2, .note h2, .recent li) a {
+  text-decoration: none;
+}
+.journal-main :is(.guide-teaser h2, .note h2, .recent li) a:is(:hover, :focus-visible) {
+  color: var(--fg-muted);
+}
 .guide-teaser,
 .note,
 .recent li,
