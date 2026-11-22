@@ -1,5 +1,17 @@
 [
   {
+    "slug": "site-privacy-choices",
+    "date": "2026-11-22",
+    "title": "Privacy choices across aicharts",
+    "summary": "Your choice for remembering visits now applies to the benchmark catalog and the product guide.",
+    "category": "Improved",
+    "surfaces": ["Website"],
+    "link": {
+      "label": "Open privacy choices",
+      "href": "/blog#privacy"
+    }
+  },
+  {
     "slug": "current-explorer-preview",
     "date": "2026-11-22",
     "title": "See the current benchmark chart on Hraness",

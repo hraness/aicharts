@@ -34,9 +34,9 @@ export default function Blog() {
       </section>
       <footer id="privacy" className="journal-privacy">
         <p>
-          The product guide counts visits and use of its closing link with
-          PostHog. Your privacy choices control how visits are remembered. The
-          guide does not record sessions.
+          aicharts counts visits and use of the product guide’s closing link
+          with PostHog. Your privacy choices control how visits are remembered.
+          Session recording is off.
         </p>
         <PrivacyChoices />
       </footer>

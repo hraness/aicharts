@@ -13,12 +13,12 @@ function analytics() {
     regionUrl: false,
     preset: "app",
     surface: "site",
-    pageKind: "product_guide",
+    landingKind: (path) => path.startsWith("/blog/") ? "product_guide" : "site",
     privacyHref: "/blog#privacy",
     replaySampleRate: 0,
     words: {
       allBody:
-        "May aicharts remember your visits to the guide on this browser?",
+        "May aicharts remember your visits on this browser?",
       adsBody: "May aicharts remember your measurement preference?",
       allow: "Allow",
       decline: "Decline",
@@ -29,6 +29,14 @@ function analytics() {
     },
   }));
 }
+
+export function SiteAnalytics() {
+  useEffect(() => {
+    analytics();
+  }, []);
+  return null;
+}
+
 export function ArticleAction({
   slug,
   href,
@@ -54,6 +62,7 @@ export function ArticleAction({
       seen.add(slug);
       api.track("article cta viewed", {
         article_slug: slug,
+        page_kind: "product_guide",
         placement: "article_end",
         cta: "open",
       });
@@ -88,6 +97,7 @@ export function ArticleAction({
         onClick={() =>
           analytics().track("cta clicked", {
             article_slug: slug,
+            page_kind: "product_guide",
             placement: "article_end",
             cta: "open",
           })
