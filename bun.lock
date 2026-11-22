@@ -5,7 +5,7 @@
     "": {
       "name": "aicharts",
       "dependencies": {
-        "@hraness/analytics": "https://github.com/hraness/posthog/releases/download/v1.2.1/hraness-analytics-1.2.1.tgz",
+        "@hraness/analytics": "https://github.com/hraness/posthog/releases/download/v1.2.2/hraness-analytics-1.2.2.tgz",
         "next": "16.4.6",
         "react": "19.3.1",
         "react-dom": "19.3.1",
@@ -23,7 +23,7 @@
   "packages": {
     "@emnapi/runtime": ["@emnapi/runtime@1.11.3", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-Xz4Tpyki7XyrpbUK1jR1AhdAdaXyhhY4lZ3neLodmhpuWfy2PAQN5B46sAiU4liOXGLkHypn/qU+jvfWSCYYLA=="],
 
-    "@hraness/analytics": ["@hraness/analytics@https://github.com/hraness/posthog/releases/download/v1.2.1/hraness-analytics-1.2.1.tgz", { "dependencies": { "posthog-js": "1.449.1" } }, "sha512-O71uChVSca4IlG0E2sYU+Tm0QNJTO3EHppH4i5k5xJ3f3rRIWGG0qujTGgZ0hzK/u21NB6tooxBj1yKohdKAhw=="],
+    "@hraness/analytics": ["@hraness/analytics@https://github.com/hraness/posthog/releases/download/v1.2.2/hraness-analytics-1.2.2.tgz", { "dependencies": { "posthog-js": "1.449.1" } }, "sha512-daf08B+OBRKiwKG28JQWTDP/sWOJat1LSnDDqKZbGgDss/a51pPPgol606XTxmqQAlAcSHdt83SaMv0FkrzItA=="],
 
     "@img/colour": ["@img/colour@1.1.0", "", {}, "sha512-Td76q7j57o/tLVdgS746cYARfSyxk8iEfRxewL9h4OMzYhbW4TAcppl0mT4eyqXddh6L/jwoM75mo7ixa/pCeQ=="],
 
