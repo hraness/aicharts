@@ -1,5 +1,14 @@
 [
   {
+    "slug": "current-explorer-preview",
+    "date": "2026-11-22",
+    "title": "See the current benchmark chart on Hraness",
+    "summary": "The portfolio preview shows the explorer’s Argo-Bench cost chart and follows updates to its model data.",
+    "category": "Improved",
+    "surfaces": ["Website"],
+    "link": { "label": "Explore the chart", "href": "/" }
+  },
+  {
     "slug": "cleaner-linked-titles",
     "date": "2026-11-21",
     "title": "Cleaner titles in the blog and changelog",

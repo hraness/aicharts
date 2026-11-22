@@ -1,10 +1,8 @@
 import assert from "node:assert/strict";
-import { execFileSync, spawn } from "node:child_process";
+import { spawn } from "node:child_process";
 import { once } from "node:events";
-import { mkdtemp, mkdir, readFile, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { createHash } from "node:crypto";
+import { readFile } from "node:fs/promises";
+import { renderPreview } from "../showcase/preview.mjs";
 import { chromium } from "playwright-core";
 
 const capture = process.argv.includes("--preview");
@@ -103,6 +101,21 @@ try {
     "Chromium",
     browser.version(),
   );
+  if (capture) await renderPreview(browser, url);
+  else await checkSite(browser, url);
+} finally {
+  try {
+    await browser?.close();
+  } finally {
+    if (server.exitCode === null && server.signalCode === null) {
+      const exited = once(server, "exit");
+      server.kill();
+      await exited;
+    }
+  }
+}
+
+async function checkSite(browser, url) {
   for (const [width, colorScheme] of [
     [320, "dark"],
     [960, "light"],
@@ -654,82 +667,7 @@ try {
   assert.equal(api.headers.get("access-control-allow-origin"), "*");
   assert.equal((await api.json()).releases.length, releases.length);
   await plain.close();
-  if (capture) {
-    const ctx = await browser.newContext({
-      viewport: { width: 480, height: 800 },
-      colorScheme: "light",
-      reducedMotion: "reduce",
-    });
-    const page = await ctx.newPage();
-    await page.goto(url);
-    await page.locator(".pareto-svg").waitFor();
-    await page.waitForFunction(
-      () => document.querySelector(".pareto-svg").width.baseVal.value < 480,
-    );
-    const top = await page
-      .locator(".pareto-card")
-      .evaluate((el) =>
-        Math.floor(el.getBoundingClientRect().top + window.scrollY),
-      );
-    const tmp = await mkdtemp(join(tmpdir(), "aicharts-preview-"));
-    const png = join(tmp, "preview.png");
-    await page.screenshot({
-      path: png,
-      clip: { x: 0, y: top, width: 480, height: 480 },
-      animations: "disabled",
-    });
-    await mkdir("showcase/media", { recursive: true });
-    execFileSync("cwebp", [
-      "-quiet",
-      "-q",
-      "90",
-      "-m",
-      "6",
-      "-metadata",
-      "none",
-      png,
-      "-o",
-      "showcase/media/preview.webp",
-    ]);
-    const bytes = await readFile("showcase/media/preview.webp");
-    const hash = (input) => createHash("sha256").update(input).digest("hex");
-    const record = {
-      schemaVersion: 1,
-      product: "aicharts",
-      file: "preview.webp",
-      command: "bun run showcase",
-      sourceSha: execFileSync("git", ["rev-parse", "HEAD"], {
-        encoding: "utf8",
-      }).trim(),
-      pixelWidth: 480,
-      pixelHeight: 480,
-      bytes: bytes.length,
-      sha256: hash(bytes),
-      inputs: {
-        "data/releases.json": hash(await readFile("data/releases.json")),
-        "data/argo-bench.json": hash(await readFile("data/argo-bench.json")),
-      },
-      browser: browser.version(),
-      encoder: execFileSync("cwebp", ["-version"], { encoding: "utf8" }).trim(),
-      alt: "aicharts plotting Argo-Bench scores against cost per task across reasoning settings for Anthropic, OpenAI and Google models.",
-    };
-    await writeFile(
-      "showcase/media/preview.json",
-      JSON.stringify(record, null, 2) + "\n",
-    );
-    await ctx.close();
-  }
   console.log(
     "Verified the guide, comparison controls, closing action, filters, catalog and coding agent pages, redirects, footer, and mobile layout.",
   );
-} finally {
-  try {
-    await browser?.close();
-  } finally {
-    if (server.exitCode === null && server.signalCode === null) {
-      const exited = once(server, "exit");
-      server.kill();
-      await exited;
-    }
-  }
 }
