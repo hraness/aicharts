@@ -3,15 +3,21 @@
   "product": "aicharts",
   "file": "preview.webp",
   "command": "bun run showcase",
-  "sourceSha": "6e7d8598ce13c7c0beb76b4b11e4e259f52ecec4",
+  "sourceSha": "ece5c141f7819408470fc7d15f8a5e5273965676",
   "pixelWidth": 480,
   "pixelHeight": 480,
-  "bytes": 17476,
-  "sha256": "946fa6df07b7035bc2d2b60477f98d027ca27f742ec7d470e7bbdcd32c0905bf",
+  "bytes": 26168,
+  "sha256": "c8a20d34cff7c25e798f4e0ddec8848a352da07590daf9791ab7c0187e159561",
   "inputs": {
-    "data/releases.json": "f347ddc6f898b37e478d10a3fd80f6a6936731b37701b9094597d93c42d7e9da"
+    "data/releases.json": "a5e6be946f0b2a23c91cfe4533648b4a30a31293d1492fd5a3921f3e0e87a711",
+    "data/argo-bench.json": "811ae7c3a494bfd397684611a82c474b464f8633db17f3ec64a6cdb694b2dec7",
+    "app/globals.css": "e52c63ad32fe5e7e2d81ad58e74ce970d45f127749e0c56af6cff9b50f9e349d",
+    "components/pareto-chart.tsx": "1c49b8d5d027b0dca65fcd5bcada60e1866e43e6a73759102f14b23c88e45941",
+    "components/release-explorer.tsx": "acddd636353488ef7ef7c985695be755143182b000d7c234123302fc4c7554f3",
+    "lib/pareto.ts": "9bb964223ecfe7b952c4088299ca3f046ae478970dbd6bed5e958b3a41e62b23",
+    "showcase/preview.mjs": "7a09b179017572abb0082bcf4407641f994542376ca47b8dafed0f862f5ceb62"
   },
   "browser": "153.0.8010.12",
-  "encoder": "1.6.0\nlibsharpyuv: 0.4.2",
-  "alt": "aicharts plotting Terminal-Bench scores against cost per task for Anthropic, OpenAI and Google models."
+  "encoder": "Chromium canvas WebP, quality 0.92",
+  "alt": "aicharts plotting Argo-Bench scores against cost per task across reasoning settings."
 }

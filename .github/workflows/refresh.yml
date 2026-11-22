@@ -62,9 +62,16 @@ jobs:
         if: steps.refresh.outputs.changed == 'true'
         run: bun install --frozen-lockfile
 
-      - name: Validate data, types, tests, and production build
+      - name: Render the portfolio preview from the updated explorer
         if: steps.refresh.outputs.changed == 'true'
-        run: bun run check
+        run: |
+          bun run build
+          bunx --no-install playwright-core install --with-deps chromium
+          bun run showcase
+
+      - name: Validate data, types, tests and the rendered preview
+        if: steps.refresh.outputs.changed == 'true'
+        run: bun run data:check && bun run typecheck && bun run test
 
       - name: Deliver updated dataset via PR
         if: steps.refresh.outputs.changed == 'true'
@@ -77,8 +84,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -B "$branch"
-          git add data/releases.json
-          git commit -m "chore(data): refresh releases and benchmarks (${snapshot})"
+          git add data/releases.json showcase/media/preview.webp showcase/media/preview.json
+          git commit -m "chore(data): refresh releases and benchmarks (${snapshot})" -m "Changelog-skip: The public release feed records this dataset and its matching chart preview."
           git push --force origin "HEAD:refs/heads/${branch}"
 
           head_sha="$(git rev-parse HEAD)"
