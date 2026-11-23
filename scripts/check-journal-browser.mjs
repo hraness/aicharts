@@ -6,6 +6,12 @@ import { renderPreview } from "../showcase/preview.mjs";
 import { chromium } from "playwright-core";
 
 const capture = process.argv.includes("--preview");
+const benchmarkJourney = process.argv.includes("--benchmark-journey");
+async function captureWalk(page, filename) {
+  if (benchmarkJourney && process.env.RA_WALK_DIR) {
+    await page.screenshot({ path: `${process.env.RA_WALK_DIR}/${filename}` });
+  }
+}
 const entries = JSON.parse(await readFile("journal/entries.json", "utf8"));
 const { releases } = JSON.parse(await readFile("data/releases.json", "utf8"));
 const localHardware = JSON.parse(await readFile("data/local-hardware.json", "utf8"));
@@ -120,6 +126,7 @@ async function checkSite(browser, url) {
     [320, "dark"],
     [960, "light"],
   ]) {
+    if (benchmarkJourney && width !== 960) continue;
     const context = await browser.newContext({
       viewport: { width, height: 850 },
       colorScheme,
@@ -215,6 +222,7 @@ async function checkSite(browser, url) {
     await search.fill("zzznomatchzzz");
     await benchmarkDialog.getByText(/no (matching benchmarks|benchmarks|results)/i).waitFor();
     assert.equal(await benchmarkDialog.getByRole("option").count(), 0);
+    await captureWalk(page, "01-no-matches.png");
     await benchmarkDialog.getByRole("button", { name: /^clear( search)?$/i }).click();
     assert.equal(await search.inputValue(), "");
     await benchmarkOption("Argo-Bench").waitFor();
@@ -228,6 +236,7 @@ async function checkSite(browser, url) {
     await search.press("Escape");
     await benchmarkDialog.waitFor({ state: "hidden" });
     assert.equal(await benchmark.evaluate((button) => button === document.activeElement), true);
+    await captureWalk(page, "02-explorer.png");
     await openBenchmark();
     await page.getByRole("heading", { level: 1 }).click();
     await benchmarkDialog.waitFor({ state: "hidden" });
@@ -250,8 +259,14 @@ async function checkSite(browser, url) {
     await budget.getByRole("button", { name: "Tokens" }).click();
     await waitForParams({ bench: "argo-bench", axis: "tokens" });
     assert.match(await argo.locator(".pareto-svg").getAttribute("aria-label"), /output tokens/i);
+    await captureWalk(page, "03-tokens.png");
     await budget.getByRole("button", { name: "Cost" }).click();
     await waitForParams({ bench: null, axis: null });
+    await captureWalk(page, "04-cost.png");
+    if (benchmarkJourney) {
+      await context.close();
+      return;
+    }
 
     // The lineup is the default order. The chart keeps its axes whichever
     // model, order or lab is picked, so siblings compare by position: before

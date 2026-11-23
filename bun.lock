@@ -11,6 +11,7 @@
         "react-dom": "19.3.1",
       },
       "devDependencies": {
+        "@hraness/ra": "https://github.com/hraness/ra/releases/download/v0.3.0/hraness-ra-0.3.0.tgz",
         "@types/bun": "1.3.14",
         "@types/node": "24.19.2",
         "@types/react": "19.3.0",
@@ -24,6 +25,8 @@
     "@emnapi/runtime": ["@emnapi/runtime@1.11.3", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-Xz4Tpyki7XyrpbUK1jR1AhdAdaXyhhY4lZ3neLodmhpuWfy2PAQN5B46sAiU4liOXGLkHypn/qU+jvfWSCYYLA=="],
 
     "@hraness/analytics": ["@hraness/analytics@https://github.com/hraness/posthog/releases/download/v1.2.2/hraness-analytics-1.2.2.tgz", { "dependencies": { "posthog-js": "1.449.1" } }, "sha512-daf08B+OBRKiwKG28JQWTDP/sWOJat1LSnDDqKZbGgDss/a51pPPgol606XTxmqQAlAcSHdt83SaMv0FkrzItA=="],
+
+    "@hraness/ra": ["@hraness/ra@https://github.com/hraness/ra/releases/download/v0.3.0/hraness-ra-0.3.0.tgz", { "peerDependencies": { "playwright-core": ">=1.58" }, "optionalPeers": ["playwright-core"], "bin": { "ra": "./dist/cli.js" } }, "sha512-9nlxSbeMBTV1OQaJQa0+gqUC1Fn0SUdh1USLxHrC386ovV/sLQK/+efT4no0UONudoIWIj2FE07/QyRv8ccpBQ=="],
 
     "@img/colour": ["@img/colour@1.1.0", "", {}, "sha512-Td76q7j57o/tLVdgS746cYARfSyxk8iEfRxewL9h4OMzYhbW4TAcppl0mT4eyqXddh6L/jwoM75mo7ixa/pCeQ=="],
 

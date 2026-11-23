@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "journeys": {
+    "compare-reasoning-cost": {
+      "title": "Recover a benchmark search and compare reasoning cost",
+      "start": "Build the site with bun run build. The fixture opens the local Argo-Bench chart with the checked-in benchmark data and outside requests blocked.",
+      "steps": [
+        {
+          "action": "Open the benchmark picker and enter a query with no matches.",
+          "expect": "The empty result lists no options and offers Clear search.",
+          "image": "01-no-matches.png"
+        },
+        {
+          "action": "Clear search, browse with the arrow keys, then press Escape.",
+          "expect": "The benchmarks return and keyboard focus goes back to the picker.",
+          "image": "02-explorer.png"
+        },
+        {
+          "action": "Choose a reasoning setting and change the budget axis to Tokens.",
+          "expect": "The selected effort and axis appear in the URL. The chart’s accessible label names output tokens.",
+          "image": "03-tokens.png"
+        },
+        {
+          "action": "Return to Cost.",
+          "expect": "The chart uses its cost axis again and the default benchmark and axis drop out of the URL.",
+          "image": "04-cost.png"
+        }
+      ],
+      "run": [
+        "node",
+        "scripts/check-journal-browser.mjs",
+        "--benchmark-journey"
+      ],
+      "sources": [
+        "scripts/check-journal-browser.mjs",
+        "components/benchmark-picker.tsx",
+        "components/release-explorer.tsx",
+        "components/pareto-chart.tsx"
+      ]
+    }
+  }
+}
