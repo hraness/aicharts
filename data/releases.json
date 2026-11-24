@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
-  "updatedAt": "2026-11-20T22:42:28Z",
-  "snapshotDate": "2026-11-20",
+  "updatedAt": "2026-11-24T16:00:51Z",
+  "snapshotDate": "2026-11-24",
   "sources": [
     {
       "id": "terminal-bench",
@@ -33,10 +33,10 @@
     {
       "id": "gamebench-2",
       "name": "DuelLab GameBench 2",
-      "url": "https://benchmarks.duellab.org/releases/gb2-20261119-235af8c04037/",
+      "url": "https://benchmarks.duellab.org/releases/gb2-20261124-ddeb638de3d9/",
       "license": "CC-BY-4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-      "attribution": "DuelLab, GameBench 2 public release gb2-20261119-235af8c04037. aicharts selected rows with complete scores and costs, matched model IDs and normalized effort labels.",
+      "attribution": "DuelLab, GameBench 2 public release gb2-20261124-ddeb638de3d9. aicharts selected rows with complete scores and costs, matched model IDs and normalized effort labels.",
       "covers": "Reasoning settings, relative scores and mean API costs per generated player program across eight strategy games."
     }
   ],
@@ -89,7 +89,26 @@
           "runOn": "2026-11-19"
         }
       ],
-      "gameBench": []
+      "gameBench": [
+        {
+          "effort": "low",
+          "score": 83.7764295975712,
+          "costPerProgramUsd": 0.18819824999999998,
+          "costBasis": "Standard list-price estimate"
+        },
+        {
+          "effort": "medium",
+          "score": 92.56927909267468,
+          "costPerProgramUsd": 0.409414125,
+          "costBasis": "Standard list-price estimate"
+        },
+        {
+          "effort": "xhigh",
+          "score": 98.01598825187365,
+          "costPerProgramUsd": 1.8576172499999999,
+          "costBasis": "Standard list-price estimate"
+        }
+      ]
     },
     {
       "slug": "gpt-6-2-astra",
@@ -149,19 +168,19 @@
       "gameBench": [
         {
           "effort": "low",
-          "score": 90.60791882590138,
+          "score": 90.71514663055669,
           "costPerProgramUsd": 0.15296900000000002,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "medium",
-          "score": 92.92522145234409,
+          "score": 92.87653893913503,
           "costPerProgramUsd": 0.22132,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "xhigh",
-          "score": 97.14640370897472,
+          "score": 97.24684315242018,
           "costPerProgramUsd": 0.678774,
           "costBasis": "Standard list-price estimate"
         }
@@ -203,19 +222,19 @@
       "gameBench": [
         {
           "effort": "low",
-          "score": 86.42527732892029,
+          "score": 86.5297785154989,
           "costPerProgramUsd": 0.05140225,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "medium",
-          "score": 93.43206849833581,
+          "score": 93.47244760512392,
           "costPerProgramUsd": 0.09717475,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "xhigh",
-          "score": 94.33052724382564,
+          "score": 94.41773698050393,
           "costPerProgramUsd": 0.19944099999999998,
           "costBasis": "Standard list-price estimate"
         }
@@ -272,13 +291,13 @@
       "gameBench": [
         {
           "effort": "low",
-          "score": 57.757718426297004,
+          "score": 57.687549411294846,
           "costPerProgramUsd": 0.0554655,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "medium",
-          "score": 79.80745152688367,
+          "score": 79.80574817398342,
           "costPerProgramUsd": 0.128996625,
           "costBasis": "Standard list-price estimate"
         }
@@ -335,19 +354,19 @@
       "gameBench": [
         {
           "effort": "low",
-          "score": 91.6456830623077,
+          "score": 91.69287935386632,
           "costPerProgramUsd": 0.468819,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "medium",
-          "score": 93.94449952652492,
+          "score": 93.93541211823536,
           "costPerProgramUsd": 0.648709,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "xhigh",
-          "score": 99.34937182227225,
+          "score": 99.39587783507034,
           "costPerProgramUsd": 4.579015,
           "costBasis": "Standard list-price estimate"
         }
@@ -404,13 +423,13 @@
       "gameBench": [
         {
           "effort": "low",
-          "score": 85.61313436185918,
+          "score": 85.56303344376558,
           "costPerProgramUsd": 0.16463,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "high",
-          "score": 94.796374682841,
+          "score": 94.86551219403093,
           "costPerProgramUsd": 0.79900425,
           "costBasis": "Standard list-price estimate"
         }
@@ -474,19 +493,19 @@
       "gameBench": [
         {
           "effort": "none",
-          "score": 79.18567367353047,
+          "score": 79.13779449754057,
           "costPerProgramUsd": 0.026974875000000002,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "medium",
-          "score": 78.41066154938903,
+          "score": 78.4690093390568,
           "costPerProgramUsd": 0.03952675,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "xhigh",
-          "score": 85.85157885577352,
+          "score": 85.82262209818126,
           "costPerProgramUsd": 0.10675300000000001,
           "costBasis": "Standard list-price estimate"
         }
@@ -550,19 +569,19 @@
       "gameBench": [
         {
           "effort": "none",
-          "score": 36.66364036519457,
+          "score": 36.69383475103366,
           "costPerProgramUsd": 0.0031203999999999997,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "medium",
-          "score": 56.27645748814573,
+          "score": 56.2744045326367,
           "costPerProgramUsd": 0.0119476,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "xhigh",
-          "score": 74.93122894644671,
+          "score": 74.91016662802691,
           "costPerProgramUsd": 0.046909768750000004,
           "costBasis": "Standard list-price estimate"
         }
@@ -626,19 +645,19 @@
       "gameBench": [
         {
           "effort": "low",
-          "score": 78.94676903571784,
+          "score": 78.86804515790223,
           "costPerProgramUsd": 0.08425525,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "medium",
-          "score": 76.47067923160951,
+          "score": 76.318921530965,
           "costPerProgramUsd": 0.09679175,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "high",
-          "score": 89.2085208479816,
+          "score": 89.17934743138912,
           "costPerProgramUsd": 0.440512,
           "costBasis": "Standard list-price estimate"
         }
@@ -702,19 +721,19 @@
       "gameBench": [
         {
           "effort": "low",
-          "score": 76.90600479708291,
+          "score": 76.8247921363498,
           "costPerProgramUsd": 0.0485635,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "medium",
-          "score": 86.29767372305673,
+          "score": 86.21157620201707,
           "costPerProgramUsd": 0.084337375,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "xhigh",
-          "score": 91.79978984701788,
+          "score": 91.76769916288536,
           "costPerProgramUsd": 0.2665285,
           "costBasis": "Standard list-price estimate"
         }
@@ -778,19 +797,19 @@
       "gameBench": [
         {
           "effort": "low",
-          "score": 39.77274210314025,
+          "score": 39.64805065499928,
           "costPerProgramUsd": 0.040937249999999994,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "medium",
-          "score": 49.892316092756026,
+          "score": 49.82785188026643,
           "costPerProgramUsd": 0.06079725,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "xhigh",
-          "score": 91.74338724313353,
+          "score": 91.89873524706817,
           "costPerProgramUsd": 0.54817025,
           "costBasis": "Standard list-price estimate"
         }
@@ -861,19 +880,19 @@
       "gameBench": [
         {
           "effort": "low",
-          "score": 76.70487107445685,
+          "score": 76.65000132255639,
           "costPerProgramUsd": 0.11677924999999999,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "medium",
-          "score": 91.15900724051832,
+          "score": 91.0904931061529,
           "costPerProgramUsd": 0.33381875,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "xhigh",
-          "score": 94.85452544184642,
+          "score": 94.98918829206848,
           "costPerProgramUsd": 1.98688675,
           "costBasis": "Standard list-price estimate"
         }
@@ -937,19 +956,19 @@
       "gameBench": [
         {
           "effort": "none",
-          "score": 64.64088158139555,
+          "score": 64.72967194805804,
           "costPerProgramUsd": 0.043196000000000005,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "medium",
-          "score": 75.13131290910714,
+          "score": 75.27438861025318,
           "costPerProgramUsd": 0.07831456249999999,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "xhigh",
-          "score": 79.04708825237384,
+          "score": 79.00089246094558,
           "costPerProgramUsd": 0.20679475000000003,
           "costBasis": "Standard list-price estimate"
         }
@@ -1013,19 +1032,19 @@
       "gameBench": [
         {
           "effort": "none",
-          "score": 45.23944761338622,
+          "score": 45.32362631536465,
           "costPerProgramUsd": 0.0031813812500000004,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "medium",
-          "score": 41.774247191775935,
+          "score": 41.79322162817845,
           "costPerProgramUsd": 0.0038361124999999998,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "xhigh",
-          "score": 55.86736452771078,
+          "score": 55.70143575103077,
           "costPerProgramUsd": 0.0117399875,
           "costBasis": "Standard list-price estimate"
         }
@@ -1079,19 +1098,19 @@
       "gameBench": [
         {
           "effort": "low",
-          "score": 83.70615872004123,
+          "score": 83.61264697193775,
           "costPerProgramUsd": 0.23918625000000002,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "medium",
-          "score": 88.40714277267371,
+          "score": 88.46984136992134,
           "costPerProgramUsd": 0.4090425,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "xhigh",
-          "score": 94.15460201675799,
+          "score": 94.13545440272691,
           "costPerProgramUsd": 1.30343,
           "costBasis": "Standard list-price estimate"
         }
@@ -1155,19 +1174,19 @@
       "gameBench": [
         {
           "effort": "low",
-          "score": 53.1142677784547,
+          "score": 53.173648319492884,
           "costPerProgramUsd": 0.031941679879238995,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "medium",
-          "score": 59.65737492421835,
+          "score": 59.56969288937301,
           "costPerProgramUsd": 0.07182689102312519,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "high",
-          "score": 64.09975743928875,
+          "score": 63.98675289037836,
           "costPerProgramUsd": 0.14318721034763582,
           "costBasis": "Standard list-price estimate"
         }
@@ -1231,19 +1250,19 @@
       "gameBench": [
         {
           "effort": "low",
-          "score": 84.62253253879717,
+          "score": 84.51262306773086,
           "costPerProgramUsd": 0.7923815012907612,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "medium",
-          "score": 82.66517273428299,
+          "score": 82.60012137680683,
           "costPerProgramUsd": 1.1541937045345083,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "xhigh",
-          "score": 93.81408806751688,
+          "score": 93.83064927867075,
           "costPerProgramUsd": 5.15427625,
           "costBasis": "Standard list-price estimate"
         }
@@ -1543,19 +1562,19 @@
       "gameBench": [
         {
           "effort": "none",
-          "score": 42.49820452837593,
+          "score": 42.52032149970175,
           "costPerProgramUsd": 0.06167125,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "medium",
-          "score": 43.29070567356348,
+          "score": 43.32008286024011,
           "costPerProgramUsd": 0.06562375000000001,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "xhigh",
-          "score": 54.06857544144793,
+          "score": 53.9947966729143,
           "costPerProgramUsd": 0.35099375,
           "costBasis": "Standard list-price estimate"
         }
@@ -1633,19 +1652,19 @@
       "gameBench": [
         {
           "effort": "none",
-          "score": 54.430193468485676,
+          "score": 54.30952512482688,
           "costPerProgramUsd": 0.12786562499999998,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "medium",
-          "score": 65.97566219155826,
+          "score": 65.97477694526077,
           "costPerProgramUsd": 0.229063125,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "xhigh",
-          "score": 80.05787231310717,
+          "score": 80.06365741457427,
           "costPerProgramUsd": 0.7965692187500001,
           "costBasis": "Standard list-price estimate"
         }
@@ -1723,19 +1742,19 @@
       "gameBench": [
         {
           "effort": "none",
-          "score": 34.65085214134246,
+          "score": 34.717155977519425,
           "costPerProgramUsd": 0.07671781250000001,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "medium",
-          "score": 48.47898990258422,
+          "score": 48.46396789269734,
           "costPerProgramUsd": 0.09696234375000001,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "xhigh",
-          "score": 53.671777282249074,
+          "score": 53.77839435025351,
           "costPerProgramUsd": 0.38340421874999997,
           "costBasis": "Standard list-price estimate"
         }
@@ -1827,19 +1846,19 @@
       "gameBench": [
         {
           "effort": "none",
-          "score": 24.025790045654475,
+          "score": 23.95061680178276,
           "costPerProgramUsd": 0.004598475,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "medium",
-          "score": 42.865054049110405,
+          "score": 42.9213226798952,
           "costPerProgramUsd": 0.00631805625,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "xhigh",
-          "score": 53.812630294371765,
+          "score": 53.70171260106834,
           "costPerProgramUsd": 0.030833324999999998,
           "costBasis": "Standard list-price estimate"
         }
@@ -1924,19 +1943,19 @@
       "gameBench": [
         {
           "effort": "low",
-          "score": 57.95739713817292,
+          "score": 57.98682152288199,
           "costPerProgramUsd": 0.28860625,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "medium",
-          "score": 64.17489299064258,
+          "score": 64.0301154779361,
           "costPerProgramUsd": 0.5233875,
           "costBasis": "Standard list-price estimate"
         },
         {
           "effort": "xhigh",
-          "score": 75.12570118942544,
+          "score": 75.00617999136287,
           "costPerProgramUsd": 1.47056875,
           "costBasis": "Standard list-price estimate"
         }
