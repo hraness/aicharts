@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
-  "updatedAt": "2026-11-24T16:00:51Z",
-  "snapshotDate": "2026-11-24",
+  "updatedAt": "2026-11-26T00:31:34Z",
+  "snapshotDate": "2026-11-26",
   "sources": [
     {
       "id": "terminal-bench",
@@ -74,6 +74,13 @@
         "sourceUrl": "https://github.com/harbor-framework/terminal-bench/blob/main/leaderboard/submissions/2026-11-20-4-1-0-gemini-gemini-4-neon-xhigh-antigravity-cli.json"
       },
       "epoch": [
+        {
+          "benchmark": "mirrorCode",
+          "effort": "xhigh",
+          "score": 61.1,
+          "stderr": 11.8,
+          "runOn": "2026-11-19"
+        },
         {
           "benchmark": "gpqaDiamond",
           "effort": "xhigh",
